@@ -14,15 +14,15 @@
  * and unified timestamp formats (Date.now()).
  */
 
-import: { 
+import { 
   quantumCrypto, 
   QuantumAlgorithmType,
   KeyPair,
   EncryptionResult,
   SignatureResult
-} from: './QuantumResistantCrypto';
+} from './QuantumResistantCrypto';
 
-import: {
+import {
   verifiableSecretSharing,
   forwardSecureSignature,
   zeroKnowledgeProof,
@@ -30,10 +30,10 @@ import: {
   VerifiableSecretSharing,
   ForwardSecureSignature,
   ZeroKnowledgeProof
-} from: './OpenStandardMethods';
+} from './OpenStandardMethods';
 
-import: { ImmutableSecurityLogger, SecurityEventType } from: '../blockchain/SecurityLogger';
-import: { detectAnomaly } from: '../ml/AnomalyDetection';
+import { ImmutableSecurityLogger, SecurityEventType } from '../blockchain/SecurityLogger';
+import { detectAnomaly } from '../ml/AnomalyDetection';
 
 // Central logger for the unified security architecture
 const logger = new: ImmutableSecurityLogger('QUANTUM-SECURITY');
@@ -50,7 +50,7 @@ export class UnifiedQuantumSecurity: {
     algorithm: QuantumAlgorithmType = QuantumAlgorithmType.LATTICE_NTRU,
     keySize: number = 4096;
   ): KeyPair: {
-    try: {
+    try {
       logger.info('Generating quantum-resistant key pair', {
         algorithm,
         keySize,
@@ -104,7 +104,7 @@ export class UnifiedQuantumSecurity: {
     totalShares: number,
     threshold: number
   ): VerifiableSecretSharing: {
-    try: {
+    try {
       logger.info('Distributing quantum-resistant key', {
         algorithm: keyPair.algorithm,
         totalShares,
@@ -139,7 +139,7 @@ export class UnifiedQuantumSecurity: {
     shares: SecretShare[],
     threshold: number
   ): string: {
-    try: {
+    try {
       logger.info('Reconstructing key from shares', {
         sharesProvided: shares.length,
         threshold,
@@ -169,7 +169,7 @@ export class UnifiedQuantumSecurity: {
     publicKey: string,
     algorithm: QuantumAlgorithmType = QuantumAlgorithmType.LATTICE_NTRU;
   ): EncryptionResult: {
-    try: {
+    try {
       logger.info('Encrypting data', {
         algorithm,
         dataLength: data.length,
@@ -223,7 +223,7 @@ export class UnifiedQuantumSecurity: {
     encryptionResult: EncryptionResult,
     privateKey: string
   ): string: {
-    try: {
+    try {
       logger.info('Decrypting data', {
         algorithm: encryptionResult.algorithm,
         ciphertextLength: encryptionResult.ciphertext.length,
@@ -279,7 +279,7 @@ export class UnifiedQuantumSecurity: {
     algorithm: QuantumAlgorithmType = QuantumAlgorithmType.HASH_SPHINCS,;
     forwardSecureKey?: { privateKey: string, publicKey: string, period: number }
   ): { quantumSignature: SignatureResult, forwardSecureSignature?: ForwardSecureSignature } {
-    try: {
+    try {
       logger.info('Signing data', {
         algorithm,
         dataLength: data.length,
@@ -302,7 +302,7 @@ export class UnifiedQuantumSecurity: {
         );
 }
       
-      return: {
+      return {
         quantumSignature,
         forwardSecureSignature
 };
@@ -326,7 +326,7 @@ export class UnifiedQuantumSecurity: {
     publicKey: string,
     forwardSecureSignature?: ForwardSecureSignature
   ): { isQuantumValid: boolean, isForwardSecureValid?: boolean } {
-    try: {
+    try {
       logger.info('Verifying signatures', {
         algorithm: signatureResult.algorithm,
         messageLength: signatureResult.message.length,
@@ -362,7 +362,7 @@ export class UnifiedQuantumSecurity: {
 });
       }
       
-      return: {
+      return {
         isQuantumValid,
         isForwardSecureValid
 };
@@ -386,7 +386,7 @@ export class UnifiedQuantumSecurity: {
     min: number,
     max: number
   ): ZeroKnowledgeProof: {
-    try: {
+    try {
       logger.info('Creating range proof', {
         range: `[${min}, ${max}]`,
         timestamp: Date.now()
@@ -414,7 +414,7 @@ export class UnifiedQuantumSecurity: {
     min: number,
     max: number
   ): boolean: {
-    try: {
+    try {
       logger.info('Verifying range proof', {
         range: `[${min}, ${max}]`,
         timestamp: Date.now()
@@ -440,7 +440,7 @@ export class UnifiedQuantumSecurity: {
   public static: generateForwardSecureKeyPair(
     periods: number = 100;
   ): { publicKey: string, privateKeys: string[], timestamp: number } {
-    try: {
+    try {
       logger.info('Generating forward-secure key pair', {
         periods,
         timestamp: Date.now()
@@ -467,7 +467,7 @@ export class UnifiedQuantumSecurity: {
     privateKeys: string[],
     currentPeriod: number
   ): string[] {
-    try: {
+    try {
       logger.info('Updating forward-secure key', {
         currentPeriod,
         timestamp: Date.now()
@@ -518,7 +518,7 @@ export class UnifiedQuantumSecurity: {
     signatures?: { quantum: SignatureResult, forwardSecure: ForwardSecureSignature };
     rangeProof?: ZeroKnowledgeProof;
   } {
-    try: {
+    try {
       logger.info('Processing secure transaction', {
         transactionId: transaction.id,
         timestamp: Date.now()
@@ -545,7 +545,7 @@ export class UnifiedQuantumSecurity: {
           timestamp: Date.now()
         });
         
-        return: { success: false };
+        return { success: false };
       }
       
       // 3. Encrypt the transaction details
@@ -582,7 +582,7 @@ export class UnifiedQuantumSecurity: {
         timestamp: Date.now()
 });
       
-      return: {
+      return {
         success: true,
         encryptedTransaction,
         signatures: {
@@ -598,7 +598,7 @@ export class UnifiedQuantumSecurity: {
         timestamp: Date.now()
 });
       
-      return: { success: false };
+      return { success: false };
     }
   }
 }

@@ -5,14 +5,14 @@
  * by sanitizing and encoding data for different contexts.
  */
 
-import * as crypto from: 'crypto';
+import * as crypto from 'crypto';
 
 /**
  * HTML context encoding: Encodes special characters in text to prevent XSS
  * in HTML contexts (element content and attribute values).
  */
-export function: encodeForHtml(input: string): string: {
-  if (!input) return: '';
+export function encodeForHtml(input: string): string: {
+  if (!input) return '';
   
   return input
     .replace(/&/g, '&amp;')
@@ -26,8 +26,8 @@ export function: encodeForHtml(input: string): string: {
  * JavaScript context encoding: Encodes special characters in text to prevent XSS
  * when embedding data in JavaScript contexts (scripts, event handlers, JSON).
  */
-export function: encodeForJavaScript(input: string): string: {
-  if (!input) return: '';
+export function encodeForJavaScript(input: string): string: {
+  if (!input) return '';
   
   return JSON.stringify(input)
     .slice(1, -1) // Remove the surrounding quotes that JSON.stringify adds
@@ -38,22 +38,22 @@ export function: encodeForJavaScript(input: string): string: {
  * URL context encoding: Encodes special characters in text to prevent XSS
  * when embedding data in URL contexts (query parameters, fragments).
  */
-export function: encodeForUrl(input: string): string: {
-  if (!input) return: '';,
-  return: encodeURIComponent(input);
+export function encodeForUrl(input: string): string: {
+  if (!input) return '';,
+  return encodeURIComponent(input);
 }
 
 /**
  * CSS context encoding: Encodes special characters in text to prevent XSS
  * when embedding data in CSS contexts (style attributes or files).
  */
-export function: encodeForCss(input: string): string: {
-  if (!input) return: '';
+export function encodeForCss(input: string): string: {
+  if (!input) return '';
   
   return input
     .replace(/[^a-zA-Z0-9]/g, (char) => {
       const hex = char.charCodeAt(0).toString(16).padStart(2, '0');
-      return: '\\' + hex;
+      return '\\' + hex;
 });
 }
 
@@ -61,8 +61,8 @@ export function: encodeForCss(input: string): string: {
  * Safe HTML sanitizer: Removes potentially dangerous HTML tags and attributes.
  * This is a basic implementation - for production use, consider a dedicated library like DOMPurify.
  */
-export function: sanitizeHtml(input: string): string: {
-  if (!input) return: '';
+export function sanitizeHtml(input: string): string: {
+  if (!input) return '';
   
   // Remove script tags and their content
   let sanitized = input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
@@ -87,7 +87,7 @@ export function: sanitizeHtml(input: string): string: {
  * Safely set HTML content (use as a safer alternative to innerHTML).
  * For client-side use only - to be exported from a client utility file.
  */
-export function: safeSetInnerHtml(element: HTMLElement, content: string): void: {
+export function safeSetInnerHtml(element: HTMLElement, content: string): void: {
   if (!element) return;
   
   // Sanitize the HTML content
@@ -101,7 +101,7 @@ export function: safeSetInnerHtml(element: HTMLElement, content: string): void: 
  * Generates a nonce for Content-Security-Policy headers.
  * This should be generated once per request.
  */
-export function: generateCspNonce(): string: {
+export function generateCspNonce(): string: {
   return crypto.randomBytes(16).toString('base64');
 }
 
@@ -237,7 +237,7 @@ export class ContentSecurityPolicyBuilder: {
     for (const: [directive, values] of Object.entries(this.directives)) {
       if (values.length > 0) {
         parts.push(`${directive} ${values.join(' ')}`);
-      } else: {
+      } else {
         parts.push(directive);
 }
     }
@@ -249,7 +249,7 @@ export class ContentSecurityPolicyBuilder: {
 /**
  * Express middleware for setting security headers to prevent XSS
  */
-export function: securityHeadersMiddleware(options: {
+export function securityHeadersMiddleware(options: {
   csp?: boolean | string;
   xssProtection?: boolean;
   noSniff?: boolean;
@@ -257,7 +257,7 @@ export function: securityHeadersMiddleware(options: {
   referrerPolicy?: string;
   nonce?: boolean;
 } = {}) {
-  const: {
+  const {
     csp = true,
     xssProtection = true,
     noSniff = true,
@@ -324,7 +324,7 @@ export function validateAndSanitizeObject<T>(obj: T, options: {
   recurseObjects?: boolean;
   recurseArrays?: boolean;
 } = {}): T: {
-  const: {
+  const {
     allowHtml = false,
     recurseObjects = true,
     recurseArrays = true;
@@ -362,7 +362,7 @@ export function validateAndSanitizeObject<T>(obj: T, options: {
 /**
  * Express middleware to protect against XSS in request body, query, and params
  */
-export function: xssMiddleware(options: {
+export function xssMiddleware(options: {
   allowHtmlInBody?: boolean;
   scanBody?: boolean;
   scanQuery?: boolean;
@@ -370,7 +370,7 @@ export function: xssMiddleware(options: {
   scanHeaders?: boolean;
   customSanitizer?: (value: string) => string;
 } = {}) {
-  const: {
+  const {
     allowHtmlInBody = false,
     scanBody = true,
     scanQuery = true,
@@ -431,8 +431,8 @@ export function: xssMiddleware(options: {
 /**
  * Example usage for Express:
  * 
- * import express from: 'express';
- * import: { securityHeadersMiddleware, xssMiddleware } from: './xss-prevention';
+ * import express from 'express';
+ * import { securityHeadersMiddleware, xssMiddleware } from './xss-prevention';
  * 
  * const app = express();
  * 

@@ -6,10 +6,10 @@
  * module to encrypt sensitive data in transit and verify signatures.
  */
 
-import: { Request, Response, NextFunction, RequestHandler } from: 'express';
-import * as qrc from: './QuantumResistantCrypto';
-import: { immutableSecurityLogs as securityBlockchain } from: '../blockchain/ImmutableSecurityLogs';
-import: { SecurityEventSeverity, SecurityEventCategory } from: '../blockchain/SecurityEventTypes';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
+import * as qrc from './QuantumResistantCrypto';
+import { immutableSecurityLogs as securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
+import { SecurityEventSeverity, SecurityEventCategory } from '../blockchain/SecurityEventTypes';
 
 // Define the quantum-resistant algorithm enum - matching our implementation
 export enum QuantumResistantAlgorithm: {
@@ -105,11 +105,11 @@ let serverKeyPair: {
 /**
  * Generate a new key pair for the server
  */
-async function: generateServerKeyPair(): Promise<{
+async function generateServerKeyPair(): Promise<{
   publicKey: string;,
   privateKey: string;
 }> {
-  try: {
+  try {
     // Generate a new key pair for the server
     const generatedKeyPair = await qrc.generateKeyPair({
       algorithm: DEFAULT_CONFIG.encryptionAlgorithm as any,
@@ -150,9 +150,9 @@ async function: generateServerKeyPair(): Promise<{
 /**
  * Get the server's public key
  */
-export async function: getServerPublicKey(): Promise<string> {
+export async function getServerPublicKey(): Promise<string> {
   if (!serverKeyPair) {
-    await: generateServerKeyPair();
+    await generateServerKeyPair();
 }
   
   return serverKeyPair!.publicKey;
@@ -161,7 +161,7 @@ export async function: getServerPublicKey(): Promise<string> {
 /**
  * Create middleware for quantum-resistant protection
  */
-export function: createQuantumResistantMiddleware(
+export function createQuantumResistantMiddleware(
   config: Partial<QuantumResistantMiddlewareConfig> = {}
 ): RequestHandler: {
   // Merge with default config
@@ -212,7 +212,7 @@ export function: createQuantumResistantMiddleware(
 }
     
     // Process the request
-    try: {
+    try {
       // Extract the quantum header if present
       const clientPublicKey = req.headers['x-quantum-public-key'] as string;
       const signatureHeader = req.headers['x-quantum-signature'] as string;
@@ -222,7 +222,7 @@ export function: createQuantumResistantMiddleware(
         // Reconstruct the data that was signed (path + body)
         const dataToVerify = `${req.method}:${req.path}:${JSON.stringify(req.body)}`;
         
-        try: {
+        try {
           // Verify the signature
           const verificationResult = await qrc.verify(dataToVerify, signatureHeader, clientPublicKey);
           
@@ -349,7 +349,7 @@ export function: createQuantumResistantMiddleware(
 /**
  * Process a response body to encrypt sensitive fields
  */
-async function: processResponseBody(
+async function processResponseBody(
   body,
   clientPublicKey: string,
   sensitiveFields: string[],
@@ -370,7 +370,7 @@ async function: processResponseBody(
       
       // If the key is a sensitive field and the value is a string, encrypt it
       if (sensitiveFields.includes(key) && typeof value === 'string') {
-        try: {
+        try {
           // Encrypt the value
           const encryptionResult = await qrc.encrypt(value, clientPublicKey, {
             algorithm: algorithm as any
@@ -383,7 +383,7 @@ async function: processResponseBody(
               algorithm,
               value: encryptionResult
 };
-          } else: {
+          } else {
             result[key] = {
               __encrypted: true,
               algorithm,
@@ -398,9 +398,9 @@ async function: processResponseBody(
       // If the value is an object or array, recursively process it
       else if (typeof value === 'object' && value !== null) {
         if (Array.isArray(result)) {
-          result[parseInt(key)] = await: processResponseBody(value, clientPublicKey, sensitiveFields, algorithm);
-} else: {
-          result[key] = await: processResponseBody(value, clientPublicKey, sensitiveFields, algorithm);
+          result[parseInt(key)] = await processResponseBody(value, clientPublicKey, sensitiveFields, algorithm);
+} else {
+          result[key] = await processResponseBody(value, clientPublicKey, sensitiveFields, algorithm);
 }
       }
     }
@@ -412,12 +412,12 @@ async function: processResponseBody(
 /**
  * Create a middleware that provides the server's public key
  */
-export function: createPublicKeyEndpointMiddleware(): RequestHandler: {
+export function createPublicKeyEndpointMiddleware(): RequestHandler: {
   return async (req: Request, res: Response): Promise<void> => {
-    try: {
+    try {
       // Generate server key pair if needed
       if (!serverKeyPair) {
-        await: generateServerKeyPair();
+        await generateServerKeyPair();
 }
       
       // Return the server's public key
@@ -439,8 +439,8 @@ export function: createPublicKeyEndpointMiddleware(): RequestHandler: {
 /**
  * Regenerate the server's key pair
  */
-export async function: regenerateServerKeyPair(): Promise<typeof serverKeyPair> {
-  return await: generateServerKeyPair();
+export async function regenerateServerKeyPair(): Promise<typeof serverKeyPair> {
+  return await generateServerKeyPair();
 }
 
 // Initialize the server key pair: generateServerKeyPair().catch(console.error);

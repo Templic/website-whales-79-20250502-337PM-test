@@ -8,9 +8,9 @@
  * - Custom HTTP header validation
  */
 ;
-import: { Request, Response, NextFunction } from: 'express';
-import: { randomBytes } from: 'crypto';
-import: { logSecurityEvent } from: '../security/security';
+import { Request, Response, NextFunction } from 'express';
+import { randomBytes } from 'crypto';
+import { logSecurityEvent } from '../security/security';
 
 // Token storage for server-side validation
 // In a production environment with multiple servers, this would need to be stored in a shared cache like Redis
@@ -28,7 +28,7 @@ const tokenCache = new Map<string, { token: string, expires: number }>();
 /**
  * Generate a new CSRF token for the current session
  */
-export function: generateCsrfToken(req: Request, res: Response): string: {
+export function generateCsrfToken(req: Request, res: Response): string: {
   // Generate a random token
   const token = randomBytes(32).toString('hex');
   
@@ -57,11 +57,11 @@ export function: generateCsrfToken(req: Request, res: Response): string: {
  * Validates that the CSRF token in the X-CSRF-Token header matches the one stored in the session
  * This middleware should be used on all state-changing routes (POST, PUT, DELETE, etc.)
  */
-export function: csrfProtection(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
+export function csrfProtection(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
   // Skip CSRF check for GET, HEAD, OPTIONS
   const safeMethod = /^(GET|HEAD|OPTIONS)$/i.test(req.method);
   if (safeMethod) => {
-    return: next();
+    return next();
 }
   
   // Get token from header
@@ -70,7 +70,7 @@ export function: csrfProtection(req: Request, res: Response, next: NextFunction)
   // No token provided
   if (!headerToken || typeof headerToken !== 'string') {
     logSecurityEvent({
-      type: 'CSRF_PROTECTION_FAILURE',
+      type 'CSRF_PROTECTION_FAILURE',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: 'Missing CSRF token in request header',
@@ -86,7 +86,7 @@ export function: csrfProtection(req: Request, res: Response, next: NextFunction)
   // No session ID
   if (!req.session?.id) {
     logSecurityEvent({
-      type: 'CSRF_PROTECTION_FAILURE',
+      type 'CSRF_PROTECTION_FAILURE',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: 'No session ID found when validating CSRF token',
@@ -105,7 +105,7 @@ export function: csrfProtection(req: Request, res: Response, next: NextFunction)
   // No stored token
   if (!cachedData) {
     logSecurityEvent({
-      type: 'CSRF_PROTECTION_FAILURE',
+      type 'CSRF_PROTECTION_FAILURE',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: 'No stored CSRF token found for session',
@@ -123,7 +123,7 @@ export function: csrfProtection(req: Request, res: Response, next: NextFunction)
     tokenCache.delete(req.session.id);
     
     logSecurityEvent({
-      type: 'CSRF_PROTECTION_FAILURE',
+      type 'CSRF_PROTECTION_FAILURE',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: 'Expired CSRF token',
@@ -139,7 +139,7 @@ export function: csrfProtection(req: Request, res: Response, next: NextFunction)
   // Token mismatch
   if (cachedData.token !== headerToken) {
     logSecurityEvent({
-      type: 'CSRF_PROTECTION_FAILURE',
+      type 'CSRF_PROTECTION_FAILURE',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: 'CSRF token mismatch',
@@ -158,7 +158,7 @@ export function: csrfProtection(req: Request, res: Response, next: NextFunction)
 /**
  * Middleware to provide a route for the frontend to get a CSRF token
  */
-export function: csrfTokenRoute(req: Request, res: Response): void | Response<any, Record<string, any>> {
+export function csrfTokenRoute(req: Request, res: Response): void | Response<any, Record<string, any>> {
   const token = generateCsrfToken(req, res);
   res.json({ csrfToken: token });
 }
@@ -167,7 +167,7 @@ export function: csrfTokenRoute(req: Request, res: Response): void | Response<an
  * Middleware to rotate the CSRF token after authentication changes (login/logout)
  * This should be called after login and logout operations
  */
-export function: rotateCsrfToken(req: Request, res: Response, next: NextFunction): void: {
+export function rotateCsrfToken(req: Request, res: Response, next: NextFunction): void: {
   if (req.session?.id) {
     // Delete any existing token
     tokenCache.delete(req.session.id);

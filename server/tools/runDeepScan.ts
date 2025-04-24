@@ -5,17 +5,17 @@
  * maximumSecurityScan module with the deepest possible scan configuration.
  */
 
-import: { SecurityScanType } from: '../security/maximumSecurityScan';
-import: { raspManager } from: '../security/advanced/rasp';
-import: { performSecurityScan } from: '../security/maximumSecurityScan';
-import: { securityFabric } from: '../security/advanced/SecurityFabric';
-import: { securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
+import { SecurityScanType } from '../security/maximumSecurityScan';
+import { raspManager } from '../security/advanced/rasp';
+import { performSecurityScan } from '../security/maximumSecurityScan';
+import { securityFabric } from '../security/advanced/SecurityFabric';
+import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
 
 /**
  * Run a deep comprehensive security scan
  */
-async function: runDeepScan() {
+async function runDeepScan() {
   console.log('┌──────────────────────────────────────────────────────┐');
   console.log('│             INITIATING DEEP SECURITY SCAN             │');
   console.log('├──────────────────────────────────────────────────────┤');
@@ -24,7 +24,7 @@ async function: runDeepScan() {
   console.log('│ dependencies, runtime behaviors, APIs, and databases. │');
   console.log('└──────────────────────────────────────────────────────┘');
   
-  try: {
+  try {
     // Log scan start event
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
@@ -46,7 +46,7 @@ async function: runDeepScan() {
     });
     
     // Run a full security scan with maximum depth
-    const scanResult = await: performSecurityScan({
+    const scanResult = await performSecurityScan({
       scanType: SecurityScanType.FULL,
       deep: true,  // Enable deep scanning,
   autoFix: false, // Do not auto-fix issues to avoid unexpected changes,
@@ -106,7 +106,7 @@ async function: runDeepScan() {
       }
       
       console.log('└──────────────────────────────────────────────────────┘');
-    } else: {
+    } else {
       console.log('\n✓ No security issues found.');
 }
     
@@ -155,4 +155,4 @@ async function: runDeepScan() {
 });
 
 // Export for use as a module
-export: { runDeepScan };
+export { runDeepScan };

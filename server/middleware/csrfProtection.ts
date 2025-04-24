@@ -5,10 +5,10 @@
  * It implements a token-based approach with double submit cookies.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import crypto from: 'crypto';
-import: { securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
+import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
+import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
 
 // Token expiration time (2 hours)
 const TOKEN_EXPIRATION = 2 * 60 * 60 * 1000;
@@ -106,7 +106,7 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
   sameSite: 'strict', // Prevent CSRF,
   maxAge: TOKEN_EXPIRATION;
 });
-    return: next();
+    return next();
   }
   
   // Get token from request header or body

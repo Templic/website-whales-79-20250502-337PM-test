@@ -5,7 +5,7 @@
  * These schemas ensure proper input validation and prevent security vulnerabilities.
  */
 
-import: { z } from: 'zod';
+import { z } from 'zod';
 
 /**
  * Schema for validating product IDs
@@ -26,7 +26,7 @@ const postalCodeSchema = z.string()
  * Schema for validating address
  */
 const addressSchema = z.object({
-  streetAddress: z.string()
+  (match) => match.replace(':', '')string()
     .min(3, 'Street address is too short')
     .max(100, 'Street address is too long')
     .trim(),
@@ -34,16 +34,16 @@ const addressSchema = z.object({
     .max(100, 'Street address, line: 2 is too long')
     .trim()
     .optional(),
-  city: z.string()
+  (match) => match.replace(':', '')string()
     .min(2, 'City name is too short')
     .max(50, 'City name is too long')
     .trim(),
-  state: z.string()
+  (match) => match.replace(':', '')string()
     .min(2, 'State/Province is too short')
     .max(50, 'State/Province is too long')
     .trim(),
   postalCode: postalCodeSchema,
-  country: z.string()
+  (match) => match.replace(':', '')string()
     .min(2, 'Country is too short')
     .max(56, 'Country name is too long')
     .trim()
@@ -53,33 +53,33 @@ const addressSchema = z.object({
  * Schema for creating new order
  */
 export const createOrderSchema = z.object({
-  items: z.array(
+  (match) => match.replace(':', '')array(
     z.object({
       productId: productIdSchema,
-      quantity: z.number()
+      (match) => match.replace(':', '')number()
         .int('Quantity must be an integer')
         .min(1, 'Quantity must be at, least: 1')
         .max(100, 'Quantity cannot, exceed: 100'),
-      price: z.number()
+      (match) => match.replace(':', '')number()
         .nonnegative('Price cannot be negative')
         .optional()
 })
   ).min(1, 'Order must contain at least one item'),
   shippingAddress: addressSchema,
   billingAddress: addressSchema.optional(),
-  sameBillingAddress: z.boolean().optional(),
-  paymentMethod: z.enum(['credit_card', 'paypal', 'crypto', 'bank_transfer']),
-  paymentToken: z.string()
+  (match) => match.replace(':', '')boolean().optional(),
+  (match) => match.replace(':', '')enum(['credit_card', 'paypal', 'crypto', 'bank_transfer']),
+  (match) => match.replace(':', '')string()
     .min(10, 'Invalid payment token')
     .max(256, 'Payment token too long')
     .optional(),
-  discountCode: z.string()
+  (match) => match.replace(':', '')string()
     .max(30, 'Discount code too long')
     .optional(),
-  notes: z.string()
+  (match) => match.replace(':', '')string()
     .max(500, 'Notes too long')
     .optional(),
-  agreeToTerms: z.boolean()
+  (match) => match.replace(':', '')boolean()
     .refine(val = > val === true, 'You must agree to the terms and conditions');
 });
 
@@ -87,19 +87,19 @@ export const createOrderSchema = z.object({
  * Schema for updating an existing order
  */
 export const updateOrderSchema = z.object({
-  orderId: z.string()
+  (match) => match.replace(':', '')string()
     .uuid('Invalid order ID format'),
   shippingAddress: addressSchema.optional(),
   billingAddress: addressSchema.optional(),
-  paymentMethod: z.enum(['credit_card', 'paypal', 'crypto', 'bank_transfer']).optional(),
-  paymentToken: z.string()
+  (match) => match.replace(':', '')enum(['credit_card', 'paypal', 'crypto', 'bank_transfer']).optional(),
+  (match) => match.replace(':', '')string()
     .min(10, 'Invalid payment token')
     .max(256, 'Payment token too long')
     .optional(),
-  notes: z.string()
+  (match) => match.replace(':', '')string()
     .max(500, 'Notes too long')
     .optional(),
-  status: z.enum([
+  (match) => match.replace(':', '')enum([
     'pending', 
     'processing', 
     'shipped', 
@@ -114,18 +114,18 @@ export const updateOrderSchema = z.object({
  * Schema for querying orders
  */
 export const queryOrdersSchema = z.object({
-  page: z.coerce.number()
+  (match) => match.replace(':', '')coerce.number()
     .int('Page must be an integer')
     .min(1, 'Page must be at, least: 1')
     .optional()
     .default(1),
-  limit: z.coerce.number()
+  (match) => match.replace(':', '')coerce.number()
     .int('Limit must be an integer')
     .min(1, 'Limit must be at, least: 1')
     .max(100, 'Limit cannot, exceed: 100')
     .optional()
     .default(20),
-  status: z.enum([
+  (match) => match.replace(':', '')enum([
     'pending', 
     'processing', 
     'shipped', 
@@ -135,23 +135,23 @@ export const queryOrdersSchema = z.object({
     'on_hold',
     'all'
   ]).optional(),
-  startDate: z.string()
+  (match) => match.replace(':', '')string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)')
     .optional(),
-  endDate: z.string()
+  (match) => match.replace(':', '')string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)')
     .optional(),
-  customerId: z.string()
+  (match) => match.replace(':', '')string()
     .uuid('Invalid customer ID format')
     .optional(),
-  sort: z.enum(['date_asc', 'date_desc', 'total_asc', 'total_desc']).optional()
+  (match) => match.replace(':', '')enum(['date_asc', 'date_desc', 'total_asc', 'total_desc']).optional()
 });
 
 /**
  * Schema for getting a specific order
  */
 export const getOrderSchema = z.object({
-  orderId: z.string()
+  (match) => match.replace(':', '')string()
     .uuid('Invalid order ID format')
 });
 
@@ -159,29 +159,29 @@ export const getOrderSchema = z.object({
  * Schema for deleting/cancelling an order
  */
 export const deleteOrderSchema = z.object({
-  orderId: z.string()
+  (match) => match.replace(':', '')string()
     .uuid('Invalid order ID format'),
-  reason: z.string()
+  (match) => match.replace(':', '')string()
     .max(500, 'Reason too long')
     .optional(),
-  refundRequested: z.boolean().optional()
+  (match) => match.replace(':', '')boolean().optional()
 });
 
 /**
  * Schema for processing payment
  */
 export const processPaymentSchema = z.object({
-  orderId: z.string()
+  (match) => match.replace(':', '')string()
     .uuid('Invalid order ID format'),
-  paymentMethod: z.enum(['credit_card', 'paypal', 'crypto', 'bank_transfer']),
-  amount: z.number()
+  (match) => match.replace(':', '')enum(['credit_card', 'paypal', 'crypto', 'bank_transfer']),
+  (match) => match.replace(':', '')number()
     .positive('Amount must be positive'),
-  currency: z.string()
+  (match) => match.replace(':', '')string()
     .length(3, 'Currency code must, be: 3 characters')
     .regex(/^[A-Z]{3}$/, 'Currency must be in ISO: 4217 format (e.g., USD)'),
-  paymentToken: z.string()
+  (match) => match.replace(':', '')string()
     .min(10, 'Invalid payment token')
     .max(256, 'Payment token too long'),
   billingAddress: addressSchema.optional(),
-  savePaymentMethod: z.boolean().optional()
+  (match) => match.replace(':', '')boolean().optional()
 });

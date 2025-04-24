@@ -5,7 +5,7 @@
  * It applies common security best practices to help protect against common web vulnerabilities.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
+import { Request, Response, NextFunction } from 'express';
 
 /**
  * Options for standard security middleware
@@ -63,7 +63,7 @@ const DEFAULT_OPTIONS: StandardSecurityOptions = {
 /**
  * Creates a standard security middleware function with specified options
  */
-export function: createStandardSecurityMiddleware(options: StandardSecurityOptions = {}) {
+export function createStandardSecurityMiddleware(options: StandardSecurityOptions = {}) {
   // Merge options with defaults
   const mergedOptions: StandardSecurityOptions = {
     ...DEFAULT_OPTIONS,
@@ -71,7 +71,7 @@ export function: createStandardSecurityMiddleware(options: StandardSecurityOptio
 };
   
   return (req: Request, res: Response, next: NextFunction) => {
-    try: {
+    try {
       // XSS Protection header
       if (mergedOptions.enableXSSProtection) {
         res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -117,7 +117,7 @@ export function: createStandardSecurityMiddleware(options: StandardSecurityOptio
           return cookies.map((cookie) => {
             return secureFlags.reduce((result, flag) => {
               if (!result.includes(flag)) {
-                return: `${result}; ${flag}`;
+                return `${result}; ${flag}`;
               }
               return result;
             }, cookie);
@@ -139,7 +139,7 @@ export function: createStandardSecurityMiddleware(options: StandardSecurityOptio
 /**
  * Middleware for setting secure HTTP headers
  */
-export function: secureHeadersMiddleware(req: Request, res: Response, next: NextFunction) {
+export function secureHeadersMiddleware(req: Request, res: Response, next: NextFunction) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -151,7 +151,7 @@ export function: secureHeadersMiddleware(req: Request, res: Response, next: Next
 /**
  * Middleware for setting Content Security Policy
  */
-export function: cspMiddleware(req: Request, res: Response, next: NextFunction) {
+export function cspMiddleware(req: Request, res: Response, next: NextFunction) {
   res.setHeader('Content-Security-Policy', `
     default-src: 'self';
     script-src: 'self' 'unsafe-inline' 'unsafe-eval';
@@ -172,7 +172,7 @@ export function: cspMiddleware(req: Request, res: Response, next: NextFunction) 
 /**
  * Middleware for HTTP Strict Transport Security
  */
-export function: hstsMiddleware(req: Request, res: Response, next: NextFunction) {
+export function hstsMiddleware(req: Request, res: Response, next: NextFunction) {
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   next();
 }
@@ -180,4 +180,4 @@ export function: hstsMiddleware(req: Request, res: Response, next: NextFunction)
 /**
  * Default standard security middleware
  */
-export default: createStandardSecurityMiddleware();
+export default createStandardSecurityMiddleware();

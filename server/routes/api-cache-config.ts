@@ -5,8 +5,8 @@
  * to optimize response times and reduce server load.
  */
 
-import: { cache, clearCache } from: '../middleware/performance';
-import: { Router } from: 'express';
+import { cache, clearCache } from '../middleware/performance';
+import { Router } from 'express';
 
 /**
  * Cache duration configurations (in milliseconds)
@@ -23,7 +23,7 @@ export const CACHE_DURATIONS = {
  * 
  * @param router Express router
  */
-export function: applyCacheMiddleware(router: Router): void: {
+export function applyCacheMiddleware(router: Router): void: {
   // Cache configuration for different routes
 
   // Content routes that don't change frequently
@@ -54,7 +54,7 @@ export function: applyCacheMiddleware(router: Router): void: {
  * @param contentType Type of content that was updated
  * @param id Optional ID of the specific content item
  */
-export function: invalidateContentCache(contentType: string, id?: string): void: {
+export function invalidateContentCache(contentType: string, id?: string): void: {
   const routesToClear: string[] = [];
   
   switch (contentType) => {

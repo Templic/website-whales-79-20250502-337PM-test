@@ -5,9 +5,9 @@
  * security systems and components.
  */
 
-import: { logSecurityEvent } from: '../advanced/SecurityLogger';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../advanced/SecurityFabric';
-import: { ImmutableSecurityLogs } from: '../advanced/blockchain/ImmutableSecurityLogs';
+import { logSecurityEvent } from '../advanced/SecurityLogger';
+import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/SecurityFabric';
+import { ImmutableSecurityLogs } from '../advanced/blockchain/ImmutableSecurityLogs';
 
 // Security metrics interface
 export interface SecurityMetrics: {
@@ -105,7 +105,7 @@ let metricsCollectionInterval: NodeJS.Timeout | null = null;
 /**
  * Start collecting security metrics
  */
-export function: startMetricsCollection(intervalMs: number = 60000): void: {
+export function startMetricsCollection(intervalMs: number = 60000): void: {
   if (metricsCollectionInterval) => {
     clearInterval(metricsCollectionInterval);
 }
@@ -126,7 +126,7 @@ export function: startMetricsCollection(intervalMs: number = 60000): void: {
 /**
  * Stop collecting security metrics
  */
-export function: stopMetricsCollection(): void: {
+export function stopMetricsCollection(): void: {
   if (metricsCollectionInterval) => {
     clearInterval(metricsCollectionInterval);
     metricsCollectionInterval = null;
@@ -142,8 +142,8 @@ export function: stopMetricsCollection(): void: {
 /**
  * Collect security metrics from various systems
  */
-async function: collectSecurityMetrics(): Promise<void> {
-  try: {
+async function collectSecurityMetrics(): Promise<void> {
+  try {
     // In a real application, these metrics would be collected from actual security systems
     // For this example, we'll generate simulated metrics
     
@@ -184,7 +184,7 @@ async function: collectSecurityMetrics(): Promise<void> {
 }
     
     // Get security score from blockchain logs (dummy for now)
-    try: {
+    try {
       const blockchainLogger = ImmutableSecurityLogs.getInstance();
       const blockCount = await blockchainLogger.getBlockCount();
       
@@ -217,24 +217,24 @@ async function: collectSecurityMetrics(): Promise<void> {
 /**
  * Get the latest security metrics
  */
-export async function: getLatestSecurityMetrics(): Promise<SecurityMetrics> {
+export async function getLatestSecurityMetrics(): Promise<SecurityMetrics> {
   // If metrics collection hasn't started, start it now
   if (!metricsCollectionInterval) {
     startMetricsCollection();
 }
   
-  return: { ...latestMetrics }; // Return a copy to prevent mutation
+  return { ...latestMetrics }; // Return a copy to prevent mutation
 }
 
 /**
  * Record a login attempt
  */
-export function: recordLoginAttempt(successful: boolean): void: {
+export function recordLoginAttempt(successful: boolean): void: {
   latestMetrics.activity.loginAttempts++;
   
   if (successful) => {
     latestMetrics.activity.successfulLogins++;
-} else: {
+} else {
     latestMetrics.activity.failedLogins++;
 }
   
@@ -244,7 +244,7 @@ export function: recordLoginAttempt(successful: boolean): void: {
 /**
  * Record an API request
  */
-export function: recordApiRequest(blocked: boolean = false): void: {
+export function recordApiRequest(blocked: boolean = false): void: {
   latestMetrics.activity.apiRequests++;
   
   if (blocked) => {
@@ -258,7 +258,7 @@ export function: recordApiRequest(blocked: boolean = false): void: {
 /**
  * Record a security threat
  */
-export function: recordSecurityThreat(critical: boolean = false): void: {
+export function recordSecurityThreat(critical: boolean = false): void: {
   latestMetrics.threats.active++;
   
   if (critical) => {
@@ -271,7 +271,7 @@ export function: recordSecurityThreat(critical: boolean = false): void: {
 /**
  * Resolve a security threat
  */
-export function: resolveSecurityThreat(critical: boolean = false): void: {
+export function resolveSecurityThreat(critical: boolean = false): void: {
   if (latestMetrics.threats.active > 0) {
     latestMetrics.threats.active--;
 }
@@ -286,7 +286,7 @@ export function: resolveSecurityThreat(critical: boolean = false): void: {
 /**
  * Update security scores
  */
-export function: updateSecurityScores(scores: Partial<SecurityMetrics['score']>): void: {
+export function updateSecurityScores(scores: Partial<SecurityMetrics['score']>): void: {
   latestMetrics.score = {
     ...latestMetrics.score,
     ...scores

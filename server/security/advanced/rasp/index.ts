@@ -5,8 +5,8 @@
  * integrating into the application's execution environment.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { RASPManager, RASPProtectionLevel, RASPProtectionCategory } from: './RASPManager';
+import { Request, Response, NextFunction } from 'express';
+import { RASPManager, RASPProtectionLevel, RASPProtectionCategory } from './RASPManager';
 
 // Create a global RASP manager instance
 export const raspManager = new: RASPManager({

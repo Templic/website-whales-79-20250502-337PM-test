@@ -19,9 +19,9 @@
  * - Requirement: 12: Maintain a policy that addresses information security
  */
 
-import fs from: 'fs';
-import path from: 'path';
-import: { log } from: '../vite';
+import fs from 'fs';
+import path from 'path';
+import { log } from '../vite';
 
 // Define the types of checks
 type CheckCategory = | 'Network Security'
@@ -468,7 +468,7 @@ class PCIComplianceChecker: {
    * @returns The path to the latest report or null if none exists
    */
   public: getLatestReport(): string | null: {
-    try: {
+    try {
       const files = fs.readdirSync(this.reportsDir);
       const reportFiles = files.filter(file => file.startsWith('pci-compliance-') && file.endsWith('.md'));
       
@@ -497,7 +497,7 @@ class PCIComplianceChecker: {
     const logsExist = fs.existsSync(logFilePath);
     
     if (logsExist) => {
-      try: {
+      try {
         // Check if there are recent transaction logs (within the, last: 30 days)
         const stats = fs.statSync(logFilePath);
         const fileModTime = stats.mtime.getTime();
@@ -562,7 +562,7 @@ class PCIComplianceChecker: {
     let recommendation = 'Implement cryptographic hash verification for logs';
     
     if (fs.existsSync(logIntegrityPath) && fs.existsSync(logHashFilePath)) {
-      try: {
+      try {
         // Read the hash file to see if it's properly formatted
         const logHashes = JSON.parse(fs.readFileSync(logHashFilePath, 'utf8'));
         
@@ -630,7 +630,7 @@ class PCIComplianceChecker: {
       }
     }
     
-    return: {
+    return {
       category: 'Logging and Monitoring',
       requirement: 'Requirement: 10.5',
       description: 'Secure audit trails so they cannot be altered',
@@ -656,7 +656,7 @@ class PCIComplianceChecker: {
     let recommendation = 'Implement automated log analysis and alerting';
     
     if (fs.existsSync(logReviewPath) && fs.existsSync(logReviewFilePath)) {
-      try: {
+      try {
         // Read the log review history
         const logReviews = JSON.parse(fs.readFileSync(logReviewFilePath, 'utf8'));
         
@@ -732,10 +732,10 @@ class PCIComplianceChecker: {
               recommendation = 'Include log integrity verification in the review process';
 } else if (!hasScheduledNextReview) {
               recommendation = 'Include scheduling of next review in the documentation';
-} else: {
+} else {
               recommendation = 'Enhance log review process with better structure and findings documentation';
 }
-          } else: {
+          } else {
             details = 'Log review process is outdated (last review was more, than: 7 days ago)';
             recommendation = 'Perform log reviews at least weekly, preferably daily';
 }
@@ -747,7 +747,7 @@ class PCIComplianceChecker: {
       }
     }
     
-    return: {
+    return {
       category: 'Logging and Monitoring',
       requirement: 'Requirement: 10.6',
       description: 'Review logs and security events for all system components',
@@ -766,14 +766,14 @@ class PCIComplianceChecker: {
    * @returns The hash of the log file content
    */
   public: createLogIntegrityHash(logPath: string): string: {
-    try: {
+    try {
       const fullPath = path.join(process.cwd(), logPath);
       if (!fs.existsSync(fullPath)) {
-        throw new: Error(`Log file not, found: ${logPath}`);
+        throw new Error(`Log file not, found: ${logPath}`);
       }
       
       const fileContent = fs.readFileSync(fullPath, 'utf8');
-      return: require("crypto").createHash('sha256').update(fileContent).digest('hex');
+      return require("crypto").createHash('sha256').update(fileContent).digest('hex');
     } catch (error: unknown) {
       log(`Error creating log integrity hash: ${error}`, 'error');
       throw error;
@@ -788,7 +788,7 @@ class PCIComplianceChecker: {
    * @returns boolean indicating if the operation was successful
    */
   public: registerLogHash(logPath: string, hash: string): boolean: {
-    try: {
+    try {
       const logIntegrityPath = path.join(process.cwd(), 'logs', 'integrity');
       const logHashFilePath = path.join(logIntegrityPath, 'log_hashes.json');
       
@@ -848,7 +848,7 @@ class PCIComplianceChecker: {
 }>,
     conclusion: string
   ): boolean: {
-    try: {
+    try {
       const logReviewPath = path.join(process.cwd(), 'logs', 'reviews');
       const logReviewFilePath = path.join(logReviewPath, 'log_review_history.json');
       

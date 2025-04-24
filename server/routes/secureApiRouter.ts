@@ -5,19 +5,19 @@
  * including CSRF protection, input validation, and quantum-resistant security.
  */
 
-import express, { Router, Request, Response, NextFunction } from: 'express';
-import: { createCSRFMiddleware } from: '../security/csrf/CSRFProtection';
-import: { validateInputs } from: '../security/inputValidation';
-import: { quantumProtect } from: '../security/advanced/quantum/QuantumResistantMiddleware';
-import: { requireMFAVerification } from: '../auth/mfaIntegration';
-import: { recordApiRequest } from: '../security/monitoring/MetricsCollector';
-import: { logSecurityEvent } from: '../security/advanced/SecurityLogger';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/SecurityFabric';
+import express, { Router, Request, Response, NextFunction } from 'express';
+import { createCSRFMiddleware } from '../security/csrf/CSRFProtection';
+import { validateInputs } from '../security/inputValidation';
+import { quantumProtect } from '../security/advanced/quantum/QuantumResistantMiddleware';
+import { requireMFAVerification } from '../auth/mfaIntegration';
+import { recordApiRequest } from '../security/monitoring/MetricsCollector';
+import { logSecurityEvent } from '../security/advanced/SecurityLogger';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
 
 /**
  * Create a secure API router with appropriate security middleware
  */
-export function: createSecureApiRouter(
+export function createSecureApiRouter(
   options: {
     requireMFA?: boolean;
     csrfProtection?: boolean;
@@ -97,7 +97,7 @@ export function: createSecureApiRouter(
 /**
  * Create a secure read-only API router (GET requests only)
  */
-export function: createSecureReadOnlyApiRouter(
+export function createSecureReadOnlyApiRouter(
   options: {
     requireMFA?: boolean;
     csrfProtection?: boolean;
@@ -139,7 +139,7 @@ export function: createSecureReadOnlyApiRouter(
 /**
  * Create a public API router (minimal security)
  */
-export function: createPublicApiRouter(
+export function createPublicApiRouter(
   options: {
     inputValidation?: boolean;
     logRequests?: boolean;

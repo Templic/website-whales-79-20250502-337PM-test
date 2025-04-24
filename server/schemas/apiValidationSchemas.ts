@@ -6,56 +6,56 @@
  * across the entire application.
  */
 
-import: { z } from: 'zod';
-import: { validationPatterns } from: '../security/advanced/apiValidation';
+import { z } from 'zod';
+import { validationPatterns } from '../security/advanced/apiValidation';
 
 /**
  * Authentication schemas
  */
 export const authSchemas = {
-  login: z.object({
-    username: z.string().min(3).max(50),
-    password: z.string().min(1).max(100)
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')string().min(3).max(50),
+    (match) => match.replace(':', '')string().min(1).max(100)
 }),
   
-  register: z.object({
+  (match) => match.replace(':', '')object({
     username: validationPatterns.username,
     email: validationPatterns.email,
     password: validationPatterns.password,
-    confirmPassword: z.string().min(1)
+    (match) => match.replace(':', '')string().min(1)
 }).refine(data => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"]
 }),
   
-  resetPassword: z.object({
-    token: z.string().min(20).max(500),
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')string().min(20).max(500),
     password: validationPatterns.password,
-    confirmPassword: z.string().min(1)
+    (match) => match.replace(':', '')string().min(1)
 }).refine(data => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"]
 }),
   
-  requestPasswordReset: z.object({
+  (match) => match.replace(':', '')object({
     email: validationPatterns.email
 }),
   
-  changePassword: z.object({
-    currentPassword: z.string().min(1),
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')string().min(1),
     newPassword: validationPatterns.password,
-    confirmPassword: z.string().min(1)
+    (match) => match.replace(':', '')string().min(1)
 }).refine(data => data.newPassword === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"]
 }),
   
-  twoFactorSetup: z.object({
-    enable: z.boolean()
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')boolean()
 }),
   
-  twoFactorVerify: z.object({
-    code: z.string().min(6).max(8).regex(/^\d+$/)
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')string().min(6).max(8).regex(/^\d+$/)
 })
 };
 
@@ -63,26 +63,26 @@ export const authSchemas = {
  * User schemas
  */
 export const userSchemas = {
-  updateProfile: z.object({
-    displayName: z.string().min(1).max(100).optional(),
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')string().min(1).max(100).optional(),
     email: validationPatterns.email.optional(),
-    bio: z.string().max(500).optional(),
-    location: z.string().max(100).optional(),
-    avatar: z.string().max(200).optional()
+    (match) => match.replace(':', '')string().max(500).optional(),
+    (match) => match.replace(':', '')string().max(100).optional(),
+    (match) => match.replace(':', '')string().max(200).optional()
 }),
   
-  updateSettings: z.object({
-    emailNotifications: z.boolean().optional(),
-    darkMode: z.boolean().optional(),
-    language: z.string().max(10).optional(),
-    timezone: z.string().max(50).optional()
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')boolean().optional(),
+    (match) => match.replace(':', '')boolean().optional(),
+    (match) => match.replace(':', '')string().max(10).optional(),
+    (match) => match.replace(':', '')string().max(50).optional()
 }),
   
-  userSearchQuery: z.object({
-    query: z.string().min(1).max(100),
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')string().min(1).max(100),
     page: validationPatterns.page,
     limit: validationPatterns.limit,
-    sortBy: z.enum(['username', 'createdAt', 'lastLogin']).optional()
+    (match) => match.replace(':', '')enum(['username', 'createdAt', 'lastLogin']).optional()
 })
 };
 
@@ -90,20 +90,20 @@ export const userSchemas = {
  * Payment schemas
  */
 export const paymentSchemas = {
-  createPaymentIntent: z.object({
-    amount: z.number().int().positive(),
-    currency: z.string().min(3).max(3).default('usd'),
-    metadata: z.record(z.string()).optional()
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')number().int().positive(),
+    (match) => match.replace(':', '')string().min(3).max(3).default('usd'),
+    (match) => match.replace(':', '')record(z.string()).optional()
 }),
   
-  confirmPayment: z.object({
-    paymentMethodId: z.string().min(5).max(100),
-    orderId: z.string().min(5).max(100),
-    userId: z.number().int().positive().optional(),
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')string().min(5).max(100),
+    (match) => match.replace(':', '')string().min(5).max(100),
+    (match) => match.replace(':', '')number().int().positive().optional(),
     email: validationPatterns.email.optional(),
     last4: z.string().length(4).regex(/^\d+$/).optional(),
-    amount: z.number().int().positive().optional(),
-    currency: z.string().min(3).max(3).optional()
+    (match) => match.replace(':', '')number().int().positive().optional(),
+    (match) => match.replace(':', '')string().min(3).max(3).optional()
 })
 };
 
@@ -111,37 +111,37 @@ export const paymentSchemas = {
  * Content schemas
  */
 export const contentSchemas = {
-  createPost: z.object({
+  (match) => match.replace(':', '')object({
     title: validationPatterns.title,
-    content: z.string().min(1).max(50000),
-    summary: z.string().max(500).optional(),
-    tags: z.array(z.string().min(1).max(30)).max(10).optional(),
-    published: z.boolean().optional().default(false),
-    slug: z.string().regex(/^[a-z0-9-]+$/).optional(),
-    categoryId: z.number().int().positive().optional()
+    (match) => match.replace(':', '')string().min(1).max(50000),
+    (match) => match.replace(':', '')string().max(500).optional(),
+    (match) => match.replace(':', '')array(z.string().min(1).max(30)).max(10).optional(),
+    (match) => match.replace(':', '')boolean().optional().default(false),
+    (match) => match.replace(':', '')string().regex(/^[a-z0-9-]+$/).optional(),
+    (match) => match.replace(':', '')number().int().positive().optional()
 }),
   
-  updatePost: z.object({
+  (match) => match.replace(':', '')object({
     id: validationPatterns.id,
     title: validationPatterns.title.optional(),
-    content: z.string().min(1).max(50000).optional(),
-    summary: z.string().max(500).optional(),
-    tags: z.array(z.string().min(1).max(30)).max(10).optional(),
-    published: z.boolean().optional(),
-    slug: z.string().regex(/^[a-z0-9-]+$/).optional(),
-    categoryId: z.number().int().positive().optional()
+    (match) => match.replace(':', '')string().min(1).max(50000).optional(),
+    (match) => match.replace(':', '')string().max(500).optional(),
+    (match) => match.replace(':', '')array(z.string().min(1).max(30)).max(10).optional(),
+    (match) => match.replace(':', '')boolean().optional(),
+    (match) => match.replace(':', '')string().regex(/^[a-z0-9-]+$/).optional(),
+    (match) => match.replace(':', '')number().int().positive().optional()
 }),
   
-  createComment: z.object({
+  (match) => match.replace(':', '')object({
     postId: validationPatterns.id,
-    content: z.string().min(1).max(2000),
-    authorName: z.string().min(2).max(100).optional(),
+    (match) => match.replace(':', '')string().min(1).max(2000),
+    (match) => match.replace(':', '')string().min(2).max(100).optional(),
     authorEmail: validationPatterns.email.optional()
 }),
   
-  moderateComment: z.object({
+  (match) => match.replace(':', '')object({
     id: validationPatterns.id,
-    approved: z.boolean()
+    (match) => match.replace(':', '')boolean()
 })
 };
 
@@ -149,24 +149,24 @@ export const contentSchemas = {
  * Search schemas
  */
 export const searchSchemas = {
-  globalSearch: z.object({
-    query: z.string().min(1).max(100),
-    type: z.enum(['all', 'posts', 'products', 'users', 'comments']).optional().default('all'),
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')string().min(1).max(100),
+    type z.enum(['all', 'posts', 'products', 'users', 'comments']).optional().default('all'),
     page: validationPatterns.page,
     limit: validationPatterns.limit
 }),
   
-  advancedSearch: z.object({
-    query: z.string().min(1).max(100),
-    filters: z.record(z.union([z.string(), z.number(), z.boolean(), z.array(z.string())])).optional(),
-    dateRange: z.object({
-      start: z.string().datetime().optional(),
-      end: z.string().datetime().optional()
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')string().min(1).max(100),
+    (match) => match.replace(':', '')record(z.union([z.string(), z.number(), z.boolean(), z.array(z.string())])).optional(),
+    (match) => match.replace(':', '')object({
+      (match) => match.replace(':', '')string().datetime().optional(),
+      (match) => match.replace(':', '')string().datetime().optional()
 }).optional(),
     page: validationPatterns.page,
     limit: validationPatterns.limit,
-    sortBy: z.string().max(50).optional(),
-    sortDirection: z.enum(['asc', 'desc']).optional()
+    (match) => match.replace(':', '')string().max(50).optional(),
+    (match) => match.replace(':', '')enum(['asc', 'desc']).optional()
   })
 };
 
@@ -174,33 +174,33 @@ export const searchSchemas = {
  * Product schemas
  */
 export const productSchemas = {
-  createProduct: z.object({
+  (match) => match.replace(':', '')object({
     title: validationPatterns.title,
-    description: z.string().min(1).max(5000),
-    price: z.number().positive(),
-    salePrice: z.number().positive().optional(),
-    sku: z.string().max(100).optional(),
-    stock: z.number().int().min(0).optional(),
-    images: z.array(z.string()).max(10).optional(),
-    categoryId: z.number().int().positive().optional(),
-    tags: z.array(z.string()).max(10).optional(),
-    featured: z.boolean().optional(),
-    specifications: z.record(z.string()).optional()
+    (match) => match.replace(':', '')string().min(1).max(5000),
+    (match) => match.replace(':', '')number().positive(),
+    (match) => match.replace(':', '')number().positive().optional(),
+    (match) => match.replace(':', '')string().max(100).optional(),
+    (match) => match.replace(':', '')number().int().min(0).optional(),
+    (match) => match.replace(':', '')array(z.string()).max(10).optional(),
+    (match) => match.replace(':', '')number().int().positive().optional(),
+    (match) => match.replace(':', '')array(z.string()).max(10).optional(),
+    (match) => match.replace(':', '')boolean().optional(),
+    (match) => match.replace(':', '')record(z.string()).optional()
 }),
   
-  updateProduct: z.object({
+  (match) => match.replace(':', '')object({
     id: validationPatterns.id,
     title: validationPatterns.title.optional(),
-    description: z.string().min(1).max(5000).optional(),
-    price: z.number().positive().optional(),
-    salePrice: z.number().positive().optional(),
-    sku: z.string().max(100).optional(),
-    stock: z.number().int().min(0).optional(),
-    images: z.array(z.string()).max(10).optional(),
-    categoryId: z.number().int().positive().optional(),
-    tags: z.array(z.string()).max(10).optional(),
-    featured: z.boolean().optional(),
-    specifications: z.record(z.string()).optional()
+    (match) => match.replace(':', '')string().min(1).max(5000).optional(),
+    (match) => match.replace(':', '')number().positive().optional(),
+    (match) => match.replace(':', '')number().positive().optional(),
+    (match) => match.replace(':', '')string().max(100).optional(),
+    (match) => match.replace(':', '')number().int().min(0).optional(),
+    (match) => match.replace(':', '')array(z.string()).max(10).optional(),
+    (match) => match.replace(':', '')number().int().positive().optional(),
+    (match) => match.replace(':', '')array(z.string()).max(10).optional(),
+    (match) => match.replace(':', '')boolean().optional(),
+    (match) => match.replace(':', '')record(z.string()).optional()
 })
 };
 
@@ -208,20 +208,20 @@ export const productSchemas = {
  * Media schemas
  */
 export const mediaSchemas = {
-  uploadFile: z.object({
-    type: z.enum(['image', 'document', 'audio', 'video']),
-    title: z.string().min(1).max(100).optional(),
-    description: z.string().max(500).optional(),
-    tags: z.array(z.string()).max(10).optional(),
-    alt: z.string().max(200).optional() // For accessibility
+  (match) => match.replace(':', '')object({
+    type z.enum(['image', 'document', 'audio', 'video']),
+    (match) => match.replace(':', '')string().min(1).max(100).optional(),
+    (match) => match.replace(':', '')string().max(500).optional(),
+    (match) => match.replace(':', '')array(z.string()).max(10).optional(),
+    (match) => match.replace(':', '')string().max(200).optional() // For accessibility
 }),
   
-  updateMedia: z.object({
+  (match) => match.replace(':', '')object({
     id: validationPatterns.id,
-    title: z.string().min(1).max(100).optional(),
-    description: z.string().max(500).optional(),
-    tags: z.array(z.string()).max(10).optional(),
-    alt: z.string().max(200).optional()
+    (match) => match.replace(':', '')string().min(1).max(100).optional(),
+    (match) => match.replace(':', '')string().max(500).optional(),
+    (match) => match.replace(':', '')array(z.string()).max(10).optional(),
+    (match) => match.replace(':', '')string().max(200).optional()
 })
 };
 
@@ -229,22 +229,22 @@ export const mediaSchemas = {
  * Stats and analytics schemas
  */
 export const analyticsSchemas = {
-  timeRange: z.object({
-    start: z.string().datetime(),
-    end: z.string().datetime()
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')string().datetime(),
+    (match) => match.replace(':', '')string().datetime()
 }),
   
-  metricRequest: z.object({
-    metrics: z.array(z.enum([
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')array(z.enum([
       'page_views', 'unique_visitors', 'conversion_rate',
       'bounce_rate', 'avg_session_duration', 'revenue'
     ])),
-    timeRange: z.object({
-      start: z.string().datetime(),
-      end: z.string().datetime()
+    (match) => match.replace(':', '')object({
+      (match) => match.replace(':', '')string().datetime(),
+      (match) => match.replace(':', '')string().datetime()
 }),
-    groupBy: z.enum(['day', 'week', 'month']).optional(),
-    filters: z.record(z.union([z.string(), z.number(), z.boolean()])).optional()
+    (match) => match.replace(':', '')enum(['day', 'week', 'month']).optional(),
+    (match) => match.replace(':', '')record(z.union([z.string(), z.number(), z.boolean()])).optional()
   })
 };
 
@@ -252,24 +252,24 @@ export const analyticsSchemas = {
  * Security and admin schemas
  */
 export const adminSchemas = {
-  updateUserStatus: z.object({
+  (match) => match.replace(':', '')object({
     userId: validationPatterns.id,
-    isBanned: z.boolean().optional(),
-    role: z.enum(['user', 'admin', 'super_admin']).optional(),
-    isVerified: z.boolean().optional()
+    (match) => match.replace(':', '')boolean().optional(),
+    (match) => match.replace(':', '')enum(['user', 'admin', 'super_admin']).optional(),
+    (match) => match.replace(':', '')boolean().optional()
 }),
   
-  securityScanRequest: z.object({
-    scanType: z.enum(['full', 'api', 'auth', 'database', 'custom']),
-    deep: z.boolean().optional(),
-    includeFiles: z.array(z.string()).optional(),
-    customChecks: z.array(z.string()).optional()
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')enum(['full', 'api', 'auth', 'database', 'custom']),
+    (match) => match.replace(':', '')boolean().optional(),
+    (match) => match.replace(':', '')array(z.string()).optional(),
+    (match) => match.replace(':', '')array(z.string()).optional()
 }),
   
-  updateSecuritySetting: z.object({
-    setting: z.string().min(3).max(100),
-    value: z.union([z.string(), z.number(), z.boolean()]),
-    scope: z.enum(['global', 'api', 'auth', 'database']).optional()
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')string().min(3).max(100),
+    (match) => match.replace(':', '')union([z.string(), z.number(), z.boolean()]),
+    (match) => match.replace(':', '')enum(['global', 'api', 'auth', 'database']).optional()
 })
 };
 

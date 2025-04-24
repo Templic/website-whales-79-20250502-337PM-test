@@ -5,8 +5,8 @@
  * common web vulnerabilities such as XSS, clickjacking, and MIME sniffing.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { generateNonce } from: '../utils/securityUtils';
+import { Request, Response, NextFunction } from 'express';
+import { generateNonce } from '../utils/securityUtils';
 
 /**
  * Options for configuring security headers
@@ -52,7 +52,7 @@ const defaultOptions: SecurityHeadersOptions = {
  * @param options Custom security headers options
  * @returns Express middleware
  */
-export function: createSecurityHeadersMiddleware(options: SecurityHeadersOptions = defaultOptions) {
+export function createSecurityHeadersMiddleware(options: SecurityHeadersOptions = defaultOptions) {
   const mergedOptions = { ...defaultOptions, ...options };
   
   return (req: Request, res: Response, next: NextFunction) => {
@@ -137,7 +137,7 @@ export const apiSecurityHeadersMiddleware = createSecurityHeadersMiddleware({
  * @param res Express response
  * @param next Next middleware function
  */
-export function: nonceSecurityHeadersMiddleware(req: Request, res: Response, next: NextFunction) {
+export function nonceSecurityHeadersMiddleware(req: Request, res: Response, next: NextFunction) {
   // Generate a nonce for this request
   const nonce = generateNonce();
   

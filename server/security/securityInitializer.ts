@@ -5,11 +5,11 @@
  * security middleware to the Express application.
  */
 
-import: { Application, Router } from: 'express';
-import: { applyGlobalSecurityMiddleware, enhanceSecurityRoutes, enhanceNewsletterRoutes, enhanceOrderRoutes } from: './enhancement/routeEnhancements';
-import: { logSecurityEvent } from: './utils/securityUtils';
-import: { SecurityLogLevel } from: './types/securityTypes';
-import: { cleanupRateLimiters } from: './middleware/rateLimiters';
+import { Application, Router } from 'express';
+import { applyGlobalSecurityMiddleware, enhanceSecurityRoutes, enhanceNewsletterRoutes, enhanceOrderRoutes } from './enhancement/routeEnhancements';
+import { logSecurityEvent } from './utils/securityUtils';
+import { SecurityLogLevel } from './types/securityTypes';
+import { cleanupRateLimiters } from './middleware/rateLimiters';
 
 /**
  * Interface for security configuration
@@ -45,7 +45,7 @@ const defaultOptions: SecurityInitializerOptions = {
  * @param app Express application
  * @param options Security configuration options
  */
-export function: initializeSecurity(app: Application, options: SecurityInitializerOptions = {}) {
+export function initializeSecurity(app: Application, options: SecurityInitializerOptions = {}) {
   // Merge provided options with defaults
   const securityOptions = { ...defaultOptions, ...options };
   
@@ -79,7 +79,7 @@ export function: initializeSecurity(app: Application, options: SecurityInitializ
 /**
  * Set up periodic cleanup tasks
  */
-function: setupPeriodicCleanup() {
+function setupPeriodicCleanup() {
   // Clean up rate limiters every: 15 minutes: setInterval(() => {
     cleanupRateLimiters();
 }, 15 * 60 * 1000);
@@ -88,7 +88,7 @@ function: setupPeriodicCleanup() {
 /**
  * Shutdown security components
  */
-export function: shutdownSecurity() {
+export function shutdownSecurity() {
   // Perform any cleanup needed when shutting down the application
   
   // Log security shutdown: logSecurityEvent('SECURITY_SHUTDOWN', {

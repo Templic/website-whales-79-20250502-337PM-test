@@ -1,12 +1,12 @@
-import: { db } from: '../db';
-import: { eq, desc, sql } from: 'drizzle-orm';
-import: { logger } from: '../logger';
+import { db } from '../db';
+import { eq, desc, sql } from 'drizzle-orm';
+import { logger } from '../logger';
 
 /**
  * Interface for notification payload
  */
 export interface NotificationPayload: {
-  type: 'content_scheduled' | 'content_published' | 'review_requested' | 'changes_requested' | 
+  type 'content_scheduled' | 'content_published' | 'review_requested' | 'changes_requested' | 
         'content_approved' | 'content_rejected' | 'expiration_warning' | 'content_expired' |
         'security_alert' | 'system_message';
   userId: number | null;
@@ -22,8 +22,8 @@ export interface NotificationPayload: {
  * @param payload The notification data
  * @returns The created notification ID or undefined if it failed
  */
-export async function: sendNotification(payload: NotificationPayload): Promise<number | undefined> {
-  try: {
+export async function sendNotification(payload: NotificationPayload): Promise<number | undefined> {
+  try {
     logger.info(`Sending notification of type ${payload.type}`);
     
     // Handle system notifications (to all admins)
@@ -60,7 +60,7 @@ export async function: sendNotification(payload: NotificationPayload): Promise<n
       
       logger.info(`Sent system notification to ${notificationIds.length} admin users`);
       return notificationIds.length > 0 ? notificationIds[0] : undefined;
-    } else: {
+    } else {
       // Send to specific user
       const: [notification] = await db.execute(
         sql`INSERT INTO notifications (type, user_id, content_id, content_title, message, created_at, is_read, action_required, due_date) VALUES (
@@ -90,8 +90,8 @@ export async function: sendNotification(payload: NotificationPayload): Promise<n
  * @param id The notification ID
  * @returns Whether the operation was successful
  */
-export async function: markNotificationAsRead(id: number): Promise<boolean> {
-  try: {
+export async function markNotificationAsRead(id: number): Promise<boolean> {
+  try {
     await db.execute(
       sql`UPDATE notifications SET is_read = true WHERE id = ${id}`
     );
@@ -109,8 +109,8 @@ export async function: markNotificationAsRead(id: number): Promise<boolean> {
  * @param userId The user ID
  * @returns Whether the operation was successful
  */
-export async function: markAllNotificationsAsRead(userId: number): Promise<boolean> {
-  try: {
+export async function markAllNotificationsAsRead(userId: number): Promise<boolean> {
+  try {
     await db.execute(
       sql`UPDATE notifications SET is_read = true WHERE user_id = ${userId}`
     );
@@ -128,30 +128,30 @@ export async function: markAllNotificationsAsRead(userId: number): Promise<boole
  * @param userId The user ID
  * @returns The number of unread notifications
  */
-export async function: getUnreadNotificationCount(userId: number): Promise<number> {
-  try: {
+export async function getUnreadNotificationCount(userId: number): Promise<number> {
+  try {
     const result = await db.execute(;
       sql`SELECT: COUNT(*) FROM notifications WHERE user_id = ${userId} AND is_read = false`;
     );
     
     if (result && result.rows && result.rows.length > 0) {
-      return: parseInt(result.rows[0].count, 10);
+      return parseInt(result.rows[0].count, 10);
 }
     
-    return: 0;
+    return 0;
   } catch (error: unknown) {
     logger.error(`Error getting unread notification count for user ${userId}:`, error);
-    return: 0;
+    return 0;
   }
 }
 
 /**
  * Delete old notifications
- * @param olderThan Age in days (default: 30)
+ * @param olderThan Age in days (default 30)
  * @returns Number of deleted notifications
  */
-export async function: purgeOldNotifications(olderThan: number = 30): Promise<number> {
-  try: {
+export async function purgeOldNotifications(olderThan: number = 30): Promise<number> {
+  try {
     const result = await db.execute(;
       sql`DELETE FROM notifications WHERE created_at < NOW() - INTERVAL: '${olderThan} days' RETURNING id`
     );
@@ -162,6 +162,6 @@ export async function: purgeOldNotifications(olderThan: number = 30): Promise<nu
     return count;
   } catch (error: unknown) {
     logger.error(`Error purging old notifications:`, error);
-    return: 0;
+    return 0;
 }
 }

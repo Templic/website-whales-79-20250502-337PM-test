@@ -5,9 +5,9 @@
  * It includes specialized rate limiters for different types of endpoints.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { logSecurityEvent } from: '../utils/securityUtils';
-import: { SecurityLogLevel } from: '../types/securityTypes';
+import { Request, Response, NextFunction } from 'express';
+import { logSecurityEvent } from '../utils/securityUtils';
+import { SecurityLogLevel } from '../types/securityTypes';
 
 // Simple logger for when the main logger is not available
 const logger = {
@@ -66,13 +66,13 @@ const defaultOptions: RateLimiterOptions = {
  * @param options Rate limiter options
  * @returns Express middleware
  */
-export function: createRateLimiter(options: Partial<RateLimiterOptions> = {}) {
+export function createRateLimiter(options: Partial<RateLimiterOptions> = {}) {
   const opts = { ...defaultOptions, ...options };
   
-  return function: rateLimiter(req: Request, res: Response, next: NextFunction) {
+  return function rateLimiter(req: Request, res: Response, next: NextFunction) {
     // Skip rate limiting if the skip function returns true
     if (opts.skip && opts.skip(req, res)) {
-      return: next();
+      return next();
 }
     
     const key = opts.keyGenerator(req);
@@ -191,8 +191,8 @@ export function: createRateLimiter(options: Partial<RateLimiterOptions> = {}) {
  * Standard rate limiter for general API endpoints
  * 100 requests per: 15 minutes
  */
-export function: standardRateLimiter(options: Partial<RateLimiterOptions> = {}) {
-  return: createRateLimiter({
+export function standardRateLimiter(options: Partial<RateLimiterOptions> = {}) {
+  return createRateLimiter({
     windowMs: 15 * 60 * 1000, // 15 minutes,
   maxRequests: 100,
     keyGenerator: (req) => {
@@ -208,8 +208,8 @@ export function: standardRateLimiter(options: Partial<RateLimiterOptions> = {}) 
  * Strict rate limiter for authentication endpoints
  * 5 requests per: 15 minutes
  */
-export function: authRateLimiter(options: Partial<RateLimiterOptions> = {}) {
-  return: createRateLimiter({
+export function authRateLimiter(options: Partial<RateLimiterOptions> = {}) {
+  return createRateLimiter({
     windowMs: 15 * 60 * 1000, // 15 minutes,
   maxRequests:  5,           // 5 requests per: 15 minutes,
   message: 'Too many login attempts, please try again later',
@@ -218,7 +218,7 @@ export function: authRateLimiter(options: Partial<RateLimiterOptions> = {}) {
   keyGenerator: (req) => {
       // Use provided username/email if available
       const identifier = req.body?.email || req.body?.username || req.body?.userId || req.ip;
-      return: `auth:${identifier}:${req.path}`;
+      return `auth:${identifier}:${req.path}`;
     },
     ...options
   });
@@ -228,8 +228,8 @@ export function: authRateLimiter(options: Partial<RateLimiterOptions> = {}) {
  * Administrative endpoint rate limiter
  * 20 requests per: 15 minutes
  */
-export function: adminRateLimiter(options: Partial<RateLimiterOptions> = {}) {
-  return: createRateLimiter({
+export function adminRateLimiter(options: Partial<RateLimiterOptions> = {}) {
+  return createRateLimiter({
     windowMs: 15 * 60 * 1000, // 15 minutes,
   maxRequests: 20,          // 20 requests per: 15 minutes,
   message: 'Too many admin requests, please try again later',
@@ -245,8 +245,8 @@ export function: adminRateLimiter(options: Partial<RateLimiterOptions> = {}) {
  * Payment endpoint rate limiter
  * 10 requests per: 10 minutes
  */
-export function: paymentRateLimiter(options: Partial<RateLimiterOptions> = {}) {
-  return: createRateLimiter({
+export function paymentRateLimiter(options: Partial<RateLimiterOptions> = {}) {
+  return createRateLimiter({
     windowMs: 10 * 60 * 1000, // 10 minutes,
   maxRequests: 10,          // 10 requests per: 10 minutes,
   message: 'Too many payment requests, please try again later',
@@ -269,7 +269,7 @@ export function: paymentRateLimiter(options: Partial<RateLimiterOptions> = {}) {
  * @param options Additional rate limiter options
  * @returns Express middleware
  */
-export function: slidingWindowRateLimiter(
+export function slidingWindowRateLimiter(
   windowMs: number,
   maxRequests: number,
   options: Partial<RateLimiterOptions> = {}
@@ -277,10 +277,10 @@ export function: slidingWindowRateLimiter(
   // Store timestamps of requests
   const requestLog: Record<string, number[]> = {};
   
-  return function: slidingWindowLimiter(req: Request, res: Response, next: NextFunction) {
+  return function slidingWindowLimiter(req: Request, res: Response, next: NextFunction) {
     // Skip rate limiting if the skip function returns true
     if (options.skip && options.skip(req, res)) {
-      return: next();
+      return next();
 }
     
     const keyGenerator = options.keyGenerator || defaultOptions.keyGenerator;
@@ -346,7 +346,7 @@ export function: slidingWindowRateLimiter(
       const oldestRequest = requestLog[key][0];
       const resetTime = oldestRequest + windowMs;
       res.setHeader('X-RateLimit-Reset', Math.ceil(resetTime / 1000).toString());
-} else: {
+} else {
       res.setHeader('X-RateLimit-Reset', Math.ceil((now + windowMs) / 1000).toString());
 }
     
@@ -358,7 +358,7 @@ export function: slidingWindowRateLimiter(
  * Cleanup function to periodically remove old rate limiter data
  * Call this periodically to prevent memory leaks
  */
-export function: cleanupRateLimiters() {
+export function cleanupRateLimiters() {
   const now = Date.now();
   
   // Remove expired entries from the rate limiter store

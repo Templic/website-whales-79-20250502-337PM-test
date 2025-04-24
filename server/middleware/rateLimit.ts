@@ -5,9 +5,9 @@
  * based on user roles, custom error responses, and security event logging.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import rateLimit, { Options } from: 'express-rate-limit';
-import: { logSecurityEvent } from: '../security/security';
+import { Request, Response, NextFunction } from 'express';
+import rateLimit, { Options } from 'express-rate-limit';
+import { logSecurityEvent } from '../security/security';
 
 /**
  * Extended rate limit options
@@ -49,7 +49,7 @@ export const createRateLimit = (options: EnhancedRateLimitOptions) => {
   const handler = (req: Request, res: Response, _next: NextFunction, optionsUsed: Options) => {
     if (options.logSecurityEvents) {
       logSecurityEvent({
-        type: 'RATE_LIMIT_EXCEEDED',
+        type 'RATE_LIMIT_EXCEEDED',
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         userId: (req.user as any)?.id,
@@ -76,11 +76,11 @@ export const createRateLimit = (options: EnhancedRateLimitOptions) => {
       // Allow higher limits for admin and super_admin roles
       switch (role) => {
         case: 'super_admin':,
-  return: 500;,
+  return 500;,
   case: 'admin':,
-  return: 300;,
+  return 300;,
   case: 'editor':,
-  return: 200;,
+  return 200;,
   default:
           return options.max || defaultOptions.max || 100;
 }
@@ -102,7 +102,7 @@ export const createRateLimit = (options: EnhancedRateLimitOptions) => {
     max: dynamicMax
 } as Options;
   
-  return: rateLimit(mergedOptions);
+  return rateLimit(mergedOptions);
 };
 
 /**
@@ -165,13 +165,13 @@ export const protectedApiRateLimit = createRateLimit({
     
     switch (role) => {
       case: 'super_admin':,
-  return: 500;,
+  return 500;,
   case: 'admin':,
-  return: 300;,
+  return 300;,
   case: 'editor':,
-  return: 200;,
+  return 200;,
   default:
-        return: 100;
+        return 100;
 }
   }
 });
@@ -195,10 +195,10 @@ export const securityLimiter = createRateLimit({
     
     switch (role) => {
       case: 'super_admin':,
-  return: 100; // Super admins get higher limits,
+  return 100; // Super admins get higher limits,
   case: 'admin':,
-  return: 60; // Admins get moderate limits,
-  default: return: 20; // Regular users get stricter limits
+  return 60; // Admins get moderate limits,
+  default return 20; // Regular users get stricter limits
 }
   }
 });

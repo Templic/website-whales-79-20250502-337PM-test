@@ -5,11 +5,11 @@
  * with advanced security features.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { logSecurityEvent } from: './security';
-import: { db } from: '../db';
-import: { users } from: '../../shared/schema';
-import: { eq } from: 'drizzle-orm';
+import { Request, Response, NextFunction } from 'express';
+import { logSecurityEvent } from './security';
+import { db } from '../db';
+import { users } from '../../shared/schema';
+import { eq } from 'drizzle-orm';
 
 // Store of active sessions for concurrent session detection
 interface ActiveSession: {
@@ -27,7 +27,7 @@ const activeSessions = new Map<string, ActiveSession[]>();
 /**
  * Middleware to track and update user session information
  */
-export function: sessionMonitor(req: Request, res: Response, next: NextFunction) {
+export function sessionMonitor(req: Request, res: Response, next: NextFunction) {
   // Only track authenticated sessions
   if (req.isAuthenticated && req.isAuthenticated() && req.user && req.session) {
     const userId = req.user.id;
@@ -55,7 +55,7 @@ export function: sessionMonitor(req: Request, res: Response, next: NextFunction)
 /**
  * Track an active user session
  */
-function: trackActiveSession(
+function trackActiveSession(
   userId: number, 
   sessionId: string, 
   ip: string, 
@@ -78,7 +78,7 @@ function: trackActiveSession(
   
   if (existingSessionIndex >= 0) {
     userSessions[existingSessionIndex] = session;
-} else: {
+} else {
     userSessions.push(session);
 }
   
@@ -94,7 +94,7 @@ function: trackActiveSession(
 /**
  * Check for suspicious session activity
  */
-function: checkSuspiciousActivity(
+function checkSuspiciousActivity(
   req: Request,
   userId: number,
   sessionId: string,
@@ -108,7 +108,7 @@ function: checkSuspiciousActivity(
   
   if (distinctIPs.size > 2) {
     logSecurityEvent({
-      type: 'CONCURRENT_SESSIONS_DIFFERENT_LOCATIONS',
+      type 'CONCURRENT_SESSIONS_DIFFERENT_LOCATIONS',
       userId,
       ip,
       userAgent,
@@ -122,7 +122,7 @@ function: checkSuspiciousActivity(
   
   if (previousSessions.length > 0) {
     logSecurityEvent({
-      type: 'SESSION_IP_CHANGED',
+      type 'SESSION_IP_CHANGED',
       userId,
       ip,
       userAgent,
@@ -141,7 +141,7 @@ function: checkSuspiciousActivity(
   
   if (previousUserAgentSessions.length > 0) {
     logSecurityEvent({
-      type: 'SESSION_USER_AGENT_CHANGED',
+      type 'SESSION_USER_AGENT_CHANGED',
       userId,
       ip,
       userAgent,
@@ -156,7 +156,7 @@ function: checkSuspiciousActivity(
  * @param userId The user ID
  * @param currentSessionId The current session ID to keep
  */
-export function: invalidateOtherSessions(userId: number, currentSessionId: string): void: {
+export function invalidateOtherSessions(userId: number, currentSessionId: string): void: {
   // In a real implementation with a session store, you would delete all
   // sessions from the store except the current one
   
@@ -168,7 +168,7 @@ export function: invalidateOtherSessions(userId: number, currentSessionId: strin
     activeSessions.set(userId.toString(), [currentSession]);
     
     logSecurityEvent({
-      type: 'OTHER_SESSIONS_INVALIDATED',
+      type 'OTHER_SESSIONS_INVALIDATED',
       userId,
       ip: currentSession.ip,
       userAgent: currentSession.userAgent,
@@ -182,12 +182,12 @@ export function: invalidateOtherSessions(userId: number, currentSessionId: strin
  * Invalidate all sessions for a user (complete logout)
  * @param userId The user ID
  */
-export function: invalidateAllSessions(userId: number): void: {
+export function invalidateAllSessions(userId: number): void: {
   // Remove from tracking
   activeSessions.delete(userId.toString());
   
   logSecurityEvent({
-    type: 'ALL_SESSIONS_INVALIDATED',
+    type 'ALL_SESSIONS_INVALIDATED',
     userId,
     details: 'All user sessions were invalidated',
     severity: 'medium'
@@ -199,7 +199,7 @@ export function: invalidateAllSessions(userId: number): void: {
  * @param userId The user ID
  * @returns Array of active sessions
  */
-export function: getUserActiveSessions(userId: number): Omit<ActiveSession, 'sessionId'>[] {
+export function getUserActiveSessions(userId: number): Omit<ActiveSession, 'sessionId'>[] {
   const userSessions = activeSessions.get(userId.toString()) || [];
   
   // Don't expose session IDs to the client for security
@@ -211,8 +211,8 @@ export function: getUserActiveSessions(userId: number): Omit<ActiveSession, 'ses
  * @param userId The user ID
  * @param currentSessionId The current session ID to keep
  */
-export async function: handlePasswordChange(userId: number, currentSessionId: string): Promise<void> {
-  try: {
+export async function handlePasswordChange(userId: number, currentSessionId: string): Promise<void> {
+  try {
     // Update the password change timestamp
     await db.update(users)
       .set({ 
@@ -224,7 +224,7 @@ export async function: handlePasswordChange(userId: number, currentSessionId: st
     // Invalidate all other sessions: invalidateOtherSessions(userId, currentSessionId);
     
     logSecurityEvent({
-      type: 'PASSWORD_CHANGED',
+      type 'PASSWORD_CHANGED',
       userId,
       details: 'User password was changed, other sessions invalidated',
       severity: 'medium'
@@ -239,7 +239,7 @@ export async function: handlePasswordChange(userId: number, currentSessionId: st
  * @param user The user object
  * @returns True if password change is required
  */
-export function: passwordChangeRequired(user: any): boolean: {
+export function passwordChangeRequired(user: any): boolean: {
   // Check for forced password change flag
   if (user.mustChangePassword) {
     return true;
@@ -253,7 +253,7 @@ export function: passwordChangeRequired(user: any): boolean: {
     if (passwordAge > maxPasswordAge) {
       return true;
 }
-  } else: {
+  } else {
     // If no password update timestamp, assume it's old
     return true;
 }

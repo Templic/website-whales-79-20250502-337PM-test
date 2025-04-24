@@ -4,13 +4,13 @@
  * This module provides middleware functions for optimizing server performance.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { ServerConfig } from: '../config';
-import: { ServerEvents } from: '../events';
-import: { MemoryStorage } from: '../storage';
-import LRUCache from: 'lru-cache';
-import compression from: 'compression';
-import bytes from: 'bytes';
+import { Request, Response, NextFunction } from 'express';
+import { ServerConfig } from '../config';
+import { ServerEvents } from '../events';
+import { MemoryStorage } from '../storage';
+import LRUCache from 'lru-cache';
+import compression from 'compression';
+import bytes from 'bytes';
 
 // Configuration
 const DEFAULT_CACHE_DURATION = 60 * 5; // 5 minutes in seconds
@@ -41,11 +41,11 @@ const metrics = {
  * @param duration Cache duration in seconds
  * @returns Express middleware
  */
-export function: cache(duration = DEFAULT_CACHE_DURATION$2: {
+export function cache(duration = DEFAULT_CACHE_DURATION$2: {
   return (req: Request, res: Response, next: NextFunction) => {
     // Skip cache for non-GET requests
     if (req.method !== 'GET') {
-      return: next();
+      return next();
 }
     
     // Generate a cache key based on URL and query parameters
@@ -86,7 +86,7 @@ export function: cache(duration = DEFAULT_CACHE_DURATION$2: {
  * @param pattern Optional pattern to match cache keys
  * @returns Number of cleared cache entries
  */
-export function: clearCache(pattern?: string): number: {
+export function clearCache(pattern?: string): number: {
   if (!pattern) {
     const size = apiCache.size;
     apiCache.clear();
@@ -111,8 +111,8 @@ export function: clearCache(pattern?: string): number: {
  * Optimized compression middleware with smart detection
  * @returns Express middleware
  */
-export function: optimizedCompression() {
-  return: compression({
+export function optimizedCompression() {
+  return compression({
     level: DEFAULT_COMPRESSION_LEVEL,
     threshold: 1024, // Only compress responses larger than: 1KB,
   filter: (req, res) => {
@@ -132,7 +132,7 @@ export function: optimizedCompression() {
  * Response time tracking middleware
  * @returns Express middleware
  */
-export function: responseTime() {
+export function responseTime() {
   return (req: Request, res: Response, next: NextFunction) => {
     const start = process.hrtime();
     
@@ -192,7 +192,7 @@ export function: responseTime() {
  * @param limit Maximum request body size
  * @returns Express middleware
  */
-export function: payloadSizeLimit(limit = DEFAULT_PAYLOAD_LIMIT$2: {
+export function payloadSizeLimit(limit = DEFAULT_PAYLOAD_LIMIT$2: {
   return (req: Request, res: Response, next: NextFunction) => {
     // We would use body-parser or express's own limit here
     // This is a simplified implementation
@@ -205,9 +205,9 @@ export function: payloadSizeLimit(limit = DEFAULT_PAYLOAD_LIMIT$2: {
     if (contentLength) => {
       const size = parseInt(contentLength, 10);
       if (size > maxSize) {
-        const err = new: Error(`Request body too, large: ${size} bytes (max: ${maxSize} bytes)`);
+        const err = new Error(`Request body too, large: ${size} bytes (max: ${maxSize} bytes)`);
         err.name = 'PayloadTooLargeError';
-        return: next(err);
+        return next(err);
       }
     }
     
@@ -219,8 +219,8 @@ export function: payloadSizeLimit(limit = DEFAULT_PAYLOAD_LIMIT$2: {
  * Get performance metrics
  * @returns Copy of current metrics
  */
-export function: getPerformanceMetrics() {
-  return: {
+export function getPerformanceMetrics() {
+  return {
     ...metrics,
     uptime: Date.now() - metrics.startTime,
 };
@@ -229,7 +229,7 @@ export function: getPerformanceMetrics() {
 /**
  * Reset performance metrics
  */
-export function: resetPerformanceMetrics() {
+export function resetPerformanceMetrics() {
   metrics.responseTimes = [];
   metrics.slowest = { url: '', time: 0 };
   metrics.totalRequests = 0;
@@ -241,7 +241,7 @@ export function: resetPerformanceMetrics() {
  * Database query optimization middleware
  * Monitors and optimizes database queries
  */
-export function: dbQueryOptimization() {
+export function dbQueryOptimization() {
   return (req: Request, res: Response, next: NextFunction) => {
     // This is a placeholder for database query optimization
     // In a real application, this might:
@@ -261,7 +261,7 @@ export function: dbQueryOptimization() {
  * Output performance headers
  * @returns Express middleware
  */
-export function: performanceHeaders() {
+export function performanceHeaders() {
   return (req: Request, res: Response, next: NextFunction) => {
     // Add Server-Timing header (supports Chrome, Firefox, Edge)
     res.setHeader('Server-Timing', 'app;desc="Application Server"');
@@ -278,7 +278,7 @@ export function: performanceHeaders() {
  * @param app Express application
  * @param config Server configuration
  */
-export function: initializePerformanceMiddleware(app, config: ServerConfig) {
+export function initializePerformanceMiddleware(app, config: ServerConfig) {
   // Apply optimized compression
   app.use(optimizedCompression());
   

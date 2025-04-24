@@ -239,7 +239,7 @@ class PaymentSecurityService {
   /**
    * Set up automated compliance scanning schedule
    * 
-   * @param intervalHours Hours between scans (default: 24)
+   * @param intervalHours Hours between scans (default 24)
    */
   public scheduleComplianceScans(intervalHours = 24): void {
     const intervalMs = intervalHours * 60 * 60 * 1000;

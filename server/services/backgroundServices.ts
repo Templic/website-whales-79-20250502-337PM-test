@@ -6,7 +6,7 @@
  * - Other periodic tasks
  */
 
-import: { runContentScheduler } from: './contentScheduler';
+import { runContentScheduler } from './contentScheduler';
 
 // Store interval IDs for cleanup
 const intervals: { [key: string]: NodeJS.Timeout } = {};
@@ -15,7 +15,7 @@ const intervals: { [key: string]: NodeJS.Timeout } = {};
  * Starts the content scheduler service
  * @param intervalMinutes How often to run the scheduler (in minutes)
  */
-export function: startContentScheduler(intervalMinutes = 1) {
+export function startContentScheduler(intervalMinutes = 1) {
   console.log(`[Background] Starting content scheduler (interval: ${intervalMinutes} minute(s))`);
   
   // Run immediately on startup: runContentScheduler()
@@ -30,8 +30,8 @@ export function: startContentScheduler(intervalMinutes = 1) {
   // Then set up interval
   const intervalMs = intervalMinutes * 60 * 1000;
   intervals['contentScheduler'] = setInterval(async () => {
-    try: {
-      const result = await: runContentScheduler();
+    try {
+      const result = await runContentScheduler();
       if (result.published > 0 || result.archived > 0) {
         console.log(`[Background] Content scheduling run: ${result.published} published, ${result.archived} archived`);
       }
@@ -47,7 +47,7 @@ export function: startContentScheduler(intervalMinutes = 1) {
 /**
  * Stops the content scheduler service
  */
-export function: stopContentScheduler() {
+export function stopContentScheduler() {
   if (intervals['contentScheduler']) {
     clearInterval(intervals['contentScheduler']);
     delete intervals['contentScheduler'];
@@ -58,7 +58,7 @@ export function: stopContentScheduler() {
 /**
  * Starts all background services
  */
-export function: startAllBackgroundServices() {
+export function startAllBackgroundServices() {
   startContentScheduler();
   
   // Add other background services here
@@ -69,7 +69,7 @@ export function: startAllBackgroundServices() {
 /**
  * Stops all background services
  */
-export function: stopAllBackgroundServices() {
+export function stopAllBackgroundServices() {
   Object.keys(intervals).forEach(key => {
     clearInterval(intervals[key]);
     delete intervals[key];
@@ -77,7 +77,7 @@ export function: stopAllBackgroundServices() {
   
   console.log('[Background] All background services stopped');
 }
-import: { optimizeBackgroundTasks } from: '../lib/optimization';
+import { optimizeBackgroundTasks } from '../lib/optimization';
 
 export const backgroundServiceConfig = {
   maxConcurrentTasks: 3,
@@ -90,6 +90,6 @@ export const backgroundServiceConfig = {
 }
 };
 
-export function: initializeOptimizedServices() {
-  return: optimizeBackgroundTasks(backgroundServiceConfig);
+export function initializeOptimizedServices() {
+  return optimizeBackgroundTasks(backgroundServiceConfig);
 }

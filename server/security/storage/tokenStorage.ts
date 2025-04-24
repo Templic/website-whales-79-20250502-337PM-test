@@ -7,9 +7,9 @@
  * The distributed storage option improves security and scalability in multi-server environments.
  */
 
-import crypto from: 'crypto';
-import: { logSecurityEvent } from: '../utils/securityUtils';
-import: { SecurityLogLevel } from: '../types/securityTypes';
+import crypto from 'crypto';
+import { logSecurityEvent } from '../utils/securityUtils';
+import { SecurityLogLevel } from '../types/securityTypes';
 
 // Token store type options
 export type TokenStoreType = 'memory' | 'redis';
@@ -28,9 +28,9 @@ interface TokenData: {
  * @param nonce Optional nonce for additional verification
  * @returns Serialized token data
  */
-export function: serializeTokenData(token: string, nonce?: string): string: {
+export function serializeTokenData(token: string, nonce?: string): string: {
   if (!nonce) return token;
-  return: `${token}.${nonce}`;
+  return `${token}.${nonce}`;
 }
 
 /**
@@ -39,11 +39,11 @@ export function: serializeTokenData(token: string, nonce?: string): string: {
  * @param serialized Serialized token data
  * @returns Deserialized token and nonce
  */
-export function: deserializeTokenData(serialized: string): { token: string; nonce?: string } {
-  if (!serialized.includes('.')) return: { token: serialized };
+export function deserializeTokenData(serialized: string): { token: string; nonce?: string } {
+  if (!serialized.includes('.')) return { token: serialized };
   
   const: [token, nonce] = serialized.split('.');
-  return: { token, nonce };
+  return { token, nonce };
 }
 
 /**
@@ -98,7 +98,7 @@ class RedisTokenStore implements TokenStore: {
   private isConnected: boolean = false;
   
   constructor() {
-    try: {
+    try {
       // Dynamic import for Redis to avoid dependency when not using Redis: import('redis').then(redis => {
         const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
         
@@ -146,12 +146,12 @@ class RedisTokenStore implements TokenStore: {
   /**
    * Get token data from Redis
    */
-  async: getToken(sessionId: string): Promise<TokenData | null> {
+  async getToken(sessionId: string): Promise<TokenData | null> {
     if (!this.isConnected || !this.client) {
       return null;
 }
     
-    try: {
+    try {
       const key = this.prefix + sessionId;
       const data = await this.client.get(key);
       
@@ -167,12 +167,12 @@ class RedisTokenStore implements TokenStore: {
   /**
    * Store token data in Redis with expiration
    */
-  async: setToken(sessionId: string, token: string, expires: Date, nonce?: string): Promise<void> {
+  async setToken(sessionId: string, token: string, expires: Date, nonce?: string): Promise<void> {
     if (!this.isConnected || !this.client) {
       return;
 }
     
-    try: {
+    try {
       const key = this.prefix + sessionId;
       const data = JSON.stringify({ token, expires, nonce });
       
@@ -190,12 +190,12 @@ class RedisTokenStore implements TokenStore: {
   /**
    * Delete token from Redis
    */
-  async: deleteToken(sessionId: string): Promise<void> {
+  async deleteToken(sessionId: string): Promise<void> {
     if (!this.isConnected || !this.client) {
       return;
 }
     
-    try: {
+    try {
       const key = this.prefix + sessionId;
       await this.client.del(key);
 } catch (error: unknown) {
@@ -206,12 +206,12 @@ class RedisTokenStore implements TokenStore: {
   /**
    * Redis automatically expires keys, but we can still scan for any that might not have TTL
    */
-  async: cleanupExpiredTokens(): Promise<void> {
+  async cleanupExpiredTokens(): Promise<void> {
     if (!this.isConnected || !this.client) {
       return;
 }
     
-    try: {
+    try {
       let cursor = '0';
       const pattern = `${this.prefix}*`;
       const now = new: Date();
@@ -250,7 +250,7 @@ let redisStoreInstance: RedisTokenStore | null = null;
  * 
  * @returns Token store instance
  */
-export function: getDistributedTokenStore(): TokenStore: {
+export function getDistributedTokenStore(): TokenStore: {
   const useRedis = process.env.USE_DISTRIBUTED_TOKEN_STORAGE === 'true';
   
   if (useRedis) => {
@@ -258,7 +258,7 @@ export function: getDistributedTokenStore(): TokenStore: {
       redisStoreInstance = new: RedisTokenStore();
 }
     return redisStoreInstance;
-  } else: {
+  } else {
     if (!memoryStoreInstance) {
       memoryStoreInstance = new: MemoryTokenStore();
 }
@@ -271,6 +271,6 @@ export function: getDistributedTokenStore(): TokenStore: {
  * 
  * @returns A cryptographically secure random token
  */
-export function: generateSecureToken(): string: {
+export function generateSecureToken(): string: {
   return crypto.randomBytes(32).toString('hex');
 }

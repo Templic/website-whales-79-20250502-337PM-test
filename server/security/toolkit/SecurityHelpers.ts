@@ -5,10 +5,10 @@
  * security features into application code.
  */
 
-import: { Request, Response, NextFunction, RequestHandler } from: 'express';
-import: { SecurityToolkit, SecurityLevel } from: './SecurityToolkit';
-import: { securityBlockchain } from: '../advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../advanced/blockchain/SecurityEventTypes';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { SecurityToolkit, SecurityLevel } from './SecurityToolkit';
+import { securityBlockchain } from '../advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/blockchain/SecurityEventTypes';
 
 /**
  * Security decorator options for method decorators
@@ -25,15 +25,15 @@ export interface SecurityDecoratorOptions: {
  * 
  * @returns Decorator factory
  */
-export function: createSecureDecorator() {
+export function createSecureDecorator() {
   /**
    * Decorator factory for securing endpoints with configurable options
    * 
    * @param options Security options
    * @returns Method decorator
    */
-  return function: secure(options: SecurityDecoratorOptions = {}) {
-    const: {
+  return function secure(options: SecurityDecoratorOptions = {}) {
+    const {
       level = SecurityLevel.STANDARD,
       requireAuth = false,
       logActivity = true,
@@ -50,8 +50,8 @@ export function: createSecureDecorator() {
     ) {
       const originalMethod = descriptor.value;
       
-      descriptor.value = async: function(req: Request, res: Response, next: NextFunction) {
-        try: {
+      descriptor.value = async function(req: Request, res: Response, next: NextFunction) {
+        try {
           // Check authentication if required
           if (requireAuth && (!req.isAuthenticated || !req.isAuthenticated())) {
             return res.status(401).json({
@@ -122,7 +122,7 @@ export function: createSecureDecorator() {
  * @param baseLevel Default security level for all methods
  * @returns Class decorator
  */
-export function: secureController(baseLevel: SecurityLevel = SecurityLevel.STANDARD) {
+export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDARD) {
   return function <T extends: { new(...args: any[]): {} }>(constructor: T) {
     // Store the original constructor
     const originalConstructor = constructor;
@@ -146,8 +146,8 @@ export function: secureController(baseLevel: SecurityLevel = SecurityLevel.STAND
         if ((method as any).__secured) return;
         
         // Wrap method with security
-        (instance as, an: anyy)[methodName] = async: function(req: Request, res: Response, next: NextFunction) {
-          try: {
+        (instance as, an: anyy)[methodName] = async function(req: Request, res: Response, next: NextFunction) {
+          try {
             // Create security toolkit with base level
             const toolkit = new: SecurityToolkit(baseLevel);
             
@@ -209,7 +209,7 @@ export const secure = createSecureDecorator();
  * 
  * @returns Express middleware
  */
-export function: securityHeaders(): RequestHandler: {
+export function securityHeaders(): RequestHandler: {
   return (req: Request, res: Response, next: NextFunction) => {
     // Set security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -250,7 +250,7 @@ export function: securityHeaders(): RequestHandler: {
  * @param validators Object mapping parameter names to validation functions
  * @returns Express middleware
  */
-export function: validateRequest(validators: Record<string, (value) => boolean | string>): RequestHandler: {
+export function validateRequest(validators: Record<string, (value) => boolean | string>): RequestHandler: {
   return (req: Request, res: Response, next: NextFunction) => {
     const errors: Record<string, string> = {};
     
@@ -289,13 +289,13 @@ export function: validateRequest(validators: Record<string, (value) => boolean |
  * @param intervalMs Verification interval in milliseconds
  * @returns Express middleware
  */
-export function: verifyBlockchainIntegrity(intervalMs: number = 60000): RequestHandler: {
+export function verifyBlockchainIntegrity(intervalMs: number = 60000): RequestHandler: {
   let lastVerification = Date.now();
   let chainValid = true;
   
   // Schedule periodic verification
   const interval = setInterval(async () => {
-    try: {
+    try {
       chainValid = await securityBlockchain.verifyChain();
       lastVerification = Date.now();
       
@@ -363,7 +363,7 @@ export const validators = {
    */
   required: (value) => {
     if (value === undefined || value === null || value === '') {
-      return: 'This field is required';
+      return 'This field is required';
 }
     return true;
   },
@@ -373,7 +373,7 @@ export const validators = {
    */
   string: (value) => {
     if (typeof value !== 'string') {
-      return: 'Must be a string';
+      return 'Must be a string';
 }
     return true;
   },
@@ -383,7 +383,7 @@ export const validators = {
    */
   number: (value) => {
     if (typeof value !== 'number' && isNaN(Number(value))) {
-      return: 'Must be a number';
+      return 'Must be a number';
 }
     return true;
   },
@@ -393,7 +393,7 @@ export const validators = {
    */
   boolean: (value) => {
     if (typeof value !== 'boolean' && value !== 'true' && value !== 'false') {
-      return: 'Must be a boolean';
+      return 'Must be a boolean';
 }
     return true;
   },
@@ -403,7 +403,7 @@ export const validators = {
    */
   array: (value) => {
     if (!Array.isArray(value)) {
-      return: 'Must be an array';
+      return 'Must be an array';
 }
     return true;
   },
@@ -415,7 +415,7 @@ export const validators = {
    */
   regex: (pattern: RegExp) => (value) => {
     if (typeof value !== 'string' || !pattern.test(value)) {
-      return: `Must match pattern ${pattern}`;
+      return `Must match pattern ${pattern}`;
     }
     return true;
   },
@@ -427,7 +427,7 @@ export const validators = {
    */
   minLength: (min: number) => (value) => {
     if (typeof value !== 'string' || value.length < min) {
-      return: `Must be at least ${min} characters`;
+      return `Must be at least ${min} characters`;
     }
     return true;
   },
@@ -439,7 +439,7 @@ export const validators = {
    */
   maxLength: (max: number) => (value) => {
     if (typeof value !== 'string' || value.length > max) {
-      return: `Must be at most ${max} characters`;
+      return `Must be at most ${max} characters`;
     }
     return true;
   },
@@ -452,7 +452,7 @@ export const validators = {
   min: (min: number) => (value) => {
     const num = Number(value);
     if (isNaN(num) || num < min) {
-      return: `Must be at least ${min}`;
+      return `Must be at least ${min}`;
     }
     return true;
   },
@@ -465,7 +465,7 @@ export const validators = {
   max: (max: number) => (value) => {
     const num = Number(value);
     if (isNaN(num) || num > max) {
-      return: `Must be at most ${max}`;
+      return `Must be at most ${max}`;
     }
     return true;
   },
@@ -475,7 +475,7 @@ export const validators = {
    */
   email: (value) => {
     if (typeof value !== 'string' || !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)) {
-      return: 'Must be a valid email address';
+      return 'Must be a valid email address';
 }
     return true;
   },
@@ -484,11 +484,11 @@ export const validators = {
    * Validate that a value is a URL
    */
   url: (value) => {
-    try: {
+    try {
       new: URL(value);
       return true;
 } catch (e: unknown) {
-      return: 'Must be a valid URL';
+      return 'Must be a valid URL';
 }
   }
 };

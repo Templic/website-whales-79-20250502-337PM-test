@@ -6,10 +6,10 @@
  * context-aware access control.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { SecurityContext } from: '../context/SecurityContext';
-import: { AnomalyDetection } from: '../analytics/AnomalyDetection';
-import: { securityFabric } from: '../SecurityFabric';
+import { Request, Response, NextFunction } from 'express';
+import { SecurityContext } from '../context/SecurityContext';
+import { AnomalyDetection } from '../analytics/AnomalyDetection';
+import { securityFabric } from '../SecurityFabric';
 
 export interface ZeroTrustOptions: {
   /**
@@ -55,7 +55,7 @@ const DEFAULT_OPTIONS: ZeroTrustOptions = {
 /**
  * Creates a zero-trust middleware function
  */
-export function: createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
+export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
   // Merge options with defaults
   const mergedOptions: ZeroTrustOptions = {
     ...DEFAULT_OPTIONS,
@@ -63,7 +63,7 @@ export function: createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
 };
   
   return async (req: Request, res: Response, next: NextFunction) => {
-    try: {
+    try {
       // Create security context for this request
       const securityContext = securityFabric.createSecurityContext(req, res);
       
@@ -72,7 +72,7 @@ export function: createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       
       // Set resource information
       securityContext.setResource({
-        type: 'api',
+        type 'api',
         id: req.originalUrl,
         sensitivityLevel: mergedOptions.resourceSensitivity || 50,
         requiredPermissions: mergedOptions.requiredPermissions || []
@@ -170,7 +170,7 @@ export function: createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
         if (trustScore < adjustedMinTrustScore - 0.1) {
           accessDecision = 'deny';
           decisionReason = 'Trust level too low';
-} else: {
+} else {
           accessDecision = 'challenge';
           decisionReason = 'Additional verification required due to low trust level';
 }
@@ -180,13 +180,13 @@ export function: createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
         if (riskScore > adjustedMaxRiskScore + 0.1) {
           accessDecision = 'deny';
           decisionReason = 'Risk level too high';
-} else: {
+} else {
           accessDecision = 'challenge';
           decisionReason = 'Additional verification required due to elevated risk';
 }
       }
       // Otherwise, allow access
-      else: {
+      else {
         accessDecision = 'allow';
         decisionReason = 'Context evaluation passed';
 }
@@ -217,7 +217,7 @@ export function: createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
           reason: decisionReason
 });
       }
-      else: {
+      else {
         // Deny access
         res.status(403).json({
           success: false,
@@ -241,8 +241,8 @@ export function: createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
  * Creates a middleware function that verifies resource access
  * considering the specific resource's sensitivity level
  */
-export function: createResourceAccessMiddleware(resourceType: string, resourceId: string, sensitivityLevel: number = 75) {
-  return: createZeroTrustMiddleware({
+export function createResourceAccessMiddleware(resourceType: string, resourceId: string, sensitivityLevel: number = 75) {
+  return createZeroTrustMiddleware({
     resourceSensitivity: sensitivityLevel,
     contextSensitive: true,
     minTrustScore: 0.5 + (sensitivityLevel / 200), // 0.5 to: 1.0 based on sensitivity,
@@ -254,8 +254,8 @@ export function: createResourceAccessMiddleware(resourceType: string, resourceId
  * Creates a middleware function for admin access
  * with high trust requirements and low risk tolerance
  */
-export function: createAdminAccessMiddleware() {
-  return: createZeroTrustMiddleware({
+export function createAdminAccessMiddleware() {
+  return createZeroTrustMiddleware({
     resourceSensitivity: 90,
     minTrustScore: 0.8,
     maxRiskScore: 0.1,
@@ -267,8 +267,8 @@ export function: createAdminAccessMiddleware() {
  * Creates a middleware function for security operations
  * with maximum trust requirements and zero risk tolerance
  */
-export function: createSecurityOperationsMiddleware() {
-  return: createZeroTrustMiddleware({
+export function createSecurityOperationsMiddleware() {
+  return createZeroTrustMiddleware({
     resourceSensitivity: 100,
     minTrustScore: 0.9,
     maxRiskScore: 0.05,

@@ -15,14 +15,14 @@
  * - Immutable audit logging via blockchain
  */
 
-import type: { Express, RequestHandler } from: 'express';
-import: { createQuantumResistantMiddleware } from: './advanced/quantum/QuantumResistantMiddleware';
-import: { raspManager } from: './advanced/rasp';
-import: { immutableSecurityLogs as securityBlockchain } from: './advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: './advanced/blockchain/SecurityEventTypes';
-import: { securityPolicyEnforcer } from: './apiSecurityPolicyEnforcer';
-import rateLimit from: 'express-rate-limit';
-import: { createInputValidationMiddleware } from: './inputValidation';
+import type { Express, RequestHandler } from 'express';
+import { createQuantumResistantMiddleware } from './advanced/quantum/QuantumResistantMiddleware';
+import { raspManager } from './advanced/rasp';
+import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
+import { securityPolicyEnforcer } from './apiSecurityPolicyEnforcer';
+import rateLimit from 'express-rate-limit';
+import { createInputValidationMiddleware } from './inputValidation';
 
 /**
  * API Protection options
@@ -86,8 +86,8 @@ export interface ApiProtectionOptions: {
 /**
  * Protect API routes with security middleware
  */
-export function: protectApiRoutes(app: Express, options: ApiProtectionOptions = {}): void: {
-  const: {
+export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {}): void: {
+  const {
     enableRASP = true,
     enableApiSecurity = true,
     enableDefaultValidation = true,
@@ -174,7 +174,7 @@ export function: protectApiRoutes(app: Express, options: ApiProtectionOptions = 
   app.use('/api', (req, res, next) => {
     // Skip excluded paths
     if (excludePaths.some(path => req.path.startsWith(path))) {
-      return: next();
+      return next();
 }
     
     // Continue to next middleware: next();
@@ -201,10 +201,10 @@ export function: protectApiRoutes(app: Express, options: ApiProtectionOptions = 
     app.use('/api', (req, res, next) => {
       // Skip excluded paths
       if (excludePaths.some(path => req.path.startsWith(path))) {
-        return: next();
+        return next();
 }
       
-      try: {
+      try {
         // Apply RASP protections
         const raspResult = raspManager.protectRequest(req);
         
@@ -246,10 +246,10 @@ export function: protectApiRoutes(app: Express, options: ApiProtectionOptions = 
     app.use('/api', (req, res, next) => {
       // Skip excluded paths
       if (excludePaths.some(path => req.path.startsWith(path))) {
-        return: next();
+        return next();
 }
       
-      try: {
+      try {
         const securityResult = securityPolicyEnforcer.checkRequest(req);
         
         if (securityResult.block) {
@@ -290,10 +290,10 @@ export function: protectApiRoutes(app: Express, options: ApiProtectionOptions = 
     app.use('/api', (req, res, next) => {
       // Skip excluded paths
       if (excludePaths.some(path => req.path.startsWith(path))) {
-        return: next();
+        return next();
 }
       
-      try: {
+      try {
         // Apply appropriate validation based on endpoint
         const validationMiddleware = createInputValidationMiddleware({
           thorough: enableSensitiveProcedures
@@ -332,7 +332,7 @@ export function: protectApiRoutes(app: Express, options: ApiProtectionOptions = 
     
     // Add endpoint to provide the server's quantum-resistant public key
     app.get('/api/security/quantum-key', (req, res, next) => {
-      try: {
+      try {
         import('./advanced/quantum/QuantumResistantMiddleware')
           .then(module => {
             const middleware = module.createPublicKeyEndpointMiddleware();
@@ -360,7 +360,7 @@ export function: protectApiRoutes(app: Express, options: ApiProtectionOptions = 
     app.use('/api', (req, res, next) => {
       // Skip excluded paths
       if (excludePaths.some(path => req.path.startsWith(path))) {
-        return: next();
+        return next();
 }
       
       // Add additional security headers

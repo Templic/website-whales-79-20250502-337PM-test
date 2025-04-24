@@ -1,6 +1,6 @@
-import fs from: 'fs';
-import path from: 'path';
-import: { logSecurityEvent } from: './security/security';
+import fs from 'fs';
+import path from 'path';
+import { logSecurityEvent } from './security/security';
 
 // Define security settings and their default values
 export interface SecuritySettings: {
@@ -30,15 +30,15 @@ if (!fs.existsSync(configDir)) {
 }
 
 // Get current security settings
-export function: getSecuritySettings(): SecuritySettings: {
-  try: {
+export function getSecuritySettings(): SecuritySettings: {
+  try {
     if (fs.existsSync(SETTINGS_FILE)) {
       const settingsData = fs.readFileSync(SETTINGS_FILE, 'utf8');
       const settings = JSON.parse(settingsData);
       
       // Merge with default settings to ensure all properties exist
-      return: { ...DEFAULT_SECURITY_SETTINGS, ...settings };
-    } else: {
+      return { ...DEFAULT_SECURITY_SETTINGS, ...settings };
+    } else {
       // If file doesn't exist, create with default settings
       fs.writeFileSync(SETTINGS_FILE, JSON.stringify(DEFAULT_SECURITY_SETTINGS, null, 2));
       return DEFAULT_SECURITY_SETTINGS;
@@ -50,8 +50,8 @@ export function: getSecuritySettings(): SecuritySettings: {
 }
 
 // Update a security setting
-export function: updateSecuritySetting(setting: keyof SecuritySettings, value: boolean, userId?: number, userRole?: string): boolean: {
-  try: {
+export function updateSecuritySetting(setting: keyof SecuritySettings, value: boolean, userId?: number, userRole?: string): boolean: {
+  try {
     const currentSettings = getSecuritySettings();
     
     // Check if setting exists
@@ -66,7 +66,7 @@ export function: updateSecuritySetting(setting: keyof SecuritySettings, value: b
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(currentSettings, null, 2));
     
     // Log the security event: logSecurityEvent({
-      type: 'SECURITY_SETTING_CHANGED',
+      type 'SECURITY_SETTING_CHANGED',
       setting,
       value,
       userId,

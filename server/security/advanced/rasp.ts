@@ -5,7 +5,7 @@
  * by monitoring and analyzing application behavior at runtime.
  */
 
-import type: { Request, Response, NextFunction } from: 'express';
+import type { Request, Response, NextFunction } from 'express';
 
 /**
  * RASP protection features
@@ -146,7 +146,7 @@ class RASPManager: {
     return (req: Request, res: Response, next: NextFunction) => {
       // Skip excluded paths
       if (this.options.excludePaths?.some(path => req.path.startsWith(path))) {
-        return: next();
+        return next();
 }
       
       // Apply RASP protection

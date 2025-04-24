@@ -4,10 +4,10 @@
  * This file contains the API routes for the security dashboard.
  */
 
-import: { Router, Request, Response } from: 'express';
-import: { immutableSecurityLogs as securityBlockchain } from: '../../security/advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventSeverity, SecurityEventCategory } from: '../../security/advanced/blockchain/SecurityEventTypes';
-import: { securityScanner, SecurityScanType } from: '../../security/maximumSecurityScan';
+import { Router, Request, Response } from 'express';
+import { immutableSecurityLogs as securityBlockchain } from '../../security/advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventSeverity, SecurityEventCategory } from '../../security/advanced/blockchain/SecurityEventTypes';
+import { securityScanner, SecurityScanType } from '../../security/maximumSecurityScan';
 
 export const securityDashboardRoutes = Router();
 
@@ -17,7 +17,7 @@ export const securityDashboardRoutes = Router();
  * @route GET /api/security/dashboard/events
  */
 securityDashboardRoutes.get('/events', async (req: Request, res: Response) => {
-  try: {
+  try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const severity = req.query.severity as SecurityEventSeverity | undefined;
@@ -70,7 +70,7 @@ securityDashboardRoutes.get('/events', async (req: Request, res: Response) => {
  * @route GET /api/security/dashboard/events/:id
  */
 securityDashboardRoutes.get('/events/:id', async (req: Request, res: Response) => {
-  try: {
+  try {
     const id = req.params.id;
     
     // In this stub implementation, just return a mock event
@@ -97,9 +97,9 @@ securityDashboardRoutes.get('/events/:id', async (req: Request, res: Response) =
  * @route POST /api/security/dashboard/events/:id/acknowledge
  */
 securityDashboardRoutes.post('/events/:id/acknowledge', async (req: Request, res: Response) => {
-  try: {
+  try {
     const id = req.params.id;
-    const: { acknowledgedBy } = req.body;
+    const { acknowledgedBy } = req.body;
     
     if (!acknowledgedBy) {
       return res.status(400).json({
@@ -129,7 +129,7 @@ securityDashboardRoutes.post('/events/:id/acknowledge', async (req: Request, res
  * @route GET /api/security/dashboard/metrics
  */
 securityDashboardRoutes.get('/metrics', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Calculate metrics
     const eventsLast24Hours = securityBlockchain.queryEvents({
       fromDate: new: Date(Date.now() - 24 * 60 * 60 * 1000)
@@ -218,8 +218,8 @@ securityDashboardRoutes.get('/metrics', async (req: Request, res: Response) => {
  * @route POST /api/security/dashboard/scans
  */
 securityDashboardRoutes.post('/scans', async (req: Request, res: Response) => {
-  try: {
-    const: { scanType = SecurityScanType.QUICK, deep = false } = req.body;
+  try {
+    const { scanType = SecurityScanType.QUICK, deep = false } = req.body;
     
     // Create a new scan
     const scanId = securityScanner.createScan({
@@ -255,7 +255,7 @@ securityDashboardRoutes.post('/scans', async (req: Request, res: Response) => {
  * @route GET /api/security/dashboard/scans
  */
 securityDashboardRoutes.get('/scans', async (req: Request, res: Response) => {
-  try: {
+  try {
     const scans = securityScanner.getAllScans();
     // @ts-ignore - Response type issue
   return res.json({ scans });
@@ -274,7 +274,7 @@ securityDashboardRoutes.get('/scans', async (req: Request, res: Response) => {
  * @route GET /api/security/dashboard/scans/:id
  */
 securityDashboardRoutes.get('/scans/:id', async (req: Request, res: Response) => {
-  try: {
+  try {
     const scanId = req.params.id as string;
     const scan = securityScanner.getScan(scanId);
     

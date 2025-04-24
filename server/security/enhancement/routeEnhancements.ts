@@ -5,22 +5,22 @@
  * It applies appropriate middleware and validation to different types of routes.
  */
 
-import: { Application, Router, Request, Response, NextFunction } from: 'express';
-import: { standardRateLimiter, authRateLimiter, adminRateLimiter, paymentRateLimiter } from: '../middleware/rateLimiters';
-import: { ApiSecurity } from: '../middleware/apiSecurity';
-import: { securityHeadersMiddleware } from: '../middleware/securityHeadersMiddleware';
-import: { validate } from: '../middleware/apiValidation';
-import: { newsletterSubscribeSchema, newsletterUnsubscribeSchema, newsletterStatusSchema } from: '../validation/newsletterValidationSchemas';
-import: { createOrderSchema, updateOrderSchema, queryOrdersSchema, processPaymentSchema } from: '../validation/orderValidationSchemas';
-import: { logSecurityEvent } from: '../utils/securityUtils';
-import: { SecurityLogLevel } from: '../types/securityTypes';
+import { Application, Router, Request, Response, NextFunction } from 'express';
+import { standardRateLimiter, authRateLimiter, adminRateLimiter, paymentRateLimiter } from '../middleware/rateLimiters';
+import { ApiSecurity } from '../middleware/apiSecurity';
+import { securityHeadersMiddleware } from '../middleware/securityHeadersMiddleware';
+import { validate } from '../middleware/apiValidation';
+import { newsletterSubscribeSchema, newsletterUnsubscribeSchema, newsletterStatusSchema } from '../validation/newsletterValidationSchemas';
+import { createOrderSchema, updateOrderSchema, queryOrdersSchema, processPaymentSchema } from '../validation/orderValidationSchemas';
+import { logSecurityEvent } from '../utils/securityUtils';
+import { SecurityLogLevel } from '../types/securityTypes';
 
 /**
  * Apply global security middleware to all routes
  * 
  * @param app Express application
  */
-export function: applyGlobalSecurityMiddleware(app: Application): void: {
+export function applyGlobalSecurityMiddleware(app: Application): void: {
   // Apply security headers to all responses
   app.use(securityHeadersMiddleware);
   
@@ -43,7 +43,7 @@ export function: applyGlobalSecurityMiddleware(app: Application): void: {
  * 
  * @param apiRouter Express router for API routes
  */
-export function: enhanceSecurityRoutes(apiRouter: Router): void: {
+export function enhanceSecurityRoutes(apiRouter: Router): void: {
   // Security scanning route
   apiRouter.post('/security/scan', adminRateLimiter(), (req: Request, res: Response) => {
     logSecurityEvent('SECURITY_SCAN_REQUESTED', {
@@ -168,7 +168,7 @@ export function: enhanceSecurityRoutes(apiRouter: Router): void: {
  * 
  * @param apiRouter Express router for API routes
  */
-export function: enhanceNewsletterRoutes(apiRouter: Router): void: {
+export function enhanceNewsletterRoutes(apiRouter: Router): void: {
   // Newsletter subscribe route
   apiRouter.post('/newsletter/subscribe', 
     standardRateLimiter(),
@@ -251,7 +251,7 @@ export function: enhanceNewsletterRoutes(apiRouter: Router): void: {
  * 
  * @param shopRouter Express router for shop routes
  */
-export function: enhanceOrderRoutes(shopRouter: Router): void: {
+export function enhanceOrderRoutes(shopRouter: Router): void: {
   // Create order route
   shopRouter.post('/orders', 
     standardRateLimiter(),

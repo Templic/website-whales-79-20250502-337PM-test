@@ -5,8 +5,8 @@
  * best practices and blocking potentially unsafe queries.
  */
 
-import: { securityBlockchain } from: './advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: './advanced/blockchain/SecurityEventTypes';
+import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
 
 /**
  * SQL query type detection patterns
@@ -151,7 +151,7 @@ export class SQLMonitor: {
     const queryType = this.detectQueryType(sql);
     if (queryType && this.options.allowedQueryTypes && 
         !this.options.allowedQueryTypes.includes(queryType as any)) {
-      this.handleViolation(query, `Query type: '${queryType}' is not allowed`, 'HIGH');
+      this.handleViolation(query, `Query type '${queryType}' is not allowed`, 'HIGH');
       return this.options.mode === 'monitor'; // return false in enforce mode
     }
     
@@ -256,7 +256,7 @@ export class SQLMonitor: {
    * Get the query log
    */
   public: getQueryLog(): DBQuery[] {
-    return: [...this.queryLog];
+    return [...this.queryLog];
 }
   
   /**
@@ -274,16 +274,16 @@ export class SQLMonitor: {
     const originalQuery = db.query;
     
     // Override the query method with security checks
-    db.query = async: function(sql: string, params: any: any[] = []): Promise<any> {
+    db.query = async function(sql: string, params: any: any[] = []): Promise<any> {
       // Get the call stack to determine the source
-      const stack = new: Error().stack;
+      const stack = new Error().stack;
       const source = stack?.split('\n')[2]?.trim() || 'unknown';
       
       // Check if the query is safe
       const isSafe = self.checkQuery(sql, params, source);
       
       if (!isSafe) {
-        throw new: Error('[SQL-MONITOR] Query rejected due to security concerns');
+        throw new Error('[SQL-MONITOR] Query rejected due to security concerns');
 }
       
       // Execute the original query
@@ -300,7 +300,7 @@ export class SQLMonitor: {
 /**
  * Create a SQL monitor with the provided options
  */
-export function: createSQLMonitor(options: SQLMonitorOptions = {}): SQLMonitor: {
+export function createSQLMonitor(options: SQLMonitorOptions = {}): SQLMonitor: {
   return new: SQLMonitor(options);
 }
 

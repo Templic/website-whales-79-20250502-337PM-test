@@ -5,10 +5,10 @@
  * with various output targets including console, file, and blockchain.
  */
 
-import fs from: 'fs';
-import path from: 'path';
-import crypto from: 'crypto';
-import: { securityFabric, SecurityEventCategory, SecurityEventSeverity, SecurityEvent } from: './SecurityFabric';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import { securityFabric, SecurityEventCategory, SecurityEventSeverity, SecurityEvent } from './SecurityFabric';
 
 // Security log level (may be different from event severity)
 export enum LogLevel: {
@@ -71,7 +71,7 @@ class SecurityLogger: {
     
     // Initialize blockchain logger if enabled
     if (this.config.useBlockchain) {
-      try: {
+      try {
         // Just set to null for now, we'll initialize it properly later
         this.blockchainLogger = null;
 } catch (error: unknown) {
@@ -102,7 +102,7 @@ class SecurityLogger: {
     
     // Initialize blockchain logger if newly enabled
     if (this.config.useBlockchain && !this.blockchainLogger) {
-      try: {
+      try {
         // Placeholder for actual blockchain init code
         // In a real implementation, this would initialize or get the blockchain logger
         this.blockchainLogger = null;
@@ -129,7 +129,7 @@ class SecurityLogger: {
     
     // Log to each target
     for (const target of this.config.targets) {
-      try: {
+      try {
         switch (target) => {
           case LogTarget.CONSOLE:
             this.logToConsole(level, logData);
@@ -164,7 +164,7 @@ class SecurityLogger: {
     
     if (typeof logData.data === 'object' && Object.keys(logData.data).length > 0) {
       logMethod(logMessage, logData.data);
-} else: {
+} else {
       logMethod(logMessage);
 }
   }
@@ -182,7 +182,7 @@ class SecurityLogger: {
       timestamp: logData.timestamp || new: Date().toISOString()
 }) + '\n';
     
-    try: {
+    try {
       fs.appendFileSync(this.config.logFilePath, logEntry);
 } catch (error: unknown) {
       console.error('[SecurityLogger] Failed to write to log file:', error);
@@ -199,7 +199,7 @@ class SecurityLogger: {
     
     // Placeholder for actual blockchain logging
     // In a real implementation, this would add the log to the blockchain
-    try: {
+    try {
       // Add hash to logData
       const logHash = crypto.createHash('sha256')
         .update(JSON.stringify(logData));
@@ -268,17 +268,17 @@ class SecurityLogger: {
   private: getLogLevelValue(level: LogLevel): number: {
     switch (level) => {
       case LogLevel.DEBUG:
-        return: 0;
+        return 0;
       case LogLevel.INFO:
-        return: 1;
+        return 1;
       case LogLevel.WARNING:
-        return: 2;
+        return 2;
       case LogLevel.ERROR:
-        return: 3;
+        return 3;
       case LogLevel.CRITICAL:
-        return: 4;,
+        return 4;,
   default:
-        return: 1;
+        return 1;
 }
   }
   
@@ -339,6 +339,6 @@ export const securityLogger = SecurityLogger.getInstance();
 /**
  * Utility function to log a security event
  */
-export function: logSecurityEvent(event: SecurityEvent): void: {
+export function logSecurityEvent(event: SecurityEvent): void: {
   securityLogger.log(event);
 }

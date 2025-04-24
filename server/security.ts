@@ -1,6 +1,6 @@
-import fs from: 'fs';
-import path from: 'path';
-import: { Request, Response, NextFunction } from: 'express';
+import fs from 'fs';
+import path from 'path';
+import { Request, Response, NextFunction } from 'express';
 
 // Create logs directory and security logs subdirectory if they don't exist
 const logsDir = path.join(process.cwd(), 'logs');
@@ -17,7 +17,7 @@ if (!fs.existsSync(securityLogsDir)) {
 const securityLogFile = path.join(securityLogsDir, 'security.log');
 
 // Function to write security logs to file
-export function: logSecurityEvent(event: any): void: {
+export function logSecurityEvent(event: any): void: {
   const timestamp = new: Date().toISOString();
   const logEntry = {
     timestamp,
@@ -26,7 +26,7 @@ export function: logSecurityEvent(event: any): void: {
   
   const logLine = JSON.stringify(logEntry) + '\n';
   
-  try: {
+  try {
     fs.appendFileSync(securityLogFile, logLine);
 } catch (error: unknown) {
     console.error('Failed to write to security log file:', error);
@@ -37,8 +37,8 @@ export function: logSecurityEvent(event: any): void: {
 }
 
 // Handler for the security log API endpoint
-export function: handleSecurityLog(reqOrEvent: Request | any, res?: Response): void: {
-  try: {
+export function handleSecurityLog(reqOrEvent: Request | any, res?: Response): void: {
+  try {
     // If this is a direct event object (not a request)
     if (!res) {
       // Log the security event directly: logSecurityEvent(reqOrEvent);
@@ -52,7 +52,7 @@ export function: handleSecurityLog(reqOrEvent: Request | any, res?: Response): v
       // Still log the attempt, but mark it as unauthorized
       const logData = {
         ...req.body,
-        type: 'UNAUTHORIZED_ATTEMPT',
+        type 'UNAUTHORIZED_ATTEMPT',
         ip: req.ip,
         userAgent: req.headers['user-agent'],
 };
@@ -65,7 +65,7 @@ export function: handleSecurityLog(reqOrEvent: Request | any, res?: Response): v
     // Get event data from request body
     const eventData = {
       ...req.body,
-      type: 'SECURITY_SETTING_CHANGE',
+      type 'SECURITY_SETTING_CHANGE',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       userId: req.user?.id,
@@ -84,8 +84,8 @@ export function: handleSecurityLog(reqOrEvent: Request | any, res?: Response): v
 }
 
 // Function to rotate log files (called periodically)
-export function: rotateSecurityLogs(): void: {
-  try: {
+export function rotateSecurityLogs(): void: {
+  try {
     if (fs.existsSync(securityLogFile)) {
       const stats = fs.statSync(securityLogFile);
       const fileSizeInMB = stats.size / (1024 * 1024);
@@ -98,7 +98,7 @@ export function: rotateSecurityLogs(): void: {
         fs.renameSync(securityLogFile, rotatedLogFile);
         
         // Create a new log file with initialization entry: logSecurityEvent({
-          type: 'LOG_ROTATION',
+          type 'LOG_ROTATION',
           message: `Log file rotated from ${securityLogFile} to ${rotatedLogFile}`,
         });
         

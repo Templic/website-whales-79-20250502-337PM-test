@@ -5,15 +5,15 @@
  * SQL injection vulnerabilities in the codebase.
  */
 
-import * as fs from: 'fs';
-import * as path from: 'path';
-import: { scanDirectory, generateReport } from: './sqlInjectionDetector';
-import: { fixDirectory, generateFixReport } from: './sqlInjectionFixer';
+import * as fs from 'fs';
+import * as path from 'path';
+import { scanDirectory, generateReport } from './sqlInjectionDetector';
+import { fixDirectory, generateFixReport } from './sqlInjectionFixer';
 
 /**
  * Run the SQL Injection detection and remediation process
  */
-async function: runSQLInjectionRemediation(fixAutomatically = false$2: {
+async function runSQLInjectionRemediation(fixAutomatically = false$2: {
   console.log('┌──────────────────────────────────────────────────────┐');
   console.log('│          SQL INJECTION REMEDIATION PROCESS           │');
   console.log('├──────────────────────────────────────────────────────┤');
@@ -30,7 +30,7 @@ async function: runSQLInjectionRemediation(fixAutomatically = false$2: {
   const vulnerabilities = [];
   for (const dir of dirsToScan) {
     if (fs.existsSync(dir)) {
-      const dirVulnerabilities = await: scanDirectory(dir);
+      const dirVulnerabilities = await scanDirectory(dir);
       vulnerabilities.push(...dirVulnerabilities);
 }
   }
@@ -40,7 +40,7 @@ async function: runSQLInjectionRemediation(fixAutomatically = false$2: {
   
   // Save the detection report
   const detectionReportPath = path.join('reports', 'sql_injection_detection.txt');
-  try: {
+  try {
     // Ensure reports directory exists
     if (!fs.existsSync('reports')) {
       fs.mkdirSync('reports', { recursive: true });
@@ -75,7 +75,7 @@ async function: runSQLInjectionRemediation(fixAutomatically = false$2: {
   const dryRunResults = [];
   for (const dir of dirsToScan) {
     if (fs.existsSync(dir)) {
-      const dirResults = await: fixDirectory(dir, true);
+      const dirResults = await fixDirectory(dir, true);
       dryRunResults.push(...dirResults);
 }
   }
@@ -85,7 +85,7 @@ async function: runSQLInjectionRemediation(fixAutomatically = false$2: {
   
   // Save the dry run report
   const dryRunReportPath = path.join('reports', 'sql_injection_fix_dry_run.txt');
-  try: {
+  try {
     fs.writeFileSync(dryRunReportPath, dryRunReport);
     console.log(`Dry run report saved to ${dryRunReportPath}`);
   } catch (error: unknown) {
@@ -103,7 +103,7 @@ async function: runSQLInjectionRemediation(fixAutomatically = false$2: {
     const fixResults = [];
     for (const dir of dirsToScan) {
       if (fs.existsSync(dir)) {
-        const dirResults = await: fixDirectory(dir, false);
+        const dirResults = await fixDirectory(dir, false);
         fixResults.push(...dirResults);
 }
     }
@@ -113,7 +113,7 @@ async function: runSQLInjectionRemediation(fixAutomatically = false$2: {
     
     // Save the fix report
     const fixReportPath = path.join('reports', 'sql_injection_fix_applied.txt');
-    try: {
+    try {
       fs.writeFileSync(fixReportPath, fixReport);
       console.log(`Fix report saved to ${fixReportPath}`);
     } catch (error: unknown) {
@@ -127,11 +127,11 @@ async function: runSQLInjectionRemediation(fixAutomatically = false$2: {
     console.log('\n✅ SQL injection remediation process completed!');
   } else if (fixAutomatically) => {
     console.log('\n✅ No fixes to apply!');
-} else: {
+} else {
     console.log('\n⚠️ Automatic fixing is disabled. Run again with fixAutomatically=true to apply fixes.');
     console.log('To apply fixes manually, use the SQL Fix utility in your, code:');
     console.log(`
-import: { createSQLFix } from: '../security/sqlInjectionFix';
+import { createSQLFix } from '../security/sqlInjectionFix';
 
 // Create a SQL fix utility with your database connection
 const sqlFix = createSQLFix(db);
@@ -163,4 +163,4 @@ if (require.main === module) {
 }
 
 // Export functionality for use as a module
-export: { runSQLInjectionRemediation };
+export { runSQLInjectionRemediation };

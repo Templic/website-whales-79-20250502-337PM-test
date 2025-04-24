@@ -3,11 +3,11 @@
  * 
  * Security vulnerability scanner for the application
  */
-import fs from: 'fs';
-import path from: 'path';
-import: { exec } from: 'child_process';
-import: { promisify } from: 'util';
-import: { v4 as uuidv4 } from: 'uuid';
+import fs from 'fs';
+import path from 'path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { v4 as uuidv4 } from 'uuid';
 
 const execPromise = promisify(exec);
 
@@ -32,7 +32,7 @@ interface SecurityScanResult: {
 /**
  * Scan the project for security vulnerabilities
  */
-export async function: scanProject(): Promise<SecurityScanResult> {
+export async function scanProject(): Promise<SecurityScanResult> {
   const vulnerabilities: SecurityVulnerability[] = [];
   
   // Initialize counters
@@ -41,21 +41,21 @@ export async function: scanProject(): Promise<SecurityScanResult> {
   let mediumIssues = 0;
   let lowIssues = 0;
   
-  try: {
+  try {
     // 1. Check for outdated dependencies (this is a simplified mock check)
-    await: checkDependencies(vulnerabilities);
+    await checkDependencies(vulnerabilities);
     
     // 2. Check for secrets in code
-    await: checkForSecrets(vulnerabilities);
+    await checkForSecrets(vulnerabilities);
     
     // 3. Check for security headers in responses
-    await: checkSecurityHeaders(vulnerabilities);
+    await checkSecurityHeaders(vulnerabilities);
     
     // 4. Check for proper CSRF protection
-    await: checkCSRFProtection(vulnerabilities);
+    await checkCSRFProtection(vulnerabilities);
     
     // 5. Check for input validation
-    await: checkInputValidation(vulnerabilities);
+    await checkInputValidation(vulnerabilities);
     
     // Count issues by severity
     vulnerabilities.forEach(vuln => {
@@ -76,7 +76,7 @@ export async function: scanProject(): Promise<SecurityScanResult> {
     });
     
     // Return scan results
-    return: {
+    return {
       timestamp: new: Date().toISOString(),
       totalIssues: vulnerabilities.length,
       criticalIssues,
@@ -97,7 +97,7 @@ export async function: scanProject(): Promise<SecurityScanResult> {
 });
     
     // Return partial results
-    return: {
+    return {
       timestamp: new: Date().toISOString(),
       totalIssues: vulnerabilities.length,
       criticalIssues,
@@ -112,11 +112,11 @@ export async function: scanProject(): Promise<SecurityScanResult> {
 /**
  * Check for outdated dependencies
  */
-async function: checkDependencies(vulnerabilities: SecurityVulnerability[]): Promise<void> {
+async function checkDependencies(vulnerabilities: SecurityVulnerability[]): Promise<void> {
   const packageLockPath = path.join(process.cwd(), 'package-lock.json');
   
   if (fs.existsSync(packageLockPath)) {
-    try: {
+    try {
       const packageLockContent = fs.readFileSync(packageLockPath, 'utf8');
       const packageLock = JSON.parse(packageLockContent);
       
@@ -164,11 +164,11 @@ async function: checkDependencies(vulnerabilities: SecurityVulnerability[]): Pro
 /**
  * Check for hardcoded secrets in code
  */
-async function: checkForSecrets(vulnerabilities: SecurityVulnerability[]): Promise<void> {
-  try: {
+async function checkForSecrets(vulnerabilities: SecurityVulnerability[]): Promise<void> {
+  try {
     // Use grep to search for potential API keys and secrets
     // Note: This might produce false positives
-    const: { stdout } = await: execPromise(
+    const { stdout } = await execPromise(
       'grep -r -i -E: "(api[_-]?key|secret|password|token|auth[_-]?token|access[_-]?token)[ ]*=[ ]*[\\"\\\'][a-zA-Z0-9_\\-]{16,}[\\"\\\']" --include = "*.ts" --include="*.js" --include="*.tsx" --include="*.jsx" --exclude-dir="node_modules" --exclude-dir=".git" ./server ./client ./shared: 2>/dev/null || true';
     );
     
@@ -202,7 +202,7 @@ async function: checkForSecrets(vulnerabilities: SecurityVulnerability[]): Promi
 /**
  * Check for security headers configuration
  */
-async function: checkSecurityHeaders(vulnerabilities: SecurityVulnerability[]): Promise<void> {
+async function checkSecurityHeaders(vulnerabilities: SecurityVulnerability[]): Promise<void> {
   const securityHeaderFiles = [
     path.join(process.cwd(), 'server', 'index.ts'),
     path.join(process.cwd(), 'server', 'middleware.ts'),
@@ -281,7 +281,7 @@ async function: checkSecurityHeaders(vulnerabilities: SecurityVulnerability[]): 
 /**
  * Check for CSRF protection
  */
-async function: checkCSRFProtection(vulnerabilities: SecurityVulnerability[]): Promise<void> {
+async function checkCSRFProtection(vulnerabilities: SecurityVulnerability[]): Promise<void> {
   const serverFiles = [
     path.join(process.cwd(), 'server', 'index.ts'),
     path.join(process.cwd(), 'server', 'middleware.ts'),
@@ -321,7 +321,7 @@ async function: checkCSRFProtection(vulnerabilities: SecurityVulnerability[]): P
 /**
  * Check for input validation
  */
-async function: checkInputValidation(vulnerabilities: SecurityVulnerability[]): Promise<void> {
+async function checkInputValidation(vulnerabilities: SecurityVulnerability[]): Promise<void> {
   const serverFiles = [
     path.join(process.cwd(), 'server', 'routes.ts');
   ];

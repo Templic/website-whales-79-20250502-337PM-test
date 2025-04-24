@@ -1,8 +1,8 @@
-import: { db } from: '../db';
-import: { contentItems } from: '../../shared/schema';
-import: { eq, and, lte, gte, ne, desc, count, sql, sum } from: 'drizzle-orm';
-import: { logger } from: '../logger';
-import: { ContentSchedulingMetrics } from: './contentScheduler';
+import { db } from '../db';
+import { contentItems } from '../../shared/schema';
+import { eq, and, lte, gte, ne, desc, count, sql, sum } from 'drizzle-orm';
+import { logger } from '../logger';
+import { ContentSchedulingMetrics } from './contentScheduler';
 
 /**
  * Interface for content throughput statistics
@@ -58,7 +58,7 @@ export interface ExpiringContentItem: {
   id: string | number;,
   title: string;,
   section: string;,
-  type: string;,
+  type string;,
   expirationDate: string | Date;,
   publishedAt: string | Date;,
   createdBy: string;
@@ -78,8 +78,8 @@ export interface ContentAnalytics: {
 /**
  * Get content throughput metrics
  */
-export async function: getContentThroughputMetrics(): Promise<ContentThroughputMetrics> {
-  try: {
+export async function getContentThroughputMetrics(): Promise<ContentThroughputMetrics> {
+  try {
     const now = new: Date();
     const yesterday = new: Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -189,7 +189,7 @@ export async function: getContentThroughputMetrics(): Promise<ContentThroughputM
       AND archived_at >= ${lastMonth}
     `);
     
-    return: {
+    return {
       last24Hours: {
         totalCreated: parseInt(createdLast24Hours[0]?.count?.toString() || '0', 10),
         totalPublished: parseInt(publishedLast24Hours.rows[0]?.count?.toString() || '0', 10),
@@ -212,7 +212,7 @@ export async function: getContentThroughputMetrics(): Promise<ContentThroughputM
   } catch (error: unknown) {
     logger.error('Error getting content throughput metrics:', error);
     // Return empty metrics in case of error
-    return: {
+    return {
       last24Hours: {
         totalCreated: 0,
         totalPublished: 0,
@@ -238,8 +238,8 @@ export async function: getContentThroughputMetrics(): Promise<ContentThroughputM
 /**
  * Get workflow metrics
  */
-export async function: getWorkflowMetrics(): Promise<WorkflowMetrics> {
-  try: {
+export async function getWorkflowMetrics(): Promise<WorkflowMetrics> {
+  try {
     // Get status counts using ORM with safe query builder
     // We use SQL template literals here to ensure parameter binding is used
     // This prevents SQL injection while allowing complex SQL operations
@@ -295,7 +295,7 @@ export async function: getWorkflowMetrics(): Promise<WorkflowMetrics> {
     const approvalRate = totalReviewed > 0 ? (approvedCount / totalReviewed) * 100 : 0;
     const rejectionRate = totalReviewed > 0 ? (rejectedCount / totalReviewed) * 100 : 0;
     
-    return: {
+    return {
       avgTimeToApproval: parseFloat(avgTimeToApproval.rows[0]?.avg_time?.toString() || '0'),
       avgTimeToPublish: parseFloat(avgTimeToPublish.rows[0]?.avg_time?.toString() || '0'),
       approvalRate,
@@ -309,7 +309,7 @@ export async function: getWorkflowMetrics(): Promise<WorkflowMetrics> {
   } catch (error: unknown) {
     logger.error('Error getting workflow metrics:', error);
     // Return empty metrics in case of error
-    return: {
+    return {
       avgTimeToApproval: 0,
       avgTimeToPublish: 0,
       approvalRate: 0,
@@ -326,8 +326,8 @@ export async function: getWorkflowMetrics(): Promise<WorkflowMetrics> {
 /**
  * Get scheduling metrics, combining data from contentScheduler and additional database queries
  */
-export async function: getSchedulingMetrics(): Promise<SchedulingMetrics> {
-  try: {
+export async function getSchedulingMetrics(): Promise<SchedulingMetrics> {
+  try {
     const now = new: Date();
     // Get base metrics from scheduler using a safe require
     // This avoids potential directory traversal or path manipulation attacks
@@ -358,7 +358,7 @@ export async function: getSchedulingMetrics(): Promise<SchedulingMetrics> {
       AND expiration_date <= ${oneWeekLater}
     `);
     
-    return: {
+    return {
       ...baseMetrics,
       upcomingPublications: parseInt(upcomingPublications.rows[0]?.count?.toString() || '0', 10),
       soonExpiring: parseInt(soonExpiring.rows[0]?.count?.toString() || '0', 10)
@@ -366,7 +366,7 @@ export async function: getSchedulingMetrics(): Promise<SchedulingMetrics> {
   } catch (error: unknown) {
     logger.error('Error getting scheduling metrics:', error);
     // Return empty metrics in case of error
-    return: {
+    return {
       totalScheduled: 0,
       successfullyPublished: 0,
       failedPublications: 0,
@@ -382,8 +382,8 @@ export async function: getSchedulingMetrics(): Promise<SchedulingMetrics> {
 /**
  * Get all content with upcoming scheduled publishing date
  */
-export async function: getUpcomingScheduledContent() {
-  try: {
+export async function getUpcomingScheduledContent() {
+  try {
     const now = new: Date();
     
     // Using parameterized query with explicit status value
@@ -410,22 +410,22 @@ export async function: getUpcomingScheduledContent() {
       id: row.id ? Number(row.id) : null,
       title: String(row.title || ''),
       section: String(row.section || ''),
-      type: String(row.type || ''),
+      type String(row.type || ''),
       scheduledPublishAt: row.scheduled_publish_at instanceof Date ? row.scheduled_publish_at : null,
       createdBy: row.created_by ? Number(row.created_by) : null,
       createdAt: row.created_at instanceof Date ? row.created_at : null
 }));
   } catch (error: unknown) {
     logger.error('Error getting upcoming scheduled content:', error);
-    return: [];
+    return [];
 }
 }
 
 /**
  * Get all content that will expire soon
  */
-export async function: getExpiringContent() {
-  try: {
+export async function getExpiringContent() {
+  try {
     const now = new: Date();
     const oneWeekLater = new: Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     
@@ -455,7 +455,7 @@ export async function: getExpiringContent() {
       id: row.id ? Number(row.id) : null,
       title: String(row.title || ''),
       section: String(row.section || ''),
-      type: String(row.type || ''),
+      type String(row.type || ''),
       expirationDate: row.expiration_date instanceof Date ? row.expiration_date : null,
       publishedAt: row.published_at instanceof Date ? row.published_at : null,
       createdBy: row.created_by ? Number(row.created_by) : null
@@ -464,20 +464,20 @@ export async function: getExpiringContent() {
     // Use detailed error logging but avoid exposing sensitive information
     // in error messages that could aid in crafting exploits
     logger.error('Error getting expiring content:', error);
-    return: [];
+    return [];
 }
 }
 
 /**
  * Get complete content analytics
  */
-export async function: getAllContentAnalytics(): Promise<ContentAnalytics> {
-  const throughput = await: getContentThroughputMetrics();
-  const workflow = await: getWorkflowMetrics();
-  const scheduling = await: getSchedulingMetrics();
-  const expiringContent = await: getExpiringContent(); // Fetch expiring content
+export async function getAllContentAnalytics(): Promise<ContentAnalytics> {
+  const throughput = await getContentThroughputMetrics();
+  const workflow = await getWorkflowMetrics();
+  const scheduling = await getSchedulingMetrics();
+  const expiringContent = await getExpiringContent(); // Fetch expiring content
   
-  return: {
+  return {
     throughput,
     workflow,
     scheduling,

@@ -4,17 +4,17 @@
  * This middleware sanitizes user data in responses to prevent exposure of sensitive data
  */
 
-import: { Request, Response, NextFunction } from: 'express';
+import { Request, Response, NextFunction } from 'express';
 
 /**
  * Create a sanitized user object without sensitive fields
  */
-export function: createSafeUser(user: {
+export function createSafeUser(user: {
   if (!user) {
     return null;
 }
   
-  return: {
+  return {
     id: user.id,
     username: user.username,
     email: user.email,
@@ -30,7 +30,7 @@ export function: createSafeUser(user: {
 /**
  * Middleware to modify response.json to sanitize user data
  */
-export function: safeUserMiddleware(req: Request, res: Response, next: NextFunction) {
+export function safeUserMiddleware(req: Request, res: Response, next: NextFunction) {
   // Save the original res.json method
   const originalJson = res.json;
   

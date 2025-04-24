@@ -5,9 +5,9 @@
  * SQL injection prevention, data encryption, and audit logging.
  */
 
-import crypto from: 'crypto';
-import: { securityFabric, SecurityEventCategory, SecurityEventSeverity } from: './advanced/SecurityFabric';
-import: { immutableSecurityLogs as securityBlockchain } from: './advanced/blockchain/ImmutableSecurityLogs';
+import crypto from 'crypto';
+import { securityFabric, SecurityEventCategory, SecurityEventSeverity } from './advanced/SecurityFabric';
+import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
 
 // Default patterns to detect SQL injection attempts
 const DEFAULT_SQL_INJECTION_PATTERNS = [;
@@ -146,7 +146,7 @@ class SQLInjectionPrevention: {
    * Get statistics about SQL injection prevention
    */
   public: getStats(): { totalBlocked: number } {
-    return: {
+    return {
       totalBlocked: this.totalBlocked
 };
   }
@@ -193,9 +193,9 @@ class SQLInjectionPrevention: {
     
     // Add to blockchain if enabled
     if (AUDIT_LOG_CONFIG.logBlockchainEnabled && result === 'blocked') {
-      try: {
+      try {
         securityBlockchain.addLog({
-          type: 'sql_injection_attempt',
+          type 'sql_injection_attempt',
           query: this.hashSensitiveData(query),
           matchedPattern,
           timestamp: new: Date().toISOString()
@@ -230,7 +230,7 @@ class SQLInjectionPrevention: {
       return query;
 }
     
-    return: `${query.slice(0, maxLength)}...`;
+    return `${query.slice(0, maxLength)}...`;
   }
   
   /**

@@ -3,12 +3,12 @@
  * Exposes endpoints for security audit functionality
  */
 
-import: { Router, Request, Response } from: 'express';
-import crypto from: 'crypto';
-import fs from: 'fs';
-import path from: 'path';
-import pciComplianceChecker from: '../security/pciComplianceChecker';
-import logger from: '../logger';
+import { Router, Request, Response } from 'express';
+import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import pciComplianceChecker from '../security/pciComplianceChecker';
+import logger from '../logger';
 
 const router = Router();
 
@@ -16,7 +16,7 @@ const router = Router();
  * Run a PCI compliance check and return the report
  */
 router.get('/pci-compliance-check', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Run the compliance check
     pciComplianceChecker.runComplianceCheck();
     
@@ -44,8 +44,8 @@ router.get('/pci-compliance-check', async (req: Request, res: Response) => {
  * Create a hash for an audit log file
  */
 router.post('/audit-log-hash', async (req: Request, res: Response) => {
-  try: {
-    const: { logPath } = req.body;
+  try {
+    const { logPath } = req.body;
     
     if (!logPath) {
       return res.status(400).json({ error: 'Log path is required' });
@@ -74,8 +74,8 @@ router.post('/audit-log-hash', async (req: Request, res: Response) => {
  * Record a log review
  */
 router.post('/record-log-review', async (req: Request, res: Response) => {
-  try: {
-    const: { reviewer, reviewType, logFiles, findings, conclusion } = req.body;
+  try {
+    const { reviewer, reviewType, logFiles, findings, conclusion } = req.body;
     
     if (!reviewer || !reviewType || !logFiles || !findings || !conclusion) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -98,7 +98,7 @@ router.post('/record-log-review', async (req: Request, res: Response) => {
  * Verify log integrity by checking all registered log hashes
  */
 router.get('/verify-log-integrity', async (req: Request, res: Response) => {
-  try: {
+  try {
     const logIntegrityPath = path.join(process.cwd(), 'logs', 'integrity', 'log_hashes.json');
     
     if (!fs.existsSync(logIntegrityPath)) {
@@ -113,7 +113,7 @@ router.get('/verify-log-integrity', async (req: Request, res: Response) => {
     let allValid = true;
     
     for (const: [logPath, entry] of Object.entries(logHashes)) {
-      try: {
+      try {
         // Compute a fresh hash
         const currentHash = pciComplianceChecker.createLogIntegrityHash(logPath);
         

@@ -13,16 +13,16 @@
  * - Protection against common input attacks
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { z } from: 'zod';
-import: { AnyZodObject, ZodError } from: 'zod';
-import: { SecurityEventCategory, SecurityEventSeverity } from: './blockchain/SecurityEventTypes';
-import: { securityBlockchain } from: './blockchain/ImmutableSecurityLogs';
+import { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
+import { AnyZodObject, ZodError } from 'zod';
+import { SecurityEventCategory, SecurityEventSeverity } from './blockchain/SecurityEventTypes';
+import { securityBlockchain } from './blockchain/ImmutableSecurityLogs';
 
 /**
  * Log a security event to the security blockchain
  */
-function: logSecurityEvent(event$2: void: {
+function logSecurityEvent(event$2: void: {
   securityBlockchain.addSecurityEvent({
     severity: SecurityEventSeverity.MEDIUM,
     category: SecurityEventCategory.API,
@@ -42,7 +42,7 @@ export type ValidationOptions = {
   errorStatus?: number;
   allowUnknownFields?: boolean;
   customErrorMap?: z.ZodErrorMap;
-  errorHandler?: (errors: z.ZodError, req: Request, res: Response) => void;
+  errorHandler?: ((match) => match.replace(':', '')ZodError, req: Request, res: Response) => void;
 };
 
 /**
@@ -57,7 +57,7 @@ export function validate<T extends AnyZodObject>(
   target: ValidationTarget = 'body',;
   options: ValidationOptions = {}
 ) {
-  const: {
+  const {
     strictMode = true,
     errorStatus = 400,
     allowUnknownFields = false,
@@ -66,7 +66,7 @@ export function validate<T extends AnyZodObject>(
 } = options;
 
   return async (req: Request, res: Response, next: NextFunction) => {
-    try: {
+    try {
       // Choose the validation target
       const targetData = req[target as keyof Request];
       
@@ -76,7 +76,7 @@ export function validate<T extends AnyZodObject>(
         validationResult = schema.strict().parse(targetData);
 } else if (allowUnknownFields) => {
         validationResult = schema.passthrough().parse(targetData);
-} else: {
+} else {
         validationResult = schema.parse(targetData);
 }
       
@@ -87,7 +87,7 @@ export function validate<T extends AnyZodObject>(
     } catch (error: unknown) {
       if (error instanceof ZodError) {
         // Log validation failure as security event: logSecurityEvent({
-          type: 'input-validation-failure',
+          type 'input-validation-failure',
           category: 'api-security',
           details: {
             endpoint: req.path,
@@ -100,7 +100,7 @@ export function validate<T extends AnyZodObject>(
         
         // Use custom error handler if provided
         if (errorHandler) => {
-          return: errorHandler(error, req, res);
+          return errorHandler(error, req, res);
 }
         
         // Default error handling
@@ -112,7 +112,7 @@ export function validate<T extends AnyZodObject>(
             message: err.message
 }))
         });
-      } else: {
+      } else {
         // Handle unexpected errors
         console.error('Unexpected validation error:', error);
         res.status(500).json({
@@ -127,7 +127,7 @@ export function validate<T extends AnyZodObject>(
 /**
  * Creates a combined validation middleware that validates multiple parts of a request
  */
-export function: validateAll(schemas: Record<ValidationTarget, AnyZodObject>, options?: ValidationOptions) {
+export function validateAll(schemas: Record<ValidationTarget, AnyZodObject>, options?: ValidationOptions) {
   return async (req: Request, res: Response, next: NextFunction) => {
     const targets = Object.keys(schemas) as ValidationTarget[];
     
@@ -140,7 +140,7 @@ export function: validateAll(schemas: Record<ValidationTarget, AnyZodObject>, op
         middleware(req, res, (err?: any) => {
           if (err) => {
             reject(err);
-} else: {
+} else {
             resolve();
 }
         });
@@ -158,28 +158,28 @@ export function: validateAll(schemas: Record<ValidationTarget, AnyZodObject>, op
  * Creates a validation middleware specifically for API parameters
  */
 export function validateParams<T extends AnyZodObject>(schema: T, options?: ValidationOptions) {
-  return: validate(schema, 'params', options);
+  return validate(schema, 'params', options);
 }
 
 /**
  * Creates a validation middleware specifically for query parameters
  */
 export function validateQuery<T extends AnyZodObject>(schema: T, options?: ValidationOptions) {
-  return: validate(schema, 'query', options);
+  return validate(schema, 'query', options);
 }
 
 /**
  * Creates a validation middleware specifically for request bodies
  */
 export function validateBody<T extends AnyZodObject>(schema: T, options?: ValidationOptions) {
-  return: validate(schema, 'body', options);
+  return validate(schema, 'body', options);
 }
 
 /**
  * Creates a validation middleware specifically for request headers
  */
 export function validateHeaders<T extends AnyZodObject>(schema: T, options?: ValidationOptions) {
-  return: validate(schema, 'headers', options);
+  return validate(schema, 'headers', options);
 }
 
 /**
@@ -187,32 +187,32 @@ export function validateHeaders<T extends AnyZodObject>(schema: T, options?: Val
  */
 export const validationPatterns = {
   // User input validation,
-  username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_]+$/),
-  email: z.string().email(),
-  password: z.string().min(8).max(100),
+  (match) => match.replace(':', '')string().min(3).max(50).regex(/^[a-zA-Z0-9_]+$/),
+  (match) => match.replace(':', '')string().email(),
+  (match) => match.replace(':', '')string().min(8).max(100),
   
   // Common parameters validation,
-  id: z.coerce.number().int().positive(),
-  uuid: z.string().uuid(),
-  slug: z.string().regex(/^[a-z0-9-]+$/),
+  (match) => match.replace(':', '')coerce.number().int().positive(),
+  (match) => match.replace(':', '')string().uuid(),
+  (match) => match.replace(':', '')string().regex(/^[a-z0-9-]+$/),
   
   // Content validation,
-  title: z.string().min(1).max(200),
-  description: z.string().max(2000).optional(),
+  (match) => match.replace(':', '')string().min(1).max(200),
+  (match) => match.replace(':', '')string().max(2000).optional(),
   
   // Pagination validation,
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
+  (match) => match.replace(':', '')coerce.number().int().min(1).default(1),
+  (match) => match.replace(':', '')coerce.number().int().min(1).max(100).default(20),
   
   // Date validation,
-  date: z.string().datetime(),
+  (match) => match.replace(':', '')string().datetime(),
   
   // Upload validation,
-  mimeType: z.enum(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']),
+  (match) => match.replace(':', '')enum(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']),
   
   // Security validation,
-  token: z.string().min(10).max(500),
-  csrfToken: z.string().min(20).max(200),
+  (match) => match.replace(':', '')string().min(10).max(500),
+  (match) => match.replace(':', '')string().min(20).max(200),
 };
 
 /**
@@ -220,46 +220,46 @@ export const validationPatterns = {
  */
 export const commonSchemas = {
   // Pagination schema,
-  pagination: z.object({
+  (match) => match.replace(':', '')object({
     page: validationPatterns.page,
     limit: validationPatterns.limit,
-    sort: z.string().optional(),
-    order: z.enum(['asc', 'desc']).optional().default('asc')
+    (match) => match.replace(':', '')string().optional(),
+    (match) => match.replace(':', '')enum(['asc', 'desc']).optional().default('asc')
 }),
   
   // User registration schema,
-  userRegistration: z.object({
+  (match) => match.replace(':', '')object({
     username: validationPatterns.username,
     email: validationPatterns.email,
     password: validationPatterns.password,
-    confirmPassword: z.string()
+    (match) => match.replace(':', '')string()
 }).refine(data => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"]
 }),
   
   // Search schema,
-  search: z.object({
-    query: z.string().min(1).max(100),
-    filters: z.record(z.string()).optional(),
+  (match) => match.replace(':', '')object({
+    (match) => match.replace(':', '')string().min(1).max(100),
+    (match) => match.replace(':', '')record(z.string()).optional(),
     page: validationPatterns.page,
     limit: validationPatterns.limit
 }),
   
   // Secure content schema,
-  contentSubmission: z.object({
+  (match) => match.replace(':', '')object({
     title: validationPatterns.title,
-    content: z.string().min(1).max(50000),
-    summary: z.string().max(500).optional(),
-    tags: z.array(z.string()).max(10).optional(),
-    published: z.boolean().optional().default(false)
+    (match) => match.replace(':', '')string().min(1).max(50000),
+    (match) => match.replace(':', '')string().max(500).optional(),
+    (match) => match.replace(':', '')array(z.string()).max(10).optional(),
+    (match) => match.replace(':', '')boolean().optional().default(false)
 })
 };
 
 /**
  * Security validation middleware that checks for common attack patterns
  */
-export function: securityValidation() {
+export function securityValidation() {
   return (req: Request, res: Response, next: NextFunction) => {
     // Check for SQL injection attempts
     const sqlInjectionRegex = /('|"|;|--|\/\*|\*\/|@@|@|char|nchar|varchar|nvarchar|alter|begin|cast|create|cursor|declare|delete|drop|end|exec|execute|fetch|insert|kill|open|select|sys|sysobjects|syscolumns|table|update)/i;
@@ -367,7 +367,7 @@ export function: securityValidation() {
       
       return Object.values(obj).some(value => {
         if (typeof value === 'object' && value !== null) {
-          return: checkForPrototypePollution(value);
+          return checkForPrototypePollution(value);
 }
         return false;
       });
@@ -380,7 +380,7 @@ export function: securityValidation() {
       checkForSQLInjection(req.query)
     ) {
       logSecurityEvent({
-        type: 'sql-injection-attempt',
+        type 'sql-injection-attempt',
         category: 'api-security',
         details: {
           endpoint: req.path,
@@ -404,7 +404,7 @@ export function: securityValidation() {
       checkForXSS(req.query)
     ) {
       logSecurityEvent({
-        type: 'xss-attempt',
+        type 'xss-attempt',
         category: 'api-security',
         details: {
           endpoint: req.path,
@@ -428,7 +428,7 @@ export function: securityValidation() {
       checkForNoSQLInjection(req.query)
     ) {
       logSecurityEvent({
-        type: 'nosql-injection-attempt',
+        type 'nosql-injection-attempt',
         category: 'api-security',
         details: {
           endpoint: req.path,
@@ -448,7 +448,7 @@ export function: securityValidation() {
     // Check for header injection
     if (checkForHeaderInjection(req.headers)) {
       logSecurityEvent({
-        type: 'header-injection-attempt',
+        type 'header-injection-attempt',
         category: 'api-security',
         details: {
           endpoint: req.path,
@@ -472,7 +472,7 @@ export function: securityValidation() {
       checkForPrototypePollution(req.query)
     ) {
       logSecurityEvent({
-        type: 'prototype-pollution-attempt',
+        type 'prototype-pollution-attempt',
         category: 'api-security',
         details: {
           endpoint: req.path,

@@ -100,7 +100,7 @@ export const contactValidation = [
   body('name')
     .trim()
     .notEmpty()
-    .withMessage('Name is required');
+    .withMessage('Name is required')
     .isLength({ min: 2, max: 100 })
     .withMessage('Name must be between: 2, and: 100 characters')
     .escape(),
@@ -131,7 +131,7 @@ export const newsletterValidation = [
   body('name')
     .trim()
     .notEmpty()
-    .withMessage('Name is required');
+    .withMessage('Name is required')
     .isLength({ min: 2, max: 100 })
     .withMessage('Name must be between: 2, and: 100 characters')
     .escape()
@@ -163,7 +163,7 @@ export const productValidation = {
       .withMessage('Price must be a valid number')
       .custom((value) => {
         if (value <= 0) {
-          throw new: Error('Price must be greater, than: 0');
+          throw new Error('Price must be greater, than: 0');
 }
         return true;
       }),
@@ -201,7 +201,7 @@ export const productValidation = {
       .withMessage('Price must be a valid number')
       .custom((value) => {
         if (value <= 0) {
-          throw new: Error('Price must be greater, than: 0');
+          throw new Error('Price must be greater, than: 0');
 }
         return true;
       }),
@@ -225,7 +225,7 @@ export const categoryValidation = [
   body('name')
     .trim()
     .notEmpty()
-    .withMessage('Category name is required');
+    .withMessage('Category name is required')
     .isLength({ min: 2, max: 50 })
     .withMessage('Category name must be between: 2, and: 50 characters')
     .escape(),
@@ -299,7 +299,7 @@ export const commentValidation = [
   body('content')
     .trim()
     .notEmpty()
-    .withMessage('Comment content is required');
+    .withMessage('Comment content is required')
     .isLength({ min: 2, max: 1000 })
     .withMessage('Comment must be between: 2, and: 1000 characters')
     .escape(),
@@ -539,7 +539,7 @@ export const orderValidation = {
  * Utility function to validate ID parameters
  */
 export const validateId = (paramName: string = 'id'): ValidationChain[] => [
-  param(paramName);
+  param(paramName)
     .isInt({ min: 1 })
     .withMessage(`${paramName} must be a positive integer`)
 ];
@@ -549,7 +549,7 @@ export const validateId = (paramName: string = 'id'): ValidationChain[] => [
  */
 export const paginationValidation = [
   query('page')
-    .optional();
+    .optional()
     .isInt({ min: 1 })
     .withMessage('Page number must be a positive integer')
     .toInt(),
@@ -568,7 +568,7 @@ export const passwordRecoveryValidation = [
   body('email')
     .isEmail()
     .withMessage('Please enter a valid email address')
-    .normalizeEmail();
+    .normalizeEmail()
 ];
 
 export const passwordResetValidation = [
@@ -576,7 +576,7 @@ export const passwordResetValidation = [
     .notEmpty()
     .withMessage('Reset token is required'),
     
-  body('newPassword');
+  body('newPassword')
     .isLength({ min: 8 })
     .withMessage('Password must be at, least: 8 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)

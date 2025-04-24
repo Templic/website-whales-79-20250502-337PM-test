@@ -1,8 +1,8 @@
-import express from: 'express';
-import: { databaseSecurity } from: '../security/databaseSecurity';
-import: { databaseConfigChecker } from: '../security/databaseConfigurationChecker';
-import: { log } from: '../vite';
-import: { db } from: '../db';
+import express from 'express';
+import { databaseSecurity } from '../security/databaseSecurity';
+import { databaseConfigChecker } from '../security/databaseConfigurationChecker';
+import { log } from '../vite';
+import { db } from '../db';
 
 const router = express.Router();
 
@@ -12,7 +12,7 @@ const router = express.Router();
  * This endpoint does not require authentication for testing purposes
  */
 router.get('/test-validate', (req, res) => {
-  try: {
+  try {
     const query = req.query.q as string;
     
     if (!query) {
@@ -56,7 +56,7 @@ router.get('/test-validate', (req, res) => {
  * GET /api/admin/database-security/status
  */
 router.get('/status', async (req, res) => {
-  try: {
+  try {
     // Check database connection security
     const connectionSecurity = await databaseSecurity.verifyConnectionSecurity();
     
@@ -86,7 +86,7 @@ router.get('/status', async (req, res) => {
  * POST /api/admin/database-security/check-configuration
  */
 router.post('/check-configuration', async (req, res) => {
-  try: {
+  try {
     log('Running database security configuration check...', 'database-security');
     
     // Run the configuration check
@@ -113,7 +113,7 @@ router.post('/check-configuration', async (req, res) => {
  * GET /api/admin/database-security/logs
  */
 router.get('/logs', async (req, res) => {
-  try: {
+  try {
     // Get query parameters
     const days = parseInt(req.query.days as string) || 7;
     
@@ -158,8 +158,8 @@ router.get('/logs', async (req, res) => {
  * POST /api/admin/database-security/validate-query
  */
 router.post('/validate-query', (req, res) => {
-  try: {
-    const: { query } = req.body;
+  try {
+    const { query } = req.body;
     
     if (!query) {
       return res.status(400).json({
@@ -201,7 +201,7 @@ router.post('/validate-query', (req, res) => {
  * GET /api/admin/database-security/configuration-report
  */
 router.get('/configuration-report', (req, res) => {
-  try: {
+  try {
     const fs = require('fs');
     const path = require('path');
     

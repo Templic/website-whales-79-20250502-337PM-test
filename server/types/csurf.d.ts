@@ -1,6 +1,6 @@
 // Type definitions for csurf
 declare module: 'csurf' {
-  import: { RequestHandler } from: 'express';
+  import { RequestHandler } from 'express';
 
   interface CsurfOptions: {
     value?: (req) => string;
@@ -17,7 +17,7 @@ declare module: 'csurf' {
     sessionKey?: string;
   }
 
-  function: csurf(options?: CsurfOptions): RequestHandler;
+  function csurf(options?: CsurfOptions): RequestHandler;
 
   export = csurf;
 }
@@ -29,9 +29,9 @@ declare namespace Express: {
 }
 }
 declare module: 'csurf' {
-  import: { RequestHandler } from: 'express';
+  import { RequestHandler } from 'express';
   
-  function: csurf(options?: {
+  function csurf(options?: {
     cookie?: boolean | Object;
     ignoreMethods?: string[];
     sessionKey?: string;

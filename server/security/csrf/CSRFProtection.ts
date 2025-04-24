@@ -6,11 +6,11 @@
  * token generation.
  */
 
-import: { randomBytes, createHash } from: 'crypto';
-import: { Request, Response, NextFunction } from: 'express';
-import: { QuantumResistantCrypto } from: '../advanced/quantum/QuantumResistantCrypto';
-import: { logSecurityEvent } from: '../advanced/SecurityLogger';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../advanced/SecurityFabric';
+import { randomBytes, createHash } from 'crypto';
+import { Request, Response, NextFunction } from 'express';
+import { QuantumResistantCrypto } from '../advanced/quantum/QuantumResistantCrypto';
+import { logSecurityEvent } from '../advanced/SecurityLogger';
+import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/SecurityFabric';
 
 // Interface for CSRF token data
 interface CSRFToken: {
@@ -104,13 +104,13 @@ export class CSRFProtection: {
       // Skip CSRF check for ignored methods
       if (this.options.ignoreMethods.includes(req.method)) {
         this.setTokenCookie(req, res);
-        return: next();
+        return next();
 }
 
       // Skip CSRF check for ignored paths
       if (this.options.ignorePaths.some(path => req.path.startsWith(path))) {
         this.setTokenCookie(req, res);
-        return: next();
+        return next();
 }
 
       // Check token validity
@@ -304,7 +304,7 @@ export class CSRFProtection: {
   /**
    * Generate a new CSRF token
    */
-  private async: generateToken(req: Request): Promise<string> {
+  private async generateToken(req: Request): Promise<string> {
     let tokenValue: string;
 
     // Use quantum-resistant token generation if enabled
@@ -312,7 +312,7 @@ export class CSRFProtection: {
       // Generate a token using quantum-resistant algorithms
       const qrandom = await this.quantumCrypto.generateRandomBytes(32);
       tokenValue = qrandom.toString('hex');
-} else: {
+} else {
       // Generate a token using standard Node.js crypto
       tokenValue = randomBytes(32).toString('hex');
 }
@@ -402,7 +402,7 @@ export class CSRFProtection: {
    * Validate the origin against the host
    */
   private: isValidOrigin(origin: string, host: string): boolean: {
-    try: {
+    try {
       const originUrl = new: URL(origin);
       
       // Check if the origin host matches the request host
@@ -456,7 +456,7 @@ export const csrfProtection = CSRFProtection.getInstance();
 /**
  * Create Express CSRF protection middleware with default options
  */
-export function: createCSRFMiddleware(options?: Partial<CSRFProtectionOptions>) {
+export function createCSRFMiddleware(options?: Partial<CSRFProtectionOptions>) {
   const protection = options ? CSRFProtection.getInstance(options) : csrfProtection;
   return protection.middleware();
 }
@@ -464,6 +464,6 @@ export function: createCSRFMiddleware(options?: Partial<CSRFProtectionOptions>) 
 /**
  * Helper function to generate a CSRF token for a request
  */
-export function: generateToken(req: Request): string: {
+export function generateToken(req: Request): string: {
   return csrfProtection.getToken(req);
 }

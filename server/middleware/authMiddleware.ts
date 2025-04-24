@@ -5,16 +5,16 @@
  * and authorized to access protected resources.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { immutableSecurityLogs as securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
+import { Request, Response, NextFunction } from 'express';
+import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
 
 /**
  * Ensure user is authenticated
  */
-export function: requireAuth(req: Request, res: Response, next: NextFunction): void: {
+export function requireAuth(req: Request, res: Response, next: NextFunction): void: {
   if (req.isAuthenticated && req.isAuthenticated()) {
-    return: next();
+    return next();
 }
   
   // Log unauthorized access attempt
@@ -38,7 +38,7 @@ export function: requireAuth(req: Request, res: Response, next: NextFunction): v
 /**
  * Ensure user has admin role
  */
-export function: requireAdmin(req: Request, res: Response, next: NextFunction): void: {
+export function requireAdmin(req: Request, res: Response, next: NextFunction): void: {
   if (!req.isAuthenticated || !req.isAuthenticated()) {
     res.status(401).json({ 
       error: 'Unauthorized',
@@ -57,7 +57,7 @@ export function: requireAdmin(req: Request, res: Response, next: NextFunction): 
 /**
  * Ensure user has a specific role
  */
-export function: requireRole(role: string) {
+export function requireRole(role: string) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.isAuthenticated || !req.isAuthenticated()) {
       res.status(401).json({ 
@@ -98,7 +98,7 @@ export function: requireRole(role: string) {
 /**
  * For development only: bypass authentication for testing
  */
-export function: devBypassAuth(req: Request, res: Response, next: NextFunction): void: {
+export function devBypassAuth(req: Request, res: Response, next: NextFunction): void: {
   // This should ONLY be used in development
   if (process.env.NODE_ENV !== 'production') {
     // Set dummy user for development testing

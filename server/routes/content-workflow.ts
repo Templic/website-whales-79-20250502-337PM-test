@@ -1,26 +1,26 @@
-import express from: 'express';
-import: { db } from: '../db';
-import: { contentItems, contentVersions, contentWorkflowHistory } from: '../../shared/schema';
-import: { eq, and, between, like, desc, asc, gte, lte, isNull, ne } from: 'drizzle-orm';
-import: { requireAuth, requireRole } from: '../middleware/authMiddleware';
-import: { logger } from: '../logger';
-import: { 
+import express from 'express';
+import { db } from '../db';
+import { contentItems, contentVersions, contentWorkflowHistory } from '../../shared/schema';
+import { eq, and, between, like, desc, asc, gte, lte, isNull, ne } from 'drizzle-orm';
+import { requireAuth, requireRole } from '../middleware/authMiddleware';
+import { logger } from '../logger';
+import { 
   runContentScheduler, 
   getSchedulingMetrics,
   resetSchedulingMetrics 
-} from: '../services/contentScheduler';
-import: { 
+} from '../services/contentScheduler';
+import { 
   getAllContentAnalytics,
   getUpcomingScheduledContent,
   getExpiringContent 
-} from: '../services/contentAnalytics';
-import: { format, parseISO, startOfDay, endOfDay, subDays } from: 'date-fns';
+} from '../services/contentAnalytics';
+import { format, parseISO, startOfDay, endOfDay, subDays } from 'date-fns';
 
 const router = express.Router();
 
 // Get all content with pagination, filtering and sorting
 router.get('/content', requireAuth, async (req, res) => {
-  try: {
+  try {
     const userId = req.session.user?.id;
     const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
     
@@ -59,7 +59,7 @@ router.get('/content', requireAuth, async (req, res) => {
       query = query.orderBy(sortOrder(contentItems.updatedAt));
 } else if (sortBy === 'title') {
       query = query.orderBy(sortOrder(contentItems.title));
-} else: {
+} else {
       query = query.orderBy(desc(contentItems.updatedAt)); // Default sorting
 }
     
@@ -92,7 +92,7 @@ router.get('/content', requireAuth, async (req, res) => {
 
 // Get content details by ID
 router.get('/content/:id', requireAuth, async (req, res) => {
-  try: {
+  try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
     const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
@@ -137,9 +137,9 @@ router.get('/content/:id', requireAuth, async (req, res) => {
 
 // Create new content
 router.post('/content', requireAuth, async (req, res) => {
-  try: {
+  try {
     const userId = req.session.user?.id;
-    const: {
+    const {
       title,
       content,
       section,
@@ -205,7 +205,7 @@ router.post('/content', requireAuth, async (req, res) => {
 
 // Update content
 router.put('/content/:id', requireAuth, async (req, res) => {
-  try: {
+  try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
     const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
@@ -233,7 +233,7 @@ router.put('/content/:id', requireAuth, async (req, res) => {
 });
     }
     
-    const: {
+    const {
       title,
       content,
       section,
@@ -255,7 +255,7 @@ router.put('/content/:id', requireAuth, async (req, res) => {
         title: title || existingContent[0].title,
         content: content || existingContent[0].content,
         section: section || existingContent[0].section,
-        type: type || existingContent[0].type,
+        type type || existingContent[0].type,
         version: newVersion,
         status: 'draft', // Reset to draft when updated,
   updatedAt: new: Date(),
@@ -296,7 +296,7 @@ router.put('/content/:id', requireAuth, async (req, res) => {
 
 // Submit content for review
 router.post('/submit/:id', requireAuth, async (req, res) => {
-  try: {
+  try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
     const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
@@ -354,7 +354,7 @@ router.post('/submit/:id', requireAuth, async (req, res) => {
 
 // Approve content
 router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
-  try: {
+  try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
     
@@ -411,7 +411,7 @@ router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), 
 
 // Reject content
 router.post('/reject/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
-  try: {
+  try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
     
@@ -462,7 +462,7 @@ router.post('/reject/:id', requireAuth, requireRole(['admin', 'super_admin']), a
 
 // Request changes
 router.post('/request-changes/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
-  try: {
+  try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
     
@@ -518,7 +518,7 @@ router.post('/request-changes/:id', requireAuth, requireRole(['admin', 'super_ad
 
 // Get content review history
 router.get('/review-history/:id', requireAuth, async (req, res) => {
-  try: {
+  try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
     const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
@@ -559,7 +559,7 @@ router.get('/review-history/:id', requireAuth, async (req, res) => {
     const result = await Promise.all(;
       workflowHistoryEntries.map(async (entry) => {
         if (!entry.userId) {
-          return: { ...entry, username: null };
+          return { ...entry, username: null };
         }
         
         const user = await db;
@@ -568,7 +568,7 @@ router.get('/review-history/:id', requireAuth, async (req, res) => {
           .where(eq(users.id, entry.userId))
           .limit(1);
           
-        return: {
+        return {
           ...entry,
           username: user[0]?.username || null
 };
@@ -585,7 +585,7 @@ router.get('/review-history/:id', requireAuth, async (req, res) => {
 
 // Archive content
 router.post('/archive/:id', requireAuth, async (req, res) => {
-  try: {
+  try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
     const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
@@ -637,9 +637,9 @@ router.post('/archive/:id', requireAuth, async (req, res) => {
 
 // Run content scheduler manually (admin only)
 router.post('/scheduler/run', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
-  try: {
+  try {
     // Run the scheduler
-    await: runContentScheduler();
+    await runContentScheduler();
     
     // Get updated metrics
     const metrics = getSchedulingMetrics();
@@ -657,7 +657,7 @@ router.post('/scheduler/run', requireAuth, requireRole(['admin', 'super_admin'])
 
 // Get content scheduler metrics (admin only)
 router.get('/scheduler/metrics', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
-  try: {
+  try {
     const metrics = getSchedulingMetrics();
     res.json(metrics);
 } catch (error: unknown) {
@@ -668,7 +668,7 @@ router.get('/scheduler/metrics', requireAuth, requireRole(['admin', 'super_admin
 
 // Reset content scheduler metrics (admin only)
 router.post('/scheduler/reset-metrics', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
-  try: {
+  try {
     resetSchedulingMetrics();
     res.json({
       success: true,
@@ -682,8 +682,8 @@ router.post('/scheduler/reset-metrics', requireAuth, requireRole(['admin', 'supe
 
 // Get upcoming scheduled content
 router.get('/upcoming', requireAuth, async (req, res) => {
-  try: {
-    const scheduledContent = await: getUpcomingScheduledContent();
+  try {
+    const scheduledContent = await getUpcomingScheduledContent();
     res.json(scheduledContent);
 } catch (error: unknown) {
     logger.error('Error getting upcoming scheduled content:', error);
@@ -693,8 +693,8 @@ router.get('/upcoming', requireAuth, async (req, res) => {
 
 // Get expiring content
 router.get('/expiring', requireAuth, async (req, res) => {
-  try: {
-    const expiringContent = await: getExpiringContent();
+  try {
+    const expiringContent = await getExpiringContent();
     res.json(expiringContent);
 } catch (error: unknown) {
     logger.error('Error getting expiring content:', error);
@@ -704,7 +704,7 @@ router.get('/expiring', requireAuth, async (req, res) => {
 
 // Get content analytics
 router.get('/analytics', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
-  try: {
+  try {
     const startDateStr = req.query.start as string;
     const endDateStr = req.query.end as string;
     
@@ -714,12 +714,12 @@ router.get('/analytics', requireAuth, requireRole(['admin', 'super_admin']), asy
     if (startDateStr && endDateStr) {
       startDate = startOfDay(parseISO(startDateStr));
       endDate = endOfDay(parseISO(endDateStr));
-} else: {
+} else {
       endDate = endOfDay(new: Date());
       startDate = startOfDay(subDays(endDate, 30));
 }
     
-    const analytics = await: getAllContentAnalytics();
+    const analytics = await getAllContentAnalytics();
     res.json(analytics);
   } catch (error: unknown) {
     logger.error('Error getting content analytics:', error);

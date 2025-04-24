@@ -5,30 +5,30 @@
  */
 
 // Export the core cryptography functions
-export * from: './QuantumResistantCrypto';
+export * from './QuantumResistantCrypto';
 
 // Export the middleware
-export: { 
+export { 
   createQuantumMiddleware,
   type QuantumMiddlewareOptions 
-} from: './QuantumMiddleware';
+} from './QuantumMiddleware';
 
 // Export the helper functions
-export: { 
+export { 
   getKeyPair,
   secureData,
   processSecuredData,
   secureHash,
   createSecureToken,
   verifySecureToken
-} from: './QuantumHelper';
+} from './QuantumHelper';
 
 // Export a default object for convenient access to all components
-import * as QuantumResistantCrypto from: './QuantumResistantCrypto';
-import: { createQuantumMiddleware } from: './QuantumMiddleware';
-import * as QuantumHelper from: './QuantumHelper';
+import * as QuantumResistantCrypto from './QuantumResistantCrypto';
+import { createQuantumMiddleware } from './QuantumMiddleware';
+import * as QuantumHelper from './QuantumHelper';
 
-export default: {
+export default {
   ...QuantumResistantCrypto,
   createMiddleware: createQuantumMiddleware,
   ...QuantumHelper

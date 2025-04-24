@@ -5,9 +5,9 @@
  * anomaly detection system to identify and block potentially malicious requests.
  */
 
-import express, { Request, Response, NextFunction } from: 'express';
-import: { createAnomalyDetectionMiddleware } from: '../advanced/ml/AnomalyDetection';
-import: { createCustomSecurityMiddleware } from: '../../middleware/securityMiddleware';
+import express, { Request, Response, NextFunction } from 'express';
+import { createAnomalyDetectionMiddleware } from '../advanced/ml/AnomalyDetection';
+import { createCustomSecurityMiddleware } from '../../middleware/securityMiddleware';
 
 const app = express();
 const port = 3001;
@@ -47,12 +47,12 @@ app.post('/api/secure-data', blockHighRiskRequests, (req: Request, res: Response
 
 // Create a route that demonstrates how to manually check for anomalies
 app.post('/api/custom-security', async (req: Request, res: Response, next: NextFunction) => {
-  try: {
+  try {
     // Import anomaly detection
-    const: { detectAnomaly } = require('../advanced/ml/AnomalyDetection');
+    const { detectAnomaly } = require('../advanced/ml/AnomalyDetection');
     
     // Run anomaly detection on this request
-    const anomalyResult = await: detectAnomaly(req);
+    const anomalyResult = await detectAnomaly(req);
     
     // Add anomaly information to the response
     req.securityInfo = {
@@ -77,7 +77,7 @@ app.post('/api/custom-security', async (req: Request, res: Response, next: NextF
           success: false,
           message: 'Please complete security challenge',
           challenge: {
-            type: 'captcha',
+            type 'captcha',
             reason: 'Unusual activity detected'
 },
           requestId: req.securityContext?.requestId || 'unknown'

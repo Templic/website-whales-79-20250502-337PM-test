@@ -5,17 +5,17 @@
  * attempts to automatically remediate common issues.
  */
 
-import * as fs from: 'fs';
-import * as path from: 'path';
-import * as util from: 'util';
-import: { 
+import * as fs from 'fs';
+import * as path from 'path';
+import * as util from 'util';
+import { 
   scanDirectoryForXssVulnerabilities, 
   XssVulnerability,
   XssRiskLevel,
   XssVulnerabilityType
-} from: '../security/xss/XssDetector';
-import: { securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
+} from '../security/xss/XssDetector';
+import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
 
 // Promisify filesystem operations
 const readFile = util.promisify(fs.readFile);
@@ -29,14 +29,14 @@ const modifiedFiles = new Set<string>();
 /**
  * Apply a fix to a specific file
  */
-async function: applyFix(
+async function applyFix(
   filePath: string, 
   vulnerability: XssVulnerability,
   dryRun: boolean = false;
 ): Promise<boolean> {
-  try: {
+  try {
     // Read the file content
-    const content = await: readFile(filePath, 'utf-8');
+    const content = await readFile(filePath, 'utf-8');
     const lines = content.split('\n');
     
     // Get the vulnerable line
@@ -139,7 +139,7 @@ async function: applyFix(
         // For URLs, encode them
         if (line.includes('src') || line.includes('href') || line.includes('data') || line.includes('formaction')) {
           fixedLine = line.replace(matchAttributeSetting, '$1encodeURI($2))');
-} else: {
+} else {
           // For event handlers, this is a security risk that should be manually reviewed
           console.log(`WARNING: Manual fix required for attribute setting at ${filePath}:${vulnerability.line}`);
           return false;
@@ -181,7 +181,7 @@ async function: applyFix(
       // Only write the file if not a dry run
       if (!dryRun) {
         const updatedContent = lines.join('\n');
-        await: writeFile(filePath, updatedContent, 'utf-8');
+        await writeFile(filePath, updatedContent, 'utf-8');
         modifiedFiles.add(filePath);
 }
       
@@ -198,19 +198,19 @@ async function: applyFix(
 /**
  * Check if a file needs import statements for fixes
  */
-async function: addNeededImports(
+async function addNeededImports(
   filePath: string,
   vulnerabilities: XssVulnerability[],
   dryRun: boolean = false;
 ): Promise<boolean> {
-  try: {
+  try {
     // Skip if no vulnerabilities were fixed
     if (!modifiedFiles.has(filePath)) {
       return false;
 }
     
     // Read the file content
-    const content = await: readFile(filePath, 'utf-8');
+    const content = await readFile(filePath, 'utf-8');
     
     // Check if we need to add imports
     const needsDOMPurify = vulnerabilities.some(v => 
@@ -238,7 +238,7 @@ async function: addNeededImports(
     
     if (needsDOMPurify) => {
       if (ext === '.ts' || ext === '.tsx' || ext === '.js' || ext === '.jsx') {
-        importStatements += "import DOMPurify from: 'dompurify';\n";
+        importStatements += "import DOMPurify from 'dompurify';\n";
 }
     }
     
@@ -247,7 +247,7 @@ async function: addNeededImports(
         // Define escape HTML function if using it
         importStatements += `
 // Function to escape HTML special characters
-function: escapeHtml(text: string): string: {
+function escapeHtml(text: string): string: {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -269,7 +269,7 @@ function: escapeHtml(text: string): string: {
     
     // Only write the file if not a dry run
     if (!dryRun) {
-      await: writeFile(filePath, updatedContent, 'utf-8');
+      await writeFile(filePath, updatedContent, 'utf-8');
 }
     
     return true;
@@ -282,7 +282,7 @@ function: escapeHtml(text: string): string: {
 /**
  * Main function to run the XSS vulnerability fixer
  */
-async function: main() {
+async function main() {
   console.log('XSS Vulnerability Automated Remediation Tool');
   console.log('===========================================');
   
@@ -310,11 +310,11 @@ async function: main() {
     console.log('Fixing critical vulnerabilities only');
 } else if (fixHighOnly) => {
     console.log('Fixing high and critical vulnerabilities only');
-} else: {
+} else {
     console.log('Fixing all vulnerabilities');
 }
   
-  try: {
+  try {
     // Log the scan start
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
@@ -337,9 +337,9 @@ async function: main() {
     for (const dir of dirsToScan) {
       if (fs.existsSync(dir)) {
         console.log(`Scanning ${dir}...`);
-        const dirVulnerabilities = await: scanDirectoryForXssVulnerabilities(dir, excludeDirs);
+        const dirVulnerabilities = await scanDirectoryForXssVulnerabilities(dir, excludeDirs);
         vulnerabilities.push(...dirVulnerabilities);
-      } else: {
+      } else {
         console.warn(`Directory not, found: ${dir}`);
       }
     }
@@ -378,11 +378,11 @@ async function: main() {
       for (const vuln of fileVulnerabilities) {
         console.log(`  - ${vuln.pattern.risk} ${vuln.pattern.type}: ${vuln.pattern.name} at line ${vuln.line}`);
         
-        const fixed = await: applyFix(file, vuln, dryRun);
+        const fixed = await applyFix(file, vuln, dryRun);
         if (fixed) => {
           console.log(`    ✓ Fixed`);
           fixedCount++;
-} else: {
+} else {
           console.log(`    ✗ Manual fix required`);
           manualFixCount++;
 }
@@ -390,7 +390,7 @@ async function: main() {
       
       // Add needed imports
       if (!dryRun) {
-        const importsAdded = await: addNeededImports(file, fileVulnerabilities, dryRun);
+        const importsAdded = await addNeededImports(file, fileVulnerabilities, dryRun);
         if (importsAdded) => {
           console.log(`  ✓ Added necessary imports`);
 }
@@ -431,7 +431,7 @@ async function: main() {
       let index = 1;
       for (const vuln of vulnerabilitiesToFix) {
         const fixed = modifiedFiles.has(vuln.file) && ;
-          await: applyFix(vuln.file, vuln, true); // dry run to check if fixable
+          await applyFix(vuln.file, vuln, true); // dry run to check if fixable
         
         if (!fixed) {
           console.log(`${index}. ${vuln.file}:${vuln.line} - ${vuln.pattern.name}`);
@@ -443,7 +443,7 @@ async function: main() {
       }
     }
     
-    return: {
+    return {
       totalVulnerabilities: vulnerabilities.length,
       fixedCount,
       manualFixCount,
@@ -478,4 +478,4 @@ if (require.main === module) {
 }
 
 // Export for use as a module
-export: { main as fixXssVulnerabilities };
+export { main as fixXssVulnerabilities };

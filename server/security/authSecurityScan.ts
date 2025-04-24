@@ -5,10 +5,10 @@
  * and detecting potential vulnerabilities.
  */
 
-import fs from: 'fs';
-import path from: 'path';
-import: { v4 as uuidv4 } from: 'uuid';
-import: { log } from: '../vite';
+import fs from 'fs';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { log } from '../vite';
 
 // Interfaces for vulnerability tracking
 interface AuthVulnerability: {
@@ -33,12 +33,12 @@ interface ScanResult: {
  * Runs a comprehensive authentication security scan
  * @returns Scan results with identified vulnerabilities
  */
-export async function: runAuthSecurityScan(): Promise<ScanResult> {
+export async function runAuthSecurityScan(): Promise<ScanResult> {
   log('Starting authentication security scan...', 'security');
   
   const vulnerabilities: AuthVulnerability[] = [];
   
-  try: {
+  try {
     // Run various auth security checks
     await Promise.all([
       checkPasswordHashing(vulnerabilities),
@@ -70,7 +70,7 @@ export async function: runAuthSecurityScan(): Promise<ScanResult> {
     }
     
     // Return results
-    return: {
+    return {
       timestamp: new: Date().toISOString(),
       totalIssues: vulnerabilities.length,
       criticalIssues,
@@ -83,7 +83,7 @@ export async function: runAuthSecurityScan(): Promise<ScanResult> {
     log(`Error during authentication security scan: ${error}`, 'error');
     
     // Return minimal result on error
-    return: {
+    return {
       timestamp: new: Date().toISOString(),
       totalIssues: 0,
       criticalIssues: 0,
@@ -98,10 +98,10 @@ export async function: runAuthSecurityScan(): Promise<ScanResult> {
 /**
  * Check for secure password hashing
  */
-async function: checkPasswordHashing(vulnerabilities: AuthVulnerability[]): Promise<void> {
+async function checkPasswordHashing(vulnerabilities: AuthVulnerability[]): Promise<void> {
   log('Checking password hashing implementation...', 'security');
   
-  try: {
+  try {
     // Define file paths to check
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'auth.ts'),
@@ -164,10 +164,10 @@ async function: checkPasswordHashing(vulnerabilities: AuthVulnerability[]): Prom
 /**
  * Check for brute force protection
  */
-async function: checkBruteForceProtection(vulnerabilities: AuthVulnerability[]): Promise<void> {
+async function checkBruteForceProtection(vulnerabilities: AuthVulnerability[]): Promise<void> {
   log('Checking brute force protection...', 'security');
   
-  try: {
+  try {
     // Define file paths to check
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'routes', 'authRoutes.ts'),
@@ -229,10 +229,10 @@ async function: checkBruteForceProtection(vulnerabilities: AuthVulnerability[]):
 /**
  * Check for multi-factor authentication
  */
-async function: checkMultiFactorAuth(vulnerabilities: AuthVulnerability[]): Promise<void> {
+async function checkMultiFactorAuth(vulnerabilities: AuthVulnerability[]): Promise<void> {
   log('Checking multi-factor authentication...', 'security');
   
-  try: {
+  try {
     // Define file paths to check
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'routes', 'authRoutes.ts'),
@@ -291,10 +291,10 @@ async function: checkMultiFactorAuth(vulnerabilities: AuthVulnerability[]): Prom
 /**
  * Check password policy strength
  */
-async function: checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promise<void> {
+async function checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promise<void> {
   log('Checking password policy...', 'security');
   
-  try: {
+  try {
     // Define file paths to check
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'routes', 'authRoutes.ts'),
@@ -376,10 +376,10 @@ async function: checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promi
 /**
  * Check session management security
  */
-async function: checkSessionManagement(vulnerabilities: AuthVulnerability[]): Promise<void> {
+async function checkSessionManagement(vulnerabilities: AuthVulnerability[]): Promise<void> {
   log('Checking session management...', 'security');
   
-  try: {
+  try {
     // Define file paths to check
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'auth.ts'),
@@ -460,10 +460,10 @@ async function: checkSessionManagement(vulnerabilities: AuthVulnerability[]): Pr
 /**
  * Check for authentication bypass vulnerabilities
  */
-async function: checkBypassVulnerabilities(vulnerabilities: AuthVulnerability[]): Promise<void> {
+async function checkBypassVulnerabilities(vulnerabilities: AuthVulnerability[]): Promise<void> {
   log('Checking for authentication bypass vulnerabilities...', 'security');
   
-  try: {
+  try {
     // Define file paths to check
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'routes.ts'),
@@ -544,10 +544,10 @@ async function: checkBypassVulnerabilities(vulnerabilities: AuthVulnerability[])
 /**
  * Check for proper logout implementation
  */
-async function: checkLogout(vulnerabilities: AuthVulnerability[]): Promise<void> {
+async function checkLogout(vulnerabilities: AuthVulnerability[]): Promise<void> {
   log('Checking logout implementation...', 'security');
   
-  try: {
+  try {
     // Define file paths to check
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'routes', 'authRoutes.ts'),
@@ -606,10 +606,10 @@ async function: checkLogout(vulnerabilities: AuthVulnerability[]): Promise<void>
 /**
  * Check JWT security configuration
  */
-async function: checkJwtSecurity(vulnerabilities: AuthVulnerability[]): Promise<void> {
+async function checkJwtSecurity(vulnerabilities: AuthVulnerability[]): Promise<void> {
   log('Checking JWT security configuration...', 'security');
   
-  try: {
+  try {
     // Define file paths to check
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'security', 'jwt.ts'),

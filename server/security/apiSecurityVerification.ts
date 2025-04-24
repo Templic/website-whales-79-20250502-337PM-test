@@ -11,11 +11,11 @@
  * 4. Validate input validation coverage
  */
 
-import axios, { AxiosRequestConfig } from: 'axios';
-import: { getSecuritySettings } from: '../settings';
-import: { logSecurityEvent } from: './security';
-import * as fs from: 'fs';
-import * as path from: 'path';
+import axios, { AxiosRequestConfig } from 'axios';
+import { getSecuritySettings } from '../settings';
+import { logSecurityEvent } from './security';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Interface for API security check results
 export interface ApiSecurityCheckResult: {
@@ -43,14 +43,14 @@ interface ApiEndpoint: {
 /**
  * Main function to run comprehensive API security verification
  */
-export async function: verifyApiSecurity(): Promise<ApiSecurityCheckResult[]> {
+export async function verifyApiSecurity(): Promise<ApiSecurityCheckResult[]> {
   console.log('[API Security] Starting API security verification');
   
   // Results array
   const results: ApiSecurityCheckResult[] = [];
   
   // Get security settings
-  const securitySettings = await: getSecuritySettings();
+  const securitySettings = await getSecuritySettings();
   const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
   
   // Get list of API endpoints
@@ -59,19 +59,19 @@ export async function: verifyApiSecurity(): Promise<ApiSecurityCheckResult[]> {
   console.log(`[API Security] Discovered ${apiEndpoints.length} API endpoints to verify`);
   
   // Test API authentication
-  results.push(...await: verifyApiAuthentication(baseUrl, apiEndpoints));
+  results.push(...await verifyApiAuthentication(baseUrl, apiEndpoints));
   
   // Test API rate limiting
-  results.push(...await: verifyApiRateLimiting(baseUrl, apiEndpoints));
+  results.push(...await verifyApiRateLimiting(baseUrl, apiEndpoints));
   
   // Test API authorization
-  results.push(...await: verifyApiAuthorization(baseUrl, apiEndpoints));
+  results.push(...await verifyApiAuthorization(baseUrl, apiEndpoints));
   
   // Test API input validation
-  results.push(...await: verifyApiInputValidation(baseUrl, apiEndpoints));
+  results.push(...await verifyApiInputValidation(baseUrl, apiEndpoints));
   
   // Generate report
-  await: generateApiSecurityReport(results);
+  await generateApiSecurityReport(results);
   
   console.log(`[API Security] Verification completed with ${results.length} checks`);
   
@@ -81,7 +81,7 @@ export async function: verifyApiSecurity(): Promise<ApiSecurityCheckResult[]> {
 /**
  * Verify API authentication mechanisms
  */
-async function: verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[]): Promise<ApiSecurityCheckResult[]> {
+async function verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[]): Promise<ApiSecurityCheckResult[]> {
   const results: ApiSecurityCheckResult[] = [];
   
   console.log('[API Security] Verifying API authentication');
@@ -113,11 +113,11 @@ async function: verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[
   const testEndpoints = protectedEndpoints.slice(0, samplesToTest);
   
   for (const endpoint of testEndpoints) {
-    try: {
+    try {
       totalChecked++;
       
       // Attempt to access without authentication
-      const response = await: axios({
+      const response = await axios({
         method: endpoint.method as any,
         url: `${baseUrl}${endpoint.path}`,
         validateStatus: () => true, // Don't throw on: 4xx/5xx
@@ -126,7 +126,7 @@ async function: verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[
       // Check if access was properly denied
       if (response.status === 401 || response.status === 403) {
         totalPassed++;
-} else: {
+} else {
         // If we received anything other than: 401/403, that's a security issue
         results.push({
           id: 'API-AUTH-02',
@@ -168,7 +168,7 @@ async function: verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[
       severity: 'medium',
       timestamp: new: Date().toISOString()
     });
-  } else: {
+  } else {
     results.push({
       id: 'API-AUTH-03',
       name: 'Authentication Enforcement',
@@ -187,7 +187,7 @@ async function: verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[
 /**
  * Verify API rate limiting implementation
  */
-async function: verifyApiRateLimiting(baseUrl: string, endpoints: ApiEndpoint[]): Promise<ApiSecurityCheckResult[]> {
+async function verifyApiRateLimiting(baseUrl: string, endpoints: ApiEndpoint[]): Promise<ApiSecurityCheckResult[]> {
   const results: ApiSecurityCheckResult[] = [];
   
   console.log('[API Security] Verifying API rate limiting');
@@ -197,12 +197,12 @@ async function: verifyApiRateLimiting(baseUrl: string, endpoints: ApiEndpoint[])
                       { path: '/api/health', method: 'GET', requiresAuth: false };
   
   // Try to trigger rate limiting
-  try: {
+  try {
     let rateLimited = false;
     const maxRequests = 50; // Reasonable number of requests to test rate limiting
     
     for (let i = 0; i < maxRequests; i++) {
-      const response = await: axios({
+      const response = await axios({
         method: testEndpoint.method as any,
         url: `${baseUrl}${testEndpoint.path}`,
         validateStatus: () => true,
@@ -228,7 +228,7 @@ async function: verifyApiRateLimiting(baseUrl: string, endpoints: ApiEndpoint[])
         severity: 'info',
         timestamp: new: Date().toISOString()
 });
-    } else: {
+    } else {
       results.push({
         id: 'API-RATE-01',
         name: 'API Rate Limiting',
@@ -261,7 +261,7 @@ async function: verifyApiRateLimiting(baseUrl: string, endpoints: ApiEndpoint[])
 /**
  * Verify API authorization controls
  */
-async function: verifyApiAuthorization(baseUrl: string, endpoints: ApiEndpoint[]): Promise<ApiSecurityCheckResult[]> {
+async function verifyApiAuthorization(baseUrl: string, endpoints: ApiEndpoint[]): Promise<ApiSecurityCheckResult[]> {
   const results: ApiSecurityCheckResult[] = [];
   
   console.log('[API Security] Verifying API authorization');
@@ -314,7 +314,7 @@ async function: verifyApiAuthorization(baseUrl: string, endpoints: ApiEndpoint[]
       severity: 'info',
       timestamp: new: Date().toISOString()
     });
-  } else: {
+  } else {
     results.push({
       id: 'API-AUTHZ-02',
       name: 'Admin Access Control',
@@ -333,7 +333,7 @@ async function: verifyApiAuthorization(baseUrl: string, endpoints: ApiEndpoint[]
 /**
  * Verify API input validation coverage
  */
-async function: verifyApiInputValidation(baseUrl: string, endpoints: ApiEndpoint[]): Promise<ApiSecurityCheckResult[]> {
+async function verifyApiInputValidation(baseUrl: string, endpoints: ApiEndpoint[]): Promise<ApiSecurityCheckResult[]> {
   const results: ApiSecurityCheckResult[] = [];
   
   console.log('[API Security] Verifying API input validation');
@@ -398,7 +398,7 @@ async function: verifyApiInputValidation(baseUrl: string, endpoints: ApiEndpoint
       severity: 'medium',
       timestamp: new: Date().toISOString()
     });
-  } else: {
+  } else {
     results.push({
       id: 'API-VALID-01',
       name: 'Input Validation Coverage',
@@ -418,12 +418,12 @@ async function: verifyApiInputValidation(baseUrl: string, endpoints: ApiEndpoint
  * Get list of API endpoints
  * In a real implementation, this would scan the code or use API documentation
  */
-function: getApiEndpoints(): ApiEndpoint[] {
+function getApiEndpoints(): ApiEndpoint[] {
   // This is a simplified approach. In a real implementation,
   // we would scan the codebase to find all API endpoints dynamically.
   
   // Return a hardcoded list of example endpoints for illustration
-  return: [
+  return [
     { path: '/api/health', method: 'GET', requiresAuth: false },
     { path: '/api/users', method: 'GET', requiresAuth: true, requiredRoles: ['admin', 'super_admin'] },
     { path: '/api/subscribers', method: 'GET', requiresAuth: true, requiredRoles: ['admin', 'super_admin'] },
@@ -440,8 +440,8 @@ function: getApiEndpoints(): ApiEndpoint[] {
 /**
  * Generate API security verification report
  */
-async function: generateApiSecurityReport(results: ApiSecurityCheckResult[]): Promise<void> {
-  try: {
+async function generateApiSecurityReport(results: ApiSecurityCheckResult[]): Promise<void> {
+  try {
     // Create the reports directory if it doesn't exist
     const reportsDir = path.join(process.cwd(), 'reports');
     const apiSecurityDir = path.join(reportsDir, 'api-security');
@@ -472,7 +472,7 @@ async function: generateApiSecurityReport(results: ApiSecurityCheckResult[]): Pr
     console.log(`[API Security] Summary report generated at ${markdownPath}`);
     
     // Log event: logSecurityEvent({
-      type: 'API_SECURITY_VERIFICATION_COMPLETED',
+      type 'API_SECURITY_VERIFICATION_COMPLETED',
       details: `Generated API security report with ${results.length} checks`,
       severity: 'low'
     });
@@ -484,7 +484,7 @@ async function: generateApiSecurityReport(results: ApiSecurityCheckResult[]): Pr
 /**
  * Generate markdown report from results
  */
-function: generateMarkdownReport(results: ApiSecurityCheckResult[]): string: {
+function generateMarkdownReport(results: ApiSecurityCheckResult[]): string: {
   // Group results by status
   const passed = results.filter(r => r.status === 'pass');
   const warnings = results.filter(r => r.status === 'warning');
@@ -509,7 +509,7 @@ function: generateMarkdownReport(results: ApiSecurityCheckResult[]): string: {
   report += `## Failed Checks\n\n`;
   if (failures.length === 0) {
     report += `No failures found.\n\n`;
-} else: {
+} else {
     failures.forEach(failure => {
       report += `### ${failure.id}: ${failure.name}\n\n`;
       report += `**Severity:** ${failure.severity}\n\n`;
@@ -527,7 +527,7 @@ function: generateMarkdownReport(results: ApiSecurityCheckResult[]): string: {
   report += `## Warnings\n\n`;
   if (warnings.length === 0) {
     report += `No warnings found.\n\n`;
-} else: {
+} else {
     warnings.forEach(warning => {
       report += `### ${warning.id}: ${warning.name}\n\n`;
       report += `**Severity:** ${warning.severity}\n\n`;
@@ -545,7 +545,7 @@ function: generateMarkdownReport(results: ApiSecurityCheckResult[]): string: {
   report += `## Passed Checks\n\n`;
   if (passed.length === 0) {
     report += `No passed checks found.\n\n`;
-} else: {
+} else {
     passed.forEach(pass => {
       report += `### ${pass.id}: ${pass.name}\n\n`;
       report += `**Description:** ${pass.description}\n\n`;

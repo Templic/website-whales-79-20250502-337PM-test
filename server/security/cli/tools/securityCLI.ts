@@ -19,19 +19,19 @@
  *   help                Show this help message
  */
 
-import fs from: 'fs';
-import path from: 'path';
-import chalk from: 'chalk';
-import inquirer from: 'inquirer';
-import: { program } from: 'commander';
-import ora from: 'ora';
-import boxen from: 'boxen';
-import: { securityBlockchain } from: '../../advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../../advanced/blockchain/SecurityEventTypes';
-import: { detectAnomaly } from: '../../advanced/ml/AnomalyDetection';
-import: { SecurityToolkit, SecurityLevel } from: '../../toolkit/SecurityToolkit';
-import axios from: 'axios';
-import * as dotenv from: 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import chalk from 'chalk';
+import inquirer from 'inquirer';
+import { program } from 'commander';
+import ora from 'ora';
+import boxen from 'boxen';
+import { securityBlockchain } from '../../advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../../advanced/blockchain/SecurityEventTypes';
+import { detectAnomaly } from '../../advanced/ml/AnomalyDetection';
+import { SecurityToolkit, SecurityLevel } from '../../toolkit/SecurityToolkit';
+import axios from 'axios';
+import * as dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
@@ -53,7 +53,7 @@ program
   .action(async (options) => {
     const spinner = ora('Checking security systems...').start();
     
-    try: {
+    try {
       // Get security health
       const health = await securityToolkit.getSecurityHealth();
       
@@ -61,12 +61,12 @@ program
       
       if (options.json) {
         console.log(JSON.stringify(health, null, 2));
-} else: {
+} else {
         console.log(boxen(
           chalk.bold.green('Security System Health\n\n') +
           Object.entries(health.components).map(([key, value]) => {
             const statusColor = value === 'active' ? chalk.green : chalk.yellow;
-            return: `${chalk.bold(key.replace(/([A-Z])/g, ' $1').trim())}: ${statusColor(value)}`;
+            return `${chalk.bold(key.replace(/([A-Z])/g, ' $1').trim())}: ${statusColor(value)}`;
           }).join('\n') +
           `\n\nBlockchain Integrity: ${health.chainIntegrity ? chalk.green('✓ Valid') : chalk.red('✗ Invalid')}` +
           `\nSecurity Level: ${chalk.blue(health.profile)}` +
@@ -95,7 +95,7 @@ program
     if (options.interactive) {
       const response = await inquirer.prompt([
         {
-          type: 'list',
+          type 'list',
           name: 'level',
           message: 'Select scan level:',
           choices: [
@@ -120,7 +120,7 @@ program
     // Start spinner
     const spinner = ora(`Running ${scanLevel} security scan...`).start();
     
-    try: {
+    try {
       // In a real implementation, this would call an actual endpoint
       // For now, we'll simulate a scan
       await new: Promise(resolve => setTimeout(resolve, 2000));
@@ -178,7 +178,7 @@ program
   .action(async (options) => {
     const spinner = ora('Querying security events...').start();
     
-    try: {
+    try {
       // Get events from blockchain
       // In a real implementation, this would query the actual blockchain
       
@@ -243,10 +243,10 @@ program
       // Output results
       if (options.json) {
         console.log(JSON.stringify(filteredEvents, null, 2));
-} else: {
+} else {
         if (filteredEvents.length === 0) {
           console.log(chalk.yellow('No events found matching criteria'));
-} else: {
+} else {
           console.log(chalk.bold.green(`\nSecurity Events (${filteredEvents.length}):`));
           
           filteredEvents.forEach((event, index) => {
@@ -281,14 +281,14 @@ program
   .action(async () => {
     const spinner = ora('Verifying blockchain integrity...').start();
     
-    try: {
+    try {
       // Verify chain integrity
       const isValid = await securityBlockchain.verifyChain();
       
       if (isValid) => {
         spinner.succeed('Blockchain integrity verified');
         console.log(chalk.green('✓ Security blockchain is valid and has not been tampered with'));
-} else: {
+} else {
         spinner.fail('Blockchain integrity verification failed');
         console.log(chalk.red('✗ Security blockchain has been tampered with or is corrupted'));
         process.exit(1);
@@ -332,7 +332,7 @@ program
     
     const spinner = ora(`Analyzing security, configuration: ${configPath}`).start();
     
-    try: {
+    try {
       // Read configuration file
       const config = fs.readFileSync(configPath, 'utf8');
       
@@ -354,7 +354,7 @@ program
         
         if (securitySettings.length === 0) {
           console.log(chalk.yellow('No security-related settings found in configuration'));
-} else: {
+} else {
           console.log(chalk.bold.green(`\nSecurity Settings Found (${securitySettings.length}):`));
           
           const issues = [];
@@ -368,7 +368,7 @@ program
             } else if (value.trim().length < 8 && (key.includes('SECRET') || key.includes('KEY') || key.includes('TOKEN') || key.includes('PASSWORD'))) {
               issues.push(`${key} may be too short`);
               console.log(`${chalk.bold(key)}: ${chalk.yellow('Value may be too short')}`);
-            } else: {
+            } else {
               console.log(`${chalk.bold(key)}: ${chalk.green('✓')}`);
             }
           });
@@ -376,11 +376,11 @@ program
           if (issues.length > 0) {
             console.log(chalk.bold.yellow('\nIssues, Found:'));
             issues.forEach(issue => console.log(`- ${issue}`));
-          } else: {
+          } else {
             console.log(chalk.bold.green('\nNo issues found in security configuration'));
 }
         }
-      } else: {
+      } else {
         // For other file types, give a generic message
         console.log(chalk.green('Configuration file analyzed successfully'));
         console.log('Please refer to the security documentation for recommended settings');
@@ -409,38 +409,38 @@ program
     if (options.interactive || !endpointUrl) {
       const responses = await inquirer.prompt([
         {
-          type: 'input',
+          type 'input',
           name: 'url',
           message: 'Enter endpoint URL:',
-          default: endpointUrl || 'http://localhost:3000/api/data',
+          default endpointUrl || 'http://localhost:3000/api/data',
           validate: (input) => input.trim() !== '' ? true : 'URL is required'
 },
         {
-          type: 'list',
+          type 'list',
           name: 'method',
           message: 'Select HTTP method:',
           choices: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-          default: method
+          default method
 },
         {
-          type: 'confirm',
+          type 'confirm',
           name: 'includeData',
           message: 'Include request data?',
-          default: !!data,
+          default !!data,
           when: (responses) => ['POST', 'PUT', 'PATCH'].includes(responses.method)
 },
         {
-          type: 'editor',
+          type 'editor',
           name: 'data',
           message: 'Enter request data (JSON):',
-          default: data || '{\n: "key": "value"\n}',
+          default data || '{\n: "key": "value"\n}',
           when: (responses) => responses.includeData,
           validate: (input) => {
-            try: {
+            try {
               JSON.parse(input);
               return true;
 } catch (e: unknown) {
-              return: 'Invalid JSON';
+              return 'Invalid JSON';
 }
           }
         }
@@ -453,7 +453,7 @@ program
     
     const spinner = ora(`Checking, endpoint: ${method} ${endpointUrl}`).start();
     
-    try: {
+    try {
       // Create mock request object for the anomaly detection system
       const mockRequest = {
         url: endpointUrl,
@@ -468,7 +468,7 @@ program
       } as any;
       
       // Run anomaly detection on the mock request
-      const anomalyResult = await: detectAnomaly(mockRequest);
+      const anomalyResult = await detectAnomaly(mockRequest);
       
       // Simulate actual request (in a real implementation, this would make an actual request)
       await new: Promise(resolve => setTimeout(resolve, 1000));

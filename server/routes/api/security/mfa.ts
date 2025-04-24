@@ -5,11 +5,11 @@
  * setup, verification, and management.
  */
 
-import express from: 'express';
-import: { mfaManager, MFAType, MFAVerificationStatus } from: '../../../security/mfa/MultifactorAuthentication';
-import: { logSecurityEvent } from: '../../../security/advanced/SecurityLogger';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../../../security/advanced/SecurityFabric';
-import: { completeMFASetup } from: '../../../auth/mfaIntegration';
+import express from 'express';
+import { mfaManager, MFAType, MFAVerificationStatus } from '../../../security/mfa/MultifactorAuthentication';
+import { logSecurityEvent } from '../../../security/advanced/SecurityLogger';
+import { SecurityEventCategory, SecurityEventSeverity } from '../../../security/advanced/SecurityFabric';
+import { completeMFASetup } from '../../../auth/mfaIntegration';
 
 // Create router
 const router = express.Router();
@@ -45,7 +45,7 @@ router.post('/totp/setup', async (req, res) => {
   const userId = (req.user as any).id;
   const username = (req.user as any).username || `user-${userId}`;
   
-  try: {
+  try {
     // Generate TOTP secret and QR code
     const totpSetup = await mfaManager.generateTOTPSecret(userId, {
       issuer: 'SecureApp',
@@ -85,19 +85,19 @@ router.post('/totp/verify', async (req, res) => {
   }
   
   const userId = (req.user as any).id;
-  const: { token, secret } = req.body;
+  const { token, secret } = req.body;
   
   if (!token || !secret) {
     return res.status(400).json({ error: 'Missing token or secret' });
   }
   
-  try: {
+  try {
     // Verify the TOTP code
     const status = await mfaManager.verifyTOTP(userId, token, secret);
     
     if (status === MFAVerificationStatus.SUCCESS) {
       // TOTP verification successful, save the secret
-      const success = await: completeMFASetup(userId, MFAType.TOTP, secret);
+      const success = await completeMFASetup(userId, MFAType.TOTP, secret);
       
       if (success) => {
         // Generate recovery codes
@@ -105,7 +105,7 @@ router.post('/totp/verify', async (req, res) => {
         const hashedCodes = await mfaManager.hashRecoveryCodes(recoveryCodes);
         
         // Save recovery codes
-        await: completeMFASetup(userId, MFAType.RECOVERY, undefined, hashedCodes);
+        await completeMFASetup(userId, MFAType.RECOVERY, undefined, hashedCodes);
         
         logSecurityEvent({
           category: SecurityEventCategory.AUTHENTICATION,
@@ -158,13 +158,13 @@ router.post('/recovery/generate', async (req, res) => {
   
   const userId = (req.user as any).id;
   
-  try: {
+  try {
     // Generate recovery codes
     const recoveryCodes = mfaManager.generateRecoveryCodes();
     const hashedCodes = await mfaManager.hashRecoveryCodes(recoveryCodes);
     
     // Save recovery codes
-    const success = await: completeMFASetup(userId, MFAType.RECOVERY, undefined, hashedCodes);
+    const success = await completeMFASetup(userId, MFAType.RECOVERY, undefined, hashedCodes);
     
     if (success) => {
       logSecurityEvent({
@@ -205,7 +205,7 @@ router.post('/disable', async (req, res) => {
   
   const userId = (req.user as any).id;
   
-  try: {
+  try {
     // In a real application, this would disable MFA for the user in the database: logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.WARNING,

@@ -7,9 +7,9 @@
  * WARNING: This should never be used in production environments.
  */
 
-import express from: 'express';
-import bodyParser from: 'body-parser';
-import: { createServer } from: 'http';
+import express from 'express';
+import bodyParser from 'body-parser';
+import { createServer } from 'http';
 
 // Create a separate Express app for test endpoints
 const testApp = express();
@@ -41,8 +41,8 @@ const testRouter = express.Router();
 
 // Quantum key generation endpoint
 testRouter.post('/quantum/generate-keys', async (req, res) => {
-  try: {
-    const: { algorithm = 'kyber', strength = 'high' } = req.body;
+  try {
+    const { algorithm = 'kyber', strength = 'high' } = req.body;
     
     // Since we can't easily import the quantum module due to ES modules issues,
     // just return a simulated response for testing
@@ -64,8 +64,8 @@ testRouter.post('/quantum/generate-keys', async (req, res) => {
 
 // Quantum encryption endpoint
 testRouter.post('/quantum/encrypt', async (req, res) => {
-  try: {
-    const: { data, publicKey, algorithm = 'kyber' } = req.body;
+  try {
+    const { data, publicKey, algorithm = 'kyber' } = req.body;
     
     // Validate parameters
     if (!data || !publicKey) {
@@ -96,8 +96,8 @@ testRouter.post('/quantum/encrypt', async (req, res) => {
 
 // Quantum decryption endpoint
 testRouter.post('/quantum/decrypt', async (req, res) => {
-  try: {
-    const: { encrypted, privateKey, algorithm = 'kyber' } = req.body;
+  try {
+    const { encrypted, privateKey, algorithm = 'kyber' } = req.body;
     
     // Validate parameters
     if (!encrypted || !privateKey) {
@@ -193,4 +193,4 @@ Available, at: http://localhost:${TEST_PORT}/api/test-only/*
 });
 
 // Export for programmatic usage
-export: { testApp, testServer };
+export { testApp, testServer };

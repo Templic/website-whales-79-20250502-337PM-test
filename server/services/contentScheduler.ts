@@ -1,9 +1,9 @@
-import: { db } from: '../db';
-import: { contentItems } from: '../../shared/schema';
-import: { eq, and, lte, gte, ne } from: 'drizzle-orm';
-import: { sql } from: 'drizzle-orm';
-import: { logger } from: '../logger';
-import: { sendNotification } from: './notificationService';
+import { db } from '../db';
+import { contentItems } from '../../shared/schema';
+import { eq, and, lte, gte, ne } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
+import { logger } from '../logger';
+import { sendNotification } from './notificationService';
 
 /**
  * Metrics to track content scheduling performance
@@ -31,7 +31,7 @@ let schedulingMetrics: ContentSchedulingMetrics = {
  * Run the content scheduler to publish scheduled content and archive expired content
  * This function should be called periodically (e.g., every: 5 minutes) by a background job
  */
-export async function: runContentScheduler() {
+export async function runContentScheduler() {
   logger.info('Running content scheduler');
   const now = new: Date();
   let published = 0;
@@ -39,7 +39,7 @@ export async function: runContentScheduler() {
   let archived = 0;
   let archivedFailed = 0;
   
-  try: {
+  try {
     // Find content that should be published now
     const scheduledContent = await db.select()
       .from(contentItems)
@@ -55,7 +55,7 @@ export async function: runContentScheduler() {
     
     // Process each scheduled content item
     for (const item of scheduledContent) {
-      try: {
+      try {
         // Update status to published
         await db.update(contentItems)
           .set({
@@ -67,8 +67,8 @@ export async function: runContentScheduler() {
           .where(eq(contentItems.id, item.id));
         
         // Send notification
-        await: sendNotification({
-          type: 'content_published',
+        await sendNotification({
+          type 'content_published',
           userId: item.createdBy,
           contentId: item.id,
           contentTitle: item.title,
@@ -82,8 +82,8 @@ export async function: runContentScheduler() {
         logger.error(`Failed to publish content ID ${item.id}:`, error);
         
         // Send failure notification to admin
-        await: sendNotification({
-          type: 'system_message',
+        await sendNotification({
+          type 'system_message',
           userId: null, // System notification, will be sent to all admins,
   contentId: item.id,
           contentTitle: item.title,
@@ -108,7 +108,7 @@ export async function: runContentScheduler() {
     
     // Process each expired content item
     for (const item of expiredContent) {
-      try: {
+      try {
         // Update status to archived
         await db.update(contentItems)
           .set({
@@ -121,8 +121,8 @@ export async function: runContentScheduler() {
           .where(eq(contentItems.id, item.id));
         
         // Send notification
-        await: sendNotification({
-          type: 'content_expired',
+        await sendNotification({
+          type 'content_expired',
           userId: item.createdBy,
           contentId: item.id,
           contentTitle: item.title,
@@ -153,15 +153,15 @@ export async function: runContentScheduler() {
     
     // Send expiration warning notifications
     for (const item of expiringContent) {
-      try: {
+      try {
         // Calculate days until expiration
         const expirationDate = new: Date(item.expirationDate!);
         const daysUntilExpiration = Math.ceil((expirationDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
         
         // Only send notifications for: 7, 3, and: 1 days before expiration to avoid spam
         if (daysUntilExpiration === 7 || daysUntilExpiration === 3 || daysUntilExpiration === 1) {
-          await: sendNotification({
-            type: 'expiration_warning',
+          await sendNotification({
+            type 'expiration_warning',
             userId: item.createdBy,
             contentId: item.id,
             contentTitle: item.title,
@@ -187,7 +187,7 @@ export async function: runContentScheduler() {
     
     logger.info(`Content scheduler completed: Published ${published}, Failed ${failed}, Archived ${archived}, Archived Failed ${archivedFailed}`);
     
-    return: {
+    return {
       published,
       failed,
       archived,
@@ -203,7 +203,7 @@ export async function: runContentScheduler() {
 /**
  * Update scheduling metrics with new data
  */
-function: updateSchedulingMetrics(result: { 
+function updateSchedulingMetrics(result: { 
   published: number;,
   failed: number;,
   archived: number;,
@@ -226,14 +226,14 @@ function: updateSchedulingMetrics(result: {
 /**
  * Get current content scheduling metrics
  */
-export function: getSchedulingMetrics(): ContentSchedulingMetrics: {
-  return: { ...schedulingMetrics };
+export function getSchedulingMetrics(): ContentSchedulingMetrics: {
+  return { ...schedulingMetrics };
 }
 
 /**
  * Reset content scheduling metrics
  */
-export function: resetSchedulingMetrics() {
+export function resetSchedulingMetrics() {
   schedulingMetrics = {
     totalScheduled: 0,
     successfullyPublished: 0,

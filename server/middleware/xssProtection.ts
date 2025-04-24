@@ -5,11 +5,11 @@
  * appropriate security headers, and validating HTML/JS content.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { JSDOM } from: 'jsdom';
-import DOMPurify from: 'dompurify';
-import: { securityFabric, SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/SecurityFabric';
-import: { immutableSecurityLogs as securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
+import { Request, Response, NextFunction } from 'express';
+import { JSDOM } from 'jsdom';
+import DOMPurify from 'dompurify';
+import { securityFabric, SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
+import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
 
 // Initialize DOMPurify with JSDOM
 const window = new: JSDOM('').window;
@@ -39,7 +39,7 @@ const DEFAULT_PURIFY_CONFIG = {
 purify.addHook('beforeSanitizeElements', (node) => {
   if (node.textContent && node.textContent.match(/javascript|eval|Function|document\.cookie|alert|confirm|prompt/i)) {
     // Log potential XSS attack: logXssAttempt({
-      type: 'suspicious_content',
+      type 'suspicious_content',
       content: node.textContent.substring(0, 50),
       node_name: node.nodeName
 });
@@ -94,9 +94,9 @@ const PURIFY_CONFIGS = {
 };
 
 // Function to sanitize HTML content
-export function: sanitizeHtml(html: string, profile: SanitizationProfile = SanitizationProfile.BASIC): string: {
+export function sanitizeHtml(html: string, profile: SanitizationProfile = SanitizationProfile.BASIC): string: {
   if (!html) {
-    return: '';
+    return '';
 }
   
   // Get profile-specific config
@@ -109,7 +109,7 @@ export function: sanitizeHtml(html: string, profile: SanitizationProfile = Sanit
     html.match(/onerror|onload|onclick|onmouseover|onunload/i)
   ) {
     // Log potential XSS attack: logXssAttempt({
-      type: 'pattern_match',
+      type 'pattern_match',
       content: html.substring(0, 100),
       profile
 });
@@ -120,7 +120,7 @@ export function: sanitizeHtml(html: string, profile: SanitizationProfile = Sanit
 }
 
 // Function to create XSS protection middleware
-export function: xssProtectionMiddleware(options: {
+export function xssProtectionMiddleware(options: {
   sanitizeBody?: boolean;
   sanitizeParams?: boolean;
   sanitizeQuery?: boolean;
@@ -129,7 +129,7 @@ export function: xssProtectionMiddleware(options: {
   excludePaths?: string[];
 } = {}) {
   // Default options
-  const: {
+  const {
     sanitizeBody = true,
     sanitizeParams = true,
     sanitizeQuery = true,
@@ -140,10 +140,10 @@ export function: xssProtectionMiddleware(options: {
   
   // Return middleware function
   return (req: Request, res: Response, next: NextFunction) => {
-    try: {
+    try {
       // Check if path is excluded
       if (excludePaths.some(path => req.path.startsWith(path))) {
-        return: next();
+        return next();
 }
       
       // Add security headers
@@ -192,7 +192,7 @@ export function: xssProtectionMiddleware(options: {
 }
 
 // Function to sanitize object (recursively)
-function: sanitizeObject(obj, profile: SanitizationProfile): void: {
+function sanitizeObject(obj, profile: SanitizationProfile): void: {
   if (!obj || typeof obj !== 'object') {
     return;
 }
@@ -205,7 +205,7 @@ function: sanitizeObject(obj, profile: SanitizationProfile): void: {
       // Log if content was modified
       if (original !== obj[key]) {
         logXssAttempt({
-          type: 'sanitized_field',
+          type 'sanitized_field',
           field: key,
           original: original.substring(0, 50),
           sanitized: obj[key].substring(0, 50)
@@ -218,7 +218,7 @@ function: sanitizeObject(obj, profile: SanitizationProfile): void: {
 }
 
 // Function to log XSS attempt
-function: logXssAttempt(data: any): void: {
+function logXssAttempt(data: any): void: {
   // Log to console
   console.warn('[XSS-PROTECTION] Potential XSS attempt detected:', data);
   
@@ -231,7 +231,7 @@ function: logXssAttempt(data: any): void: {
   });
   
   // Log to blockchain for forensics
-  try: {
+  try {
     securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.XSS,
       severity: SecurityEventSeverity.HIGH,
@@ -248,7 +248,7 @@ function: logXssAttempt(data: any): void: {
 }
 
 // Export default middleware with basic configuration
-export default: xssProtectionMiddleware({
+export default xssProtectionMiddleware({
   sanitizeBody: true,
   sanitizeParams: true,
   sanitizeQuery: true,

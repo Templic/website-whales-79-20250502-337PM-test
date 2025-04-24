@@ -1,7 +1,7 @@
-import express from: 'express';
-import: { storage } from: '../storage';
-import: { z } from: 'zod';
-import: { insertContentHistorySchema, insertContentItemSchema, insertContentUsageSchema } from: '../../shared/schema';
+import express from 'express';
+import { storage } from '../storage';
+import { z } from 'zod';
+import { insertContentHistorySchema, insertContentItemSchema, insertContentUsageSchema } from '../../shared/schema';
 
 const router = express.Router();
 
@@ -11,9 +11,9 @@ const router = express.Router();
  * @access  Admin
  */
 router.get('/', async (req, res) => {
-  try: {
+  try {
     // Check for admin authorization 
-    const: { user } = req.session;
+    const { user } = req.session;
     if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
       return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
     }
@@ -34,9 +34,9 @@ router.get('/', async (req, res) => {
  * @access  Admin
  */
 router.get('/:id', async (req, res) => {
-  try: {
+  try {
     // Check for admin authorization
-    const: { user } = req.session;
+    const { user } = req.session;
     if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
       return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
     }
@@ -62,7 +62,7 @@ router.get('/:id', async (req, res) => {
  * @access  Public
  */
 router.get('/key/:key', async (req, res) => {
-  try: {
+  try {
     const key = req.params.key;
     const contentItem = await storage.getContentItemByKey(key);
 
@@ -84,7 +84,7 @@ router.get('/key/:key', async (req, res) => {
  * @access  Public
  */
 router.get('/page/:page', async (req, res) => {
-  try: {
+  try {
     const page = req.params.page;
     
     // Get all content items
@@ -107,13 +107,13 @@ router.get('/page/:page', async (req, res) => {
  * @access  Admin or System Component
  */
 router.post('/', async (req, res) => {
-  try: {
+  try {
     // Check if this is an auto-creation request from the DynamicContent component
     const isAutoCreation = req.headers['x-auto-creation'] === 'true';
     
     // For non-auto-creation requests, enforce admin authorization
     if (!isAutoCreation) {
-      const: { user } = req.session;
+      const { user } = req.session;
       if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
         return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
       }
@@ -134,7 +134,7 @@ router.post('/', async (req, res) => {
     // Log the action differently based on the source
     if (isAutoCreation) => {
       console.info(`Auto-created content item with, key: ${contentItem.key}`);
-    } else: {
+    } else {
       console.info(`Admin created content item with, key: ${contentItem.key}`);
     }
     
@@ -157,9 +157,9 @@ router.post('/', async (req, res) => {
  * @access  Admin
  */
 router.put('/:id', async (req, res) => {
-  try: {
+  try {
     // Check for admin authorization
-    const: { user } = req.session;
+    const { user } = req.session;
     if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
       return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
     }
@@ -202,9 +202,9 @@ router.put('/:id', async (req, res) => {
  * @access  Admin
  */
 router.delete('/:id', async (req, res) => {
-  try: {
+  try {
     // Check for admin authorization
-    const: { user } = req.session;
+    const { user } = req.session;
     if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
       return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
     }
@@ -232,9 +232,9 @@ router.delete('/:id', async (req, res) => {
  * @access  Admin
  */
 router.get('/:id/history', async (req, res) => {
-  try: {
+  try {
     // Check for admin authorization
-    const: { user } = req.session;
+    const { user } = req.session;
     if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
       return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
     }
@@ -263,15 +263,15 @@ router.get('/:id/history', async (req, res) => {
  * @access  Admin
  */
 router.post('/:id/version', async (req, res) => {
-  try: {
+  try {
     // Check for admin authorization
-    const: { user } = req.session;
+    const { user } = req.session;
     if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
       return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
     }
 
     const contentId = parseInt(req.params.id);
-    const: { changeDescription } = req.body;
+    const { changeDescription } = req.body;
     
     // Check if content item exists
     const contentItem = await storage.getContentItemById(contentId);
@@ -300,9 +300,9 @@ router.post('/:id/version', async (req, res) => {
  * @access  Admin
  */
 router.post('/history/:historyId/restore', async (req, res) => {
-  try: {
+  try {
     // Check for admin authorization
-    const: { user } = req.session;
+    const { user } = req.session;
     if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
       return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
     }
@@ -325,9 +325,9 @@ router.post('/history/:historyId/restore', async (req, res) => {
  * @access  Public
  */
 router.post('/:id/usage', async (req, res) => {
-  try: {
+  try {
     const contentId = parseInt(req.params.id);
-    const: { location, path } = req.body;
+    const { location, path } = req.body;
     
     if (!location || !path) {
       return res.status(400).json({ message: 'Location and path are required' });
@@ -354,7 +354,7 @@ router.post('/:id/usage', async (req, res) => {
  * @access  Public
  */
 router.post('/:id/view', async (req, res) => {
-  try: {
+  try {
     const contentId = parseInt(req.params.id);
     
     // Check if content item exists
@@ -378,9 +378,9 @@ router.post('/:id/view', async (req, res) => {
  * @access  Admin
  */
 router.get('/report/usage', async (req, res) => {
-  try: {
+  try {
     // Check for admin authorization
-    const: { user } = req.session;
+    const { user } = req.session;
     if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
       return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
     }

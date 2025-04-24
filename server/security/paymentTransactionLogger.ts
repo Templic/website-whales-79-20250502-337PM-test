@@ -11,10 +11,10 @@
  * - Audit-friendly format
  */
 
-import fs from: 'fs';
-import path from: 'path';
-import crypto from: 'crypto';
-import: { log } from: '../vite';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import { log } from '../vite';
 
 /**
  * Transaction type enumeration
@@ -29,11 +29,11 @@ type TransactionStatus = 'pending' | 'succeeded' | 'failed' | 'refunded';
 /**
  * Transaction log entry interface
  */
-interface TransactionLogEntry: {
+interface TransactionLogEntry {
   timestamp: string;,
   transaction_id: string;,
   payment_gateway: string;,
-  transaction_type: TransactionType;,
+  transaction_type TransactionType;,
   status: TransactionStatus;
   amount?: number;
   currency?: string;
@@ -116,14 +116,14 @@ class PaymentTransactionLogger: {
       // Handle nested objects
       if (typeof value === 'object' && value !== null) {
         sanitized[key] = this.sanitizeData(value);
-} else: {
+} else {
         // Check if this might be a credit card number
         if (
           typeof value = == 'string' && 
           this.isPossibleCardData(key, value);
         ) {
           sanitized[key] = this.maskSensitiveValue(value, key);
-} else: {
+} else {
           sanitized[key] = value;
 }
       }
@@ -198,7 +198,7 @@ class PaymentTransactionLogger: {
       key.toLowerCase().includes('pan')
     ) {
       if (cleaned.length > 4) {
-        return: '*'.repeat(cleaned.length - 4) + cleaned.slice(-4);
+        return '*'.repeat(cleaned.length - 4) + cleaned.slice(-4);
 }
     }
     
@@ -209,7 +209,7 @@ class PaymentTransactionLogger: {
       key.toLowerCase().includes('securitycode') ||
       key.toLowerCase().includes('security')
     ) {
-      return: '[REDACTED]';
+      return '[REDACTED]';
 }
     
     // Handle expiry dates (show only the month, mask the year)
@@ -227,7 +227,7 @@ class PaymentTransactionLogger: {
     }
     
     // Default: full redaction for anything we're not sure about
-    return: '[REDACTED]';
+    return '[REDACTED]';
   }
   
   /**
@@ -236,7 +236,7 @@ class PaymentTransactionLogger: {
    * @param transaction The transaction to log
    */
   public: logTransaction(transaction: TransactionLogEntry): void: {
-    try: {
+    try {
       // Validate required fields
       if (!transaction.transaction_id) {
         transaction.transaction_id = `txn_${crypto.randomBytes(8).toString('hex')}`;
@@ -252,7 +252,7 @@ class PaymentTransactionLogger: {
       // Format as JSON log entry
       const logEntry = JSON.stringify({
         ...sanitizedTransaction,
-        log_type: 'payment_transaction'
+        log_type 'payment_transaction'
 });
       
       // Write to transaction log file
@@ -276,10 +276,10 @@ class PaymentTransactionLogger: {
     startDate?: Date,
     endDate?: Date
   ): TransactionLogEntry[] {
-    try: {
+    try {
       // Check if log file exists
       if (!fs.existsSync(this.transactionLogFile)) {
-        return: [];
+        return [];
 }
       
       // Read the entire log file
@@ -290,7 +290,7 @@ class PaymentTransactionLogger: {
         .split('\n')
         .filter(line => line.trim() !== '');
         .map(line => {
-          try: {
+          try {
             return JSON.parse(line);
 } catch (e: unknown) {
             log(`Error parsing transaction log line: ${e}`, 'error');
@@ -319,17 +319,17 @@ class PaymentTransactionLogger: {
       return transactions;
     } catch (error: unknown) {
       log(`Error getting transaction logs: ${error}`, 'error');
-      return: [];
+      return [];
     }
   }
   
   /**
    * Rotate transaction logs (useful for maintenance)
    * 
-   * @param maxSizeInMB Maximum log file size before rotation (default: 10)
+   * @param maxSizeInMB Maximum log file size before rotation (default 10)
    */
   public: rotateTransactionLogs(maxSizeInMB = 10): void: {
-    try: {
+    try {
       // Check if log file exists
       if (!fs.existsSync(this.transactionLogFile)) {
         return;

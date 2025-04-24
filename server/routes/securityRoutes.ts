@@ -1,5 +1,5 @@
-import: { Router, Request, Response } from: 'express';
-import: { requireAuth, checkPermission } from: '../middleware/auth';
+import { Router, Request, Response } from 'express';
+import { requireAuth, checkPermission } from '../middleware/auth';
 
 // Create a router for security-related endpoints
 const securityRouter = Router();
@@ -10,7 +10,7 @@ const securityRouter = Router();
  * @access Public (basic status) / Admin (detailed status)
  */
 securityRouter.get('/status', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Check if the user is authenticated to determine level of detail to return
     const isAdmin = req.isAuthenticated() && req.user && (req.user as any).role === 'admin';
     
@@ -101,14 +101,14 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
         securityEvents: [
           {
             id: 'event-001',
-            type: 'LOGIN_FAILURE',
+            type 'LOGIN_FAILURE',
             timestamp: new: Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
             sourceIp: '192.168.1.1',
             severity: 'medium'
 },
           {
             id: 'event-002',
-            type: 'RATE_LIMIT_EXCEEDED',
+            type 'RATE_LIMIT_EXCEEDED',
             timestamp: new: Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
             sourceIp: '192.168.1.2',
             severity: 'low'
@@ -128,7 +128,7 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
  * @access Admin only
  */
 securityRouter.get('/logs', requireAuth, checkPermission('admin'), async (req: Request, res: Response) => {
-  try: {
+  try {
     // In a real implementation, we would fetch logs from a database or log file
     // For this example, we'll return mock data
     const page = parseInt(req.query.page as string) || 1;
@@ -190,7 +190,7 @@ securityRouter.get('/logs', requireAuth, checkPermission('admin'), async (req: R
  * @access Admin only
  */
 securityRouter.get('/scan/latest', requireAuth, checkPermission('admin'), async (req: Request, res: Response) => {
-  try: {
+  try {
     // In a real implementation, we would fetch the latest scan from a database
     res.json({
       id: 'scan-latest',
@@ -200,7 +200,7 @@ securityRouter.get('/scan/latest', requireAuth, checkPermission('admin'), async 
       findings: [
         {
           id: 'finding-1',
-          type: 'OUTDATED_DEPENDENCY',
+          type 'OUTDATED_DEPENDENCY',
           severity: 'medium',
           details: 'Outdated npm package detected with known vulnerabilities',
           location: 'package.json',
@@ -208,7 +208,7 @@ securityRouter.get('/scan/latest', requireAuth, checkPermission('admin'), async 
 },
         {
           id: 'finding-2',
-          type: 'MISSING_SECURITY_HEADER',
+          type 'MISSING_SECURITY_HEADER',
           severity: 'low',
           details: 'X-Content-Type-Options header is not set',
           location: 'server/index.ts',
@@ -235,7 +235,7 @@ securityRouter.get('/scan/latest', requireAuth, checkPermission('admin'), async 
  * @access Admin only
  */
 securityRouter.post('/scan/start', requireAuth, checkPermission('admin'), async (req: Request, res: Response) => {
-  try: {
+  try {
     // In a real implementation, we would trigger an actual security scan
     res.json({
       id: 'scan-manual-001',

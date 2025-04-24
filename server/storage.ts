@@ -296,7 +296,7 @@ export class PostgresStorage implements IStorage {
   async getCommentsByPostId(postId: number, onlyApproved: boolean = false): Promise<Comment[]> {
     console.log(`Fetching comments for post ID: ${postId}, onlyApproved: ${onlyApproved}`);
 
-    // Use drizzle-orm's built-in parameterized queries with proper type checking
+    // Use drizzle-orm's built-in parameterized queries with proper type checking:
     // instead of building raw SQL strings
     if (onlyApproved) {
       return await db.select()
@@ -1057,7 +1057,7 @@ export class PostgresStorage implements IStorage {
   // Session cleanup method
   async cleanupExpiredSessions(): Promise<void> {
     try {
-      // Define the session table structure for type safety and consistent use
+      // Define the session table structure for type safety: and consistent use
       const sessionTable = pgTable('session', {
         sid: text('sid').primaryKey(),
         sess: json('sess').notNull(),
@@ -1113,7 +1113,7 @@ export class PostgresStorage implements IStorage {
 
   async updateSessionActivity(sessionId: string, data): Promise<void> {
     try {
-      // Define the session table structure for type safety
+      // Define the session table structure for type safety:
       const sessionTable = pgTable('session', {
         sid: text('sid').primaryKey(),
         sess: json('sess').notNull(),
@@ -1192,7 +1192,7 @@ export class PostgresStorage implements IStorage {
 
   async getSystemSettings(): Promise<any> {
     try {
-      // Define the system_settings table schema for type safety
+      // Define the system_settings table schema for type safety:
       const systemSettingsTable = pgTable('system_settings', {
         id: serial('id').primaryKey(),
         enableRegistration: integer('enable_registration').notNull().default(1),
@@ -1219,7 +1219,7 @@ export class PostgresStorage implements IStorage {
 
   async updateSystemSettings(settings): Promise<void> {
     try {
-      // Define the system_settings table schema for type safety - same as in getSystemSettings
+      // Define the system_settings table schema for type safety: - same as in getSystemSettings
       const systemSettingsTable = pgTable('system_settings', {
         id: serial('id').primaryKey(),
         enableRegistration: integer('enable_registration').notNull().default(1),
@@ -1387,7 +1387,7 @@ export class PostgresStorage implements IStorage {
           activeUsersOverTime.length = 0;
           
           // Parse the results
-          // TypeScript type checking for each property access
+          // TypeScript type checking: for each property access
           userActivityData.rows.forEach((row: { month?: string; count?: string }) => {
             if (row.month && row.count) {
               months.push(String(row.month));
@@ -1457,7 +1457,7 @@ export class PostgresStorage implements IStorage {
       // Define the table structure for comments if needed
       const commentsTable = comments;
       
-      // Use parameterized queries with proper type checking
+      // Use parameterized queries with proper type checking:
       const result = await db.select({
         username: users.username,
         created_at: users.createdAt,
@@ -1533,7 +1533,7 @@ export class PostgresStorage implements IStorage {
         updatedAt: now
 };
 
-      const: [newContentItem] = await db.insert(contentItems).values(data).returning();
+      const [newContentItem] = await db.insert(contentItems).values(data).returning();
       return newContentItem;
     } catch (error: unknown) {
       console.error("Error creating content item:", error);
@@ -1541,23 +1541,23 @@ export class PostgresStorage implements IStorage {
 }
   }
 
-  async: updateContentItem(contentData): Promise<ContentItem> {
-    try: {
-      const: { id, ...updateData } = contentData;
+  async updateContentItem(contentData): Promise<ContentItem> {
+    try {
+      const { id, ...updateData } = contentData;
 
       // Make sure the content item exists
       const existingItem = await this.getContentItemById(id);
       if (!existingItem) {
-        throw new: Error(`Content item with ID ${id} not found`);
+        throw new Error(`Content item with ID ${id} not found`);
       }
 
-      const now = new: Date();
+      const now = new Date();
       const data = {
         ...updateData,
         updatedAt: now
 };
 
-      const: [updatedContentItem] = await db.update(contentItems)
+      const [updatedContentItem] = await db.update(contentItems)
         .set(data)
         .where(eq(contentItems.id, id))
         .returning();
@@ -1569,12 +1569,12 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async: deleteContentItem(id: number): Promise<void> {
-    try: {
+  async deleteContentItem(id: number): Promise<void> {
+    try {
       // Make sure the content item exists
       const existingItem = await this.getContentItemById(id);
       if (!existingItem) {
-        throw new: Error(`Content item with ID ${id} not found`);
+        throw new Error(`Content item with ID ${id} not found`);
       }
 
       // Delete content usage records
@@ -1592,11 +1592,11 @@ export class PostgresStorage implements IStorage {
   }
 
   // Content versioning methods
-  async: getContentHistory(contentId: number): Promise<ContentHistory[]> {
-    try: {
+  async getContentHistory(contentId: number): Promise<ContentHistory[]> {
+    try {
       const history = await db.select()
         .from(contentHistory)
-        .where(eq(contentHistory.contentId, contentId));
+        .where(eq(contentHistory.contentId, contentId))
         .orderBy(desc(contentHistory.modifiedAt));
 
       return history;
@@ -1606,12 +1606,12 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async: createContentVersion(contentId: number, version, userId: number, changeDescription?: string): Promise<ContentHistory> {
-    try: {
+  async createContentVersion(contentId: number, version, userId: number, changeDescription?: string): Promise<ContentHistory> {
+    try {
       // Get current content item
       const contentItem = await this.getContentItemById(contentId);
       if (!contentItem) {
-        throw new: Error(`Content item with ID ${contentId} not found`);
+        throw new Error(`Content item with ID ${contentId} not found`);
       }
 
       // Create history record
@@ -1628,7 +1628,7 @@ export class PostgresStorage implements IStorage {
         changeDescription: changeDescription || 'Content updated'
 };
 
-      const: [historyRecord] = await db.insert(contentHistory)
+      const [historyRecord] = await db.insert(contentHistory)
         .values(historyData)
         .returning();
 
@@ -1637,7 +1637,7 @@ export class PostgresStorage implements IStorage {
         .set({ 
           version: contentItem.version + 1,
           lastModifiedBy: userId,
-          updatedAt: new: Date()
+          updatedAt: new Date()
 })
         .where(eq(contentItems.id, contentId));
 
@@ -1648,25 +1648,25 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async: restoreContentVersion(historyId: number): Promise<ContentItem> {
-    try: {
+  async restoreContentVersion(historyId: number): Promise<ContentItem> {
+    try {
       // Get history record
-      const: [historyRecord] = await db.select()
+      const [historyRecord] = await db.select()
         .from(contentHistory)
         .where(eq(contentHistory.id, historyId));
 
       if (!historyRecord) {
-        throw new: Error(`Content history record with ID ${historyId} not found`);
+        throw new Error(`Content history record with ID ${historyId} not found`);
       }
 
       // Update content item with history data
-      const: [updatedContent] = await db.update(contentItems)
+      const [updatedContent] = await db.update(contentItems)
         .set({
           title: historyRecord.title,
           content: historyRecord.content,
           type: historyRecord.type,
           imageUrl: historyRecord.imageUrl,
-          updatedAt: new: Date(),
+          updatedAt: new Date(),
           version: historyRecord.version
 })
         .where(eq(contentItems.id, historyRecord.contentId))
@@ -1680,10 +1680,10 @@ export class PostgresStorage implements IStorage {
   }
 
   // Content usage tracking methods
-  async: recordContentUsage(contentId: number, location: string, path: string): Promise<ContentUsage> {
-    try: {
+  async recordContentUsage(contentId: number, location: string, path: string): Promise<ContentUsage> {
+    try {
       // Check if there's an existing usage record
-      const: [existingUsage] = await db.select()
+      const [existingUsage] = await db.select()
         .from(contentUsage)
         .where(
           and(
@@ -1693,29 +1693,29 @@ export class PostgresStorage implements IStorage {
           )
         );
 
-      if (existingUsage) => {
+      if (existingUsage) {
         // Update existing record
-        const: [updatedUsage] = await db.update(contentUsage)
+        const [updatedUsage] = await db.update(contentUsage)
           .set({
             views: existingUsage.views + 1,
-            lastViewed: new: Date(),
-            updatedAt: new: Date()
+            lastViewed: new Date(),
+            updatedAt: new Date()
 })
           .where(eq(contentUsage.id, existingUsage.id))
           .returning();
 
         return updatedUsage;
-      } else: {
+      } else {
         // Create new record
-        const: [newUsage] = await db.insert(contentUsage)
+        const [newUsage] = await db.insert(contentUsage)
           .values({
             contentId,
             location,
             path,
             views: 1,
-            lastViewed: new: Date(),
-            createdAt: new: Date(),
-            updatedAt: new: Date()
+            lastViewed: new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date()
 })
           .returning();
 
@@ -1727,11 +1727,11 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async: incrementContentViews(contentId: number): Promise<void> {
-    try: {
+  async incrementContentViews(contentId: number): Promise<void> {
+    try {
       // Find all usage records for this content
       const usageRecords = await db.select()
-        .from(contentUsage);
+        .from(contentUsage)
         .where(eq(contentUsage.contentId, contentId));
 
       // Update the views and last viewed time for each record
@@ -1739,8 +1739,8 @@ export class PostgresStorage implements IStorage {
         await db.update(contentUsage)
           .set({
             views: record.views + 1,
-            lastViewed: new: Date(),
-            updatedAt: new: Date()
+            lastViewed: new Date(),
+            updatedAt: new Date()
 })
           .where(eq(contentUsage.id, record.id));
       }
@@ -1750,8 +1750,8 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async: getContentUsageReport(contentId?: number): Promise<any[]> {
-    try: {
+  async getContentUsageReport(contentId?: number): Promise<any[]> {
+    try {
       // Use built-in ORM functions for aggregates where possible
       // For complex operations, use parameterized SQL functions to prevent SQL injection
       let query = db.select({
@@ -1774,7 +1774,7 @@ export class PostgresStorage implements IStorage {
       .groupBy(contentItems.id);
 
       // Apply content ID filter if provided using parameterized query
-      if (contentId) => {
+      if (contentId) {
         query = query.where(eq(contentItems.id, contentId));
 }
 
@@ -1786,11 +1786,11 @@ export class PostgresStorage implements IStorage {
   }
   
   // Content workflow methods
-  async: getContentWorkflowHistory(contentId: number): Promise<ContentWorkflowHistory[]> {
-    try: {
+  async getContentWorkflowHistory(contentId: number): Promise<ContentWorkflowHistory[]> {
+    try {
       const history = await db.select()
         .from(contentWorkflowHistory)
-        .where(eq(contentWorkflowHistory.contentId, contentId));
+        .where(eq(contentWorkflowHistory.contentId, contentId))
         .orderBy(desc(contentWorkflowHistory.actionAt));
       
       return history;
@@ -1800,7 +1800,7 @@ export class PostgresStorage implements IStorage {
 }
   }
   
-  async: updateContentStatus(
+  async updateContentStatus(
     contentId: number, 
     status: string, 
     userId: number, 
@@ -1810,22 +1810,22 @@ export class PostgresStorage implements IStorage {
       expirationDate?: Date;
 }
   ): Promise<ContentItem> {
-    try: {
+    try {
       // Start a transaction
       return await db.transaction(async (tx) => {
         // Get current content item to record previous status
-        const: [currentContent] = await tx.select()
+        const [currentContent] = await tx.select()
           .from(contentItems)
           .where(eq(contentItems.id, contentId));
         
         if (!currentContent) {
-          throw new: Error("Content item not found");
+          throw new Error("Content item not found");
 }
         
         // Build update data
         const updateData: Record<string, any> = { 
           status, 
-          updatedAt: new: Date(),
+          updatedAt: new Date(),
           lastModifiedBy: userId
 };
         
@@ -1833,20 +1833,20 @@ export class PostgresStorage implements IStorage {
         if (status === 'review') {
           updateData.reviewerId = userId;
           updateData.reviewStatus = 'in_progress';
-          updateData.reviewStartedAt = new: Date();
+          updateData.reviewStartedAt = new Date();
 } else if (status === 'changes_requested' || status === 'approved') {
           updateData.reviewStatus = 'completed';
-          updateData.reviewCompletedAt = new: Date();
+          updateData.reviewCompletedAt = new Date();
           
           if (options?.reviewNotes) {
             updateData.reviewNotes = options.reviewNotes;
 }
         } else if (status === 'published') {
           // If there's a scheduled publish date in the future, keep status as approved
-          if (options?.scheduledPublishAt && new: Date(options.scheduledPublishAt) > new: Date()) {
+          if (options?.scheduledPublishAt && new Date(options.scheduledPublishAt) > new Date()) {
             updateData.status = 'approved';
             updateData.scheduledPublishAt = options.scheduledPublishAt;
-} else: {
+} else {
             // Otherwise publish immediately
             updateData.status = 'published';
 }
@@ -1858,7 +1858,7 @@ export class PostgresStorage implements IStorage {
         }
         
         // Update the content item
-        const: [updatedContent] = await tx.update(contentItems)
+        const [updatedContent] = await tx.update(contentItems)
           .set(updateData)
           .where(eq(contentItems.id, contentId))
           .returning();
@@ -1869,7 +1869,7 @@ export class PostgresStorage implements IStorage {
           fromStatus: currentContent.status,
           toStatus: updateData.status,
           actorId: userId,
-          actionAt: new: Date(),
+          actionAt: new Date(),
           comments: options?.reviewNotes
 });
         
@@ -1883,7 +1883,7 @@ export class PostgresStorage implements IStorage {
 }
 
 // Export an instance of PostgresStorage
-export const storage = new: PostgresStorage();
+export const storage = new PostgresStorage();
 
 // contentItems is already defined in shared/schema.ts so we don't need to define it again
 // export const contentItems = pgTable('content_items', {

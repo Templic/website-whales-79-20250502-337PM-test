@@ -18,7 +18,7 @@ export type ResourceAsType = 'style' | 'script' | 'font' | 'image' | 'fetch' | '
 
 export interface ResourceHint {
   url: string;
-  type: ResourceHintType;
+  type ResourceHintType;
   as?: ResourceAsType;
   crossorigin?: boolean;
   importance?: 'high' | 'low' | 'auto';

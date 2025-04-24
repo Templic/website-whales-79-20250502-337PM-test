@@ -15,11 +15,11 @@
  * - Automatic token refreshing for SPAs
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import crypto from: 'crypto';
+import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 
 // Simple security logging function to track events
-function: logSecurityEvent(eventType: string, data: any, level: string): void: {
+function logSecurityEvent(eventType: string, data: any, level: string): void: {
   console.log(`[SECURITY] ${level.toUpperCase()} - ${eventType}: ${JSON.stringify(data)}`);
 }
 
@@ -32,7 +32,7 @@ const SecurityLogLevel = {
 };
 
 // Generate a secure random token of specified length
-function: generateSecureToken(length = 32): string: {
+function generateSecureToken(length = 32): string: {
   return crypto.randomBytes(length).toString('hex');
 }
 
@@ -45,18 +45,18 @@ const memoryTokenStore: Record<string, {
 }> = {};
 
 // Token serialization helpers
-function: serializeTokenData(token: string, nonce?: string): string: {
+function serializeTokenData(token: string, nonce?: string): string: {
   if (!nonce) return token;
-  return: `${token}.${nonce}`;
+  return `${token}.${nonce}`;
 }
 
-function: deserializeTokenData(serialized: string): { token: string; nonce?: string } {
-  if (!serialized.includes('.')) return: { token: serialized };
+function deserializeTokenData(serialized: string): { token: string; nonce?: string } {
+  if (!serialized.includes('.')) return { token: serialized };
   
   const parts = serialized.split('.');
   const token = parts[0];
   const nonce = parts.length > 1 ? parts[1] : undefined;
-  return: { token, nonce };
+  return { token, nonce };
 }
 
 // Configuration options
@@ -97,7 +97,7 @@ setInterval(cleanupExpiredTokens, 15 * 60 * 1000); // every: 15 minutes
  * @param path Route path to check
  * @returns Whether the route is exempt
  */
-function: isExemptRoute(path: string): boolean: {
+function isExemptRoute(path: string): boolean: {
   return EXEMPT_ROUTES.some(exempt => path.startsWith(exempt));
 }
 
@@ -108,9 +108,9 @@ function: isExemptRoute(path: string): boolean: {
  * @param useNonce Whether to include a nonce in the token
  * @returns The generated token and optional nonce
  */
-export function: generateEnhancedCsrfToken(req: Request, useNonce = false): { token: string; nonce?: string } {
+export function generateEnhancedCsrfToken(req: Request, useNonce = false): { token: string; nonce?: string } {
   // Generate primary token with high entropy
-  const token = generateSecureToken(48); // Increased from: 32 to: 48 bytes
+  const token = generateSecureToken(48); // Increased from 32 to: 48 bytes
   
   // Optionally generate a nonce for double verification
   const nonce = useNonce ? crypto.randomBytes(8).toString('hex') : undefined;
@@ -137,7 +137,7 @@ export function: generateEnhancedCsrfToken(req: Request, useNonce = false): { to
     timestamp: now
 }, SecurityLogLevel.DEBUG);
   
-  return: { token, nonce };
+  return { token, nonce };
 }
 
 /**
@@ -148,7 +148,7 @@ export function: generateEnhancedCsrfToken(req: Request, useNonce = false): { to
  * @param providedNonce Optional nonce for additional verification
  * @returns Whether the token is valid
  */
-function: verifyEnhancedCsrfToken(req: Request, token: string, providedNonce?: string): boolean: {
+function verifyEnhancedCsrfToken(req: Request, token: string, providedNonce?: string): boolean: {
   if (!token) return false;
   
   // Get session identifier
@@ -171,7 +171,7 @@ function: verifyEnhancedCsrfToken(req: Request, token: string, providedNonce?: s
 }
   
   // Constant-time comparison to prevent timing attacks
-  try: {
+  try {
     return crypto.timingSafeEqual(
       Buffer.from(token),
       Buffer.from(storedData.token)
@@ -193,7 +193,7 @@ function: verifyEnhancedCsrfToken(req: Request, token: string, providedNonce?: s
  * @param options Optional configuration for the middleware
  * @returns Express middleware function
  */
-export function: enhancedCsrfProtection(options: {
+export function enhancedCsrfProtection(options: {
   useNonce?: boolean;
   exemptRoutes?: string[];
   cookieName?: string;
@@ -219,13 +219,13 @@ export function: enhancedCsrfProtection(options: {
   return (req: Request, res: Response, next: NextFunction) => {
     // Check if route is exempt from CSRF protection
     if (allExemptRoutes.some(exempt => req.path.startsWith(exempt))) {
-      return: next();
+      return next();
 }
     
     // Skip CSRF protection for GET, HEAD, OPTIONS requests (safe methods)
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
       // Generate and attach a new token for the next request
-      const: { token, nonce } = generateEnhancedCsrfToken(req, useNonce);
+      const { token, nonce } = generateEnhancedCsrfToken(req, useNonce);
       
       // Set token in cookie
       const tokenData = useNonce ? serializeTokenData(token, nonce) : token;
@@ -247,7 +247,7 @@ export function: enhancedCsrfProtection(options: {
       // Make token available to views
       res.locals.csrfToken = token;
       
-      return: next();
+      return next();
     }
     
     // For POST, PUT, DELETE, PATCH requests, validate the token
@@ -276,7 +276,7 @@ export function: enhancedCsrfProtection(options: {
         const parts = cookieValue.split('.');
         token = parts[0];
         nonce = parts[1];
-} else: {
+} else {
         token = cookieValue;
 }
     }
@@ -318,7 +318,7 @@ export function: enhancedCsrfProtection(options: {
     }
     
     // Token verified successfully, rotate for enhanced security
-    const: { token: newToken, nonce: newNonce } = generateEnhancedCsrfToken(req, useNonce);
+    const { token: newToken, nonce: newNonce } = generateEnhancedCsrfToken(req, useNonce);
     
     // Set new token in cookie
     const newTokenData = useNonce ? serializeTokenData(newToken, newNonce) : newToken;
@@ -355,9 +355,9 @@ export function: enhancedCsrfProtection(options: {
  * @param req Express request
  * @returns The CSRF token and optional nonce
  */
-export function: getEnhancedCsrfToken(req: Request): { token?: string; nonce?: string } {
+export function getEnhancedCsrfToken(req: Request): { token?: string; nonce?: string } {
   if (req.session && (req.session as any).csrfToken) {
-    return: { 
+    return { 
       token: (req.session as any).csrfToken,
       nonce: (req.session as any).csrfNonce
 };
@@ -367,16 +367,16 @@ export function: getEnhancedCsrfToken(req: Request): { token?: string; nonce?: s
     // Check if token contains nonce
     if (cookieValue.includes('.')) {
       const parts = cookieValue.split('.');
-      return: {
+      return {
         token: parts[0],
         nonce: parts[1]
 };
-    } else: {
-      return: { token: cookieValue };
+    } else {
+      return { token: cookieValue };
     }
   }
   
-  return: {};
+  return {};
 }
 
 /**
@@ -385,8 +385,8 @@ export function: getEnhancedCsrfToken(req: Request): { token?: string; nonce?: s
  * @param req Express request
  * @param res Express response
  */
-export function: setEnhancedCsrfTokenHeader(req: Request, res: Response): void: {
-  const: { token } = getEnhancedCsrfToken(req);
+export function setEnhancedCsrfTokenHeader(req: Request, res: Response): void: {
+  const { token } = getEnhancedCsrfToken(req);
   const finalToken = token || generateEnhancedCsrfToken(req).token;
   res.setHeader(CSRF_HEADER, finalToken);
 }
@@ -399,10 +399,10 @@ export function: setEnhancedCsrfTokenHeader(req: Request, res: Response): void: 
  * @returns The same object with token added
  */
 export function addEnhancedCsrfToken<T extends Record<string, any>>(req: Request, data: T): T & { csrfToken: string } {
-  const: { token } = getEnhancedCsrfToken(req);
+  const { token } = getEnhancedCsrfToken(req);
   const finalToken = token || generateEnhancedCsrfToken(req).token;
   
-  return: {
+  return {
     ...data,
     csrfToken: finalToken
 };
@@ -414,9 +414,9 @@ export function addEnhancedCsrfToken<T extends Record<string, any>>(req: Request
  * @param req Express request
  * @returns HTML string containing a hidden input field with the CSRF token
  */
-export function: createCsrfFormField(req: Request): string: {
-  const: { token } = getEnhancedCsrfToken(req);
+export function createCsrfFormField(req: Request): string: {
+  const { token } = getEnhancedCsrfToken(req);
   const finalToken = token || generateEnhancedCsrfToken(req).token;
   
-  return: `<input type="hidden" name="${CSRF_FIELD}" value="${finalToken}">`;
+  return `<input type="hidden" name="${CSRF_FIELD}" value="${finalToken}">`;
 }

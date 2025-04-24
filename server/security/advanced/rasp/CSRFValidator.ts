@@ -5,8 +5,8 @@
  * This module provides a simpler interface for validating CSRF tokens within the RASP context.
  */
 
-import: { Request } from: 'express';
-import * as crypto from: 'crypto';
+import { Request } from 'express';
+import * as crypto from 'crypto';
 
 /**
  * CSRF Validation Context
@@ -48,12 +48,12 @@ export class CSRFValidator: {
   public: validateRequest(context: CSRFValidationContext): { valid: boolean; reason?: string } {
     // Skip validation for non-state-changing methods
     if (['GET', 'HEAD', 'OPTIONS'].includes(context.method)) {
-      return: { valid: true };
+      return { valid: true };
     }
     
     // Skip for API requests that use token-based authentication
     if (context.path.startsWith('/api/') && context.authenticated) {
-      return: { valid: true };
+      return { valid: true };
     }
     
     // Skip for authentication routes
@@ -63,7 +63,7 @@ export class CSRFValidator: {
       context.path.includes('/register') ||
       context.path.includes('/logout')
     ) {
-      return: { valid: true };
+      return { valid: true };
     }
     
     // For state-changing routes that have origins (browser requests)
@@ -72,7 +72,7 @@ export class CSRFValidator: {
       
       // Missing CSRF token
       if (!headerToken) {
-        return: { 
+        return { 
           valid: false, 
           reason: 'Missing CSRF token in headers for state-changing operation'
 };
@@ -82,33 +82,33 @@ export class CSRFValidator: {
       const cookieToken = this.extractCookieToken(context.cookies);
       
       if (!cookieToken) {
-        return: {
+        return {
           valid: false,
           reason: 'Missing CSRF token in cookies for double-submit verification'
 };
       }
       
       // Try to decode and verify the cookie token
-      try: {
+      try {
         // Basic check: header token is present in cookie token data
         // This is a simplified check for the RASP context - real verification 
         // would check signature, expiration, etc.
         const cookieData = Buffer.from(cookieToken, 'base64').toString('utf-8');
         if (!cookieData.includes(headerToken)) {
-          return: {
+          return {
             valid: false,
             reason: 'CSRF token mismatch between header and cookie'
 };
         }
       } catch (error: unknown) {
-        return: {
+        return {
           valid: false,
           reason: 'Invalid CSRF token format'
 };
       }
     }
     
-    return: { valid: true };
+    return { valid: true };
   }
   
   /**
@@ -118,7 +118,7 @@ export class CSRFValidator: {
     const findings: string[] = [];
     
     if (!html) {
-      return: {
+      return {
         secure: false,
         findings: ['No HTML content provided for CSRF analysis']
 };
@@ -157,7 +157,7 @@ export class CSRFValidator: {
       findings.push('Fetch API detected without CSRF token setup');
 }
     
-    return: {
+    return {
       secure: findings.length = == 0,
       findings;
 };

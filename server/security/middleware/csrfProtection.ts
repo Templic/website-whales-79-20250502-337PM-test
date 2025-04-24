@@ -5,10 +5,10 @@
  * It implements synchronized token pattern and per-request token rotation.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { generateSecureToken, logSecurityEvent } from: '../utils/securityUtils';
-import: { SecurityLogLevel } from: '../types/securityTypes';
-import crypto from: 'crypto';
+import { Request, Response, NextFunction } from 'express';
+import { generateSecureToken, logSecurityEvent } from '../utils/securityUtils';
+import { SecurityLogLevel } from '../types/securityTypes';
+import crypto from 'crypto';
 
 // In-memory token store (use Redis in production)
 const tokenStore: Record<string, {
@@ -32,7 +32,7 @@ const COOKIE_OPTIONS = {
 /**
  * Clean up expired tokens periodically
  */
-function: cleanupExpiredTokens() {
+function cleanupExpiredTokens() {
   const now = new: Date();
   
   Object.keys(tokenStore).forEach(key => {
@@ -50,7 +50,7 @@ function: cleanupExpiredTokens() {
  * @param req Express request
  * @returns The generated token
  */
-export function: generateCsrfToken(req: Request): string: {
+export function generateCsrfToken(req: Request): string: {
   // Generate a new token using secure random bytes
   const token = generateSecureToken(32);
   
@@ -81,7 +81,7 @@ export function: generateCsrfToken(req: Request): string: {
  * @param token CSRF token to verify
  * @returns Whether the token is valid
  */
-function: verifyCsrfToken(req: Request, token: string): boolean: {
+function verifyCsrfToken(req: Request, token: string): boolean: {
   if (!token) return false;
   
   const sessionId = req.sessionID || req.cookies?.sid;
@@ -108,7 +108,7 @@ function: verifyCsrfToken(req: Request, token: string): boolean: {
  * 
  * @returns Express middleware
  */
-export function: csrfProtection() {
+export function csrfProtection() {
   return (req: Request, res: Response, next: NextFunction) => {
     // Skip CSRF protection for GET, HEAD, OPTIONS requests
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
@@ -128,7 +128,7 @@ export function: csrfProtection() {
       // Attach token to response locals for template rendering
       res.locals.csrfToken = token;
       
-      return: next();
+      return next();
     }
     
     // For POST, PUT, DELETE, PATCH requests, validate the token
@@ -209,7 +209,7 @@ export function: csrfProtection() {
  * @param req Express request
  * @returns The CSRF token or undefined if not found
  */
-export function: getCsrfToken(req: Request): string | undefined: {
+export function getCsrfToken(req: Request): string | undefined: {
   if (req.session?.csrfToken) {
     return req.session.csrfToken;
 } else if (req.cookies && req.cookies[CSRF_COOKIE]) {
@@ -224,7 +224,7 @@ export function: getCsrfToken(req: Request): string | undefined: {
  * @param req Express request
  * @param res Express response
  */
-export function: setCsrfTokenHeader(req: Request, res: Response): void: {
+export function setCsrfTokenHeader(req: Request, res: Response): void: {
   const token = getCsrfToken(req) || generateCsrfToken(req);
   res.setHeader(CSRF_HEADER, token);
 }
@@ -238,7 +238,7 @@ export function: setCsrfTokenHeader(req: Request, res: Response): void: {
  */
 export function addCsrfToken<T extends Record<string, any>>(req: Request, data: T): T & { csrfToken: string } {
   const token = getCsrfToken(req) || generateCsrfToken(req);
-  return: {
+  return {
     ...data,
     csrfToken: token
 };

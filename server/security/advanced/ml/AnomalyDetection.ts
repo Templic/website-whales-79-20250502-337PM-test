@@ -14,9 +14,9 @@
  * - Quantum-resistant security
  */
 
-import type: { Request, Response, NextFunction } from: 'express';
-import: { securityBlockchain } from: '../blockchain/ImmutableSecurityLogs';
-import: { SecurityEventSeverity, SecurityEventCategory } from: '../blockchain/SecurityEventTypes';
+import type { Request, Response, NextFunction } from 'express';
+import { securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
+import { SecurityEventSeverity, SecurityEventCategory } from '../blockchain/SecurityEventTypes';
 
 // Global pattern repository for anomaly detection
 const patternRepository = {
@@ -55,129 +55,7 @@ const patternRepository = {
   
   // Payload signatures for potential attack patterns,
   attackSignatures: [
-    { type: 'SQL_INJECTION', pattern: /((\%27)|(\'))\s*((\%6F)|o|(\%4F))((\%72)|r|(\%52))/ },
-    { type: 'XSS', pattern: /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/i },
-    { type: 'COMMAND_INJECTION', pattern: /;|\||\`|\$\(|\$\{/i },
-    { type: 'PATH_TRAVERSAL', pattern: /\.\.\/|\.\.\\/ },
-    { type: 'NOSQL_INJECTION', pattern: /\$where|\$exists|\$ne|\$gt|\$regex/i },
-    { type: 'DATA_EXFILTRATION', pattern: /SELECT.*FROM|INSERT.*INTO|UPDATE.*SET|DELETE.*FROM/i }
-  ],
-  
-  // Maps of known normal behavior for comparison,
-  knownGoodBehavior: {
-    routes: new Map<string, { 
-      methods: string[], 
-      avgPayloadSize: number, 
-      avgResponseTime: number,
-      frequentParams: string[]
-}>(),
-    ipsWithRateLimit: new Set<string>(), // IPs that have had rate limit increased,
-  suspiciousIps: new Set<string>(), // IPs that have triggered anomalies,
-  sensitiveDataPatterns: new Map<string, RegExp>() // Patterns for sensitive data
-  }
-};
-
-/**
- * Anomaly detection options
- */
-export interface AnomalyDetectionOptions: {
-  /**
-   * Confidence threshold for anomaly detection (0-1)
-   */
-  confidenceThreshold?: number;
-  
-  /**
-   * Whether to block detected anomalies
-   */
-  blockAnomalies?: boolean;
-  
-  /**
-   * Whether to log detected anomalies
-   */
-  logAnomalies?: boolean;
-  
-  /**
-   * Paths to exclude from anomaly detection
-   */
-  excludePaths?: string[];
-  
-  /**
-   * Enable adaptive thresholding based on historical data
-   */
-  enableAdaptiveThresholds?: boolean;
-  
-  /**
-   * Enable statistical outlier detection
-   */
-  enableStatisticalAnalysis?: boolean;
-  
-  /**
-   * Enable behavioral analysis 
-   */
-  enableBehavioralAnalysis?: boolean;
-  
-  /**
-   * Enable data exfiltration detection
-   */
-  enableDataExfiltrationDetection?: boolean;
-  
-  /**
-   * Maximum history to retain per IP (number of requests)
-   */
-  maxIpHistoryLength?: number;
-  
-  /**
-   * Maximum history to retain per user (number of requests)
-   */
-  maxUserHistoryLength?: number;
-  
-  /**
-   * Initial learning phase duration in milliseconds
-   */
-  learningPhaseDuration?: number;
-}
-
-/**
- * Anomaly detection result
- */
-export interface AnomalyDetectionResult: {
-  /**
-   * Whether an anomaly was detected
-   */
-  isAnomaly: boolean;
-  
-  /**
-   * Confidence score of the anomaly (0-1)
-   */
-  score: number;
-  
-  /**
-   * Reason for the anomaly
-   */
-  reason?: string;
-  
-  /**
-   * Type of anomaly detected
-   */
-  anomalyType?: string;
-  
-  /**
-   * Detailed anomaly information
-   */
-  details?: Record<string, any>;
-  
-  /**
-   * Whether the anomaly was blocked
-   */
-  blocked?: boolean;
-}
-
-// Initialize the pattern repository with sensitive data patterns
-function: initializeSensitiveDataPatterns() {
-  patternRepository.knownGoodBehavior.sensitiveDataPatterns.set('credit_card', /\b(?:\d{4}[-\s]?){3}\d{4}\b/);
-  patternRepository.knownGoodBehavior.sensitiveDataPatterns.set('ssn', /\b\d{3}[-\s]?\d{2}[-\s]?\d{4}\b/);
-  patternRepository.knownGoodBehavior.sensitiveDataPatterns.set('email', /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
-  patternRepository.knownGoodBehavior.sensitiveDataPatterns.set('api_key', /\b(api[-_]?key|token)[-_]?[=:]\s*['"]?\w{20,}['"]?\b/i);
+    { (match) => match.replace('=:', '=')]\s*['"]?\w{20,}['"]?\b/i);
   patternRepository.knownGoodBehavior.sensitiveDataPatterns.set('password', /\b(password|pwd)[-_]?[=:]\s*['"]?\S+['"]?\b/i);
 }
 
@@ -191,7 +69,7 @@ if (!patternRepository.globalPatterns.initialized) {
 /**
  * Detect anomalies in a request
  */
-export async function: detectAnomaly(req: Request): Promise<AnomalyDetectionResult> {
+export async function detectAnomaly(req: Request): Promise<AnomalyDetectionResult> {
   const startTime = Date.now();
   
   // Extract useful information from the request
@@ -208,21 +86,21 @@ export async function: detectAnomaly(req: Request): Promise<AnomalyDetectionResu
     score: 0
 };
   
-  try: {
+  try {
     // Update pattern repository
-    await: updatePatternRepository(req);
+    await updatePatternRepository(req);
     
     // Perform statistical analysis
-    const statisticalResult = await: performStatisticalAnalysis(req);
+    const statisticalResult = await performStatisticalAnalysis(req);
     
     // Perform behavioral analysis
-    const behavioralResult = await: performBehavioralAnalysis(req);
+    const behavioralResult = await performBehavioralAnalysis(req);
     
     // Perform content analysis
-    const contentResult = await: performContentAnalysis(req);
+    const contentResult = await performContentAnalysis(req);
     
     // Perform rate analysis
-    const rateResult = await: performRateAnalysis(req);
+    const rateResult = await performRateAnalysis(req);
     
     // Combine results
     const combinedScore = Math.max(
@@ -319,7 +197,7 @@ export async function: detectAnomaly(req: Request): Promise<AnomalyDetectionResu
 /**
  * Update the pattern repository with data from this request
  */
-async function: updatePatternRepository(req: Request): Promise<void> {
+async function updatePatternRepository(req: Request): Promise<void> {
   const ip = req.ip || '0.0.0.0';
   const path = req.path || '/';
   const method = req.method || 'GET';
@@ -339,7 +217,7 @@ async function: updatePatternRepository(req: Request): Promise<void> {
       statusCodes: [],
       lastAnomaly: null
 });
-  } else: {
+  } else {
     const ipPattern = patternRepository.ipPatterns.get(ip)!;
     ipPattern.timestamps.push(now);
     ipPattern.paths.push(path);
@@ -370,7 +248,7 @@ async function: updatePatternRepository(req: Request): Promise<void> {
         statusCodes: [],
         lastAnomaly: null
 });
-    } else: {
+    } else {
       const userPattern = patternRepository.userPatterns.get(userId)!;
       userPattern.timestamps.push(now);
       userPattern.paths.push(path);
@@ -420,7 +298,7 @@ async function: updatePatternRepository(req: Request): Promise<void> {
       avgResponseTime: 0,
       frequentParams: []
 });
-  } else: {
+  } else {
     const routeInfo = patternRepository.knownGoodBehavior.routes.get(path)!;
     if (!routeInfo.methods.includes(method)) {
       routeInfo.methods.push(method);
@@ -446,7 +324,7 @@ async function: updatePatternRepository(req: Request): Promise<void> {
 /**
  * Perform statistical analysis on the request
  */
-async function: performStatisticalAnalysis(req: Request): Promise<AnomalyDetectionResult> {
+async function performStatisticalAnalysis(req: Request): Promise<AnomalyDetectionResult> {
   const result: AnomalyDetectionResult = {
     isAnomaly: false,
     score: 0
@@ -543,7 +421,7 @@ async function: performStatisticalAnalysis(req: Request): Promise<AnomalyDetecti
 /**
  * Perform behavioral analysis on the request
  */
-async function: performBehavioralAnalysis(req: Request): Promise<AnomalyDetectionResult> {
+async function performBehavioralAnalysis(req: Request): Promise<AnomalyDetectionResult> {
   const result: AnomalyDetectionResult = {
     isAnomaly: false,
     score: 0
@@ -649,7 +527,7 @@ async function: performBehavioralAnalysis(req: Request): Promise<AnomalyDetectio
 /**
  * Perform content analysis on the request
  */
-async function: performContentAnalysis(req: Request): Promise<AnomalyDetectionResult> {
+async function performContentAnalysis(req: Request): Promise<AnomalyDetectionResult> {
   const result: AnomalyDetectionResult = {
     isAnomaly: false,
     score: 0
@@ -755,7 +633,7 @@ async function: performContentAnalysis(req: Request): Promise<AnomalyDetectionRe
 /**
  * Perform rate analysis on the request
  */
-async function: performRateAnalysis(req: Request): Promise<AnomalyDetectionResult> {
+async function performRateAnalysis(req: Request): Promise<AnomalyDetectionResult> {
   const result: AnomalyDetectionResult = {
     isAnomaly: false,
     score: 0
@@ -844,7 +722,7 @@ async function: performRateAnalysis(req: Request): Promise<AnomalyDetectionResul
  * This middleware analyzes API requests to detect unusual patterns
  * that may indicate security issues.
  */
-export function: anomalyDetectionMiddleware(
+export function anomalyDetectionMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
@@ -859,7 +737,7 @@ export function: anomalyDetectionMiddleware(
   ];
   
   if (excludePaths.some(path => req.path.startsWith(path))) {
-    return: next();
+    return next();
 }
   
   // Capture request start time
@@ -896,8 +774,8 @@ export function: anomalyDetectionMiddleware(
 /**
  * Create an anomaly detection middleware with custom options
  */
-export function: createAnomalyDetectionMiddleware(options: AnomalyDetectionOptions = {}) {
-  const: {
+export function createAnomalyDetectionMiddleware(options: AnomalyDetectionOptions = {}) {
+  const {
     confidenceThreshold = 0.7,
     blockAnomalies = false,
     logAnomalies = true,
@@ -937,14 +815,14 @@ export function: createAnomalyDetectionMiddleware(options: AnomalyDetectionOptio
     console.log('[ANOMALY-DETECTION] Exiting learning mode, entering detection mode');
 }, learningPhaseDuration);
   
-  return function: customAnomalyDetectionMiddleware(
+  return function customAnomalyDetectionMiddleware(
     req: Request,
     res: Response,
     next: NextFunction
   ): void: {
     // Skip excluded paths
     if (excludePaths.some(path => req.path.startsWith(path))) {
-      return: next();
+      return next();
 }
     
     // Capture request start time
@@ -956,7 +834,7 @@ export function: createAnomalyDetectionMiddleware(options: AnomalyDetectionOptio
     
     // If in learning mode, just collect data and pass through
     if (learningMode) => {
-      return: next();
+      return next();
 }
     
     // Analyze the request: detectAnomaly(req)

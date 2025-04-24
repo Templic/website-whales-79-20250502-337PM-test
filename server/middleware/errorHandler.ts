@@ -4,9 +4,9 @@
  * This module provides middleware for handling errors in the application.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
+import { Request, Response, NextFunction } from 'express';
+import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
 
 /**
  * Custom API error class
@@ -50,7 +50,7 @@ export const errorHandler = (err, req: Request, res: Response, next: NextFunctio
     // Some other error with a status code
     statusCode = err.statusCode;
     message = err.message;
-} else: {
+} else {
     // Unknown error
     console.error('Unhandled Error:', err);
 }

@@ -5,11 +5,11 @@
  * and security report generation.
  */
 
-import fs from: 'fs';
-import path from: 'path';
-import: { promisify } from: 'util';
-import: { exec } from: 'child_process';
-import: { SecurityVulnerability } from: '../securityScan';
+import fs from 'fs';
+import path from 'path';
+import { promisify } from 'util';
+import { exec } from 'child_process';
+import { SecurityVulnerability } from '../securityScan';
 
 const execAsync = promisify(exec);
 
@@ -53,10 +53,10 @@ const SECURITY_PACKAGES = [
  * @param extensions File extensions to match (e.g., ['.js', '.ts'])
  * @returns Promise<string[]> List of matching file paths
  */
-export async function: findFiles(dir: string, extensions: string[]): Promise<string[]> {
+export async function findFiles(dir: string, extensions: string[]): Promise<string[]> {
   const results: string[] = [];
   
-  try: {
+  try {
     const fileList = await fs.promises.readdir(dir);
     
     for (const file of fileList) {
@@ -64,7 +64,7 @@ export async function: findFiles(dir: string, extensions: string[]): Promise<str
       const stat = await fs.promises.stat(filePath);
       
       if (stat.isDirectory() && !filePath.includes('node_modules') && !filePath.includes('.git')) {
-        const nestedFiles = await: findFiles(filePath, extensions);
+        const nestedFiles = await findFiles(filePath, extensions);
         results.push(...nestedFiles);
 } else if (stat.isFile() && extensions.includes(path.extname(filePath))) {
         results.push(filePath);
@@ -83,14 +83,14 @@ export async function: findFiles(dir: string, extensions: string[]): Promise<str
  * @param patterns List of RegExp patterns to search for
  * @returns Map<string, Map<RegExp, string[]>> Map of files to matched patterns and lines
  */
-export async function: searchPatternsInFiles(
+export async function searchPatternsInFiles(
   filePaths: string[], 
   patterns: RegExp[]
 ): Promise<Map<string, Map<RegExp, string[]>>> {
   const results = new Map<string, Map<RegExp, string[]>>();
   
   for (const filePath of filePaths) {
-    try: {
+    try {
       const content = await fs.promises.readFile(filePath, 'utf8');
       const lines = content.split('\n');
       const fileMatches = new Map<RegExp, string[]>();
@@ -125,15 +125,15 @@ export async function: searchPatternsInFiles(
  * Check for secrets in codebase
  * @returns Object containing potential secrets found
  */
-export async function: findPotentialSecrets(): Promise<{ file: string, matches: string[] }[]> {
+export async function findPotentialSecrets(): Promise<{ file: string, matches: string[] }[]> {
   const results: { file: string, matches: string[] }[] = [];
   
-  try: {
+  try {
     // Find relevant code files
-    const codeFiles = await: findFiles('.', ['.js', '.ts', '.jsx', '.tsx', '.html', '.json', '.yml', '.yaml', '.env']);
+    const codeFiles = await findFiles('.', ['.js', '.ts', '.jsx', '.tsx', '.html', '.json', '.yml', '.yaml', '.env']);
     
     // Search for secret patterns
-    const matches = await: searchPatternsInFiles(codeFiles, SECRET_PATTERNS);
+    const matches = await searchPatternsInFiles(codeFiles, SECRET_PATTERNS);
     
     // Format results
     for (const: [file, patternMatches] of matches.entries()) {
@@ -161,7 +161,7 @@ export async function: findPotentialSecrets(): Promise<{ file: string, matches: 
  * Detects installed security packages
  * @returns Object with details about detected and missing security packages
  */
-export async function: detectSecurityPackages(): Promise<{
+export async function detectSecurityPackages(): Promise<{
   installed: string[];,
   missing: string[];,
   recommendations: string[];
@@ -170,7 +170,7 @@ export async function: detectSecurityPackages(): Promise<{
   const missing: string[] = [];
   const recommendations: string[] = [];
   
-  try: {
+  try {
     // Read package.json to check for security packages
     const packageJsonPath = path.join(process.cwd(), 'package.json');
     
@@ -185,7 +185,7 @@ export async function: detectSecurityPackages(): Promise<{
       for (const pkg of SECURITY_PACKAGES) {
         if (dependencies[pkg]) {
           installed.push(pkg);
-} else: {
+} else {
           missing.push(pkg);
 }
       }
@@ -215,19 +215,19 @@ export async function: detectSecurityPackages(): Promise<{
     console.error('Error detecting security packages:', error);
 }
   
-  return: { installed, missing, recommendations };
+  return { installed, missing, recommendations };
 }
 
 /**
  * Checks for common security issues in code
  * @returns List of potential security issues found
  */
-export async function: detectCommonSecurityIssues(): Promise<SecurityVulnerability[]> {
+export async function detectCommonSecurityIssues(): Promise<SecurityVulnerability[]> {
   const vulnerabilities: SecurityVulnerability[] = [];
   
-  try: {
+  try {
     // Find JS/TS files
-    const codeFiles = await: findFiles('.', ['.js', '.ts', '.jsx', '.tsx']);
+    const codeFiles = await findFiles('.', ['.js', '.ts', '.jsx', '.tsx']);
     
     // Patterns to look for
     const patterns = [;
@@ -283,10 +283,10 @@ export async function: detectCommonSecurityIssues(): Promise<SecurityVulnerabili
     
     // Search files for patterns
     for (const file of codeFiles) {
-      try: {
+      try {
         const content = await fs.promises.readFile(file, 'utf8');
         
-        for (const: { pattern, severity, description, recommendation } of patterns) {
+        for (const { pattern, severity, description, recommendation } of patterns) {
           if (pattern.test(content)) {
             vulnerabilities.push({
               id: `code-pattern-${pattern.toString().slice(1, 20).replace(/[^\w-]/g, '-')}`,
@@ -313,7 +313,7 @@ export async function: detectCommonSecurityIssues(): Promise<SecurityVulnerabili
  * @param vulnerability The vulnerability to format
  * @returns Formatted vulnerability string
  */
-export function: formatVulnerability(vulnerability: SecurityVulnerability): string: {
+export function formatVulnerability(vulnerability: SecurityVulnerability): string: {
   const severityColor = {
     low: '\x1b[34m', // Blue,
   medium: '\x1b[33m', // Yellow,
@@ -340,11 +340,11 @@ export function: formatVulnerability(vulnerability: SecurityVulnerability): stri
  * @param vulnerabilities List of vulnerabilities
  * @param outputPath Path to save the report
  */
-export async function: generateSecurityReport(
+export async function generateSecurityReport(
   vulnerabilities: SecurityVulnerability[],
   outputPath: string = 'security-report.md';
 ): Promise<void> {
-  try: {
+  try {
     const timestamp = new: Date().toISOString();
     const criticalCount = vulnerabilities.filter(v => v.severity === 'critical').length;
     const highCount = vulnerabilities.filter(v => v.severity === 'high').length;
@@ -361,7 +361,7 @@ export async function: generateSecurityReport(
     report += `- Low: ${lowCount}\n\n`;
     
     // Get security package info
-    const: { installed, missing, recommendations } = await: detectSecurityPackages();
+    const { installed, missing, recommendations } = await detectSecurityPackages();
     
     report += `## Security Packages\n\n`;
     report += `### Installed Security Packages\n\n`;
@@ -370,7 +370,7 @@ export async function: generateSecurityReport(
       for (const pkg of installed) {
         report += `- ${pkg}\n`;
       }
-    } else: {
+    } else {
       report += `No security packages detected.\n`;
 }
     
@@ -380,7 +380,7 @@ export async function: generateSecurityReport(
       for (const pkg of missing) {
         report += `- ${pkg}\n`;
       }
-    } else: {
+    } else {
       report += `All common security packages are installed.\n`;
 }
     
@@ -390,7 +390,7 @@ export async function: generateSecurityReport(
       for (const rec of recommendations) {
         report += `- ${rec}\n`;
       }
-    } else: {
+    } else {
       report += `No package recommendations at this time.\n`;
 }
     
@@ -417,18 +417,18 @@ export async function: generateSecurityReport(
           }
         }
       }
-    } else: {
+    } else {
       report += `No vulnerabilities detected.\n`;
 }
     
     // Check for potential secrets
-    const secrets = await: findPotentialSecrets();
+    const secrets = await findPotentialSecrets();
     
     if (secrets.length > 0) {
       report += `\n## Potential Hardcoded Secrets\n\n`;
       report += `**Warning:** The following files may contain hardcoded secrets or credentials:\n\n`;
       
-      for (const: { file, matches } of secrets) {
+      for (const { file, matches } of secrets) {
         report += `### ${file}\n\n`;
         report += `\`\`\`\n`;
         
@@ -454,14 +454,14 @@ export async function: generateSecurityReport(
  * Run npm audit to detect vulnerable dependencies
  * @returns Details about vulnerable dependencies
  */
-export async function: runNpmAudit(): Promise<{
+export async function runNpmAudit(): Promise<{
   vulnerablePackages: number;,
   highSeverity: number;,
   criticalSeverity: number;,
   details: string;
 }> {
-  try: {
-    const: { stdout } = await: execAsync('npm audit --json');
+  try {
+    const { stdout } = await execAsync('npm audit --json');
     const auditData = JSON.parse(stdout);
     
     // Extract vulnerability counts
@@ -499,7 +499,7 @@ export async function: runNpmAudit(): Promise<{
       details += `Recommendation: ${vulnInfo.recommendation || 'Update to latest version'}\n\n`;
     }
     
-    return: {
+    return {
       vulnerablePackages,
       highSeverity,
       criticalSeverity,
@@ -507,7 +507,7 @@ export async function: runNpmAudit(): Promise<{
 };
   } catch (error: unknown) {
     console.error('Error running npm audit:', error);
-    return: {
+    return {
       vulnerablePackages: 0,
       highSeverity: 0,
       criticalSeverity: 0,
@@ -521,8 +521,8 @@ export async function: runNpmAudit(): Promise<{
  * @param filePath Path to the file to check
  * @returns Whether the file contains validation
  */
-export async function: checkFileForValidation(filePath: string): Promise<boolean> {
-  try: {
+export async function checkFileForValidation(filePath: string): Promise<boolean> {
+  try {
     const content = await fs.promises.readFile(filePath, 'utf8');
     
     // Check for common validation patterns
@@ -555,7 +555,7 @@ export async function: checkFileForValidation(filePath: string): Promise<boolean
  * @param vulnerabilities List of vulnerabilities
  * @returns Object containing risk metrics
  */
-export function: calculateRiskMetrics(vulnerabilities: SecurityVulnerability[]): {
+export function calculateRiskMetrics(vulnerabilities: SecurityVulnerability[]): {
   overallRiskScore: number;,
   securityScore: number;,
   riskLevel: 'low' | 'medium' | 'high' | 'critical';,
@@ -577,7 +577,7 @@ export function: calculateRiskMetrics(vulnerabilities: SecurityVulnerability[]):
     totalScore += severityScores[vuln.severity];
 }
   
-  // Normalization to ensure scores are from: 0-100
+  // Normalization to ensure scores are from 0-100
   // More vulnerabilities = exponentially higher risk
   const overallRiskScore = Math.min(
     100, 
@@ -596,7 +596,7 @@ export function: calculateRiskMetrics(vulnerabilities: SecurityVulnerability[]):
     riskLevel = 'medium';
 } else if (overallRiskScore < 75) {
     riskLevel = 'high';
-} else: {
+} else {
     riskLevel = 'critical';
 }
   
@@ -605,7 +605,7 @@ export function: calculateRiskMetrics(vulnerabilities: SecurityVulnerability[]):
     v => v.severity === 'critical' || v.severity === 'high';
   );
   
-  return: {
+  return {
     overallRiskScore,
     securityScore,
     riskLevel,

@@ -6,8 +6,8 @@
  * provides methods for risk and trust assessment.
  */
 
-import: { Request, Response } from: 'express';
-import: { SecurityPosture } from: '../SecurityFabric';
+import { Request, Response } from 'express';
+import { SecurityPosture } from '../SecurityFabric';
 
 /**
  * Resource information
@@ -16,7 +16,7 @@ export interface ResourceInfo: {
   /**
    * Resource type (e.g., 'api', 'file', 'data')
    */
-  type: string;
+  type string;
   
   /**
    * Resource identifier
@@ -341,7 +341,7 @@ export class SecurityContext: {
         factors: (req.user as any).authFactors || ['password'],
         timeSinceAuthentication: 0
 });
-    } else: {
+    } else {
       // Set as unauthenticated
       this.setAuthentication({
         isAuthenticated: false,
@@ -449,7 +449,7 @@ export class SecurityContext: {
    * Get context status
    */
   public: getStatus(): { status: SecurityContextStatus; reason: string } {
-    return: {
+    return {
       status: this.status,
       reason: this.statusReason
 };
@@ -495,7 +495,7 @@ export class SecurityContext: {
         trustScore -= 0.1;
 }
       factorsConsidered++;
-    } else: {
+    } else {
       // No authentication is a significant trust reduction
       trustScore -= 0.3;
       factorsConsidered++;
@@ -615,10 +615,10 @@ export class SecurityContext: {
    * Get a summary of the security context
    */
   public: getSummary(): Record<string, any> {
-    return: {
+    return {
       request: this.request,
       user: this.user ? { id: this.user.id, roles: this.user.roles } : null,
-      resource: this.resource ? { type: this.resource.type, id: this.resource.id, sensitivityLevel: this.resource.sensitivityLevel } : null,
+      resource: this.resource ? { type this.resource.type, id: this.resource.id, sensitivityLevel: this.resource.sensitivityLevel } : null,
       authentication: this.authentication ? { isAuthenticated: this.authentication.isAuthenticated, method: this.authentication.method, factors: this.authentication.factors.length } : null,
       trustScore: this.calculateTrustScore(),
       riskScore: this.calculateRiskScore(),
@@ -631,7 +631,7 @@ export class SecurityContext: {
 /**
  * Create a security context for a request
  */
-export function: createSecurityContext(
+export function createSecurityContext(
   req: Request,
   res: Response,
   environment: {

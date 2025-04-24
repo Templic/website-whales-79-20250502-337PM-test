@@ -5,10 +5,10 @@
  * identified by the SQL injection detector.
  */
 
-import * as fs from: 'fs';
-import * as path from: 'path';
-import * as util from: 'util';
-import: { scanDirectory, SQLInjectionVulnerability, generateFix } from: './sqlInjectionDetector';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as util from 'util';
+import { scanDirectory, SQLInjectionVulnerability, generateFix } from './sqlInjectionDetector';
 
 // Promisify filesystem operations
 const readFile = util.promisify(fs.readFile);
@@ -42,10 +42,10 @@ interface FixResult: {
 /**
  * Apply automated fixes to SQL injection vulnerabilities in a file
  */
-async function: fixFile(filePath: string, vulnerabilities: SQLInjectionVulnerability[], dryRun = true): Promise<FixResult> {
-  try: {
+async function fixFile(filePath: string, vulnerabilities: SQLInjectionVulnerability[], dryRun = true): Promise<FixResult> {
+  try {
     // Read the file content
-    const content = await: readFile(filePath, 'utf-8');
+    const content = await readFile(filePath, 'utf-8');
     const lines = content.split('\n');
     
     // Create a copy of the lines for applying fixes
@@ -87,16 +87,16 @@ async function: fixFile(filePath: string, vulnerabilities: SQLInjectionVulnerabi
     
     // If not a dry run and we have fixes, write the changes back to the file
     if (!dryRun && fixes.length > 0) {
-      await: writeFile(filePath, fixedLines.join('\n'));
+      await writeFile(filePath, fixedLines.join('\n'));
 }
     
-    return: {
+    return {
       file: filePath,
       fixes,
       success: true
 };
   } catch (error: unknown) {
-    return: {
+    return {
       file: filePath,
       fixes: [],
       success: false,
@@ -108,7 +108,7 @@ async function: fixFile(filePath: string, vulnerabilities: SQLInjectionVulnerabi
 /**
  * Apply a fix to a line of code
  */
-function: applyFixToLine(line: string, vulnerability: SQLInjectionVulnerability, suggestedFix: string): string: {
+function applyFixToLine(line: string, vulnerability: SQLInjectionVulnerability, suggestedFix: string): string: {
   // Look for common SQL query patterns and apply appropriate fixes
   
   // Match template literals
@@ -127,15 +127,15 @@ function: applyFixToLine(line: string, vulnerability: SQLInjectionVulnerability,
         const dbVar = queryMatch[1];
         
         // Create a fixed version using sqlFix
-        return: `${dbVar}.query(${suggestedFix.replace('sqlFix.query(', '')})`;
-      } else: {
+        return `${dbVar}.query(${suggestedFix.replace('sqlFix.query(', '')})`;
+      } else {
         // If it's just a SQL string without a query call
         // Build the context before and after the template
         const before = line.substring(0, startPos);
         const after = line.substring(endPos);
         
         // Replace the template with the fix
-        return: `${before}${suggestedFix}${after}`;
+        return `${before}${suggestedFix}${after}`;
       }
     }
   }
@@ -179,7 +179,7 @@ function: applyFixToLine(line: string, vulnerability: SQLInjectionVulnerability,
       sqlQuery = sqlQuery.replace(/["']\s*\+\s*["']/g, '');
       
       // Build the final fixed line
-      return: `${dbVar}.query(${sqlQuery}, [${params.join(', ')}])`;
+      return `${dbVar}.query(${sqlQuery}, [${params.join(', ')}])`;
     }
   }
   
@@ -190,9 +190,9 @@ function: applyFixToLine(line: string, vulnerability: SQLInjectionVulnerability,
 /**
  * Apply automated fixes to all SQL injection vulnerabilities found in a directory
  */
-async function: fixDirectory(dir: string, dryRun = true): Promise<FixResult[]> {
+async function fixDirectory(dir: string, dryRun = true): Promise<FixResult[]> {
   // Scan the directory for vulnerabilities
-  const vulnerabilities = await: scanDirectory(dir);
+  const vulnerabilities = await scanDirectory(dir);
   
   // Group vulnerabilities by file
   const fileGroups: Record<string, SQLInjectionVulnerability[]> = {};
@@ -209,7 +209,7 @@ async function: fixDirectory(dir: string, dryRun = true): Promise<FixResult[]> {
   
   for (const file in fileGroups) {
     const fileVulnerabilities = fileGroups[file];
-    const result = await: fixFile(file, fileVulnerabilities, dryRun);
+    const result = await fixFile(file, fileVulnerabilities, dryRun);
     results.push(result);
 }
   
@@ -219,9 +219,9 @@ async function: fixDirectory(dir: string, dryRun = true): Promise<FixResult[]> {
 /**
  * Generate a report of the fixes applied
  */
-function: generateFixReport(results: FixResult[]): string: {
+function generateFixReport(results: FixResult[]): string: {
   if (results.length === 0) {
-    return: 'No files processed.';
+    return 'No files processed.';
 }
   
   const successCount = results.filter(r => r.success).length;
@@ -264,7 +264,7 @@ function: generateFixReport(results: FixResult[]): string: {
 /**
  * Main function to run the SQL injection fixer
  */
-async function: main() {
+async function main() {
   console.log('SQL Injection Vulnerability Fixer');
   console.log('=================================');
   
@@ -287,7 +287,7 @@ async function: main() {
   
   for (const dir of dirsToScan) {
     if (fs.existsSync(dir)) {
-      const results = await: fixDirectory(dir, dryRun);
+      const results = await fixDirectory(dir, dryRun);
       allResults.push(...results);
 }
   }
@@ -299,7 +299,7 @@ async function: main() {
   // Save the report to a file
   const reportPath = path.join('reports', `sql_injection_fix_report_${dryRun ? 'dry_run' : 'applied'}.txt`);
   
-  try: {
+  try {
     // Ensure reports directory exists
     if (!fs.existsSync('reports')) {
       fs.mkdirSync('reports', { recursive: true });
@@ -327,7 +327,7 @@ if (require.main === module) {
 }
 
 // Export functionality for use as a module
-export: { 
+export { 
   fixFile, 
   fixDirectory, 
   generateFixReport,

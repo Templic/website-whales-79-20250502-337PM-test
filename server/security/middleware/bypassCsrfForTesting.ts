@@ -5,13 +5,13 @@
  * It disables CSRF protection for specific routes to enable testing endpoints without CSRF tokens.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
+import { Request, Response, NextFunction } from 'express';
 
 /**
  * Creates a middleware that bypasses CSRF protection by setting a fake _csrf property
  * This should ONLY be used for testing purposes and never in production
  */
-export function: bypassCsrfForTesting() {
+export function bypassCsrfForTesting() {
   return (req: Request, res: Response, next: NextFunction) => {
     console.log('[SECURITY] WARNING: CSRF protection bypassed for testing endpoint');
     

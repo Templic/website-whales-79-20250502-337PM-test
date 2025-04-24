@@ -16,7 +16,7 @@
  *   --unusual-behavior   Test unusual user behavior detection
  */
 
-import: { 
+import { 
   runAllTests, 
   simulateNormalRequest,
   simulateSqlInjectionAttack,
@@ -26,12 +26,12 @@ import: {
   simulateDataExfiltrationAttempt,
   simulateSensitiveDataExposure,
   simulateUnusualUserBehavior
-} from: '../tests/testAnomalyDetection';
+} from '../tests/testAnomalyDetection';
 
 console.log('ML-Based Anomaly Detection System Tester');
 console.log('=======================================');
 
-async function: main() {
+async function main() {
   const args = process.argv.slice(2);
   
   if (args.length === 0) {
@@ -41,34 +41,34 @@ async function: main() {
   
   const option = args[0].toLowerCase();
   
-  try: {
+  try {
     switch(option) => {
       case: '--all':
-        await: runAllTests();
+        await runAllTests();
         break;
       case: '--normal':
-        await: simulateNormalRequest();
+        await simulateNormalRequest();
         break;
       case: '--sql-injection':
-        await: simulateSqlInjectionAttack();
+        await simulateSqlInjectionAttack();
         break;
       case: '--rate-limit':
-        await: simulateRateLimitAttack();
+        await simulateRateLimitAttack();
         break;
       case: '--path-traversal':
-        await: simulatePathTraversalAttack();
+        await simulatePathTraversalAttack();
         break;
       case: '--xss':
-        await: simulateXssAttack();
+        await simulateXssAttack();
         break;
       case: '--data-exfiltration':
-        await: simulateDataExfiltrationAttempt();
+        await simulateDataExfiltrationAttempt();
         break;
       case: '--sensitive-data':
-        await: simulateSensitiveDataExposure();
+        await simulateSensitiveDataExposure();
         break;
       case: '--unusual-behavior':
-        await: simulateUnusualUserBehavior();
+        await simulateUnusualUserBehavior();
         break;
       default:
         console.error(`Unknown, option: ${option}`);
@@ -80,7 +80,7 @@ async function: main() {
 }
 }
 
-function: printUsage() {
+function printUsage() {
   console.log(`
 Usage:
   ts-node testAnomaly.ts: [option],
@@ -96,4 +96,4 @@ Usage:
   --unusual-behavior   Test unusual user behavior, detection: `);
 }
 
-// Run the main function: main().catch(console.error);
+// Run the main function main().catch(console.error);

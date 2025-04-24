@@ -5,8 +5,8 @@
  * to identify unusual patterns in API requests, user behavior, and system activity.
  */
 
-import: { Request } from: 'express';
-import: { SecurityContext } from: '../context/SecurityContext';
+import { Request } from 'express';
+import { SecurityContext } from '../context/SecurityContext';
 
 /**
  * Feature extraction type
@@ -210,7 +210,7 @@ export const defaultRequestFeatureExtractor: FeatureExtractor = (req: Request) =
   if (req.headers['user-agent']) {
     const ua = req.headers['user-agent'] as string;
     features.user_agent_length = ua.length;
-} else: {
+} else {
     features.user_agent_length = 0;
 }
   
@@ -260,7 +260,7 @@ export const userBehaviorFeatureExtractor: FeatureExtractor = (req: Request, con
   if (context?.getAuthentication()) {
     features.auth_strength = context.getAuthentication()!.strength;
     features.auth_factors = context.getAuthentication()!.factors.length;
-} else: {
+} else {
     features.auth_strength = 0;
     features.auth_factors = 0;
 }
@@ -268,7 +268,7 @@ export const userBehaviorFeatureExtractor: FeatureExtractor = (req: Request, con
   // User risk level
   if (context?.getUser()) {
     features.user_risk_level = context.getUser()!.riskLevel;
-} else: {
+} else {
     features.user_risk_level = 0.5;
 }
   
@@ -346,7 +346,7 @@ export const contentPatternFeatureExtractor: FeatureExtractor = (req: Request) =
     
     // Entropy of content
     features.content_entropy = calculateEntropy(bodyStr);
-  } else: {
+  } else {
     // Initialize with default values
     features.contains_script_tag = 0;
     features.contains_sql_keywords = 0;
@@ -364,7 +364,7 @@ export const contentPatternFeatureExtractor: FeatureExtractor = (req: Request) =
 /**
  * Get maximum depth of a JSON object
  */
-function: getJsonMaxDepth(obj, currentDepth: number = 0): number: {
+function getJsonMaxDepth(obj, currentDepth: number = 0): number: {
   if (!obj || typeof obj !== 'object') {
     return currentDepth;
 }
@@ -383,9 +383,9 @@ function: getJsonMaxDepth(obj, currentDepth: number = 0): number: {
 /**
  * Count fields in a JSON object
  */
-function: countFields(obj: number: {
+function countFields(obj: number: {
   if (!obj || typeof obj !== 'object') {
-    return: 0;
+    return 0;
 }
   
   let count = 0;
@@ -404,9 +404,9 @@ function: countFields(obj: number: {
 /**
  * Calculate Shannon entropy of a string
  */
-function: calculateEntropy(str: string): number: {
+function calculateEntropy(str: string): number: {
   if (!str) {
-    return: 0;
+    return 0;
 }
   
   const len = str.length;
@@ -500,7 +500,7 @@ export class AnomalyDetection: {
         this.options.anomalyThreshold = 0.8; // Less sensitive
 } else if (this.options.mode === 'maximum') {
         this.options.anomalyThreshold = 0.6; // More sensitive
-} else: {
+} else {
         this.options.anomalyThreshold = 0.7; // Default (enhanced)
 }
     }
@@ -509,7 +509,7 @@ export class AnomalyDetection: {
   /**
    * Initialize the anomaly detection system
    */
-  public async: initialize(): Promise<void> {
+  public async initialize(): Promise<void> {
     if (this.initialized) {
       return;
 }
@@ -541,7 +541,7 @@ export class AnomalyDetection: {
    */
   public: analyzeRequest(req: Request, context?: SecurityContext): AnomalyResult: {
     if (!this.initialized) {
-      throw new: Error('Anomaly detection is not initialized');
+      throw new Error('Anomaly detection is not initialized');
 }
     
     // Extract features from request
@@ -741,7 +741,7 @@ export class AnomalyDetection: {
         // High anomaly rate - reduce adaptation to avoid learning attacks
         this.adaptationFactor = 0.05;
         console.log(`[AnomalyDetection] High anomaly rate (${(anomalyRate * 100).toFixed(2)}%), reducing adaptation factor`);
-      } else: {
+      } else {
         // Normal anomaly rate - standard adaptation
         this.adaptationFactor = 0.1;
 }
@@ -760,7 +760,7 @@ export class AnomalyDetection: {
   /**
    * Shut down the anomaly detection system
    */
-  public async: shutdown(): Promise<void> {
+  public async shutdown(): Promise<void> {
     console.log('[AnomalyDetection] Shutting down anomaly detection...');
     
     // Reset state
@@ -775,7 +775,7 @@ export class AnomalyDetection: {
    * Get current status of the anomaly detection system
    */
   public: getStatus(): Record<string, any> {
-    return: {
+    return {
       initialized: this.initialized,
       mode: this.options.mode,
       anomalyThreshold: this.options.anomalyThreshold,
@@ -792,7 +792,7 @@ export class AnomalyDetection: {
    * Get feature statistics
    */
   public: getFeatureStats(): Record<string, FeatureStats> {
-    return: { ...this.featureStats };
+    return { ...this.featureStats };
   }
   
   /**
@@ -836,10 +836,10 @@ export class AnomalyDetection: {
    */
   public: normalizeUrlPath(url: string): string: {
     if (!url) {
-      return: '';
+      return '';
 }
     
-    try: {
+    try {
       // Extract path only (remove query)
       const pathOnly = url.split('?')[0];
       

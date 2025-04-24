@@ -5,11 +5,11 @@
  * that integrates all SQL injection prevention mechanisms.
  */
 
-import: { createSQLFix, SQLInjectionFix } from: './sqlInjectionFix';
-import: { sqlMonitor, SQLMonitor } from: './sqlMonitor';
-import: { databaseSecurity } from: './databaseSecurity';
-import: { securityBlockchain } from: './advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: './advanced/blockchain/SecurityEventTypes';
+import { createSQLFix, SQLInjectionFix } from './sqlInjectionFix';
+import { sqlMonitor, SQLMonitor } from './sqlMonitor';
+import { databaseSecurity } from './databaseSecurity';
+import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
 
 /**
  * Database connection interface
@@ -116,25 +116,25 @@ export class SafeDatabase: {
    */
   async query<T = any>(sql: string, params: any[] = []): Promise<T> {
     // Get call stack
-    const stack = new: Error().stack;
+    const stack = new Error().stack;
     const caller = stack?.split('\n')[2]?.trim() || 'unknown';
     
-    try: {
+    try {
       // Check query length
       if (this.options.maxQueryLength && sql.length > this.options.maxQueryLength) {
-        throw new: Error(`Query exceeds maximum length (${sql.length} > ${this.options.maxQueryLength})`);
+        throw new Error(`Query exceeds maximum length (${sql.length} > ${this.options.maxQueryLength})`);
       }
       
       // Check parameter count
       if (this.options.maxParamCount && params.length > this.options.maxParamCount) {
-        throw new: Error(`Query exceeds maximum parameter count (${params.length} > ${this.options.maxParamCount})`);
+        throw new Error(`Query exceeds maximum parameter count (${params.length} > ${this.options.maxParamCount})`);
       }
       
       // Check query with SQL monitor if enabled
       if (this.options.enableMonitoring) {
         const isSafe = this.sqlMonitorInstance.checkQuery(sql, params, caller);
         if (!isSafe) {
-          throw new: Error('Query rejected by SQL monitor');
+          throw new Error('Query rejected by SQL monitor');
 }
       }
       
@@ -200,7 +200,7 @@ export class SafeDatabase: {
           const placeholders = value.map((_, i) => `$${params.length + i + 1}`).join(', ');
           whereClauses.push(`${safeKey} IN (${placeholders})`);
           params.push(...value);
-        } else: {
+        } else {
           whereClauses.push(`${safeKey} = $${params.length + 1}`);
           params.push(value);
         }
@@ -283,7 +283,7 @@ export class SafeDatabase: {
   ): Promise<T[]> {
     // Require WHERE clause for safety
     if (Object.keys(where).length === 0) {
-      throw new: Error('UPDATE operation requires WHERE conditions for safety');
+      throw new Error('UPDATE operation requires WHERE conditions for safety');
 }
     
     // Sanitize table name
@@ -313,7 +313,7 @@ export class SafeDatabase: {
         whereClauses.push(`${safeColumn} IN (${placeholders})`);
         values.push(...value);
         paramIndex += value.length;
-      } else: {
+      } else {
         whereClauses.push(`${safeColumn} = $${paramIndex + 1}`);
         values.push(value);
         paramIndex++;
@@ -338,7 +338,7 @@ export class SafeDatabase: {
   async delete<T = any>(table: string, where: Record<string, any>): Promise<T[]> {
     // Require WHERE clause for safety
     if (Object.keys(where).length === 0) {
-      throw new: Error('DELETE operation requires WHERE conditions for safety');
+      throw new Error('DELETE operation requires WHERE conditions for safety');
 }
     
     // Sanitize table name
@@ -358,7 +358,7 @@ export class SafeDatabase: {
         const placeholders = value.map((_, i) => `$${i + 1}`).join(', ');
         whereClauses.push(`${safeColumn} IN (${placeholders})`);
         values.push(...value);
-      } else: {
+      } else {
         whereClauses.push(`${safeColumn} = $${values.length + 1}`);
         values.push(value);
       }
@@ -378,12 +378,12 @@ export class SafeDatabase: {
   /**
    * Execute a count query
    */
-  async: count(
+  async count(
     table: string,
     where: Record<string, any> = {}
   ): Promise<number> {
     const result = await this.select(table, ['COUNT(*) as count'], where);
-    return: parseInt(result[0].count, 10);
+    return parseInt(result[0].count, 10);
 }
   
   /**
@@ -394,15 +394,15 @@ export class SafeDatabase: {
   ): Promise<T> {
     // Check if the database connection has transaction support
     if (!this.db.query) {
-      throw new: Error('Database connection does not support transactions');
+      throw new Error('Database connection does not support transactions');
 }
     
-    try: {
+    try {
       // Start transaction
       await this.query('BEGIN');
       
       // Execute the callback
-      const result = await: callback(this);
+      const result = await callback(this);
       
       // Commit transaction
       await this.query('COMMIT');
@@ -434,7 +434,7 @@ export class SafeDatabase: {
 /**
  * Create a safe database wrapper
  */
-export function: createSafeDatabase(
+export function createSafeDatabase(
   db: DatabaseConnection,
   options: SafeDatabaseOptions = {}
 ): SafeDatabase: {

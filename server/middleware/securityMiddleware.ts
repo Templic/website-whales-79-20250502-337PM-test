@@ -5,16 +5,16 @@
  * including XSS protection, SQL injection prevention, and general security headers.
  */
 
-import: { Express, Router, Request, Response, NextFunction } from: 'express';
-import xssProtectionMiddleware from: './xssProtection';
-import: { immutableSecurityLogs as securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
-import: { AnyZodObject, z } from: 'zod';
+import { Express, Router, Request, Response, NextFunction } from 'express';
+import xssProtectionMiddleware from './xssProtection';
+import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
+import { AnyZodObject, z } from 'zod';
 
 /**
  * Apply all security middleware to an Express application
  */
-export function: applySecurityMiddleware(app: Express) {
+export function applySecurityMiddleware(app: Express) {
   console.log('[SECURITY] Applying comprehensive security middleware');
   
   // Log initialization
@@ -31,13 +31,13 @@ export function: applySecurityMiddleware(app: Express) {
     console.error('[SECURITY ERROR] Failed to log security middleware initialization:', err);
 });
   
-  try: {
+  try {
     // Apply XSS protection
     app.use(xssProtectionMiddleware());
     
     // Add Helmet for additional security headers
     if (!app.get('helmet-applied')) {
-      try: {
+      try {
         const helmet = require('helmet');
         app.use(helmet({
           contentSecurityPolicy: false // We apply custom CSP in XSS protection
@@ -51,7 +51,7 @@ export function: applySecurityMiddleware(app: Express) {
     
     // Add rate limiting to prevent brute force attacks
     if (!app.get('rate-limit-applied')) {
-      try: {
+      try {
         const rateLimit = require('express-rate-limit');
         
         // Apply rate limiting to sensitive routes
@@ -131,12 +131,12 @@ export function: applySecurityMiddleware(app: Express) {
 /**
  * Custom security middleware for specific security requirements
  */
-export function: createCustomSecurityMiddleware(options: {
+export function createCustomSecurityMiddleware(options: {
   enableMlDetection?: boolean;
   enableBlockchainLogging?: boolean;
   enableRuntimeProtection?: boolean;
 }) {
-  const: {
+  const {
     enableMlDetection = false,
     enableBlockchainLogging = true,
     enableRuntimeProtection = false;
@@ -204,9 +204,9 @@ export function: createCustomSecurityMiddleware(options: {
     
     // Enable ML-based anomaly detection
     if (enableMlDetection) => {
-      try: {
+      try {
         // Import ML detection dynamically to avoid dependency if not used
-        const: { detectAnomaly, createAnomalyDetectionMiddleware } = require('../security/advanced/ml/AnomalyDetection');
+        const { detectAnomaly, createAnomalyDetectionMiddleware } = require('../security/advanced/ml/AnomalyDetection');
         
         // Create anomaly detection options based on security settings
         const anomalyOptions = {
@@ -267,7 +267,7 @@ export function: createCustomSecurityMiddleware(options: {
               req.securityContext.anomalyDetails = {
                 score: result.score,
                 reason: result.reason,
-                type: result.anomalyType
+                type result.anomalyType
 };
               
               // Optionally apply additional security measures for high-severity anomalies
@@ -284,9 +284,9 @@ export function: createCustomSecurityMiddleware(options: {
     
     // Enable Runtime Application Self-Protection (RASP)
     if (enableRuntimeProtection) => {
-      try: {
+      try {
         // Import RASP dynamically to avoid dependency if not used
-        const: { monitorRuntime } = require('../security/advanced/rasp/RuntimeProtection');
+        const { monitorRuntime } = require('../security/advanced/rasp/RuntimeProtection');
         
         // Monitor runtime for suspicious activities: monitorRuntime(req, res).then(result => {
           req.securityContext.securityChecks.runtimeProtection = true;
@@ -352,11 +352,11 @@ interface SecureRouter extends Router: {
   secureDelete: (path: string, handler: SecureRouteHandler, options?: RouteOptions) => void;
 }
 
-export function: createSecureRouter(options: SecureRouterOptions = {}): SecureRouter: {
+export function createSecureRouter(options: SecureRouterOptions = {}): SecureRouter: {
   const router = Router() as SecureRouter;
   
   // Default options
-  const: {
+  const {
     authenticate = false,
     rateLimit = 'default',
     enableMlDetection = false,
@@ -366,7 +366,7 @@ export function: createSecureRouter(options: SecureRouterOptions = {}): SecureRo
   // Validation middleware creator
   const createValidationMiddleware = (schema: AnyZodObject, target: 'body' | 'query' | 'params') => {
     return async (req: Request, res: Response, next: NextFunction) => {
-      try: {
+      try {
         // Parse and validate the request data
         const data = target === 'body' ? req.body : ;
                     target === 'query' ? req.query : req.params;
@@ -454,7 +454,7 @@ export function: createSecureRouter(options: SecureRouterOptions = {}): SecureRo
       // Apply rate limiting if specified
       const routeRateLimit = options.rateLimit || rateLimit;
       if (routeRateLimit !== 'none') {
-        try: {
+        try {
           const rateLimit = require('express-rate-limit');
           
           let limiter;
@@ -497,8 +497,8 @@ export function: createSecureRouter(options: SecureRouterOptions = {}): SecureRo
       
       // Apply route handler
       router[method](path, ...middlewares, async (req: Request, res: Response, next: NextFunction) => {
-        try: {
-          await: handler(req, res);
+        try {
+          await handler(req, res);
 } catch (error: unknown) {
           // Log error
           securityBlockchain.addSecurityEvent({
@@ -535,7 +535,7 @@ export function: createSecureRouter(options: SecureRouterOptions = {}): SecureRo
 /**
  * Creates an admin-only secure router with additional security
  */
-export function: createAdminRouter(): SecureRouter: {
+export function createAdminRouter(): SecureRouter: {
   const router = createSecureRouter({
     authenticate: true,
     rateLimit: 'strict',
@@ -548,7 +548,7 @@ export function: createAdminRouter(): SecureRouter: {
     // In a real app, this would check if user has admin role
     if (req.user && (req.user as any).role === 'admin') {
       next();
-} else: {
+} else {
       // Log unauthorized access attempt
       securityBlockchain.addSecurityEvent({
         category: SecurityEventCategory.ACCESS_DENIED,
@@ -609,8 +609,8 @@ export function: createAdminRouter(): SecureRouter: {
 /**
  * Example usage:
  * 
- * import express from: 'express';
- * import: { applySecurityMiddleware, createCustomSecurityMiddleware, createSecureRouter } from: './middleware/securityMiddleware';
+ * import express from 'express';
+ * import { applySecurityMiddleware, createCustomSecurityMiddleware, createSecureRouter } from './middleware/securityMiddleware';
  * 
  * const app = express();
  * 
@@ -627,7 +627,7 @@ export function: createAdminRouter(): SecureRouter: {
  * apiRouter.secureGet('/items', (req, res) => {
  *   res.json({ items: [] });
  * }, {
- *   querySchema: z.object({ q: z.string().optional() })
+ *   (match) => match.replace(':', '')object({ (match) => match.replace(':', '')string().optional() })
  * });
  * 
  * // Use the router in your app

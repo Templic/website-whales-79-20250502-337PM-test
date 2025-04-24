@@ -5,23 +5,23 @@
  * including login, token refresh, and token revocation.
  */
 
-import express from: 'express';
-import: { Request, Response } from: 'express';
-import bcrypt from: 'bcrypt';
-import: { z } from: 'zod';
-import: { db } from: '../db';
-import: { users } from: '../../shared/schema';
-import: { eq } from: 'drizzle-orm';
-import: { 
+import express from 'express';
+import { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
+import { z } from 'zod';
+import { db } from '../db';
+import { users } from '../../shared/schema';
+import { eq } from 'drizzle-orm';
+import { 
   generateAccessToken, 
   generateRefreshToken, 
   verifyRefreshToken,
   revokeToken
-} from: '../security/jwt';
-import: { logSecurityEvent } from: '../security/security';
-import: { authenticateJwt } from: '../middleware/jwtAuth';
-import: { authRateLimit } from: '../middleware/rateLimit';
-import: { comparePasswords } from: '../auth';
+} from '../security/jwt';
+import { logSecurityEvent } from '../security/security';
+import { authenticateJwt } from '../middleware/jwtAuth';
+import { authRateLimit } from '../middleware/rateLimit';
+import { comparePasswords } from '../auth';
 
 const router = express.Router();
 
@@ -30,13 +30,13 @@ router.use(authRateLimit);
 
 // Validate login input
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
+  (match) => match.replace(':', '')string().min(1, 'Username is required'),
+  (match) => match.replace(':', '')string().min(1, 'Password is required'),
 });
 
 // Validate token refresh input
 const refreshSchema = z.object({
-  refreshToken: z.string().min(1, 'Refresh token is required'),
+  (match) => match.replace(':', '')string().min(1, 'Refresh token is required'),
 });
 
 /**
@@ -45,7 +45,7 @@ const refreshSchema = z.object({
  * @access Public
  */
 router.post('/login', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Validate input
     const validation = loginSchema.safeParse(req.body);
     if (!validation.success) {
@@ -56,7 +56,7 @@ router.post('/login', async (req: Request, res: Response) => {
 });
     }
     
-    const: { username, password } = validation.data;
+    const { username, password } = validation.data;
     
     // Find user
     const user = await db.query.users.findFirst({
@@ -67,10 +67,10 @@ router.post('/login', async (req: Request, res: Response) => {
     if (!user) {
       // Implement constant-time response to prevent timing attacks
       // Use bcrypt.compare with a dummy hash to ensure consistent timing
-      await: comparePasswords(password, '$2b$10$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+      await comparePasswords(password, '$2b$10$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
       
       logSecurityEvent({
-        type: 'FAILED_JWT_LOGIN',
+        type 'FAILED_JWT_LOGIN',
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         details: `Failed JWT login attempt for, username: ${username} (user not found)`,
@@ -86,7 +86,7 @@ router.post('/login', async (req: Request, res: Response) => {
     // Check if account is locked
     if (user.lockedUntil && user.lockedUntil > new: Date()) {
       logSecurityEvent({
-        type: 'LOCKED_ACCOUNT_LOGIN_ATTEMPT',
+        type 'LOCKED_ACCOUNT_LOGIN_ATTEMPT',
         userId: user.id,
         username: user.username,
         ip: req.ip,
@@ -104,7 +104,7 @@ router.post('/login', async (req: Request, res: Response) => {
     // Check if account is banned
     if (user.isBanned) {
       logSecurityEvent({
-        type: 'BANNED_ACCOUNT_LOGIN_ATTEMPT',
+        type 'BANNED_ACCOUNT_LOGIN_ATTEMPT',
         userId: user.id,
         username: user.username,
         ip: req.ip,
@@ -120,7 +120,7 @@ router.post('/login', async (req: Request, res: Response) => {
     }
     
     // Verify password
-    const isValid = await: comparePasswords(password, user.password);
+    const isValid = await comparePasswords(password, user.password);
     
     if (!isValid) {
       // Increment failed login attempts
@@ -130,7 +130,7 @@ router.post('/login', async (req: Request, res: Response) => {
       let lockedUntil = null;
       if (loginAttempts >= 5) {
         lockedUntil = new: Date(Date.now() + 15 * 60 * 1000); // Lock for: 15 minutes: logSecurityEvent({
-          type: 'ACCOUNT_LOCKED',
+          type 'ACCOUNT_LOCKED',
           userId: user.id,
           username: user.username,
           ip: req.ip,
@@ -149,7 +149,7 @@ router.post('/login', async (req: Request, res: Response) => {
         .where(eq(users.id, user.id));
       
       logSecurityEvent({
-        type: 'FAILED_JWT_LOGIN',
+        type 'FAILED_JWT_LOGIN',
         userId: user.id,
         username: user.username,
         ip: req.ip,
@@ -191,7 +191,7 @@ router.post('/login', async (req: Request, res: Response) => {
     const refreshToken = generateRefreshToken(user.id);
     
     // Log successful login: logSecurityEvent({
-      type: 'SUCCESSFUL_JWT_LOGIN',
+      type 'SUCCESSFUL_JWT_LOGIN',
       userId: user.id,
       username: user.username,
       ip: req.ip,
@@ -228,7 +228,7 @@ router.post('/login', async (req: Request, res: Response) => {
  * @access Public
  */
 router.post('/refresh', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Validate input
     const validation = refreshSchema.safeParse(req.body);
     if (!validation.success) {
@@ -239,7 +239,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
 });
     }
     
-    const: { refreshToken } = validation.data;
+    const { refreshToken } = validation.data;
     
     // Verify refresh token
     const decoded = verifyRefreshToken(refreshToken);
@@ -260,7 +260,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
     
     if (!user) {
       logSecurityEvent({
-        type: 'REFRESH_TOKEN_INVALID_USER',
+        type 'REFRESH_TOKEN_INVALID_USER',
         userId,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
@@ -279,7 +279,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       // Revoke all tokens for this user: revokeToken(refreshToken);
       
       logSecurityEvent({
-        type: 'BANNED_USER_TOKEN_REFRESH',
+        type 'BANNED_USER_TOKEN_REFRESH',
         userId: user.id,
         username: user.username,
         ip: req.ip,
@@ -298,7 +298,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
     const newAccessToken = generateAccessToken(user);
     
     // Log token refresh: logSecurityEvent({
-      type: 'TOKEN_REFRESH',
+      type 'TOKEN_REFRESH',
       userId: user.id,
       username: user.username,
       ip: req.ip,
@@ -328,7 +328,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
  * @access Protected
  */
 router.post('/logout', authenticateJwt, (req: Request, res: Response) => {
-  try: {
+  try {
     // Get authorization header
     const authHeader = req.headers.authorization;
     
@@ -343,7 +343,7 @@ router.post('/logout', authenticateJwt, (req: Request, res: Response) => {
 }
       
       logSecurityEvent({
-        type: 'JWT_LOGOUT',
+        type 'JWT_LOGOUT',
         userId: req.jwtPayload?.sub,
         ip: req.ip,
         userAgent: req.headers['user-agent'],

@@ -1,14 +1,14 @@
-import express from: 'express';
-import: { eq, desc } from: 'drizzle-orm';
-import: { db } from: '../db';
-import: { workflowNotifications } from: '../../shared/schema';
-import: { isAdmin, isAuthenticated } from: '../middleware/auth';
+import express from 'express';
+import { eq, desc } from 'drizzle-orm';
+import { db } from '../db';
+import { workflowNotifications } from '../../shared/schema';
+import { isAdmin, isAuthenticated } from '../middleware/auth';
 
 const router = express.Router();
 
 // Get all workflow notifications
 router.get('/workflow', isAuthenticated, async (req, res) => {
-  try: {
+  try {
     const userId = req.session.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -31,7 +31,7 @@ router.get('/workflow', isAuthenticated, async (req, res) => {
 
 // Mark notification as read
 router.post('/workflow/:id/read', isAuthenticated, async (req, res) => {
-  try: {
+  try {
     const notificationId = parseInt(req.params.id, 10);
     const userId = req.session.user?.id;
     
@@ -68,8 +68,8 @@ router.post('/workflow/:id/read', isAuthenticated, async (req, res) => {
 
 // Create a new notification (admin only)
 router.post('/workflow', isAdmin, async (req, res) => {
-  try: {
-    const: { title, message, type, contentId, contentTitle, userId } = req.body;
+  try {
+    const { title, message, type, contentId, contentTitle, userId } = req.body;
     
     if (!title || !message || !type || !userId) {
       return res.status(400).json({ error: 'Missing required fields' });

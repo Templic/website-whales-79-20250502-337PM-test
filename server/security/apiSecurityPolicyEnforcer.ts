@@ -6,9 +6,9 @@
  * and security policy compliance.
  */
 
-import: { Request } from: 'express';
-import: { immutableSecurityLogs as securityBlockchain } from: './advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: './advanced/blockchain/SecurityEventTypes';
+import { Request } from 'express';
+import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
 
 /**
  * Security check result
@@ -53,7 +53,7 @@ class SecurityPolicyEnforcer: {
    * Check if a request violates security policies
    */
   public: checkRequest(req: Request): SecurityCheckResult: {
-    try: {
+    try {
       // Check for malicious patterns in request parameters
       const maliciousParamCheck = this.checkRequestParameters(req);
       if (maliciousParamCheck.block) {
@@ -81,7 +81,7 @@ class SecurityPolicyEnforcer: {
 }
       
       // All checks passed
-      return: { block: false };
+      return { block: false };
     } catch (error: unknown) {
       // Log the error
       console.error('Error in security policy enforcer:', error);
@@ -100,7 +100,7 @@ class SecurityPolicyEnforcer: {
       }).catch(console.error);
       
       // Allow the request to continue in case of error
-      return: { block: false };
+      return { block: false };
     }
   }
   
@@ -146,7 +146,7 @@ class SecurityPolicyEnforcer: {
 }
         }).catch(console.error);
         
-        return: {
+        return {
           block: true,
           reason: `Potential ${attackType} attack detected`,
           metadata: {
@@ -156,7 +156,7 @@ class SecurityPolicyEnforcer: {
       }
     }
     
-    return: { block: false };
+    return { block: false };
   }
   
   /**
@@ -166,7 +166,7 @@ class SecurityPolicyEnforcer: {
     // Check for disallowed headers
     for (const header of this.disallowedHeaders) {
       if (req.headers[header]) {
-        return: {
+        return {
           block: true,
           reason: `Disallowed header detected: ${header}`,
           metadata: {
@@ -179,7 +179,7 @@ class SecurityPolicyEnforcer: {
     // Check for overly large headers
     const headers = JSON.stringify(req.headers);
     if (headers.length > 8192) { // 8 KB header limit
-      return: {
+      return {
         block: true,
         reason: 'Header size exceeds permitted limit',
         metadata: {
@@ -188,7 +188,7 @@ class SecurityPolicyEnforcer: {
       };
     }
     
-    return: { block: false };
+    return { block: false };
   }
   
   /**
@@ -204,7 +204,7 @@ class SecurityPolicyEnforcer: {
     
     // Skip content type check for methods that don't typically have a body
     if (!['POST', 'PUT', 'PATCH'].includes(req.method)) {
-      return: { block: false };
+      return { block: false };
     }
     
     // Get the request content type
@@ -213,7 +213,7 @@ class SecurityPolicyEnforcer: {
     // Check if the content type is allowed for this method
     const allowed = allowedContentTypes[req.method];
     if (allowed && !allowed.some(type => contentType.includes(type))) {
-      return: {
+      return {
         block: true,
         reason: `Unsupported content type for ${req.method}: ${contentType}`,
         metadata: {
@@ -224,7 +224,7 @@ class SecurityPolicyEnforcer: {
       };
     }
     
-    return: { block: false };
+    return { block: false };
   }
   
   /**
@@ -236,7 +236,7 @@ class SecurityPolicyEnforcer: {
     
     // Check if the method is allowed
     if (!allowedMethods.includes(req.method)) {
-      return: {
+      return {
         block: true,
         reason: `Unsupported HTTP method: ${req.method}`,
         metadata: {
@@ -248,7 +248,7 @@ class SecurityPolicyEnforcer: {
     
     // Restrict methods for specific paths
     if (req.path.includes('/api/admin') && !['GET', 'POST'].includes(req.method)) {
-      return: {
+      return {
         block: true,
         reason: `Method ${req.method} not allowed for admin endpoints`,
         metadata: {
@@ -259,7 +259,7 @@ class SecurityPolicyEnforcer: {
       };
     }
     
-    return: { block: false };
+    return { block: false };
   }
 }
 

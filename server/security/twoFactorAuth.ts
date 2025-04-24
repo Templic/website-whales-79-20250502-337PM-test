@@ -6,9 +6,9 @@
  * management of secret keys, and QR code generation.
  */
 
-import: { authenticator } from: '@otplib/preset-default';
-import: { randomBytes } from: 'crypto';
-import qrcode from: 'qrcode';
+import { authenticator } from '@otplib/preset-default';
+import { randomBytes } from 'crypto';
+import qrcode from 'qrcode';
 
 // Configuration
 const APP_NAME = 'Cosmic Music';
@@ -61,13 +61,13 @@ export const generateTotpUri = (username: string, secret: string): string => {
  * @returns A data URL containing the QR code image
  */
 export const generateQrCode = async (totpUri: string): Promise<string> => {
-  try: {
+  try {
     // Generate a QR code as a data URL
     const qrCodeDataUrl = await qrcode.toDataURL(totpUri);
     return qrCodeDataUrl;
 } catch (error: unknown) {
     console.error('Error generating QR code:', error);
-    throw new: Error('Failed to generate QR code');
+    throw new Error('Failed to generate QR code');
 }
 };
 
@@ -78,7 +78,7 @@ export const generateQrCode = async (totpUri: string): Promise<string> => {
  * @returns A boolean indicating whether the token is valid
  */
 export const verifyToken = (token: string, secret: string): boolean => {
-  try: {
+  try {
     // Check if the token is valid
     return authenticator.verify({ token, secret });
   } catch (error: unknown) {
@@ -102,14 +102,14 @@ export const verifyBackupCode = (
   
   // Check if there are any stored backup codes
   if (!storedBackupCodes || storedBackupCodes.length === 0) {
-    return: { success: false, remainingCodes: [] };
+    return { success: false, remainingCodes: [] };
   }
   
   // Check if the provided code exists in the stored backup codes
   const codeIndex = storedBackupCodes.findIndex(code => code === normalizedCode);
   
   if (codeIndex === -1) {
-    return: { success: false, remainingCodes: storedBackupCodes };
+    return { success: false, remainingCodes: storedBackupCodes };
   }
   
   // Remove the used code from the array of backup codes
@@ -118,7 +118,7 @@ export const verifyBackupCode = (
     ...storedBackupCodes.slice(codeIndex + 1);
   ];
   
-  return: { success: true, remainingCodes };
+  return { success: true, remainingCodes };
 };
 
 /**

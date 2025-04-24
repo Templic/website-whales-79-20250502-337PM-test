@@ -5,10 +5,10 @@
  * It generates, validates, and manages CSRF tokens to protect against CSRF attacks.
  */
 
-import * as crypto from: 'crypto';
-import: { Request, Response, NextFunction } from: 'express';
-import: { securityBlockchain } from: '../blockchain/ImmutableSecurityLogs';
-import: { SecurityEventSeverity, SecurityEventCategory } from: '../blockchain/ImmutableSecurityLogs';
+import * as crypto from 'crypto';
+import { Request, Response, NextFunction } from 'express';
+import { securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
+import { SecurityEventSeverity, SecurityEventCategory } from '../blockchain/ImmutableSecurityLogs';
 
 // Declare session property on Express Request
 declare global: {
@@ -27,27 +27,27 @@ declare global: {
  */
 export interface CSRFOptions: {
   /**
-   * The name of the CSRF token cookie (default: '_csrf')
+   * The name of the CSRF token cookie (default '_csrf')
    */
   cookieName?: string;
   
   /**
-   * The name of the CSRF token header (default: 'x-csrf-token')
+   * The name of the CSRF token header (default 'x-csrf-token')
    */
   headerName?: string;
   
   /**
-   * The expiration time of the CSRF token in milliseconds (default: 24 hours)
+   * The expiration time of the CSRF token in milliseconds (default 24 hours)
    */
   expiryTime?: number;
   
   /**
-   * Routes to exclude from CSRF protection (default: [])
+   * Routes to exclude from CSRF protection (default [])
    */
   excludeRoutes?: string[];
   
   /**
-   * Whether to enable double-submit verification (default: true)
+   * Whether to enable double-submit verification (default true)
    */
   doubleSubmitVerification?: boolean;
 }
@@ -119,7 +119,7 @@ export class CSRFProtection: {
     const created = Date.now();
     const id = crypto.randomBytes(8).toString('hex');
     
-    return: { 
+    return { 
       token, 
       expires, 
       created,
@@ -142,15 +142,15 @@ export class CSRFProtection: {
     
     // Extract tokens
     if (!request.cookies || !request.headers) {
-      return: { valid: false, reason: 'No cookies or headers in request' };
+      return { valid: false, reason: 'No cookies or headers in request' };
     }
     
     if (!cookieName) {
-      return: { valid: false, reason: 'CSRF cookie name is undefined' };
+      return { valid: false, reason: 'CSRF cookie name is undefined' };
     }
     
     if (!headerName) {
-      return: { valid: false, reason: 'CSRF header name is undefined' };
+      return { valid: false, reason: 'CSRF header name is undefined' };
     }
     
     const cookieToken = request.cookies[cookieName];
@@ -158,42 +158,42 @@ export class CSRFProtection: {
     
     // Check if tokens exist
     if (!cookieToken) {
-      return: { valid: false, reason: 'Missing CSRF cookie token' };
+      return { valid: false, reason: 'Missing CSRF cookie token' };
     }
     
     if (!headerToken) {
-      return: { valid: false, reason: 'Missing CSRF header token' };
+      return { valid: false, reason: 'Missing CSRF header token' };
     }
     
     // Parse cookie token data
-    try: {
+    try {
       const cookieTokenData = JSON.parse(Buffer.from(cookieToken, 'base64').toString('utf-8')) as CSRFTokenData;
       
       // Check if token is expired
       if (cookieTokenData.expires < Date.now()) {
-        return: { valid: false, reason: 'CSRF token expired' };
+        return { valid: false, reason: 'CSRF token expired' };
       }
       
       // If token is marked as used and this is a one-time token
       if (cookieTokenData.used === true) {
-        return: { valid: false, reason: 'CSRF token already used (one-time token)' };
+        return { valid: false, reason: 'CSRF token already used (one-time token)' };
       }
       
       // If token was created too recently (potential token stealing attack)
       const minimumTokenAge = 500; // 500ms minimum token age
       if (cookieTokenData.created && (Date.now() - cookieTokenData.created < minimumTokenAge)) {
-        return: { valid: false, reason: 'CSRF token too new (potential token stealing attack)' };
+        return { valid: false, reason: 'CSRF token too new (potential token stealing attack)' };
       }
       
       // If route-specific tokens are being used, validate the route
       if (route && cookieTokenData.route && cookieTokenData.route !== route) {
-        return: { valid: false, reason: 'CSRF token is for a different route' };
+        return { valid: false, reason: 'CSRF token is for a different route' };
       }
       
       // If double-submit verification is enabled, check if tokens match
       if (this.options.doubleSubmitVerification !== false) {
         if (cookieTokenData.token !== headerToken) {
-          return: { valid: false, reason: 'CSRF token mismatch between cookie and header' };
+          return { valid: false, reason: 'CSRF token mismatch between cookie and header' };
         }
       }
       
@@ -201,10 +201,10 @@ export class CSRFProtection: {
       // In a production system, this would be persisted in a cache/store
       cookieTokenData.used = true;
       
-      return: { valid: true };
+      return { valid: true };
     } catch (error: unknown) {
       console.error('Error validating CSRF token:', error);
-      return: { valid: false, reason: 'Invalid CSRF token format' };
+      return { valid: false, reason: 'Invalid CSRF token format' };
     }
   }
   
@@ -217,7 +217,7 @@ export class CSRFProtection: {
     const maxAge = this.options.expiryTime || defaultOptions.expiryTime;
     
     if (!cookieName) {
-      throw new: Error('CSRF cookie name is undefined');
+      throw new Error('CSRF cookie name is undefined');
 }
     
     // Set cookie
@@ -238,14 +238,14 @@ export class CSRFProtection: {
     return (req: Request, res: Response, next: NextFunction) => {
       // Skip for non-state-changing methods
       if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-        return: next();
+        return next();
 }
       
       // Skip for excluded routes
       const excludeRoutes = this.options.excludeRoutes || [];
       for (const route of excludeRoutes) {
         if (req.path.startsWith(route)) {
-          return: next();
+          return next();
 }
       }
       
@@ -287,7 +287,7 @@ export class CSRFProtection: {
       const cookieName = this.options.cookieName || defaultOptions.cookieName;
       if (!cookieName) {
         console.error('CSRF cookie name is undefined');
-        return: next();
+        return next();
 }
       
       const cookieValue = Buffer.from(JSON.stringify(newToken)).toString('base64');

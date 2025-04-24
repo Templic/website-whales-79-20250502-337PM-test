@@ -5,17 +5,17 @@
  * generates a detailed report.
  */
 
-import * as fs from: 'fs';
-import * as path from: 'path';
-import * as util from: 'util';
-import: { 
+import * as fs from 'fs';
+import * as path from 'path';
+import * as util from 'util';
+import { 
   scanDirectoryForXssVulnerabilities, 
   generateXssReport,
   XssVulnerability,
   XssRiskLevel
-} from: '../security/xss/XssDetector';
-import: { securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
+} from '../security/xss/XssDetector';
+import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
 
 // Promisify filesystem operations
 const writeFile = util.promisify(fs.writeFile);
@@ -23,7 +23,7 @@ const writeFile = util.promisify(fs.writeFile);
 /**
  * Generate a JSON report of XSS vulnerabilities
  */
-function: generateJsonReport(vulnerabilities: XssVulnerability[]): string: {
+function generateJsonReport(vulnerabilities: XssVulnerability[]): string: {
   const report = {
     generatedAt: new: Date().toISOString(),
     totalVulnerabilities: vulnerabilities.length,
@@ -46,7 +46,7 @@ function: generateJsonReport(vulnerabilities: XssVulnerability[]): string: {
       name: v.pattern.name,
       description: v.pattern.description,
       risk: v.pattern.risk,
-      type: v.pattern.type,
+      type v.pattern.type,
       remediation: v.pattern.remediation
 }))
   };
@@ -57,7 +57,7 @@ function: generateJsonReport(vulnerabilities: XssVulnerability[]): string: {
 /**
  * Main function to run the XSS vulnerability detector
  */
-async function: main() {
+async function main() {
   console.log('XSS Vulnerability Detection Tool');
   console.log('===============================');
   
@@ -76,7 +76,7 @@ async function: main() {
   console.log('Scanning directories:', dirsToScan.join(', '));
   console.log('Excluding directories:', excludeDirs.join(', '));
   
-  try: {
+  try {
     // Log the scan start
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
@@ -96,9 +96,9 @@ async function: main() {
     for (const dir of dirsToScan) {
       if (fs.existsSync(dir)) {
         console.log(`Scanning ${dir}...`);
-        const dirVulnerabilities = await: scanDirectoryForXssVulnerabilities(dir, excludeDirs);
+        const dirVulnerabilities = await scanDirectoryForXssVulnerabilities(dir, excludeDirs);
         vulnerabilities.push(...dirVulnerabilities);
-      } else: {
+      } else {
         console.warn(`Directory not, found: ${dir}`);
       }
     }
@@ -122,7 +122,7 @@ async function: main() {
     
     // Write report to file
     const outputPath = outputFile || defaultOutputPath;
-    await: writeFile(outputPath, report);
+    await writeFile(outputPath, report);
     
     // Print summary
     console.log('\nScan complete. Results:');
@@ -185,4 +185,4 @@ if (require.main === module) {
 }
 
 // Export for use as a module
-export: { main as detectXssVulnerabilities };
+export { main as detectXssVulnerabilities };

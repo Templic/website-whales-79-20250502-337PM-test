@@ -12,9 +12,9 @@
  * - Frodo: Lattice-based key exchange with a more conservative parameter choice
  */
 
-import crypto from: 'crypto';
-import: { immutableSecurityLogs as securityBlockchain } from: '../blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../blockchain/SecurityEventTypes';
+import crypto from 'crypto';
+import { immutableSecurityLogs as securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../blockchain/SecurityEventTypes';
 
 // Type definitions
 export interface EncryptionResult: {
@@ -91,11 +91,11 @@ const algorithmConfigs = {
  * @param options Options for key generation
  * @returns Promise resolving to a key pair
  */
-export async function: generateKeyPair(options: QRCOptions = {}): Promise<KeyPair> {
+export async function generateKeyPair(options: QRCOptions = {}): Promise<KeyPair> {
   const opts = { ...defaultOptions, ...options };
-  const: { algorithm, strength, encoding } = opts;
+  const { algorithm, strength, encoding } = opts;
   
-  try: {
+  try {
     // Log key pair generation
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -116,14 +116,14 @@ export async function: generateKeyPair(options: QRCOptions = {}): Promise<KeyPai
     
     // Generate key pair using Node.js crypto module
     // This would be replaced with actual quantum-resistant algorithms in production
-    const: { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+    const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
       modulusLength: keyConfig.keySize,
       publicKeyEncoding: {
-        type: 'spki',
+        type 'spki',
         format: 'pem'
 },
       privateKeyEncoding: {
-        type: 'pkcs8',
+        type 'pkcs8',
         format: 'pem'
 }
     });
@@ -141,7 +141,7 @@ export async function: generateKeyPair(options: QRCOptions = {}): Promise<KeyPai
 }
     });
     
-    return: { publicKey, privateKey };
+    return { publicKey, privateKey };
   } catch (error: unknown) {
     // Log error
     await securityBlockchain.addSecurityEvent({
@@ -158,7 +158,7 @@ export async function: generateKeyPair(options: QRCOptions = {}): Promise<KeyPai
 }
     });
     
-    throw new: Error(`Quantum-resistant key pair generation, failed: ${error.message}`);
+    throw new Error(`Quantum-resistant key pair generation, failed: ${error.message}`);
   }
 }
 
@@ -170,15 +170,15 @@ export async function: generateKeyPair(options: QRCOptions = {}): Promise<KeyPai
  * @param options Encryption options
  * @returns Promise resolving to encryption result
  */
-export async function: encrypt(
+export async function encrypt(
   data: string | Buffer,
   recipientPublicKey: string,
   options: QRCOptions = {}
 ): Promise<EncryptionResult> {
   const opts = { ...defaultOptions, ...options };
-  const: { algorithm, strength, encoding } = opts;
+  const { algorithm, strength, encoding } = opts;
   
-  try: {
+  try {
     // Convert data to Buffer if it's a string
     const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
     
@@ -256,7 +256,7 @@ export async function: encrypt(
 }
     });
     
-    throw new: Error(`Quantum-resistant encryption, failed: ${error.message}`);
+    throw new Error(`Quantum-resistant encryption, failed: ${error.message}`);
   }
 }
 
@@ -268,15 +268,15 @@ export async function: encrypt(
  * @param options Decryption options
  * @returns Promise resolving to decrypted data
  */
-export async function: decrypt(
+export async function decrypt(
   encryptionResult: EncryptionResult,
   privateKey: string,
   options: QRCOptions = {}
 ): Promise<string | Buffer> {
   const opts = { ...defaultOptions, ...options };
-  const: { algorithm, strength, encoding } = opts;
+  const { algorithm, strength, encoding } = opts;
   
-  try: {
+  try {
     // Log decryption attempt
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -345,7 +345,7 @@ export async function: decrypt(
 }
     });
     
-    throw new: Error(`Quantum-resistant decryption, failed: ${error.message}`);
+    throw new Error(`Quantum-resistant decryption, failed: ${error.message}`);
   }
 }
 
@@ -357,15 +357,15 @@ export async function: decrypt(
  * @param options Signing options
  * @returns Promise resolving to signature result
  */
-export async function: sign(
+export async function sign(
   data: string | Buffer,
   privateKey: string,
   options: QRCOptions = {}
 ): Promise<SignatureResult> {
   const opts = { ...defaultOptions, ...options };
-  const: { algorithm, strength, encoding } = opts;
+  const { algorithm, strength, encoding } = opts;
   
-  try: {
+  try {
     // Convert data to Buffer if it's a string
     const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
     
@@ -401,7 +401,7 @@ export async function: sign(
     
     // Extract public key from private key (for demonstration)
     // In a real implementation, this would be done properly
-    const publicKey = await: extractPublicKey(privateKey);
+    const publicKey = await extractPublicKey(privateKey);
     
     // Log success
     await securityBlockchain.addSecurityEvent({
@@ -417,7 +417,7 @@ export async function: sign(
 }
     });
     
-    return: {
+    return {
       signature: signature.toString(encoding),
       publicKey
 };
@@ -437,7 +437,7 @@ export async function: sign(
 }
     });
     
-    throw new: Error(`Quantum-resistant signing, failed: ${error.message}`);
+    throw new Error(`Quantum-resistant signing, failed: ${error.message}`);
   }
 }
 
@@ -450,16 +450,16 @@ export async function: sign(
  * @param options Verification options
  * @returns Promise resolving to verification result
  */
-export async function: verify(
+export async function verify(
   data: string | Buffer,
   signature: string,
   publicKey: string,
   options: QRCOptions = {}
 ): Promise<VerificationResult> {
   const opts = { ...defaultOptions, ...options };
-  const: { algorithm, strength, encoding } = opts;
+  const { algorithm, strength, encoding } = opts;
   
-  try: {
+  try {
     // Convert data to Buffer if it's a string
     const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
     
@@ -537,7 +537,7 @@ export async function: verify(
 }
     });
     
-    return: {
+    return {
       valid: false,
       reason: `Verification error: ${error.message}`
     };
@@ -551,14 +551,14 @@ export async function: verify(
  * @param options Hashing options
  * @returns Promise resolving to hash string
  */
-export async function: hash(
+export async function hash(
   data: string | Buffer,
   options: QRCOptions = {}
 ): Promise<string> {
   const opts = { ...defaultOptions, ...options };
-  const: { algorithm, strength, encoding } = opts;
+  const { algorithm, strength, encoding } = opts;
   
-  try: {
+  try {
     // Convert data to Buffer if it's a string
     const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
     
@@ -615,7 +615,7 @@ export async function: hash(
 }
     });
     
-    throw new: Error(`Quantum-resistant hashing, failed: ${error.message}`);
+    throw new Error(`Quantum-resistant hashing, failed: ${error.message}`);
   }
 }
 
@@ -626,10 +626,10 @@ export async function: hash(
  * @param privateKey Private key
  * @returns Promise resolving to public key
  */
-async function: extractPublicKey(privateKey: string): Promise<string> {
+async function extractPublicKey(privateKey: string): Promise<string> {
   // This is a placeholder that would be implemented properly in a real system
   // For now, just return a fake public key
-  return: `-----BEGIN PUBLIC KEY-----
+  return `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvYq0zcxPd/QQvYfgVWFS: 7e6t0+Ej5SdR9XIUKzHgO/KLr0X79cGsmQSYJx6YtQSk4JGvJElLDLQbX5/RUfRD
 nHGfYD+CwzQDFxSvH8zy0O0MJhofh5+zzlWxvEHCnKFUMvC/36aLPKYmahIurTPi: 3rcZ5WcaC9YwV2MVpP3RvGQbKYlQPKdpNP/EBl0epP/xK5PxXe7lJEzLFGd53xKu
 m5vQn/Bm5UVdJjYzFxDzlI0G0n0PYT8RkYzkYRqh0JR6Q4Eq3pgfdBwGt2UbKnIh

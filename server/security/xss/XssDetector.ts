@@ -5,9 +5,9 @@
  * vulnerabilities in source code.
  */
 
-import * as fs from: 'fs';
-import * as path from: 'path';
-import * as util from: 'util';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as util from 'util';
 
 // Promisify filesystem operations
 const readdir = util.promisify(fs.readdir);
@@ -41,7 +41,7 @@ export interface XssVulnerabilityPattern: {
   name: string;,
   description: string;,
   risk: XssRiskLevel;,
-  type: XssVulnerabilityType;,
+  type XssVulnerabilityType;,
   remediation: string;
 }
 
@@ -65,7 +65,7 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
     name: 'Unsafe innerHTML Assignment',
     description: 'Assignment to innerHTML or outerHTML without proper sanitization can lead to XSS attacks.',
     risk: XssRiskLevel.HIGH,
-    type: XssVulnerabilityType.DOM,
+    type XssVulnerabilityType.DOM,
     remediation: 'Use DOMPurify.sanitize() or textContent instead.'
 },
   
@@ -74,7 +74,7 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
     name: 'Unsafe document.write Usage',
     description: 'Using document.write or document.writeln can lead to XSS attacks if user input is included.',
     risk: XssRiskLevel.HIGH,
-    type: XssVulnerabilityType.DOM,
+    type XssVulnerabilityType.DOM,
     remediation: 'Avoid document.write and use safe DOM manipulation methods instead.'
 },
   
@@ -83,7 +83,7 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
     name: 'Unsafe Code Execution',
     description: 'Dynamically executing code with user input can lead to XSS attacks.',
     risk: XssRiskLevel.CRITICAL,
-    type: XssVulnerabilityType.DOM,
+    type XssVulnerabilityType.DOM,
     remediation: 'Avoid dynamically executing code with user input.'
 },
   
@@ -92,7 +92,7 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
     name: 'Unsafe React dangerouslySetInnerHTML',
     description: 'Using dangerouslySetInnerHTML without proper sanitization can lead to XSS attacks.',
     risk: XssRiskLevel.HIGH,
-    type: XssVulnerabilityType.DOM,
+    type XssVulnerabilityType.DOM,
     remediation: 'Use DOMPurify.sanitize() before setting content with dangerouslySetInnerHTML.'
 },
   
@@ -101,7 +101,7 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
     name: 'Unsafe Location Assignment',
     description: 'Setting location properties without proper encoding can lead to XSS attacks.',
     risk: XssRiskLevel.MEDIUM,
-    type: XssVulnerabilityType.REFLECTED,
+    type XssVulnerabilityType.REFLECTED,
     remediation: 'Use: encodeURI() or: encodeURIComponent() to encode values.'
 },
   
@@ -110,7 +110,7 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
     name: 'Unsafe insertAdjacentHTML Usage',
     description: 'Using insertAdjacentHTML without proper sanitization can lead to XSS attacks.',
     risk: XssRiskLevel.HIGH,
-    type: XssVulnerabilityType.DOM,
+    type XssVulnerabilityType.DOM,
     remediation: 'Use DOMPurify.sanitize() before inserting content with insertAdjacentHTML.'
 },
   
@@ -119,7 +119,7 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
     name: 'Unsafe jQuery DOM Manipulation',
     description: 'Using jQuery DOM manipulation methods without proper sanitization can lead to XSS attacks.',
     risk: XssRiskLevel.HIGH,
-    type: XssVulnerabilityType.DOM,
+    type XssVulnerabilityType.DOM,
     remediation: 'Use DOMPurify.sanitize() before manipulating DOM with jQuery.'
 },
   
@@ -128,7 +128,7 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
     name: 'Unsafe Express Response',
     description: 'Sending user input in Express responses without proper sanitization can lead to XSS attacks.',
     risk: XssRiskLevel.HIGH,
-    type: XssVulnerabilityType.REFLECTED,
+    type XssVulnerabilityType.REFLECTED,
     remediation: 'Use: escapeHtml() or a template engine with automatic escaping.'
 },
   
@@ -137,7 +137,7 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
     name: 'Unsafe Attribute Setting',
     description: 'Setting attributes like event handlers or URLs without proper validation can lead to XSS attacks.',
     risk: XssRiskLevel.HIGH,
-    type: XssVulnerabilityType.DOM,
+    type XssVulnerabilityType.DOM,
     remediation: 'Validate and sanitize values before setting attributes, especially for event handlers and URLs.'
 },
   
@@ -146,7 +146,7 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
     name: 'Potential Template Injection',
     description: 'Rendering templates with user data might lead to XSS if the template engine does not escape by default.',
     risk: XssRiskLevel.MEDIUM,
-    type: XssVulnerabilityType.REFLECTED,
+    type XssVulnerabilityType.REFLECTED,
     remediation: 'Ensure template engine escapes by default or manually escape variables.'
   },
   
@@ -155,7 +155,7 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
     name: 'Unvalidated Request Data Usage',
     description: 'Using request data without validation can lead to XSS and injection attacks.',
     risk: XssRiskLevel.MEDIUM,
-    type: XssVulnerabilityType.REFLECTED,
+    type XssVulnerabilityType.REFLECTED,
     remediation: 'Validate and sanitize all request data before use.'
 },
   
@@ -164,7 +164,7 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
     name: 'Unescaped Data in HTML Template',
     description: 'Embedding user data in HTML templates without escaping can lead to XSS attacks.',
     risk: XssRiskLevel.HIGH,
-    type: XssVulnerabilityType.REFLECTED,
+    type XssVulnerabilityType.REFLECTED,
     remediation: 'Use: escapeHtml() or template engine auto-escaping.'
   },
   
@@ -173,7 +173,7 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
     name: 'Unescaped Data in JavaScript Context',
     description: 'Embedding user data in JavaScript context requires proper JSON encoding.',
     risk: XssRiskLevel.HIGH,
-    type: XssVulnerabilityType.DOM,
+    type XssVulnerabilityType.DOM,
     remediation: 'Use JSON.stringify() for data in JavaScript context.'
   }
 ];
@@ -181,12 +181,12 @@ export const XSS_VULNERABILITY_PATTERNS: XssVulnerabilityPattern[] = [
 /**
  * Scan a file for XSS vulnerabilities
  */
-export async function: scanFileForXssVulnerabilities(filePath: string): Promise<XssVulnerability[]> {
+export async function scanFileForXssVulnerabilities(filePath: string): Promise<XssVulnerability[]> {
   const vulnerabilities: XssVulnerability[] = [];
   
-  try: {
+  try {
     // Read file content
-    const content = await: readFile(filePath, 'utf-8');
+    const content = await readFile(filePath, 'utf-8');
     const lines = content.split('\n');
     
     // Check each pattern
@@ -224,14 +224,14 @@ export async function: scanFileForXssVulnerabilities(filePath: string): Promise<
 /**
  * Recursively scan a directory for XSS vulnerabilities
  */
-export async function: scanDirectoryForXssVulnerabilities(
+export async function scanDirectoryForXssVulnerabilities(
   dir: string,
   exclude: string[] = ['node_modules', '.git', 'dist', 'build']
 ): Promise<XssVulnerability[]> {
   const vulnerabilities: XssVulnerability[] = [];
   
-  try: {
-    const entries = await: readdir(dir, { withFileTypes: true });
+  try {
+    const entries = await readdir(dir, { withFileTypes: true });
     
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
@@ -243,13 +243,13 @@ export async function: scanDirectoryForXssVulnerabilities(
       
       if (entry.isDirectory()) {
         // Scan subdirectory
-        const subDirVulnerabilities = await: scanDirectoryForXssVulnerabilities(fullPath, exclude);
+        const subDirVulnerabilities = await scanDirectoryForXssVulnerabilities(fullPath, exclude);
         vulnerabilities.push(...subDirVulnerabilities);
 } else if (entry.isFile()) {
         // Scan files with matching extensions
         const ext = path.extname(entry.name).toLowerCase();
         if (['.js', '.jsx', '.ts', '.tsx', '.vue', '.html', '.ejs', '.pug'].includes(ext)) {
-          const fileVulnerabilities = await: scanFileForXssVulnerabilities(fullPath);
+          const fileVulnerabilities = await scanFileForXssVulnerabilities(fullPath);
           vulnerabilities.push(...fileVulnerabilities);
 }
       }
@@ -264,9 +264,9 @@ export async function: scanDirectoryForXssVulnerabilities(
 /**
  * Generate a report of XSS vulnerabilities
  */
-export function: generateXssReport(vulnerabilities: XssVulnerability[]): string: {
+export function generateXssReport(vulnerabilities: XssVulnerability[]): string: {
   if (vulnerabilities.length === 0) {
-    return: 'No XSS vulnerabilities found.';
+    return 'No XSS vulnerabilities found.';
 }
   
   let report = `XSS Vulnerability Report\n`;
@@ -347,7 +347,7 @@ export function: generateXssReport(vulnerabilities: XssVulnerability[]): string:
   // Provide general recommendations
   report += `General Recommendations\n`;
   report += `=====================\n\n`;
-  report += `1. Use DOMPurify to sanitize any HTML before rendering: import DOMPurify from: 'dompurify';\n`;
+  report += `1. Use DOMPurify to sanitize any HTML before rendering: import DOMPurify from 'dompurify';\n`;
   report += `2. Prefer textContent over innerHTML when not rendering HTML.\n`;
   report += `3. Use framework escaping mechanisms (React escapes content by default).\n`;
   report += `4. Validate and sanitize all user inputs, especially URL parameters.\n`;
@@ -360,7 +360,7 @@ export function: generateXssReport(vulnerabilities: XssVulnerability[]): string:
 /**
  * Example usage:
  * 
- * const vulnerabilities = await: scanDirectoryForXssVulnerabilities('./src');
+ * const vulnerabilities = await scanDirectoryForXssVulnerabilities('./src');
  * const report = generateXssReport(vulnerabilities);
  * console.log(report);
  */

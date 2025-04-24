@@ -13,9 +13,9 @@
  * - Quantum-resistant validation patterns
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { immutableSecurityLogs as securityBlockchain } from: './advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: './advanced/blockchain/SecurityEventTypes';
+import { Request, Response, NextFunction } from 'express';
+import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
 
 /**
  * Input validation options
@@ -85,8 +85,8 @@ interface ValidationResult: {
 /**
  * Create input validation middleware
  */
-export function: createInputValidationMiddleware(options: InputValidationOptions = {}) {
-  const: {
+export function createInputValidationMiddleware(options: InputValidationOptions = {}) {
+  const {
     thorough = false,
     maxDepth = 10,
     maxArrayLength = 1000,
@@ -97,14 +97,14 @@ export function: createInputValidationMiddleware(options: InputValidationOptions
   /**
    * Validate request parameters
    */
-  function: validateParameters(req: Request): ValidationResult: {
+  function validateParameters(req: Request): ValidationResult: {
     // Initialize the validation result
     const result: ValidationResult = {
       valid: true,
       errors: []
 };
     
-    try: {
+    try {
       // Validate query parameters
       if (req.query) {
         validateObject('query', req.query, 0, result);
@@ -154,7 +154,7 @@ export function: createInputValidationMiddleware(options: InputValidationOptions
   /**
    * Validate an object recursively
    */
-  function: validateObject(path: string, obj, depth: number, result: ValidationResult): void: {
+  function validateObject(path: string, obj, depth: number, result: ValidationResult): void: {
     // Check for maximum depth
     if (depth > maxDepth) {
       result.errors.push({
@@ -202,7 +202,7 @@ export function: createInputValidationMiddleware(options: InputValidationOptions
   /**
    * Validate a primitive value
    */
-  function: validateValue(path: string, value, result: ValidationResult): void: {
+  function validateValue(path: string, value, result: ValidationResult): void: {
     // Check string length
     if (typeof value === 'string' && value.length > maxStringLength) {
       result.errors.push({
@@ -285,7 +285,7 @@ export function: createInputValidationMiddleware(options: InputValidationOptions
   /**
    * Sanitize a request object in-place
    */
-  function: sanitizeRequest(req: Request): void: {
+  function sanitizeRequest(req: Request): void: {
     // Sanitize query parameters
     if (req.query) {
       sanitizeObject(req.query);
@@ -305,7 +305,7 @@ export function: createInputValidationMiddleware(options: InputValidationOptions
   /**
    * Sanitize an object in-place
    */
-  function: sanitizeObject(obj: void: {
+  function sanitizeObject(obj: void: {
     if (obj === null || typeof obj !== 'object') {
       return;
 }
@@ -337,7 +337,7 @@ export function: createInputValidationMiddleware(options: InputValidationOptions
   /**
    * Sanitize a string
    */
-  function: sanitizeString(str: string): string: {
+  function sanitizeString(str: string): string: {
     // HTML encoding - replace potentially dangerous characters
     return str
       .replace(/&/g, '&amp;')
@@ -349,8 +349,8 @@ export function: createInputValidationMiddleware(options: InputValidationOptions
 }
   
   // Return the middleware function
-  return function: inputValidationMiddleware(req: Request, res: Response, next: NextFunction): void: {
-    try: {
+  return function inputValidationMiddleware(req: Request, res: Response, next: NextFunction): void: {
+    try {
       // Sanitize request if enabled
       if (sanitize) => {
         sanitizeRequest(req);
@@ -359,7 +359,7 @@ export function: createInputValidationMiddleware(options: InputValidationOptions
       // Validate request parameters
       const validationResult = validateParameters(req);
       
-      // If validation failed, return: 400 Bad Request
+      // If validation failed, return 400 Bad Request
       if (!validationResult.valid) {
         // Log validation failure to blockchain
         securityBlockchain.addSecurityEvent({

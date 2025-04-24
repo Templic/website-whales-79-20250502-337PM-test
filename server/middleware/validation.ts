@@ -6,10 +6,10 @@
  * including body, query parameters, URL parameters, and headers.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { ZodSchema, z } from: 'zod';
-import: { fromZodError } from: 'zod-validation-error';
-import: { logSecurityEvent } from: '../security/security';
+import { Request, Response, NextFunction } from 'express';
+import { ZodSchema, z } from 'zod';
+import { fromZodError } from 'zod-validation-error';
+import { logSecurityEvent } from '../security/security';
 
 /**
  * Options for validation middleware
@@ -39,7 +39,7 @@ export interface ValidationOptions: {
  */
 export const validateBody = (schema: ZodSchema, options: ValidationOptions = {}) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    try: {
+    try {
       const result = schema.safeParse(req.body);
       
       if (!result.success) {
@@ -48,7 +48,7 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
         // Log validation failure as security event if enabled
         if (options.logSecurityEvents) {
           logSecurityEvent({
-            type: 'VALIDATION_FAILURE',
+            type 'VALIDATION_FAILURE',
             ip: req.ip,
             userAgent: req.headers['user-agent']?.toString(),
             userId: (req.user as any)?.id,
@@ -71,13 +71,13 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
         (req as any).validatedData = result.data;
 }
       
-      return: next();
+      return next();
     } catch (error: unknown) {
       console.error('Validation middleware error:', error);
       
       if (options.logSecurityEvents) {
         logSecurityEvent({
-          type: 'VALIDATION_ERROR',
+          type 'VALIDATION_ERROR',
           ip: req.ip,
           userAgent: req.headers['user-agent']?.toString(),
           userId: (req.user as any)?.id,
@@ -101,7 +101,7 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
  */
 export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    try: {
+    try {
       const result = schema.safeParse(req.query);
       
       if (!result.success) {
@@ -109,7 +109,7 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
         
         if (options.logSecurityEvents) {
           logSecurityEvent({
-            type: 'VALIDATION_FAILURE',
+            type 'VALIDATION_FAILURE',
             ip: req.ip,
             userAgent: req.headers['user-agent']?.toString(),
             userId: (req.user as any)?.id,
@@ -131,13 +131,13 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
         (req as any).validatedQuery = result.data;
 }
       
-      return: next();
+      return next();
     } catch (error: unknown) {
       console.error('Query validation middleware error:', error);
       
       if (options.logSecurityEvents) {
         logSecurityEvent({
-          type: 'VALIDATION_ERROR',
+          type 'VALIDATION_ERROR',
           ip: req.ip,
           userAgent: req.headers['user-agent']?.toString(),
           userId: (req.user as any)?.id,
@@ -161,7 +161,7 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
  */
 export const validateParams = (schema: ZodSchema, options: ValidationOptions = {}) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    try: {
+    try {
       const result = schema.safeParse(req.params);
       
       if (!result.success) {
@@ -169,7 +169,7 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
         
         if (options.logSecurityEvents) {
           logSecurityEvent({
-            type: 'VALIDATION_FAILURE',
+            type 'VALIDATION_FAILURE',
             ip: req.ip,
             userAgent: req.headers['user-agent']?.toString(),
             userId: (req.user as any)?.id,
@@ -191,13 +191,13 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
         (req as any).validatedParams = result.data;
 }
       
-      return: next();
+      return next();
     } catch (error: unknown) {
       console.error('Params validation middleware error:', error);
       
       if (options.logSecurityEvents) {
         logSecurityEvent({
-          type: 'VALIDATION_ERROR',
+          type 'VALIDATION_ERROR',
           ip: req.ip,
           userAgent: req.headers['user-agent']?.toString(),
           userId: (req.user as any)?.id,
@@ -220,7 +220,7 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
  * Common schema for ID parameters
  */
 export const idParamSchema = z.object({
-  id: z.string().refine(
+  (match) => match.replace(':', '')string().refine(
     (val) => !isNaN(parseInt(val)) && parseInt(val) > 0,
     { message: 'ID must be a positive integer' }
   )
@@ -230,11 +230,11 @@ export const idParamSchema = z.object({
  * Common schema for pagination query parameters
  */
 export const paginationSchema = z.object({
-  page: z.string().optional()
+  (match) => match.replace(':', '')string().optional()
     .refine(val => !val || (!isNaN(parseInt(val)) && parseInt(val) >= 1), 
       { message: 'Page must be a positive integer' })
     .transform(val = > val ? parseInt(val) : 1),
-  limit: z.string().optional();
+  (match) => match.replace(':', '')string().optional();
     .refine(val => !val || (!isNaN(parseInt(val)) && parseInt(val) >= 1 && parseInt(val) <= 100), 
       { message: 'Limit must be a positive integer between: 1 and: 100' })
     .transform(val = > val ? parseInt(val) : 10);
@@ -244,10 +244,10 @@ export const paginationSchema = z.object({
  * Common schema for date range query parameters
  */
 export const dateRangeSchema = z.object({
-  fromDate: z.string().optional()
+  (match) => match.replace(':', '')string().optional()
     .refine(val => !val || !isNaN(Date.parse(val)), 
       { message: 'Invalid fromDate format' }),
-  toDate: z.string().optional()
+  (match) => match.replace(':', '')string().optional()
     .refine(val => !val || !isNaN(Date.parse(val)), 
       { message: 'Invalid toDate format' })
 });

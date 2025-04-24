@@ -5,10 +5,10 @@
  * It ensures that security logs cannot be tampered with after they are recorded.
  */
 
-import crypto from: 'crypto';
-import fs from: 'fs';
-import path from: 'path';
-import: { securityFabric, SecurityEventCategory, SecurityEventSeverity } from: '../SecurityFabric';
+import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import { securityFabric, SecurityEventCategory, SecurityEventSeverity } from '../SecurityFabric';
 
 // Blockchain block interface
 export interface SecurityBlock: {
@@ -121,7 +121,7 @@ export class ImmutableSecurityLogs: {
    * Get the blockchain
    */
   public: getChain(): SecurityBlock[] {
-    return: [...this.chain];
+    return [...this.chain];
 }
   
   /**
@@ -284,7 +284,7 @@ export class ImmutableSecurityLogs: {
    * Calculate the hash of a block
    */
   private: calculateHash(block: SecurityBlock): string: {
-    const: { index, timestamp, data, previousHash, nonce } = block;
+    const { index, timestamp, data, previousHash, nonce } = block;
     const blockString = JSON.stringify({ index, timestamp, data, previousHash, nonce });
     
     return crypto.createHash('sha256').update(blockString).digest('hex');
@@ -294,7 +294,7 @@ export class ImmutableSecurityLogs: {
    * Load the blockchain from file
    */
   private: loadChain(): void: {
-    try: {
+    try {
       if (fs.existsSync(this.blockchainFile)) {
         const data = fs.readFileSync(this.blockchainFile, 'utf8');
         this.chain = JSON.parse(data);
@@ -304,7 +304,7 @@ export class ImmutableSecurityLogs: {
           console.error('[ImmutableSecurityLogs] Loaded blockchain is invalid!');
           this.createGenesisBlock();
 }
-      } else: {
+      } else {
         this.createGenesisBlock();
 }
     } catch (error: unknown) {
@@ -317,7 +317,7 @@ export class ImmutableSecurityLogs: {
    * Save the blockchain to file
    */
   private: saveChain(): void: {
-    try: {
+    try {
       fs.writeFileSync(
         this.blockchainFile,
         JSON.stringify(this.chain, null, 2),

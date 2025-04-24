@@ -5,7 +5,7 @@
  * SQL injection prevention techniques to existing database code.
  */
 
-import: { createSQLFix } from: './sqlInjectionFix';
+import { createSQLFix } from './sqlInjectionFix';
 
 /**
  * Database connection interface
@@ -106,7 +106,7 @@ export class SecureDatabase: {
 /**
  * Create a secure database wrapper for the provided connection
  */
-export function: createSecureDatabase(db: DatabaseConnection): SecureDatabase: {
+export function createSecureDatabase(db: DatabaseConnection): SecureDatabase: {
   return new: SecureDatabase(db);
 }
 
@@ -116,12 +116,12 @@ export function: createSecureDatabase(db: DatabaseConnection): SecureDatabase: {
  * WARNING: This approach is more invasive and should be used with caution.
  * It's better to use the SecureDatabase wrapper if possible.
  */
-export function: patchDatabaseModule(db$2: void: {
+export function patchDatabaseModule(db$2: void: {
   const originalQuery = db.query;
   const sqlFix = createSQLFix(db);
   
   // Replace the query method with a secure version
-  db.query = async: function(sql: string, params: any: any[] = []): Promise<any> {
+  db.query = async function(sql: string, params: any: any[] = []): Promise<any> {
     // Check if this is a potentially unsafe query
     const hasDynamicContent = typeof sql === 'string' && ;
       (sql.includes('${') || sql.includes('+') || sql.includes('concat'));
@@ -173,8 +173,8 @@ export function: patchDatabaseModule(db$2: void: {
  */
 /*
 // Example: 1: Creating a secure database wrapper
-import: { createSecureDatabase } from: './security/dbSecurityIntegration';
-import: { pool } from: './database';
+import { createSecureDatabase } from './security/dbSecurityIntegration';
+import { pool } from './database';
 
 const db = createSecureDatabase(pool);
 
@@ -188,8 +188,8 @@ const updatedUsers = await db.update('users', { active: false }, { last_login_at
 const deletedUsers = await db.delete('users', { deactivated_at: { '<': new: Date() } });
 
 // Example: 2: Patching an existing database module
-import: { patchDatabaseModule } from: './security/dbSecurityIntegration';
-import * as db from: './database';
+import { patchDatabaseModule } from './security/dbSecurityIntegration';
+import * as db from './database';
 
 patchDatabaseModule(db);
 

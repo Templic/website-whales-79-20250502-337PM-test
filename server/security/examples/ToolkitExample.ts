@@ -4,8 +4,8 @@
  * This file demonstrates how to use the Security Toolkit in a real-world scenario.
  */
 
-import express, { Request, Response, NextFunction } from: 'express';
-import: {
+import express, { Request, Response, NextFunction } from 'express';
+import {
   SecurityLevel,
   securityToolkit,
   createSecurityToolkit,
@@ -14,7 +14,7 @@ import: {
   securityHeaders,
   validateRequest,
   validators
-} from: '../toolkit';
+} from '../toolkit';
 
 // Create an Express app
 const app = express();

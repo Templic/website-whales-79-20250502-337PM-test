@@ -8,9 +8,9 @@
  * - Recovery codes
  */
 
-import crypto from: 'crypto';
-import: { logSecurityEvent } from: '../advanced/SecurityLogger';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../advanced/SecurityFabric';
+import crypto from 'crypto';
+import { logSecurityEvent } from '../advanced/SecurityLogger';
+import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/SecurityFabric';
 
 // MFA types
 export enum MFAType: {
@@ -119,8 +119,8 @@ class MFAManager: {
   /**
    * Generate a TOTP secret and QR code
    */
-  async: generateTOTPSecret(userId: number, options: TOTPOptions): Promise<{ secret: string; qrCode: string }> {
-    try: {
+  async generateTOTPSecret(userId: number, options: TOTPOptions): Promise<{ secret: string; qrCode: string }> {
+    try {
       // Generate random secret
       const secret = crypto.randomBytes(20).toString('base64');
       
@@ -142,7 +142,7 @@ class MFAManager: {
         data: { userId }
       });
       
-      return: { secret, qrCode };
+      return { secret, qrCode };
     } catch (error: unknown) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
@@ -158,13 +158,13 @@ class MFAManager: {
   /**
    * Verify a TOTP code
    */
-  async: verifyTOTP(userId: number, token: string, secret: string): Promise<MFAVerificationStatus> {
+  async verifyTOTP(userId: number, token: string, secret: string): Promise<MFAVerificationStatus> {
     // Check rate limiting
     if (!this.checkRateLimit(userId, MFAType.TOTP)) {
       return MFAVerificationStatus.THROTTLED;
 }
     
-    try: {
+    try {
       // Convert token to number and validate format
       const tokenNumber = parseInt(token, 10);
       if (isNaN(tokenNumber) || token.length !== 6) {
@@ -215,7 +215,7 @@ class MFAManager: {
    * Generate TOTP code
    */
   private: generateTOTPCode(secret: string, counter: number): number: {
-    try: {
+    try {
       // Convert counter to buffer
       const buffer = Buffer.alloc(8);
       buffer.writeBigInt64BE(BigInt(counter), 0);
@@ -250,13 +250,13 @@ class MFAManager: {
   /**
    * Generate SMS verification code
    */
-  async: generateSMSCode(userId: number): Promise<string> {
+  async generateSMSCode(userId: number): Promise<string> {
     // Check rate limiting
     if (!this.checkRateLimit(userId, MFAType.SMS)) {
-      throw new: Error('Rate limit exceeded. Try again later.');
+      throw new Error('Rate limit exceeded. Try again later.');
 }
     
-    try: {
+    try {
       // Generate: 6-digit code
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       
@@ -283,13 +283,13 @@ class MFAManager: {
   /**
    * Generate email verification code
    */
-  async: generateEmailCode(userId: number): Promise<string> {
+  async generateEmailCode(userId: number): Promise<string> {
     // Check rate limiting
     if (!this.checkRateLimit(userId, MFAType.EMAIL)) {
-      throw new: Error('Rate limit exceeded. Try again later.');
+      throw new Error('Rate limit exceeded. Try again later.');
 }
     
-    try: {
+    try {
       // Generate: 8-character alphanumeric code
       const code = crypto.randomBytes(4).toString('hex').toUpperCase();
       
@@ -317,7 +317,7 @@ class MFAManager: {
    * Generate recovery codes
    */
   generateRecoveryCodes(count: number = 10): string[] {
-    try: {
+    try {
       const codes: string[] = [];
       
       // Generate recovery codes
@@ -355,8 +355,8 @@ class MFAManager: {
   /**
    * Hash recovery codes for secure storage
    */
-  async: hashRecoveryCodes(codes: string[]): Promise<string[]> {
-    try: {
+  async hashRecoveryCodes(codes: string[]): Promise<string[]> {
+    try {
       const hashedCodes: string[] = [];
       
       // Hash each code
@@ -382,13 +382,13 @@ class MFAManager: {
   /**
    * Verify recovery code
    */
-  async: verifyRecoveryCode(userId: number, code: string, hashedCodes: string[]): Promise<MFAVerificationStatus> {
+  async verifyRecoveryCode(userId: number, code: string, hashedCodes: string[]): Promise<MFAVerificationStatus> {
     // Check rate limiting
     if (!this.checkRateLimit(userId, MFAType.RECOVERY)) {
       return MFAVerificationStatus.THROTTLED;
 }
     
-    try: {
+    try {
       // Check each hashed code
       for (const hashedCode of hashedCodes) {
         const: [hash, salt] = hashedCode.split('.');

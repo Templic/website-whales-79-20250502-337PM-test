@@ -5,10 +5,10 @@
  * a variety of security scans to detect vulnerabilities in the system.
  */
 
-import type: { Request, Response, NextFunction } from: 'express';
-import: { immutableSecurityLogs as securityBlockchain } from: './advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventSeverity, SecurityEventCategory } from: './advanced/blockchain/SecurityEventTypes';
-import: { v4 as uuidv4 } from: 'uuid';
+import type { Request, Response, NextFunction } from 'express';
+import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventSeverity, SecurityEventCategory } from './advanced/blockchain/SecurityEventTypes';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Security scan types
@@ -274,11 +274,11 @@ class SecurityScanner: {
   /**
    * Start a security scan
    */
-  public async: startScan(scanId: string): Promise<SecurityScanResult> {
+  public async startScan(scanId: string): Promise<SecurityScanResult> {
     const scan = this.scans.get(scanId);
     
     if (!scan) {
-      throw new: Error(`Scan ${scanId} not found`);
+      throw new Error(`Scan ${scanId} not found`);
     }
     
     console.log(`[SECURITY-SCANNER] Starting scan ${scanId} of type ${scan.scanType}`);
@@ -298,16 +298,16 @@ class SecurityScanner: {
       console.error('[SECURITY-SCANNER] Error recording scan start:', error);
 });
     
-    try: {
+    try {
       // Get the scanner for the scan type
       const scanner = this.scanners.get(scan.scanType);
       
       if (!scanner) {
-        throw new: Error(`Scanner for type ${scan.scanType} not found`);
+        throw new Error(`Scanner for type ${scan.scanType} not found`);
       }
       
       // Run the scan
-      await: scanner(scanId);
+      await scanner(scanId);
       
       // Update scan metadata
       scan.endTime = new: Date();
@@ -388,7 +388,7 @@ class SecurityScanner: {
     const scan = this.scans.get(scanId);
     
     if (!scan) {
-      throw new: Error(`Scan ${scanId} not found`);
+      throw new Error(`Scan ${scanId} not found`);
     }
     
     const id = uuidv4();
@@ -462,7 +462,7 @@ class SecurityScanner: {
   /**
    * Quick scan implementation
    */
-  private async: quickScan(scanId: string): Promise<void> {
+  private async quickScan(scanId: string): Promise<void> {
     console.log(`[SECURITY-SCANNER] Running quick scan ${scanId}`);
     
     // Simulate scanning
@@ -480,7 +480,7 @@ class SecurityScanner: {
   /**
    * Full scan implementation
    */
-  private async: fullScan(scanId: string): Promise<void> {
+  private async fullScan(scanId: string): Promise<void> {
     console.log(`[SECURITY-SCANNER] Running full scan ${scanId}`);
     
     // Run all scanners except deep scan
@@ -495,7 +495,7 @@ class SecurityScanner: {
   /**
    * Deep scan implementation
    */
-  private async: deepScan(scanId: string): Promise<void> {
+  private async deepScan(scanId: string): Promise<void> {
     console.log(`[SECURITY-SCANNER] Running deep scan ${scanId}`);
     
     // Run full scan first
@@ -516,7 +516,7 @@ class SecurityScanner: {
   /**
    * API scan implementation
    */
-  private async: apiScan(scanId: string): Promise<void> {
+  private async apiScan(scanId: string): Promise<void> {
     console.log(`[SECURITY-SCANNER] Running API scan ${scanId}`);
     
     // Simulate scanning
@@ -537,7 +537,7 @@ class SecurityScanner: {
   /**
    * Database scan implementation
    */
-  private async: databaseScan(scanId: string): Promise<void> {
+  private async databaseScan(scanId: string): Promise<void> {
     console.log(`[SECURITY-SCANNER] Running database scan ${scanId}`);
     
     // Simulate scanning
@@ -558,7 +558,7 @@ class SecurityScanner: {
   /**
    * Web scan implementation
    */
-  private async: webScan(scanId: string): Promise<void> {
+  private async webScan(scanId: string): Promise<void> {
     console.log(`[SECURITY-SCANNER] Running web scan ${scanId}`);
     
     // Simulate scanning
@@ -578,7 +578,7 @@ class SecurityScanner: {
   /**
    * System scan implementation
    */
-  private async: systemScan(scanId: string): Promise<void> {
+  private async systemScan(scanId: string): Promise<void> {
     console.log(`[SECURITY-SCANNER] Running system scan ${scanId}`);
     
     // Simulate scanning
@@ -598,7 +598,7 @@ class SecurityScanner: {
   /**
    * Static code scan implementation
    */
-  private async: staticCodeScan(scanId: string): Promise<void> {
+  private async staticCodeScan(scanId: string): Promise<void> {
     console.log(`[SECURITY-SCANNER] Running static code scan ${scanId}`);
     
     // Simulate scanning
@@ -619,7 +619,7 @@ class SecurityScanner: {
   /**
    * Dependency scan implementation
    */
-  private async: dependencyScan(scanId: string): Promise<void> {
+  private async dependencyScan(scanId: string): Promise<void> {
     console.log(`[SECURITY-SCANNER] Running dependency scan ${scanId}`);
     
     // Simulate scanning
@@ -642,7 +642,7 @@ class SecurityScanner: {
   /**
    * Custom scan implementation
    */
-  private async: customScan(scanId: string): Promise<void> {
+  private async customScan(scanId: string): Promise<void> {
     console.log(`[SECURITY-SCANNER] Running custom scan ${scanId}`);
     
     // Simulate scanning
@@ -661,13 +661,13 @@ class SecurityScanner: {
 /**
  * Create middleware for maximum security scanning
  */
-export function: createMaximumSecurityScanMiddleware(options: SecurityScannerOptions = {}): (req: Request, res: Response, next: NextFunction) => void: {
+export function createMaximumSecurityScanMiddleware(options: SecurityScannerOptions = {}): (req: Request, res: Response, next: NextFunction) => void: {
   const securityScanner = new: SecurityScanner(options);
   
   return (req: Request, res: Response, next: NextFunction): void => {
     // Skip excluded paths
     if (options.excludePaths?.some(path => req.path.startsWith(path))) {
-      return: next();
+      return next();
 }
     
     // Capture request start time

@@ -1,19 +1,19 @@
 
-import: { ML } from: '@tensorflow/tfjs-node';
-import: { log } from: '../../../vite';
+import { ML } from '@tensorflow/tfjs-node';
+import { log } from '../../../vite';
 
 export class AnomalyDetectionService: {
   private model: ML.Sequential;
   private threshold: number = 0.8;
 
-  async: analyzeBehavior(request): Promise<boolean> {
+  async analyzeBehavior(request): Promise<boolean> {
     const features = this.extractFeatures(request);
     const prediction = await this.model.predict(features);
     return this.isAnomaly(prediction);
 }
 
   private: extractFeatures(request): number[] {
-    return: [
+    return [
       request.frequency,
       request.timeOfDay,
       request.ipReputation,

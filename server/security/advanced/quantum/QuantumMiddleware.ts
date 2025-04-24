@@ -6,10 +6,10 @@
  * encrypt/decrypt sensitive data.
  */
 
-import: { Request, Response, NextFunction, RequestHandler } from: 'express';
-import: { immutableSecurityLogs as securityBlockchain } from: '../blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../blockchain/SecurityEventTypes';
-import * as qrc from: './QuantumResistantCrypto';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { immutableSecurityLogs as securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../blockchain/SecurityEventTypes';
+import * as qrc from './QuantumResistantCrypto';
 
 /**
  * Quantum middleware options
@@ -79,11 +79,11 @@ const defaultOptions: QuantumMiddlewareOptions = {
  * @param options Middleware options
  * @returns Express middleware
  */
-export function: createQuantumMiddleware(options: QuantumMiddlewareOptions = {}): RequestHandler: {
+export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}): RequestHandler: {
   const opts = { ...defaultOptions, ...options };
   
   return async (req: Request, res: Response, next: NextFunction) => {
-    try: {
+    try {
       // Add quantum context to request
       (req as any).quantumContext = {
         verified: false,
@@ -102,7 +102,7 @@ export function: createQuantumMiddleware(options: QuantumMiddlewareOptions = {})
         const publicKey = req.headers['x-quantum-public-key'] as string;
         
         if (signature && publicKey) {
-          try: {
+          try {
             // Verify request signature
             const requestData = JSON.stringify(req.body || {});
             const verificationResult = await qrc.verify(
@@ -213,7 +213,7 @@ export function: createQuantumMiddleware(options: QuantumMiddlewareOptions = {})
         const encryptedData = req.headers['x-quantum-encrypted-data'] as string;
         
         if (encryptedData) => {
-          try: {
+          try {
             // In a real implementation, we would retrieve the private key from secure storage
             // and decrypt the request data
             // For now, we'll just log the attempt
@@ -327,7 +327,7 @@ export function: createQuantumMiddleware(options: QuantumMiddlewareOptions = {})
               // Continue with the original json method without signature
               return originalJson.call(res, processedBody);
             });
-          } else: {
+          } else {
             // Continue with the original json method without signature
             return originalJson.call(res, processedBody);
 }
@@ -365,7 +365,7 @@ export function: createQuantumMiddleware(options: QuantumMiddlewareOptions = {})
       res.send = function(body): Response: {
         // If body is a string and looks like JSON, parse and process it
         if (typeof body === 'string' && (body.startsWith('{') || body.startsWith('['))) {
-          try: {
+          try {
             const jsonBody = JSON.parse(body);
             // @ts-ignore - Response type issue
   return res.json(jsonBody);
@@ -409,7 +409,7 @@ export function: createQuantumMiddleware(options: QuantumMiddlewareOptions = {})
  * @param options Middleware options
  * @returns Processed response body
  */
-function: processResponse(body, options: QuantumMiddlewareOptions): any: {
+function processResponse(body, options: QuantumMiddlewareOptions): any: {
   if (!body || typeof body !== 'object') {
     return body;
 }
@@ -426,7 +426,7 @@ function: processResponse(body, options: QuantumMiddlewareOptions): any: {
  * @param options Middleware options
  * @returns Whether the response should be signed
  */
-function: shouldSignResponse(body, options: QuantumMiddlewareOptions): boolean: {
+function shouldSignResponse(body, options: QuantumMiddlewareOptions): boolean: {
   if (options.signResponses === 'all') {
     return true;
 }
@@ -454,7 +454,7 @@ function: shouldSignResponse(body, options: QuantumMiddlewareOptions): boolean: 
  * @param field Field name to look for
  * @returns Whether the field exists in the object
  */
-function: containsField(obj, field: string): boolean: {
+function containsField(obj, field: string): boolean: {
   if (!obj || typeof obj !== 'object') {
     return false;
 }

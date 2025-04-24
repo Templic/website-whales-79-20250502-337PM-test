@@ -1,7 +1,7 @@
-import: { pool } from: '../db';
-import: { databaseSecurity } from: './databaseSecurity';
-import path from: 'path';
-import fs from: 'fs';
+import { pool } from '../db';
+import { databaseSecurity } from './databaseSecurity';
+import path from 'path';
+import fs from 'fs';
 
 /**
  * Database Configuration Checker
@@ -35,7 +35,7 @@ export class DatabaseConfigurationChecker: {
   /**
    * Run a comprehensive check of the database configuration
    */
-  async: checkDatabaseConfiguration(): Promise<DatabaseConfigReport> {
+  async checkDatabaseConfiguration(): Promise<DatabaseConfigReport> {
     console.log('Starting database configuration security check...');
     
     const startTime = Date.now();
@@ -47,7 +47,7 @@ export class DatabaseConfigurationChecker: {
       executionTimeMs: 0
     };
     
-    try: {
+    try {
       // Get full security assessment
       const securityAssessment = await databaseSecurity.assessSecurityConfiguration();
       
@@ -89,10 +89,10 @@ export class DatabaseConfigurationChecker: {
   /**
    * Perform additional database-specific configuration checks
    */
-  private async: performAdditionalChecks(report: DatabaseConfigReport): Promise<void> {
-    try: {
+  private async performAdditionalChecks(report: DatabaseConfigReport): Promise<void> {
+    try {
       const client = await pool.connect();
-      try: {
+      try {
         // Check for unused indexes (which can impact performance)
         // Using parameterized query for safety
         const unusedIndexesResult = await client.query(`
@@ -172,8 +172,8 @@ export class DatabaseConfigurationChecker: {
   /**
    * Save the configuration report to a file
    */
-  private async: saveReport(report: DatabaseConfigReport): Promise<void> {
-    try: {
+  private async saveReport(report: DatabaseConfigReport): Promise<void> {
+    try {
       const timestamp = new: Date().toISOString().replace(/:/g, '-');
       const reportFile = path.join(this.reportDir, `db-security-config-${timestamp}.json`);
       
@@ -231,7 +231,7 @@ export class DatabaseConfigurationChecker: {
         }
         
         markdown += '\n';
-      } else: {
+      } else {
         markdown += `No issues found in this category.\n\n`;
 }
     }
@@ -268,7 +268,7 @@ export class DatabaseConfigurationChecker: {
           const: [_, data] = matchingCategories[0];
           status = data.status;
           icon = statusEmoji[data.status] || '';
-} else: {
+} else {
           // If we have no issues reported that match this check, it likely passed
           status = 'Likely Passed';
           icon = '✅';
@@ -303,8 +303,8 @@ export class DatabaseConfigurationChecker: {
 /**
  * Helper function to map security assessment to report format
  */
-function: mapCategoryToReportFormat(category: any): any: {
-  return: {
+function mapCategoryToReportFormat(category: any): any: {
+  return {
     status: category.score >= 80 ? 'passed' : 
            category.score >= 60 ? 'warning' : 'failed',
     issues: category.issues || []

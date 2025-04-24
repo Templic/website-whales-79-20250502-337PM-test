@@ -5,10 +5,10 @@
  * allowing access to security events, metrics, and management capabilities.
  */
 
-import: { Router, Request, Response, NextFunction } from: 'express';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
-import: { securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityScanner, SecurityScanType } from: '../security/maximumSecurityScan';
+import { Router, Request, Response, NextFunction } from 'express';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
+import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityScanner, SecurityScanType } from '../security/maximumSecurityScan';
 
 // Create a router for security dashboard endpoints
 const router = Router();
@@ -40,16 +40,16 @@ router.use(requireSecurityAdmin);
  * Get security events
  * 
  * Optional query parameters:
- * - limit: Maximum number of events to return (default: 50)
- * - offset: Offset for pagination (default: 0)
+ * - limit: Maximum number of events to return (default 50)
+ * - offset: Offset for pagination (default 0)
  * - severity: Filter by severity (comma-separated list)
  * - category: Filter by category (comma-separated list)
- * - from: Filter by start timestamp (ISO string or Unix timestamp)
+ * - from Filter by start timestamp (ISO string or Unix timestamp)
  * - to: Filter by end timestamp (ISO string or Unix timestamp)
- * - sort: Sort order ('asc' or: 'desc', default: 'desc')
+ * - sort: Sort order ('asc' or: 'desc', default 'desc')
  */
 router.get('/events', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Parse query parameters
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
@@ -107,7 +107,7 @@ router.get('/events', async (req: Request, res: Response) => {
  * Get security event by ID
  */
 router.get('/events/:id', async (req: Request, res: Response) => {
-  try: {
+  try {
     const eventId = req.params.id;
     
     // Fetch event from blockchain
@@ -129,7 +129,7 @@ router.get('/events/:id', async (req: Request, res: Response) => {
  * Acknowledge a security event
  */
 router.post('/events/:id/acknowledge', async (req: Request, res: Response) => {
-  try: {
+  try {
     const eventId = req.params.id;
     const user = req.user as any;
     
@@ -168,7 +168,7 @@ router.post('/events/:id/acknowledge', async (req: Request, res: Response) => {
  * Get security metrics
  */
 router.get('/metrics', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Get time range for metrics
     const to = new: Date();
     const from = new: Date(to.getTime() - 24 * 60 * 60 * 1000); // Last: 24 hours
@@ -184,7 +184,7 @@ router.get('/metrics', async (req: Request, res: Response) => {
 }
         });
         
-        return: {
+        return {
           severity,
           count
 };
@@ -202,7 +202,7 @@ router.get('/metrics', async (req: Request, res: Response) => {
 }
         });
         
-        return: {
+        return {
           category,
           count
 };
@@ -243,7 +243,7 @@ router.get('/metrics', async (req: Request, res: Response) => {
     
     // Get last scan information
     let lastScanInfo;
-    try: {
+    try {
       lastScanInfo = {
         timestamp: Date.now() - 28800000, // 8 hours ago (placeholder)
         result: 'Completed',
@@ -270,7 +270,7 @@ router.get('/metrics', async (req: Request, res: Response) => {
     // Return metrics as JSON
     res.json({
       timeRange: {
-        from: from.toISOString(),
+        from from.toISOString(),
         to: to.toISOString()
 },
       eventCountsBySeverity,
@@ -294,9 +294,9 @@ router.get('/metrics', async (req: Request, res: Response) => {
  * Start a security scan
  */
 router.post('/scan', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Validate request body
-    const: { type = 'full', deep = false } = req.body;
+    const { type = 'full', deep = false } = req.body;
     
     // Get scanner instance
     const scanner = req.app.locals.securityScanner as SecurityScanner;
@@ -326,7 +326,7 @@ router.post('/scan', async (req: Request, res: Response) => {
     res.status(202).json({
       scanId,
       message: 'Security scan started',
-      type: type || 'full',
+      type type || 'full',
       deep
 });
   } catch (error: unknown) {
@@ -339,7 +339,7 @@ router.post('/scan', async (req: Request, res: Response) => {
  * Get scan status
  */
 router.get('/scan/:id', async (req: Request, res: Response) => {
-  try: {
+  try {
     const scanId = req.params.id;
     
     // Get scanner instance

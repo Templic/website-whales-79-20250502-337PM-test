@@ -5,8 +5,8 @@
  * components in a real-world application.
  */
 
-import express from: 'express';
-import: { 
+import express from 'express';
+import { 
   createQuantumMiddleware, 
   generateKeyPair, 
   encrypt, 
@@ -16,7 +16,7 @@ import: {
   hash,
   createSecureToken,
   verifySecureToken
-} from: '../advanced/quantum';
+} from '../advanced/quantum';
 
 // Create an Express app
 const app = express();
@@ -42,9 +42,9 @@ app.get('/api/public', (req, res) => {
 
 // Route demonstrating key generation
 app.get('/api/keys/generate', async (req, res) => {
-  try: {
+  try {
     // Generate a quantum-resistant key pair
-    const keyPair = await: generateKeyPair({
+    const keyPair = await generateKeyPair({
       algorithm: 'kyber',
       strength: 'high'
 });
@@ -64,8 +64,8 @@ app.get('/api/keys/generate', async (req, res) => {
 
 // Route demonstrating encryption
 app.post('/api/encrypt', async (req, res) => {
-  try: {
-    const: { data, publicKey } = req.body;
+  try {
+    const { data, publicKey } = req.body;
     
     if (!data || !publicKey) {
       return res.status(400).json({
@@ -75,7 +75,7 @@ app.post('/api/encrypt', async (req, res) => {
     }
     
     // Encrypt the data
-    const encryptedData = await: encrypt(data, publicKey, {
+    const encryptedData = await encrypt(data, publicKey, {
       algorithm: 'kyber',
       strength: 'high'
 });
@@ -95,8 +95,8 @@ app.post('/api/encrypt', async (req, res) => {
 
 // Route demonstrating decryption
 app.post('/api/decrypt', async (req, res) => {
-  try: {
-    const: { encryptedData, privateKey } = req.body;
+  try {
+    const { encryptedData, privateKey } = req.body;
     
     if (!encryptedData || !privateKey) {
       return res.status(400).json({
@@ -106,7 +106,7 @@ app.post('/api/decrypt', async (req, res) => {
     }
     
     // Decrypt the data
-    const decryptedData = await: decrypt(encryptedData, privateKey, {
+    const decryptedData = await decrypt(encryptedData, privateKey, {
       algorithm: 'kyber',
       strength: 'high'
 });
@@ -126,8 +126,8 @@ app.post('/api/decrypt', async (req, res) => {
 
 // Route demonstrating signing
 app.post('/api/sign', async (req, res) => {
-  try: {
-    const: { data, privateKey } = req.body;
+  try {
+    const { data, privateKey } = req.body;
     
     if (!data || !privateKey) {
       return res.status(400).json({
@@ -137,7 +137,7 @@ app.post('/api/sign', async (req, res) => {
     }
     
     // Sign the data
-    const signatureResult = await: sign(data, privateKey, {
+    const signatureResult = await sign(data, privateKey, {
       algorithm: 'dilithium',
       strength: 'high'
 });
@@ -158,8 +158,8 @@ app.post('/api/sign', async (req, res) => {
 
 // Route demonstrating verification
 app.post('/api/verify', async (req, res) => {
-  try: {
-    const: { data, signature, publicKey } = req.body;
+  try {
+    const { data, signature, publicKey } = req.body;
     
     if (!data || !signature || !publicKey) {
       return res.status(400).json({
@@ -169,7 +169,7 @@ app.post('/api/verify', async (req, res) => {
     }
     
     // Verify the signature
-    const verificationResult = await: verify(data, signature, publicKey, {
+    const verificationResult = await verify(data, signature, publicKey, {
       algorithm: 'dilithium',
       strength: 'high'
 });
@@ -190,8 +190,8 @@ app.post('/api/verify', async (req, res) => {
 
 // Route demonstrating hashing
 app.post('/api/hash', async (req, res) => {
-  try: {
-    const: { data } = req.body;
+  try {
+    const { data } = req.body;
     
     if (!data) {
       return res.status(400).json({
@@ -201,7 +201,7 @@ app.post('/api/hash', async (req, res) => {
     }
     
     // Hash the data
-    const hashedData = await: hash(data, {
+    const hashedData = await hash(data, {
       strength: 'high'
 });
     
@@ -220,8 +220,8 @@ app.post('/api/hash', async (req, res) => {
 
 // Route demonstrating token creation
 app.post('/api/tokens/create', async (req, res) => {
-  try: {
-    const: { payload } = req.body;
+  try {
+    const { payload } = req.body;
     
     if (!payload) {
       return res.status(400).json({
@@ -231,13 +231,13 @@ app.post('/api/tokens/create', async (req, res) => {
     }
     
     // Generate a key pair for token signing
-    const keyPair = await: generateKeyPair({
+    const keyPair = await generateKeyPair({
       algorithm: 'dilithium',
       strength: 'high'
 });
     
     // Create a secure token
-    const token = await: createSecureToken(payload, keyPair.privateKey, {
+    const token = await createSecureToken(payload, keyPair.privateKey, {
       expiresIn: 3600000, // 1 hour,
   algorithm: 'dilithium',
       strength: 'high'
@@ -258,8 +258,8 @@ app.post('/api/tokens/create', async (req, res) => {
 
 // Route demonstrating token verification
 app.post('/api/tokens/verify', async (req, res) => {
-  try: {
-    const: { token } = req.body;
+  try {
+    const { token } = req.body;
     
     if (!token) {
       return res.status(400).json({
@@ -269,7 +269,7 @@ app.post('/api/tokens/verify', async (req, res) => {
     }
     
     // Verify the secure token
-    const verificationResult = await: verifySecureToken(token, {
+    const verificationResult = await verifySecureToken(token, {
       checkExpiration: true,
       algorithm: 'dilithium',
       strength: 'high'

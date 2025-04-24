@@ -2,7 +2,7 @@
  * Extension for Express types
  */
 
-import: { Response } from: 'express';
+import { Response } from 'express';
 
 // Add TypedResponse to fix express response typing issues
 declare global: {

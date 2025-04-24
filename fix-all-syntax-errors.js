@@ -97,7 +97,15 @@ function fixSyntaxErrors(filePath) {
     { find: /throw: /g, replace: 'throw ' },
     { find: /typeof: /g, replace: 'typeof ' },
     { find: /instanceof: /g, replace: 'instanceof ' },
-    { find: /default: /g, replace: 'default ' }
+    { find: /default: /g, replace: 'default ' },
+    { find: / from: /g, replace: ' from ' },
+    { find: /import \{[^}]+\} from:/g, replace: (match) => match.replace('from:', 'from') },
+    { find: /type [^=]+=:/g, replace: (match) => match.replace('=:', '=') },
+    { find: /[a-zA-Z]+: z\./g, replace: (match) => match.replace(':', '') },
+    // Fix specific missing colon patterns in object properties
+    { find: /(\btype\s)['"]([^'"]+)['"]/g, replace: '$1: \'$2\'' },
+    { find: /(\bcrossorigin\s)['"]([^'"]+)['"]/g, replace: '$1: \'$2\'' },
+    { find: /(\bas\s)['"]([^'"]+)['"]/g, replace: '$1: \'$2\'' }
   ];
   
   // Apply fixes
@@ -116,10 +124,10 @@ function fixSyntaxErrors(filePath) {
   // Save changes if fixes were made
   if (replacementsMade > 0) {
     fs.writeFileSync(filePath, content, 'utf8');
-    log(`Fixed ${replacementsMade} syntax errors in ${filePath}`, colors.green);
+    log(`Fixed ${replacementsMade} syntax errors in ${filePath}`, chalk.green);
     return true;
   } else {
-    log(`No syntax errors found in ${filePath}`, colors.yellow);
+    log(`No syntax errors found in ${filePath}`, chalk.yellow);
     return false;
   }
 }
@@ -128,9 +136,9 @@ function fixSyntaxErrors(filePath) {
  * Fix syntax errors in the server directory
  */
 function fixServerFiles() {
-  log('Scanning server directory for TypeScript files...', colors.blue);
+  log('Scanning server directory for TypeScript files...', chalk.blue);
   const files = findTypeScriptFiles('./server');
-  log(`Found ${files.length} TypeScript files`, colors.blue);
+  log(`Found ${files.length} TypeScript files`, chalk.blue);
   
   let fixedFilesCount = 0;
   for (const file of files) {
@@ -138,7 +146,7 @@ function fixServerFiles() {
     if (fixed) fixedFilesCount++;
   }
   
-  log(`Fixed syntax errors in ${fixedFilesCount} files`, colors.green);
+  log(`Fixed syntax errors in ${fixedFilesCount} files`, chalk.green);
 }
 
 /**
@@ -146,10 +154,10 @@ function fixServerFiles() {
  */
 function fixValidationFile() {
   const validationPath = './server/validation.ts';
-  log(`Specifically targeting ${validationPath}...`, colors.blue);
+  log(`Specifically targeting ${validationPath}...`, chalk.blue);
   
   if (!fs.existsSync(validationPath)) {
-    log(`File ${validationPath} does not exist!`, colors.red);
+    log(`File ${validationPath} does not exist!`, chalk.red);
     return;
   }
   
@@ -186,14 +194,14 @@ function fixValidationFile() {
   
   // Save changes
   fs.writeFileSync(validationPath, content, 'utf8');
-  log(`Fixed validation.ts syntax errors`, colors.green);
+  log(`Fixed validation.ts syntax errors`, chalk.green);
 }
 
 /**
  * Main function
  */
 function main() {
-  log('Starting syntax error fixing process...', colors.blue);
+  log('Starting syntax error fixing process...', chalk.blue);
   
   // Fix server files
   fixServerFiles();
@@ -201,7 +209,7 @@ function main() {
   // Fix validation.ts specifically
   fixValidationFile();
   
-  log('Syntax error fixing process completed!', colors.green);
+  log('Syntax error fixing process completed!', chalk.green);
 }
 
 main();

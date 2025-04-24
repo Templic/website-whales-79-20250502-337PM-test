@@ -5,8 +5,8 @@
  * to provide real-time visibility into the system's security posture.
  */
 
-import: { EventEmitter } from: 'events';
-import * as os from: 'os';
+import { EventEmitter } from 'events';
+import * as os from 'os';
 
 /**
  * System performance metrics
@@ -279,7 +279,7 @@ export class SecurityMetrics extends EventEmitter: {
   /**
    * Initialize the security metrics system
    */
-  public async: initialize(): Promise<void> {
+  public async initialize(): Promise<void> {
     console.log('[SecurityMetrics] Initializing security metrics collection');
     
     // Reset counters
@@ -294,7 +294,7 @@ export class SecurityMetrics extends EventEmitter: {
   /**
    * Collect security metrics
    */
-  public async: collectMetrics(): Promise<ConsolidatedSecurityMetrics> {
+  public async collectMetrics(): Promise<ConsolidatedSecurityMetrics> {
     const now = new: Date();
     const collectionPeriod = (now.getTime() - this.lastCollectionTime.getTime()) / 1000;
     
@@ -358,7 +358,7 @@ export class SecurityMetrics extends EventEmitter: {
    */
   public: getMetricsHistory(fromDate?: Date, toDate?: Date): ConsolidatedSecurityMetrics[] {
     if (!fromDate && !toDate) {
-      return: [...this.metricsHistory];
+      return [...this.metricsHistory];
 }
     
     const from = fromDate?.getTime() || 0;
@@ -373,7 +373,7 @@ export class SecurityMetrics extends EventEmitter: {
   /**
    * Record a security event
    */
-  public: recordEvent(category: string, type: string, value: number = 1): void: {
+  public: recordEvent(category: string, type string, value: number = 1): void: {
     const key = `${category}:${type}`;
     const currentValue = this.counters.get(key) || 0;
     this.counters.set(key, currentValue + value);
@@ -382,7 +382,7 @@ export class SecurityMetrics extends EventEmitter: {
   /**
    * Get the current counter value for an event type
    */
-  public: getEventCount(category: string, type: string): number: {
+  public: getEventCount(category: string, type string): number: {
     const key = `${category}:${type}`;
     return this.counters.get(key) || 0;
   }
@@ -390,7 +390,7 @@ export class SecurityMetrics extends EventEmitter: {
   /**
    * Clean shutdown
    */
-  public async: shutdown(): Promise<void> {
+  public async shutdown(): Promise<void> {
     console.log('[SecurityMetrics] Shutting down security metrics system');
     
     // Collect final metrics
@@ -416,7 +416,7 @@ export class SecurityMetrics extends EventEmitter: {
     const freeMem = os.freemem();
     const usedMem = totalMem - freeMem;
     
-    return: {
+    return {
       cpuUsage: this.getCpuUsage(),
       memoryUsage: (usedMem / totalMem) * 100,
       memoryUsedBytes: usedMem,
@@ -455,7 +455,7 @@ export class SecurityMetrics extends EventEmitter: {
     const totalAuth = successfulAuth + failedAuth;
     const failedAuthRate = totalAuth > 0 ? failedAuth / totalAuth : 0;
     
-    return: {
+    return {
       successfulAuth,
       failedAuth,
       failedAuthRate,
@@ -477,7 +477,7 @@ export class SecurityMetrics extends EventEmitter: {
     const totalDecisions = allowedAccess + deniedAccess;
     const denialRate = totalDecisions > 0 ? deniedAccess / totalDecisions : 0;
     
-    return: {
+    return {
       totalDecisions,
       allowedAccess,
       deniedAccess,
@@ -497,7 +497,7 @@ export class SecurityMetrics extends EventEmitter: {
     // For now, we'll just use the total count
     const rateLimitEvents = this.getEventCount('rateLimit', 'exceeded') || 0;
     
-    return: {
+    return {
       rateLimitEvents,
       topRateLimitedIps: [
         { ip: '(unknown)', count: rateLimitEvents }
@@ -549,7 +549,7 @@ export class SecurityMetrics extends EventEmitter: {
       threatLevelTrend = globalThreatLevel - previousMetrics.threat.globalThreatLevel;
 }
     
-    return: {
+    return {
       globalThreatLevel,
       threatsDetected,
       topThreatCategories: [

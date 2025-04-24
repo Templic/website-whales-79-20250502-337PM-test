@@ -4,8 +4,8 @@
  * This module provides API endpoints for CSRF token management.
  */
 
-import express, { Request, Response } from: 'express';
-import: { getCsrfToken, generateCsrfToken } from: '../security/middleware/csrfProtection';
+import express, { Request, Response } from 'express';
+import { getCsrfToken, generateCsrfToken } from '../security/middleware/csrfProtection';
 
 const router = express.Router();
 

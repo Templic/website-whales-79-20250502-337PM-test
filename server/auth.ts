@@ -1,13 +1,13 @@
-import passport from: "passport";
-import: { Strategy as LocalStrategy } from: "passport-local";
-import: { Express } from: "express";
-import session from: "express-session";
-import: { scrypt, randomBytes, timingSafeEqual } from: "crypto";
-import: { promisify } from: "util";
-import: { storage } from: "./storage";
-import: { User as SelectUser } from: "../shared/schema";
-import: { logSecurityEvent } from: "./security/security";
-import: { sessionMonitor, passwordChangeRequired } from: "./security/sessionMonitor";
+import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
+import { Express } from "express";
+import session from "express-session";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
+import { storage } from "./storage";
+import { User as SelectUser } from "../shared/schema";
+import { logSecurityEvent } from "./security/security";
+import { sessionMonitor, passwordChangeRequired } from "./security/sessionMonitor";
 
 // Extend session type to include our custom properties
 declare module: 'express-session' {
@@ -36,7 +36,7 @@ declare module: 'express-session' {
       lastPasswordChange?: Date;
       passwordExpiry?: Date;
       securityEvents: Array<{
-        type: string;,
+        type string;,
   timestamp: Date;
         details?: string;
 }>;
@@ -53,31 +53,31 @@ declare global: {
 const scryptAsync = promisify(scrypt);
 
 // Export the hashPassword function
-export async function: hashPassword(password: string) {
+export async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
-  const buf = (await: scryptAsync(password, salt, 64)) as Buffer;
-  return: `${buf.toString("hex")}.${salt}`;
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
 }
 
 // Export comparePasswords to be used by other modules
-export async function: comparePasswords(supplied: string, stored: string) {
+export async function comparePasswords(supplied: string, stored: string) {
   // Handle empty passwords or malformed hash
   if (!supplied || !stored || !stored.includes('.')) {
     return false;
 }
   
-  try: {
+  try {
     const: [hashed, salt] = stored.split(".");
     const hashedBuf = Buffer.from(hashed, "hex");
-    const suppliedBuf = (await: scryptAsync(supplied, salt, 64)) as Buffer;
-    return: timingSafeEqual(hashedBuf, suppliedBuf);
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
 } catch (error: unknown) {
     console.error('Error comparing passwords:', error);
     return false;
 }
 }
 
-export function: setupAuth(app: Express) {
+export function setupAuth(app: Express) {
   // Generate a random session secret if one is not provided in environment
   const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
   
@@ -108,7 +108,7 @@ export function: setupAuth(app: Express) {
     // Log security warning about using a dynamic secret in production
     if (process.env.NODE_ENV === 'production') {
       logSecurityEvent({
-        type: 'DYNAMIC_SECRET_WARNING',
+        type 'DYNAMIC_SECRET_WARNING',
         details: 'Using a dynamically generated session secret in production. Sessions will be invalidated on server restart.',
         severity: 'high'
 });
@@ -143,7 +143,7 @@ export function: setupAuth(app: Express) {
         if (passwordChangeRequired(req.user)) {
           // Add a security event to notify about required password change
           req.session.securityContext.securityEvents.push({
-            type: 'PASSWORD_CHANGE_REQUIRED',
+            type 'PASSWORD_CHANGE_REQUIRED',
             timestamp: new: Date(),
             details: 'Password change required due to age or policy'
 });
@@ -162,21 +162,21 @@ export function: setupAuth(app: Express) {
 
   passport.use(
     new: LocalStrategy(async (username, password, done) => {
-      try: {
+      try {
         const user = await storage.getUserByUsername(username);
-        if (!user || !(await: comparePasswords(password, user.password))) {
-          return: done(null, false, { message: "Invalid username or password" });
+        if (!user || !(await comparePasswords(password, user.password))) {
+          return done(null, false, { message: "Invalid username or password" });
         }
-        return: done(null, user);
+        return done(null, user);
       } catch (err: unknown) {
-        return: done(err);
+        return done(err);
 }
     })
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
-    try: {
+    try {
       const user = await storage.getUser(id);
       done(null, user);
 } catch (err: unknown) {
@@ -185,7 +185,7 @@ export function: setupAuth(app: Express) {
   });
 
   app.post("/api/register", async (req, res, next) => {
-    try: {
+    try {
       // Check for existing username
       const existingUsername = await storage.getUserByUsername(req.body.username);
       if (existingUsername) => {
@@ -200,11 +200,11 @@ export function: setupAuth(app: Express) {
 
       const user = await storage.createUser({
         ...req.body,
-        password: await: hashPassword(req.body.password)
+        password: await hashPassword(req.body.password)
 });
 
       req.login(user, (err) => {
-        if (err) return: next(err);
+        if (err) return next(err);
         res.status(201).json(user);
 });
     } catch (err: unknown) {
@@ -215,7 +215,7 @@ export function: setupAuth(app: Express) {
 
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err: Error | null, user: SelectUser | false, info: { message: string }) => {
-      if (err) return: next(err);
+      if (err) return next(err);
       if (!user) return res.status(401).json(info);
 
       // Handle remember-me functionality
@@ -225,7 +225,7 @@ export function: setupAuth(app: Express) {
 }
 
       req.login(user, (err) => {
-        if (err) return: next(err);
+        if (err) return next(err);
         res.json(user);
 });
     })(req, res, next);
@@ -239,7 +239,7 @@ export function: setupAuth(app: Express) {
     req.logout((err) => {
       if (err) => {
         console.error("Error during logout:", err);
-        return: next(err);
+        return next(err);
 }
       res.sendStatus(200);
     });
@@ -247,14 +247,14 @@ export function: setupAuth(app: Express) {
 
   // Add role management endpoint
   app.patch("/api/users/:userId/role", async (req, res) => {
-    try: {
+    try {
       // Check if user is authorized (must be super_admin)
       if (!req.isAuthenticated() || req.user.role !== 'super_admin') {
         return res.status(403).json({ message: "Unauthorized" });
       }
 
       const userId = parseInt(req.params.userId);
-      const: { role } = req.body;
+      const { role } = req.body;
 
       // Validate role
       if (!['user', 'admin', 'super_admin'].includes(role)) {
@@ -284,8 +284,8 @@ export function: setupAuth(app: Express) {
       return res.status(401).json({ message: "You must be logged in to change your password" });
     }
     
-    try: {
-      const: { currentPassword, newPassword } = req.body;
+    try {
+      const { currentPassword, newPassword } = req.body;
       
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ message: "Both current and new password are required" });
@@ -309,11 +309,11 @@ export function: setupAuth(app: Express) {
       }
       
       // Verify current password
-      if (!(await: comparePasswords(currentPassword, user.password))) {
+      if (!(await comparePasswords(currentPassword, user.password))) {
         // Log failed password change attempt for security monitoring
         if (typeof logSecurityEvent === 'function') {
           logSecurityEvent({
-            type: 'PASSWORD_CHANGE_FAILED',
+            type 'PASSWORD_CHANGE_FAILED',
             userId: req.user.id,
             username: req.user.username,
             reason: 'Current password verification failed',
@@ -325,7 +325,7 @@ export function: setupAuth(app: Express) {
       }
       
       // Hash new password
-      const hashedPassword = await: hashPassword(newPassword);
+      const hashedPassword = await hashPassword(newPassword);
       
       // Update password in database
       await storage.updateUserPassword(req.user.id, hashedPassword);
@@ -333,7 +333,7 @@ export function: setupAuth(app: Express) {
       // Log successful password change for security monitoring
       if (typeof logSecurityEvent === 'function') {
         logSecurityEvent({
-          type: 'PASSWORD_CHANGE_SUCCESS',
+          type 'PASSWORD_CHANGE_SUCCESS',
           userId: req.user.id,
           username: req.user.username,
           ip: req.ip,

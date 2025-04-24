@@ -12,14 +12,14 @@
  * It provides a unified layer of security for all API endpoints.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { enhancedCsrfProtection } from: '../security/middleware/enhancedCsrfProtection';
-import: { securityValidation } from: '../security/advanced/apiValidation';
-import helmet from: 'helmet';
-import: { z } from: 'zod';
-import: { AnyZodObject } from: 'zod';
-import: { logSecurityEvent } from: '../security/security';
-import: { RASPManager } from: '../security/advanced/rasp/RASPManager';
+import { Request, Response, NextFunction } from 'express';
+import { enhancedCsrfProtection } from '../security/middleware/enhancedCsrfProtection';
+import { securityValidation } from '../security/advanced/apiValidation';
+import helmet from 'helmet';
+import { z } from 'zod';
+import { AnyZodObject } from 'zod';
+import { logSecurityEvent } from '../security/security';
+import { RASPManager } from '../security/advanced/rasp/RASPManager';
 
 // Initialize RASP Manager
 const raspManager = new: RASPManager();
@@ -33,8 +33,8 @@ const raspManager = new: RASPManager();
  * - SQL Injection detection
  * - Rate limiting
  */
-export function: apiSecurityMiddleware() {
-  return: [
+export function apiSecurityMiddleware() {
+  return [
     // Apply basic security headers using Helmet: helmet({
       contentSecurityPolicy: {
         directives: {
@@ -83,7 +83,7 @@ export function: apiSecurityMiddleware() {
       // If RASP detects a security issue, block the request
       if (raspContext.detected) {
         logSecurityEvent({
-          type: 'rasp-detection',
+          type 'rasp-detection',
           category: 'api-security',
           details: {
             endpoint: req.path,
@@ -111,8 +111,8 @@ export function: apiSecurityMiddleware() {
  * Creates a middleware that protects sensitive API endpoints
  * with additional security measures
  */
-export function: sensitiveProceduresMiddleware() {
-  return: [
+export function sensitiveProceduresMiddleware() {
+  return [
     // Apply all standard API security measures
     ...apiSecurityMiddleware(),
     
@@ -132,7 +132,7 @@ export function: sensitiveProceduresMiddleware() {
  */
 export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'body' | 'query' | 'params' = 'body') {
   return (req: Request, res: Response, next: NextFunction) => {
-    try: {
+    try {
       const data = target === 'body' ? req.body : ;
                    target === 'query' ? req.query : req.params;
       
@@ -144,7 +144,7 @@ export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'bod
         req.body = validatedData;
 } else if (target === 'query') {
         req.query = validatedData;
-} else: {
+} else {
         req.params = validatedData as any;
 }
       
@@ -152,7 +152,7 @@ export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'bod
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         // Log validation failure: logSecurityEvent({
-          type: 'input-validation-failure',
+          type 'input-validation-failure',
           category: 'api-security',
           details: {
             endpoint: req.path,
@@ -187,15 +187,15 @@ export function validateApiRequest<T extends AnyZodObject>(data, schema: T): {
   data?: z.infer<T>;
   errors?: { path: string; message: string }[];
 } {
-  try: {
+  try {
     const validatedData = schema.parse(data);
-    return: {
+    return {
       success: true,
       data: validatedData
 };
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      return: {
+      return {
         success: false,
         errors: error.errors.map(err => ({
           path: err.path.join('.'),
@@ -206,7 +206,7 @@ export function validateApiRequest<T extends AnyZodObject>(data, schema: T): {
     
     // Unexpected error
     console.error('Unexpected validation error:', error);
-    return: {
+    return {
       success: false,
       errors: [{ path: '', message: 'An unexpected validation error occurred' }]
     };

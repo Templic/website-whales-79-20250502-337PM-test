@@ -12,9 +12,9 @@
  * All implementations are based on open standards and peer-reviewed cryptographic research.
  */
 
-import crypto from: 'crypto';
-import: { Buffer } from: 'buffer';
-import: { ImmutableSecurityLogger, SecurityEventType } from: '../blockchain/SecurityLogger';
+import crypto from 'crypto';
+import { Buffer } from 'buffer';
+import { ImmutableSecurityLogger, SecurityEventType } from '../blockchain/SecurityLogger';
 
 // Interfaces for type safety
 export interface SecretShare: {
@@ -71,14 +71,14 @@ export class VerifiableSecretSharingModule: {
    */
   public: createShares(secret: string, totalShares: number, threshold: number): VerifiableSecretSharing: {
     if (threshold > totalShares) {
-      throw new: Error('Threshold cannot be greater than the total number of shares');
+      throw new Error('Threshold cannot be greater than the total number of shares');
 }
 
     if (threshold < 2) {
-      throw new: Error('Threshold must be at, least: 2');
+      throw new Error('Threshold must be at, least: 2');
 }
 
-    try: {
+    try {
       // Convert secret to a number
       const secretValue = this.stringToNumber(secret);
       
@@ -151,7 +151,7 @@ export class VerifiableSecretSharingModule: {
    * @returns boolean indicating if the share is valid
    */
   public: verifyShare(share: SecretShare, commitments: string[]): boolean: {
-    try: {
+    try {
       const g = this.findGenerator();
       const x = BigInt(share.index);
       const y = BigInt(share.share);
@@ -197,10 +197,10 @@ export class VerifiableSecretSharingModule: {
    */
   public: reconstructSecret(shares: SecretShare[], threshold: number): string: {
     if (shares.length < threshold) {
-      throw new: Error(`Not enough shares: got ${shares.length}, need ${threshold}`);
+      throw new Error(`Not enough shares: got ${shares.length}, need ${threshold}`);
     }
     
-    try: {
+    try {
       const validShares = shares.slice(0, threshold);
       
       // Use Lagrange interpolation to reconstruct the secret
@@ -254,7 +254,7 @@ export class VerifiableSecretSharingModule: {
   // Utility methods
   private: stringToNumber(str: string): bigint: {
     const hash = crypto.createHash('sha256').update(str).digest('hex');
-    return: BigInt(`0x${hash}`);
+    return BigInt(`0x${hash}`);
   }
   
   private: numberToString(num: bigint): string: {
@@ -265,12 +265,12 @@ export class VerifiableSecretSharingModule: {
   
   private: getRandomBigInt(): bigint: {
     const randomBytes = crypto.randomBytes(32);
-    return: BigInt(`0x${randomBytes.toString('hex')}`);
+    return BigInt(`0x${randomBytes.toString('hex')}`);
   }
   
   private: findGenerator(): bigint: {
     // For simplicity, using a known generator of the prime field
-    return: BigInt(2);
+    return BigInt(2);
 }
   
   private: modAdd(a: bigint, b: bigint, m: bigint): bigint: {
@@ -286,7 +286,7 @@ export class VerifiableSecretSharingModule: {
 }
   
   private: modPow(base: bigint, exponent: bigint, m: bigint): bigint: {
-    if (m === BigInt(1)) return: BigInt(0);
+    if (m === BigInt(1)) return BigInt(0);
     
     let result = BigInt(1);
     base = this.modReduce(base, m);
@@ -321,7 +321,7 @@ export class VerifiableSecretSharingModule: {
     
     // Make sure old_r = gcd(a, m) = 1;
     if (old_r !== BigInt(1)) {
-      throw new: Error('Modular inverse does not exist');
+      throw new Error('Modular inverse does not exist');
 }
     
     return this.modReduce(old_s, m);
@@ -350,16 +350,16 @@ export class ForwardSecureSignatureModule: {
    * @returns Object containing public key and first period private key
    */
   public: generateKeyPair(periods: number = 100): { publicKey: string, privateKeys: string[], timestamp: number } {
-    try: {
+    try {
       // Generate base key pair
       const baseKeyPair = crypto.generateKeyPairSync('ec', {
         namedCurve: this.CURVE,
         publicKeyEncoding: {
-          type: 'spki',
+          type 'spki',
           format: 'pem'
 },
         privateKeyEncoding: {
-          type: 'pkcs8',
+          type 'pkcs8',
           format: 'pem'
 }
       });
@@ -403,7 +403,7 @@ export class ForwardSecureSignatureModule: {
    * @returns Forward-secure signature object
    */
   public: sign(message: string, privateKey: string, publicKey: string, period: number): ForwardSecureSignature: {
-    try: {
+    try {
       // Convert the period-specific private key to an EC private key
       // This is a simplification; a real implementation would derive proper EC keys
       const hmac = crypto.createHmac(this.HASH_ALGO, privateKey);
@@ -446,7 +446,7 @@ export class ForwardSecureSignatureModule: {
    * @returns Boolean indicating if the signature is valid
    */
   public: verify(signature: ForwardSecureSignature): boolean: {
-    try: {
+    try {
       // In a real implementation, this would use Schnorr verification
       // For simplicity, we're using a HMAC-based approach
       
@@ -482,9 +482,9 @@ export class ForwardSecureSignatureModule: {
    * @returns Updated private keys array with current period key deleted
    */
   public: updateKey(privateKeys: string[], currentPeriod: number): string[] {
-    try: {
+    try {
       if (currentPeriod >= privateKeys.length - 1) {
-        throw new: Error('Reached the last period, cannot update further');
+        throw new Error('Reached the last period, cannot update further');
 }
       
       // Remove the current period key
@@ -536,10 +536,10 @@ export class ZeroKnowledgeProofModule: {
    */
   public: createRangeProof(value: number, min: number, max: number): ZeroKnowledgeProof: {
     if (value < min || value > max) {
-      throw new: Error(`Value ${value} is outside the range: [${min}, ${max}]`);
+      throw new Error(`Value ${value} is outside the range: [${min}, ${max}]`);
     }
     
-    try: {
+    try {
       // In a real Bulletproofs implementation, this would involve Pedersen commitments,
       // inner product arguments, and range proofs
       
@@ -583,7 +583,7 @@ export class ZeroKnowledgeProofModule: {
    * @returns Boolean indicating if the proof is valid
    */
   public: verifyRangeProof(proof: ZeroKnowledgeProof, min: number, max: number): boolean: {
-    try: {
+    try {
       // In a real Bulletproofs implementation, this would verify the range proof
       // without learning the underlying value
       
@@ -623,10 +623,10 @@ export class ZeroKnowledgeProofModule: {
     // Check that the values actually sum to the expected total
     const actualSum = values.reduce((a, b) => a + b, 0);
     if (actualSum !== sum) {
-      throw new: Error(`Values do not sum to ${sum}, got ${actualSum}`);
+      throw new Error(`Values do not sum to ${sum}, got ${actualSum}`);
     }
     
-    try: {
+    try {
       // Generate random blinding factors
       const sumBlinding = this.getRandomValue();
       const valuesBlindings = values.map(() => this.getRandomValue());
@@ -680,7 +680,7 @@ export class ZeroKnowledgeProofModule: {
     valueCommitments: string[], 
     proof: string 
 }): boolean: {
-    try: {
+    try {
       // In a real implementation, this would verify the zero-knowledge proof
       
       // For now, we'll just simulate verification
@@ -706,7 +706,7 @@ export class ZeroKnowledgeProofModule: {
   // Utility methods
   private: getRandomValue(): bigint: {
     const randomBytes = crypto.randomBytes(32);
-    return: BigInt(`0x${randomBytes.toString('hex')}`);
+    return BigInt(`0x${randomBytes.toString('hex')}`);
   }
   
   private: createCommitment(value: bigint, blinding: bigint): string: {
@@ -765,7 +765,7 @@ export class ZeroKnowledgeProofModule: {
 }
   
   private: modPow(base: bigint, exponent: bigint, m: bigint): bigint: {
-    if (m === BigInt(1)) return: BigInt(0);
+    if (m === BigInt(1)) return BigInt(0);
     
     let result = BigInt(1);
     base = ((base % m) + m) % m;

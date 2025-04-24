@@ -5,4 +5,4 @@
  * and middleware for Express applications.
  */
 
-export * from: './CSRFProtection';
+export * from './CSRFProtection';

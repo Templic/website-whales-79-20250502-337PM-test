@@ -6,12 +6,12 @@
  * and runtime behavior to identify security vulnerabilities.
  */
 
-import * as fs from: 'fs';
-import * as path from: 'path';
-import * as crypto from: 'crypto';
-import: { securityFabric } from: '../SecurityFabric';
-import: { securityBlockchain } from: '../blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../blockchain/SecurityEventTypes';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
+import { securityFabric } from '../SecurityFabric';
+import { securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../blockchain/SecurityEventTypes';
 
 /**
  * Deep scan types
@@ -155,7 +155,7 @@ export interface VulnerabilityFinding: {
   /**
    * Vulnerability type
    */
-  type: VulnerabilityType;
+  type VulnerabilityType;
   
   /**
    * Vulnerability severity
@@ -305,7 +305,7 @@ export class DeepScanEngine: {
   /**
    * Initialize the deep scan engine
    */
-  public async: initialize(): Promise<void> {
+  public async initialize(): Promise<void> {
     if (this.initialized) {
       return;
 }
@@ -321,7 +321,7 @@ export class DeepScanEngine: {
   /**
    * Start a deep scan
    */
-  public async: startScan(options: DeepScanOptions = {}): Promise<string> {
+  public async startScan(options: DeepScanOptions = {}): Promise<string> {
     await this.initialize();
     
     // Generate a scan ID
@@ -399,13 +399,13 @@ export class DeepScanEngine: {
   /**
    * Perform the scan
    */
-  private async: performScan(scanId: string): Promise<void> {
+  private async performScan(scanId: string): Promise<void> {
     const scan = this.activeScans.get(scanId);
     if (!scan) {
-      throw new: Error(`Scan not, found: ${scanId}`);
+      throw new Error(`Scan not, found: ${scanId}`);
     }
     
-    try: {
+    try {
       // If full scan, expand to all scan types
       if (scan.scanTypes.includes(DeepScanType.FULL)) {
         scan.scanTypes = Object.values(DeepScanType).filter(type => type !== DeepScanType.FULL);
@@ -480,7 +480,7 @@ export class DeepScanEngine: {
   /**
    * Perform a specific scan type
    */
-  private async: performScanType(scan: DeepScanResult, scanType: DeepScanType): Promise<void> {
+  private async performScanType(scan: DeepScanResult, scanType: DeepScanType): Promise<void> {
     console.log(`[DEEP-SCAN] Performing ${scanType} scan for scan ${scan.scanId}`);
     
     switch (scanType) => {
@@ -494,14 +494,14 @@ export class DeepScanEngine: {
         await this.performApiScan(scan);
         break;
       default:
-        throw new: Error(`Unknown scan, type: ${scanType}`);
+        throw new Error(`Unknown scan, type ${scanType}`);
     }
   }
   
   /**
    * Perform a code scan
    */
-  private async: performCodeScan(scan: DeepScanResult): Promise<void> {
+  private async performCodeScan(scan: DeepScanResult): Promise<void> {
     // Get code files to scan
     const files = await this.getFilesToScan(scan, ['.js', '.ts', '.tsx', '.jsx']);
     
@@ -519,7 +519,7 @@ export class DeepScanEngine: {
   /**
    * Get files to scan based on scan options
    */
-  private async: getFilesToScan(scan: DeepScanResult, extensions?: string[]): Promise<string[]> {
+  private async getFilesToScan(scan: DeepScanResult, extensions?: string[]): Promise<string[]> {
     const files: string[] = [];
     
     // Default directories to scan
@@ -541,14 +541,14 @@ export class DeepScanEngine: {
         return;
 }
       
-      try: {
+      try {
         const entries = await fs.promises.readdir(dir, { withFileTypes: true });
         
         for (const entry of entries) {
           const fullPath = path.join(dir, entry.name);
           
           if (entry.isDirectory()) {
-            await: scanDir(fullPath, depth + 1);
+            await scanDir(fullPath, depth + 1);
 } else if (entry.isFile()) {
             // Check file extension if extensions are provided
             if (extensions) => {
@@ -575,7 +575,7 @@ export class DeepScanEngine: {
     // Scan each include directory
     for (const dir of includeDirectories) {
       if (await this.directoryExists(dir)) {
-        await: scanDir(dir, 0);
+        await scanDir(dir, 0);
 }
     }
     
@@ -585,8 +585,8 @@ export class DeepScanEngine: {
   /**
    * Check if a directory exists
    */
-  private async: directoryExists(dirPath: string): Promise<boolean> {
-    try: {
+  private async directoryExists(dirPath: string): Promise<boolean> {
+    try {
       const stat = await fs.promises.stat(dirPath);
       return stat.isDirectory();
 } catch (error: unknown) {
@@ -597,8 +597,8 @@ export class DeepScanEngine: {
   /**
    * Scan a code file for vulnerabilities
    */
-  private async: scanCodeFile(scan: DeepScanResult, filePath: string): Promise<void> {
-    try: {
+  private async scanCodeFile(scan: DeepScanResult, filePath: string): Promise<void> {
+    try {
       // Read file content
       const content = await fs.promises.readFile(filePath, 'utf-8');
       
@@ -621,11 +621,11 @@ export class DeepScanEngine: {
   /**
    * Scan JavaScript/TypeScript code for vulnerabilities
    */
-  private async: scanJavaScriptCode(scan: DeepScanResult, filePath: string, content: string, lines: string[]): Promise<void> {
+  private async scanJavaScriptCode(scan: DeepScanResult, filePath: string, content: string, lines: string[]): Promise<void> {
     // Define vulnerability patterns
     const patterns = [
       {
-        type: VulnerabilityType.SQL_INJECTION,
+        type VulnerabilityType.SQL_INJECTION,
         severity: VulnerabilitySeverity.HIGH,
         pattern: /\b(SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE)\b.*\$\{.*\}/i,
         description: 'Potential SQL injection vulnerability due to unparameterized queries with template literals',
@@ -633,7 +633,7 @@ export class DeepScanEngine: {
         cweId: 'CWE-89'
       },
       {
-        type: VulnerabilityType.XSS,
+        type VulnerabilityType.XSS,
         severity: VulnerabilitySeverity.HIGH,
         pattern: /\b(innerHTML|outerHTML|document\.write|eval)\b/i,
         description: 'Potential XSS vulnerability due to unsafe DOM manipulation',
@@ -641,7 +641,7 @@ export class DeepScanEngine: {
         cweId: 'CWE-79'
 },
       {
-        type: VulnerabilityType.SENSITIVE_DATA_EXPOSURE,
+        type VulnerabilityType.SENSITIVE_DATA_EXPOSURE,
         severity: VulnerabilitySeverity.HIGH,
         pattern: /(password|secret|key|token|credential)s?\s*=\s*['"`][^'"`]*['"`]/i,
         description: 'Potential sensitive data exposure due to hardcoded secrets',
@@ -672,7 +672,7 @@ export class DeepScanEngine: {
           const findingId = crypto.randomUUID();
           const finding: VulnerabilityFinding = {
             id: findingId,
-            type: pattern.type,
+            type pattern.type,
             severity: pattern.severity,
             description: pattern.description,
             location: `${filePath}:${lineNumber}`,
@@ -695,7 +695,7 @@ export class DeepScanEngine: {
   /**
    * Perform a configuration scan
    */
-  private async: performConfigurationScan(scan: DeepScanResult): Promise<void> {
+  private async performConfigurationScan(scan: DeepScanResult): Promise<void> {
     // Get configuration files to scan
     const files = await this.getFilesToScan(scan, ['.json', '.yml', '.yaml', '.env']);
     
@@ -706,7 +706,7 @@ export class DeepScanEngine: {
     
     // Scan each file
     for (const file of files) {
-      try: {
+      try {
         // Read file content
         const content = await fs.promises.readFile(file, 'utf-8');
         
@@ -734,8 +734,8 @@ export class DeepScanEngine: {
   /**
    * Scan package.json for vulnerabilities
    */
-  private async: scanPackageJson(scan: DeepScanResult, filePath: string, content: string): Promise<void> {
-    try: {
+  private async scanPackageJson(scan: DeepScanResult, filePath: string, content: string): Promise<void> {
+    try {
       const packageJson = JSON.parse(content);
       
       // Check for outdated dependencies
@@ -748,7 +748,7 @@ export class DeepScanEngine: {
             const findingId = crypto.randomUUID();
             const finding: VulnerabilityFinding = {
               id: findingId,
-              type: VulnerabilityType.INSECURE_CONFIGURATION,
+              type VulnerabilityType.INSECURE_CONFIGURATION,
               severity: VulnerabilitySeverity.MEDIUM,
               description: `Using a flexible version specifier (${version}) for security-critical package: ${dependency}`,
               location: filePath,
@@ -790,7 +790,7 @@ export class DeepScanEngine: {
   /**
    * Scan .env file for vulnerabilities
    */
-  private async: scanEnvFile(scan: DeepScanResult, filePath: string, content: string, lines: string[]): Promise<void> {
+  private async scanEnvFile(scan: DeepScanResult, filePath: string, content: string, lines: string[]): Promise<void> {
     // Scan each line
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -809,7 +809,7 @@ export class DeepScanEngine: {
         const findingId = crypto.randomUUID();
         const finding: VulnerabilityFinding = {
           id: findingId,
-          type: VulnerabilityType.SENSITIVE_DATA_EXPOSURE,
+          type VulnerabilityType.SENSITIVE_DATA_EXPOSURE,
           severity: VulnerabilitySeverity.MEDIUM,
           description: `Sensitive environment variable detected: ${variableMatch[1]}`,
           location: `${filePath}:${lineNumber}`,
@@ -827,11 +827,11 @@ export class DeepScanEngine: {
   /**
    * Scan JSON configuration file for vulnerabilities
    */
-  private async: scanJsonConfig(scan: DeepScanResult, filePath: string, content: string, lines: string[]): Promise<void> {
+  private async scanJsonConfig(scan: DeepScanResult, filePath: string, content: string, lines: string[]): Promise<void> {
     // Define vulnerability patterns for JSON files
     const patterns = [
       {
-        type: VulnerabilityType.SENSITIVE_DATA_EXPOSURE,
+        type VulnerabilityType.SENSITIVE_DATA_EXPOSURE,
         severity: VulnerabilitySeverity.HIGH,
         pattern: /(api[_-]?key|token|secret|password|credential)[_-]?\w*\s*[:=]\s*["'](?!process|env|config|{{)[a-zA-Z0-9_\-\.]{8,}["']/i,
         description: 'Potential sensitive data exposure due to hardcoded API keys, tokens, or credentials',
@@ -839,7 +839,7 @@ export class DeepScanEngine: {
         cweId: 'CWE-798'
       },
       {
-        type: VulnerabilityType.INSECURE_CONFIGURATION,
+        type VulnerabilityType.INSECURE_CONFIGURATION,
         severity: VulnerabilitySeverity.MEDIUM,
         pattern: /(ssl[_-]?verify|verify[_-]?ssl|check[_-]?ssl|validate[_-]?cert)\s*[:=]\s*(false|0|"false"|'false')/i,
         description: 'Potential security vulnerability due to disabled SSL certificate validation',
@@ -858,7 +858,7 @@ export class DeepScanEngine: {
           const findingId = crypto.randomUUID();
           const finding: VulnerabilityFinding = {
             id: findingId,
-            type: pattern.type,
+            type pattern.type,
             severity: pattern.severity,
             description: pattern.description,
             location: `${filePath}:${lineNumber}`,
@@ -880,7 +880,7 @@ export class DeepScanEngine: {
   /**
    * Perform an API scan
    */
-  private async: performApiScan(scan: DeepScanResult): Promise<void> {
+  private async performApiScan(scan: DeepScanResult): Promise<void> {
     // Since we don't have direct access to API, scan code for API-related issues
     console.log('[DEEP-SCAN] Performing API security scan');
     
@@ -894,7 +894,7 @@ export class DeepScanEngine: {
     
     // Scan each file
     for (const file of files) {
-      try: {
+      try {
         // Read file content
         const content = await fs.promises.readFile(file, 'utf-8');
         
@@ -913,11 +913,11 @@ export class DeepScanEngine: {
   /**
    * Scan code for API security issues
    */
-  private async: scanApiCode(scan: DeepScanResult, filePath: string, content: string, lines: string[]): Promise<void> {
+  private async scanApiCode(scan: DeepScanResult, filePath: string, content: string, lines: string[]): Promise<void> {
     // Define vulnerability patterns
     const patterns = [
       {
-        type: VulnerabilityType.AUTH_BYPASS,
+        type VulnerabilityType.AUTH_BYPASS,
         severity: VulnerabilitySeverity.HIGH,
         pattern: /\bapp\.(get|post|put|delete|patch)\s*\(\s*["'`][^"'`]*["`']\s*,\s*(?!auth|authenticate|authorize|checkAuth|isAuthenticated|validateToken|requireAuth|checkPermission)/i,
         description: 'API endpoint without authentication middleware',
@@ -925,7 +925,7 @@ export class DeepScanEngine: {
         cweId: 'CWE-306'
 },
       {
-        type: VulnerabilityType.INSECURE_CONFIGURATION,
+        type VulnerabilityType.INSECURE_CONFIGURATION,
         severity: VulnerabilitySeverity.MEDIUM,
         pattern: /\bcors\s*\(\s*\{\s*origin\s*:\s*["'`]\*["'`]\s*\}\s*\)/i,
         description: 'CORS configured to allow all origins',
@@ -950,7 +950,7 @@ export class DeepScanEngine: {
           const findingId = crypto.randomUUID();
           const finding: VulnerabilityFinding = {
             id: findingId,
-            type: pattern.type,
+            type pattern.type,
             severity: pattern.severity,
             description: pattern.description,
             location: `${filePath}:${lineNumber}`,
@@ -1003,7 +1003,7 @@ export class DeepScanEngine: {
     securityFabric.emit('security:deep-scan:finding', {
       scanId: scan.scanId,
       findingId: finding.id,
-      type: finding.type,
+      type finding.type,
       severity: finding.severity,
       location: finding.location,
       timestamp: new: Date()
@@ -1017,7 +1017,7 @@ export class DeepScanEngine: {
       metadata: {
         scanId: scan.scanId,
         findingId: finding.id,
-        type: finding.type,
+        type finding.type,
         location: finding.location,
         description: finding.description,
         remediation: finding.remediation
@@ -1065,7 +1065,7 @@ export class DeepScanEngine: {
   /**
    * Start a deep scan with maximum settings
    */
-  public async: startDeepScan(): Promise<string> {
+  public async startDeepScan(): Promise<string> {
     return this.startScan({
       scanTypes: [DeepScanType.FULL],
       maxDepth: 15

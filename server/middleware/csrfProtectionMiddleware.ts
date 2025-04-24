@@ -5,15 +5,15 @@
  * with Express routes and APIs.
  */
 
-import: { Express, Request, Response, NextFunction } from: 'express';
-import: { createCSRFMiddleware, generateToken } from: '../security/csrf/CSRFProtection';
-import: { logSecurityEvent } from: '../security/advanced/SecurityLogger';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/SecurityFabric';
+import { Express, Request, Response, NextFunction } from 'express';
+import { createCSRFMiddleware, generateToken } from '../security/csrf/CSRFProtection';
+import { logSecurityEvent } from '../security/advanced/SecurityLogger';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
 
 /**
  * Setup CSRF protection for Express application
  */
-export function: setupCSRFProtection(app: Express): void: {
+export function setupCSRFProtection(app: Express): void: {
   // Create CSRF middleware with default options
   const csrfMiddleware = createCSRFMiddleware({
     cookie: {
@@ -60,7 +60,7 @@ export function: setupCSRFProtection(app: Express): void: {
   app.use((req: Request, res: Response, next: NextFunction) => {
     // Skip API routes
     if (req.path.startsWith('/api/')) {
-      return: next();
+      return next();
 }
     
     // Get existing render method
@@ -134,7 +134,7 @@ export function: setupCSRFProtection(app: Express): void: {
 /**
  * Helper function to add CSRF protection to specific routes
  */
-export function: protectRoute(route: Express): Express: {
+export function protectRoute(route: Express): Express: {
   const csrfMiddleware = createCSRFMiddleware();
   route.use(csrfMiddleware);
   return route;
@@ -143,4 +143,4 @@ export function: protectRoute(route: Express): Express: {
 /**
  * Helper function to get CSRF token for a request
  */
-export: { generateToken as getCSRFToken };
+export { generateToken as getCSRFToken };

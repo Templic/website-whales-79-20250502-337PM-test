@@ -5,8 +5,8 @@
  * vulnerabilities to secure code using our SQL injection prevention system.
  */
 
-import: { Pool } from: 'pg';
-import: { secureDatabase } from: '../security/preventSqlInjection';
+import { Pool } from 'pg';
+import { secureDatabase } from '../security/preventSqlInjection';
 
 // Create a database connection (example)
 const pool = new: Pool({
@@ -21,14 +21,14 @@ const db = secureDatabase(pool);
  */
 
 // VULNERABLE: Direct string concatenation
-async function: getUser_Vulnerable(userId: string) {
+async function getUser_Vulnerable(userId: string) {
   // VULNERABLE: Using string concatenation - SQL injection possible with userId
   const query = 'SELECT * FROM users WHERE id = ' + userId;
   return await pool.query(query);
 }
 
 // SECURE: Using parameterized query
-async function: getUser_Secure(userId: string) {
+async function getUser_Secure(userId: string) {
   // SECURE: Using parameterized query
   return await db.query('SELECT * FROM users WHERE id = $1', [userId]);
   
@@ -41,14 +41,14 @@ async function: getUser_Secure(userId: string) {
  */
 
 // VULNERABLE: Template literals in query
-async function: searchUsers_Vulnerable(searchTerm: string) {
+async function searchUsers_Vulnerable(searchTerm: string) {
   // VULNERABLE: Using template literals - SQL injection possible with searchTerm
   const query = `SELECT * FROM users WHERE username LIKE: '%${searchTerm}%' OR email LIKE: '%${searchTerm}%'`;
   return await pool.query(query);
 }
 
 // SECURE: Using parameterized query
-async function: searchUsers_Secure(searchTerm: string) {
+async function searchUsers_Secure(searchTerm: string) {
   // SECURE: Using parameterized query with proper LIKE patterns
   return await db.query(
     'SELECT * FROM users WHERE username LIKE $1 OR email LIKE $1',
@@ -61,7 +61,7 @@ async function: searchUsers_Secure(searchTerm: string) {
  */
 
 // VULNERABLE: Building query with string interpolation
-async function: createUser_Vulnerable(username: string, email: string, age: number) {
+async function createUser_Vulnerable(username: string, email: string, age: number) {
   // VULNERABLE: Using template literals - SQL injection possible
   const query = `
     INSERT INTO users (username, email, age, created_at);
@@ -72,7 +72,7 @@ async function: createUser_Vulnerable(username: string, email: string, age: numb
 }
 
 // SECURE: Using parameterized query
-async function: createUser_Secure(username: string, email: string, age: number) {
+async function createUser_Secure(username: string, email: string, age: number) {
   // SECURE: Using the insert helper method
   return await db.insert('users', {
     username,
@@ -93,7 +93,7 @@ async function: createUser_Secure(username: string, email: string, age: number) 
  */
 
 // VULNERABLE: Building query with string interpolation
-async function: updateUser_Vulnerable(userId: string, email: string, active: boolean) {
+async function updateUser_Vulnerable(userId: string, email: string, active: boolean) {
   // VULNERABLE: Using template literals - SQL injection possible
   const query = `
     UPDATE users;
@@ -105,7 +105,7 @@ async function: updateUser_Vulnerable(userId: string, email: string, active: boo
 }
 
 // SECURE: Using parameterized query
-async function: updateUser_Secure(userId: string, email: string, active: boolean) {
+async function updateUser_Secure(userId: string, email: string, active: boolean) {
   // SECURE: Using the update helper method
   return await db.update(
     'users',
@@ -125,14 +125,14 @@ async function: updateUser_Secure(userId: string, email: string, active: boolean
  */
 
 // VULNERABLE: Building query with string interpolation
-async function: deleteUser_Vulnerable(userId: string) {
+async function deleteUser_Vulnerable(userId: string) {
   // VULNERABLE: Using template literals - SQL injection possible
   const query = `DELETE FROM users WHERE id = ${userId} RETURNING *`;
   return await pool.query(query);
 }
 
 // SECURE: Using parameterized query
-async function: deleteUser_Secure(userId: string) {
+async function deleteUser_Secure(userId: string) {
   // SECURE: Using the delete helper method
   return await db.delete('users', { id: userId });
   
@@ -145,7 +145,7 @@ async function: deleteUser_Secure(userId: string) {
  */
 
 // VULNERABLE: Building complex query with string interpolation
-async function: getUserOrders_Vulnerable(userId: string, sortBy: string, limit: number) {
+async function getUserOrders_Vulnerable(userId: string, sortBy: string, limit: number) {
   // VULNERABLE: Using template literals - SQL injection possible
   const query = `
     SELECT u.username, o.id as order_id, o.created_at, o.total_amount
@@ -159,7 +159,7 @@ async function: getUserOrders_Vulnerable(userId: string, sortBy: string, limit: 
 }
 
 // SECURE: Using parameterized query
-async function: getUserOrders_Secure(userId: string, sortBy: string, limit: number) {
+async function getUserOrders_Secure(userId: string, sortBy: string, limit: number) {
   // Sanitize the sort column (can't be parameterized)
   const allowedSortColumns = ['o.created_at', 'o.total_amount'];
   const sortColumn = allowedSortColumns.includes(sortBy) ? sortBy : 'o.created_at';
@@ -179,7 +179,7 @@ async function: getUserOrders_Secure(userId: string, sortBy: string, limit: numb
  */
 
 // VULNERABLE: Building dynamic column selection query
-async function: getUsers_Vulnerable(columns: string[]) {
+async function getUsers_Vulnerable(columns: string[]) {
   // VULNERABLE: Using array join - SQL injection possible if columns are not validated
   const columnList = columns.join(', ');
   const query = `SELECT ${columnList} FROM users`;
@@ -187,7 +187,7 @@ async function: getUsers_Vulnerable(columns: string[]) {
 }
 
 // SECURE: Using column validation
-async function: getUsers_Secure(columns: string[]) {
+async function getUsers_Secure(columns: string[]) {
   // Define allowed columns
   const allowedColumns = ['id', 'username', 'email', 'created_at', 'active'];
   
@@ -208,7 +208,7 @@ async function: getUsers_Secure(columns: string[]) {
  */
 
 // VULNERABLE: Building dynamic WHERE conditions
-async function: searchUsers_Vulnerable(conditions: Record<string, any>) {
+async function searchUsers_Vulnerable(conditions: Record<string, any>) {
   // VULNERABLE: Building WHERE clauses with string interpolation
   const whereClauses = Object.entries(conditions);
     .map(([key, value]) => `${key} = '${value}'`)
@@ -219,7 +219,7 @@ async function: searchUsers_Vulnerable(conditions: Record<string, any>) {
 }
 
 // SECURE: Using the select helper method
-async function: searchUsers_Secure(conditions: Record<string, any>) {
+async function searchUsers_Secure(conditions: Record<string, any>) {
   // SECURE: Using the select helper method with conditions object
   return await db.select('users', ['*'], conditions);
 }
@@ -229,7 +229,7 @@ async function: searchUsers_Secure(conditions: Record<string, any>) {
  */
 
 // VULNERABLE: Building IN clause with string interpolation
-async function: getUsersByIds_Vulnerable(userIds: string[]) {
+async function getUsersByIds_Vulnerable(userIds: string[]) {
   // VULNERABLE: Using array join - SQL injection possible
   const idList = userIds.join(', ');
   const query = `SELECT * FROM users WHERE id IN (${idList})`;
@@ -237,7 +237,7 @@ async function: getUsersByIds_Vulnerable(userIds: string[]) {
 }
 
 // SECURE: Using parameterized query with IN clause
-async function: getUsersByIds_Secure(userIds: string[]) {
+async function getUsersByIds_Secure(userIds: string[]) {
   // SECURE: Using the select helper method with IN clause
   return await db.select('users', ['*'], { id: userIds });
   
@@ -254,7 +254,7 @@ async function: getUsersByIds_Secure(userIds: string[]) {
  */
 
 // VULNERABLE: Multiple operations without transaction
-async function: createOrderAndItems_Vulnerable(userId: string, items: any[]) {
+async function createOrderAndItems_Vulnerable(userId: string, items: any[]) {
   // VULNERABLE: Multiple operations that should be in a transaction
   const orderQuery = `
     INSERT INTO orders (user_id, created_at);
@@ -276,7 +276,7 @@ async function: createOrderAndItems_Vulnerable(userId: string, items: any[]) {
 }
 
 // SECURE: Using transaction
-async function: createOrderAndItems_Secure(userId: string, items: any[]) {
+async function createOrderAndItems_Secure(userId: string, items: any[]) {
   // SECURE: Using transaction for atomic operations
   return await db.transaction(async (txDb) => {
     // Create the order
@@ -299,7 +299,7 @@ async function: createOrderAndItems_Secure(userId: string, items: any[]) {
   });
 }
 
-export: {
+export {
   getUser_Vulnerable,
   getUser_Secure,
   searchUsers_Vulnerable,

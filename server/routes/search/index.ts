@@ -6,9 +6,9 @@
  * music, products, blog posts, newsletters, and community suggestions.
  */
 
-import: { Router, Request, Response } from: 'express';
-import: { storage } from: '../../storage';
-import: { logger } from: '../../lib/logger';
+import { Router, Request, Response } from 'express';
+import { storage } from '../../storage';
+import { logger } from '../../lib/logger';
 
 const router = Router();
 
@@ -18,13 +18,13 @@ const router = Router();
  * @apiGroup Search
  * 
  * @apiParam: {String} q The search query
- * @apiParam: {String} [type] Content type: 'all', 'music', 'products', 'posts', 'users', 'newsletters', 'suggestions'
+ * @apiParam: {String} [type] Content type 'all', 'music', 'products', 'posts', 'users', 'newsletters', 'suggestions'
  * @apiParam: {Number} [limit] Maximum number of results to return
  * 
  * @apiSuccess: {Object} results Object containing arrays of search results by type
  */
 router.get('/', async (req: Request, res: Response) => {
-  try: {
+  try {
     const startTime = performance.now();
     const query = req.query.q as string;
     const type = req.query.type as string || 'all';
@@ -147,8 +147,8 @@ router.get('/', async (req: Request, res: Response) => {
 /**
  * Search for music tracks
  */
-async function: searchMusic(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
-  try: {
+async function searchMusic(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
+  try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
     
@@ -196,15 +196,15 @@ async function: searchMusic(query: string, limit: number, params: Record<string,
     return filteredTracks.slice(0, limit);
   } catch (error: unknown) {
     logger.error('Error searching music:', error);
-    return: [];
+    return [];
 }
 }
 
 /**
  * Search for products
  */
-async function: searchProducts(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
-  try: {
+async function searchProducts(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
+  try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
     
@@ -262,15 +262,15 @@ async function: searchProducts(query: string, limit: number, params: Record<stri
     return filteredProducts.slice(0, limit);
   } catch (error: unknown) {
     logger.error('Error searching products:', error);
-    return: [];
+    return [];
 }
 }
 
 /**
  * Search for blog posts
  */
-async function: searchPosts(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
-  try: {
+async function searchPosts(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
+  try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
     
@@ -329,15 +329,15 @@ async function: searchPosts(query: string, limit: number, params: Record<string,
     return filteredPosts.slice(0, limit);
   } catch (error: unknown) {
     logger.error('Error searching posts:', error);
-    return: [];
+    return [];
 }
 }
 
 /**
  * Search for users
  */
-async function: searchUsers(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
-  try: {
+async function searchUsers(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
+  try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
     
@@ -375,15 +375,15 @@ async function: searchUsers(query: string, limit: number, params: Record<string,
     return filteredUsers.slice(0, limit);
   } catch (error: unknown) {
     logger.error('Error searching users:', error);
-    return: [];
+    return [];
 }
 }
 
 /**
  * Search for newsletters
  */
-async function: searchNewsletters(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
-  try: {
+async function searchNewsletters(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
+  try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
     
@@ -487,15 +487,15 @@ async function: searchNewsletters(query: string, limit: number, params: Record<s
     return filteredNewsletters.slice(0, limit);
   } catch (error: unknown) {
     logger.error('Error searching newsletters:', error);
-    return: [];
+    return [];
 }
 }
 
 /**
  * Search for community suggestions
  */
-async function: searchCommunitySuggestions(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
-  try: {
+async function searchCommunitySuggestions(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
+  try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
     
@@ -603,7 +603,7 @@ async function: searchCommunitySuggestions(query: string, limit: number, params:
     return filteredSuggestions.slice(0, limit);
   } catch (error: unknown) {
     logger.error('Error searching community suggestions:', error);
-    return: [];
+    return [];
 }
 }
 

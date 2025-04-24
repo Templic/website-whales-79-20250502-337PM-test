@@ -5,16 +5,16 @@
  */
 
 // Export Security Toolkit
-export: {
+export {
   SecurityToolkit,
   SecurityLevel,
   type SecurityProfile,
   createSecurityToolkit,
   default as securityToolkit
-} from: './SecurityToolkit';
+} from './SecurityToolkit';
 
 // Export Security Helpers
-export: {
+export {
   secure,
   secureController,
   securityHeaders,
@@ -22,29 +22,29 @@ export: {
   verifyBlockchainIntegrity,
   validators,
   type SecurityDecoratorOptions
-} from: './SecurityHelpers';
+} from './SecurityHelpers';
 
 // Export core security components for advanced usage
-export: { securityBlockchain } from: '../advanced/blockchain/ImmutableSecurityLogs';
-export: { 
+export { securityBlockchain } from '../advanced/blockchain/ImmutableSecurityLogs';
+export { 
   SecurityEventCategory, 
   SecurityEventSeverity,
   type SecurityEvent,
   type SecurityEventMetadata
-} from: '../advanced/blockchain/SecurityEventTypes';
+} from '../advanced/blockchain/SecurityEventTypes';
 
 // Export anomaly detection components
-export: {
+export {
   detectAnomaly,
   createAnomalyDetectionMiddleware,
   type AnomalyDetectionOptions,
   type AnomalyDetectionResult
-} from: '../advanced/ml/AnomalyDetection';
+} from '../advanced/ml/AnomalyDetection';
 
 // Export security middleware components
-export: {
+export {
   applySecurityMiddleware,
   createCustomSecurityMiddleware,
   createSecureRouter,
   type SecureRouterOptions
-} from: '../../middleware/securityMiddleware';
+} from '../../middleware/securityMiddleware';

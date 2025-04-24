@@ -1,11 +1,11 @@
-import: { Router, Request, Response, NextFunction } from: 'express';
-import: { z } from: 'zod';
-import fs from: 'fs';
-import path from: 'path';
-import: { fileURLToPath } from: 'url';
-import: { logSecurityEvent, handleSecurityLog, rotateSecurityLogs } from: './security';
-import: { scanProject } from: './security/securityScan';
-import: { User } from: '../shared/schema';
+import { Router, Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { logSecurityEvent, handleSecurityLog, rotateSecurityLogs } from './security';
+import { scanProject } from './security/securityScan';
+import { User } from '../shared/schema';
 
 // Add the user property to express-session
 declare module: 'express-session' {
@@ -56,7 +56,7 @@ const checkPermission = (requiredPermission: SecurityPermission) => {
     // Check if user is authenticated using Passport.js's req.user
     if (!req.isAuthenticated() || !req.user) {
       logSecurityEvent({
-        type: 'UNAUTHORIZED_ATTEMPT',
+        type 'UNAUTHORIZED_ATTEMPT',
         details: `Unauthenticated user attempted to access ${req.path}`,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
@@ -75,7 +75,7 @@ const checkPermission = (requiredPermission: SecurityPermission) => {
     
     if (!hasPermission) {
       logSecurityEvent({
-        type: 'PERMISSION_DENIED',
+        type 'PERMISSION_DENIED',
         details: `User with role ${userRole} attempted to access resource requiring ${requiredPermission}`,
         userId: req.user.id,
         userRole,
@@ -119,7 +119,7 @@ const defaultSecuritySettings = {
 
 // Initialize or load security settings
 const initializeSecuritySettings = () => {
-  try: {
+  try {
     if (!fs.existsSync(SECURITY_SETTINGS_FILE)) {
       fs.writeFileSync(
         SECURITY_SETTINGS_FILE,
@@ -137,7 +137,7 @@ const initializeSecuritySettings = () => {
 
 // Get current security settings
 const getSecuritySettings = () => {
-  try: {
+  try {
     return JSON.parse(fs.readFileSync(SECURITY_SETTINGS_FILE, 'utf8'));
 } catch (error: unknown) {
     console.error('Failed to read security settings:', error);
@@ -147,7 +147,7 @@ const getSecuritySettings = () => {
 
 // Update security settings
 const updateSecuritySettings = (newSettings) => {
-  try: {
+  try {
     const currentSettings = getSecuritySettings();
     const updatedSettings = { ...currentSettings, ...newSettings };
     fs.writeFileSync(
@@ -164,9 +164,9 @@ const updateSecuritySettings = (newSettings) => {
 
 // Parse and get security events from log file
 const getSecurityStats = () => {
-  try: {
+  try {
     if (!fs.existsSync(SECURITY_LOG_FILE)) {
-      return: { 
+      return { 
         total: 0,
         byType: {},
         bySetting: {},
@@ -178,7 +178,7 @@ const getSecurityStats = () => {
     const logLines = logContent.split('\n').filter(line => line.trim() !== '');
 
     const events = logLines.map(line => {
-      try: {
+      try {
         // Skip the timestamp prefix (e.g., "[SECURITY] 2023-01-01T00:00:00.000Z - ")
         const jsonStart = line.indexOf('- ') + 2;
         const jsonContent = line.substring(jsonStart);
@@ -202,7 +202,7 @@ const getSecurityStats = () => {
 }
     });
 
-    return: {
+    return {
       total: events.length,
       byType,
       bySetting,
@@ -210,7 +210,7 @@ const getSecurityStats = () => {
 };
   } catch (error: unknown) {
     console.error('Failed to get security stats:', error);
-    return: { 
+    return { 
       total: 0,
       byType: {},
       bySetting: {},
@@ -220,7 +220,7 @@ const getSecurityStats = () => {
 };
 
 // Import rate limiters
-import: { securityLimiter } from: './middleware/rateLimit';
+import { securityLimiter } from './middleware/rateLimit';
 
 // Setup security routes with rate limiting
 const securityRouter = Router();
@@ -233,11 +233,11 @@ securityRouter.get(
   '/settings', 
   checkPermission(SecurityPermission.VIEW_SETTINGS),
   async (req: Request, res: Response) => {
-    try: {
+    try {
       const settings = getSecuritySettings();
       
       // Log successful access: logSecurityEvent({
-        type: 'SECURITY_SETTINGS_ACCESS',
+        type 'SECURITY_SETTINGS_ACCESS',
         userId: req.user?.id || undefined,
         userRole: req.user?.role || undefined,
         details: 'Security settings accessed',
@@ -257,20 +257,20 @@ securityRouter.post(
   '/settings/update', 
   checkPermission(SecurityPermission.MODIFY_SETTINGS),
   async (req: Request, res: Response) => {
-    try: {
+    try {
       const userId = req.user?.id;
       const userRole = req.user?.role;
       
       // Enhanced input validation with more strict requirements
       const schema = z.object({
-        setting: z.string()
+        (match) => match.replace(':', '')string()
           .min(3, 'Setting name must be at, least: 3 characters')
           .max(100, 'Setting name must be at, most: 100 characters')
           .refine(
             (val) => Object.keys(defaultSecuritySettings).includes(val),
             { message: 'Invalid security setting name' }
           ),
-        value: z.boolean({ 
+        (match) => match.replace(':', '')boolean({ 
           required_error: 'Value must be a boolean', 
           invalid_type_error: 'Value must be a boolean'
 })
@@ -280,7 +280,7 @@ securityRouter.post(
       
       if (!validationResult.success) {
         // Log validation failure: logSecurityEvent({
-          type: 'SECURITY_SETTING_VALIDATION_FAILED',
+          type 'SECURITY_SETTING_VALIDATION_FAILED',
           userId,
           userRole,
           details: `Input validation, failed: ${JSON.stringify(validationResult.error.errors)}`,
@@ -297,14 +297,14 @@ securityRouter.post(
 });
       }
       
-      const: { setting, value } = validationResult.data;
+      const { setting, value } = validationResult.data;
       
       // Update setting
       const newSettings = { [setting]: value };
       const updatedSettings = updateSecuritySettings(newSettings);
       
       // Log the change: logSecurityEvent({
-        type: 'SECURITY_SETTING_CHANGED',
+        type 'SECURITY_SETTING_CHANGED',
         setting,
         value,
         userId,
@@ -321,7 +321,7 @@ securityRouter.post(
       console.error('Error updating security setting:', error);
       
       // Log the error: logSecurityEvent({
-        type: 'SECURITY_SETTING_UPDATE_ERROR',
+        type 'SECURITY_SETTING_UPDATE_ERROR',
         userId: req.user?.id || undefined,
         userRole: req.user?.role || undefined,
         details: `Error updating security setting: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -338,11 +338,11 @@ securityRouter.get(
   '/stats', 
   checkPermission(SecurityPermission.VIEW_LOGS),
   async (req: Request, res: Response) => {
-    try: {
+    try {
       const stats = getSecurityStats();
       
       // Log access: logSecurityEvent({
-        type: 'SECURITY_STATS_ACCESS',
+        type 'SECURITY_STATS_ACCESS',
         userId: req.user?.id || undefined,
         userRole: req.user?.role || undefined,
         details: 'Security statistics accessed',
@@ -362,7 +362,7 @@ securityRouter.post(
   '/scan/run', 
   checkPermission(SecurityPermission.RUN_SCAN),
   async (req: Request, res: Response) => {
-    try: {
+    try {
       // Add brute force protection - check if a scan was run recently
       const SCAN_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
       const now = Date.now();
@@ -378,11 +378,11 @@ securityRouter.post(
         });
       }
       
-      const scanResult = await: scanProject();
+      const scanResult = await scanProject();
       latestScanResult = scanResult;
       
       // Log the scan event: logSecurityEvent({
-        type: 'SECURITY_SCAN',
+        type 'SECURITY_SCAN',
         userId: req.user?.id || undefined,
         userRole: req.user?.role || undefined,
         details: `Security scan completed with ${scanResult.totalIssues} issues found`,
@@ -399,7 +399,7 @@ securityRouter.post(
       console.error('Error running security scan:', error);
       
       // Log error: logSecurityEvent({
-        type: 'SECURITY_SCAN_ERROR',
+        type 'SECURITY_SCAN_ERROR',
         userId: req.user?.id || undefined,
         userRole: req.user?.role || undefined,
         details: `Error running security scan: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -416,9 +416,9 @@ securityRouter.get(
   '/scan/latest', 
   checkPermission(SecurityPermission.VIEW_SCAN_RESULTS),
   async (req: Request, res: Response) => {
-    try: {
+    try {
       // Log access: logSecurityEvent({
-        type: 'SECURITY_SCAN_RESULTS_ACCESS',
+        type 'SECURITY_SCAN_RESULTS_ACCESS',
         userId: req.user?.id || undefined,
         userRole: req.user?.role || undefined,
         details: 'Security scan results accessed',
@@ -428,10 +428,10 @@ securityRouter.get(
       if (!latestScanResult) {
         // Run a new scan if none available but only if user has permission
         if (req.user && rolePermissions[req.user.role as UserRole]?.includes(SecurityPermission.RUN_SCAN)) {
-          latestScanResult = await: scanProject();
+          latestScanResult = await scanProject();
           
           // Log the scan event: logSecurityEvent({
-            type: 'SECURITY_SCAN',
+            type 'SECURITY_SCAN',
             userId: req.user.id,
             userRole: req.user.role,
             details: `Automatic security scan completed with ${latestScanResult.totalIssues} issues found`,
@@ -439,7 +439,7 @@ securityRouter.get(
                     latestScanResult.highIssues > 0 ? 'high' : 
                     latestScanResult.mediumIssues > 0 ? 'medium' : 'low'
           });
-        } else: {
+        } else {
           return res.status(404).json({ message: 'No scan results available. Please request a scan first.' });
         }
       }
@@ -460,7 +460,7 @@ const testSecurityRouter = Router();
 
 // Security status endpoint - public access with varying detail levels
 securityRouter.get('/status', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Check if the user is authenticated to determine level of detail to return
     const isAdmin = req.isAuthenticated() && req.user && (req.user as any).role === 'admin';
     
@@ -551,14 +551,14 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
         securityEvents: [
           {
             id: 'event-001',
-            type: 'LOGIN_FAILURE',
+            type 'LOGIN_FAILURE',
             timestamp: new: Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
             sourceIp: '192.168.1.1',
             severity: 'medium'
 },
           {
             id: 'event-002',
-            type: 'RATE_LIMIT_EXCEEDED',
+            type 'RATE_LIMIT_EXCEEDED',
             timestamp: new: Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
             sourceIp: '192.168.1.2',
             severity: 'low'
@@ -586,12 +586,12 @@ testSecurityRouter.get('/security/stats', (req, res) => {
 
 // Test endpoint to run a security scan without authentication
 testSecurityRouter.get('/security/scan', async (req, res) => {
-  try: {
-    const scanResult = await: scanProject();
+  try {
+    const scanResult = await scanProject();
     latestScanResult = scanResult;
     
     // Log the scan event: logSecurityEvent({
-      type: 'SECURITY_SCAN',
+      type 'SECURITY_SCAN',
       ...scanResult
 });
     
@@ -616,7 +616,7 @@ testSecurityRouter.get('/security/scan', async (req, res) => {
 // Test endpoint to simulate an unauthorized access event for testing
 testSecurityRouter.get('/security/simulate-unauthorized', (req, res) => {
   logSecurityEvent({
-    type: 'UNAUTHORIZED_ATTEMPT',
+    type 'UNAUTHORIZED_ATTEMPT',
     setting: 'API_ACCESS',
     ip: req.ip,
     userAgent: req.headers['user-agent'],
@@ -629,4 +629,4 @@ testSecurityRouter.get('/security/simulate-unauthorized', (req, res) => {
 
 // Initialize security settings on module load: initializeSecuritySettings();
 
-export: { securityRouter, testSecurityRouter };
+export { securityRouter, testSecurityRouter };

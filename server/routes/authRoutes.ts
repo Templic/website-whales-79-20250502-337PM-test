@@ -27,18 +27,18 @@ const router = express.Router();
 
 // Validate login input
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
-  rememberMe: z.boolean().optional().default(false),
+  (match) => match.replace(':', '')string().min(1, 'Username is required'),
+  (match) => match.replace(':', '')string().min(1, 'Password is required'),
+  (match) => match.replace(':', '')boolean().optional().default(false),
 });
 
 // Validate: 2FA input
 const totpSchema = z.object({
-  token: z.string().min(6).max(6)
+  (match) => match.replace(':', '')string().min(6).max(6)
 });
 
 const backupCodeSchema = z.object({
-  backupCode: z.string().min(11).max(11) // Format: XXXXX-XXXXX
+  (match) => match.replace(':', '')string().min(11).max(11) // Format: XXXXX-XXXXX
 });
 
 // Login endpoint
@@ -67,7 +67,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
       );
       
       logSecurityEvent({
-        type: 'ACCOUNT_LOCKED_ATTEMPT',
+        type 'ACCOUNT_LOCKED_ATTEMPT',
         username: req.body.username,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
@@ -103,7 +103,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
             updateData.lockedUntil = lockUntil;
             
             logSecurityEvent({
-              type: 'ACCOUNT_LOCKED',
+              type 'ACCOUNT_LOCKED',
               username: req.body.username,
               ip: req.ip,
               userAgent: req.headers['user-agent'],
@@ -118,7 +118,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
         }
         
         logSecurityEvent({
-          type: 'FAILED_LOGIN',
+          type 'FAILED_LOGIN',
           username: req.body.username,
           ip: req.ip,
           userAgent: req.headers['user-agent'],
@@ -180,7 +180,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
           .where(eq(users.id, user.id));
         
         logSecurityEvent({
-          type: 'SUCCESSFUL_LOGIN',
+          type 'SUCCESSFUL_LOGIN',
           userId: user.id,
           username: user.username,
           ip: req.ip,
@@ -206,7 +206,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
     console.error('Login error:', error);
     
     logSecurityEvent({
-      type: 'LOGIN_ERROR',
+      type 'LOGIN_ERROR',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: `An error occurred during login: ${error.message}`,
@@ -222,7 +222,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
 
 // Verify Two-Factor Authentication Code
 router.post('/verify-2fa', async (req: Request, res: Response) => {
-  try: {
+  try {
     if (!req.session.twoFactorAuth || !req.session.twoFactorAuth.twoFactorPending) {
       return res.status(401).json({
         success: false,
@@ -240,8 +240,8 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
 });
     }
     
-    const: { userId } = req.session.twoFactorAuth;
-    const: { token } = req.body;
+    const { userId } = req.session.twoFactorAuth;
+    const { token } = req.body;
     
     // Get the user record with the: 2FA secret
     const userRecord = await db.query.users.findFirst({
@@ -250,7 +250,7 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
     
     if (!userRecord || !userRecord.twoFactorSecret) {
       logSecurityEvent({
-        type: 'FAILED_2FA_VERIFICATION',
+        type 'FAILED_2FA_VERIFICATION',
         userId,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
@@ -269,7 +269,7 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
     
     if (!isTokenValid) {
       logSecurityEvent({
-        type: 'FAILED_2FA_VERIFICATION',
+        type 'FAILED_2FA_VERIFICATION',
         userId,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
@@ -307,7 +307,7 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
       delete req.session.twoFactorAuth;
       
       logSecurityEvent({
-        type: 'SUCCESSFUL_2FA_VERIFICATION',
+        type 'SUCCESSFUL_2FA_VERIFICATION',
         userId: userRecord.id,
         username: userRecord.username,
         ip: req.ip,
@@ -330,7 +330,7 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
     console.error('2FA verification error:', error);
     
     logSecurityEvent({
-      type: '2FA_VERIFICATION_ERROR',
+      type '2FA_VERIFICATION_ERROR',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: `An error occurred during: 2FA verification: ${error.message}`,
@@ -346,7 +346,7 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
 
 // Verify using backup code
 router.post('/verify-backup-code', async (req: Request, res: Response) => {
-  try: {
+  try {
     if (!req.session.twoFactorAuth || !req.session.twoFactorAuth.twoFactorPending) {
       return res.status(401).json({
         success: false,
@@ -364,8 +364,8 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
 });
     }
     
-    const: { userId } = req.session.twoFactorAuth;
-    const: { backupCode } = req.body;
+    const { userId } = req.session.twoFactorAuth;
+    const { backupCode } = req.body;
     
     // Get the user record with backup codes
     const userRecord = await db.query.users.findFirst({
@@ -374,7 +374,7 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
     
     if (!userRecord || !userRecord.backupCodes || userRecord.backupCodes.length === 0) {
       logSecurityEvent({
-        type: 'FAILED_BACKUP_CODE_VERIFICATION',
+        type 'FAILED_BACKUP_CODE_VERIFICATION',
         userId,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
@@ -389,11 +389,11 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
     }
     
     // Verify the backup code
-    const: { success, remainingCodes } = verifyBackupCode(backupCode, userRecord.backupCodes);
+    const { success, remainingCodes } = verifyBackupCode(backupCode, userRecord.backupCodes);
     
     if (!success) {
       logSecurityEvent({
-        type: 'FAILED_BACKUP_CODE_VERIFICATION',
+        type 'FAILED_BACKUP_CODE_VERIFICATION',
         userId,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
@@ -436,7 +436,7 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
       delete req.session.twoFactorAuth;
       
       logSecurityEvent({
-        type: 'SUCCESSFUL_BACKUP_CODE_VERIFICATION',
+        type 'SUCCESSFUL_BACKUP_CODE_VERIFICATION',
         userId: userRecord.id,
         username: userRecord.username,
         ip: req.ip,
@@ -460,7 +460,7 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
     console.error('Backup code verification error:', error);
     
     logSecurityEvent({
-      type: 'BACKUP_CODE_VERIFICATION_ERROR',
+      type 'BACKUP_CODE_VERIFICATION_ERROR',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: `An error occurred during backup code verification: ${error.message}`,
@@ -476,7 +476,7 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
 
 // Endpoint to set up: 2FA
 router.post('/setup-2fa', isAuthenticated, async (req: Request, res: Response) => {
-  try: {
+  try {
     const userId = req.user?.id;
     
     if (!userId) {
@@ -508,7 +508,7 @@ router.post('/setup-2fa', isAuthenticated, async (req: Request, res: Response) =
     const totpUri = generateTotpUri(userRecord.username, secret);
     
     // Generate QR code
-    const qrCode = await: generateQrCode(totpUri);
+    const qrCode = await generateQrCode(totpUri);
     
     // Store the new secret temporarily in the session
     req.session.twoFactorSetup = {
@@ -517,7 +517,7 @@ router.post('/setup-2fa', isAuthenticated, async (req: Request, res: Response) =
 };
     
     logSecurityEvent({
-      type: '2FA_SETUP_INITIATED',
+      type '2FA_SETUP_INITIATED',
       userId,
       username: userRecord.username,
       ip: req.ip,
@@ -536,7 +536,7 @@ router.post('/setup-2fa', isAuthenticated, async (req: Request, res: Response) =
     console.error('2FA setup error:', error);
     
     logSecurityEvent({
-      type: '2FA_SETUP_ERROR',
+      type '2FA_SETUP_ERROR',
       userId: req.user?.id,
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -553,7 +553,7 @@ router.post('/setup-2fa', isAuthenticated, async (req: Request, res: Response) =
 
 // Endpoint to verify and activate: 2FA
 router.post('/activate-2fa', isAuthenticated, async (req: Request, res: Response) => {
-  try: {
+  try {
     const userId = req.user?.id;
     
     if (!userId) {
@@ -581,8 +581,8 @@ router.post('/activate-2fa', isAuthenticated, async (req: Request, res: Response
 });
     }
     
-    const: { token } = req.body;
-    const: { secret, backupCodes } = req.session.twoFactorSetup;
+    const { token } = req.body;
+    const { secret, backupCodes } = req.session.twoFactorSetup;
     
     // Verify the provided token
     const isValidToken = verifyToken(token, secret);
@@ -607,7 +607,7 @@ router.post('/activate-2fa', isAuthenticated, async (req: Request, res: Response
     delete req.session.twoFactorSetup;
     
     logSecurityEvent({
-      type: '2FA_SETUP_COMPLETED',
+      type '2FA_SETUP_COMPLETED',
       userId,
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -623,7 +623,7 @@ router.post('/activate-2fa', isAuthenticated, async (req: Request, res: Response
     console.error('2FA activation error:', error);
     
     logSecurityEvent({
-      type: '2FA_ACTIVATION_ERROR',
+      type '2FA_ACTIVATION_ERROR',
       userId: req.user?.id,
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -640,7 +640,7 @@ router.post('/activate-2fa', isAuthenticated, async (req: Request, res: Response
 
 // Endpoint to disable: 2FA (requires password confirmation)
 router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response) => {
-  try: {
+  try {
     const userId = req.user?.id;
     
     if (!userId) {
@@ -652,7 +652,7 @@ router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response)
     
     // Validate password
     const passwordSchema = z.object({
-      password: z.string().min(1, 'Password is required')
+      (match) => match.replace(':', '')string().min(1, 'Password is required')
 });
     
     const validation = passwordSchema.safeParse(req.body);
@@ -664,7 +664,7 @@ router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response)
 });
     }
     
-    const: { password } = req.body;
+    const { password } = req.body;
     
     // Get the user with their password
     const userRecord = await db.query.users.findFirst({
@@ -683,7 +683,7 @@ router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response)
     
     if (!isPasswordValid) {
       logSecurityEvent({
-        type: 'FAILED_2FA_DISABLE_ATTEMPT',
+        type 'FAILED_2FA_DISABLE_ATTEMPT',
         userId,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
@@ -707,7 +707,7 @@ router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response)
       .where(eq(users.id, userId));
     
     logSecurityEvent({
-      type: '2FA_DISABLED',
+      type '2FA_DISABLED',
       userId,
       username: userRecord.username,
       ip: req.ip,
@@ -724,7 +724,7 @@ router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response)
     console.error('2FA disable error:', error);
     
     logSecurityEvent({
-      type: '2FA_DISABLE_ERROR',
+      type '2FA_DISABLE_ERROR',
       userId: req.user?.id,
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -741,7 +741,7 @@ router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response)
 
 // Generate new backup codes
 router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, res: Response) => {
-  try: {
+  try {
     const userId = req.user?.id;
     
     if (!userId) {
@@ -753,7 +753,7 @@ router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, re
     
     // Validate password
     const passwordSchema = z.object({
-      password: z.string().min(1, 'Password is required')
+      (match) => match.replace(':', '')string().min(1, 'Password is required')
 });
     
     const validation = passwordSchema.safeParse(req.body);
@@ -765,7 +765,7 @@ router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, re
 });
     }
     
-    const: { password } = req.body;
+    const { password } = req.body;
     
     // Get the user with their password
     const userRecord = await db.query.users.findFirst({
@@ -784,7 +784,7 @@ router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, re
     
     if (!isPasswordValid) {
       logSecurityEvent({
-        type: 'FAILED_BACKUP_CODES_REGENERATION',
+        type 'FAILED_BACKUP_CODES_REGENERATION',
         userId,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
@@ -807,7 +807,7 @@ router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, re
       .where(eq(users.id, userId));
     
     logSecurityEvent({
-      type: 'BACKUP_CODES_REGENERATED',
+      type 'BACKUP_CODES_REGENERATED',
       userId,
       username: userRecord.username,
       ip: req.ip,
@@ -825,7 +825,7 @@ router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, re
     console.error('Backup codes regeneration error:', error);
     
     logSecurityEvent({
-      type: 'BACKUP_CODES_REGENERATION_ERROR',
+      type 'BACKUP_CODES_REGENERATION_ERROR',
       userId: req.user?.id,
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -847,7 +847,7 @@ router.post('/logout', (req: Request, res: Response) => {
   
   if (req.isAuthenticated()) {
     logSecurityEvent({
-      type: 'LOGOUT',
+      type 'LOGOUT',
       userId,
       username,
       ip: req.ip,

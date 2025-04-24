@@ -4,7 +4,7 @@
  * This module defines common types for the security system.
  */
 
-import: { Session } from: 'express-session';
+import { Session } from 'express-session';
 
 /**
  * Security event types for logging
@@ -100,7 +100,7 @@ export enum SecurityLogLevel: {
  * Interface for security events
  */;
 export interface SecurityEvent: {
-  type: SecurityEventType;,
+  type SecurityEventType;,
   timestamp: Date;,
   level: SecurityLogLevel;,
   source: string;,

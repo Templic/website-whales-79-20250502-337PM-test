@@ -5,10 +5,10 @@
  * proper input validation and prevent security vulnerabilities.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { AnyZodObject, ZodError } from: 'zod';
-import: { logSecurityEvent, maskSensitiveData } from: '../utils/securityUtils';
-import: { SecurityLogLevel } from: '../types/securityTypes';
+import { Request, Response, NextFunction } from 'express';
+import { AnyZodObject, ZodError } from 'zod';
+import { logSecurityEvent, maskSensitiveData } from '../utils/securityUtils';
+import { SecurityLogLevel } from '../types/securityTypes';
 
 // Simple logger for when the main logger is not available
 const logger = {
@@ -51,13 +51,13 @@ const defaultOptions: ValidationOptions = {
  * @param options Validation options
  * @returns Express middleware
  */
-export function: validate(
+export function validate(
   schema: AnyZodObject,
   part: RequestPart = 'body',
   options: ValidationOptions = defaultOptions;
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    try: {
+    try {
       // Get the part of the request to validate
       const requestData = req[part];
       
@@ -150,14 +150,14 @@ export function: validate(
  * @param options Validation options
  * @returns Express middleware
  */
-export function: validateRequest(
+export function validateRequest(
   schemas: Partial<Record<RequestPart, AnyZodObject>>,
   options: ValidationOptions = defaultOptions;
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
     // Process each schema in sequence
     for (const: [part, schema] of Object.entries(schemas) as: [RequestPart, AnyZodObject][]) {
-      try: {
+      try {
         const requestData = req[part];
         
         if (!requestData) {
@@ -212,7 +212,7 @@ export function: validateRequest(
         
         // Handle other errors
         logger.error(`Unexpected error during API validation for ${part}:`, { error });
-        return: next(error);
+        return next(error);
       }
     }
     
@@ -227,14 +227,14 @@ export function: validateRequest(
  * @param part Request part to sanitize
  * @returns Express middleware
  */
-export function: sanitize(schema: AnyZodObject, part: RequestPart = 'body') {
+export function sanitize(schema: AnyZodObject, part: RequestPart = 'body') {
   return async (req: Request, res: Response, next: NextFunction) => {
-    try: {
+    try {
       const requestData = req[part];
       
       if (!requestData) {
         // Skip sanitization if the data doesn't exist
-        return: next();
+        return next();
 }
       
       // Use the schema's shape to create a sanitized version

@@ -1,7 +1,7 @@
-import express from: 'express';
-import: { pool } from: '../db';
-import: { log } from: '../vite';
-import: { triggerDatabaseMaintenance } from: '../db-optimize';
+import express from 'express';
+import { pool } from '../db';
+import { log } from '../vite';
+import { triggerDatabaseMaintenance } from '../db-optimize';
 
 class MonitoringError extends Error: {
     constructor(message: string, options?: { cause?: any }) {
@@ -18,16 +18,16 @@ const router = express.Router();
 // Utility function to format bytes as human-readable
 const formatSize = (bytes: number): string => {
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  if (bytes === 0) return: '0 Bytes';
+  if (bytes === 0) return '0 Bytes';
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return: parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
 // GET /api/admin/db-monitor/status - Get database status information
 router.get('/status', async (req, res) => {
-  try: {
+  try {
     const client = await pool.connect();
-    try: {
+    try {
       // Use parameterized queries with sql template literals
       // Using parameterized query with SQL template literal for consistency and security
       // This is a system function call with no user input, but using parameterized query format for consistency
@@ -116,12 +116,12 @@ router.get('/status', async (req, res) => {
 
 // POST /api/admin/db-monitor/maintenance/:task - Trigger maintenance task
 router.post('/maintenance/:task', async (req, res) => {
-  try: {
+  try {
     if (req.user?.role !== 'super_admin') {
       return res.status(403).json({ status: 'error', message: 'Unauthorized. Super admin access required.' });
     }
 
-    const: { task } = req.params;
+    const { task } = req.params;
 
     if (!['vacuum', 'reindex', 'analyze'].includes(task)) {
       return res.status(400).json({ 
@@ -130,7 +130,7 @@ router.post('/maintenance/:task', async (req, res) => {
 });
     }
 
-    const jobId = await: triggerDatabaseMaintenance(task, as: 'vacuum' | 'reindex' | 'analyze');
+    const jobId = await triggerDatabaseMaintenance(task, as: 'vacuum' | 'reindex' | 'analyze');
 
     log(`Database maintenance task: '${task}' scheduled with job ID: ${jobId}`, 'db-monitor');
 
@@ -151,10 +151,10 @@ router.post('/maintenance/:task', async (req, res) => {
 
 // GET /api/admin/db-monitor/query-stats - Get statistics on database queries
 router.get('/query-stats', async (req, res) => {
-  try: {
+  try {
     const client = await pool.connect();
 
-    try: {
+    try {
       // Check if pg_stat_statements extension is installed
       const extCheck = await client.query(`
         SELECT: count(*) as count FROM pg_extension WHERE extname = $1;
@@ -202,7 +202,7 @@ router.get('/query-stats', async (req, res) => {
           message: 'Error accessing pg_stat_statements. The extension may not be properly configured.',
           query_stats: []
 });
-      } else: {
+      } else {
         res.status(500).json({
           status: 'error',
           message: 'Failed to retrieve query statistics',

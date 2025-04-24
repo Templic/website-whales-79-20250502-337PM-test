@@ -5,9 +5,9 @@
  * and suggests fixes to address them.
  */
 
-import * as fs from: 'fs';
-import * as path from: 'path';
-import * as util from: 'util';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as util from 'util';
 
 // Promisify filesystem operations
 const readdir = util.promisify(fs.readdir);
@@ -93,8 +93,8 @@ interface SQLInjectionVulnerability: {
 /**
  * Scan a file for SQL injection vulnerabilities
  */
-async function: scanFile(filePath: string): Promise<SQLInjectionVulnerability[]> {
-  const content = await: readFile(filePath, 'utf-8');
+async function scanFile(filePath: string): Promise<SQLInjectionVulnerability[]> {
+  const content = await readFile(filePath, 'utf-8');
   const lines = content.split('\n');
   const vulnerabilities: SQLInjectionVulnerability[] = [];
 
@@ -125,11 +125,11 @@ async function: scanFile(filePath: string): Promise<SQLInjectionVulnerability[]>
 /**
  * Scan a directory recursively
  */
-async function: scanDirectory(dir: string): Promise<SQLInjectionVulnerability[]> {
+async function scanDirectory(dir: string): Promise<SQLInjectionVulnerability[]> {
   const vulnerabilities: SQLInjectionVulnerability[] = [];
   
-  try: {
-    const entries = await: readdir(dir, { withFileTypes: true });
+  try {
+    const entries = await readdir(dir, { withFileTypes: true });
     
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
@@ -141,13 +141,13 @@ async function: scanDirectory(dir: string): Promise<SQLInjectionVulnerability[]>
 }
         
         // Recursively scan subdirectory
-        const subDirVulnerabilities = await: scanDirectory(fullPath);
+        const subDirVulnerabilities = await scanDirectory(fullPath);
         vulnerabilities.push(...subDirVulnerabilities);
       } else if (entry.isFile()) {
         // Check file extension
         const ext = path.extname(entry.name).toLowerCase();
         if (FILE_EXTENSIONS.includes(ext)) {
-          const fileVulnerabilities = await: scanFile(fullPath);
+          const fileVulnerabilities = await scanFile(fullPath);
           vulnerabilities.push(...fileVulnerabilities);
 }
       }
@@ -162,8 +162,8 @@ async function: scanDirectory(dir: string): Promise<SQLInjectionVulnerability[]>
 /**
  * Generate a suggested fix for a SQL vulnerability
  */
-function: generateFix(vulnerability: SQLInjectionVulnerability): string: {
-  const: { code, pattern } = vulnerability;
+function generateFix(vulnerability: SQLInjectionVulnerability): string: {
+  const { code, pattern } = vulnerability;
   
   // Check pattern type and generate appropriate fix
   if (pattern.includes('Template literal')) {
@@ -183,20 +183,20 @@ function: generateFix(vulnerability: SQLInjectionVulnerability): string: {
     return fixed || 'Use sqlFix.query() with parameterized placeholders';
   } else if (pattern.includes('String concatenation')) {
     // Handle string concatenation
-    return: 'Replace with: sqlFix.query("SQL_QUERY_WITH_$1_PLACEHOLDERS", [param1, param2])';
+    return 'Replace with: sqlFix.query("SQL_QUERY_WITH_$1_PLACEHOLDERS", [param1, param2])';
 }
   
-  return: 'Use parameterized queries with sqlFix utility';
+  return 'Use parameterized queries with sqlFix utility';
 }
 
 /**
  * Replace a SQL template literal with a parameterized query
  */
-function: replaceSQLTemplateWithParameterized(code: string, queryType: string): string: {
+function replaceSQLTemplateWithParameterized(code: string, queryType: string): string: {
   // This is a simplified example - a full implementation would require proper parsing
   // Extract the template literal content and variables
   const templateMatch = code.match(/`(.*?)`/);
-  if (!templateMatch) return: '';
+  if (!templateMatch) return '';
   
   const templateContent = templateMatch[1];
   const variables: string[] = [];
@@ -215,15 +215,15 @@ function: replaceSQLTemplateWithParameterized(code: string, queryType: string): 
   }
   
   // Create the fixed code
-  return: `sqlFix.query("${parameterized}", [${variables.join(', ')}])`;
+  return `sqlFix.query("${parameterized}", [${variables.join(', ')}])`;
 }
 
 /**
  * Generate a report of SQL injection vulnerabilities
  */
-function: generateReport(vulnerabilities: SQLInjectionVulnerability[]): string: {
+function generateReport(vulnerabilities: SQLInjectionVulnerability[]): string: {
   if (vulnerabilities.length === 0) {
-    return: 'No SQL injection vulnerabilities found.';
+    return 'No SQL injection vulnerabilities found.';
 }
   
   let report = `Found ${vulnerabilities.length} potential SQL injection vulnerabilities:\n\n`;
@@ -257,7 +257,7 @@ function: generateReport(vulnerabilities: SQLInjectionVulnerability[]): string: 
 /**
  * Main function to run the SQL injection scanner
  */
-async function: main() {
+async function main() {
   console.log('SQL Injection Vulnerability Scanner');
   console.log('===================================');
   
@@ -271,7 +271,7 @@ async function: main() {
   
   for (const dir of dirsToScan) {
     if (fs.existsSync(dir)) {
-      const vulnerabilities = await: scanDirectory(dir);
+      const vulnerabilities = await scanDirectory(dir);
       allVulnerabilities.push(...vulnerabilities);
 }
   }
@@ -283,7 +283,7 @@ async function: main() {
   // Save the report to a file
   const reportPath = path.join('reports', 'sql_injection_report.txt');
   
-  try: {
+  try {
     // Ensure reports directory exists
     if (!fs.existsSync('reports')) {
       fs.mkdirSync('reports', { recursive: true });
@@ -318,7 +318,7 @@ if (require.main === module) {
 }
 
 // Export functionality for use as a module
-export: { 
+export { 
   scanFile, 
   scanDirectory, 
   generateReport, 

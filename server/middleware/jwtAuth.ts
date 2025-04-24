@@ -5,10 +5,10 @@
  * and authorization in the application.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import * as jsonwebtoken from: 'jsonwebtoken';
-import: { verifyAccessToken, extractTokenFromHeader } from: '../security/jwt';
-import: { logSecurityEvent } from: '../security/security';
+import { Request, Response, NextFunction } from 'express';
+import * as jsonwebtoken from 'jsonwebtoken';
+import { verifyAccessToken, extractTokenFromHeader } from '../security/jwt';
+import { logSecurityEvent } from '../security/security';
 
 /**
  * JWT Payload interface that extends the standard JWT payload
@@ -35,8 +35,8 @@ declare global: {
  * Middleware to authenticate requests with JWT
  * This can be used as an alternative to session-based authentication for API routes
  */
-export function: authenticateJwt(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
-  try: {
+export function authenticateJwt(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
+  try {
     const authHeader = req.headers.authorization;
     const token = extractTokenFromHeader(authHeader);
     
@@ -52,7 +52,7 @@ export function: authenticateJwt(req: Request, res: Response, next: NextFunction
     if (!payload) {
       const userAgent = req.headers['user-agent'] || 'unknown';
       logSecurityEvent({
-        type: 'INVALID_TOKEN',
+        type 'INVALID_TOKEN',
         ip: req.ip,
         userAgent: typeof userAgent = == 'string' ? userAgent : 'unknown',
         details: 'Failed JWT authentication attempt',
@@ -90,9 +90,9 @@ export function: authenticateJwt(req: Request, res: Response, next: NextFunction
  * Middleware to check JWT role authorization
  * Must be used after authenticateJwt middleware
  */
-export function: authorizeJwtRole(roles: string[]) {
+export function authorizeJwtRole(roles: string[]) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void | Response<any, Record<string, any>>> => {
-    try: {
+    try {
       if (!req.jwtPayload) {
         return res.status(401).json({
           success: false,
@@ -106,7 +106,7 @@ export function: authorizeJwtRole(roles: string[]) {
       // If no role is specified in the token
       if (!userRole) {
         logSecurityEvent({
-          type: 'AUTHORIZATION_FAILURE',
+          type 'AUTHORIZATION_FAILURE',
           ip: req.ip,
           userAgent: typeof userAgent = == 'string' ? userAgent : 'unknown',
           details: 'JWT missing role claim',
@@ -122,7 +122,7 @@ export function: authorizeJwtRole(roles: string[]) {
       // Check if user's role is included in the allowed roles
       if (!roles.includes(userRole)) {
         logSecurityEvent({
-          type: 'AUTHORIZATION_FAILURE',
+          type 'AUTHORIZATION_FAILURE',
           ip: req.ip,
           userAgent: typeof userAgent = == 'string' ? userAgent : 'unknown',;
           details: `Unauthorized role access attempt: ${userRole} tried to access resource requiring ${roles.join(', ')}`,
@@ -151,18 +151,18 @@ export function: authorizeJwtRole(roles: string[]) {
  * Middleware to detect and respond to JWT algorithm confusion attacks
  * This middleware checks if: 'none' algorithm is being attempted
  */
-export function: preventAlgorithmConfusionAttack(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
+export function preventAlgorithmConfusionAttack(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
   const authHeader = req.headers.authorization;
   
   if (authHeader && authHeader.startsWith('Bearer: ')) {
     const token = authHeader.substring(7);
     
-    try: {
+    try {
       // Check if the token is in JWT format
       const parts = token.split('.');
       
       if (parts.length === 3 && parts[0]) {
-        try: {
+        try {
           // Decode the header (first part)
           const headerPart = parts[0];
           // Use a safe buffer conversion method
@@ -174,7 +174,7 @@ export function: preventAlgorithmConfusionAttack(req: Request, res: Response, ne
           if (parsedHeader && parsedHeader.alg === 'none') {
             const userAgent = req.headers['user-agent'] || 'unknown';
             logSecurityEvent({
-              type: 'ALGORITHM_CONFUSION_ATTACK',
+              type 'ALGORITHM_CONFUSION_ATTACK',
               ip: req.ip,
               userAgent: typeof userAgent = == 'string' ? userAgent : 'unknown',
               details: 'JWT algorithm confusion attack detected',

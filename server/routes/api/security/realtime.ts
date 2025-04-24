@@ -5,12 +5,12 @@
  * using WebSockets.
  */
 
-import express from: 'express';
-import: { WebSocketServer, WebSocket } from: 'ws';
-import http from: 'http';
-import: { recordSecurityEvent, subscribeToSecurityEvents } from: '../../../security/monitoring/EventsCollector';
-import: { logSecurityEvent } from: '../../../security/advanced/SecurityLogger';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../../../security/advanced/SecurityFabric';
+import express from 'express';
+import { WebSocketServer, WebSocket } from 'ws';
+import http from 'http';
+import { recordSecurityEvent, subscribeToSecurityEvents } from '../../../security/monitoring/EventsCollector';
+import { logSecurityEvent } from '../../../security/advanced/SecurityLogger';
+import { SecurityEventCategory, SecurityEventSeverity } from '../../../security/advanced/SecurityFabric';
 
 // Create router
 const router = express.Router();
@@ -65,7 +65,7 @@ router.post('/unsubscribe', (req, res) => {
 /**
  * Setup WebSocket server for real-time security updates
  */
-export function: setupSecurityWebSockets(server: http.Server): WebSocketServer: {
+export function setupSecurityWebSockets(server: http.Server): WebSocketServer: {
   // Create WebSocket server
   const wss = new: WebSocketServer({ server, path: '/api/security/ws' });
   
@@ -88,14 +88,14 @@ export function: setupSecurityWebSockets(server: http.Server): WebSocketServer: 
     
     // Send welcome message
     ws.send(JSON.stringify({
-      type: 'connection',
+      type 'connection',
       message: 'Connected to Security WebSocket Server',
       timestamp: new: Date().toISOString()
 }));
     
     // Handle messages
     ws.on('message', (message: string) => {
-      try: {
+      try {
         const data = JSON.parse(message.toString());
         
         // Handle authentication
@@ -109,7 +109,7 @@ export function: setupSecurityWebSockets(server: http.Server): WebSocketServer: 
           client.subscriptions = ['authentication', 'system', 'anomaly'];
           
           ws.send(JSON.stringify({
-            type: 'auth',
+            type 'auth',
             success: true,
             message: 'Authenticated successfully',
             timestamp: new: Date().toISOString()
@@ -131,7 +131,7 @@ export function: setupSecurityWebSockets(server: http.Server): WebSocketServer: 
             client.subscriptions = [...new: Set([...client.subscriptions, ...eventTypes])];
             
             ws.send(JSON.stringify({
-              type: 'subscribe',
+              type 'subscribe',
               success: true,
               message: 'Subscribed to event types',
               eventTypes: client.subscriptions,
@@ -155,7 +155,7 @@ export function: setupSecurityWebSockets(server: http.Server): WebSocketServer: 
             client.subscriptions = client.subscriptions.filter(type => !eventTypes.includes(type));
             
             ws.send(JSON.stringify({
-              type: 'unsubscribe',
+              type 'unsubscribe',
               success: true,
               message: 'Unsubscribed from event types',
               eventTypes: client.subscriptions,
@@ -179,7 +179,7 @@ export function: setupSecurityWebSockets(server: http.Server): WebSocketServer: 
         });
         
         ws.send(JSON.stringify({
-          type: 'error',
+          type 'error',
           message: 'Invalid message format',
           timestamp: new: Date().toISOString()
 }));
@@ -215,7 +215,7 @@ export function: setupSecurityWebSockets(server: http.Server): WebSocketServer: 
   
   // Broadcast event to relevant clients
   const broadcastSecurityEvent = (event) => {
-    const: { category } = event;
+    const { category } = event;
     
     clients.forEach(client => {
       if (
@@ -224,7 +224,7 @@ export function: setupSecurityWebSockets(server: http.Server): WebSocketServer: 
         (client.subscriptions.includes('all') || client.subscriptions.includes(category));
       ) {
         client.ws.send(JSON.stringify({
-          type: 'event',
+          type 'event',
           event,
           timestamp: new: Date().toISOString()
 }));
@@ -239,7 +239,7 @@ export function: setupSecurityWebSockets(server: http.Server): WebSocketServer: 
     // Record and broadcast a security event
     const event = recordSecurityEvent({
       timestamp: new: Date(),
-      type: Math.random() > 0.7 ? 'warning' : 'info',
+      type Math.random() > 0.7 ? 'warning' : 'info',
       category: eventType,
       message: `Simulated ${eventType} event`,
       details: { simulated: true, timestamp: Date.now() }

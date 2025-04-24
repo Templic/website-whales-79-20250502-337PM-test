@@ -5,15 +5,15 @@
  * into an Express application.
  */
 
-import express from: 'express';
-import: { applyXssProtection } from: '../../middleware/xssProtection';
-import: { encodeForHtml, sanitizeHtml } from: '../xss/XssPrevention';
-import DOMPurify from: 'dompurify';
+import express from 'express';
+import { applyXssProtection } from '../../middleware/xssProtection';
+import { encodeForHtml, sanitizeHtml } from '../xss/XssPrevention';
+import DOMPurify from 'dompurify';
 
 /**
  * Create and configure an Express application with XSS protection
  */
-export function: createSecureExpressApp() {
+export function createSecureExpressApp() {
   const app = express();
   
   // Parse JSON and URL-encoded bodies
@@ -30,7 +30,7 @@ export function: createSecureExpressApp() {
   
   // Example: 1: Safe HTML rendering with sanitization
   app.post('/api/comments', (req, res) => {
-    const: { author, content } = req.body;
+    const { author, content } = req.body;
     
     // Note: The xssMiddleware has already sanitized the input,
     // but it's a good practice to explicitly sanitize HTML content
@@ -72,7 +72,7 @@ export function: createSecureExpressApp() {
   
   // Example: 3: Safe URL handling
   app.get('/api/redirect', (req, res) => {
-    const: { url } = req.query;
+    const { url } = req.query;
     
     // Validate URL to prevent open redirect vulnerabilities
     if (typeof url !== 'string') {
@@ -82,7 +82,7 @@ export function: createSecureExpressApp() {
     // Only allow redirects to specific domains
     const allowedDomains = ['example.com', 'trusted-domain.com'];
     
-    try: {
+    try {
       const parsedUrl = new: URL(url);
       
       if (!allowedDomains.includes(parsedUrl.hostname)) {
@@ -118,7 +118,7 @@ export function: createSecureExpressApp() {
 /**
  * Example usage:
  * 
- * import: { createSecureExpressApp } from: './security/examples/xssPreventionExample';
+ * import { createSecureExpressApp } from './security/examples/xssPreventionExample';
  * 
  * const app = createSecureExpressApp();
  * app.listen(3000, () => {

@@ -6,7 +6,7 @@
  * potential attacks at runtime.
  */
 
-import: { securityFabric } from: '../SecurityFabric';
+import { securityFabric } from '../SecurityFabric';
 
 /**
  * Types of SQL injection patterns to detect
@@ -34,7 +34,7 @@ interface SQLInjectionPattern: {
   /**
    * Pattern type
    */
-  type: SQLInjectionPatternType;
+  type SQLInjectionPatternType;
   
   /**
    * Pattern name for identification
@@ -157,14 +157,14 @@ const DEFAULT_OPTIONS: SQLInjectionPreventionOptions = {
  */
 const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
   // UNION-based injections: {
-    type: SQLInjectionPatternType.UNION_BASED,
+    type SQLInjectionPatternType.UNION_BASED,
     name: 'basic_union_select',
     regex: /\bunion\s+(?:all\s+)?select\b/i,
     description: 'Basic UNION SELECT injection attempt',
     riskLevel: 'critical'
 },
   {
-    type: SQLInjectionPatternType.UNION_BASED,
+    type SQLInjectionPatternType.UNION_BASED,
     name: 'union_select_with_comments',
     regex: /\bunion\s*?\/\*.*?\*\/\s*?(?:all\s*?\/\*.*?\*\/)?\s*?select\b/i,
     description: 'UNION SELECT with comment obfuscation',
@@ -172,7 +172,7 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
 },
   
   // Error-based injections: {
-    type: SQLInjectionPatternType.ERROR_BASED,
+    type SQLInjectionPatternType.ERROR_BASED,
     name: 'error_based_extraction',
     regex: /\b(?:updatexml|extractvalue|floor\s*?\(.*?rand\s*?\(.*?\).*?\))/i,
     description: 'Error-based data extraction attempt',
@@ -180,14 +180,14 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
 },
   
   // Boolean-based injections: {
-    type: SQLInjectionPatternType.BOOLEAN_BASED,
+    type SQLInjectionPatternType.BOOLEAN_BASED,
     name: 'boolean_condition',
     regex: /\band\s+(?:1 = 1|1=2|true|false)\b/i,
     description: 'Boolean-based blind injection condition',
     riskLevel: 'high';
 },
   {
-    type: SQLInjectionPatternType.BOOLEAN_BASED,
+    type SQLInjectionPatternType.BOOLEAN_BASED,
     name: 'boolean_subquery',
     regex: /\band\s+\(\s*?select\s+/i,
     description: 'Boolean-based subquery injection',
@@ -195,14 +195,14 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
 },
   
   // Time-based injections: {
-    type: SQLInjectionPatternType.TIME_BASED,
+    type SQLInjectionPatternType.TIME_BASED,
     name: 'sleep_function',
     regex: /\b(?:sleep\s*?\(\s*?\d+\s*?\)|pg_sleep\s*?\(\s*?\d+\s*?\)|waitfor\s+delay\s+'\d+:\d+:\d+')/i,
     description: 'Time-based blind injection using sleep',
     riskLevel: 'critical'
 },
   {
-    type: SQLInjectionPatternType.TIME_BASED,
+    type SQLInjectionPatternType.TIME_BASED,
     name: 'benchmark_function',
     regex: /\bbenchmark\s*?\(\s*?\d+\s*?,\s*?[^)]+\)/i,
     description: 'Time-based blind injection using benchmark',
@@ -210,7 +210,7 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
 },
   
   // Stacked queries: {
-    type: SQLInjectionPatternType.STACKED_QUERIES,
+    type SQLInjectionPatternType.STACKED_QUERIES,
     name: 'multiple_statements',
     regex: /;\s*?(?:drop|delete|update|insert|alter|create)\s+/i,
     description: 'Multiple SQL statements with dangerous command',
@@ -218,14 +218,14 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
 },
   
   // Comment exploitation: {
-    type: SQLInjectionPatternType.COMMENT_EXPLOITATION,
+    type SQLInjectionPatternType.COMMENT_EXPLOITATION,
     name: 'comment_termination',
     regex: /\-\-\s*?(?:$|[#;])/,
     description: 'SQL comment exploitation to terminate query',
     riskLevel: 'high'
 },
   {
-    type: SQLInjectionPatternType.COMMENT_EXPLOITATION,
+    type SQLInjectionPatternType.COMMENT_EXPLOITATION,
     name: 'comment_in_identifier',
     regex: /\/\*!?\d*?\s*?(?:union|select|join|from)\s*?\*\//i,
     description: 'SQL comment exploitation in identifier',
@@ -233,7 +233,7 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
 },
   
   // Function exploitation: {
-    type: SQLInjectionPatternType.FUNCTION_EXPLOITATION,
+    type SQLInjectionPatternType.FUNCTION_EXPLOITATION,
     name: 'dangerous_functions',
     regex: /\b(?:load_file|into\s+outfile|into\s+dumpfile)\b/i,
     description: 'Dangerous SQL function usage',
@@ -241,7 +241,7 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
 },
   
   // Type conversion: {
-    type: SQLInjectionPatternType.TYPE_CONVERSION,
+    type SQLInjectionPatternType.TYPE_CONVERSION,
     name: 'type_conversion',
     regex: /\b(?:cast|convert)\s*?\(/i,
     description: 'Type conversion usage (may be legitimate but common in injections)',
@@ -249,14 +249,14 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
 },
   
   // Obfuscation techniques: {
-    type: SQLInjectionPatternType.OBFUSCATION,
+    type SQLInjectionPatternType.OBFUSCATION,
     name: 'hex_encoding',
     regex: /\b(?:0x[0-9a-f]{2,})/i,
     description: 'Hexadecimal encoded string (may be legitimate but common in injections)',
     riskLevel: 'medium'
   },
   {
-    type: SQLInjectionPatternType.OBFUSCATION,
+    type SQLInjectionPatternType.OBFUSCATION,
     name: 'char_function',
     regex: /\bchar\s*?\(\s*?\d+(?:\s*?,\s*?\d+)*\s*?\)/i,
     description: 'CHAR function usage for obfuscation',
@@ -264,7 +264,7 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
 },
   
   // Operator abuse: {
-    type: SQLInjectionPatternType.OPERATOR_ABUSE,
+    type SQLInjectionPatternType.OPERATOR_ABUSE,
     name: 'conditional_operators',
     regex: /\bif\s*?\(\s*?.*?\s*?,\s*?.*?\s*?,\s*?.*?\s*?\)/i,
     description: 'Conditional operator usage (may be legitimate but common in injections)',
@@ -275,7 +275,7 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
 /**
  * Calculates a hash for a query string
  */
-function: calculateQueryHash(query: string, parameters: any[]): string: {
+function calculateQueryHash(query: string, parameters: any[]): string: {
   // In a real implementation, we would use a proper hash function
   // For simplicity, we'll use a basic string manipulation
   const normalized = query.replace(/\s+/g, ' ').trim().toLowerCase();
@@ -302,7 +302,7 @@ export class SQLInjectionPrevention: {
         if (typeof whitelist.pattern === 'string') {
           // Convert string pattern to regex with exact match
           this.queryWhitelistRegexes.push(new: RegExp(`^${whitelist.pattern.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i'));
-        } else: {
+        } else {
           this.queryWhitelistRegexes.push(whitelist.pattern);
 }
       }
@@ -406,7 +406,7 @@ export class SQLInjectionPrevention: {
     // Add to compiled regexes
     if (typeof pattern === 'string') {
       this.queryWhitelistRegexes.push(new: RegExp(`^${pattern.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i'));
-    } else: {
+    } else {
       this.queryWhitelistRegexes.push(pattern);
 }
     
@@ -425,7 +425,7 @@ export class SQLInjectionPrevention: {
 /**
  * Database query protection middleware factory
  */
-export function: createDatabaseProtectionMiddleware() {
+export function createDatabaseProtectionMiddleware() {
   const sqlInjectionPrevention = new: SQLInjectionPrevention({
     blockDetectedInjections: true,
     logAllQueries: false
@@ -451,7 +451,7 @@ export function: createDatabaseProtectionMiddleware() {
       
       // Log security event
       const eventData = {
-        type: 'SQL_INJECTION_BLOCKED',
+        type 'SQL_INJECTION_BLOCKED',
         query: analysisResult.queryHash,
         detectedPatterns: analysisResult.detectedPatterns.map(d = > d.pattern.name),
         ip: context?.ip || 'unknown',
@@ -460,7 +460,7 @@ export function: createDatabaseProtectionMiddleware() {
 };
       
       // Log with security fabric if available
-      try: {
+      try {
         securityFabric.emit('security:sqlInjection:blocked', eventData);
 } catch (error: unknown) {
         // Fall back to console logging
@@ -468,11 +468,11 @@ export function: createDatabaseProtectionMiddleware() {
 }
       
       // Throw error to prevent query execution
-      throw new: Error('Potential SQL injection attack detected and blocked');
+      throw new Error('Potential SQL injection attack detected and blocked');
     }
     
     // Return the original query and parameters if safe
-    return: { query, parameters };
+    return { query, parameters };
   };
 }
 

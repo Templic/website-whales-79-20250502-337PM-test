@@ -5,11 +5,11 @@
  * including security metrics, configuration, and security scan endpoints.
  */
 
-import express from: 'express';
-import: { getLatestSecurityMetrics } from: '../../../security/monitoring/MetricsCollector';
-import: { getSecurityEventsHistory } from: '../../../security/monitoring/EventsCollector';
-import: { logSecurityEvent } from: '../../../security/advanced/SecurityLogger';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../../../security/advanced/SecurityFabric';
+import express from 'express';
+import { getLatestSecurityMetrics } from '../../../security/monitoring/MetricsCollector';
+import { getSecurityEventsHistory } from '../../../security/monitoring/EventsCollector';
+import { logSecurityEvent } from '../../../security/advanced/SecurityLogger';
+import { SecurityEventCategory, SecurityEventSeverity } from '../../../security/advanced/SecurityFabric';
 
 // Create router
 const router = express.Router();
@@ -19,8 +19,8 @@ const router = express.Router();
  * GET /api/security/dashboard/metrics
  */
 router.get('/metrics', async (req, res) => {
-  try: {
-    const metrics = await: getLatestSecurityMetrics();
+  try {
+    const metrics = await getLatestSecurityMetrics();
     res.json(metrics);
 } catch (error: unknown) {
     logSecurityEvent({
@@ -39,14 +39,14 @@ router.get('/metrics', async (req, res) => {
  * GET /api/security/dashboard/events
  */
 router.get('/events', async (req, res) => {
-  try: {
+  try {
     // Parse query parameters
     const timeRange = req.query.timeRange as string || '24h';
     const category = req.query.category as string || 'all';
     const type = req.query.type as string || 'all';
     const limit = parseInt(req.query.limit as string || '100');
     
-    const events = await: getSecurityEventsHistory(timeRange, category, type, limit);
+    const events = await getSecurityEventsHistory(timeRange, category, type, limit);
     res.json(events);
 } catch (error: unknown) {
     logSecurityEvent({
@@ -65,7 +65,7 @@ router.get('/events', async (req, res) => {
  * GET /api/security/dashboard/config
  */
 router.get('/config', (req, res) => {
-  try: {
+  try {
     // In a real application, this would fetch the actual security configuration
     const securityConfig = {
       mfaRequired: true,
@@ -111,7 +111,7 @@ router.get('/config', (req, res) => {
  * POST /api/security/dashboard/config
  */
 router.post('/config', (req, res) => {
-  try: {
+  try {
     const newConfig = req.body;
     
     // In a real application, this would validate and update the security configuration: logSecurityEvent({
@@ -139,7 +139,7 @@ router.post('/config', (req, res) => {
  * POST /api/security/dashboard/scan
  */
 router.post('/scan', async (req, res) => {
-  try: {
+  try {
     // In a real application, this would initiate a security scan
     
     // Log the scan initiation: logSecurityEvent({
@@ -171,9 +171,9 @@ router.post('/scan', async (req, res) => {
         threats: 0,
         warnings: 3,
         details: [
-          { type: 'warning', message: 'Session timeout is less than recommended: 60 minutes' },
-          { type: 'warning', message: 'Some API endpoints lack rate limiting' },
-          { type: 'warning', message: 'CORS configuration allows multiple origins' }
+          { type 'warning', message: 'Session timeout is less than recommended: 60 minutes' },
+          { type 'warning', message: 'Some API endpoints lack rate limiting' },
+          { type 'warning', message: 'CORS configuration allows multiple origins' }
         ]
       }
     });

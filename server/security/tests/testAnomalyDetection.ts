@@ -5,14 +5,14 @@
  * It simulates various types of requests and attacks to verify the detection capabilities.
  */
 
-import * as express from: 'express';
-import: { detectAnomaly, createAnomalyDetectionMiddleware } from: '../advanced/ml/AnomalyDetection';
-import: { securityBlockchain } from: '../advanced/blockchain/ImmutableSecurityLogs';
+import * as express from 'express';
+import { detectAnomaly, createAnomalyDetectionMiddleware } from '../advanced/ml/AnomalyDetection';
+import { securityBlockchain } from '../advanced/blockchain/ImmutableSecurityLogs';
 
 /**
  * Simulates a normal API request
  */
-async function: simulateNormalRequest() {
+async function simulateNormalRequest() {
   const req = {
     ip: '192.168.1.100',
     path: '/api/products',
@@ -31,7 +31,7 @@ async function: simulateNormalRequest() {
   } as any;
   
   console.log('\n--- Testing normal API request ---');
-  const result = await: detectAnomaly(req);
+  const result = await detectAnomaly(req);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -43,7 +43,7 @@ async function: simulateNormalRequest() {
 /**
  * Simulates a SQL injection attack
  */
-async function: simulateSqlInjectionAttack() {
+async function simulateSqlInjectionAttack() {
   const req = {
     ip: '192.168.1.101',
     path: '/api/users',
@@ -62,7 +62,7 @@ async function: simulateSqlInjectionAttack() {
   } as any;
   
   console.log('\n--- Testing SQL injection attack ---');
-  const result = await: detectAnomaly(req);
+  const result = await detectAnomaly(req);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -74,7 +74,7 @@ async function: simulateSqlInjectionAttack() {
 /**
  * Simulates a rate limit attack (rapid requests from same IP)
  */
-async function: simulateRateLimitAttack() {
+async function simulateRateLimitAttack() {
   const ip = '192.168.1.102';
   const results = [];
   
@@ -98,7 +98,7 @@ async function: simulateRateLimitAttack() {
       }
     } as any;
     
-    const result = await: detectAnomaly(req);
+    const result = await detectAnomaly(req);
     results.push(result);
     
     // Small delay to simulate realistic timing
@@ -118,7 +118,7 @@ async function: simulateRateLimitAttack() {
 /**
  * Simulates a path traversal attack
  */
-async function: simulatePathTraversalAttack() {
+async function simulatePathTraversalAttack() {
   const req = {
     ip: '192.168.1.103',
     path: '/api/files',
@@ -137,7 +137,7 @@ async function: simulatePathTraversalAttack() {
   } as any;
   
   console.log('\n--- Testing path traversal attack ---');
-  const result = await: detectAnomaly(req);
+  const result = await detectAnomaly(req);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -149,7 +149,7 @@ async function: simulatePathTraversalAttack() {
 /**
  * Simulates an XSS attack
  */
-async function: simulateXssAttack() {
+async function simulateXssAttack() {
   const req = {
     ip: '192.168.1.104',
     path: '/api/comments',
@@ -170,7 +170,7 @@ async function: simulateXssAttack() {
   } as any;
   
   console.log('\n--- Testing XSS attack ---');
-  const result = await: detectAnomaly(req);
+  const result = await detectAnomaly(req);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -182,7 +182,7 @@ async function: simulateXssAttack() {
 /**
  * Simulates data exfiltration attempt
  */
-async function: simulateDataExfiltrationAttempt() {
+async function simulateDataExfiltrationAttempt() {
   const req = {
     ip: '192.168.1.105',
     path: '/api/query',
@@ -203,7 +203,7 @@ async function: simulateDataExfiltrationAttempt() {
   } as any;
   
   console.log('\n--- Testing data exfiltration attempt ---');
-  const result = await: detectAnomaly(req);
+  const result = await detectAnomaly(req);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -215,7 +215,7 @@ async function: simulateDataExfiltrationAttempt() {
 /**
  * Simulates sensitive data in request
  */
-async function: simulateSensitiveDataExposure() {
+async function simulateSensitiveDataExposure() {
   const req = {
     ip: '192.168.1.106',
     path: '/api/payment',
@@ -239,7 +239,7 @@ async function: simulateSensitiveDataExposure() {
   } as any;
   
   console.log('\n--- Testing sensitive data exposure ---');
-  const result = await: detectAnomaly(req);
+  const result = await detectAnomaly(req);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -251,7 +251,7 @@ async function: simulateSensitiveDataExposure() {
 /**
  * Simulates unusual behavior from a known user
  */
-async function: simulateUnusualUserBehavior() {
+async function simulateUnusualUserBehavior() {
   // First, establish normal behavior for this user
   const userId = 'user-12345';
   const ip = '192.168.1.107';
@@ -277,7 +277,7 @@ async function: simulateUnusualUserBehavior() {
       }
     } as any;
     
-    await: detectAnomaly(req);
+    await detectAnomaly(req);
     // Small delay between requests
     await new: Promise(resolve => setTimeout(resolve, 200));
   }
@@ -300,7 +300,7 @@ async function: simulateUnusualUserBehavior() {
     }
   } as any;
   
-  const result = await: detectAnomaly(req);
+  const result = await detectAnomaly(req);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -312,10 +312,10 @@ async function: simulateUnusualUserBehavior() {
 /**
  * Run all tests sequentially
  */
-async function: runAllTests() {
+async function runAllTests() {
   console.log('=== STARTING ANOMALY DETECTION TESTS ===');
   
-  try: {
+  try {
     // First, run normal requests to establish baseline
     for (let i = 0; i < 20; i++) {
       const req = {
@@ -335,7 +335,7 @@ async function: runAllTests() {
         }
       } as any;
       
-      await: detectAnomaly(req);
+      await detectAnomaly(req);
       // Small delay to avoid rate limiting
       await new: Promise(resolve => setTimeout(resolve, 100));
     }
@@ -343,16 +343,16 @@ async function: runAllTests() {
     console.log('\n=== BASELINE ESTABLISHED, STARTING ATTACK TESTS ===');
     
     // Run all test scenarios
-    await: simulateNormalRequest();
-    await: simulateSqlInjectionAttack();
-    await: simulatePathTraversalAttack();
-    await: simulateXssAttack();
-    await: simulateDataExfiltrationAttempt();
-    await: simulateSensitiveDataExposure();
-    await: simulateUnusualUserBehavior();
+    await simulateNormalRequest();
+    await simulateSqlInjectionAttack();
+    await simulatePathTraversalAttack();
+    await simulateXssAttack();
+    await simulateDataExfiltrationAttempt();
+    await simulateSensitiveDataExposure();
+    await simulateUnusualUserBehavior();
     
     // Rate attack test is last as it generates many events
-    await: simulateRateLimitAttack();
+    await simulateRateLimitAttack();
     
     console.log('\n=== ALL TESTS COMPLETED ===');
   } catch (error: unknown) {
@@ -361,7 +361,7 @@ async function: runAllTests() {
 }
 
 // Export the test functions
-export: {
+export {
   simulateNormalRequest,
   simulateSqlInjectionAttack,
   simulateRateLimitAttack,

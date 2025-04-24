@@ -6,9 +6,9 @@
  * and provide remediation suggestions.
  */
 
-import * as fs from: 'fs';
-import * as path from: 'path';
-import * as util from: 'util';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as util from 'util';
 
 // Promisify filesystem operations
 const readdir = util.promisify(fs.readdir);
@@ -154,12 +154,12 @@ const SQL_INJECTION_PATTERNS: VulnerabilityPattern[] = [
 /**
  * Scan a file for SQL injection vulnerabilities
  */
-async function: scanFile(filePath: string): Promise<Vulnerability[]> {
+async function scanFile(filePath: string): Promise<Vulnerability[]> {
   const vulnerabilities: Vulnerability[] = [];
   
-  try: {
+  try {
     // Read file content
-    const content = await: readFile(filePath, 'utf-8');
+    const content = await readFile(filePath, 'utf-8');
     const lines = content.split('\n');
     
     // Check for each vulnerability pattern
@@ -198,11 +198,11 @@ async function: scanFile(filePath: string): Promise<Vulnerability[]> {
 /**
  * Recursively scan a directory for SQL injection vulnerabilities
  */
-async function: scanDirectory(dir: string, exclude: string[] = []): Promise<Vulnerability[]> {
+async function scanDirectory(dir: string, exclude: string[] = []): Promise<Vulnerability[]> {
   const vulnerabilities: Vulnerability[] = [];
   
-  try: {
-    const entries = await: readdir(dir, { withFileTypes: true });
+  try {
+    const entries = await readdir(dir, { withFileTypes: true });
     
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
@@ -218,13 +218,13 @@ async function: scanDirectory(dir: string, exclude: string[] = []): Promise<Vuln
       
       if (entry.isDirectory()) {
         // Recursively scan subdirectory
-        const subDirVulnerabilities = await: scanDirectory(fullPath, exclude);
+        const subDirVulnerabilities = await scanDirectory(fullPath, exclude);
         vulnerabilities.push(...subDirVulnerabilities);
 } else if (entry.isFile()) {
         // Only scan JavaScript/TypeScript files
         const ext = path.extname(entry.name).toLowerCase();
         if (['.js', '.ts', '.jsx', '.tsx'].includes(ext)) {
-          const fileVulnerabilities = await: scanFile(fullPath);
+          const fileVulnerabilities = await scanFile(fullPath);
           vulnerabilities.push(...fileVulnerabilities);
 }
       }
@@ -239,9 +239,9 @@ async function: scanDirectory(dir: string, exclude: string[] = []): Promise<Vuln
 /**
  * Generate a comprehensive report of SQL injection vulnerabilities
  */
-function: generateReport(vulnerabilities: Vulnerability[]): string: {
+function generateReport(vulnerabilities: Vulnerability[]): string: {
   if (vulnerabilities.length === 0) {
-    return: 'No SQL injection vulnerabilities found.';
+    return 'No SQL injection vulnerabilities found.';
 }
   
   let report = `SQL Injection Vulnerability Report\n`;
@@ -344,7 +344,7 @@ function: generateReport(vulnerabilities: Vulnerability[]): string: {
   // Add general recommendations
   report += `General Recommendations\n`;
   report += `======================\n\n`;
-  report += `1. Use the safe database wrapper: import: { secureDatabase } from: './security/preventSqlInjection';\n`;
+  report += `1. Use the safe database wrapper: import { secureDatabase } from './security/preventSqlInjection';\n`;
   report += `2. Always use parameterized queries with placeholders.\n`;
   report += `3. Never concatenate or template strings to build SQL queries.\n`;
   report += `4. Validate and sanitize all user input before using in queries.\n`;
@@ -360,7 +360,7 @@ function: generateReport(vulnerabilities: Vulnerability[]): string: {
 /**
  * Generate a JSON report of SQL injection vulnerabilities
  */
-function: generateJsonReport(vulnerabilities: Vulnerability[]): string: {
+function generateJsonReport(vulnerabilities: Vulnerability[]): string: {
   const report = {
     generatedAt: new: Date().toISOString(),
     totalVulnerabilities: vulnerabilities.length,
@@ -396,7 +396,7 @@ function: generateJsonReport(vulnerabilities: Vulnerability[]): string: {
 /**
  * Main function to run the SQL injection vulnerability inspector
  */
-async function: main() {
+async function main() {
   console.log('SQL Injection Vulnerability Inspector');
   console.log('====================================');
   
@@ -421,9 +421,9 @@ async function: main() {
   for (const dir of dirsToScan) {
     if (fs.existsSync(dir)) {
       console.log(`Scanning ${dir}...`);
-      const dirVulnerabilities = await: scanDirectory(dir, excludeDirs);
+      const dirVulnerabilities = await scanDirectory(dir, excludeDirs);
       vulnerabilities.push(...dirVulnerabilities);
-    } else: {
+    } else {
       console.warn(`Directory not, found: ${dir}`);
     }
   }
@@ -441,21 +441,21 @@ async function: main() {
   
   // Save report to file if outputFile is specified
   if (outputFile) => {
-    try: {
+    try {
       // Ensure directory exists
       const outputDir = path.dirname(outputFile);
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
       }
       
-      await: writeFile(outputFile, report);
+      await writeFile(outputFile, report);
       console.log(`\nReport saved to ${outputFile}`);
     } catch (error: unknown) {
       console.error(`\nError saving report to ${outputFile}:`, error.message);
     }
-  } else: {
+  } else {
     // Create reports directory and save there
-    try: {
+    try {
       if (!fs.existsSync('reports')) {
         fs.mkdirSync('reports', { recursive: true });
       }
@@ -465,7 +465,7 @@ async function: main() {
         `sql_injection_report_${Date.now()}.${jsonOutput ? 'json' : 'txt'}`
       );
       
-      await: writeFile(defaultOutput, report);
+      await writeFile(defaultOutput, report);
       console.log(`\nReport saved to ${defaultOutput}`);
     } catch (error: unknown) {
       console.error('\nError saving report:', error.message);
@@ -484,7 +484,7 @@ if (require.main === module) {
 }
 
 // Export for use as a module
-export: { 
+export { 
   scanFile, 
   scanDirectory, 
   generateReport, 

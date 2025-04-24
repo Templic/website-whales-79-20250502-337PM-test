@@ -5,15 +5,15 @@
  * DeepScanEngine module with the most thorough possible scan configuration.
  */
 
-import: { deepScanEngine } from: '../security/advanced/deepScan/DeepScanEngine';
-import: { securityFabric } from: '../security/advanced/SecurityFabric';
-import: { securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
+import { deepScanEngine } from '../security/advanced/deepScan/DeepScanEngine';
+import { securityFabric } from '../security/advanced/SecurityFabric';
+import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
 
 /**
  * Run an advanced deep security scan
  */
-async function: runAdvancedDeepScan() {
+async function runAdvancedDeepScan() {
   console.log('┌──────────────────────────────────────────────────────┐');
   console.log('│           INITIATING ADVANCED DEEP SCAN              │');
   console.log('├──────────────────────────────────────────────────────┤');
@@ -22,7 +22,7 @@ async function: runAdvancedDeepScan() {
   console.log('│ code, configurations, and API endpoints.             │');
   console.log('└──────────────────────────────────────────────────────┘');
   
-  try: {
+  try {
     // Register event listeners for scan events
     const findingsCollector: any[] = [];
     
@@ -70,7 +70,7 @@ async function: runAdvancedDeepScan() {
     }
     
     if (!scanResult) {
-      throw new: Error('Scan completed but no results were found');
+      throw new Error('Scan completed but no results were found');
 }
     
     // Print scan summary
@@ -148,7 +148,7 @@ async function: runAdvancedDeepScan() {
       }
       
       console.log('└──────────────────────────────────────────────────────┘');
-    } else: {
+    } else {
       console.log('\n✓ No security issues found.');
 }
     
@@ -197,4 +197,4 @@ async function: runAdvancedDeepScan() {
 });
 
 // Export for use as a module
-export: { runAdvancedDeepScan };
+export { runAdvancedDeepScan };

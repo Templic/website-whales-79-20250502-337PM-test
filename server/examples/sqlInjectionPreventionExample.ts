@@ -5,10 +5,10 @@
  * to secure database interactions in a typical Express application.
  */
 
-import express from: 'express';
-import: { secureDatabase } from: '../security/preventSqlInjection';
-import: { sqlInjectionPrevention } from: '../security/preventSqlInjection';
-import: { Pool } from: 'pg';
+import express from 'express';
+import { secureDatabase } from '../security/preventSqlInjection';
+import { sqlInjectionPrevention } from '../security/preventSqlInjection';
+import { Pool } from 'pg';
 
 // Create a sample Express application
 const app = express();
@@ -26,7 +26,7 @@ const db = secureDatabase(pool);
 
 // Example: 1: Simple user retrieval
 app.get('/api/users/:id', async (req, res) => {
-  try: {
+  try {
     // SECURE: Using the select method with parameters
     const userId = parseInt(req.params.id, 10);
     const users = await db.select('users', ['id', 'username', 'email'], { id: userId });
@@ -45,7 +45,7 @@ app.get('/api/users/:id', async (req, res) => {
 
 // Example: 2: Search with LIKE
 app.get('/api/users/search', async (req, res) => {
-  try: {
+  try {
     const search = req.query.q as string;
     
     if (!search) {
@@ -68,8 +68,8 @@ app.get('/api/users/search', async (req, res) => {
 
 // Example: 3: Create a new user
 app.post('/api/users', async (req, res) => {
-  try: {
-    const: { username, email, password } = req.body;
+  try {
+    const { username, email, password } = req.body;
     
     // Validate input
     if (!username || !email || !password) {
@@ -93,9 +93,9 @@ app.post('/api/users', async (req, res) => {
 
 // Example: 4: Update a user
 app.put('/api/users/:id', async (req, res) => {
-  try: {
+  try {
     const userId = parseInt(req.params.id, 10);
-    const: { email, active } = req.body;
+    const { email, active } = req.body;
     
     // SECURE: Using the update method with WHERE clause
     const updatedUsers = await db.update(;
@@ -118,7 +118,7 @@ app.put('/api/users/:id', async (req, res) => {
 
 // Example: 5: Delete a user
 app.delete('/api/users/:id', async (req, res) => {
-  try: {
+  try {
     const userId = parseInt(req.params.id, 10);
     
     // SECURE: Using the delete method with WHERE clause
@@ -138,8 +138,8 @@ app.delete('/api/users/:id', async (req, res) => {
 
 // Example: 6: Transaction example
 app.post('/api/orders', async (req, res) => {
-  try: {
-    const: { userId, items } = req.body;
+  try {
+    const { userId, items } = req.body;
     
     if (!userId || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Invalid order data' });
@@ -176,7 +176,7 @@ app.post('/api/orders', async (req, res) => {
 
 // Example: 7: Advanced query with join
 app.get('/api/orders/:id/details', async (req, res) => {
-  try: {
+  try {
     const orderId = parseInt(req.params.id, 10);
     
     // SECURE: Using parameterized query for complex query
@@ -204,7 +204,7 @@ app.get('/api/orders/:id/details', async (req, res) => {
 
 // Example: 8: Using the SQL monitor for security reporting
 app.get('/api/admin/database-security', async (req, res) => {
-  try: {
+  try {
     // Generate a security report
     const report = sqlInjectionPrevention.generateSecurityReport();
     
@@ -220,7 +220,7 @@ app.get('/api/admin/database-security', async (req, res) => {
 
 // INSECURE: Using string concatenation (vulnerable to SQL injection)
 app.get('/api/insecure/users/:id', async (req, res) => {
-  try: {
+  try {
     const userId = req.params.id;
     
     // INSECURE: Using string concatenation
@@ -241,7 +241,7 @@ app.get('/api/insecure/users/:id', async (req, res) => {
 
 // INSECURE: Using template literals (vulnerable to SQL injection)
 app.get('/api/insecure/users/search', async (req, res) => {
-  try: {
+  try {
     const search = req.query.q as string;
     
     // INSECURE: Using template literals
@@ -257,9 +257,9 @@ app.get('/api/insecure/users/search', async (req, res) => {
 });
 
 // Helper function for password hashing (example)
-function: hashPassword(password: string): string: {
+function hashPassword(password: string): string: {
   // This is just an example. In a real application, use a proper password hashing library
-  return: `hashed_${password}`;
+  return `hashed_${password}`;
 }
 
 // Start the server (example)
@@ -269,4 +269,4 @@ app.listen(port, () => {
 });
 
 // Export for testing
-export: { app };
+export { app };

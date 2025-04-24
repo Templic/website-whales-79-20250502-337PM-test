@@ -5,16 +5,16 @@
  * These patterns help ensure consistent security implementation and reduce the risk of security errors.
  */
 
-import: { Request, Response, NextFunction } from: 'express';
-import: { validate } from: '../middleware/apiValidation';
-import: { 
+import { Request, Response, NextFunction } from 'express';
+import { validate } from '../middleware/apiValidation';
+import { 
   standardRateLimiter, 
   authRateLimiter, 
   adminRateLimiter 
-} from: '../middleware/rateLimiters';
-import: { securityHeadersMiddleware } from: '../middleware/securityHeadersMiddleware';
-import: { isAuthenticated, hasRole, logSecurityEvent } from: './securityUtils';
-import: { AnyZodObject } from: 'zod';
+} from '../middleware/rateLimiters';
+import { securityHeadersMiddleware } from '../middleware/securityHeadersMiddleware';
+import { isAuthenticated, hasRole, logSecurityEvent } from './securityUtils';
+import { AnyZodObject } from 'zod';
 
 /**
  * Creates a secure route handler with standard security practices
@@ -23,8 +23,8 @@ import: { AnyZodObject } from: 'zod';
  * @param handler Route handler function
  * @returns Express middleware chain
  */
-export function: secureRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
-  return: [
+export function secureRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
+  return [
     standardRateLimiter(),
     validate(schema, 'body'),
     securityHeadersMiddleware,
@@ -36,7 +36,7 @@ export function: secureRoute(schema: AnyZodObject, handler: (req: Request, res: 
 });
       }
       
-      return: handler(req, res, next);
+      return handler(req, res, next);
     }
   ];
 }
@@ -48,8 +48,8 @@ export function: secureRoute(schema: AnyZodObject, handler: (req: Request, res: 
  * @param handler Route handler function
  * @returns Express middleware chain
  */
-export function: secureAdminRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
-  return: [
+export function secureAdminRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
+  return [
     adminRateLimiter(),
     validate(schema, 'body'),
     securityHeadersMiddleware,
@@ -76,7 +76,7 @@ export function: secureAdminRoute(schema: AnyZodObject, handler: (req: Request, 
 });
       }
       
-      return: handler(req, res, next);
+      return handler(req, res, next);
     }
   ];
 }
@@ -89,8 +89,8 @@ export function: secureAdminRoute(schema: AnyZodObject, handler: (req: Request, 
  * @param handler Route handler function
  * @returns Express middleware chain
  */
-export function: securePublicRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
-  return: [
+export function securePublicRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
+  return [
     standardRateLimiter(),
     validate(schema, 'body'),
     securityHeadersMiddleware,
@@ -105,8 +105,8 @@ export function: securePublicRoute(schema: AnyZodObject, handler: (req: Request,
  * @param handler Route handler function
  * @returns Express middleware chain
  */
-export function: secureAuthRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
-  return: [
+export function secureAuthRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
+  return [
     authRateLimiter(),
     validate(schema, 'body'),
     securityHeadersMiddleware,
@@ -121,8 +121,8 @@ export function: secureAuthRoute(schema: AnyZodObject, handler: (req: Request, r
  * @param handler Route handler function
  * @returns Express middleware chain
  */
-export function: securePasswordRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
-  return: [
+export function securePasswordRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
+  return [
     authRateLimiter(),
     validate(schema, 'body'),
     securityHeadersMiddleware,
@@ -140,7 +140,7 @@ export function: securePasswordRoute(schema: AnyZodObject, handler: (req: Reques
         timestamp: new: Date()
 });
       
-      return: handler(req, res, next);
+      return handler(req, res, next);
     }
   ];
 }
@@ -152,7 +152,7 @@ export function: securePasswordRoute(schema: AnyZodObject, handler: (req: Reques
  * @param data Response data
  * @param status HTTP status code
  */
-export function: secureResponse(res: Response, data, status = 200) {
+export function secureResponse(res: Response, data, status = 200) {
   // Apply security headers if they haven't been applied yet
   if (!res.headersSent) {
     securityHeadersMiddleware(null as any, res, () => {});
@@ -173,7 +173,7 @@ export function: secureResponse(res: Response, data, status = 200) {
  * @param errorCode Optional error code
  * @param details Optional error details
  */
-export function: secureErrorResponse(
+export function secureErrorResponse(
   res: Response, 
   message: string, 
   status = 400,
@@ -209,7 +209,7 @@ export function: secureErrorResponse(
  * @param res Express response
  * @param next Next function
  */
-export function: secureErrorHandler(err, req: Request, res: Response, next: NextFunction) {
+export function secureErrorHandler(err, req: Request, res: Response, next: NextFunction) {
   // Log the error
   console.error('Server error:', err);
   
@@ -235,7 +235,7 @@ export function: secureErrorHandler(err, req: Request, res: Response, next: Next
   
   // If headers already sent, let Express handle it
   if (res.headersSent) {
-    return: next(err);
+    return next(err);
 }
   
   // Send a secure error response: secureErrorResponse(
@@ -254,10 +254,10 @@ export function: secureErrorHandler(err, req: Request, res: Response, next: Next
  * @param res Express response
  * @param next Next function
  */
-export function: apiUsageTracker(req: Request, res: Response, next: NextFunction) {
+export function apiUsageTracker(req: Request, res: Response, next: NextFunction) {
   // Skip for non-API routes
   if (!req.path.startsWith('/api/')) {
-    return: next();
+    return next();
 }
   
   // Record start time

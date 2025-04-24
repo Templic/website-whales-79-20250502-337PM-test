@@ -5,17 +5,17 @@
  * security event logging, vulnerability scanning, and security reports.
  */
 
-import fs from: 'fs';
-import path from: 'path';
-import: { Request, Response } from: 'express';
-import: { asyncHandler } from: '../middleware/errorHandler';
-import: { forceSecurityScan } from: '../securityScan';
-import: { 
+import fs from 'fs';
+import path from 'path';
+import { Request, Response } from 'express';
+import { asyncHandler } from '../middleware/errorHandler';
+import { forceSecurityScan } from '../securityScan';
+import { 
   detectSecurityPackages, 
   detectCommonSecurityIssues, 
   generateSecurityReport,
   calculateRiskMetrics
-} from: './scanUtils';
+} from './scanUtils';
 
 // Define AsyncHandler type
 type AsyncHandler = (req: Request, res: Response) => Promise<void>;
@@ -87,7 +87,7 @@ export type SecurityEventType = | 'LOGIN_SUCCESS'
 
 // Security event data interface
 export interface SecurityEventData: {
-  type: SecurityEventType;
+  type SecurityEventType;
   timestamp?: string;
   userId?: string;
   userRole?: string;
@@ -123,11 +123,11 @@ if (!fs.existsSync(SCAN_RESULTS_DIR)) {
 // Initialize security settings
 let securitySettings: SecuritySettings;
 
-try: {
+try {
   if (fs.existsSync(SECURITY_SETTINGS_FILE)) {
     const settingsData = fs.readFileSync(SECURITY_SETTINGS_FILE, 'utf8');
     securitySettings = JSON.parse(settingsData);
-} else: {
+} else {
     securitySettings = { ...defaultSecuritySettings };
     fs.writeFileSync(SECURITY_SETTINGS_FILE, JSON.stringify(securitySettings, null, 2));
   }
@@ -140,8 +140,8 @@ try: {
  * Log a security event
  * @param event The security event to log
  */
-export function: logSecurityEvent(event: SecurityEventData): void: {
-  try: {
+export function logSecurityEvent(event: SecurityEventData): void: {
+  try {
     if (!securitySettings.logSecurityEvents) {
       return;
 }
@@ -167,7 +167,7 @@ export function: logSecurityEvent(event: SecurityEventData): void: {
  */
 export const getSecuritySettings: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
   logSecurityEvent({
-    type: 'SECURITY_SETTING_CHANGED',
+    type 'SECURITY_SETTING_CHANGED',
     userId: req.session?.user?.id,
     userRole: req.session?.user?.role,
     ip: req.ip,
@@ -185,12 +185,12 @@ export const getSecuritySettings: AsyncHandler = asyncHandler(async (req: Reques
  * Update a security setting
  */
 export const updateSecuritySetting: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
-  const: { setting, value } = req.body;
+  const { setting, value } = req.body;
   
   // Validate the setting exists
   if (!(setting in securitySettings)) {
     logSecurityEvent({
-      type: 'SECURITY_SETTING_VALIDATION_FAILED',
+      type 'SECURITY_SETTING_VALIDATION_FAILED',
       userId: req.session?.user?.id,
       userRole: req.session?.user?.role,
       ip: req.ip,
@@ -215,7 +215,7 @@ export const updateSecuritySetting: AsyncHandler = asyncHandler(async (req: Requ
   fs.writeFileSync(SECURITY_SETTINGS_FILE, JSON.stringify(securitySettings, null, 2));
   
   logSecurityEvent({
-    type: 'SECURITY_SETTING_CHANGED',
+    type 'SECURITY_SETTING_CHANGED',
     userId: req.session?.user?.id,
     userRole: req.session?.user?.role,
     ip: req.ip,
@@ -243,7 +243,7 @@ export const resetSecuritySettings: AsyncHandler = asyncHandler(async (req: Requ
   fs.writeFileSync(SECURITY_SETTINGS_FILE, JSON.stringify(securitySettings, null, 2));
   
   logSecurityEvent({
-    type: 'SECURITY_SETTING_CHANGED',
+    type 'SECURITY_SETTING_CHANGED',
     userId: req.session?.user?.id,
     userRole: req.session?.user?.role,
     ip: req.ip,
@@ -265,9 +265,9 @@ export const resetSecuritySettings: AsyncHandler = asyncHandler(async (req: Requ
  * Get security logs
  */
 export const getSecurityLogs: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
-  const: { limit = 100, severity, type, startDate, endDate } = req.query;
+  const { limit = 100, severity, type, startDate, endDate } = req.query;
   
-  try: {
+  try {
     if (!fs.existsSync(SECURITY_LOG_FILE)) {
       // @ts-ignore - Response type issue
   return res.json({ success: true, logs: [] });
@@ -279,7 +279,7 @@ export const getSecurityLogs: AsyncHandler = asyncHandler(async (req: Request, r
     
     // Parse and filter logs
     let logs = logLines.map(line => {
-      try: {
+      try {
         const timestampEndIndex = line.indexOf(' [');
         const timestamp = line.substring(0, timestampEndIndex);
         const jsonStartIndex = line.indexOf('{');
@@ -313,7 +313,7 @@ export const getSecurityLogs: AsyncHandler = asyncHandler(async (req: Request, r
     logs = logs.slice(-parseInt(limit as string));
     
     logSecurityEvent({
-      type: 'SECURITY_SETTING_CHANGED',
+      type 'SECURITY_SETTING_CHANGED',
       userId: req.session?.user?.id,
       userRole: req.session?.user?.role,
       ip: req.ip,
@@ -339,7 +339,7 @@ export const getSecurityLogs: AsyncHandler = asyncHandler(async (req: Request, r
  */
 export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
   logSecurityEvent({
-    type: 'SECURITY_SCAN_STARTED',
+    type 'SECURITY_SCAN_STARTED',
     userId: req.session?.user?.id,
     userRole: req.session?.user?.role,
     ip: req.ip,
@@ -350,15 +350,15 @@ export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, r
     severity: 'low'
 });
   
-  try: {
+  try {
     // Run the security scan
-    const scanResults = await: forceSecurityScan();
+    const scanResults = await forceSecurityScan();
     
     // Enhance with additional security package information
-    const packageInfo = await: detectSecurityPackages();
+    const packageInfo = await detectSecurityPackages();
     
     // Find additional code issues
-    const commonIssues = await: detectCommonSecurityIssues();
+    const commonIssues = await detectCommonSecurityIssues();
     
     // Merge vulnerabilities
     const allVulnerabilities = [
@@ -385,10 +385,10 @@ export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, r
     
     // Generate markdown report
     const reportFile = path.join(SCAN_RESULTS_DIR, `report-${scanTimestamp}.md`);
-    await: generateSecurityReport(allVulnerabilities, reportFile);
+    await generateSecurityReport(allVulnerabilities, reportFile);
     
     logSecurityEvent({
-      type: 'SECURITY_SCAN_COMPLETED',
+      type 'SECURITY_SCAN_COMPLETED',
       userId: req.session?.user?.id,
       userRole: req.session?.user?.role,
       ip: req.ip,
@@ -427,7 +427,7 @@ export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, r
  * Get latest security scan results
  */
 export const getLatestScanResults: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
-  try: {
+  try {
     if (!fs.existsSync(SCAN_RESULTS_DIR)) {
       // @ts-ignore - Response type issue
   return res.json({ 
@@ -457,7 +457,7 @@ export const getLatestScanResults: AsyncHandler = asyncHandler(async (req: Reque
     const scanResults = JSON.parse(scanData);
     
     logSecurityEvent({
-      type: 'SECURITY_SETTING_CHANGED',
+      type 'SECURITY_SETTING_CHANGED',
       userId: req.session?.user?.id,
       userRole: req.session?.user?.role,
       ip: req.ip,
@@ -485,7 +485,7 @@ export const getLatestScanResults: AsyncHandler = asyncHandler(async (req: Reque
  * Get security stats summary
  */
 export const getSecurityStats: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
-  try: {
+  try {
     // Get count of security logs by severity
     let criticalCount = 0;
     let highCount = 0;
@@ -525,7 +525,7 @@ export const getSecurityStats: AsyncHandler = asyncHandler(async (req: Request, 
         // Get security score from scan if available
         if (latestScan.riskMetrics && typeof latestScan.riskMetrics.securityScore === 'number') {
           securityScore = latestScan.riskMetrics.securityScore;
-} else: {
+} else {
           // Calculate score based on vulnerabilities
           const totalIssues = latestScan.totalIssues || 0;
           const criticalIssues = latestScan.criticalIssues || 0;

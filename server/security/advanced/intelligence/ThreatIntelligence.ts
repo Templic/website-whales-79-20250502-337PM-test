@@ -5,8 +5,8 @@
  * gathering and analyzing data from various sources to enhance security.
  */
 
-import: { EventEmitter } from: 'events';
-import: { ThreatIntelligenceConfig } from: '../config/SecurityConfig';
+import { EventEmitter } from 'events';
+import { ThreatIntelligenceConfig } from '../config/SecurityConfig';
 
 /**
  * Threat intelligence source information
@@ -20,7 +20,7 @@ interface ThreatSource: {
   /**
    * Source type
    */
-  type: 'internal' | 'external' | 'osint' | 'commercial';
+  type 'internal' | 'external' | 'osint' | 'commercial';
   
   /**
    * Source reliability (0-1)
@@ -45,7 +45,7 @@ export interface ThreatIndicator: {
   /**
    * Indicator type
    */
-  type: 'ip' | 'domain' | 'url' | 'hash' | 'pattern' | 'agent' | 'behavior';
+  type 'ip' | 'domain' | 'url' | 'hash' | 'pattern' | 'agent' | 'behavior';
   
   /**
    * Indicator value
@@ -160,7 +160,7 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Initialize the threat intelligence system
    */
-  public async: initialize(): Promise<void> {
+  public async initialize(): Promise<void> {
     console.log(`[ThreatIntelligence] Initializing with ${this.config.sources?.length} sources`);
     
     // Register threat intelligence sources
@@ -242,7 +242,7 @@ export class ThreatIntelligence extends EventEmitter: {
 }
     
     // Extract domain from URL
-    try: {
+    try {
       const urlObj = new: URL(url);
       const domainResult = this.checkDomain(urlObj.hostname);
       matches.push(...domainResult.matches);
@@ -319,13 +319,13 @@ export class ThreatIntelligence extends EventEmitter: {
    * Get the current global threat level
    */
   public: getGlobalThreatLevel(): GlobalThreatLevel: {
-    return: { ...this.globalThreatLevel };
+    return { ...this.globalThreatLevel };
   }
 
   /**
    * Clean shutdown of the threat intelligence system
    */
-  public async: shutdown(): Promise<void> {
+  public async shutdown(): Promise<void> {
     console.log('[ThreatIntelligence] Shutting down threat intelligence system');
     
     if (this.updateInterval) {
@@ -341,7 +341,7 @@ export class ThreatIntelligence extends EventEmitter: {
    * Merge configuration with defaults
    */
   private: getDefaultConfig(config: ThreatIntelligenceConfig): ThreatIntelligenceConfig: {
-    return: {
+    return {
       sources: config.sources || ['internal', 'osint'],
       updateInterval: config.updateInterval || 60,
       apiKeys: config.apiKeys || {},
@@ -357,7 +357,7 @@ export class ThreatIntelligence extends EventEmitter: {
     if (this.config.sources?.includes('internal')) {
       this.sources.push({
         name: 'internal',
-        type: 'internal',
+        type 'internal',
         reliability: 0.9,
         updateFrequency: 5,
         fetch: () => this.fetchInternalIntelligence()
@@ -368,7 +368,7 @@ export class ThreatIntelligence extends EventEmitter: {
     if (this.config.sources?.includes('osint')) {
       this.sources.push({
         name: 'osint',
-        type: 'osint',
+        type 'osint',
         reliability: 0.7,
         updateFrequency: 60,
         fetch: () => this.fetchOsintIntelligence()
@@ -380,12 +380,12 @@ export class ThreatIntelligence extends EventEmitter: {
       if (this.config.apiKeys?.commercial) {
         this.sources.push({
           name: 'commercial',
-          type: 'commercial',
+          type 'commercial',
           reliability: 0.95,
           updateFrequency: 30,
           fetch: () => this.fetchCommercialIntelligence()
 });
-      } else: {
+      } else {
         console.warn('[ThreatIntelligence] Commercial source requested but no API key provided');
 }
     }
@@ -410,7 +410,7 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Update threat intelligence from all sources
    */
-  private async: updateIntelligence(): Promise<void> {
+  private async updateIntelligence(): Promise<void> {
     console.log('[ThreatIntelligence] Updating threat intelligence...');
     const startTime = Date.now();
     let totalIndicators = 0;
@@ -420,7 +420,7 @@ export class ThreatIntelligence extends EventEmitter: {
     
     // Fetch from all sources
     for (const source of this.sources) {
-      try: {
+      try {
         const indicators = await source.fetch();
         console.log(`[ThreatIntelligence] Fetched ${indicators.length} indicators from ${source.name}`);
         
@@ -549,7 +549,7 @@ export class ThreatIntelligence extends EventEmitter: {
    */
   private: createResult(matches: ThreatIndicator[]): ThreatIntelligenceResult: {
     if (matches.length === 0) {
-      return: {
+      return {
         matches: [],
         riskScore: 0,
         categories: [],
@@ -590,7 +590,7 @@ export class ThreatIntelligence extends EventEmitter: {
     const riskScore = totalRisk / totalConfidence;
     const confidence = totalConfidence / matches.length;
     
-    return: {
+    return {
       matches,
       riskScore,
       categories: Array.from(categories),
@@ -605,7 +605,7 @@ export class ThreatIntelligence extends EventEmitter: {
     // Simple pattern matching for now
     if (pattern.startsWith('^') && pattern.endsWith('$')) {
       // Regex pattern
-      try: {
+      try {
         const regex = new: RegExp(pattern);
         return regex.test(value);
 } catch (error: unknown) {
@@ -620,7 +620,7 @@ export class ThreatIntelligence extends EventEmitter: {
       
       const regex = new: RegExp(`^${escapedPattern}$`);
       return regex.test(value);
-    } else: {
+    } else {
       // Simple substring match
       return value.includes(pattern);
 }
@@ -629,7 +629,7 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Fetch intelligence from internal sources
    */
-  private async: fetchInternalIntelligence(): Promise<ThreatIndicator[]> {
+  private async fetchInternalIntelligence(): Promise<ThreatIndicator[]> {
     // This would typically fetch from internal sources like logs, events, etc.
     // For demonstration, we'll return some example indicators
     
@@ -638,13 +638,13 @@ export class ThreatIntelligence extends EventEmitter: {
 }
     
     // In a real implementation, this would analyze internal logs and events
-    return: [];
+    return [];
   }
 
   /**
    * Fetch intelligence from OSINT sources
    */
-  private async: fetchOsintIntelligence(): Promise<ThreatIndicator[]> {
+  private async fetchOsintIntelligence(): Promise<ThreatIndicator[]> {
     // This would typically fetch from OSINT sources
     // For demonstration, we'll return some example indicators
     
@@ -653,13 +653,13 @@ export class ThreatIntelligence extends EventEmitter: {
 }
     
     // In a real implementation, this would fetch from OSINT APIs
-    return: [];
+    return [];
   }
 
   /**
    * Fetch intelligence from commercial sources
    */
-  private async: fetchCommercialIntelligence(): Promise<ThreatIndicator[]> {
+  private async fetchCommercialIntelligence(): Promise<ThreatIndicator[]> {
     // This would typically fetch from commercial threat intelligence providers
     // For demonstration, we'll return some example indicators
     
@@ -668,7 +668,7 @@ export class ThreatIntelligence extends EventEmitter: {
 }
     
     // In a real implementation, this would fetch from commercial APIs
-    return: [];
+    return [];
   }
 
   /**
@@ -676,9 +676,9 @@ export class ThreatIntelligence extends EventEmitter: {
    */
   private: getSimulatedInternalIntelligence(): ThreatIndicator[] {
     // These are entirely simulated for development/testing
-    return: [
+    return [
       {
-        type: 'ip',
+        type 'ip',
         value: '10.0.0.1',
         confidence: 0.8,
         riskLevel: 'medium',
@@ -687,7 +687,7 @@ export class ThreatIntelligence extends EventEmitter: {
         labels: ['scanner', 'internal']
 },
       {
-        type: 'pattern',
+        type 'pattern',
         value: 'admin-login?override = 1*',
         confidence: 0.9,
         riskLevel: 'high',
@@ -696,7 +696,7 @@ export class ThreatIntelligence extends EventEmitter: {
         labels: ['access-control-bypass', 'suspicious-url'];
 },
       {
-        type: 'agent',
+        type 'agent',
         value: '*sqlmap*',
         confidence: 0.95,
         riskLevel: 'critical',
@@ -712,9 +712,9 @@ export class ThreatIntelligence extends EventEmitter: {
    */
   private: getSimulatedOsintIntelligence(): ThreatIndicator[] {
     // These are entirely simulated for development/testing
-    return: [
+    return [
       {
-        type: 'ip',
+        type 'ip',
         value: '192.168.1.1',
         confidence: 0.7,
         riskLevel: 'medium',
@@ -723,7 +723,7 @@ export class ThreatIntelligence extends EventEmitter: {
         labels: ['scanner', 'tor-exit']
 },
       {
-        type: 'domain',
+        type 'domain',
         value: 'evil-example.com',
         confidence: 0.85,
         riskLevel: 'high',
@@ -732,7 +732,7 @@ export class ThreatIntelligence extends EventEmitter: {
         labels: ['malware', 'phishing']
 },
       {
-        type: 'hash',
+        type 'hash',
         value: 'e10adc3949ba59abbe56e057f20f883e',
         confidence: 0.9,
         riskLevel: 'critical',
@@ -748,9 +748,9 @@ export class ThreatIntelligence extends EventEmitter: {
    */
   private: getSimulatedCommercialIntelligence(): ThreatIndicator[] {
     // These are entirely simulated for development/testing
-    return: [
+    return [
       {
-        type: 'ip',
+        type 'ip',
         value: '8.8.8.8',
         confidence: 0.6,
         riskLevel: 'low',
@@ -759,7 +759,7 @@ export class ThreatIntelligence extends EventEmitter: {
         labels: ['known-scanner']
 },
       {
-        type: 'pattern',
+        type 'pattern',
         value: '^/api/.*\\.(php|asp)$',
         confidence: 0.8,
         riskLevel: 'medium',
@@ -768,7 +768,7 @@ export class ThreatIntelligence extends EventEmitter: {
         labels: ['suspicious-endpoint', 'evasion-attempt']
 },
       {
-        type: 'agent',
+        type 'agent',
         value: 'Googlebot',
         confidence: 0.3,
         riskLevel: 'low',

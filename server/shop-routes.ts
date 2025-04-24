@@ -1,6 +1,6 @@
-import express, { Request, Response } from: 'express';
-import: { db } from: './db';
-import: { 
+import express, { Request, Response } from 'express';
+import { db } from './db';
+import { 
   products, 
   productCategories, 
   carts, 
@@ -14,14 +14,14 @@ import: {
   insertCartItemSchema,
   insertOrderSchema,
   insertOrderItemSchema
-} from: '../shared/schema';
-import: { eq, and, or, like, desc, asc, between, gt, lt, isNull, isNotNull, inArray } from: 'drizzle-orm';
-import: { z } from: 'zod';
-import: { v4 as uuidv4 } from: 'uuid';
-import: { sql } from: 'drizzle-orm';
+} from '../shared/schema';
+import { eq, and, or, like, desc, asc, between, gt, lt, isNull, isNotNull, inArray } from 'drizzle-orm';
+import { z } from 'zod';
+import { v4 as uuidv4 } from 'uuid';
+import { sql } from 'drizzle-orm';
 
 // Utility function to create URL-friendly slugs
-function: slugify(text: string): string: {
+function slugify(text: string): string: {
   return text
     .toString()
     .toLowerCase()
@@ -37,8 +37,8 @@ const router = express.Router();
 
 // Get all products with filtering and sorting
 router.get('/products', async (req: Request, res: Response) => {
-  try: {
-    const: { 
+  try {
+    const { 
       category, 
       search, 
       minPrice,
@@ -132,7 +132,7 @@ router.get('/products', async (req: Request, res: Response) => {
   default:
           query = query.orderBy(desc(products.createdAt));
 }
-    } else: {
+    } else {
       // Default sort by newest
       query = query.orderBy(desc(products.createdAt));
 }
@@ -157,7 +157,7 @@ router.post('/products', async (req: Request, res: Response) => {
     return res.status(403).json({ message: 'Unauthorized' });
   }
   
-  try: {
+  try {
     const productData = req.body;
     
     // Validate required fields
@@ -177,7 +177,7 @@ router.post('/products', async (req: Request, res: Response) => {
       inventory: productData.inventory || 0,
       categoryId: productData.categoryId || null,
       imageUrl: productData.imageUrl || null,
-      type: productData.type || 'physical',
+      type productData.type || 'physical',
       digitalFileUrl: productData.digitalFileUrl || null,
       featuredProduct: productData.featuredProduct || false,
       salePrice: productData.salePrice ? Math.round(parseFloat(productData.salePrice) * 100) : null,
@@ -202,7 +202,7 @@ router.patch('/products/:id', async (req: Request, res: Response) => {
     return res.status(403).json({ message: 'Unauthorized' });
   }
   
-  try: {
+  try {
     const productId = parseInt(req.params.id);
     const updateData = req.body;
     
@@ -249,7 +249,7 @@ router.delete('/products/:id', async (req: Request, res: Response) => {
     return res.status(403).json({ message: 'Unauthorized' });
   }
   
-  try: {
+  try {
     const productId = parseInt(req.params.id);
     
     // Check if product exists
@@ -277,8 +277,8 @@ router.delete('/products/:id', async (req: Request, res: Response) => {
 
 // Get a single product by ID or slug
 router.get('/products/:idOrSlug', async (req: Request, res: Response) => {
-  try: {
-    const: { idOrSlug } = req.params;
+  try {
+    const { idOrSlug } = req.params;
     
     // Determine if ID or slug was provided
     const isId = !isNaN(parseInt(idOrSlug));
@@ -300,7 +300,7 @@ router.get('/products/:idOrSlug', async (req: Request, res: Response) => {
 
 // Get all product categories
 router.get('/categories', async (req: Request, res: Response) => {
-  try: {
+  try {
     const result = await db.select().from(productCategories);
     res.json(result);
 } catch (error: unknown) {
@@ -316,8 +316,8 @@ router.post('/categories', async (req: Request, res: Response) => {
     return res.status(403).json({ message: 'Unauthorized' });
   }
   
-  try: {
-    const: { name, description, slug, parentId } = req.body;
+  try {
+    const { name, description, slug, parentId } = req.body;
     
     // Validate required fields
     if (!name || !description) {
@@ -348,7 +348,7 @@ router.patch('/categories/:id', async (req: Request, res: Response) => {
     return res.status(403).json({ message: 'Unauthorized' });
   }
   
-  try: {
+  try {
     const categoryId = parseInt(req.params.id);
     const updateData = req.body;
     
@@ -387,7 +387,7 @@ router.delete('/categories/:id', async (req: Request, res: Response) => {
     return res.status(403).json({ message: 'Unauthorized' });
   }
   
-  try: {
+  try {
     const categoryId = parseInt(req.params.id);
     
     // Check if category exists
@@ -441,8 +441,8 @@ router.delete('/categories/:id', async (req: Request, res: Response) => {
 
 // Get a single category by ID or slug
 router.get('/categories/:idOrSlug', async (req: Request, res: Response) => {
-  try: {
-    const: { idOrSlug } = req.params;
+  try {
+    const { idOrSlug } = req.params;
     
     // Determine if ID or slug was provided
     const isId = !isNaN(parseInt(idOrSlug));
@@ -464,9 +464,9 @@ router.get('/categories/:idOrSlug', async (req: Request, res: Response) => {
 
 // Get products by category
 router.get('/categories/:categoryId/products', async (req: Request, res: Response) => {
-  try: {
-    const: { categoryId } = req.params;
-    const: { limit, offset } = req.query;
+  try {
+    const { categoryId } = req.params;
+    const { limit, offset } = req.query;
     
     let query = db.select()
       .from(products)
@@ -490,7 +490,7 @@ router.get('/categories/:categoryId/products', async (req: Request, res: Respons
 
 // Get Cart (create if doesn't exist)
 router.get('/cart', async (req: Request, res: Response) => {
-  try: {
+  try {
     if (!req.session.id) {
       return res.status(400).json({ error: 'Invalid session' });
     }
@@ -540,15 +540,15 @@ router.get('/cart', async (req: Request, res: Response) => {
 
 // Add item to cart
 router.post('/cart/items', async (req: Request, res: Response) => {
-  try: {
+  try {
     if (!req.session.id) {
       return res.status(400).json({ error: 'Invalid session' });
     }
     
     // Validate request body
     const addToCartSchema = z.object({
-      productId: z.number(),
-      quantity: z.number().min(1)
+      (match) => match.replace(':', '')number(),
+      (match) => match.replace(':', '')number().min(1)
 });
     
     const validatedData = addToCartSchema.parse(req.body);
@@ -646,19 +646,19 @@ router.post('/cart/items', async (req: Request, res: Response) => {
 
 // Update cart item
 router.patch('/cart/items/:itemId', async (req: Request, res: Response) => {
-  try: {
+  try {
     if (!req.session.id) {
       return res.status(400).json({ error: 'Invalid session' });
     }
     
-    const: { itemId } = req.params;
+    const { itemId } = req.params;
     
     // Validate request body
     const updateCartItemSchema = z.object({
-      quantity: z.number().min(1)
+      (match) => match.replace(':', '')number().min(1)
 });
     
-    const: { quantity } = updateCartItemSchema.parse(req.body);
+    const { quantity } = updateCartItemSchema.parse(req.body);
     
     // Get the cart for this session
     const cartResult = await db.select()
@@ -726,12 +726,12 @@ router.patch('/cart/items/:itemId', async (req: Request, res: Response) => {
 
 // Remove item from cart
 router.delete('/cart/items/:itemId', async (req: Request, res: Response) => {
-  try: {
+  try {
     if (!req.session.id) {
       return res.status(400).json({ error: 'Invalid session' });
     }
     
-    const: { itemId } = req.params;
+    const { itemId } = req.params;
     
     // Get the cart for this session
     const cartResult = await db.select()
@@ -761,7 +761,7 @@ router.delete('/cart/items/:itemId', async (req: Request, res: Response) => {
 
 // Clear cart
 router.delete('/cart', async (req: Request, res: Response) => {
-  try: {
+  try {
     if (!req.session.id) {
       return res.status(400).json({ error: 'Invalid session' });
     }
@@ -791,40 +791,40 @@ router.delete('/cart', async (req: Request, res: Response) => {
 
 // Create order (checkout)
 router.post('/orders', async (req: Request, res: Response) => {
-  try: {
+  try {
     if (!req.session.id) {
       return res.status(400).json({ error: 'Invalid session' });
     }
     
     // Validate request body
     const createOrderSchema = z.object({
-      billingAddress: z.object({
-        firstName: z.string().min(2),
-        lastName: z.string().min(2),
+      (match) => match.replace(':', '')object({
+        (match) => match.replace(':', '')string().min(2),
+        (match) => match.replace(':', '')string().min(2),
         address1: z.string().min(5),
         address2: z.string().optional(),
-        city: z.string().min(2),
-        state: z.string().min(2),
-        postalCode: z.string().min(3),
-        country: z.string().min(2),
-        email: z.string().email(),
-        phone: z.string().optional()
+        (match) => match.replace(':', '')string().min(2),
+        (match) => match.replace(':', '')string().min(2),
+        (match) => match.replace(':', '')string().min(3),
+        (match) => match.replace(':', '')string().min(2),
+        (match) => match.replace(':', '')string().email(),
+        (match) => match.replace(':', '')string().optional()
 }),
-      shippingAddress: z.object({
-        firstName: z.string().min(2),
-        lastName: z.string().min(2),
+      (match) => match.replace(':', '')object({
+        (match) => match.replace(':', '')string().min(2),
+        (match) => match.replace(':', '')string().min(2),
         address1: z.string().min(5),
         address2: z.string().optional(),
-        city: z.string().min(2),
-        state: z.string().min(2),
-        postalCode: z.string().min(3),
-        country: z.string().min(2),
-        email: z.string().email(),
-        phone: z.string().optional()
+        (match) => match.replace(':', '')string().min(2),
+        (match) => match.replace(':', '')string().min(2),
+        (match) => match.replace(':', '')string().min(3),
+        (match) => match.replace(':', '')string().min(2),
+        (match) => match.replace(':', '')string().email(),
+        (match) => match.replace(':', '')string().optional()
 }),
-      paymentMethod: z.string(),
-      paymentId: z.string().optional(),
-      customerNote: z.string().optional()
+      (match) => match.replace(':', '')string(),
+      (match) => match.replace(':', '')string().optional(),
+      (match) => match.replace(':', '')string().optional()
     });
     
     const validatedData = createOrderSchema.parse(req.body);
@@ -916,12 +916,12 @@ router.post('/orders', async (req: Request, res: Response) => {
 
 // Get order by ID
 router.get('/orders/:orderId', async (req: Request, res: Response) => {
-  try: {
+  try {
     if (!req.session.userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     
-    const: { orderId } = req.params;
+    const { orderId } = req.params;
     
     // Get the order
     const orderResult = await db.select()
@@ -955,7 +955,7 @@ router.get('/orders/:orderId', async (req: Request, res: Response) => {
 
 // Get user orders
 router.get('/user/orders', async (req: Request, res: Response) => {
-  try: {
+  try {
     if (!req.session.userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -975,17 +975,17 @@ router.get('/user/orders', async (req: Request, res: Response) => {
 
 // Apply coupon to cart
 router.post('/cart/coupon', async (req: Request, res: Response) => {
-  try: {
+  try {
     if (!req.session.id) {
       return res.status(400).json({ error: 'Invalid session' });
     }
     
     // Validate request body
     const couponSchema = z.object({
-      code: z.string()
+      (match) => match.replace(':', '')string()
 });
     
-    const: { code } = couponSchema.parse(req.body);
+    const { code } = couponSchema.parse(req.body);
     
     // Find the coupon
     const couponResult = await db.select()
@@ -1062,7 +1062,7 @@ router.post('/cart/coupon', async (req: Request, res: Response) => {
     let discount = 0;
     if (coupon.discountType === 'percentage') {
       discount = subtotal * (coupon.discountValue / 100);
-} else: {
+} else {
       discount = coupon.discountValue;
 }
     

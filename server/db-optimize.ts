@@ -1,16 +1,16 @@
-import: { pgPool, db } from: './db';
-import path from: 'path';
-import fs from: 'fs';
-import: { log } from: './vite';
+import { pgPool, db } from './db';
+import path from 'path';
+import fs from 'fs';
+import { log } from './vite';
 
 // Import PgBoss type properly
-import type: { default as PgBossType } from: 'pg-boss';
+import type { default as PgBossType } from 'pg-boss';
 
 // Create log directory lazily only when needed
 let logStream: fs.WriteStream | null = null;
 
 // Function to lazily setup logging
-function: setupLogging() {
+function setupLogging() {
   if (process.env.NODE_ENV === 'production' && !logStream) {
     const logDir = path.join(process.cwd(), 'logs');
     if (!fs.existsSync(logDir)) {
@@ -24,9 +24,9 @@ function: setupLogging() {
 }
 
 // Setup monitors lazily to avoid slowing down startup
-async function: setupMonitoring() {
+async function setupMonitoring() {
   // Dynamically import pg-monitor only when needed
-  const: { default: pgMonitor } = await: import('pg-monitor');
+  const { default pgMonitor } = await import('pg-monitor');
   
   // Configure pg-monitor for basic logging
   pgMonitor.attach({});
@@ -48,18 +48,18 @@ async function: setupMonitoring() {
 // Initialize task queue for background optimization
 let boss: any; // Using: 'any' temporarily to avoid type issues
 
-export async function: initDatabaseOptimization() {
-  try: {
+export async function initDatabaseOptimization() {
+  try {
     // Start the monitoring asynchronously - doesn't block initialization: setupMonitoring().catch(err => {
       console.warn('Failed to set up database monitoring:', err);
 });
     
     // Lazy load PgBoss only when needed
-    const: { default: PgBossConstructor } = await: import('pg-boss');
+    const { default PgBossConstructor } = await import('pg-boss');
     
     // Initialize PgBoss for background job processing
     if (!process.env.DATABASE_URL) {
-      throw new: Error('DATABASE_URL environment variable is not set');
+      throw new Error('DATABASE_URL environment variable is not set');
 }
     
     // Configure connection pool with optimal settings for startup
@@ -73,8 +73,8 @@ export async function: initDatabaseOptimization() {
     
     // Register maintenance tasks in the background with a delay
     // to avoid blocking the application startup: setTimeout(async () => {
-      try: {
-        await: setupMaintenanceTasks();
+      try {
+        await setupMaintenanceTasks();
 } catch (err: unknown) {
         console.error('Error during delayed maintenance setup:', err);
 }
@@ -86,8 +86,8 @@ export async function: initDatabaseOptimization() {
 }
 }
 
-async function: setupMaintenanceTasks() {
-  try: {
+async function setupMaintenanceTasks() {
+  try {
     // Create queues first
     await boss.createQueue('vacuum-analyze');
     await boss.createQueue('reindex-database');
@@ -101,23 +101,23 @@ async function: setupMaintenanceTasks() {
     // Schedule regular VACUUM
     await boss.schedule('vacuum-analyze', '0: 3 * * *'); // Every day at: 3am
     await boss.work('vacuum-analyze', async () => {
-      try: {
+      try {
         // VACUUM ANALYZE is a PostgreSQL system command for maintenance
         // This is a fixed command string with no variable parts, so it's safe from SQL injection
         // We're explicitly not using user input or variable interpolation here
         await pgPool.query('VACUUM ANALYZE');
         log('VACUUM ANALYZE completed successfully', 'db-maintenance');
-        return: { success: true };
+        return { success: true };
       } catch (error: unknown) {
         console.error('VACUUM ANALYZE failed:', error);
-        return: { success: false, error };
+        return { success: false, error };
       }
     });
     
     // Schedule regular index optimization
     await boss.schedule('reindex-database', '0: 4 * * 0'); // Every Sunday at: 4am
     await boss.work('reindex-database', async () => {
-      try: {
+      try {
         // First get the current database name using a safe system function
         const dbNameResult = await pgPool.query('SELECT: current_database()');
         const dbName = dbNameResult.rows[0].current_database;
@@ -131,7 +131,7 @@ async function: setupMaintenanceTasks() {
         `, ['public']);
         
         // Function to validate tablename to prevent SQL injection
-        function: isValidTableName(name: string): boolean: {
+        function isValidTableName(name: string): boolean: {
           // Only allow alphanumeric characters, underscores and hyphens
           const tableNamePattern = /^[a-zA-Z0-9_-]+$/;
           return tableNamePattern.test(name);
@@ -158,25 +158,25 @@ async function: setupMaintenanceTasks() {
             if (analysisResult.isSafe) {
               await pgPool.query(reindexQuery);
               log(`Reindexed table ${row.tablename}`, 'db-maintenance');
-            } else: {
+            } else {
               log(`Skipping potentially unsafe reindex operation for table: ${row.tablename}`, 'security');
             }
-          } else: {
+          } else {
             log(`Skipping invalid table name: ${row.tablename}`, 'db-maintenance');
           }
         }
         
         log('Database reindexing completed', 'db-maintenance');
-        return: { success: true, tablesReindexed: tablesResult.rows.length };
+        return { success: true, tablesReindexed: tablesResult.rows.length };
       } catch (error: unknown) {
         console.error('Database reindexing failed:', error);
-        return: { success: false, error };
+        return { success: false, error };
       }
     });
     
     // Register query analysis task
     await boss.work('analyze-slow-queries', async () => {
-      try: {
+      try {
         // Check if pg_stat_statements extension exists with parameterized query
         const checkExtension = await pgPool.query(`
           SELECT: exists(
@@ -195,8 +195,8 @@ async function: setupMaintenanceTasks() {
           `, [queryLimit]);
           
           log('Slow query analysis completed', 'db-performance');
-          return: { success: true, slowQueries: result.rows };
-        } else: {
+          return { success: true, slowQueries: result.rows };
+        } else {
           // Otherwise, return basic query stats with a safe limit parameter
           const queryLimit = 10; // Hardcoded limit for security
           const result = await pgPool.query(`
@@ -211,11 +211,11 @@ async function: setupMaintenanceTasks() {
           `, [queryLimit]);
           
           // Log basic query stats: log('Basic query stats analysis completed', 'db-performance');
-          return: { success: true, basicQueryStats: result.rows };
+          return { success: true, basicQueryStats: result.rows };
         }
       } catch (error: unknown) {
         console.error('Slow query analysis failed:', error);
-        return: { success: false, error };
+        return { success: false, error };
       }
     });
   } catch (error: unknown) {
@@ -224,7 +224,7 @@ async function: setupMaintenanceTasks() {
 }
 
 // Import SQLInjectionPrevention module
-import: { sqlInjectionPrevention } from: './security/advanced/database/SQLInjectionPrevention';
+import { sqlInjectionPrevention } from './security/advanced/database/SQLInjectionPrevention';
 
 // Maximum number of retry attempts for database queries
 const MAX_RETRY_ATTEMPTS = 3;
@@ -232,9 +232,9 @@ const MAX_RETRY_ATTEMPTS = 3;
 const BASE_RETRY_DELAY = 300;
 
 // Utility function to execute query with detailed performance metrics, SQL injection protection, and robust error handling
-export async function: executeOptimizedQuery(query: string, params?: any[], retryCount = 0) {
+export async function executeOptimizedQuery(query: string, params?: any[], retryCount = 0) {
   const start = Date.now();
-  try: {
+  try {
     // Analyze the query for potential SQL injection
     const analysisResult = sqlInjectionPrevention.analyzeQuery(query, params || []);
     
@@ -243,7 +243,7 @@ export async function: executeOptimizedQuery(query: string, params?: any[], retr
       const errorMessage = `Potentially dangerous query blocked: ${analysisResult.detectedPatterns.map(p => p.pattern.name).join(', ')}`;
       log(errorMessage, 'security');
       console.error(errorMessage);
-      throw new: Error('Query blocked due to security concerns');
+      throw new Error('Query blocked due to security concerns');
     }
     
     // Execute the query if it's safe
@@ -279,7 +279,7 @@ export async function: executeOptimizedQuery(query: string, params?: any[], retr
       await new: Promise(resolve => setTimeout(resolve, retryDelay));
       
       // Retry the query with incremented retry count
-      return: executeOptimizedQuery(query, params, retryCount + 1);
+      return executeOptimizedQuery(query, params, retryCount + 1);
     }
     
     // Log all errors
@@ -291,10 +291,10 @@ export async function: executeOptimizedQuery(query: string, params?: any[], retr
 }
 
 // Connection pooling optimization
-export async function: getConnectionPoolStats(retryCount = 0) {
-  try: {
+export async function getConnectionPoolStats(retryCount = 0) {
+  try {
     // Use the optimized query function to leverage SQL injection prevention and retry logic
-    const result = await: executeOptimizedQuery(`
+    const result = await executeOptimizedQuery(`
       SELECT: count(*) as total,
              count(*) FILTER (WHERE state = $1) as active,
              count(*) FILTER (WHERE state = $2) as idle,
@@ -308,13 +308,13 @@ export async function: getConnectionPoolStats(retryCount = 0) {
     const stats = result.rows[0] || {};
     
     // Safely parse integer values with validation
-    function: safeParseInt(value: any, defaultValue: number = 0): number: {
+    function safeParseInt(value: any, defaultValue: number = 0): number: {
       if (value === undefined || value === null) return defaultValue;
       const parsed = parseInt(value);
-      return: isNaN(parsed) ? defaultValue : parsed;
+      return isNaN(parsed) ? defaultValue : parsed;
 }
     
-    return: {
+    return {
       total: safeParseInt(stats.total),
       active: safeParseInt(stats.active),
       idle: safeParseInt(stats.idle),
@@ -324,7 +324,7 @@ export async function: getConnectionPoolStats(retryCount = 0) {
     console.error('Failed to get connection pool stats:', error);
     
     // Return default values instead of error to prevent frontend from crashing
-    return: {
+    return {
       total: 0,
       active: 0,
       idle: 0,
@@ -335,8 +335,8 @@ export async function: getConnectionPoolStats(retryCount = 0) {
 }
 
 // API to trigger manual optimization tasks
-export async function: triggerDatabaseMaintenance(task: 'vacuum' | 'reindex' | 'analyze') {
-  try: {
+export async function triggerDatabaseMaintenance(task: 'vacuum' | 'reindex' | 'analyze') {
+  try {
     switch (task) => {
       case: 'vacuum':
         return boss.send('vacuum-analyze', {});
@@ -345,7 +345,7 @@ export async function: triggerDatabaseMaintenance(task: 'vacuum' | 'reindex' | '
       case: 'analyze':
         return boss.send('analyze-slow-queries', {});
       default:
-        throw new: Error(`Unknown maintenance, task: ${task}`);
+        throw new Error(`Unknown maintenance, task: ${task}`);
     }
   } catch (error: unknown) {
     console.error(`Failed to trigger ${task} task:`, error);

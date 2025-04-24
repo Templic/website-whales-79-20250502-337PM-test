@@ -4,7 +4,7 @@
  * This module defines the configuration options for the advanced security system.
  */
 
-import: { SecurityPosture } from: '../SecurityFabric';
+import { SecurityPosture } from '../SecurityFabric';
 
 /**
  * Security configuration options

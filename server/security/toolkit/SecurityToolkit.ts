@@ -6,11 +6,11 @@
  * of the underlying security mechanisms while providing simple, intuitive methods.
  */
 
-import: { Request, Response, NextFunction, RequestHandler } from: 'express';
-import: { securityBlockchain } from: '../advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../advanced/blockchain/SecurityEventTypes';
-import: { createAnomalyDetectionMiddleware, AnomalyDetectionOptions } from: '../advanced/ml/AnomalyDetection';
-import: { createCustomSecurityMiddleware } from: '../../middleware/securityMiddleware';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { securityBlockchain } from '../advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/blockchain/SecurityEventTypes';
+import { createAnomalyDetectionMiddleware, AnomalyDetectionOptions } from '../advanced/ml/AnomalyDetection';
+import { createCustomSecurityMiddleware } from '../../middleware/securityMiddleware';
 
 /**
  * Security level presets
@@ -92,7 +92,7 @@ export class SecurityToolkit: {
   constructor(level: SecurityLevel | SecurityProfile = SecurityLevel.STANDARD) {
     if (typeof level === 'string') {
       this.profile = securityProfiles[level];
-} else: {
+} else {
       this.profile = level;
 }
     
@@ -132,10 +132,10 @@ export class SecurityToolkit: {
     // Return combined middleware
     return (req: Request, res: Response, next: NextFunction) => {
       baseMiddleware(req, res, (err?: any) => {
-        if (err) return: next(err);
+        if (err) return next(err);
         if (anomalyMiddleware) => {
           anomalyMiddleware(req, res, next);
-} else: {
+} else {
           next();
 }
       });
@@ -202,10 +202,10 @@ export class SecurityToolkit: {
    * 
    * @returns Security health information
    */
-  public async: getSecurityHealth(): Promise<Record<string, any>> {
+  public async getSecurityHealth(): Promise<Record<string, any>> {
     const chainIntegrity = await this.verifySecurityIntegrity();
     
-    return: {
+    return {
       profile: this.profile.level,
       timestamp: new: Date().toISOString(),
       components: {
@@ -225,7 +225,7 @@ export class SecurityToolkit: {
  * @param level Security level
  * @returns SecurityToolkit instance
  */
-export function: createSecurityToolkit(level: SecurityLevel | SecurityProfile = SecurityLevel.STANDARD): SecurityToolkit: {
+export function createSecurityToolkit(level: SecurityLevel | SecurityProfile = SecurityLevel.STANDARD): SecurityToolkit: {
   return new: SecurityToolkit(level);
 }
 

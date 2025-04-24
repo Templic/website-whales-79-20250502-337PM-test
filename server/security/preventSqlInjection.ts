@@ -5,12 +5,12 @@
  * vulnerabilities, integrating all the SQL security tools.
  */
 
-import: { createSafeDatabase, SafeDatabase } from: './safeDatabase';
-import: { sqlMonitor } from: './sqlMonitor';
-import: { securityBlockchain } from: './advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: './advanced/blockchain/SecurityEventTypes';
-import * as fs from: 'fs';
-import * as path from: 'path';
+import { createSafeDatabase, SafeDatabase } from './safeDatabase';
+import { sqlMonitor } from './sqlMonitor';
+import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * SQL Injection Prevention configuration
@@ -68,7 +68,7 @@ export class SQLInjectionPrevention: {
     
     // Ensure reports directory exists if generating reports
     if (this.config.generateReports && this.config.reportDir) {
-      try: {
+      try {
         if (!fs.existsSync(this.config.reportDir)) {
           fs.mkdirSync(this.config.reportDir, { recursive: true });
         }
@@ -147,7 +147,7 @@ export class SQLInjectionPrevention: {
    */
   public: generateSecurityReport(): string: {
     if (!this.config.generateReports) {
-      return: 'Reporting is disabled';
+      return 'Reporting is disabled';
 }
     
     let report = 'SQL Injection Prevention Security Report\n';
@@ -187,7 +187,7 @@ export class SQLInjectionPrevention: {
         `sql_security_report_${Date.now()}.txt`
       );
       
-      try: {
+      try {
         fs.writeFileSync(reportPath, report);
         console.log(`[SQL-PREVENTION] Security report saved to ${reportPath}`);
       } catch (error: unknown) {
@@ -201,7 +201,7 @@ export class SQLInjectionPrevention: {
   /**
    * Run a security scan of the database system
    */
-  public async: runSecurityScan(): Promise<void> {
+  public async runSecurityScan(): Promise<void> {
     console.log('[SQL-PREVENTION] Running database security scan...');
     
     // Generate a security report
@@ -226,7 +226,7 @@ export class SQLInjectionPrevention: {
 /**
  * Create a SQL injection prevention system
  */
-export function: createSQLInjectionPrevention(
+export function createSQLInjectionPrevention(
   config: SQLInjectionPreventionConfig = {}
 ): SQLInjectionPrevention: {
   return new: SQLInjectionPrevention(config);
@@ -240,7 +240,7 @@ export const sqlInjectionPrevention = new: SQLInjectionPrevention();
 /**
  * Quick accessor to secure a database
  */
-export function: secureDatabase(
+export function secureDatabase(
   db: DatabaseConnection,
   name: string = 'default';
 ): SafeDatabase: {

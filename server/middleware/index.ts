@@ -5,32 +5,32 @@
  * Includes performance optimizations for API response times and resource usage.
  */
 
-import express from: 'express';
-import cors from: 'cors';
-import helmet from: 'helmet';
-import compression from: 'compression';
-import bodyParser from: 'body-parser';
-import cookieParser from: 'cookie-parser';
-import * as expressSession from: 'express-session';
-import csurf from: 'csurf';
-import: { rateLimit } from: 'express-rate-limit';
-import: { errorHandler } from: './errorHandler';
-import: { defaultLimiter } from: './rateLimit';
-import: { checkAuth } from: './auth';
-import: { safeUserMiddleware } from: './safeUserMiddleware';
-import: { loadConfig } from: '../config';
-import: { 
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
+import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
+import * as expressSession from 'express-session';
+import csurf from 'csurf';
+import { rateLimit } from 'express-rate-limit';
+import { errorHandler } from './errorHandler';
+import { defaultLimiter } from './rateLimit';
+import { checkAuth } from './auth';
+import { safeUserMiddleware } from './safeUserMiddleware';
+import { loadConfig } from '../config';
+import { 
   cache, 
   optimizedCompression, 
   responseTime,
   payloadSizeLimit
-} from: './performance';
+} from './performance';
 
 /**
  * Set up all middleware for the Express application
  * Incorporates performance optimizations for faster response times
  */
-export function: setupMiddleware(app: express.Application, sessionSecret: string): void: {
+export function setupMiddleware(app: express.Application, sessionSecret: string): void: {
   const config = loadConfig();
   
   // Request timing middleware for performance monitoring

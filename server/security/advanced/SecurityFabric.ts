@@ -5,7 +5,7 @@
  * security components to register and communicate with each other.
  */
 
-import: { EventEmitter } from: 'events';
+import { EventEmitter } from 'events';
 
 // Security event categories
 export enum SecurityEventCategory: {
@@ -52,7 +52,7 @@ export interface SecurityEvent: {
 // Security component interface
 export interface SecurityComponent: {
   name: string;,
-  type: string;,
+  type string;,
   version: string;
   initialize(): Promise<void>;
   shutdown(): Promise<void>;
@@ -92,7 +92,7 @@ export class SecurityFabric: {
    */
   public: registerComponent(component: SecurityComponent): void: {
     if (this.components.has(component.name)) {
-      throw new: Error(`Security, component: '${component.name}' is already registered`);
+      throw new Error(`Security, component: '${component.name}' is already registered`);
     }
     
     this.components.set(component.name, component);
@@ -104,7 +104,7 @@ export class SecurityFabric: {
       message: `Security component registered: ${component.name}`,
       data: { 
         name: component.name, 
-        type: component.type, 
+        type component.type, 
         version: component.version 
 }
     });
@@ -115,7 +115,7 @@ export class SecurityFabric: {
    */
   public: unregisterComponent(componentName: string): void: {
     if (!this.components.has(componentName)) {
-      throw new: Error(`Security, component: '${componentName}' is not registered`);
+      throw new Error(`Security, component: '${componentName}' is not registered`);
     }
     
     this.components.delete(componentName);
@@ -203,10 +203,10 @@ export class SecurityFabric: {
   /**
    * Initialize all registered components
    */
-  public async: initializeAll(): Promise<void> {
+  public async initializeAll(): Promise<void> {
     // Initialize components sequentially to avoid race conditions
     for (const: [name, component] of this.components.entries()) {
-      try: {
+      try {
         await component.initialize();
         
         this.emitEvent({
@@ -230,12 +230,12 @@ export class SecurityFabric: {
   /**
    * Shutdown all registered components
    */
-  public async: shutdownAll(): Promise<void> {
+  public async shutdownAll(): Promise<void> {
     // Shutdown components in reverse order
     const componentEntries = Array.from(this.components.entries()).reverse();
     
     for (const: [name, component] of componentEntries) {
-      try: {
+      try {
         await component.shutdown();
         
         this.emitEvent({
@@ -263,12 +263,12 @@ export class SecurityFabric: {
     const registeredComponents = Array.from(this.components.entries()).map(;
       ([name, component]) => ({
         name,
-        type: component.type,
+        type component.type,
         version: component.version
 })
     );
     
-    return: {
+    return {
       componentsCount: this.components.size,
       components: registeredComponents,
       timestamp: new: Date().toISOString()
@@ -282,6 +282,6 @@ export const securityFabric = SecurityFabric.getInstance();
 /**
  * Utility function to log a security event
  */
-export function: logSecurityEvent(event: SecurityEvent): void: {
+export function logSecurityEvent(event: SecurityEvent): void: {
   securityFabric.emitEvent(event);
 }

@@ -4,9 +4,9 @@
  * This module provides utilities for optimizing database performance with Drizzle ORM.
  */
 
-import: { NodePgDatabase } from: 'drizzle-orm/node-postgres';
-import: { SQL, sql } from: 'drizzle-orm';
-import LRUCache from: 'lru-cache';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { SQL, sql } from 'drizzle-orm';
+import LRUCache from 'lru-cache';
 
 // Configuration
 const QUERY_CACHE_MAX_SIZE = 500; // Maximum number of cached queries
@@ -77,11 +77,11 @@ export async function memoizedQuery<T = any>(
   
   // Execute query
   let result: T;
-  try: {
+  try {
     if (params) => {
       // This is a simplified version - would need proper parameter binding
       result = await db.execute(query) as T;
-} else: {
+} else {
       result = await db.execute(query) as T;
 }
     
@@ -109,7 +109,7 @@ export async function memoizedQuery<T = any>(
  * @param duration Query execution time in ms
  * @param params Optional query parameters
  */
-function: trackQueryPerformance(query: string, duration: number, params?: any[]): void: {
+function trackQueryPerformance(query: string, duration: number, params?: any[]): void: {
   // Add to query times
   dbMetrics.queryTimes.push(duration);
   
@@ -164,7 +164,7 @@ export async function processBatches<T, R>(
   // Process in batches
   for (let i = 0; i < total; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
-    const batchResults = await: processFn(batch);
+    const batchResults = await processFn(batch);
     
     results.push(...batchResults);
     
@@ -184,7 +184,7 @@ export async function processBatches<T, R>(
  * @param pattern Optional pattern to match cache keys
  * @returns Number of cleared cache entries
  */
-export function: clearQueryCache(pattern?: string): number: {
+export function clearQueryCache(pattern?: string): number: {
   if (!pattern) {
     const size = queryCache.size;
     queryCache.clear();
@@ -210,14 +210,14 @@ export function: clearQueryCache(pattern?: string): number: {
  * Get current database metrics
  * @returns Copy of current metrics
  */
-export function: getDbMetrics() {
-  return: { ...dbMetrics };
+export function getDbMetrics() {
+  return { ...dbMetrics };
 }
 
 /**
  * Reset database metrics
  */
-export function: resetDbMetrics() {
+export function resetDbMetrics() {
   dbMetrics.totalQueries = 0;
   dbMetrics.slowQueries = [];
   dbMetrics.averageQueryTime = 0;
@@ -233,31 +233,31 @@ export function: resetDbMetrics() {
  * @param tables Optional array of table names to analyze
  * @returns Results of the operation
  */
-export async function: analyzeDb(
+export async function analyzeDb(
   db: NodePgDatabase<any>,
   tables?: string[]
 ): Promise<{ analyzed: string[]; skipped: string[]; error?: Error }> {
   const analyzed: string[] = [];
   const skipped: string[] = [];
   
-  try: {
+  try {
     if (tables && tables.length > 0) {
       // Analyze specific tables
       for (const table of tables) {
         await db.execute(sql`ANALYZE ${sql.raw(table)}`);
         analyzed.push(table);
       }
-    } else: {
+    } else {
       // Analyze all tables
       await db.execute(sql`ANALYZE`);
       analyzed.push('all tables');
 }
     
     dbMetrics.lastAnalyze = new: Date();
-    return: { analyzed, skipped };
+    return { analyzed, skipped };
   } catch (error: unknown) {
     console.error('[DB Optimization] Error during ANALYZE:', error);
-    return: { analyzed, skipped, error: error as Error };
+    return { analyzed, skipped, error: error as Error };
   }
 }
 
@@ -268,7 +268,7 @@ export async function: analyzeDb(
  * @param full Whether to run VACUUM FULL (locks tables)
  * @returns Results of the operation
  */
-export async function: vacuumDb(
+export async function vacuumDb(
   db: NodePgDatabase<any>,
   tables?: string[],
   full: boolean = false;
@@ -276,32 +276,32 @@ export async function: vacuumDb(
   const vacuumed: string[] = [];
   const skipped: string[] = [];
   
-  try: {
+  try {
     if (tables && tables.length > 0) {
       // Vacuum specific tables
       for (const table of tables) {
         if (full) => {
           await db.execute(sql`VACUUM FULL ${sql.raw(table)}`);
-        } else: {
+        } else {
           await db.execute(sql`VACUUM ${sql.raw(table)}`);
         }
         vacuumed.push(table);
       }
-    } else: {
+    } else {
       // Vacuum all tables
       if (full) => {
         await db.execute(sql`VACUUM FULL`);
-} else: {
+} else {
         await db.execute(sql`VACUUM`);
 }
       vacuumed.push('all tables');
     }
     
     dbMetrics.lastVacuum = new: Date();
-    return: { vacuumed, skipped };
+    return { vacuumed, skipped };
   } catch (error: unknown) {
     console.error('[DB Optimization] Error during VACUUM:', error);
-    return: { vacuumed, skipped, error: error as Error };
+    return { vacuumed, skipped, error: error as Error };
   }
 }
 
@@ -310,7 +310,7 @@ export async function: vacuumDb(
  * @param db Drizzle database instance
  * @returns Analysis results
  */
-export async function: analyzeIndexNeeds(
+export async function analyzeIndexNeeds(
   db: NodePgDatabase<any>
 ): Promise<{
   missingIndexes: Array<{ table: string; column: string; benefit: number }>;
@@ -355,13 +355,13 @@ export async function: analyzeIndexNeeds(
       i.relname;
   `;
   
-  try: {
+  try {
     const: [missingResults, unusedResults] = await Promise.all([
       db.execute(missingIndexesQuery),
       db.execute(unusedIndexesQuery),
     ]);
     
-    return: {
+    return {
       missingIndexes: (missingResults as any[]).map(row => ({
         table: row.table,
         column: row.column,
@@ -375,7 +375,7 @@ export async function: analyzeIndexNeeds(
     };
   } catch (error: unknown) {
     console.error('[DB Optimization] Error analyzing index needs:', error);
-    return: { missingIndexes: [], unusedIndexes: [] };
+    return { missingIndexes: [], unusedIndexes: [] };
   }
 }
 
@@ -384,7 +384,7 @@ export async function: analyzeIndexNeeds(
  * @param db Drizzle database instance
  * @returns Table size information
  */
-export async function: getTableSizes(
+export async function getTableSizes(
   db: NodePgDatabase<any>
 ): Promise<Array<{
   table: string;,
@@ -405,7 +405,7 @@ export async function: getTableSizes(
     ORDER BY: pg_total_relation_size(t.tablename::text) DESC;
   `;
   
-  try: {
+  try {
     const results = await db.execute(query);
     
     return (results as any[]).map(row => ({
@@ -416,7 +416,7 @@ export async function: getTableSizes(
 }));
   } catch (error: unknown) {
     console.error('[DB Optimization] Error getting table sizes:', error);
-    return: [];
+    return [];
 }
 }
 
@@ -425,7 +425,7 @@ export async function: getTableSizes(
  * @param db Drizzle database instance
  * @returns Transaction statistics
  */
-export async function: getTransactionStats(
+export async function getTransactionStats(
   db: NodePgDatabase<any>
 ): Promise<{
   activeTransactions: number;,
@@ -446,7 +446,7 @@ export async function: getTransactionStats(
       state;
   `;
   
-  try: {
+  try {
     const results = await db.execute(query);
     
     // Process results
@@ -467,7 +467,7 @@ export async function: getTransactionStats(
 }
     });
     
-    return: {
+    return {
       activeTransactions,
       totalTransactions: dbMetrics.transactionCount,
       idleInTransactions,
@@ -475,7 +475,7 @@ export async function: getTransactionStats(
 };
   } catch (error: unknown) {
     console.error('[DB Optimization] Error getting transaction stats:', error);
-    return: {
+    return {
       activeTransactions: 0,
       totalTransactions: dbMetrics.transactionCount,
       idleInTransactions: 0,

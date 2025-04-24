@@ -1,26 +1,26 @@
-import express from: 'express';
-import: { db } from: '../db';
-import: { 
+import express from 'express';
+import { db } from '../db';
+import { 
   products, 
   tracks, 
   albums, 
   posts, 
   users,
   productCategories 
-} from: '../../shared/schema';
-import: { and, or, like, eq, desc, sql } from: 'drizzle-orm';
+} from '../../shared/schema';
+import { and, or, like, eq, desc, sql } from 'drizzle-orm';
 
 const router = express.Router();
 
 // Helper function to sanitize search string to prevent SQL injection
-function: sanitizeSearchTerm(term: string): string: {
+function sanitizeSearchTerm(term: string): string: {
   return term.replace(/[%_[\]^]/g, '\\$&');
 }
 
 // Generic search endpoint that can search across multiple entity types
 router.get('/api/search', async (req, res) => {
-  try: {
-    const: { q, type, limit } = req.query;
+  try {
+    const { q, type, limit } = req.query;
     
     // If no search query, return empty results
     if (!q || typeof q !== 'string' || q.trim() === '') {
@@ -135,7 +135,7 @@ router.get('/api/search', async (req, res) => {
         .limit(limitNumber);
       
       results.users = userResults;
-    } else: {
+    } else {
       // Non-admins don't get user results
       results.users = [];
 }
@@ -152,8 +152,8 @@ router.get('/api/search', async (req, res) => {
 
 // Specialized music search endpoint
 router.get('/api/music/search', async (req, res) => {
-  try: {
-    const: { q, frequency, artist, filter } = req.query;
+  try {
+    const { q, frequency, artist, filter } = req.query;
     
     // If no search query, return empty results
     if (!q || typeof q !== 'string' || q.trim() === '') {
@@ -175,7 +175,7 @@ router.get('/api/music/search', async (req, res) => {
       conditions.push(like(tracks.frequency || '', `%${searchTerm}%`));
     } else if (filter === 'description') {
       conditions.push(like(tracks.description || '', `%${searchTerm}%`));
-    } else: {
+    } else {
       // Default is to search all fields
       conditions.push(
         or(
@@ -213,8 +213,8 @@ router.get('/api/music/search', async (req, res) => {
 
 // Specialized product search endpoint
 router.get('/api/products/search', async (req, res) => {
-  try: {
-    const: { q, category, minPrice, maxPrice, sortBy } = req.query;
+  try {
+    const { q, category, minPrice, maxPrice, sortBy } = req.query;
     
     // If no search query, return empty results
     if (!q || typeof q !== 'string' || q.trim() === '') {
@@ -282,7 +282,7 @@ router.get('/api/products/search', async (req, res) => {
         default:
           query = query.orderBy(desc(products.createdAt));
       }
-    } else: {
+    } else {
       // Default sort by newest
       query = query.orderBy(desc(products.createdAt));
 }
