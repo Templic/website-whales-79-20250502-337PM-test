@@ -10,6 +10,7 @@ import * as path from 'path';
 import { tsErrorStorage } from '../tsErrorStorage';
 import { ERROR_CATEGORIES, ERROR_SEVERITY, ERROR_STATUS, TypeScriptError } from './ts-error-analyzer';
 import { InsertErrorFix, InsertErrorFixHistory } from '../../shared/schema';
+import { generateAIFix, analyzeErrorWithAI, isOpenAIConfigured } from './openai-integration';
 
 // Fix application methods
 export enum FixMethod {
