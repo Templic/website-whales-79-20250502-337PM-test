@@ -602,6 +602,186 @@ export type InsertContentUsage = z.infer<typeof insertContentUsageSchema>;
 export type WorkflowNotification = typeof workflowNotifications.$inferSelect;
 export type InsertWorkflowNotification = z.infer<typeof insertWorkflowNotificationSchema>;
 
+// TypeScript Error Management System Tables
+
+// Error severity enum
+export const errorSeverityEnum = pgEnum("error_severity", [
+  "critical", 
+  "high", 
+  "medium", 
+  "low", 
+  "info"
+]);
+
+// Error status enum
+export const errorStatusEnum = pgEnum("error_status", [
+  "detected", 
+  "analyzing", 
+  "fixed", 
+  "ignored", 
+  "in_progress",
+  "needs_review"
+]);
+
+// Error category enum
+export const errorCategoryEnum = pgEnum("error_category", [
+  "type_mismatch", 
+  "missing_type", 
+  "undefined_variable", 
+  "null_reference", 
+  "interface_mismatch",
+  "import_error",
+  "syntax_error",
+  "generic_constraint",
+  "declaration_error",
+  "other"
+]);
+
+// TypeScript errors table
+export const typescriptErrors = pgTable("typescript_errors", {
+  id: serial("id").primaryKey(),
+  errorCode: text("error_code").notNull(),
+  filePath: text("file_path").notNull(),
+  lineNumber: integer("line_number").notNull(),
+  columnNumber: integer("column_number").notNull(),
+  errorMessage: text("error_message").notNull(),
+  errorContext: text("error_context").notNull(),
+  category: errorCategoryEnum("category").notNull(),
+  severity: errorSeverityEnum("severity").notNull(),
+  status: errorStatusEnum("status").notNull().default("detected"),
+  detectedAt: timestamp("detected_at").notNull().defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+  fixId: integer("fix_id"),
+  patternId: integer("pattern_id"),
+  userId: integer("user_id"),
+  metadata: jsonb("metadata").$type<{
+    tscVersion?: string;
+    nodeVersion?: string;
+    compiler_options?: Record<string, any>;
+    stack_trace?: string;
+    related_errors?: number[];
+  }>(),
+  firstDetectedAt: timestamp("first_detected_at").notNull().defaultNow(),
+  occurrenceCount: integer("occurrence_count").notNull().default(1),
+  lastOccurrenceAt: timestamp("last_occurrence_at").notNull().defaultNow(),
+});
+
+// Error patterns table - for categorizing similar errors
+export const errorPatterns = pgTable("error_patterns", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  regex: text("regex"),
+  category: errorCategoryEnum("category").notNull(),
+  severity: errorSeverityEnum("severity").notNull(),
+  detectionRules: jsonb("detection_rules").$type<{
+    code_patterns?: string[];
+    message_patterns?: string[];
+    context_clues?: string[];
+  }>(),
+  autoFixable: boolean("auto_fixable").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at"),
+  createdBy: integer("created_by").references(() => users.id),
+});
+
+// Error fixes table
+export const errorFixes = pgTable("error_fixes", {
+  id: serial("id").primaryKey(),
+  patternId: integer("pattern_id").references(() => errorPatterns.id),
+  fixTitle: text("fix_title").notNull(),
+  fixDescription: text("fix_description").notNull(),
+  fixCode: text("fix_code").notNull(),
+  fixType: text("fix_type", { enum: ["automatic", "semi-automatic", "manual"] }).notNull(),
+  fixPriority: integer("fix_priority").notNull().default(0),
+  successRate: numeric("success_rate", { precision: 5, scale: 2 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at"),
+  createdBy: integer("created_by").references(() => users.id),
+});
+
+// Error fix history table
+export const errorFixHistory = pgTable("error_fix_history", {
+  id: serial("id").primaryKey(),
+  errorId: integer("error_id").notNull().references(() => typescriptErrors.id),
+  fixId: integer("fix_id").references(() => errorFixes.id),
+  originalCode: text("original_code").notNull(),
+  fixedCode: text("fixed_code").notNull(),
+  fixedAt: timestamp("fixed_at").notNull().defaultNow(),
+  fixedBy: integer("fixed_by").references(() => users.id),
+  fixDuration: integer("fix_duration"), // in milliseconds
+  fixMethod: text("fix_method", { enum: ["automatic", "assisted", "manual"] }).notNull(),
+  fixResult: text("fix_result", { enum: ["success", "partial", "failure"] }).notNull(),
+  notes: text("notes"),
+});
+
+// Project analysis records
+export const projectAnalyses = pgTable("project_analyses", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+  errorCount: integer("error_count"),
+  warningCount: integer("warning_count"),
+  fixedCount: integer("fixed_count"),
+  analysisData: jsonb("analysis_data"),
+  status: text("status", { enum: ["in_progress", "completed", "failed"] }).notNull().default("in_progress"),
+  duration: integer("duration"), // in milliseconds
+  executedBy: integer("executed_by").references(() => users.id),
+});
+
+// Project files
+export const projectFiles = pgTable("project_files", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  filePath: text("file_path").notNull(),
+  fileType: text("file_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  lastCheckedAt: timestamp("last_checked_at").notNull().defaultNow(),
+  errorCount: integer("error_count").notNull().default(0),
+  warningCount: integer("warning_count").notNull().default(0),
+  lastModifiedAt: timestamp("last_modified_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Insert schemas for TypeScript error management tables
+export const insertTypescriptErrorSchema = createInsertSchema(typescriptErrors)
+  .omit({ id: true, detectedAt: true, firstDetectedAt: true, lastOccurrenceAt: true });
+
+export const insertErrorPatternSchema = createInsertSchema(errorPatterns)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertErrorFixSchema = createInsertSchema(errorFixes)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertErrorFixHistorySchema = createInsertSchema(errorFixHistory)
+  .omit({ id: true, fixedAt: true });
+
+export const insertProjectAnalysisSchema = createInsertSchema(projectAnalyses)
+  .omit({ id: true, startedAt: true, completedAt: true });
+
+export const insertProjectFileSchema = createInsertSchema(projectFiles)
+  .omit({ id: true, lastCheckedAt: true, createdAt: true });
+
+// Types for TypeScript error management tables
+export type TypescriptError = typeof typescriptErrors.$inferSelect;
+export type InsertTypescriptError = z.infer<typeof insertTypescriptErrorSchema>;
+
+export type ErrorPattern = typeof errorPatterns.$inferSelect;
+export type InsertErrorPattern = z.infer<typeof insertErrorPatternSchema>;
+
+export type ErrorFix = typeof errorFixes.$inferSelect;
+export type InsertErrorFix = z.infer<typeof insertErrorFixSchema>;
+
+export type ErrorFixHistory = typeof errorFixHistory.$inferSelect;
+export type InsertErrorFixHistory = z.infer<typeof insertErrorFixHistorySchema>;
+
+export type ProjectAnalysis = typeof projectAnalyses.$inferSelect;
+export type InsertProjectAnalysis = z.infer<typeof insertProjectAnalysisSchema>;
+
+export type ProjectFile = typeof projectFiles.$inferSelect;
+export type InsertProjectFile = z.infer<typeof insertProjectFileSchema>;
+
 // Content relations
 export const contentItemRelations = relations(contentItems, ({ one, many }) => ({
   history: many(contentHistory),
@@ -707,5 +887,61 @@ export const cartItemRelations = relations(cartItems, ({ one }) => ({
   product: one(products, {
     fields: [cartItems.productId],
     references: [products.id],
+  })
+}));
+
+// TypeScript error management relations
+export const typescriptErrorRelations = relations(typescriptErrors, ({ one, many }) => ({
+  pattern: one(errorPatterns, {
+    fields: [typescriptErrors.patternId],
+    references: [errorPatterns.id],
+  }),
+  fixHistory: many(errorFixHistory),
+  user: one(users, {
+    fields: [typescriptErrors.userId],
+    references: [users.id],
+  })
+}));
+
+export const errorPatternRelations = relations(errorPatterns, ({ one, many }) => ({
+  errors: many(typescriptErrors),
+  fixes: many(errorFixes),
+  creator: one(users, {
+    fields: [errorPatterns.createdBy],
+    references: [users.id],
+  })
+}));
+
+export const errorFixRelations = relations(errorFixes, ({ one, many }) => ({
+  pattern: one(errorPatterns, {
+    fields: [errorFixes.patternId],
+    references: [errorPatterns.id],
+  }),
+  fixHistory: many(errorFixHistory),
+  creator: one(users, {
+    fields: [errorFixes.createdBy],
+    references: [users.id],
+  })
+}));
+
+export const errorFixHistoryRelations = relations(errorFixHistory, ({ one }) => ({
+  error: one(typescriptErrors, {
+    fields: [errorFixHistory.errorId],
+    references: [typescriptErrors.id],
+  }),
+  fix: one(errorFixes, {
+    fields: [errorFixHistory.fixId],
+    references: [errorFixes.id],
+  }),
+  user: one(users, {
+    fields: [errorFixHistory.fixedBy],
+    references: [users.id],
+  })
+}));
+
+export const projectAnalysisRelations = relations(projectAnalyses, ({ one }) => ({
+  executor: one(users, {
+    fields: [projectAnalyses.executedBy],
+    references: [users.id],
   })
 }));

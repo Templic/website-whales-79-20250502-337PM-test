@@ -93,6 +93,7 @@ import notificationsRoutes from './routes/notifications';
 import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search/index';
 import csrfRoutes from './routes/csrf-routes';
+import typescriptErrorRoutes from './routes/typescript-error-routes';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 import { protectApiRoutes } from './security/apiRoutesProtector';
 
@@ -2041,6 +2042,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   app.use('/api/content', contentRoutes);
   app.use('/api/content/workflow', contentWorkflowRoutes);
   app.use('/api/notifications', notificationsRoutes);
+  app.use('/api/typescript', typescriptErrorRoutes); // Add TypeScript error management routes
   app.use(mediaRoutes); // Adding media routes for file uploads and management
 
   // Security routes

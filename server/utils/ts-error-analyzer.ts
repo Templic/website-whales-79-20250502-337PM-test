@@ -1,487 +1,426 @@
 /**
  * TypeScript Error Analyzer
  * 
- * This utility analyzes TypeScript errors by parsing compiler output and 
- * categorizing errors by type, severity, and related patterns. It provides
- * detailed information about each error and suggests potential fixes.
+ * This utility analyzes TypeScript errors, categorizes them, and provides diagnostic information
+ * to help identify patterns and root causes.
  */
 
-import { spawn } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+import { execSync } from 'child_process';
+import * as path from 'path';
+import * as fs from 'fs';
+import { tsErrorStorage } from '../tsErrorStorage';
+import { InsertTypescriptError } from '../../shared/schema';
 
-// Error category types
-export type ErrorCategory = 
-  | 'TYPE_MISMATCH' 
-  | 'MISSING_PROPERTY' 
-  | 'IMPLICIT_ANY' 
-  | 'UNUSED_VARIABLE'
-  | 'NULL_UNDEFINED'
-  | 'MODULE_NOT_FOUND'
-  | 'SYNTAX_ERROR'
-  | 'INTERFACE_ERROR'
-  | 'TYPE_ARGUMENT'
-  | 'CIRCULAR_REFERENCE'
-  | 'OTHER';
+// Error category definitions
+export const ERROR_CATEGORIES = {
+  TYPE_MISMATCH: 'type_mismatch',
+  MISSING_TYPE: 'missing_type', 
+  UNDEFINED_VARIABLE: 'undefined_variable',
+  NULL_UNDEFINED: 'null_undefined',
+  SYNTAX_ERROR: 'syntax_error',
+  IMPORT_ERROR: 'import_error',
+  DECLARATION_ERROR: 'declaration_error',
+  MODULE_ERROR: 'module_error',
+  CONFIGURATION_ERROR: 'configuration_error',
+  OTHER: 'other'
+};
 
-// Error severity
-export type ErrorSeverity = 'critical' | 'high' | 'medium' | 'low';
+// Error severity levels
+export const ERROR_SEVERITY = {
+  CRITICAL: 'critical',   // Breaks compilation/runtime
+  HIGH: 'high',           // Major functionality issues
+  MEDIUM: 'medium',       // Moderate issues that should be fixed
+  LOW: 'low',             // Minor issues, code works but could be improved
+  INFO: 'info'            // Informational only
+};
 
-// Structured error information
+// Error status types
+export const ERROR_STATUS = {
+  DETECTED: 'detected',
+  ANALYZING: 'analyzing',
+  PATTERN_IDENTIFIED: 'pattern_identified',
+  FIX_AVAILABLE: 'fix_available',
+  FIX_APPLIED: 'fix_applied',
+  FIXED: 'fixed',
+  REQUIRES_MANUAL_FIX: 'requires_manual_fix',
+  FALSE_POSITIVE: 'false_positive',
+  IGNORED: 'ignored'
+};
+
+// TypeScript error object structure
 export interface TypeScriptError {
-  // Error location
   filePath: string;
   line: number;
   column: number;
-  
-  // Error details
   code: string;
   message: string;
-  
-  // Analyzed information
-  category: ErrorCategory;
-  severity: ErrorSeverity;
-  relatedTypes?: string[];
-  suggestedFix?: string;
-  
-  // Context
-  lineContent?: string;
-  nearbyCode?: string[];
-}
-
-// Analysis results
-export interface ErrorAnalysisResult {
-  // Summary
-  totalErrors: number;
-  criticalErrors: number;
-  highSeverityErrors: number;
-  mediumSeverityErrors: number;
-  lowSeverityErrors: number;
-  
-  // Groupings
-  errorsByCategory: Record<ErrorCategory, TypeScriptError[]>;
-  errorsByFile: Record<string, TypeScriptError[]>;
-  errorsByCode: Record<string, TypeScriptError[]>;
-  
-  // All errors
-  errors: TypeScriptError[];
-  
-  // Analysis metadata
-  timestamp: number;
-  projectRoot: string;
-  tsConfigPath: string;
+  category: string;
+  severity: string;
+  context?: string;
+  suggestions?: string[];
 }
 
 /**
- * Categorizes an error message into an error category
+ * Parses the output of 'tsc --noEmit' to extract TypeScript errors
  */
-function categorizeError(message: string): ErrorCategory {
-  if (
-    message.includes('is not assignable to type') ||
-    message.includes('is not assignable to parameter') ||
-    message.includes('has no properties in common with type')
-  ) {
-    return 'TYPE_MISMATCH';
-  }
-  
-  if (
-    message.includes('Property') && 
-    (message.includes('does not exist on type') || 
-     message.includes('is missing in type'))
-  ) {
-    return 'MISSING_PROPERTY';
-  }
-  
-  if (message.includes('implicitly has an \'any\' type')) {
-    return 'IMPLICIT_ANY';
-  }
-  
-  if (message.includes('is declared but') && message.includes('never used')) {
-    return 'UNUSED_VARIABLE';
-  }
-  
-  if (
-    message.includes('null') || 
-    message.includes('undefined') || 
-    message.includes('is possibly undefined')
-  ) {
-    return 'NULL_UNDEFINED';
-  }
-  
-  if (message.includes('Cannot find module') || message.includes('Cannot find name')) {
-    return 'MODULE_NOT_FOUND';
-  }
-  
-  if (
-    message.includes('expected') || 
-    message.includes('Unexpected') || 
-    message.includes('Declaration expected')
-  ) {
-    return 'SYNTAX_ERROR';
-  }
-  
-  if (
-    message.includes('interface') || 
-    message.includes('type') && 
-    message.includes('extends')
-  ) {
-    return 'INTERFACE_ERROR';
-  }
-  
-  if (message.includes('Type argument')) {
-    return 'TYPE_ARGUMENT';
-  }
-  
-  if (message.includes('circular')) {
-    return 'CIRCULAR_REFERENCE';
-  }
-  
-  return 'OTHER';
-}
-
-/**
- * Determines the severity of an error based on its category and message
- */
-function determineSeverity(category: ErrorCategory, message: string): ErrorSeverity {
-  // Critical errors prevent compilation
-  if (
-    category === 'SYNTAX_ERROR' ||
-    category === 'MODULE_NOT_FOUND' ||
-    category === 'CIRCULAR_REFERENCE'
-  ) {
-    return 'critical';
-  }
-  
-  // High severity errors likely cause runtime issues
-  if (
-    category === 'TYPE_MISMATCH' && 
-    (message.includes('null') || message.includes('undefined')) ||
-    category === 'NULL_UNDEFINED'
-  ) {
-    return 'high';
-  }
-  
-  // Medium severity errors may cause issues or indicate code quality problems
-  if (
-    category === 'TYPE_MISMATCH' ||
-    category === 'MISSING_PROPERTY' ||
-    category === 'IMPLICIT_ANY'
-  ) {
-    return 'medium';
-  }
-  
-  // Low severity errors are mostly style or optimization issues
-  return 'low';
-}
-
-/**
- * Extracts related types from an error message
- */
-function extractRelatedTypes(message: string): string[] {
-  const types: string[] = [];
-  
-  // Extract types from "X is not assignable to type Y" patterns
-  const assignableMatch = message.match(/['"](.+)['"]\s+is not assignable to type\s+['"](.+)['"]/);
-  if (assignableMatch) {
-    types.push(assignableMatch[1], assignableMatch[2]);
-  }
-  
-  // Extract property types
-  const propertyMatch = message.match(/Property\s+['"](.+)['"]\s+does not exist on type\s+['"](.+)['"]/);
-  if (propertyMatch) {
-    types.push(propertyMatch[2]);
-  }
-  
-  // Extract other type references
-  const typeMatches = message.match(/type\s+['"]([^'"]+)['"]/g);
-  if (typeMatches) {
-    typeMatches.forEach(match => {
-      const type = match.replace(/type\s+['"]/, '').replace(/['"]$/, '');
-      if (!types.includes(type)) {
-        types.push(type);
-      }
-    });
-  }
-  
-  return types;
-}
-
-/**
- * Suggests a fix based on the error category and message
- */
-function suggestFix(error: Partial<TypeScriptError>): string | undefined {
-  const { category, message } = error;
-  
-  if (!category || !message) return undefined;
-  
-  switch (category) {
-    case 'TYPE_MISMATCH':
-      if (message.includes('null') || message.includes('undefined')) {
-        return 'Add null/undefined checks before using this value, or use optional chaining (obj?.prop) or nullish coalescing (value ?? defaultValue).';
-      }
-      return 'Ensure the types are compatible or add an explicit type cast if necessary.';
-      
-    case 'MISSING_PROPERTY':
-      const propMatch = message.match(/Property\s+['"](.+)['"]/);
-      if (propMatch) {
-        return `Add the property '${propMatch[1]}' to the object type or check if you meant to use a different property name.`;
-      }
-      return 'Add the missing property to the type, or check for typos in the property name.';
-      
-    case 'IMPLICIT_ANY':
-      return 'Add an explicit type annotation or initialize with a value that has a specific type.';
-      
-    case 'UNUSED_VARIABLE':
-      return 'Remove the unused variable or prefix with an underscore (_) to indicate it\'s intentionally unused.';
-      
-    case 'MODULE_NOT_FOUND':
-      if (message.includes('Cannot find module')) {
-        const moduleMatch = message.match(/Cannot find module\s+['"](.+)['"]/);
-        if (moduleMatch) {
-          return `Check if the module '${moduleMatch[1]}' is installed, or fix the import path.`;
-        }
-      }
-      return 'Check if the module is installed or if the import path is correct.';
-      
-    case 'SYNTAX_ERROR':
-      return 'Fix the syntax error according to TypeScript syntax rules.';
-      
-    case 'INTERFACE_ERROR':
-      return 'Check the interface definition and implementation for compatibility.';
-      
-    case 'TYPE_ARGUMENT':
-      return 'Provide the correct type arguments for the generic type.';
-      
-    case 'CIRCULAR_REFERENCE':
-      return 'Refactor the types to break the circular reference, possibly using interfaces or type intersections.';
-      
-    default:
-      return undefined;
-  }
-}
-
-/**
- * Runs the TypeScript compiler to get error output
- */
-async function runTypeScriptCompiler(projectRoot: string, tsConfigPath: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    // Use npx tsc to run TypeScript compiler
-    const tsc = spawn('npx', ['tsc', '--noEmit', '--project', tsConfigPath], {
-      cwd: projectRoot,
-      shell: true
-    });
-    
-    let stdout = '';
-    let stderr = '';
-    
-    tsc.stdout.on('data', data => {
-      stdout += data.toString();
-    });
-    
-    tsc.stderr.on('data', data => {
-      stderr += data.toString();
-    });
-    
-    tsc.on('close', code => {
-      // Code 0 means no errors, but we want errors
-      if (code === 0) {
-        resolve('');
-      } else {
-        resolve(stdout || stderr);
-      }
-    });
-    
-    tsc.on('error', error => {
-      reject(error);
-    });
-  });
-}
-
-/**
- * Gets the content of a line from a file
- */
-function getLineContent(filePath: string, lineNumber: number): string | undefined {
-  try {
-    if (!fs.existsSync(filePath)) return undefined;
-    
-    const content = fs.readFileSync(filePath, 'utf8');
-    const lines = content.split('\n');
-    
-    // Line numbers are 1-based, but array indices are 0-based
-    return lines[lineNumber - 1];
-  } catch (error) {
-    console.error(`Error reading file ${filePath}:`, error);
-    return undefined;
-  }
-}
-
-/**
- * Gets a few lines of context around a specific line
- */
-function getNearbyCode(filePath: string, lineNumber: number, context = 2): string[] | undefined {
-  try {
-    if (!fs.existsSync(filePath)) return undefined;
-    
-    const content = fs.readFileSync(filePath, 'utf8');
-    const lines = content.split('\n');
-    
-    // Calculate start and end lines with context
-    const start = Math.max(0, lineNumber - 1 - context);
-    const end = Math.min(lines.length - 1, lineNumber - 1 + context);
-    
-    return lines.slice(start, end + 1);
-  } catch (error) {
-    console.error(`Error reading file ${filePath}:`, error);
-    return undefined;
-  }
-}
-
-/**
- * Parses TypeScript error output into structured error objects
- */
-function parseErrorOutput(output: string, projectRoot: string): TypeScriptError[] {
+export function parseTypeScriptOutput(output: string): TypeScriptError[] {
   const errors: TypeScriptError[] = [];
   const errorRegex = /^(.+)\((\d+),(\d+)\): error TS(\d+): (.+)$/gm;
   
   let match;
   while ((match = errorRegex.exec(output)) !== null) {
-    const [_, filePath, lineStr, columnStr, codeNum, message] = match;
-    const line = parseInt(lineStr, 10);
-    const column = parseInt(columnStr, 10);
-    const code = `TS${codeNum}`;
+    const [_, filePath, line, column, code, message] = match;
     
-    // Create structured error object
-    const category = categorizeError(message);
-    const severity = determineSeverity(category, message);
-    const relatedTypes = extractRelatedTypes(message);
+    // Get error context by reading the file content
+    let context = '';
+    try {
+      if (fs.existsSync(filePath)) {
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        const lines = fileContent.split('\n');
+        const lineNumber = parseInt(line);
+        
+        // Get a few lines before and after the error
+        const startLine = Math.max(0, lineNumber - 3);
+        const endLine = Math.min(lines.length, lineNumber + 2);
+        context = lines.slice(startLine, endLine).join('\n');
+      }
+    } catch (error) {
+      console.error(`Failed to get context for ${filePath}:${line}`, error);
+    }
     
-    const absoluteFilePath = path.isAbsolute(filePath) 
-      ? filePath
-      : path.join(projectRoot, filePath);
-    
-    const error: TypeScriptError = {
-      filePath: absoluteFilePath,
-      line,
-      column,
+    errors.push({
+      filePath,
+      line: parseInt(line),
+      column: parseInt(column),
       code,
       message,
-      category,
-      severity,
-      relatedTypes,
-      lineContent: getLineContent(absoluteFilePath, line),
-      nearbyCode: getNearbyCode(absoluteFilePath, line)
-    };
-    
-    // Add suggested fix
-    error.suggestedFix = suggestFix(error);
-    
-    errors.push(error);
+      category: categorizeError(code, message),
+      severity: determineSeverity(code, message),
+      context
+    });
   }
   
   return errors;
 }
 
 /**
- * Analyzes TypeScript errors in a project
+ * Runs the TypeScript compiler to get error diagnostics
  */
-export async function analyzeTypeScriptErrors(
-  projectRoot: string = process.cwd(),
-  tsConfigPath: string = 'tsconfig.json'
-): Promise<ErrorAnalysisResult> {
-  // Ensure paths are absolute
-  projectRoot = path.resolve(projectRoot);
-  tsConfigPath = path.isAbsolute(tsConfigPath)
-    ? tsConfigPath
-    : path.join(projectRoot, tsConfigPath);
-  
-  // Run TypeScript compiler to get error output
-  const output = await runTypeScriptCompiler(projectRoot, tsConfigPath);
-  
-  // Parse the error output
-  const errors = parseErrorOutput(output, projectRoot);
-  
-  // Group errors by category
-  const errorsByCategory: Record<ErrorCategory, TypeScriptError[]> = {
-    TYPE_MISMATCH: [],
-    MISSING_PROPERTY: [],
-    IMPLICIT_ANY: [],
-    UNUSED_VARIABLE: [],
-    NULL_UNDEFINED: [],
-    MODULE_NOT_FOUND: [],
-    SYNTAX_ERROR: [],
-    INTERFACE_ERROR: [],
-    TYPE_ARGUMENT: [],
-    CIRCULAR_REFERENCE: [],
-    OTHER: []
-  };
-  
-  // Group errors by file
-  const errorsByFile: Record<string, TypeScriptError[]> = {};
-  
-  // Group errors by code
-  const errorsByCode: Record<string, TypeScriptError[]> = {};
-  
-  // Count errors by severity
-  let criticalErrors = 0;
-  let highSeverityErrors = 0;
-  let mediumSeverityErrors = 0;
-  let lowSeverityErrors = 0;
-  
-  // Process each error
-  for (const error of errors) {
-    // Group by category
-    errorsByCategory[error.category].push(error);
-    
-    // Group by file
-    if (!errorsByFile[error.filePath]) {
-      errorsByFile[error.filePath] = [];
+export function runTypeScriptCompiler(): string {
+  try {
+    // Run tsc with --noEmit to just do type checking without emitting files
+    return execSync('npx tsc --noEmit', { encoding: 'utf8' });
+  } catch (error) {
+    // tsc returns a non-zero exit code when there are errors, which throws an exception
+    // We catch it and return the stderr output which contains the error diagnostics
+    if (error.stdout) {
+      return error.stdout.toString();
     }
-    errorsByFile[error.filePath].push(error);
-    
-    // Group by code
-    if (!errorsByCode[error.code]) {
-      errorsByCode[error.code] = [];
-    }
-    errorsByCode[error.code].push(error);
-    
-    // Count by severity
-    switch (error.severity) {
-      case 'critical':
-        criticalErrors++;
-        break;
-      case 'high':
-        highSeverityErrors++;
-        break;
-      case 'medium':
-        mediumSeverityErrors++;
-        break;
-      case 'low':
-        lowSeverityErrors++;
-        break;
-    }
+    throw error;
   }
-  
-  // Build result
-  return {
-    totalErrors: errors.length,
-    criticalErrors,
-    highSeverityErrors,
-    mediumSeverityErrors,
-    lowSeverityErrors,
-    errorsByCategory,
-    errorsByFile,
-    errorsByCode,
-    errors,
-    timestamp: Date.now(),
-    projectRoot,
-    tsConfigPath
-  };
 }
 
+/**
+ * Categorize errors based on error code and message
+ */
+export function categorizeError(code: string, message: string): string {
+  // Type mismatch errors
+  if (
+    message.includes('is not assignable to') || 
+    message.includes('Type') && message.includes('is not assignable')
+  ) {
+    return ERROR_CATEGORIES.TYPE_MISMATCH;
+  }
+  
+  // Missing type annotations
+  if (
+    message.includes('implicitly has an \'any\' type') || 
+    message.includes('parameter') && message.includes('implicitly has an') ||
+    message.includes('no explicit type')
+  ) {
+    return ERROR_CATEGORIES.MISSING_TYPE;
+  }
+  
+  // Undefined variables or properties
+  if (
+    message.includes('cannot find name') || 
+    message.includes('Property') && message.includes('does not exist')
+  ) {
+    return ERROR_CATEGORIES.UNDEFINED_VARIABLE;
+  }
+  
+  // Null or undefined related errors
+  if (
+    message.includes('null') || 
+    message.includes('undefined') || 
+    message.includes('possibly undefined')
+  ) {
+    return ERROR_CATEGORIES.NULL_UNDEFINED;
+  }
+  
+  // Syntax errors
+  if (
+    message.includes('expected') || 
+    message.includes('Declaration or statement expected') ||
+    message.includes('Expression expected')
+  ) {
+    return ERROR_CATEGORIES.SYNTAX_ERROR;
+  }
+  
+  // Import errors
+  if (
+    message.includes('Cannot find module') || 
+    message.includes('has no exported member')
+  ) {
+    return ERROR_CATEGORIES.IMPORT_ERROR;
+  }
+  
+  // Declaration errors
+  if (
+    message.includes('already declared') || 
+    message.includes('Duplicate identifier')
+  ) {
+    return ERROR_CATEGORIES.DECLARATION_ERROR;
+  }
+  
+  // Module errors
+  if (
+    message.includes('module') || 
+    message.includes('namespace')
+  ) {
+    return ERROR_CATEGORIES.MODULE_ERROR;
+  }
+  
+  // Configuration errors
+  if (
+    message.includes('Cannot find name \'require\'') ||
+    message.includes('Cannot find name \'module\'') ||
+    message.includes('Cannot find name \'__dirname\'') ||
+    message.includes('JSX element implicitly')
+  ) {
+    return ERROR_CATEGORIES.CONFIGURATION_ERROR;
+  }
+  
+  // Default to 'other' if we can't categorize
+  return ERROR_CATEGORIES.OTHER;
+}
+
+/**
+ * Determine error severity based on error code and message
+ */
+export function determineSeverity(code: string, message: string): string {
+  // Critical errors that break compilation
+  if (
+    message.includes('Syntax error') ||
+    message.includes('expected')
+  ) {
+    return ERROR_SEVERITY.CRITICAL;
+  }
+  
+  // High severity errors that will likely cause runtime issues
+  if (
+    message.includes('cannot find name') ||
+    message.includes('Property') && message.includes('does not exist') ||
+    message.includes('Cannot find module')
+  ) {
+    return ERROR_SEVERITY.HIGH;
+  }
+  
+  // Medium severity errors - code might run but with unexpected behavior
+  if (
+    message.includes('is not assignable to') ||
+    message.includes('possibly undefined') ||
+    message.includes('implicitly has an \'any\' type')
+  ) {
+    return ERROR_SEVERITY.MEDIUM;
+  }
+  
+  // Low severity - mostly style or best practices issues
+  if (
+    message.includes('is declared but') ||
+    message.includes('but never used')
+  ) {
+    return ERROR_SEVERITY.LOW;
+  }
+  
+  // Default to medium severity if we can't determine
+  return ERROR_SEVERITY.MEDIUM;
+}
+
+/**
+ * Analyzes a project and stores TypeScript errors in the database
+ */
+export async function analyzeProject(): Promise<{ 
+  totalErrors: number; 
+  errorsByCategory: Record<string, number>;
+  errorsBySeverity: Record<string, number>;
+  filesWithErrors: string[];
+}> {
+  console.log('Running TypeScript error analysis...');
+  
+  try {
+    // Run TypeScript compiler and parse output
+    const output = runTypeScriptCompiler();
+    const errors = parseTypeScriptOutput(output);
+    
+    console.log(`Found ${errors.length} TypeScript errors`);
+    
+    // Store errors in database
+    const errorsByCategory: Record<string, number> = {};
+    const errorsBySeverity: Record<string, number> = {};
+    const filesWithErrors: string[] = [];
+    
+    for (const error of errors) {
+      // Track statistics
+      errorsByCategory[error.category] = (errorsByCategory[error.category] || 0) + 1;
+      errorsBySeverity[error.severity] = (errorsBySeverity[error.severity] || 0) + 1;
+      
+      if (!filesWithErrors.includes(error.filePath)) {
+        filesWithErrors.push(error.filePath);
+      }
+      
+      // Create error record for database
+      const errorRecord: InsertTypescriptError = {
+        errorCode: `TS${error.code}`,
+        filePath: error.filePath,
+        lineNumber: error.line,
+        columnNumber: error.column,
+        errorMessage: error.message,
+        errorContext: error.context || '',
+        category: error.category as any,
+        severity: error.severity as any,
+        status: ERROR_STATUS.DETECTED,
+        detectedAt: new Date(),
+        occurrenceCount: 1,
+        lastOccurrenceAt: new Date(),
+        metadata: {
+          suggestions: error.suggestions || []
+        }
+      };
+      
+      try {
+        // Store in database
+        await tsErrorStorage.createTypescriptError(errorRecord);
+      } catch (dbError) {
+        console.error('Failed to store TypeScript error:', dbError);
+      }
+    }
+    
+    return {
+      totalErrors: errors.length,
+      errorsByCategory,
+      errorsBySeverity,
+      filesWithErrors
+    };
+  } catch (error) {
+    console.error('Error analyzing TypeScript project:', error);
+    throw error;
+  }
+}
+
+/**
+ * Generates suggestions for fixing common TypeScript errors
+ */
+export function generateSuggestions(error: TypeScriptError): string[] {
+  const suggestions: string[] = [];
+  
+  switch (error.category) {
+    case ERROR_CATEGORIES.TYPE_MISMATCH:
+      suggestions.push('Check the expected type and ensure your variable matches it');
+      suggestions.push('Use type casting if you\'re confident the type is correct');
+      suggestions.push('Update your interfaces or type definitions to match the implementation');
+      break;
+      
+    case ERROR_CATEGORIES.MISSING_TYPE:
+      suggestions.push('Add explicit type annotations to function parameters');
+      suggestions.push('Define return types for functions');
+      suggestions.push('Use interfaces or type aliases to define complex object shapes');
+      break;
+      
+    case ERROR_CATEGORIES.UNDEFINED_VARIABLE:
+      suggestions.push('Check if the variable or property name is spelled correctly');
+      suggestions.push('Ensure the referenced module or dependency is installed');
+      suggestions.push('Import the required component or function');
+      break;
+      
+    case ERROR_CATEGORIES.NULL_UNDEFINED:
+      suggestions.push('Add null checks before accessing properties');
+      suggestions.push('Use optional chaining (obj?.prop) or nullish coalescing (obj ?? defaultValue)');
+      suggestions.push('Consider using non-null assertion operator (!) if you\'re confident the value exists');
+      break;
+      
+    case ERROR_CATEGORIES.SYNTAX_ERROR:
+      suggestions.push('Check for missing semicolons, parentheses, or braces');
+      suggestions.push('Ensure all blocks and statements are properly closed');
+      suggestions.push('Verify that function declarations have proper parameter lists and return types');
+      break;
+      
+    case ERROR_CATEGORIES.IMPORT_ERROR:
+      suggestions.push('Verify the import path is correct');
+      suggestions.push('Check if the module is installed and listed in package.json');
+      suggestions.push('Make sure the exported member name matches what you\'re trying to import');
+      break;
+      
+    case ERROR_CATEGORIES.DECLARATION_ERROR:
+      suggestions.push('Rename one of the duplicate variables or functions');
+      suggestions.push('Use namespaces or modules to avoid name conflicts');
+      suggestions.push('Check if you\'re redeclaring a variable in the same scope');
+      break;
+      
+    case ERROR_CATEGORIES.MODULE_ERROR:
+      suggestions.push('Add proper module declarations or update tsconfig.json');
+      suggestions.push('Ensure the module exists and is properly exported');
+      suggestions.push('Check for namespace or module naming conflicts');
+      break;
+      
+    case ERROR_CATEGORIES.CONFIGURATION_ERROR:
+      suggestions.push('Update your tsconfig.json settings');
+      suggestions.push('Ensure you have the right target and module settings for your environment');
+      suggestions.push('Add appropriate type definitions (@types/...) for external libraries');
+      break;
+      
+    default:
+      suggestions.push('Review the error message carefully for hints on how to fix it');
+      suggestions.push('Check TypeScript documentation for this specific error code');
+      suggestions.push('Consider refactoring the code to use simpler types or patterns');
+  }
+  
+  return suggestions;
+}
+
+/**
+ * Gets context for a TypeScript error by reading the file
+ */
+export function getErrorContext(filePath: string, line: number, column: number): string {
+  try {
+    if (!fs.existsSync(filePath)) {
+      return '';
+    }
+    
+    const content = fs.readFileSync(filePath, 'utf8');
+    const lines = content.split('\n');
+    
+    // Get a window of code around the error
+    const startLine = Math.max(0, line - 3);
+    const endLine = Math.min(lines.length, line + 2);
+    
+    return lines.slice(startLine, endLine).join('\n');
+  } catch (error) {
+    console.error(`Failed to get context for ${filePath}:${line}:${column}`, error);
+    return '';
+  }
+}
+
+// Export the module
 export default {
-  analyzeTypeScriptErrors,
+  analyzeProject,
+  parseTypeScriptOutput,
+  runTypeScriptCompiler,
   categorizeError,
   determineSeverity,
-  extractRelatedTypes,
-  suggestFix
+  generateSuggestions,
+  getErrorContext,
+  ERROR_CATEGORIES,
+  ERROR_SEVERITY,
+  ERROR_STATUS
 };
