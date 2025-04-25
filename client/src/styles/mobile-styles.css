@@ -92,8 +92,10 @@
 /* Mobile-optimized geometric section content */
 .geometric-section-mobile {
   /* Use more horizontal space on mobile devices */
-  max-width: 98% !important;
-  margin: 0.75rem auto !important;
+  max-width: 100% !important;
+  margin: 0.5rem auto !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
 }
 
 .geometric-section-mobile .section-content {
@@ -132,28 +134,28 @@
   .cosmic-heading-responsive {
     font-size: 2.5rem;
   }
-  
+
   .cosmic-heading-responsive-sm {
     font-size: 1.5rem;
   }
-  
+
   .cosmic-text-responsive {
     font-size: 1.125rem;
   }
-  
+
   .cosmic-text-responsive-sm {
     font-size: 1rem;
   }
-  
+
   .sacred-geometry-container {
     padding: 1.5rem;
     margin: 1rem 0;
   }
-  
+
   .sacred-geometry-text {
     -webkit-line-clamp: 10;
   }
-  
+
   .clip-path-octagon {
     padding: 1.5rem;
   }
@@ -163,16 +165,16 @@
   .cosmic-heading-responsive {
     font-size: 3rem;
   }
-  
+
   .cosmic-heading-responsive-sm {
     font-size: 1.75rem;
   }
-  
+
   .sacred-geometry-container {
     padding: 2rem;
     margin: 1.5rem 0;
   }
-  
+
   .clip-path-hexagon .container-text,
   .clip-path-pentagon .container-text,
   .clip-path-octagon .container-text,
@@ -214,12 +216,12 @@
     scroll-behavior: smooth;
     scrollbar-width: thin;
   }
-  
+
   .scroll-container::-webkit-scrollbar {
     height: 6px;
     width: 6px;
   }
-  
+
   .scroll-container::-webkit-scrollbar-thumb {
     background-color: rgba(120, 120, 120, 0.5);
     border-radius: 3px;

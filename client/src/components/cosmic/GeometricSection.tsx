@@ -205,7 +205,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
               background: `linear-gradient(135deg, ${variantColors[variant].border} 0%, transparent 70%)`,
               opacity: 0.4
             }}></div>
-            
+
             {/* Decorative shapes inside */}
             <CosmicShapeGroup
               shapes={[
@@ -224,7 +224,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
             />
           </>
         )}
-        
+
         {shape === 'wave' && (
           <CosmicShapeGroup
             shapes={[
@@ -278,65 +278,63 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
   // Calculate content width based on shape type and the contentWidth prop
   // Now with responsive widths for mobile devices, giving more space for text
   const getContentWidthStyle = () => {
-    if (typeof contentWidth === 'number') {
-      // For numerical width, make it wider on mobile to use more space
-      // We avoid using window.innerWidth since it might not be available during SSR
-      return isMobile ? `${contentWidth * 1.2}px` : `${contentWidth}px`;
-    }
-
-    // Helper to get mobile-adjusted width - using MORE width on mobile, not less
-    const getMobileWidth = (standardWidth: string): string => {
-      // Parse the percentage and make it wider on mobile
-      const percentage = parseInt(standardWidth);
-      if (!isNaN(percentage) && isMobile) {
-        // On mobile, we want to use more screen real estate, not less
-        // Increase width by 10-15% on mobile for better text display
-        const mobilePercentage = Math.min(percentage + 15, 95); // Don't exceed 95%
-        return `${mobilePercentage}%`;
+      if (typeof contentWidth === 'number') {
+        return isMobile ? `${contentWidth * 1.4}px` : `${contentWidth}px`;
       }
-      return standardWidth;
-    };
 
-    // Default widths based on shape type if textContained is true
-    if (textContained) {
-      switch(shape) {
-        case 'diamond':
-        case 'rounded-diamond':
-          // For mobile, we want to actually use MORE space, not less
-          return isMobile ? '90%' : '70%';
-        case 'hexagon':
-        case 'symmetric-hexagon':
-        case 'octagon':
-          return isMobile ? '92%' : '75%';
-        case 'shield':
-        case 'pentagon':
-        case 'pointed-pentagon':
-        case 'pentagram':
-          return isMobile ? '93%' : '80%';
-        case 'wave':
-        case 'trapezoid':
-        case 'parallelogram':
-          return isMobile ? '94%' : '85%';
-        case 'rectangular':
-          return isMobile ? '95%' : '95%';
-        default:
+      // Helper to get mobile-adjusted width - using MORE width on mobile, not less
+      const getMobileWidth = (standardWidth: string): string => {
+        // Parse the percentage and make it wider on mobile
+        const percentage = parseInt(standardWidth);
+        if (!isNaN(percentage) && isMobile) {
+          // On mobile, we want to use more screen real estate, not less
+          // Increase width by 10-15% on mobile for better text display
+          const mobilePercentage = Math.min(percentage + 15, 95); // Don't exceed 95%
+          return `${mobilePercentage}%`;
+        }
+        return standardWidth;
+      };
+
+      // Default widths based on shape type if textContained is true
+      if (textContained) {
+        switch(shape) {
+          case 'diamond':
+          case 'rounded-diamond':
+            // For mobile, we want to actually use MORE space, not less
+            return isMobile ? '90%' : '70%';
+          case 'hexagon':
+          case 'symmetric-hexagon':
+          case 'octagon':
+            return isMobile ? '92%' : '75%';
+          case 'shield':
+          case 'pentagon':
+          case 'pointed-pentagon':
+          case 'pentagram':
+            return isMobile ? '93%' : '80%';
+          case 'wave':
+          case 'trapezoid':
+          case 'parallelogram':
+            return isMobile ? '94%' : '85%';
+          case 'rectangular':
+            return isMobile ? '95%' : '95%';
+          default:
+            return isMobile ? '92%' : '80%';
+        }
+      }
+
+      // If textContained is false or contentWidth is explicitly set
+      switch(contentWidth) {
+        case 'narrow':
+          return isMobile ? '90%' : '60%';
+        case 'standard':
           return isMobile ? '92%' : '80%';
+        case 'wide':
+          return isMobile ? '95%' : '95%';
+        case 'auto':
+        default:
+          return '100%';
       }
-    }
-
-    // If textContained is false or contentWidth is explicitly set
-    switch(contentWidth) {
-      case 'narrow':
-        return isMobile ? '90%' : '60%';
-      case 'standard':
-        return isMobile ? '92%' : '80%';
-      case 'wide':
-        return isMobile ? '95%' : '95%';
-      case 'auto':
-      default:
-        return '100%';
-    }
-  };
+    };
 
   // Calculate padding based on shape to ensure text doesn't overflow
   // For mobile, we use much less padding to maximize text space
@@ -363,7 +361,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
           return { padding: '5%' };
       }
     }
-    
+
     // Non-mobile padding (unchanged from original)
     switch(shape) {
       case 'diamond':
