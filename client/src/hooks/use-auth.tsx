@@ -9,17 +9,20 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import axios from 'axios';
 import { useToast } from "@/hooks/use-toast";
 
-// Define User type with proper typing
+// Define User type with proper typing matching the schema.ts definition
 export interface User {
-  id: number;
+  id: string;
   username: string;
-  email: string;
+  email: string | null;
   role: 'user' | 'admin' | 'super_admin';
   isBanned: boolean;
-  twoFactorEnabled: boolean;
-  lastLogin?: string;
-  createdAt: string;
-  updatedAt?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  bio?: string | null;
+  profileImageUrl?: string | null;
+  lastLogin?: Date | string | null;
+  createdAt: Date | string | null;
+  updatedAt?: Date | string | null;
 }
 
 // Define token response interface
@@ -160,32 +163,41 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       try {
         setIsLoading(true);
         
-        // Check if we have a token stored
-        const token = localStorage.getItem(ACCESS_TOKEN_KEY);
-        const storedUserData = localStorage.getItem(USER_DATA_KEY);
+        // Check if we have user data in either localStorage (for persistent login)
+        // or sessionStorage (for current session only)
+        const storedUserData = localStorage.getItem(USER_DATA_KEY) || 
+                                sessionStorage.getItem('currentUser');
         
-        if (!token || !storedUserData) {
-          // No valid token or user data found
+        if (!storedUserData) {
+          // No user data found
           setUser(null);
           setIsLoading(false);
           return;
         }
         
-        // Parse stored user data
-        const userData = JSON.parse(storedUserData) as User;
+        // Check if 2FA is required from previous login
+        const requires2FA = sessionStorage.getItem('requires2FA') === 'true';
+        if (requires2FA) {
+          setRequires2FA(true);
+          setIsLoading(false);
+          return;
+        }
         
-        // Verify the token by making a request to validate the token
         try {
-          await api.get('/auth/verify');
+          // Parse stored user data
+          const userData = JSON.parse(storedUserData) as User;
+          
+          // Set user state directly from stored data
           setUser(userData);
+          
+          // Optional: you can still verify with the server if needed
+          // await api.get('/api/auth/user');
         } catch (error) {
-          // Token invalid, try to refresh
-          const refreshed = await refreshToken();
-          if (!refreshed) {
-            // Refresh failed, clear user data
-            setUser(null);
-            localStorage.removeItem(USER_DATA_KEY);
-          }
+          console.error('Failed to parse user data:', error);
+          // Clear invalid data
+          localStorage.removeItem(USER_DATA_KEY);
+          sessionStorage.removeItem('currentUser');
+          setUser(null);
         }
       } catch (error) {
         console.error('Auth check error:', error);

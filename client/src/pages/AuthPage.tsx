@@ -4,7 +4,7 @@
  * Authentication page for login, registration, and two-factor authentication.
  */
 import { useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth"; // Import from updated auth hook
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";

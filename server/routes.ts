@@ -64,13 +64,16 @@ function createSafeUser(user: User | null | undefined) {
     email: user.email,
     role: user.role,
     isBanned: user.isBanned,
-    twoFactorEnabled: user.twoFactorEnabled,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    bio: user.bio,
+    profileImageUrl: user.profileImageUrl,
     lastLogin: user.lastLogin,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt
   };
   
-  console.log("Returning safe user:", safeUser.username);
+  console.log("Sanitized login response for:", safeUser.username);
   return safeUser;
 }
 import { hashPassword } from "./auth";
@@ -301,6 +304,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             email: 'admin@example.com',
             role: 'admin',
             isBanned: false,
+            firstName: "Admin",
+            lastName: "User",
+            bio: "Administrator account",
+            profileImageUrl: null,
             lastLogin: null,
             createdAt: new Date(),
             updatedAt: new Date()
@@ -311,6 +318,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             email: 'superadmin@example.com',
             role: 'super_admin',
             isBanned: false,
+            firstName: "Super",
+            lastName: "Admin",
+            bio: "Super Administrator account",
+            profileImageUrl: null,
             lastLogin: null,
             createdAt: new Date(),
             updatedAt: new Date()
@@ -321,6 +332,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             email: 'user@example.com',
             role: 'user',
             isBanned: false,
+            firstName: "Regular",
+            lastName: "User",
+            bio: "Regular user account",
+            profileImageUrl: null,
             lastLogin: null,
             createdAt: new Date(),
             updatedAt: new Date()
