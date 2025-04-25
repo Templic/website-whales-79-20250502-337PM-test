@@ -93,9 +93,18 @@ export async function applyFix(
         result = patternFixResult.result;
         break;
         
+      case FixMethod.AI_ASSISTED:
+        // Apply AI-assisted fix using pattern-based replacement
+        if (fix.patternMatch && fix.replacementTemplate) {
+          const aiFixResult = applyPatternBasedFix(content, fix);
+          fixedContent = aiFixResult.content;
+          result = aiFixResult.result;
+          break;
+        }
+        // If there's no pattern match, fall through to the next case
+        
       case FixMethod.SEMI_AUTOMATED:
       case FixMethod.MANUAL:
-      case FixMethod.AI_ASSISTED:
       default:
         // For now, these methods are not automatically applied
         // We just return guidance for manual fixing
@@ -304,7 +313,7 @@ export async function findFixesForError(error: TypeScriptError): Promise<Fix[]> 
   // Try to find pattern-based fixes first
   let fixes: Fix[] = [];
   
-  // Check if we have a pattern in the database that matches this error
+  // Step 1: Check if we have a pattern in the database that matches this error
   try {
     const errorPatterns = await tsErrorStorage.getErrorPatternsByCategory(error.category);
     
@@ -332,7 +341,47 @@ export async function findFixesForError(error: TypeScriptError): Promise<Fix[]> 
     console.error('Error fetching fixes from database:', dbError);
   }
   
-  // If we don't have any fixes from the database, add some default fixes based on error category
+  // Step 2: Try to generate AI-assisted fix if OpenAI is configured
+  try {
+    if (isOpenAIConfigured() && fixes.length === 0) {
+      console.log(`Attempting to generate AI fix for error at ${error.filePath}:${error.line}:${error.column}`);
+      
+      // Read the file content
+      if (fs.existsSync(error.filePath)) {
+        const fileContent = fs.readFileSync(error.filePath, 'utf8');
+        
+        // Generate AI fix
+        const aiFix = await generateAIFix(
+          {
+            ...error,
+            lineNumber: error.line,
+            columnNumber: error.column,
+            errorMessage: error.messageText.toString(),
+            errorCode: `TS${error.code}`
+          }, 
+          fileContent
+        );
+        
+        if (aiFix) {
+          console.log('Generated AI fix for error:', aiFix.name);
+          fixes.push(aiFix);
+          
+          // Store the AI-generated fix in the database for future use
+          try {
+            const fixId = await storeErrorFix(aiFix);
+            console.log(`AI fix stored with ID: ${fixId}`);
+            aiFix.id = fixId;
+          } catch (storeError) {
+            console.error('Error storing AI fix:', storeError);
+          }
+        }
+      }
+    }
+  } catch (aiError) {
+    console.error('Error generating AI fix:', aiError);
+  }
+  
+  // Step 3: If no fixes found yet, add default fixes based on error category
   if (fixes.length === 0) {
     // Add default fixes based on error category
     switch (error.category) {

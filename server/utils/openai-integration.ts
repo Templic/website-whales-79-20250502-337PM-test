@@ -21,7 +21,14 @@ const openai = new OpenAI({
 interface ErrorContext {
   sourceCode: string;
   filePath: string;
-  error: TypeScriptError;
+  error: {
+    errorCode: string;
+    errorMessage: string;
+    lineNumber: number;
+    columnNumber: number;
+    category: string;
+    severity: string;
+  };
   projectContext?: {
     tsConfigPath?: string;
     dependencies?: Record<string, string>;
