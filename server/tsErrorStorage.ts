@@ -1,503 +1,453 @@
-import { db } from "./db";
-import { 
-  typescriptErrors, 
-  errorPatterns, 
-  errorFixes, 
-  errorFixHistory, 
-  projectAnalyses, 
+/**
+ * TypeScript Error Storage
+ * 
+ * Dedicated storage class for managing TypeScript errors, patterns, fixes, and analysis results.
+ * This is separated from the main storage to keep the codebase organized.
+ */
+
+import { db } from './db';
+import { eq, and, gte, desc, asc, sql, count, like, isNull, not, or } from 'drizzle-orm';
+import {
+  typescriptErrors,
+  errorPatterns,
+  errorFixes,
+  errorFixHistory,
+  projectAnalyses,
   projectFiles,
-  users,
   InsertTypescriptError,
-  TypescriptError,
   InsertErrorPattern,
-  ErrorPattern,
   InsertErrorFix,
-  ErrorFix,
   InsertErrorFixHistory,
-  ErrorFixHistory,
   InsertProjectAnalysis,
-  ProjectAnalysis,
   InsertProjectFile,
+  TypescriptError,
+  ErrorPattern,
+  ErrorFix,
+  ErrorFixHistory,
+  ProjectAnalysis,
   ProjectFile
-} from "../shared/schema";
-import { and, eq, gt, desc, count, sql } from "drizzle-orm";
+} from '../shared/schema';
 
 /**
- * TypeScript Error Storage Manager
- * Handles all database operations related to TypeScript error tracking and management
+ * Storage class for TypeScript error management
  */
 export class TSErrorStorage {
-  // Error tracking methods
+  /**
+   * Create a new TypeScript error
+   */
   async createTypescriptError(error: InsertTypescriptError): Promise<TypescriptError> {
-    try {
-      // Check if error already exists
-      const existingErrors = await db.select()
-        .from(typescriptErrors)
-        .where(
-          and(
-            eq(typescriptErrors.errorCode, error.errorCode),
-            eq(typescriptErrors.filePath, error.filePath),
-            eq(typescriptErrors.lineNumber, error.lineNumber),
-            eq(typescriptErrors.columnNumber, error.columnNumber)
-          )
-        );
-
-      // If error already exists, increment the occurrence count
-      if (existingErrors.length > 0) {
-        const existingError = existingErrors[0];
-        const [updatedError] = await db.update(typescriptErrors)
-          .set({
-            occurrenceCount: existingError.occurrenceCount + 1,
-            lastOccurrenceAt: new Date(),
-            // Update other fields if needed
-            status: error.status || existingError.status,
-            errorMessage: error.errorMessage || existingError.errorMessage,
-            errorContext: error.errorContext || existingError.errorContext,
-            category: error.category || existingError.category,
-            severity: error.severity || existingError.severity,
-            metadata: error.metadata || existingError.metadata
-          })
-          .where(eq(typescriptErrors.id, existingError.id))
-          .returning();
-        return updatedError;
-      }
-
-      // Otherwise, create a new error
-      const [newError] = await db.insert(typescriptErrors)
-        .values(error)
+    // Check if this exact error already exists
+    const existingErrors = await db
+      .select()
+      .from(typescriptErrors)
+      .where(and(
+        eq(typescriptErrors.filePath, error.filePath),
+        eq(typescriptErrors.lineNumber, error.lineNumber),
+        eq(typescriptErrors.columnNumber, error.columnNumber),
+        eq(typescriptErrors.errorCode, error.errorCode)
+      ));
+    
+    if (existingErrors.length > 0) {
+      // Update the existing error
+      const existingError = existingErrors[0];
+      const [updatedError] = await db
+        .update(typescriptErrors)
+        .set({
+          occurrenceCount: existingError.occurrenceCount + 1,
+          lastOccurrenceAt: new Date(),
+          metadata: {
+            ...existingError.metadata,
+            ...error.metadata
+          }
+        })
+        .where(eq(typescriptErrors.id, existingError.id))
         .returning();
-      return newError;
-    } catch (err) {
-      console.error("Error creating TypeScript error:", err);
-      throw err;
+      
+      return updatedError;
     }
-  }
-
-  async getTypescriptErrorById(id: number): Promise<TypescriptError | null> {
-    const result = await db.select().from(typescriptErrors).where(eq(typescriptErrors.id, id));
-    return result[0] || null;
-  }
-
-  async updateTypescriptError(id: number, error: Partial<InsertTypescriptError>): Promise<TypescriptError> {
-    const [updatedError] = await db.update(typescriptErrors)
-      .set({ ...error })
-      .where(eq(typescriptErrors.id, id))
+    
+    // Create a new error
+    const [newError] = await db
+      .insert(typescriptErrors)
+      .values(error)
       .returning();
-    return updatedError;
+    
+    return newError;
   }
-
+  
+  /**
+   * Get all TypeScript errors with optional filtering
+   */
   async getAllTypescriptErrors(filters?: {
-    status?: string;
-    severity?: string;
-    category?: string;
     filePath?: string;
+    errorCode?: string;
+    category?: string;
+    severity?: string;
+    status?: string;
+    userId?: number;
+    patternId?: number;
+    fixId?: number;
     fromDate?: Date;
     toDate?: Date;
   }): Promise<TypescriptError[]> {
     let query = db.select().from(typescriptErrors);
     
     if (filters) {
-      const conditions = [];
-      
-      if (filters.status) {
-        conditions.push(eq(typescriptErrors.status, filters.status as any));
-      }
-      
-      if (filters.severity) {
-        conditions.push(eq(typescriptErrors.severity, filters.severity as any));
-      }
-      
-      if (filters.category) {
-        conditions.push(eq(typescriptErrors.category, filters.category as any));
-      }
-      
       if (filters.filePath) {
-        conditions.push(eq(typescriptErrors.filePath, filters.filePath));
+        query = query.where(like(typescriptErrors.filePath, `%${filters.filePath}%`));
       }
-      
+      if (filters.errorCode) {
+        query = query.where(eq(typescriptErrors.errorCode, filters.errorCode));
+      }
+      if (filters.category) {
+        query = query.where(eq(typescriptErrors.category, filters.category as any));
+      }
+      if (filters.severity) {
+        query = query.where(eq(typescriptErrors.severity, filters.severity as any));
+      }
+      if (filters.status) {
+        query = query.where(eq(typescriptErrors.status, filters.status as any));
+      }
+      if (filters.userId) {
+        query = query.where(eq(typescriptErrors.userId, filters.userId));
+      }
+      if (filters.patternId) {
+        query = query.where(eq(typescriptErrors.patternId, filters.patternId));
+      }
       if (filters.fromDate) {
-        conditions.push(sql`${typescriptErrors.detectedAt} >= ${filters.fromDate}`);
+        query = query.where(gte(typescriptErrors.detectedAt, filters.fromDate));
       }
-      
       if (filters.toDate) {
-        conditions.push(sql`${typescriptErrors.detectedAt} <= ${filters.toDate}`);
-      }
-      
-      if (conditions.length > 0) {
-        query = query.where(and(...conditions));
+        query = query.where(gte(typescriptErrors.detectedAt, filters.toDate));
       }
     }
     
-    query = query.orderBy(
-      desc(typescriptErrors.severity),
-      desc(typescriptErrors.occurrenceCount),
-      desc(typescriptErrors.lastOccurrenceAt)
-    );
-    
-    return await query;
+    return await query.orderBy(desc(typescriptErrors.detectedAt));
   }
-
-  async getTypescriptErrorStats(fromDate?: Date, toDate?: Date): Promise<{
-    totalErrors: number;
-    bySeverity: Record<string, number>;
-    byCategory: Record<string, number>;
-    byStatus: Record<string, number>;
-    topFiles: Array<{ filePath: string; count: number }>;
-    fixRate: number;
-  }> {
-    // Create date filters if provided
-    const dateFilters = [];
-    if (fromDate) {
-      dateFilters.push(sql`${typescriptErrors.detectedAt} >= ${fromDate}`);
-    }
-    if (toDate) {
-      dateFilters.push(sql`${typescriptErrors.detectedAt} <= ${toDate}`);
-    }
+  
+  /**
+   * Get a specific TypeScript error by ID
+   */
+  async getTypescriptError(id: number): Promise<TypescriptError | undefined> {
+    const [error] = await db
+      .select()
+      .from(typescriptErrors)
+      .where(eq(typescriptErrors.id, id));
     
-    // Get total errors
-    const totalErrorsResult = await db.select({
-      count: count()
-    }).from(typescriptErrors)
-    .where(dateFilters.length > 0 ? and(...dateFilters) : undefined);
-    
-    const totalErrors = Number(totalErrorsResult[0]?.count || 0);
-    
-    // Get errors by severity
-    const bySeverityResult = await db.select({
-      severity: typescriptErrors.severity,
-      count: count()
-    }).from(typescriptErrors)
-    .where(dateFilters.length > 0 ? and(...dateFilters) : undefined)
-    .groupBy(typescriptErrors.severity);
-    
-    const bySeverity: Record<string, number> = {};
-    bySeverityResult.forEach(row => {
-      bySeverity[row.severity] = Number(row.count);
-    });
-    
-    // Get errors by category
-    const byCategoryResult = await db.select({
-      category: typescriptErrors.category,
-      count: count()
-    }).from(typescriptErrors)
-    .where(dateFilters.length > 0 ? and(...dateFilters) : undefined)
-    .groupBy(typescriptErrors.category);
-    
-    const byCategory: Record<string, number> = {};
-    byCategoryResult.forEach(row => {
-      byCategory[row.category] = Number(row.count);
-    });
-    
-    // Get errors by status
-    const byStatusResult = await db.select({
-      status: typescriptErrors.status,
-      count: count()
-    }).from(typescriptErrors)
-    .where(dateFilters.length > 0 ? and(...dateFilters) : undefined)
-    .groupBy(typescriptErrors.status);
-    
-    const byStatus: Record<string, number> = {};
-    byStatusResult.forEach(row => {
-      byStatus[row.status] = Number(row.count);
-    });
-    
-    // Get top files with errors
-    const topFilesResult = await db.select({
-      filePath: typescriptErrors.filePath,
-      count: count()
-    }).from(typescriptErrors)
-    .where(dateFilters.length > 0 ? and(...dateFilters) : undefined)
-    .groupBy(typescriptErrors.filePath)
-    .orderBy(sql`count(*) desc`)
-    .limit(10);
-    
-    const topFiles = topFilesResult.map(row => ({
-      filePath: row.filePath,
-      count: Number(row.count)
-    }));
-    
-    // Calculate fix rate (fixed / total)
-    const fixedCount = byStatus['fixed'] || 0;
-    const fixRate = totalErrors > 0 ? (fixedCount / totalErrors) * 100 : 0;
-    
-    return {
-      totalErrors,
-      bySeverity,
-      byCategory,
-      byStatus,
-      topFiles,
-      fixRate
-    };
+    return error;
   }
-
-  async markErrorAsFixed(id: number, fixId: number, userId: number): Promise<TypescriptError> {
-    const now = new Date();
-    const [updatedError] = await db.update(typescriptErrors)
-      .set({
-        status: 'fixed',
-        resolvedAt: now,
-        fixId: fixId,
-        userId: userId
-      })
+  
+  /**
+   * Update a TypeScript error
+   */
+  async updateTypescriptError(
+    id: number, 
+    updates: Partial<Omit<InsertTypescriptError, 'id'>>
+  ): Promise<TypescriptError | undefined> {
+    const [updatedError] = await db
+      .update(typescriptErrors)
+      .set(updates)
       .where(eq(typescriptErrors.id, id))
       .returning();
+    
     return updatedError;
   }
   
-  // Error pattern methods
+  /**
+   * Mark a TypeScript error as fixed
+   */
+  async markErrorAsFixed(
+    id: number, 
+    fixId: number,
+    userId: number
+  ): Promise<TypescriptError | undefined> {
+    const [updatedError] = await db
+      .update(typescriptErrors)
+      .set({
+        status: 'fixed',
+        fixedAt: new Date(),
+        fixedBy: userId,
+        fixId
+      })
+      .where(eq(typescriptErrors.id, id))
+      .returning();
+    
+    return updatedError;
+  }
+  
+  /**
+   * Create a new error pattern
+   */
   async createErrorPattern(pattern: InsertErrorPattern): Promise<ErrorPattern> {
-    const [newPattern] = await db.insert(errorPatterns)
+    const [newPattern] = await db
+      .insert(errorPatterns)
       .values(pattern)
       .returning();
+    
     return newPattern;
   }
-
-  async getErrorPatternById(id: number): Promise<ErrorPattern | null> {
-    const result = await db.select().from(errorPatterns).where(eq(errorPatterns.id, id));
-    return result[0] || null;
-  }
-
-  async updateErrorPattern(id: number, pattern: Partial<InsertErrorPattern>): Promise<ErrorPattern> {
-    const now = new Date();
-    const [updatedPattern] = await db.update(errorPatterns)
-      .set({
-        ...pattern,
-        updatedAt: now
-      })
-      .where(eq(errorPatterns.id, id))
-      .returning();
-    return updatedPattern;
-  }
-
+  
+  /**
+   * Get all error patterns
+   */
   async getAllErrorPatterns(): Promise<ErrorPattern[]> {
-    return await db.select().from(errorPatterns);
-  }
-
-  async getErrorPatternsByCategory(category: string): Promise<ErrorPattern[]> {
-    return await db.select()
+    return await db
+      .select()
       .from(errorPatterns)
-      .where(eq(errorPatterns.category, category as any));
-  }
-
-  async getAutoFixablePatterns(): Promise<ErrorPattern[]> {
-    return await db.select()
-      .from(errorPatterns)
-      .where(eq(errorPatterns.autoFixable, true));
+      .orderBy(desc(errorPatterns.createdAt));
   }
   
-  // Fix methods
+  /**
+   * Get error patterns by category
+   */
+  async getErrorPatternsByCategory(category: string): Promise<ErrorPattern[]> {
+    return await db
+      .select()
+      .from(errorPatterns)
+      .where(eq(errorPatterns.category, category as any))
+      .orderBy(desc(errorPatterns.createdAt));
+  }
+  
+  /**
+   * Get a specific error pattern by ID
+   */
+  async getErrorPattern(id: number): Promise<ErrorPattern | undefined> {
+    const [pattern] = await db
+      .select()
+      .from(errorPatterns)
+      .where(eq(errorPatterns.id, id));
+    
+    return pattern;
+  }
+  
+  /**
+   * Create a new error fix
+   */
   async createErrorFix(fix: InsertErrorFix): Promise<ErrorFix> {
-    const [newFix] = await db.insert(errorFixes)
+    const [newFix] = await db
+      .insert(errorFixes)
       .values(fix)
       .returning();
+    
     return newFix;
   }
-
-  async getErrorFixById(id: number): Promise<ErrorFix | null> {
-    const result = await db.select().from(errorFixes).where(eq(errorFixes.id, id));
-    return result[0] || null;
-  }
-
-  async updateErrorFix(id: number, fix: Partial<InsertErrorFix>): Promise<ErrorFix> {
-    const now = new Date();
-    const [updatedFix] = await db.update(errorFixes)
-      .set({
-        ...fix,
-        updatedAt: now
-      })
-      .where(eq(errorFixes.id, id))
-      .returning();
-    return updatedFix;
-  }
-
+  
+  /**
+   * Get all error fixes
+   */
   async getAllErrorFixes(): Promise<ErrorFix[]> {
-    return await db.select().from(errorFixes);
-  }
-
-  async getFixesByPatternId(patternId: number): Promise<ErrorFix[]> {
-    return await db.select()
+    return await db
+      .select()
       .from(errorFixes)
-      .where(eq(errorFixes.patternId, patternId));
+      .orderBy(desc(errorFixes.createdAt));
   }
   
-  // Fix history methods
-  async createFixHistory(fixHistory: InsertErrorFixHistory): Promise<ErrorFixHistory> {
-    const [newFixHistory] = await db.insert(errorFixHistory)
-      .values(fixHistory)
-      .returning();
-    return newFixHistory;
+  /**
+   * Get fixes by pattern ID
+   */
+  async getFixesByPatternId(patternId: number): Promise<ErrorFix[]> {
+    return await db
+      .select()
+      .from(errorFixes)
+      .where(eq(errorFixes.patternId, patternId))
+      .orderBy(desc(errorFixes.createdAt));
   }
-
-  async getFixHistoryByErrorId(errorId: number): Promise<ErrorFixHistory[]> {
-    return await db.select()
+  
+  /**
+   * Create a new fix history record
+   */
+  async createFixHistory(history: InsertErrorFixHistory): Promise<ErrorFixHistory> {
+    const [newHistory] = await db
+      .insert(errorFixHistory)
+      .values(history)
+      .returning();
+    
+    return newHistory;
+  }
+  
+  /**
+   * Get fix history for an error
+   */
+  async getFixHistoryForError(errorId: number): Promise<ErrorFixHistory[]> {
+    return await db
+      .select()
       .from(errorFixHistory)
       .where(eq(errorFixHistory.errorId, errorId))
       .orderBy(desc(errorFixHistory.fixedAt));
   }
-
-  async getFixHistoryStats(userId?: number, fromDate?: Date, toDate?: Date): Promise<{
-    totalFixes: number;
-    byMethod: Record<string, number>;
-    byResult: Record<string, number>;
-    averageFixTime: number;
-    topFixers: Array<{ userId: number; username: string; count: number }>;
-  }> {
-    // Create filters
-    const filters = [];
-    
-    if (userId) {
-      filters.push(eq(errorFixHistory.fixedBy, userId));
-    }
-    
-    if (fromDate) {
-      filters.push(sql`${errorFixHistory.fixedAt} >= ${fromDate}`);
-    }
-    
-    if (toDate) {
-      filters.push(sql`${errorFixHistory.fixedAt} <= ${toDate}`);
-    }
-    
-    // Get total fixes
-    const totalFixesResult = await db.select({
-      count: count()
-    }).from(errorFixHistory)
-    .where(filters.length > 0 ? and(...filters) : undefined);
-    
-    const totalFixes = Number(totalFixesResult[0]?.count || 0);
-    
-    // Get fixes by method
-    const byMethodResult = await db.select({
-      method: errorFixHistory.fixMethod,
-      count: count()
-    }).from(errorFixHistory)
-    .where(filters.length > 0 ? and(...filters) : undefined)
-    .groupBy(errorFixHistory.fixMethod);
-    
-    const byMethod: Record<string, number> = {};
-    byMethodResult.forEach(row => {
-      byMethod[row.method] = Number(row.count);
-    });
-    
-    // Get fixes by result
-    const byResultResult = await db.select({
-      result: errorFixHistory.fixResult,
-      count: count()
-    }).from(errorFixHistory)
-    .where(filters.length > 0 ? and(...filters) : undefined)
-    .groupBy(errorFixHistory.fixResult);
-    
-    const byResult: Record<string, number> = {};
-    byResultResult.forEach(row => {
-      byResult[row.result] = Number(row.count);
-    });
-    
-    // Get average fix time
-    const avgFixTimeResult = await db.select({
-      avg: sql<number>`avg(${errorFixHistory.fixDuration})`
-    }).from(errorFixHistory)
-    .where(filters.length > 0 ? and(...filters) : undefined);
-    
-    const averageFixTime = Number(avgFixTimeResult[0]?.avg || 0);
-    
-    // Get top fixers
-    const topFixersResult = await db
-      .select({
-        userId: errorFixHistory.fixedBy,
-        username: users.username,
-        count: count()
-      })
-      .from(errorFixHistory)
-      .leftJoin(users, eq(errorFixHistory.fixedBy, users.id))
-      .where(filters.length > 0 ? and(...filters) : undefined)
-      .groupBy(errorFixHistory.fixedBy, users.username)
-      .orderBy(sql`count(*) desc`)
-      .limit(10);
-    
-    const topFixers = topFixersResult.map(row => ({
-      userId: row.userId as number,
-      username: row.username as string,
-      count: Number(row.count)
-    }));
-    
-    return {
-      totalFixes,
-      byMethod,
-      byResult,
-      averageFixTime,
-      topFixers
-    };
-  }
   
-  // Project analysis methods
+  /**
+   * Create a new project analysis record
+   */
   async createProjectAnalysis(analysis: InsertProjectAnalysis): Promise<ProjectAnalysis> {
-    const [newAnalysis] = await db.insert(projectAnalyses)
+    const [newAnalysis] = await db
+      .insert(projectAnalyses)
       .values(analysis)
       .returning();
+    
     return newAnalysis;
   }
-
-  async getProjectAnalysisById(id: number): Promise<ProjectAnalysis | null> {
-    const result = await db.select().from(projectAnalyses).where(eq(projectAnalyses.id, id));
-    return result[0] || null;
-  }
-
-  async updateProjectAnalysis(id: number, analysis: Partial<InsertProjectAnalysis>): Promise<ProjectAnalysis> {
-    const [updatedAnalysis] = await db.update(projectAnalyses)
-      .set(analysis)
-      .where(eq(projectAnalyses.id, id))
-      .returning();
-    return updatedAnalysis;
-  }
-
-  async getAllProjectAnalyses(limit?: number): Promise<ProjectAnalysis[]> {
-    let query = db.select().from(projectAnalyses).orderBy(desc(projectAnalyses.startedAt));
+  
+  /**
+   * Get a project analysis by ID
+   */
+  async getProjectAnalysis(id: number): Promise<ProjectAnalysis | undefined> {
+    const [analysis] = await db
+      .select()
+      .from(projectAnalyses)
+      .where(eq(projectAnalyses.id, id));
     
-    if (limit) {
-      query = query.limit(limit);
-    }
-    
-    return await query;
-  }
-
-  async getLatestProjectAnalysis(): Promise<ProjectAnalysis | null> {
-    const results = await db.select().from(projectAnalyses)
-      .orderBy(desc(projectAnalyses.startedAt))
-      .limit(1);
-    return results[0] || null;
+    return analysis;
   }
   
-  // Project file methods
+  /**
+   * Get the latest project analysis
+   */
+  async getLatestProjectAnalysis(): Promise<ProjectAnalysis | undefined> {
+    const [analysis] = await db
+      .select()
+      .from(projectAnalyses)
+      .orderBy(desc(projectAnalyses.completedAt))
+      .limit(1);
+    
+    return analysis;
+  }
+  
+  /**
+   * Create a new project file record
+   */
   async createProjectFile(file: InsertProjectFile): Promise<ProjectFile> {
-    const [newFile] = await db.insert(projectFiles)
+    // Check if file already exists
+    const existingFiles = await db
+      .select()
+      .from(projectFiles)
+      .where(eq(projectFiles.filePath, file.filePath));
+    
+    if (existingFiles.length > 0) {
+      // Update the existing file
+      const [updatedFile] = await db
+        .update(projectFiles)
+        .set({
+          lastAnalyzedAt: new Date(),
+          errorCount: file.errorCount,
+          fixedErrorCount: file.fixedErrorCount,
+          status: file.status
+        })
+        .where(eq(projectFiles.id, existingFiles[0].id))
+        .returning();
+      
+      return updatedFile;
+    }
+    
+    // Create a new file record
+    const [newFile] = await db
+      .insert(projectFiles)
       .values(file)
       .returning();
+    
     return newFile;
   }
-
-  async updateProjectFile(id: number, file: Partial<InsertProjectFile>): Promise<ProjectFile> {
-    const [updatedFile] = await db.update(projectFiles)
-      .set(file)
-      .where(eq(projectFiles.id, id))
-      .returning();
-    return updatedFile;
-  }
-
-  async getProjectFileByPath(filePath: string): Promise<ProjectFile | null> {
-    const results = await db.select().from(projectFiles)
-      .where(eq(projectFiles.filePath, filePath));
-    return results[0] || null;
-  }
-
-  async getAllProjectFiles(): Promise<ProjectFile[]> {
-    return await db.select().from(projectFiles);
-  }
-
-  async getProjectFilesWithErrors(): Promise<ProjectFile[]> {
-    return await db.select().from(projectFiles)
-      .where(gt(projectFiles.errorCount, 0))
-      .orderBy(desc(projectFiles.errorCount));
+  
+  /**
+   * Get TypeScript error statistics
+   */
+  async getTypescriptErrorStats(fromDate: Date): Promise<{
+    totalErrors: number;
+    fixedErrors: number;
+    fixRate: number;
+    bySeverity: Record<string, number>;
+    byCategory: Record<string, number>;
+    byStatus: Record<string, number>;
+    topFiles: Array<{ filePath: string; count: number }>;
+  }> {
+    // Get total errors
+    const [totalCount] = await db
+      .select({ count: count() })
+      .from(typescriptErrors)
+      .where(gte(typescriptErrors.detectedAt, fromDate));
+    
+    // Get fixed errors
+    const [fixedCount] = await db
+      .select({ count: count() })
+      .from(typescriptErrors)
+      .where(and(
+        gte(typescriptErrors.detectedAt, fromDate),
+        eq(typescriptErrors.status, 'fixed')
+      ));
+    
+    // Calculate fix rate
+    const fixRate = totalCount.count > 0 
+      ? (fixedCount.count / totalCount.count) * 100 
+      : 0;
+    
+    // Get errors by severity
+    const severityCounts = await db
+      .select({
+        severity: typescriptErrors.severity,
+        count: count()
+      })
+      .from(typescriptErrors)
+      .where(gte(typescriptErrors.detectedAt, fromDate))
+      .groupBy(typescriptErrors.severity);
+    
+    // Get errors by category
+    const categoryCounts = await db
+      .select({
+        category: typescriptErrors.category,
+        count: count()
+      })
+      .from(typescriptErrors)
+      .where(gte(typescriptErrors.detectedAt, fromDate))
+      .groupBy(typescriptErrors.category);
+    
+    // Get errors by status
+    const statusCounts = await db
+      .select({
+        status: typescriptErrors.status,
+        count: count()
+      })
+      .from(typescriptErrors)
+      .where(gte(typescriptErrors.detectedAt, fromDate))
+      .groupBy(typescriptErrors.status);
+    
+    // Get top files with errors
+    const topFiles = await db
+      .select({
+        filePath: typescriptErrors.filePath,
+        count: count()
+      })
+      .from(typescriptErrors)
+      .where(gte(typescriptErrors.detectedAt, fromDate))
+      .groupBy(typescriptErrors.filePath)
+      .orderBy(desc(count()))
+      .limit(10);
+    
+    // Format results
+    const bySeverity: Record<string, number> = {};
+    severityCounts.forEach(item => {
+      bySeverity[item.severity] = item.count;
+    });
+    
+    const byCategory: Record<string, number> = {};
+    categoryCounts.forEach(item => {
+      byCategory[item.category] = item.count;
+    });
+    
+    const byStatus: Record<string, number> = {};
+    statusCounts.forEach(item => {
+      byStatus[item.status] = item.count;
+    });
+    
+    return {
+      totalErrors: totalCount.count,
+      fixedErrors: fixedCount.count,
+      fixRate,
+      bySeverity,
+      byCategory,
+      byStatus,
+      topFiles
+    };
   }
 }
 
-// Export an instance of TSErrorStorage
 export const tsErrorStorage = new TSErrorStorage();
