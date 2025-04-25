@@ -123,32 +123,37 @@ export default function AuthPage() {
           setRequires2FA(true);
         }
       } else {
-        // Store user data directly in browser storage
-        const userJson = JSON.stringify(userData);
-        
-        // Store in both localStorage for persistent logins and sessionStorage for current session
-        localStorage.setItem('cosmic_user_data', userJson);
-        sessionStorage.setItem('currentUser', userJson);
-        
-        // Update the user in auth context if possible
-        if (setUser) {
-          setUser(userData);
+        try {
+          // Store user data directly in browser storage
+          const userJson = JSON.stringify(userData);
+          
+          // Store in both localStorage for persistent logins and sessionStorage for current session
+          localStorage.setItem('cosmic_user_data', userJson);
+          sessionStorage.setItem('currentUser', userJson);
+          
+          // Update the user in auth context if possible
+          if (setUser) {
+            setUser(userData);
+          }
+          
+          console.log('User data saved:', userData);
+          
+          // Clear any 2FA requirements
+          window.sessionStorage.removeItem('requires2FA');
+          
+          // Store remember me preference if selected
+          if (loginForm.getValues().rememberMe) {
+            localStorage.setItem('rememberLogin', 'true');
+          } else {
+            localStorage.removeItem('rememberLogin');
+          }
+          
+          // Redirect to home page
+          window.location.href = '/';
+        } catch (error) {
+          console.error('Error saving user data:', error);
+          alert('Login was successful but there was an error saving your session. Please try again.');
         }
-        
-        console.log('User data saved:', userData);
-        
-        // Clear any 2FA requirements
-        window.sessionStorage.removeItem('requires2FA');
-        
-        // Store remember me preference if selected
-        if (loginForm.getValues().rememberMe) {
-          localStorage.setItem('rememberLogin', 'true');
-        } else {
-          localStorage.removeItem('rememberLogin');
-        }
-        
-        // Redirect to home page
-        window.location.href = '/';
       }
     },
     onError: (error: any) => {

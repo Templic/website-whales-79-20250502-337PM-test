@@ -273,7 +273,6 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             email: fullUserRecord.email,
             role: fullUserRecord.role,
             isBanned: fullUserRecord.isBanned,
-            twoFactorEnabled: fullUserRecord.twoFactorEnabled,
             lastLogin: fullUserRecord.lastLogin,
             createdAt: fullUserRecord.createdAt,
             updatedAt: fullUserRecord.updatedAt
@@ -297,31 +296,34 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         // For demo only - hardcoded users
         const mockUsers = {
           'admin': {
-            id: 1,
+            id: "1",
             username: 'admin',
             email: 'admin@example.com',
             role: 'admin',
             isBanned: false,
-            twoFactorEnabled: false,
-            createdAt: new Date().toISOString()
+            lastLogin: null,
+            createdAt: new Date(),
+            updatedAt: new Date()
           },
           'superadmin': {
-            id: 2,
+            id: "2",
             username: 'superadmin',
             email: 'superadmin@example.com',
             role: 'super_admin',
             isBanned: false,
-            twoFactorEnabled: false,
-            createdAt: new Date().toISOString()
+            lastLogin: null,
+            createdAt: new Date(),
+            updatedAt: new Date()
           },
           'user': {
-            id: 3,
+            id: "3",
             username: 'user',
             email: 'user@example.com',
             role: 'user',
             isBanned: false,
-            twoFactorEnabled: false,
-            createdAt: new Date().toISOString()
+            lastLogin: null,
+            createdAt: new Date(),
+            updatedAt: new Date()
           }
         };
         
