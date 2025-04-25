@@ -124,7 +124,28 @@ async function testAPI() {
         analyzeResponse.data.diagnostics.slice(0, 3).forEach((diagnostic, index) => {
           console.log(`  ${index + 1}. Line ${diagnostic.line}: ${diagnostic.message}`);
           console.log(`     Suggestion: ${diagnostic.fixSuggestion}`);
+          console.log(`     Example: ${diagnostic.fixExample?.split('\n')[0] || 'N/A'}${diagnostic.fixExample?.split('\n').length > 1 ? '...' : ''}`);
         });
+        
+        // Testing diagnostic categories
+        const errorCount = analyzeResponse.data.diagnostics.filter(d => d.category === 'error').length;
+        const warningCount = analyzeResponse.data.diagnostics.filter(d => d.category === 'warning').length;
+        const infoCount = analyzeResponse.data.diagnostics.filter(d => d.category === 'info').length;
+        
+        console.log('\nDiagnostic Categories:');
+        console.log(`- Errors: ${errorCount}`);
+        console.log(`- Warnings: ${warningCount}`);
+        console.log(`- Info: ${infoCount}`);
+        
+        // Testing if we can detect common error patterns
+        const anyTypeErrors = analyzeResponse.data.diagnostics.filter(d => d.code === 7001).length;
+        const missingReturnTypes = analyzeResponse.data.diagnostics.filter(d => d.code === 7010).length;
+        const implicitParamTypes = analyzeResponse.data.diagnostics.filter(d => d.code === 7006).length;
+        
+        console.log('\nCommon Error Patterns:');
+        console.log(`- Any Type Usage: ${anyTypeErrors}`);
+        console.log(`- Missing Return Types: ${missingReturnTypes}`);
+        console.log(`- Implicit Parameter Types: ${implicitParamTypes}`);
       } else {
         console.log('- No diagnostics found');
       }
@@ -146,6 +167,13 @@ async function testAPI() {
       console.log('TypeScript Compiler Info:');
       console.log(`- Success: ${compilerInfoResponse.data.success ? 'Yes ✓' : 'No ✗'}`);
       console.log(`- Version: ${compilerInfoResponse.data.version}`);
+      
+      if (compilerInfoResponse.data.targetInfo) {
+        console.log('- Available Target Options:');
+        console.log(`  - ES2015: ${compilerInfoResponse.data.targetInfo.ES2015}`);
+        console.log(`  - ES2020: ${compilerInfoResponse.data.targetInfo.ES2020}`);
+        console.log(`  - ESNext: ${compilerInfoResponse.data.targetInfo.ESNext}`);
+      }
       
     } catch (apiError) {
       console.log('Error getting compiler info:');
