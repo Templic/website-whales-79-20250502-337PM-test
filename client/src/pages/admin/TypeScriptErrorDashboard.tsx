@@ -8,9 +8,11 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Loader2, CheckCircle, AlertCircle, FileText, Code, Wrench, ClipboardList, BarChart, RefreshCw, Clock } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, FileText, Code, Wrench, ClipboardList, BarChart, RefreshCw, Clock, Wand, Settings } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 type ErrorCategory = 
@@ -494,6 +496,34 @@ const TypeScriptErrorDashboard: React.FC = () => {
                       </select>
                     </div>
                   </div>
+                  
+                  {selectedErrors.length > 0 && (
+                    <div className="mt-4 p-3 bg-muted rounded border flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className="font-medium mr-2">{selectedErrors.length} errors selected</span>
+                        <div className="flex items-center ml-4">
+                          <label className="text-sm mr-2">Auto-fixable only</label>
+                          <Switch 
+                            checked={autoFixOnly} 
+                            onCheckedChange={setAutoFixOnly}
+                          />
+                        </div>
+                      </div>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => runBatchFix.mutate()}
+                        disabled={runBatchFix.isPending || selectedErrors.length === 0}
+                      >
+                        {runBatchFix.isPending ? (
+                          <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand className="mr-2 h-3 w-3" />
+                        )}
+                        Apply Batch Fixes
+                      </Button>
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent>
                   {errorsLoading ? (
@@ -505,6 +535,20 @@ const TypeScriptErrorDashboard: React.FC = () => {
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            <TableHead className="w-[40px]">
+                              {filteredErrors && filteredErrors.length > 0 && (
+                                <Checkbox 
+                                  checked={selectedErrors.length === filteredErrors.length}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedErrors(filteredErrors.map(e => e.id));
+                                    } else {
+                                      setSelectedErrors([]);
+                                    }
+                                  }}
+                                />
+                              )}
+                            </TableHead>
                             <TableHead>Error</TableHead>
                             <TableHead>Location</TableHead>
                             <TableHead>Severity</TableHead>
@@ -517,32 +561,46 @@ const TypeScriptErrorDashboard: React.FC = () => {
                             filteredErrors.map((error: TypeScriptError) => (
                               <TableRow 
                                 key={error.id} 
-                                className={`cursor-pointer ${selectedError?.id === error.id ? 'bg-muted' : ''}`}
-                                onClick={() => handleErrorSelect(error)}
+                                className={`${selectedError?.id === error.id ? 'bg-muted' : ''}`}
                               >
-                                <TableCell>
+                                <TableCell className="w-[40px]">
+                                  <Checkbox 
+                                    checked={selectedErrors.includes(error.id)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setSelectedErrors([...selectedErrors, error.id]);
+                                      } else {
+                                        setSelectedErrors(selectedErrors.filter(id => id !== error.id));
+                                      }
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </TableCell>
+                                <TableCell onClick={() => handleErrorSelect(error)} className="cursor-pointer">
                                   <div className="font-medium">{error.errorCode}</div>
                                   <div className="text-sm text-gray-500 truncate max-w-[250px]">
                                     {error.errorMessage}
                                   </div>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell onClick={() => handleErrorSelect(error)} className="cursor-pointer">
                                   <div className="font-mono text-xs">{error.filePath}</div>
                                   <div className="text-xs text-gray-500">
                                     Line {error.lineNumber}, Col {error.columnNumber}
                                   </div>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell onClick={() => handleErrorSelect(error)} className="cursor-pointer">
                                   <Badge variant="outline" className={getSeverityColor(error.severity)}>
                                     {error.severity}
                                   </Badge>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell onClick={() => handleErrorSelect(error)} className="cursor-pointer">
                                   <Badge variant={error.status === 'fixed' ? 'default' : 'outline'}>
                                     {getStatusLabel(error.status)}
                                   </Badge>
                                 </TableCell>
-                                <TableCell>{formatDate(error.detectedAt)}</TableCell>
+                                <TableCell onClick={() => handleErrorSelect(error)} className="cursor-pointer">
+                                  {formatDate(error.detectedAt)}
+                                </TableCell>
                               </TableRow>
                             ))
                           ) : (

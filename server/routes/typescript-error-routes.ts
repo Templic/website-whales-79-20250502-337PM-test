@@ -7,7 +7,7 @@
 import { Router } from 'express';
 import { tsErrorStorage } from '../tsErrorStorage';
 import { analyzeProject } from '../utils/ts-error-analyzer';
-import { fixAllErrors, findFixesForError, applyFix } from '../utils/ts-error-fixer';
+import { fixAllErrors, findFixesForError, applyFix, fixBatchErrors } from '../utils/ts-error-fixer';
 import { z } from 'zod';
 import { TypescriptError } from '../../shared/schema';
 
@@ -43,6 +43,12 @@ const runAnalysisSchema = z.object({
 });
 
 const runFixSchema = z.object({
+  userId: z.number().optional(),
+  autoFixOnly: z.boolean().optional().default(true)
+});
+
+const batchFixSchema = z.object({
+  errorIds: z.array(z.number()),
   userId: z.number().optional(),
   autoFixOnly: z.boolean().optional().default(true)
 });
@@ -154,6 +160,36 @@ typescriptErrorRouter.post('/fix', async (req, res) => {
   } catch (error) {
     console.error('Error fixing TypeScript errors:', error);
     return res.status(500).json({ error: 'Failed to fix TypeScript errors' });
+  }
+});
+
+// Fix a batch of TypeScript errors
+typescriptErrorRouter.post('/batch-fix', async (req, res) => {
+  try {
+    const parsedBody = batchFixSchema.safeParse(req.body);
+    
+    if (!parsedBody.success) {
+      return res.status(400).json({ 
+        error: 'Invalid request body',
+        details: parsedBody.error.errors
+      });
+    }
+    
+    const { errorIds, userId = 1, autoFixOnly } = parsedBody.data;
+    
+    if (errorIds.length === 0) {
+      return res.status(400).json({ error: 'No error IDs provided for batch fix' });
+    }
+    
+    const result = await fixBatchErrors(errorIds, userId, autoFixOnly);
+    
+    return res.json({
+      message: 'Batch fix operation completed successfully',
+      result
+    });
+  } catch (error) {
+    console.error('Error fixing batch of TypeScript errors:', error);
+    return res.status(500).json({ error: 'Failed to fix batch of TypeScript errors' });
   }
 });
 
