@@ -447,6 +447,22 @@ export type InsertCart = z.infer<typeof insertCartSchema>;
 export type CartItem = typeof cartItems.$inferSelect;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 
+// Tour dates table
+export const tourDates = pgTable("tour_dates", {
+  id: serial("id").primaryKey(),
+  venue: text("venue").notNull(),
+  city: text("city").notNull(),
+  date: timestamp("date").notNull(),
+  ticket_link: text("ticket_link"),
+  status: text("status").default("upcoming")
+});
+
+export const insertTourDateSchema = createInsertSchema(tourDates)
+  .omit({ id: true });
+
+export type TourDate = typeof tourDates.$inferSelect;
+export type InsertTourDate = z.infer<typeof insertTourDateSchema>;
+
 export type Coupon = typeof coupons.$inferSelect;
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
 
