@@ -92,6 +92,9 @@ const TypeScriptErrorDashboard: React.FC = () => {
   const [filteredCategory, setFilteredCategory] = useState<string | null>(null);
   const [filteredSeverity, setFilteredSeverity] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<number>(30); // days
+  const [selectedErrors, setSelectedErrors] = useState<number[]>([]);
+  const [batchProcessing, setBatchProcessing] = useState<boolean>(false);
+  const [autoFixOnly, setAutoFixOnly] = useState<boolean>(true);
 
   // Fetch all errors
   const { data: errors, isLoading: errorsLoading } = useQuery({
@@ -134,19 +137,21 @@ const TypeScriptErrorDashboard: React.FC = () => {
     },
   });
 
-  // Run fix mutation
+  // Run fix mutation for all errors
   const runFix = useMutation({
     mutationFn: () => {
       return apiRequest('/api/typescript/fix', { 
         method: 'POST',
-        data: { autoFixOnly: true }
+        data: { autoFixOnly }
       });
     },
     onSuccess: (data) => {
       toast({
         title: 'Fixes Applied',
-        description: `Successfully fixed ${data.result.fixed} errors.`,
+        description: `Successfully fixed ${data.result.fixed} errors, partially fixed ${data.result.partiallyFixed}, and ${data.result.needsReview} need manual review.`,
       });
+      setSelectedErrors([]);
+      setBatchProcessing(false);
       queryClient.invalidateQueries({ queryKey: ['/api/typescript'] });
       queryClient.invalidateQueries({ queryKey: ['/api/typescript/stats'] });
     },
@@ -156,6 +161,38 @@ const TypeScriptErrorDashboard: React.FC = () => {
         description: `Failed to apply fixes: ${error}`,
         variant: 'destructive',
       });
+      setBatchProcessing(false);
+    },
+  });
+  
+  // Run batch fix mutation for selected errors
+  const runBatchFix = useMutation({
+    mutationFn: () => {
+      return apiRequest('/api/typescript/batch-fix', { 
+        method: 'POST',
+        data: { 
+          errorIds: selectedErrors,
+          autoFixOnly 
+        }
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Batch Fixes Applied',
+        description: `Successfully processed ${selectedErrors.length} errors: ${data.result.fixed} fixed, ${data.result.partiallyFixed} partially fixed, ${data.result.failed} failed.`,
+      });
+      setSelectedErrors([]);
+      setBatchProcessing(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/typescript'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/typescript/stats'] });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Batch Fix Failed',
+        description: `Failed to apply batch fixes: ${error}`,
+        variant: 'destructive',
+      });
+      setBatchProcessing(false);
     },
   });
 
