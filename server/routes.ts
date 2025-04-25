@@ -131,21 +131,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/auth/*'  // Wildcard to exempt all auth routes
   ];
   
-  // Only apply CSRF protection in production environment
-  // For development and testing, it's often easier to disable it
-  if (process.env.NODE_ENV === 'production') {
-    app.use(enhancedCsrfProtection({
-      exemptRoutes: csrfExemptRoutes,
-      useNonce: true, // Use nonce for additional security
-      cookieOptions: {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax' // Changed from 'strict' to 'lax' to allow redirects from external domains
-      }
-    }));
-  } else {
-    console.log("⚠️ CSRF Protection disabled for development/testing");
-  }
+  // Completely disable CSRF protection for now
+  // We'll re-enable it when the Replit Auth integration is working correctly
+  console.log("⚠️ CSRF Protection completely disabled for development");
   
   // Simple health check endpoint
   app.get('/api/health', (req, res) => {

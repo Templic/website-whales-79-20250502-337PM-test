@@ -9,11 +9,11 @@ export const AuthButton: React.FC = () => {
     return <span className="text-gray-600">Loading...</span>;
   }
 
-  if (isAuthenticated) {
+  if (isAuthenticated && user) {
     return (
       <div className="flex items-center gap-2">
         <span className="text-sm mr-2">
-          Hello, {user?.username || "User"}
+          Hello, {user.username || "User"}
         </span>
         <a
           href="/api/logout"

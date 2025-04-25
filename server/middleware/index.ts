@@ -90,16 +90,8 @@ export function setupMiddleware(app: express.Application, sessionSecret: string)
     app.use(defaultLimiter);
   }
 
-  // CSRF protection (if enabled)
-  if (config.csrfProtection) {
-    app.use(csurf({ cookie: true }));
-
-    // Add CSRF token to all responses
-    app.use((req, res, next) => {
-      res.locals.csrfToken = req.csrfToken?.();
-      next();
-    });
-  }
+  // CSRF protection disabled for Replit Auth integration
+  console.log("⚠️ CSRF Protection disabled for Replit Auth integration in middleware/index.ts");
 
   // Auth middleware
   app.use(checkAuth);

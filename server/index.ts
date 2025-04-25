@@ -36,37 +36,12 @@ const httpServer = createServer(app);
 // Initialize essential middleware based on startup mode
 app.use(cookieParser());
 
-// Only apply CSRF protection if enabled in config
-let csrfProtection: express.RequestHandler;
-if (config.csrfProtection) {
-  csrfProtection = csurf({ cookie: true });
-  app.use(csrfProtection);
-  
-  // CSRF token endpoint
-  app.get('/api/csrf-token', (req, res) => {
-    res.json({ csrfToken: req.csrfToken() });
-  });
-} else {
-  // Add a placeholder CSRF token endpoint for compatibility
-  log('CSRF protection disabled for faster startup', 'server');
-  app.get('/api/csrf-token', (req, res) => {
-    res.json({ csrfToken: 'csrf-disabled-for-startup-optimization' });
-  });
-  
-  // If in quickstart mode, enable CSRF after a delay
-  if (config.startupPriority === 'quickstart') {
-    setTimeout(() => {
-      log('Enabling CSRF protection after startup delay', 'server');
-      csrfProtection = csurf({ cookie: true });
-      app.use(csrfProtection);
-      
-      // Update the CSRF endpoint to use the real token
-      app.get('/api/csrf-token', (req, res) => {
-        res.json({ csrfToken: req.csrfToken() });
-      });
-    }, 60000); // Enable after 1 minute
-  }
-}
+// CSRF protection completely disabled for Replit Auth integration
+// This is necessary to allow proper authentication flow
+log('⚠️ CSRF protection completely disabled for Replit Auth integration', 'server');
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ csrfToken: 'csrf-disabled-for-replit-auth' });
+});
 
 /**
  * Initialize the server in stages
