@@ -151,6 +151,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Use CSRF routes
   app.use('/api', csrfRoutes);
   
+  // Use TypeScript error management routes
+  app.use('/api/typescript', typescriptErrorRoutes);
+  
   // Use secure API routes with comprehensive security checks
   app.use('/api/secure/public', publicRouter);
   app.use('/api/secure/auth', authenticatedRouter);
