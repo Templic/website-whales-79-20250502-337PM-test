@@ -125,19 +125,27 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/stripe-webhook',
     '/api/login',
     '/api/callback',
-    '/api/logout'
+    '/api/logout',
+    '/api/auth/user',
+    '/api/auth', 
+    '/api/auth/*'  // Wildcard to exempt all auth routes
   ];
   
-  // Apply CSRF protection with exemptions
-  app.use(enhancedCsrfProtection({
-    exemptRoutes: csrfExemptRoutes,
-    useNonce: true, // Use nonce for additional security
-    cookieOptions: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
-    }
-  }));
+  // Only apply CSRF protection in production environment
+  // For development and testing, it's often easier to disable it
+  if (process.env.NODE_ENV === 'production') {
+    app.use(enhancedCsrfProtection({
+      exemptRoutes: csrfExemptRoutes,
+      useNonce: true, // Use nonce for additional security
+      cookieOptions: {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax' // Changed from 'strict' to 'lax' to allow redirects from external domains
+      }
+    }));
+  } else {
+    console.log("⚠️ CSRF Protection disabled for development/testing");
+  }
   
   // Simple health check endpoint
   app.get('/api/health', (req, res) => {

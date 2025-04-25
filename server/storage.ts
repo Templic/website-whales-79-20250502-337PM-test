@@ -233,16 +233,14 @@ export class PostgresStorage implements IStorage {
   }
 
   // User methods
-  async getUser(id: string | number): Promise<User | undefined> {
-    // Check if id is a valid numeric value (regular user ID)
-    if (!isNaN(Number(id))) {
-      const [user] = await db.select().from(users).where(eq(users.id, Number(id)));
+  async getUser(id: string): Promise<User | undefined> {
+    try {
+      console.log("Getting user with ID:", id);
+      const [user] = await db.select().from(users).where(eq(users.id, id));
       return user;
-    } 
-    // If not numeric, treat it as a Replit ID
-    else {
-      const [user] = await db.select().from(users).where(eq(users.replit_id, String(id)));
-      return user;
+    } catch (error) {
+      console.error("Error finding user:", error);
+      return undefined;
     }
   }
 
@@ -269,65 +267,67 @@ export class PostgresStorage implements IStorage {
     }
   }
   
-  async upsertUser(userData: any): Promise<User> {
+  async upsertUser(userData: {
+    id: string;
+    username: string;
+    email?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    bio?: string | null;
+    profileImageUrl?: string | null;
+  }): Promise<User> {
     try {
       console.log("Upserting user with Replit data:", userData);
       
-      // Check if user with this Replit ID already exists
+      // Check if user with this ID already exists
       if (userData.id) {
         const existingUsers = await db
           .select()
           .from(users)
-          .where(eq(users.replit_id, userData.id));
+          .where(eq(users.id, userData.id));
           
         if (existingUsers.length > 0) {
           // User exists, update their record
-          console.log("Updating existing user with Replit ID:", userData.id);
+          console.log("Updating existing user:", userData.username);
           const [updatedUser] = await db
             .update(users)
             .set({
               username: userData.username,
               email: userData.email,
-              first_name: userData.firstName,
-              last_name: userData.lastName,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
               bio: userData.bio,
-              profile_image_url: userData.profileImageUrl,
-              role: userData.role || "user",
-              updated_at: new Date()
+              profileImageUrl: userData.profileImageUrl,
+              updatedAt: new Date()
             })
-            .where(eq(users.replit_id, userData.id))
+            .where(eq(users.id, userData.id))
             .returning();
           return updatedUser;
         } else {
-          // No user with this Replit ID, create new user
-          console.log("Creating new user with Replit ID:", userData.id);
+          // No user with this ID, create new user
+          console.log("Creating new user:", userData.username);
           
-          // For new users, generate a numeric ID ourselves since we're adapting
-          // to the existing integer-based ID schema
           const [newUser] = await db
             .insert(users)
             .values({
+              id: userData.id,
               username: userData.username,
               email: userData.email,
-              password: randomBytes(16).toString('hex'), // Generate random password
-              first_name: userData.firstName,
-              last_name: userData.lastName,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
               bio: userData.bio,
-              profile_image_url: userData.profileImageUrl,
-              role: userData.role || "user",
-              replit_id: userData.id,
-              is_banned: false,
-              two_factor_enabled: false,
-              login_attempts: 0,
-              must_change_password: false,
-              created_at: new Date(),
-              updated_at: new Date()
+              profileImageUrl: userData.profileImageUrl,
+              role: "user",
+              isBanned: false,
+              lastLogin: new Date(),
+              createdAt: new Date(),
+              updatedAt: new Date()
             })
             .returning();
           return newUser;
         }
       } else {
-        throw new Error("Missing Replit user ID");
+        throw new Error("Missing user ID");
       }
     } catch (error) {
       console.error("Error upserting user:", error);
@@ -594,7 +594,7 @@ export class PostgresStorage implements IStorage {
     return user;
   }
 
-  async deleteUser(id: number): Promise<void> {
+  async deleteUser(id: string): Promise<void> {
     try {
       // First check if user exists
       const user = await this.getUser(id);
