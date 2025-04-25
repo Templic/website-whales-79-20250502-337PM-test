@@ -463,6 +463,39 @@ export const insertTourDateSchema = createInsertSchema(tourDates)
 export type TourDate = typeof tourDates.$inferSelect;
 export type InsertTourDate = z.infer<typeof insertTourDateSchema>;
 
+// Patrons table
+export const patrons = pgTable("patrons", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  tier: text("tier").notNull(),
+  subscription_date: timestamp("subscription_date").defaultNow(),
+  active: integer("active").default(1)
+});
+
+export const insertPatronSchema = createInsertSchema(patrons)
+  .omit({ id: true, subscription_date: true });
+
+export type Patron = typeof patrons.$inferSelect;
+export type InsertPatron = z.infer<typeof insertPatronSchema>;
+
+// Collaboration proposals table
+export const collaborationProposals = pgTable("collaboration_proposals", {
+  id: serial("id").primaryKey(),
+  artist_name: text("artist_name").notNull(),
+  email: text("email").notNull(),
+  proposal_type: text("proposal_type").notNull(),
+  description: text("description").notNull(),
+  status: text("status").default("pending"),
+  created_at: timestamp("created_at").defaultNow()
+});
+
+export const insertCollaborationProposalSchema = createInsertSchema(collaborationProposals)
+  .omit({ id: true, created_at: true });
+
+export type CollaborationProposal = typeof collaborationProposals.$inferSelect;
+export type InsertCollaborationProposal = z.infer<typeof insertCollaborationProposalSchema>;
+
 export type Coupon = typeof coupons.$inferSelect;
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
 
