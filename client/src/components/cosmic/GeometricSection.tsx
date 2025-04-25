@@ -279,7 +279,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
   // Now with responsive widths for mobile devices, giving more space for text
   const getContentWidthStyle = () => {
       if (typeof contentWidth === 'number') {
-        return isMobile ? `${contentWidth * 1.4}px` : `${contentWidth}px`;
+        return isMobile ? `${contentWidth * 1.6}px` : `${contentWidth}px`;
       }
 
       // Helper to get mobile-adjusted width - using MORE width on mobile, not less
