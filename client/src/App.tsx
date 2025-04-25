@@ -2,7 +2,7 @@ import { Switch, Route, useLocation, Router } from "wouter";
 // import { lazy } from 'react';
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
-import { Toaster } from "@/components/ui/toaster";
+import { ToastProvider } from "@/hooks/toast-context";
 import Layout from "./components/layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart";
@@ -310,7 +310,7 @@ function App() {
                   {/* Temporarily disable Taskade widget to prevent overlapping AI assistant buttons */}
                   {/* <TaskadeWidget /> */}
                   <CookieConsent />
-                  <Toaster />
+                  <ToastProvider />
                   {/* Add Font optimization */}
                   <FontLoader
                     fonts={[

@@ -143,6 +143,70 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // Enhanced database health check endpoint
+  app.get('/api/health/database', async (req, res) => {
+    try {
+      // Use the imported functions directly
+      // These were already imported at the top: import { db } from "./db";
+      const client = await db.$client.connect();
+      
+      try {
+        // Check database connectivity
+        await client.query('SELECT 1');
+        
+        // Get pool stats
+        const poolStats = {
+          totalConnections: db.$client.totalCount || 0,
+          idleConnections: db.$client.idleCount || 0,
+          waitingConnections: db.$client.waitingCount || 0
+        };
+        
+        // Determine health status
+        let healthStatus = 'healthy';
+        if (poolStats.waitingConnections > 10) {
+          healthStatus = 'degraded';
+        }
+        
+        res.json({
+          status: 'ok',
+          timestamp: new Date().toISOString(),
+          database: {
+            connected: true,
+            healthStatus: healthStatus,
+            connections: {
+              total: poolStats.totalConnections,
+              idle: poolStats.idleConnections,
+              waiting: poolStats.waitingConnections
+            }
+          }
+        });
+      } catch (dbError) {
+        res.status(503).json({
+          status: 'error',
+          timestamp: new Date().toISOString(),
+          database: {
+            connected: false,
+            message: 'Database connection is currently down',
+            error: (dbError as Error).message
+          }
+        });
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('Database health check failed:', error);
+      res.status(500).json({
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        database: {
+          connected: false,
+          message: 'Database health check failed',
+          error: (error as Error).message
+        }
+      });
+    }
+  });
+
   // Use authRoutes for all /api/auth routes
   app.use('/api/auth', authRoutes);
   
@@ -270,28 +334,32 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             (username === 'user' && password === 'user123')) {
           
           // IMPORTANT: Create a sanitized user object without sensitive fields
-          const sanitizedUser = {
-            id: fullUserRecord.id,
-            username: fullUserRecord.username,
-            email: fullUserRecord.email,
-            role: fullUserRecord.role,
-            isBanned: fullUserRecord.isBanned,
-            lastLogin: fullUserRecord.lastLogin,
-            createdAt: fullUserRecord.createdAt,
-            updatedAt: fullUserRecord.updatedAt
-          };
+          const sanitizedUser = createSafeUser(fullUserRecord);
           
           console.log("Sanitized login response for:", sanitizedUser.username);
           
-          // Set user in session if authentication is successful
-          if (req.session) {
-            console.log("Setting user in session");
-            req.session.user = sanitizedUser;
+          // Save user to session
+          try {
+            if (req.session) {
+              console.log("Setting user in session");
+              req.session.user = sanitizedUser;
+              await new Promise<void>((resolve) => {
+                req.session.save((err) => {
+                  if (err) {
+                    console.error("Failed to save session:", err);
+                  } else {
+                    console.log("Session saved successfully");
+                  }
+                  resolve();
+                });
+              });
+            }
+          } catch (sessionError) {
+            console.error("Session save error:", sessionError);
           }
           
           // Return sanitized user data
-          // @ts-ignore - Response type issue
-  return res.json(sanitizedUser);
+          return res.status(200).json(sanitizedUser);
         }
       } else {
         console.log("User not found in database, checking mock users");
@@ -344,23 +412,70 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         
         // Simple test account validation
         if (username === 'admin' && password === 'admin123') {
-          if (req.session) {
-            req.session.user = mockUsers.admin;
+          // Save user to session with proper session handling
+          try {
+            if (req.session) {
+              console.log("Setting admin user in session");
+              req.session.user = mockUsers.admin;
+              await new Promise<void>((resolve) => {
+                req.session.save((err) => {
+                  if (err) {
+                    console.error("Failed to save session:", err);
+                  } else {
+                    console.log("Admin session saved successfully");
+                  }
+                  resolve();
+                });
+              });
+            }
+          } catch (sessionError) {
+            console.error("Session save error:", sessionError);
           }
-          // @ts-ignore - Response type issue
-  return res.json(mockUsers.admin);
+          return res.status(200).json(mockUsers.admin);
+          
         } else if (username === 'superadmin' && password === 'superadmin123') {
-          if (req.session) {
-            req.session.user = mockUsers.superadmin;
+          // Save user to session with proper session handling
+          try {
+            if (req.session) {
+              console.log("Setting superadmin user in session");
+              req.session.user = mockUsers.superadmin;
+              await new Promise<void>((resolve) => {
+                req.session.save((err) => {
+                  if (err) {
+                    console.error("Failed to save session:", err);
+                  } else {
+                    console.log("Superadmin session saved successfully");
+                  }
+                  resolve();
+                });
+              });
+            }
+          } catch (sessionError) {
+            console.error("Session save error:", sessionError);
           }
-          // @ts-ignore - Response type issue
-  return res.json(mockUsers.superadmin);
+          return res.status(200).json(mockUsers.superadmin);
+          
         } else if (username === 'user' && password === 'user123') {
-          if (req.session) {
-            req.session.user = mockUsers.user;
+          // Save user to session with proper session handling
+          try {
+            if (req.session) {
+              console.log("Setting regular user in session");
+              req.session.user = mockUsers.user;
+              await new Promise<void>((resolve) => {
+                req.session.save((err) => {
+                  if (err) {
+                    console.error("Failed to save session:", err);
+                  } else {
+                    console.log("User session saved successfully");
+                  }
+                  resolve();
+                });
+              });
+            }
+          } catch (sessionError) {
+            console.error("Session save error:", sessionError);
           }
-          // @ts-ignore - Response type issue
-  return res.json(mockUsers.user);
+          return res.status(200).json(mockUsers.user);
         }
       }
       

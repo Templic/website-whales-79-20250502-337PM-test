@@ -94,12 +94,29 @@ export default function AuthPage() {
   const loginMutation = useMutation({
     mutationFn: async (data: { username: string; password: string; rememberMe: boolean }) => {
       try {
-        // Import the apiRequest function from queryClient which handles CSRF automatically
-        const { apiRequest } = await import('@/lib/queryClient');
+        console.log('Attempting login with data:', { 
+          username: data.username,
+          password: '******', // Don't log the actual password
+          rememberMe: data.rememberMe
+        });
         
-        // Use the existing apiRequest utility which already handles CSRF
-        // Direct login endpoint is at /api/login (not /api/auth/login)
-        const result = await apiRequest('POST', '/api/login', data);
+        // Directly use fetch instead of apiRequest utility to rule out any middleware issues
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+          credentials: 'include' // Important: Include credentials for cookies
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Login failed');
+        }
+        
+        const result = await response.json();
+        console.log('Login response:', result);
         return result;
       } catch (error) {
         console.error('Login failed:', error);
