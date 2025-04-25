@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Post } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -55,8 +54,7 @@ export default function BlogPage() {
               <article key={post.id} className="relative h-[450px]">
                 <div className="absolute inset-0 bg-[rgba(10,50,92,0.3)] backdrop-blur-sm transform transition-all clip-path-octagon border-2 border-[#00ebd6]/30 z-0"></div>
                 <div className="relative z-10 p-6 flex flex-col h-full">
-                  {/* Here we're adding a smaller, contained area inside the octagon shape to prevent content overflow */}
-                  <div className="flex flex-col items-center justify-between h-full w-[80%] mx-auto overflow-hidden">
+                  <div className="flex flex-col items-center justify-between h-full w-full mx-auto overflow-hidden"> {/* Changed to w-full for centering */}
                     {post.featuredImage && (
                       <div className="clip-path-octagon overflow-hidden mx-auto mb-3 w-9/12 aspect-video cosmic-glow-effect">
                         <img 
@@ -68,7 +66,6 @@ export default function BlogPage() {
                     )}
                     <div className="flex-1 flex flex-col overflow-hidden w-full max-h-[200px]">
                       <h2 className="text-xl font-bold text-[#00ebd6] mb-2 line-clamp-1 text-center">{post.title.replace(/<[^>]*>/g, '')}</h2>
-                      {/* Using padding and max-width to keep content within boundaries */}
                       <div className="mb-4 overflow-hidden w-full max-w-[95%] mx-auto max-h-[100px]">
                         <p className="text-gray-300 line-clamp-4 text-sm text-center">
                           {post.content
@@ -84,14 +81,14 @@ export default function BlogPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center w-full mt-auto">
-                      <p className="text-xs text-[#fe0064]">
+                    <div className="flex flex-col items-center w-full mt-auto"> {/* Changed to flex-col for vertical alignment */}
+                      <p className="text-xs text-[#fe0064] text-center"> {/* Added text-center */}
                         {formatDisplayDate(post.createdAt)}
                       </p>
                       <Button 
                         size="sm"
                         variant="outline" 
-                        className="border-[#00ebd6] text-[#00ebd6] hover:bg-[#00ebd6] hover:text-black"
+                        className="border-[#00ebd6] text-[#00ebd6] hover:bg-[#00ebd6] hover:text-black mt-2 w-full mx-auto" {/* Added mt-2 and w-full for better spacing and centering */}
                         onClick={() => window.location.href = `/blog/${post.id}`}
                       >
                         Read More
