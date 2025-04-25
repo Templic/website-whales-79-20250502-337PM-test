@@ -1,780 +1,754 @@
 /**
  * @file openai-integration.ts
- * @description OpenAI integration for TypeScript error analysis and fix generation
+ * @description Enhanced OpenAI integration for TypeScript error analysis
  * 
- * This module provides AI-powered analysis and fix generation for TypeScript errors
- * using OpenAI's language models with rich code context awareness.
+ * This module provides utilities for analyzing and fixing TypeScript errors
+ * using OpenAI's GPT models.
  */
 
-import OpenAI from "openai";
+import OpenAI from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as ts from 'typescript';
-import { TypeScriptError, ErrorCategory, ErrorSeverity, ErrorFix } from '../types/core/error-types';
-import { findTypeScriptFiles } from './ts-type-analyzer';
+import type { TypeScriptError, ErrorCategory, ErrorFixSuggestion } from '../types/core/error-types';
 
-// Use the newest "gpt-4o" model which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Initialize OpenAI client
+// Note: API key is expected to be in the environment variable OPENAI_API_KEY
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
-// Cache for API responses to reduce API calls
-const responseCache = new Map<string, any>();
+// The model to use for error analysis and fix generation
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+const MODEL = 'gpt-4o';
+
+/**
+ * Interface for error analysis results
+ */
+export interface ErrorAnalysisResult {
+  rootCause: string;
+  explanation: string;
+  category: ErrorCategory;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  cascading: boolean;
+  suggestedApproach: string;
+  confidence: number;
+}
+
+/**
+ * Maximum number of tokens to generate in a response
+ */
+const MAX_TOKENS = 500;
+
+/**
+ * The maximum number of lines of context to include
+ */
+const MAX_CONTEXT_LINES = 100;
 
 /**
  * Analyzes a TypeScript error using OpenAI
- * @param error The TypeScript error to analyze
- * @returns An analysis of the error with root cause, category, severity, and whether it's likely to cause cascading errors
+ * 
+ * @param error TypeScript error to analyze
+ * @returns Analysis result
  */
-export async function analyzeError(
-  error: TypeScriptError
-): Promise<{
-  rootCause: string;
-  category: ErrorCategory;
-  severity: ErrorSeverity;
-  cascading: boolean;
-  explanation: string;
-}> {
+export async function analyzeError(error: TypeScriptError): Promise<ErrorAnalysisResult> {
+  // Read the file content to get more context
+  let fileContent = '';
   try {
-    // Check cache first
-    const cacheKey = `analyze:${error.id}:${error.errorCode}:${error.filePath}:${error.lineNumber}:${error.columnNumber}`;
-    if (responseCache.has(cacheKey)) {
-      return responseCache.get(cacheKey);
-    }
-
-    const errorContext = await generateErrorContext(error);
-    const projectContext = await generateFileContext(error.filePath);
-
-    const prompt = `
-      You are a TypeScript expert analyzing a code error. Given the following error:
-
-      ERROR:
-      ${error.errorMessage}
-
-      CODE CONTEXT:
-      ${errorContext}
-
-      PROJECT CONTEXT:
-      ${projectContext}
-
-      Analyze this error and provide:
-      1. The root cause of the error
-      2. The category of error (type_mismatch, missing_type, undefined_variable, null_reference, interface_mismatch, import_error, syntax_error, generic_constraint, declaration_error, other)
-      3. The severity of the error (critical, high, medium, low)
-      4. Whether this error is likely to cause cascading errors
-
-      FORMAT YOUR RESPONSE AS JSON:
-      {
-        "rootCause": "string",
-        "category": "string",
-        "severity": "string",
-        "cascading": boolean,
-        "explanation": "string"
+    if (fs.existsSync(error.filePath)) {
+      fileContent = fs.readFileSync(error.filePath, 'utf-8');
+      
+      // Limit the file content to avoid excessive tokens
+      const lines = fileContent.split('\n');
+      const contextStart = Math.max(0, error.lineNumber - MAX_CONTEXT_LINES / 2);
+      const contextEnd = Math.min(lines.length, error.lineNumber + MAX_CONTEXT_LINES / 2);
+      
+      fileContent = lines.slice(contextStart, contextEnd).join('\n');
+      
+      if (contextStart > 0) {
+        fileContent = `// ... (lines 1-${contextStart} omitted) ...\n` + fileContent;
       }
-    `;
+      
+      if (contextEnd < lines.length) {
+        fileContent = fileContent + `\n// ... (lines ${contextEnd + 1}-${lines.length} omitted) ...`;
+      }
+    }
+  } catch (err) {
+    console.error(`Error reading file ${error.filePath}: ${err instanceof Error ? err.message : String(err)}`);
+    // Continue with analysis even if file reading fails
+  }
+  
+  // Get imports from the file to understand dependencies
+  const imports = extractImports(fileContent);
+  
+  // Prepare the prompt
+  const prompt = `
+You are an expert TypeScript developer and your task is to analyze a TypeScript error and provide detailed analysis. 
+Here is the error information:
 
+- Error code: ${error.errorCode}
+- File path: ${error.filePath}
+- Line number: ${error.lineNumber}
+- Column number: ${error.columnNumber}
+- Error message: ${error.errorMessage}
+
+Relevant code context:
+\`\`\`typescript
+${error.errorContext || 'No context available'}
+\`\`\`
+
+${imports.length > 0 ? `File imports:\n${imports.map(imp => `- ${imp}`).join('\n')}` : 'No imports found.'}
+
+Please analyze this error and provide:
+1. The root cause of the error
+2. A detailed explanation of why the error is occurring
+3. Categorize the error (choose one): type_mismatch, missing_type, undefined_variable, null_reference, interface_mismatch, import_error, syntax_error, generic_constraint, declaration_error, other
+4. Assign a severity level (choose one): low, medium, high, critical
+5. Determine if this error is likely to cause cascading errors elsewhere
+6. Suggest an approach to fix the error
+7. Provide a confidence level (0.0 to 1.0) in your analysis
+
+Format your response as JSON following this structure:
+{
+  "rootCause": "Brief description of the root cause",
+  "explanation": "Detailed explanation of the error",
+  "category": "one_of_the_categories_above",
+  "severity": "low_medium_high_critical",
+  "cascading": true_or_false,
+  "suggestedApproach": "How to fix the error",
+  "confidence": number_between_0_and_1
+}
+`;
+
+  try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: MAX_TOKENS,
+      temperature: 0.2,
+      response_format: { type: 'json_object' }
     });
-
-    const analysis = JSON.parse(response.choices[0].message.content);
     
-    // Store in cache
-    responseCache.set(cacheKey, analysis);
+    const analysisText = response.choices[0].message.content;
     
+    if (!analysisText) {
+      throw new Error('Empty response from OpenAI');
+    }
+    
+    const analysis = JSON.parse(analysisText) as ErrorAnalysisResult;
+    
+    // Validate required fields
+    if (!analysis.rootCause || !analysis.explanation || !analysis.category || !analysis.severity || analysis.cascading === undefined || !analysis.suggestedApproach || analysis.confidence === undefined) {
+      throw new Error('Incomplete analysis from OpenAI');
+    }
+    
+    return analysis;
+  } catch (err) {
+    console.error(`OpenAI analysis error: ${err instanceof Error ? err.message : String(err)}`);
+    
+    // Provide a fallback analysis
     return {
-      rootCause: analysis.rootCause,
-      category: analysis.category as ErrorCategory,
-      severity: analysis.severity as ErrorSeverity,
-      cascading: analysis.cascading,
-      explanation: analysis.explanation,
-    };
-  } catch (error) {
-    console.error("Error analyzing TypeScript error with OpenAI:", error);
-    
-    // Fallback to simpler analysis
-    return {
-      rootCause: "Unknown - OpenAI analysis failed",
-      category: "other",
-      severity: "medium",
+      rootCause: 'Failed to analyze with OpenAI',
+      explanation: `Error analyzing with OpenAI: ${err instanceof Error ? err.message : String(err)}. Original error: ${error.errorMessage}`,
+      category: mapToCategory(error.errorCode, error.errorMessage),
+      severity: 'medium',
       cascading: false,
-      explanation: "Analysis failed. Please try again or analyze manually.",
+      suggestedApproach: 'Please fix the error based on the error message.',
+      confidence: 0.1
     };
   }
 }
 
 /**
  * Generates a fix for a TypeScript error using OpenAI
- * @param error The TypeScript error to fix
- * @returns A fix for the error with code, explanation, and confidence
+ * 
+ * @param error TypeScript error to fix
+ * @returns Fix suggestion
  */
-export async function generateErrorFix(
-  error: TypeScriptError
-): Promise<{
-  fixCode: string;
-  fixExplanation: string;
-  fixScope: "line" | "token" | "custom";
-  originalCode?: string;
-  confidence: number;
-  additionalRecommendations: string;
-}> {
+export async function generateErrorFix(error: TypeScriptError): Promise<ErrorFixSuggestion> {
+  // Read the file content to get more context
+  let fileContent = '';
+  let fileSummary = '';
   try {
-    // Check cache first
-    const cacheKey = `fix:${error.id}:${error.errorCode}:${error.filePath}:${error.lineNumber}:${error.columnNumber}`;
-    if (responseCache.has(cacheKey)) {
-      return responseCache.get(cacheKey);
+    if (fs.existsSync(error.filePath)) {
+      const content = fs.readFileSync(error.filePath, 'utf-8');
+      
+      // Generate a summary of the file for context
+      fileSummary = generateFileSummary(content);
+      
+      // Extract relevant portion of the file
+      const lines = content.split('\n');
+      const contextStart = Math.max(0, error.lineNumber - MAX_CONTEXT_LINES / 2);
+      const contextEnd = Math.min(lines.length, error.lineNumber + MAX_CONTEXT_LINES / 2);
+      
+      fileContent = lines.slice(contextStart, contextEnd).join('\n');
+      
+      if (contextStart > 0) {
+        fileContent = `// ... (lines 1-${contextStart} omitted) ...\n` + fileContent;
+      }
+      
+      if (contextEnd < lines.length) {
+        fileContent = fileContent + `\n// ... (lines ${contextEnd + 1}-${lines.length} omitted) ...`;
+      }
+    }
+  } catch (err) {
+    console.error(`Error reading file ${error.filePath}: ${err instanceof Error ? err.message : String(err)}`);
+    // Continue with fix generation even if file reading fails
+  }
+  
+  // Extract imports to understand dependencies
+  const imports = extractImports(fileContent);
+  
+  // Get the line with the error
+  const errorLine = error.errorContext?.split('\n')[error.lineNumber - 1] || 'Line not available';
+  
+  // Find related type declarations
+  const relatedTypes = findRelatedTypes(error.errorMessage, fileContent);
+  
+  // Prepare the prompt
+  const prompt = `
+You are an expert TypeScript developer tasked with fixing a TypeScript error. 
+Your task is to generate a fix for the error that maintains the original code's intent.
+
+Here is the error information:
+- Error code: ${error.errorCode}
+- File path: ${error.filePath}
+- Line number: ${error.lineNumber}
+- Column number: ${error.columnNumber}
+- Error message: ${error.errorMessage}
+
+The line with the error:
+\`\`\`typescript
+${errorLine}
+\`\`\`
+
+Relevant code context:
+\`\`\`typescript
+${error.errorContext || 'No context available'}
+\`\`\`
+
+${imports.length > 0 ? `File imports:\n${imports.map(imp => `- ${imp}`).join('\n')}` : 'No imports found.'}
+
+${relatedTypes.length > 0 ? `Related type declarations:\n${relatedTypes.map(type => `- ${type}`).join('\n')}` : ''}
+
+File summary:
+${fileSummary}
+
+Please generate a fix for this error that:
+1. Maintains the original functionality and code intent
+2. Follows TypeScript best practices
+3. Is minimal and focused on the specific error
+4. Takes into account the imports and related types
+
+Format your response as JSON following this structure:
+{
+  "fixExplanation": "Detailed explanation of the fix and why it works",
+  "originalCode": "The exact code that needs to be replaced",
+  "fixCode": "The corrected code that replaces the original",
+  "fixScope": "line" | "token" | "custom",
+  "confidence": number_between_0_and_1
+}
+
+Notes:
+- For fixScope, use "line" if you're replacing the entire line, "token" if you're replacing just one token, or "custom" if it's more complex
+- For originalCode, include enough context to uniquely identify the code to replace
+- For fixCode, include the complete fixed version of the code
+- The confidence score should reflect how confident you are that the fix will resolve the error
+`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: MAX_TOKENS,
+      temperature: 0.2,
+      response_format: { type: 'json_object' }
+    });
+    
+    const fixText = response.choices[0].message.content;
+    
+    if (!fixText) {
+      throw new Error('Empty response from OpenAI');
     }
     
-    const errorContext = await generateErrorContext(error, 20); // Get 20 lines of context
-    const styleGuide = await getProjectStyleGuide();
-    const fileImports = await getFileImports(error.filePath);
-    const referencedTypes = await findReferencedTypes(error.filePath, errorContext);
-
-    const prompt = `
-      You are a TypeScript expert fixing a code error. Given the following error:
-
-      ERROR:
-      ${error.errorMessage}
-
-      CODE TO FIX:
-      ${errorContext}
-
-      PROJECT STYLE GUIDE:
-      ${styleGuide}
-
-      FILE IMPORTS:
-      ${fileImports}
-
-      RELATED TYPES:
-      ${referencedTypes}
-
-      Generate a fix for this error that:
-      1. Maintains the intended functionality
-      2. Follows the project's style guide
-      3. Uses existing imports where possible
-      4. Explains the rationale for the fix
-
-      Specify the scope of your fix (choose one):
-      - "line": if your fix replaces the entire line with the error
-      - "token": if your fix replaces just the token at the error position
-      - "custom": if your fix requires replacing a specific code section
-
-      If using "custom", include the exact code to replace in originalCode.
-
-      FORMAT YOUR RESPONSE AS JSON:
-      {
-        "fixCode": "string",
-        "fixExplanation": "string",
-        "fixScope": "line" | "token" | "custom",
-        "originalCode": "string (required for custom scope)",
-        "confidence": number,
-        "additionalRecommendations": "string"
-      }
-    `;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-    });
-
-    const fix = JSON.parse(response.choices[0].message.content);
+    const fix = JSON.parse(fixText) as ErrorFixSuggestion;
     
-    // Store in cache
-    responseCache.set(cacheKey, fix);
+    // Validate required fields
+    if (!fix.fixExplanation || !fix.originalCode || !fix.fixCode || !fix.fixScope || fix.confidence === undefined) {
+      throw new Error('Incomplete fix from OpenAI');
+    }
     
     return fix;
-  } catch (error) {
-    console.error("Error generating fix with OpenAI:", error);
+  } catch (err) {
+    console.error(`OpenAI fix generation error: ${err instanceof Error ? err.message : String(err)}`);
     
-    // Fallback to empty response
+    // Provide a fallback fix suggestion
     return {
-      fixCode: "",
-      fixExplanation: "Fix generation failed. Please try again or fix manually.",
-      fixScope: "line",
-      confidence: 0,
-      additionalRecommendations: "",
+      fixExplanation: `Failed to generate fix with OpenAI: ${err instanceof Error ? err.message : String(err)}. Please fix the error based on the error message: ${error.errorMessage}`,
+      originalCode: errorLine,
+      fixCode: `// TODO: Fix error: ${error.errorMessage}\n${errorLine}`,
+      fixScope: 'line',
+      confidence: 0.1
     };
   }
 }
 
 /**
- * Analyzes a group of TypeScript errors to determine optimal fix ordering and grouping
- * @param errors List of TypeScript errors to analyze
- * @returns Optimal fix order and error groupings
+ * Extracts imports from a TypeScript file
+ * 
+ * @param fileContent Content of the TypeScript file
+ * @returns Array of import statements
  */
-export async function analyzeBatchErrors(
-  errors: TypeScriptError[]
-): Promise<{
-  fixOrder: string[];
-  errorGroups: string[][];
-  sharedFixGroups: string[][];
-}> {
+function extractImports(fileContent: string): string[] {
+  const imports: string[] = [];
+  const lines = fileContent.split('\n');
+  
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine.startsWith('import ')) {
+      imports.push(trimmedLine);
+    }
+  }
+  
+  return imports;
+}
+
+/**
+ * Finds related type declarations in the file
+ * 
+ * @param errorMessage Error message
+ * @param fileContent Content of the TypeScript file
+ * @returns Array of related type declarations
+ */
+function findRelatedTypes(errorMessage: string, fileContent: string): string[] {
+  const relatedTypes: string[] = [];
+  
+  // Extract type names from error message
+  const typeMatches = errorMessage.match(/['"]([^'"]+)['"]/g) || [];
+  const typeNames = typeMatches.map(match => match.replace(/['"]/g, ''));
+  
+  if (typeNames.length === 0) {
+    return relatedTypes;
+  }
+  
+  // Look for type declarations in the file
+  const lines = fileContent.split('\n');
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    
+    if (
+      trimmedLine.startsWith('interface ') ||
+      trimmedLine.startsWith('type ') ||
+      trimmedLine.startsWith('class ') ||
+      trimmedLine.startsWith('enum ')
+    ) {
+      for (const typeName of typeNames) {
+        if (trimmedLine.includes(typeName)) {
+          relatedTypes.push(trimmedLine);
+          break;
+        }
+      }
+    }
+  }
+  
+  return relatedTypes;
+}
+
+/**
+ * Generates a summary of a TypeScript file
+ * 
+ * @param fileContent Content of the TypeScript file
+ * @returns Summary of the file
+ */
+function generateFileSummary(fileContent: string): string {
+  // Extract imports
+  const imports = extractImports(fileContent);
+  
+  // Count type declarations
+  const typeCount = {
+    interface: 0,
+    type: 0,
+    class: 0,
+    enum: 0,
+    function: 0
+  };
+  
+  const lines = fileContent.split('\n');
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    
+    if (trimmedLine.startsWith('interface ')) {
+      typeCount.interface++;
+    } else if (trimmedLine.startsWith('type ')) {
+      typeCount.type++;
+    } else if (trimmedLine.startsWith('class ')) {
+      typeCount.class++;
+    } else if (trimmedLine.startsWith('enum ')) {
+      typeCount.enum++;
+    } else if (trimmedLine.startsWith('function ') || trimmedLine.match(/^[a-zA-Z0-9_]+\s*\([^)]*\)\s*:/)) {
+      typeCount.function++;
+    }
+  }
+  
+  // Generate summary
+  return `
+File contains:
+- ${imports.length} imports
+- ${typeCount.interface} interfaces
+- ${typeCount.type} type aliases
+- ${typeCount.class} classes
+- ${typeCount.enum} enums
+- ${typeCount.function} functions
+`;
+}
+
+/**
+ * Maps an error code and message to a category
+ * 
+ * @param errorCode TypeScript error code
+ * @param errorMessage Error message
+ * @returns Error category
+ */
+function mapToCategory(errorCode: string, errorMessage: string): ErrorCategory {
+  const code = parseInt(errorCode.replace('TS', ''));
+  
+  // Map error codes to categories
+  if (code >= 2300 && code < 2400) {
+    return 'syntax_error';
+  } else if ([2307, 2304, 2503].includes(code)) {
+    return 'missing_type';
+  } else if ([2322, 2345, 2739, 2740, 2741].includes(code)) {
+    return 'type_mismatch';
+  } else if ([2339, 2551, 2552, 2553, 2554].includes(code)) {
+    return 'undefined_variable';
+  } else if ([2531, 2532, 2533].includes(code)) {
+    return 'null_reference';
+  } else if ([2420, 2559, 2741].includes(code)) {
+    return 'interface_mismatch';
+  } else if ([2306, 2792, 2849].includes(code)) {
+    return 'import_error';
+  } else if ([2313, 2314, 2315, 2316].includes(code)) {
+    return 'generic_constraint';
+  } else if ([2403, 2456, 2742, 2451, 2452].includes(code)) {
+    return 'declaration_error';
+  }
+  
+  // Check error message for specific patterns
+  const message = errorMessage.toLowerCase();
+  
+  if (message.includes('does not exist on type')) {
+    return 'interface_mismatch';
+  } else if (message.includes('cannot find')) {
+    return 'missing_type';
+  } else if (message.includes('is not assignable to')) {
+    return 'type_mismatch';
+  } else if (message.includes('undefined')) {
+    return 'undefined_variable';
+  } else if (message.includes('null') || message.includes('undefined')) {
+    return 'null_reference';
+  } else if (message.includes('import')) {
+    return 'import_error';
+  } else if (message.includes('syntax')) {
+    return 'syntax_error';
+  } else if (message.includes('constraint')) {
+    return 'generic_constraint';
+  }
+  
+  return 'other';
+}
+
+/**
+ * Enhances code context with type information using OpenAI
+ * 
+ * @param filePath Path to the TypeScript file
+ * @param codeSnippet Code snippet to enhance
+ * @returns Enhanced code with type information
+ */
+export async function enhanceCodeContext(filePath: string, codeSnippet: string): Promise<string> {
+  // Read the file content
+  let fileContent = '';
   try {
-    // Generate a cache key based on the error IDs
-    const errorIds = errors.map(e => e.id).sort().join(',');
-    const cacheKey = `batch:${errorIds}`;
-    if (responseCache.has(cacheKey)) {
-      return responseCache.get(cacheKey);
+    if (fs.existsSync(filePath)) {
+      fileContent = fs.readFileSync(filePath, 'utf-8');
+    }
+  } catch (err) {
+    console.error(`Error reading file ${filePath}: ${err instanceof Error ? err.message : String(err)}`);
+    return codeSnippet;
+  }
+  
+  // Prepare the prompt
+  const prompt = `
+You are an expert TypeScript developer tasked with enhancing code with type information. 
+Your task is to analyze the given code snippet and add TypeScript type information.
+
+File path: ${filePath}
+
+Original code snippet:
+\`\`\`typescript
+${codeSnippet}
+\`\`\`
+
+Full file content:
+\`\`\`typescript
+${fileContent}
+\`\`\`
+
+Please add TypeScript type information to the code snippet, including:
+1. Add explicit type annotations for variables, parameters, and return types
+2. Add interface or type definitions where appropriate
+3. Add JSDoc comments to explain complex types
+
+Focus on enhancing the code snippet, not the entire file.
+`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: MAX_TOKENS * 3, // Allow longer responses for code enhancement
+      temperature: 0.1
+    });
+    
+    const enhancedText = response.choices[0].message.content;
+    
+    if (!enhancedText) {
+      throw new Error('Empty response from OpenAI');
     }
     
-    const errorsList = errors.map(e => 
-      `[${e.id}] ${e.filePath}:${e.lineNumber}:${e.columnNumber} - ${e.errorMessage}`
-    ).join("\n");
-
-    const fileDependencies = await generateFileDependencyGraph(
-      [...new Set(errors.map(e => e.filePath))]
-    );
-
-    const prompt = `
-      You are a TypeScript expert prioritizing errors. Given the following list of errors:
-
-      ${errorsList}
-
-      DEPENDENCIES BETWEEN FILES:
-      ${fileDependencies}
-
-      Analyze these errors and provide:
-      1. The optimal order to fix them to minimize cascading issues
-      2. Errors that likely share the same root cause
-      3. Errors that can be fixed with the same solution
-
-      FORMAT YOUR RESPONSE AS JSON:
-      {
-        "fixOrder": ["string"],
-        "errorGroups": [["string"]],
-        "sharedFixGroups": [["string"]]
-      }
-    `;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-    });
-
-    const analysis = JSON.parse(response.choices[0].message.content);
+    // Extract code from the response
+    const codeMatch = enhancedText.match(/```(?:typescript|ts)\n([\s\S]*?)```/);
+    if (codeMatch && codeMatch[1]) {
+      return codeMatch[1].trim();
+    }
     
-    // Store in cache
-    responseCache.set(cacheKey, analysis);
-    
-    return analysis;
-  } catch (error) {
-    console.error("Error analyzing batch errors with OpenAI:", error);
-    
-    // Fallback to sequential fix order
-    return {
-      fixOrder: errors.map(e => e.id.toString()),
-      errorGroups: [],
-      sharedFixGroups: [],
-    };
+    return enhancedText;
+  } catch (err) {
+    console.error(`OpenAI code enhancement error: ${err instanceof Error ? err.message : String(err)}`);
+    return codeSnippet;
   }
 }
 
 /**
  * Generates missing type definitions using OpenAI
- * @param filePath The file path
- * @param typeName The name of the missing type
- * @returns A type definition for the missing type
+ * 
+ * @param typeName Name of the type to generate
+ * @param usages Array of code snippets where the type is used
+ * @returns Generated type definition
  */
-export async function generateMissingTypeDefinition(
-  filePath: string,
-  typeName: string
-): Promise<string> {
+export async function generateMissingType(typeName: string, usages: string[]): Promise<string> {
+  // Prepare the prompt
+  const prompt = `
+You are an expert TypeScript developer tasked with generating type definitions. 
+Your task is to generate a TypeScript type definition for a missing type based on its usages.
+
+Missing type name: ${typeName}
+
+Usages of the type:
+${usages.map(usage => '```typescript\n' + usage + '\n```').join('\n\n')}
+
+Please generate a comprehensive TypeScript type definition for ${typeName} that:
+1. Covers all properties and methods indicated by the usages
+2. Uses appropriate TypeScript features (interfaces, generics, etc.)
+3. Includes JSDoc comments to explain the type's purpose and properties
+4. Is consistent with TypeScript best practices
+
+Your response should only include the type definition, not explanations.
+`;
+
   try {
-    // Check cache first
-    const cacheKey = `type:${filePath}:${typeName}`;
-    if (responseCache.has(cacheKey)) {
-      return responseCache.get(cacheKey);
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: MAX_TOKENS * 2, // Allow longer responses for type generation
+      temperature: 0.2
+    });
+    
+    const typeDefinition = response.choices[0].message.content;
+    
+    if (!typeDefinition) {
+      throw new Error('Empty response from OpenAI');
     }
     
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const usageExamples = extractTypeUsage(fileContent, typeName);
-
-    const prompt = `
-      You are a TypeScript expert creating a missing type definition. I need you to create a TypeScript interface or type for "${typeName}" based on how it's used in the code.
-
-      FILE PATH:
-      ${filePath}
-
-      USAGE EXAMPLES:
-      ${usageExamples}
-
-      Create a comprehensive type definition that matches all the observed usages. Include JSDoc comments.
-
-      FORMAT YOUR RESPONSE AS THE TYPE DEFINITION ONLY, WITHOUT ANY EXPLANATION OR MARKDOWN:
-    `;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    const typeDefinition = response.choices[0].message.content.trim();
-    
-    // Store in cache
-    responseCache.set(cacheKey, typeDefinition);
+    // Extract code from the response
+    const codeMatch = typeDefinition.match(/```(?:typescript|ts)\n([\s\S]*?)```/);
+    if (codeMatch && codeMatch[1]) {
+      return codeMatch[1].trim();
+    }
     
     return typeDefinition;
-  } catch (error) {
-    console.error("Error generating type definition with OpenAI:", error);
+  } catch (err) {
+    console.error(`OpenAI type generation error: ${err instanceof Error ? err.message : String(err)}`);
     
-    // Fallback to a basic interface
+    // Provide a fallback type definition
     return `/**
- * ${typeName} interface
- * TODO: Fill in the properties for this interface
+ * Auto-generated type definition for ${typeName}
+ * TODO: Replace with a proper type definition
  */
-export interface ${typeName} {
-  // Add properties here
-}`;
+export type ${typeName} = any;
+`;
   }
 }
 
 /**
- * Analyzes code style across the project
- * @returns A style guide extracted from the project
+ * Learns from fix history to improve error resolution
+ * 
+ * @param errorCode TypeScript error code
+ * @param fixHistories Array of fix history entries
+ * @returns Insights on what fixes work best for this error
  */
-export async function analyzeCodeStyle(): Promise<string> {
+export async function learnFromFixHistory(
+  errorCode: string, 
+  fixHistories: Array<{
+    originalCode: string;
+    fixedCode: string;
+    fixMethod: string;
+    fixResult: 'success' | 'failure';
+  }>
+): Promise<{
+  patterns: string[];
+  bestApproaches: string[];
+  commonMistakes: string[];
+}> {
+  // Filter successful fixes
+  const successfulFixes = fixHistories.filter(h => h.fixResult === 'success');
+  
+  if (successfulFixes.length === 0) {
+    return {
+      patterns: [],
+      bestApproaches: [],
+      commonMistakes: []
+    };
+  }
+  
+  // Prepare the prompt
+  const prompt = `
+You are an expert TypeScript developer tasked with improving error resolution.
+Your task is to analyze the history of fixes for a specific TypeScript error code and identify patterns.
+
+Error code: ${errorCode}
+
+Fix history (${successfulFixes.length} successful fixes):
+${successfulFixes.map((fix, i) => `
+Fix ${i + 1}:
+- Original code:
+\`\`\`typescript
+${fix.originalCode}
+\`\`\`
+
+- Fixed code:
+\`\`\`typescript
+${fix.fixedCode}
+\`\`\`
+
+- Fix method: ${fix.fixMethod}
+`).join('\n')}
+
+Please analyze these fixes and provide:
+1. Common patterns in the original code that lead to this error
+2. The best approaches to fix this error based on the successful fixes
+3. Common mistakes or anti-patterns to avoid
+
+Format your response as JSON following this structure:
+{
+  "patterns": ["pattern1", "pattern2", ...],
+  "bestApproaches": ["approach1", "approach2", ...],
+  "commonMistakes": ["mistake1", "mistake2", ...]
+}
+`;
+
   try {
-    // Check cache first
-    const cacheKey = 'codeStyle';
-    if (responseCache.has(cacheKey)) {
-      return responseCache.get(cacheKey);
-    }
-    
-    // Find TypeScript files
-    const files = await findTypeScriptFiles('.');
-    
-    // Sample a subset of files
-    const sampleSize = Math.min(10, files.length);
-    const sampledFiles = files
-      .sort(() => 0.5 - Math.random()) // Shuffle array
-      .slice(0, sampleSize);
-    
-    // Extract code samples
-    const codeSamples = [];
-    for (const file of sampledFiles) {
-      if (fs.existsSync(file)) {
-        const content = fs.readFileSync(file, 'utf-8');
-        const sample = content.slice(0, 2000); // First 2000 characters
-        codeSamples.push(sample);
-      }
-    }
-
-    const prompt = `
-      You are a TypeScript style analyzer. Analyze these code samples from a project and extract a style guide.
-
-      CODE SAMPLES:
-      ${codeSamples.join('\n\n--- Next Sample ---\n\n')}
-
-      Extract style guidelines covering:
-      1. Indentation (spaces vs tabs, amount)
-      2. Naming conventions (camelCase, PascalCase, etc. for different types)
-      3. Import style (single vs multiple imports, sorting)
-      4. Type annotations (when used, format)
-      5. Commenting style
-      6. Use of semicolons
-      7. Quote style (single vs double)
-      8. Other notable patterns
-
-      FORMAT YOUR RESPONSE AS MARKDOWN:
-    `;
-
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    const styleGuide = response.choices[0].message.content.trim();
-    
-    // Store in cache
-    responseCache.set(cacheKey, styleGuide);
-    
-    return styleGuide;
-  } catch (error) {
-    console.error("Error analyzing code style with OpenAI:", error);
-    
-    // Fallback to a basic style guide
-    return `# TypeScript Style Guide
-- Use 2 spaces for indentation
-- Use camelCase for variables and functions
-- Use PascalCase for classes and interfaces
-- Use single quotes for strings
-- Use semicolons at the end of statements
-- Add type annotations for function parameters and return types
-- Sort imports alphabetically
-- Add JSDoc comments for public APIs`;
-  }
-}
-
-/**
- * Generates context around a TypeScript error
- * @param error The TypeScript error
- * @param contextLines Number of context lines to include
- * @returns Context around the error
- */
-export async function generateErrorContext(
-  error: TypeScriptError,
-  contextLines: number = 10
-): Promise<string> {
-  try {
-    if (!fs.existsSync(error.filePath)) {
-      return `File ${error.filePath} does not exist`;
-    }
-    
-    const fileContent = fs.readFileSync(error.filePath, 'utf-8');
-    const lines = fileContent.split('\n');
-    
-    // Calculate start and end lines for context
-    const startLine = Math.max(0, error.lineNumber - contextLines - 1);
-    const endLine = Math.min(lines.length - 1, error.lineNumber + contextLines - 1);
-    
-    // Extract the context lines
-    const contextLinesArr = lines.slice(startLine, endLine + 1);
-    
-    // Add line numbers and mark the error line
-    const contextWithLineNumbers = contextLinesArr.map((line, index) => {
-      const lineNumber = startLine + index + 1;
-      const marker = lineNumber === error.lineNumber ? '> ' : '  ';
-      return `${marker}${lineNumber}: ${line}`;
-    }).join('\n');
-    
-    return contextWithLineNumbers;
-  } catch (error) {
-    console.error("Error generating error context:", error);
-    return "Error generating context";
-  }
-}
-
-/**
- * Generates context about a file from the project
- * @param filePath Path to the file
- * @returns Context about the file
- */
-export async function generateFileContext(filePath: string): Promise<string> {
-  try {
-    if (!fs.existsSync(filePath)) {
-      return `File ${filePath} does not exist`;
-    }
-    
-    // Get import information
-    const imports = await getFileImports(filePath);
-    
-    // Get file type information
-    const fileInfo = await getFileTypeInfo(filePath);
-    
-    return `
-File: ${path.basename(filePath)}
-Path: ${filePath}
-
-Imports:
-${imports}
-
-Type Information:
-${fileInfo}
-`.trim();
-  } catch (error) {
-    console.error("Error generating file context:", error);
-    return "Error generating file context";
-  }
-}
-
-/**
- * Gets import statements from a file
- * @param filePath Path to the file
- * @returns Import statements in the file
- */
-export async function getFileImports(filePath: string): Promise<string> {
-  try {
-    if (!fs.existsSync(filePath)) {
-      return `File ${filePath} does not exist`;
-    }
-    
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const sourceFile = ts.createSourceFile(
-      filePath,
-      fileContent,
-      ts.ScriptTarget.Latest,
-      true
-    );
-    
-    const imports: string[] = [];
-    
-    // Find import declarations
-    ts.forEachChild(sourceFile, node => {
-      if (ts.isImportDeclaration(node)) {
-        imports.push(node.getText(sourceFile));
-      }
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: MAX_TOKENS,
+      temperature: 0.2,
+      response_format: { type: 'json_object' }
     });
     
-    return imports.join('\n');
-  } catch (error) {
-    console.error("Error getting file imports:", error);
-    return "Error getting import statements";
-  }
-}
-
-/**
- * Gets type information from a file
- * @param filePath Path to the file
- * @returns Type information in the file
- */
-async function getFileTypeInfo(filePath: string): Promise<string> {
-  try {
-    if (!fs.existsSync(filePath)) {
-      return `File ${filePath} does not exist`;
+    const analysisText = response.choices[0].message.content;
+    
+    if (!analysisText) {
+      throw new Error('Empty response from OpenAI');
     }
     
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const sourceFile = ts.createSourceFile(
-      filePath,
-      fileContent,
-      ts.ScriptTarget.Latest,
-      true
-    );
-    
-    const typeInfo: string[] = [];
-    
-    // Find type declarations
-    ts.forEachChild(sourceFile, node => {
-      if (ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)) {
-        typeInfo.push(node.getText(sourceFile));
-      }
-    });
-    
-    return typeInfo.join('\n\n');
-  } catch (error) {
-    console.error("Error getting file type info:", error);
-    return "Error getting type information";
-  }
-}
-
-/**
- * Finds referenced types in code context
- * @param filePath Path to the file
- * @param context Code context
- * @returns Type definitions for referenced types
- */
-async function findReferencedTypes(filePath: string, context: string): Promise<string> {
-  try {
-    // Simple regex-based extraction of potentially referenced types
-    const typeRegex = /\b([A-Z][a-zA-Z0-9]*)(\[\])?(?=\s*[,>);\[\]\{\}])/g;
-    const matches = context.match(typeRegex) || [];
-    const typeNames = Array.from(new Set(matches)).filter(name => 
-      // Exclude built-in types and likely non-types
-      !['String', 'Number', 'Boolean', 'Array', 'Object', 'Function', 'Symbol', 'Map', 'Set', 'Promise', 'Date'].includes(name)
-    );
-    
-    // Look for these types in the project files
-    const typeDefinitions: string[] = [];
-    const tsFiles = await findTypeScriptFiles(path.dirname(filePath));
-    
-    for (const tsFile of tsFiles) {
-      if (fs.existsSync(tsFile)) {
-        const fileContent = fs.readFileSync(tsFile, 'utf-8');
-        const sourceFile = ts.createSourceFile(
-          tsFile,
-          fileContent,
-          ts.ScriptTarget.Latest,
-          true
-        );
-        
-        // Check for type definitions
-        ts.forEachChild(sourceFile, node => {
-          if ((ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)) && node.name) {
-            const name = node.name.text;
-            if (typeNames.includes(name)) {
-              typeDefinitions.push(`// From ${tsFile}:\n${node.getText(sourceFile)}`);
-            }
-          }
-        });
-      }
-    }
-    
-    return typeDefinitions.join('\n\n');
-  } catch (error) {
-    console.error("Error finding referenced types:", error);
-    return "Error finding referenced types";
-  }
-}
-
-/**
- * Extracts usage examples of a type from code
- * @param fileContent Content of the file
- * @param typeName Name of the type
- * @returns Usage examples of the type
- */
-function extractTypeUsage(fileContent: string, typeName: string): string {
-  try {
-    const sourceFile = ts.createSourceFile(
-      'temp.ts',
-      fileContent,
-      ts.ScriptTarget.Latest,
-      true
-    );
-    
-    const usage: string[] = [];
-    
-    // Helper function to check if a node might be using the type
-    const checkNode = (node: ts.Node) => {
-      // Check for variable declarations with the type
-      if (ts.isVariableDeclaration(node) && node.type && 
-          node.type.getText(sourceFile).includes(typeName)) {
-        usage.push(node.getText(sourceFile));
-      }
-      
-      // Check for property access on the type
-      if (ts.isPropertyAccessExpression(node) && 
-          node.expression.getText(sourceFile) === typeName) {
-        // Get the containing statement
-        let parent = node.parent;
-        while (parent && !ts.isExpressionStatement(parent) && 
-               !ts.isVariableStatement(parent) && 
-               !ts.isReturnStatement(parent)) {
-          parent = parent.parent;
-        }
-        if (parent) {
-          usage.push(parent.getText(sourceFile));
-        }
-      }
-      
-      // Check for function parameters with the type
-      if (ts.isParameter(node) && node.type && 
-          node.type.getText(sourceFile).includes(typeName)) {
-        const functionNode = node.parent;
-        if (functionNode) {
-          usage.push(functionNode.getText(sourceFile));
-        }
-      }
-      
-      ts.forEachChild(node, checkNode);
+    const analysis = JSON.parse(analysisText) as {
+      patterns: string[];
+      bestApproaches: string[];
+      commonMistakes: string[];
     };
     
-    ts.forEachChild(sourceFile, checkNode);
+    return analysis;
+  } catch (err) {
+    console.error(`OpenAI learning error: ${err instanceof Error ? err.message : String(err)}`);
     
-    return usage.join('\n\n');
-  } catch (error) {
-    console.error("Error extracting type usage:", error);
-    return "Error extracting type usage";
+    // Provide fallback insights
+    return {
+      patterns: ['Unknown patterns'],
+      bestApproaches: [`Fix errors with code ${errorCode} based on the error message`],
+      commonMistakes: ['Unknown mistakes']
+    };
   }
 }
 
 /**
- * Generates a dependency graph for files
- * @param filePaths List of file paths
- * @returns Dependency graph as text
+ * Generates documentation for a TypeScript type
+ * 
+ * @param typeName Name of the type to document
+ * @param typeDefinition Type definition code
+ * @returns Detailed documentation
  */
-async function generateFileDependencyGraph(filePaths: string[]): Promise<string> {
+export async function generateTypeDocumentation(typeName: string, typeDefinition: string): Promise<string> {
+  // Prepare the prompt
+  const prompt = `
+You are an expert TypeScript developer tasked with documenting types.
+Your task is to generate comprehensive documentation for a TypeScript type.
+
+Type name: ${typeName}
+
+Type definition:
+\`\`\`typescript
+${typeDefinition}
+\`\`\`
+
+Please generate detailed documentation for this type that includes:
+1. A clear description of the type's purpose and usage
+2. Explanations of all properties and methods
+3. Examples of how to use the type
+4. Any constraints or considerations when using this type
+
+Format the documentation in Markdown.
+`;
+
   try {
-    const graph: Record<string, string[]> = {};
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: MAX_TOKENS * 2, // Allow longer responses for documentation
+      temperature: 0.3
+    });
     
-    for (const filePath of filePaths) {
-      if (!fs.existsSync(filePath)) {
-        continue;
-      }
-      
-      graph[filePath] = [];
-      
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
-      const sourceFile = ts.createSourceFile(
-        filePath,
-        fileContent,
-        ts.ScriptTarget.Latest,
-        true
-      );
-      
-      // Find import declarations
-      ts.forEachChild(sourceFile, node => {
-        if (ts.isImportDeclaration(node) && node.moduleSpecifier && 
-            ts.isStringLiteral(node.moduleSpecifier)) {
-          const importPath = node.moduleSpecifier.text;
-          
-          // Handle relative imports
-          if (importPath.startsWith('./') || importPath.startsWith('../')) {
-            const resolvedPath = path.resolve(path.dirname(filePath), importPath);
-            
-            // Add file extensions if missing
-            let fullPath = resolvedPath;
-            if (!path.extname(resolvedPath)) {
-              for (const ext of ['.ts', '.tsx', '.js', '.jsx']) {
-                if (fs.existsSync(resolvedPath + ext)) {
-                  fullPath = resolvedPath + ext;
-                  break;
-                }
-              }
-            }
-            
-            if (filePaths.includes(fullPath)) {
-              graph[filePath].push(fullPath);
-            }
-          }
-        }
-      });
+    const documentation = response.choices[0].message.content;
+    
+    if (!documentation) {
+      throw new Error('Empty response from OpenAI');
     }
     
-    // Convert to text representation
-    return Object.entries(graph)
-      .map(([file, deps]) => {
-        const fileName = path.basename(file);
-        const depNames = deps.map(dep => path.basename(dep));
-        return `${fileName} -> ${depNames.join(', ') || 'No dependencies'}`;
-      })
-      .join('\n');
-  } catch (error) {
-    console.error("Error generating file dependency graph:", error);
-    return "Error generating file dependencies";
+    return documentation;
+  } catch (err) {
+    console.error(`OpenAI documentation error: ${err instanceof Error ? err.message : String(err)}`);
+    
+    // Provide fallback documentation
+    return `# ${typeName}
+
+## Description
+Auto-generated documentation for the \`${typeName}\` type.
+
+## Type Definition
+\`\`\`typescript
+${typeDefinition}
+\`\`\`
+
+## Usage
+TODO: Add usage examples for this type.
+`;
   }
-}
-
-/**
- * Gets the project style guide
- * @returns The project style guide
- */
-export async function getProjectStyleGuide(): Promise<string> {
-  try {
-    // Check cache first
-    const cacheKey = 'styleGuide';
-    if (responseCache.has(cacheKey)) {
-      return responseCache.get(cacheKey);
-    }
-    
-    // Check if there's a pre-defined style guide
-    const styleGuidePaths = [
-      './.eslintrc.js',
-      './.eslintrc.json',
-      './.prettierrc',
-      './tslint.json',
-    ];
-    
-    for (const guidePath of styleGuidePaths) {
-      if (fs.existsSync(guidePath)) {
-        const content = fs.readFileSync(guidePath, 'utf-8');
-        responseCache.set(cacheKey, content);
-        return content;
-      }
-    }
-    
-    // If no pre-defined style guide, analyze the code style
-    const styleGuide = await analyzeCodeStyle();
-    responseCache.set(cacheKey, styleGuide);
-    return styleGuide;
-  } catch (error) {
-    console.error("Error getting project style guide:", error);
-    return "Error getting style guide";
-  }
-}
-
-/**
- * Clears the response cache
- */
-export function clearResponseCache(): void {
-  responseCache.clear();
-}
-
-/**
- * Gets the size of the response cache
- * @returns The number of cached responses
- */
-export function getResponseCacheSize(): number {
-  return responseCache.size;
 }

@@ -1,718 +1,805 @@
 /**
  * @file ts-type-visualizer.ts
- * @description Type hierarchy visualization utilities for TypeScript error management
+ * @description TypeScript type visualization utilities
  * 
- * This module provides tools for visualizing the type hierarchy of a TypeScript project,
- * helping developers understand type relationships and identify problems.
+ * This module provides utilities for visualizing TypeScript type hierarchies
+ * and relationships between types.
  */
 
-import { TypeHierarchy } from './ts-type-analyzer';
+import * as fs from 'fs';
+import * as path from 'path';
+import { TypeHierarchyAnalysis, TypeInfo } from './ts-type-analyzer';
 
 /**
- * Options for generating type hierarchy visualizations
+ * Visualization options
  */
 export interface VisualizationOptions {
-  format: 'json' | 'dot' | 'mermaid' | 'svg';
-  includeStandardTypes: boolean;
-  filterByModule?: string;
-  focusOnType?: string;
-  maxDepth?: number;
-  highlightCircularDependencies?: boolean;
-  highlightMissingTypes?: boolean;
+  format: 'dot' | 'mermaid' | 'json';
+  includeOrphans: boolean;
+  maxDepth: number;
+  focusTypes?: string[];
+  includeProperties: boolean;
+  includeMethods: boolean;
+  colorScheme: 'default' | 'colorblind' | 'monochrome';
+  outputPath?: string;
 }
 
 /**
  * Default visualization options
  */
 const defaultOptions: VisualizationOptions = {
-  format: 'json',
-  includeStandardTypes: false,
-  maxDepth: 5,
-  highlightCircularDependencies: true,
-  highlightMissingTypes: true
+  format: 'dot',
+  includeOrphans: false,
+  maxDepth: 3,
+  includeProperties: true,
+  includeMethods: false,
+  colorScheme: 'default'
 };
 
 /**
- * Standard TypeScript types to optionally filter out
+ * Color schemes for different node types
  */
-const standardTypes = [
-  'Array', 'ReadonlyArray', 'Map', 'Set', 'WeakMap', 'WeakSet',
-  'Promise', 'Date', 'RegExp', 'Error', 'Function',
-  'String', 'Number', 'Boolean', 'Object', 'Symbol',
-  'Record', 'Partial', 'Required', 'Readonly', 'Pick', 'Omit',
-  'Exclude', 'Extract', 'NonNullable', 'Parameters', 'ConstructorParameters',
-  'ReturnType', 'InstanceType', 'ThisParameterType', 'OmitThisParameter',
-  'ThisType'
-];
+const colorSchemes = {
+  default: {
+    interface: 'lightblue',
+    class: 'lightgreen',
+    type: 'lightyellow',
+    enum: 'lightgrey',
+    orphan: 'lightpink',
+    missing: 'lightsalmon',
+    circular: 'lightcoral'
+  },
+  colorblind: {
+    interface: '#DDDDDD',
+    class: '#77AADD',
+    type: '#99DDFF',
+    enum: '#44BB99',
+    orphan: '#BBCC33',
+    missing: '#FFAE42',
+    circular: '#EE8866'
+  },
+  monochrome: {
+    interface: '#E0E0E0',
+    class: '#C0C0C0',
+    type: '#A0A0A0',
+    enum: '#808080',
+    orphan: '#606060',
+    missing: '#404040',
+    circular: '#202020'
+  }
+};
 
 /**
  * Generates a visualization of a type hierarchy
  * 
  * @param hierarchy Type hierarchy analysis results
  * @param options Visualization options
- * @returns Visualization in the requested format
+ * @returns Visualization in the specified format
  */
 export function visualizeTypeHierarchy(
-  hierarchy: TypeHierarchy,
-  options: Partial<VisualizationOptions> = {}
+  hierarchy: TypeHierarchyAnalysis,
+  options?: Partial<VisualizationOptions>
 ): string {
   const opts = { ...defaultOptions, ...options };
   
-  // Apply filtering
-  const filteredHierarchy = filterHierarchy(hierarchy, opts);
-  
-  // Generate visualization in the requested format
   switch (opts.format) {
-    case 'json':
-      return generateJsonVisualization(filteredHierarchy, opts);
     case 'dot':
-      return generateDotVisualization(filteredHierarchy, opts);
+      return generateDotGraph(hierarchy, opts);
     case 'mermaid':
-      return generateMermaidVisualization(filteredHierarchy, opts);
-    case 'svg':
-      return generateSvgVisualization(filteredHierarchy, opts);
+      return generateMermaidDiagram(hierarchy, opts);
+    case 'json':
+      return generateJSON(hierarchy, opts);
     default:
-      throw new Error(`Unsupported visualization format: ${opts.format}`);
+      throw new Error(`Unsupported format: ${opts.format}`);
   }
 }
 
 /**
- * Filters a type hierarchy based on visualization options
- */
-function filterHierarchy(
-  hierarchy: TypeHierarchy,
-  options: VisualizationOptions
-): TypeHierarchy {
-  let interfaces = { ...hierarchy.interfaces };
-  let types = { ...hierarchy.types };
-  let missingTypes = [...hierarchy.missingTypes];
-  let circularDependencies = [...hierarchy.circularDependencies];
-  
-  // Filter out standard types if requested
-  if (!options.includeStandardTypes) {
-    for (const stdType of standardTypes) {
-      delete interfaces[stdType];
-      delete types[stdType];
-      missingTypes = missingTypes.filter(t => t !== stdType);
-    }
-    
-    // Also filter out standard types from the dependencies
-    for (const type in interfaces) {
-      interfaces[type] = interfaces[type].filter(t => !standardTypes.includes(t));
-    }
-    for (const type in types) {
-      types[type] = types[type].filter(t => !standardTypes.includes(t));
-    }
-    
-    // Filter circular dependencies that include standard types
-    circularDependencies = circularDependencies.filter(cycle => 
-      !cycle.some(t => standardTypes.includes(t))
-    );
-  }
-  
-  // Filter by module if requested
-  if (options.filterByModule) {
-    // This would require module information from the analyzer
-    // For now, we'll leave this as a placeholder
-  }
-  
-  // Focus on a specific type if requested
-  if (options.focusOnType) {
-    const focusType = options.focusOnType;
-    const typesToKeep = new Set<string>([focusType]);
-    
-    // Helper function to collect related types up to maxDepth
-    const collectRelatedTypes = (
-      typeName: string, 
-      depth: number = 0, 
-      visited: Set<string> = new Set()
-    ) => {
-      if (depth > (options.maxDepth || 5) || visited.has(typeName)) {
-        return;
-      }
-      
-      visited.add(typeName);
-      typesToKeep.add(typeName);
-      
-      // Add dependencies
-      const deps = [
-        ...(interfaces[typeName] || []), 
-        ...(types[typeName] || [])
-      ];
-      
-      for (const dep of deps) {
-        typesToKeep.add(dep);
-        collectRelatedTypes(dep, depth + 1, visited);
-      }
-      
-      // Add dependents (types that depend on this one)
-      for (const [type, deps] of Object.entries(interfaces)) {
-        if (deps.includes(typeName)) {
-          typesToKeep.add(type);
-          collectRelatedTypes(type, depth + 1, visited);
-        }
-      }
-      
-      for (const [type, deps] of Object.entries(types)) {
-        if (deps.includes(typeName)) {
-          typesToKeep.add(type);
-          collectRelatedTypes(type, depth + 1, visited);
-        }
-      }
-    };
-    
-    collectRelatedTypes(focusType);
-    
-    // Filter interfaces and types to only include the ones we want to keep
-    interfaces = Object.entries(interfaces)
-      .filter(([type]) => typesToKeep.has(type))
-      .reduce((obj, [type, deps]) => {
-        obj[type] = deps.filter(d => typesToKeep.has(d));
-        return obj;
-      }, {} as Record<string, string[]>);
-    
-    types = Object.entries(types)
-      .filter(([type]) => typesToKeep.has(type))
-      .reduce((obj, [type, deps]) => {
-        obj[type] = deps.filter(d => typesToKeep.has(d));
-        return obj;
-      }, {} as Record<string, string[]>);
-    
-    // Filter missing types to only include the ones related to our focus
-    missingTypes = missingTypes.filter(t => typesToKeep.has(t));
-    
-    // Filter circular dependencies to only include the ones that involve our focus
-    circularDependencies = circularDependencies.filter(cycle => 
-      cycle.some(t => typesToKeep.has(t))
-    );
-  }
-  
-  return {
-    interfaces,
-    types,
-    missingTypes,
-    circularDependencies
-  };
-}
-
-/**
- * Generates a JSON visualization of a type hierarchy
- */
-function generateJsonVisualization(
-  hierarchy: TypeHierarchy,
-  options: VisualizationOptions
-): string {
-  // Convert hierarchy to a more visualization-friendly structure
-  const nodes: {
-    id: string;
-    type: 'interface' | 'type' | 'missing';
-    dependencies: string[];
-    isCircular: boolean;
-  }[] = [];
-  
-  // Add interfaces
-  for (const [name, deps] of Object.entries(hierarchy.interfaces)) {
-    nodes.push({
-      id: name,
-      type: 'interface',
-      dependencies: deps,
-      isCircular: hierarchy.circularDependencies.some(cycle => cycle.includes(name))
-    });
-  }
-  
-  // Add types
-  for (const [name, deps] of Object.entries(hierarchy.types)) {
-    nodes.push({
-      id: name,
-      type: 'type',
-      dependencies: deps,
-      isCircular: hierarchy.circularDependencies.some(cycle => cycle.includes(name))
-    });
-  }
-  
-  // Add missing types
-  for (const name of hierarchy.missingTypes) {
-    // Avoid duplicates (missing types might already be added as types or interfaces)
-    if (!nodes.some(n => n.id === name)) {
-      nodes.push({
-        id: name,
-        type: 'missing',
-        dependencies: [],
-        isCircular: hierarchy.circularDependencies.some(cycle => cycle.includes(name))
-      });
-    }
-  }
-  
-  // Generate links between nodes
-  const links = nodes.flatMap(node => 
-    node.dependencies.map(target => ({
-      source: node.id,
-      target,
-      type: node.type === 'interface' ? 'extends' : 'references'
-    }))
-  );
-  
-  const result = {
-    nodes,
-    links,
-    circularDependencies: hierarchy.circularDependencies
-  };
-  
-  return JSON.stringify(result, null, 2);
-}
-
-/**
- * Generates a DOT language visualization (for Graphviz) of a type hierarchy
- */
-function generateDotVisualization(
-  hierarchy: TypeHierarchy,
-  options: VisualizationOptions
-): string {
-  // Create sets for faster lookups
-  const interfaceSet = new Set(Object.keys(hierarchy.interfaces));
-  const typeSet = new Set(Object.keys(hierarchy.types));
-  const missingSet = new Set(hierarchy.missingTypes);
-  const circularSet = new Set(
-    hierarchy.circularDependencies.flatMap(cycle => cycle)
-  );
-  
-  let dot = 'digraph TypeHierarchy {\n';
-  dot += '  rankdir=LR;\n';
-  dot += '  node [shape=box, style=filled, fontname="Arial"];\n';
-  dot += '  edge [fontname="Arial", fontsize=10];\n\n';
-  
-  // Add nodes
-  for (const interfaceName of interfaceSet) {
-    const isCircular = circularSet.has(interfaceName);
-    const color = isCircular && options.highlightCircularDependencies ? 'lightpink' : 'lightblue';
-    dot += `  "${interfaceName}" [label="${interfaceName}", fillcolor="${color}"];\n`;
-  }
-  
-  for (const typeName of typeSet) {
-    const isCircular = circularSet.has(typeName);
-    const color = isCircular && options.highlightCircularDependencies ? 'lightpink' : 'lightgreen';
-    dot += `  "${typeName}" [label="${typeName}", fillcolor="${color}"];\n`;
-  }
-  
-  for (const missingName of missingSet) {
-    // Skip if it's already added as an interface or type
-    if (interfaceSet.has(missingName) || typeSet.has(missingName)) {
-      continue;
-    }
-    
-    const color = options.highlightMissingTypes ? 'lightsalmon' : 'lightgrey';
-    dot += `  "${missingName}" [label="${missingName}", fillcolor="${color}", style="filled,dashed"];\n`;
-  }
-  
-  // Add edges
-  for (const [interfaceName, extendedInterfaces] of Object.entries(hierarchy.interfaces)) {
-    for (const extended of extendedInterfaces) {
-      dot += `  "${interfaceName}" -> "${extended}" [label="extends"];\n`;
-    }
-  }
-  
-  for (const [typeName, referencedTypes] of Object.entries(hierarchy.types)) {
-    for (const referenced of referencedTypes) {
-      dot += `  "${typeName}" -> "${referenced}" [label="references"];\n`;
-    }
-  }
-  
-  // Highlight circular dependencies
-  if (options.highlightCircularDependencies) {
-    for (const cycle of hierarchy.circularDependencies) {
-      for (let i = 0; i < cycle.length; i++) {
-        const source = cycle[i];
-        const target = cycle[(i + 1) % cycle.length];
-        dot += `  "${source}" -> "${target}" [color="red", penwidth=2.0];\n`;
-      }
-    }
-  }
-  
-  dot += '}';
-  return dot;
-}
-
-/**
- * Generates a Mermaid diagram visualization of a type hierarchy
- */
-function generateMermaidVisualization(
-  hierarchy: TypeHierarchy,
-  options: VisualizationOptions
-): string {
-  let mermaid = 'graph LR\n';
-  
-  // Create sets for faster lookups
-  const interfaceSet = new Set(Object.keys(hierarchy.interfaces));
-  const typeSet = new Set(Object.keys(hierarchy.types));
-  const missingSet = new Set(hierarchy.missingTypes);
-  const circularSet = new Set(
-    hierarchy.circularDependencies.flatMap(cycle => cycle)
-  );
-  
-  // Add nodes
-  for (const interfaceName of interfaceSet) {
-    const isCircular = circularSet.has(interfaceName);
-    const style = isCircular && options.highlightCircularDependencies ? 
-      'fill:#faa,stroke:#f66' : 'fill:#acf,stroke:#36c';
-    mermaid += `  ${sanitizeMermaidId(interfaceName)}["${interfaceName}"]:::interface\n`;
-  }
-  
-  for (const typeName of typeSet) {
-    const isCircular = circularSet.has(typeName);
-    const style = isCircular && options.highlightCircularDependencies ? 
-      'fill:#faa,stroke:#f66' : 'fill:#afa,stroke:#3a3';
-    mermaid += `  ${sanitizeMermaidId(typeName)}["${typeName}"]:::type\n`;
-  }
-  
-  for (const missingName of missingSet) {
-    // Skip if it's already added as an interface or type
-    if (interfaceSet.has(missingName) || typeSet.has(missingName)) {
-      continue;
-    }
-    
-    mermaid += `  ${sanitizeMermaidId(missingName)}["${missingName}"]:::missing\n`;
-  }
-  
-  // Add edges
-  for (const [interfaceName, extendedInterfaces] of Object.entries(hierarchy.interfaces)) {
-    for (const extended of extendedInterfaces) {
-      mermaid += `  ${sanitizeMermaidId(interfaceName)} -->|extends| ${sanitizeMermaidId(extended)}\n`;
-    }
-  }
-  
-  for (const [typeName, referencedTypes] of Object.entries(hierarchy.types)) {
-    for (const referenced of referencedTypes) {
-      mermaid += `  ${sanitizeMermaidId(typeName)} -->|uses| ${sanitizeMermaidId(referenced)}\n`;
-    }
-  }
-  
-  // Add class definitions
-  mermaid += '\n  classDef interface fill:#acf,stroke:#36c,stroke-width:1px\n';
-  mermaid += '  classDef type fill:#afa,stroke:#3a3,stroke-width:1px\n';
-  mermaid += '  classDef missing fill:#fda,stroke:#a73,stroke-width:1px,stroke-dasharray: 5 5\n';
-  
-  if (options.highlightCircularDependencies) {
-    mermaid += '  classDef circular fill:#faa,stroke:#f66,stroke-width:2px\n';
-    
-    // Apply circular class to circular nodes
-    const circularNodes = Array.from(circularSet).map(sanitizeMermaidId).join(',');
-    if (circularNodes) {
-      mermaid += `  class ${circularNodes} circular\n`;
-    }
-  }
-  
-  return mermaid;
-}
-
-/**
- * Sanitizes a string to be used as a Mermaid node ID
- */
-function sanitizeMermaidId(id: string): string {
-  // Remove problematic characters and replace with underscores
-  return 'id_' + id.replace(/[^a-zA-Z0-9]/g, '_');
-}
-
-/**
- * Generates an SVG visualization of a type hierarchy
+ * Generates a DOT graph visualization
  * 
- * Note: This is a simplified version that creates a basic SVG.
- * A real implementation might use a library like D3.js.
+ * @param hierarchy Type hierarchy analysis
+ * @param options Visualization options
+ * @returns DOT graph representation
  */
-function generateSvgVisualization(
-  hierarchy: TypeHierarchy,
+function generateDotGraph(
+  hierarchy: TypeHierarchyAnalysis,
   options: VisualizationOptions
 ): string {
-  // For the SVG format, we'll generate a simplified force-directed graph
-  
-  // Convert hierarchy to nodes and links
-  const nodes: {
-    id: string;
-    type: 'interface' | 'type' | 'missing';
-    x?: number;
-    y?: number;
-  }[] = [];
-  
-  const links: {
-    source: string;
-    target: string;
-    type: 'extends' | 'references';
-  }[] = [];
-  
-  // Create sets for faster lookups
-  const interfaceSet = new Set(Object.keys(hierarchy.interfaces));
-  const typeSet = new Set(Object.keys(hierarchy.types));
-  const missingSet = new Set(hierarchy.missingTypes);
-  const circularSet = new Set(
-    hierarchy.circularDependencies.flatMap(cycle => cycle)
-  );
-  
-  // Add interface nodes
-  for (const interfaceName of interfaceSet) {
-    nodes.push({
-      id: interfaceName,
-      type: 'interface'
-    });
-  }
-  
-  // Add type nodes
-  for (const typeName of typeSet) {
-    nodes.push({
-      id: typeName,
-      type: 'type'
-    });
-  }
-  
-  // Add missing type nodes
-  for (const missingName of missingSet) {
-    // Skip if it's already added as an interface or type
-    if (interfaceSet.has(missingName) || typeSet.has(missingName)) {
-      continue;
-    }
-    
-    nodes.push({
-      id: missingName,
-      type: 'missing'
-    });
-  }
-  
-  // Add links
-  for (const [interfaceName, extendedInterfaces] of Object.entries(hierarchy.interfaces)) {
-    for (const extended of extendedInterfaces) {
-      links.push({
-        source: interfaceName,
-        target: extended,
-        type: 'extends'
-      });
-    }
-  }
-  
-  for (const [typeName, referencedTypes] of Object.entries(hierarchy.types)) {
-    for (const referenced of referencedTypes) {
-      links.push({
-        source: typeName,
-        target: referenced,
-        type: 'references'
-      });
-    }
-  }
-  
-  // Very basic layout - a real implementation would use a force-directed layout algorithm
-  const width = 1200;
-  const height = 800;
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const radius = Math.min(width, height) * 0.4;
-  
-  // Position nodes in a circle
-  const angleStep = (2 * Math.PI) / nodes.length;
-  for (let i = 0; i < nodes.length; i++) {
-    const angle = i * angleStep;
-    nodes[i].x = centerX + radius * Math.cos(angle);
-    nodes[i].y = centerY + radius * Math.sin(angle);
-  }
-  
-  // Generate SVG
-  let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">\n`;
-  svg += '  <defs>\n';
-  svg += '    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">\n';
-  svg += '      <polygon points="0 0, 10 3.5, 0 7" fill="#999" />\n';
-  svg += '    </marker>\n';
-  svg += '  </defs>\n';
-  
-  // Draw links
-  for (const link of links) {
-    const source = nodes.find(n => n.id === link.source);
-    const target = nodes.find(n => n.id === link.target);
-    
-    if (source && target && source.x !== undefined && source.y !== undefined && 
-        target.x !== undefined && target.y !== undefined) {
-      
-      const isCircular = options.highlightCircularDependencies && 
-        hierarchy.circularDependencies.some(cycle => 
-          cycle.includes(link.source) && cycle.includes(link.target)
-        );
-      
-      const strokeColor = isCircular ? '#f66' : '#999';
-      const strokeWidth = isCircular ? 2 : 1;
-      
-      svg += `  <line x1="${source.x}" y1="${source.y}" x2="${target.x}" y2="${target.y}" `;
-      svg += `stroke="${strokeColor}" stroke-width="${strokeWidth}" marker-end="url(#arrowhead)" />\n`;
-    }
-  }
-  
-  // Draw nodes
-  for (const node of nodes) {
-    if (node.x === undefined || node.y === undefined) continue;
-    
-    const isCircular = circularSet.has(node.id);
-    
-    let fillColor = '#ccc';
-    let strokeColor = '#999';
-    let strokeWidth = 1;
-    let strokeDasharray = '';
-    
-    switch (node.type) {
-      case 'interface':
-        fillColor = isCircular && options.highlightCircularDependencies ? '#faa' : '#acf';
-        strokeColor = isCircular && options.highlightCircularDependencies ? '#f66' : '#36c';
-        strokeWidth = isCircular && options.highlightCircularDependencies ? 2 : 1;
-        break;
-      case 'type':
-        fillColor = isCircular && options.highlightCircularDependencies ? '#faa' : '#afa';
-        strokeColor = isCircular && options.highlightCircularDependencies ? '#f66' : '#3a3';
-        strokeWidth = isCircular && options.highlightCircularDependencies ? 2 : 1;
-        break;
-      case 'missing':
-        fillColor = options.highlightMissingTypes ? '#fda' : '#ddd';
-        strokeColor = options.highlightMissingTypes ? '#a73' : '#999';
-        strokeDasharray = '5,5';
-        break;
-    }
-    
-    // Draw node
-    svg += `  <rect x="${node.x - 60}" y="${node.y - 20}" width="120" height="40" rx="5" ry="5" `;
-    svg += `fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokeWidth}"`;
-    
-    if (strokeDasharray) {
-      svg += ` stroke-dasharray="${strokeDasharray}"`;
-    }
-    
-    svg += ' />\n';
-    
-    // Draw node label
-    svg += `  <text x="${node.x}" y="${node.y + 5}" text-anchor="middle" font-family="Arial" font-size="12">${node.id}</text>\n`;
-  }
-  
-  // Add legend
-  svg += `  <rect x="20" y="${height - 140}" width="180" height="120" fill="white" stroke="#999" />\n`;
-  svg += `  <text x="110" y="${height - 115}" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold">Legend</text>\n`;
-  
-  // Legend items
-  const legendItems = [
-    { type: 'interface', label: 'Interface', fill: '#acf', stroke: '#36c' },
-    { type: 'type', label: 'Type', fill: '#afa', stroke: '#3a3' },
-    { type: 'missing', label: 'Missing Type', fill: '#fda', stroke: '#a73', dasharray: '5,5' }
+  const lines: string[] = [
+    'digraph TypeHierarchy {',
+    '  rankdir=LR;',
+    '  node [shape=box, style=filled];'
   ];
   
-  if (options.highlightCircularDependencies) {
-    legendItems.push({ type: 'circular', label: 'Circular Dependency', fill: '#faa', stroke: '#f66' });
-  }
+  const colors = colorSchemes[options.colorScheme];
+  const circularTypes = new Set(hierarchy.circularDependencies.flat());
   
-  for (let i = 0; i < legendItems.length; i++) {
-    const item = legendItems[i];
-    const y = height - 90 + i * 25;
+  // Filter types if focusTypes is specified
+  const typeMap = options.focusTypes
+    ? filterTypesByFocus(hierarchy.typeMap, options.focusTypes, hierarchy.inheritanceGraph, options.maxDepth)
+    : hierarchy.typeMap;
+  
+  // Add nodes
+  for (const typeName in typeMap) {
+    const type = typeMap[typeName];
+    let label = `${type.name}\\n(${type.kind})`;
     
-    svg += `  <rect x="30" y="${y - 10}" width="20" height="20" fill="${item.fill}" stroke="${item.stroke}"`;
-    
-    if (item.dasharray) {
-      svg += ` stroke-dasharray="${item.dasharray}"`;
+    if (options.includeProperties && type.properties.length > 0) {
+      label += '\\n\\nProperties:\\n';
+      for (const prop of type.properties.slice(0, 5)) {
+        label += `${prop.name}${prop.isOptional ? '?' : ''}: ${truncateType(prop.type)}\\n`;
+      }
+      if (type.properties.length > 5) {
+        label += `...and ${type.properties.length - 5} more\\n`;
+      }
     }
     
-    svg += ' />\n';
-    svg += `  <text x="60" y="${y + 5}" font-family="Arial" font-size="12" text-anchor="start">${item.label}</text>\n`;
+    if (options.includeMethods && type.methods.length > 0) {
+      label += '\\n\\nMethods:\\n';
+      for (const method of type.methods.slice(0, 3)) {
+        label += `${method.name}(): ${truncateType(method.returnType)}\\n`;
+      }
+      if (type.methods.length > 3) {
+        label += `...and ${type.methods.length - 3} more\\n`;
+      }
+    }
+    
+    let color = colors[type.kind];
+    
+    // Check if this type is orphaned
+    if (hierarchy.orphanedTypes.includes(typeName)) {
+      if (!options.includeOrphans) continue;
+      color = colors.orphan;
+    }
+    
+    // Check if this type is part of a circular dependency
+    if (circularTypes.has(typeName)) {
+      color = colors.circular;
+    }
+    
+    lines.push(`  "${typeName}" [label="${label}", fillcolor="${color}"];`);
   }
   
-  svg += '</svg>';
-  return svg;
-}
-
-/**
- * Generates a visualization of type coverage metrics
- * 
- * @param coverage Type coverage metrics
- * @param options Visualization options
- * @returns Visualization in the requested format
- */
-export function visualizeTypeCoverage(
-  coverage: {
-    coverage: number;
-    filesCovered: number;
-    totalFiles: number;
-    missingCoverage: string[];
-    implicitAnyCount: number;
-    explicitTypeCount: number;
-    typeByFileMap: Record<string, number>;
-  },
-  format: 'json' | 'svg' = 'json'
-): string {
-  switch (format) {
-    case 'json':
-      return JSON.stringify(coverage, null, 2);
+  // Add missing types if they are referenced by the filtered types
+  if (options.focusTypes) {
+    const referencedTypes = new Set<string>();
+    
+    for (const typeName in typeMap) {
+      const type = typeMap[typeName];
       
-    case 'svg':
-      // Generate a simple SVG bar chart of type coverage by file
-      const width = 1000;
-      const height = 600;
-      const margin = { top: 60, right: 20, bottom: 120, left: 60 };
-      const chartWidth = width - margin.left - margin.right;
-      const chartHeight = height - margin.top - margin.bottom;
-      
-      // Get top files by coverage (lowest first)
-      const sortedFiles = Object.entries(coverage.typeByFileMap)
-        .sort(([, a], [, b]) => a - b)
-        .slice(0, 20); // Show top 20 worst files
-      
-      const barWidth = Math.min(40, chartWidth / sortedFiles.length - 5);
-      
-      let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">\n`;
-      
-      // Add title
-      svg += `  <text x="${width / 2}" y="30" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold">TypeScript Type Coverage by File</text>\n`;
-      svg += `  <text x="${width / 2}" y="50" text-anchor="middle" font-family="Arial" font-size="14">Overall Coverage: ${coverage.coverage.toFixed(1)}%</text>\n`;
-      
-      // Add axes
-      svg += `  <line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" stroke="black" />\n`;
-      svg += `  <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${height - margin.bottom}" stroke="black" />\n`;
-      
-      // Add y-axis labels
-      for (let i = 0; i <= 10; i++) {
-        const y = margin.top + (chartHeight - chartHeight * i / 10);
-        svg += `  <line x1="${margin.left - 5}" y1="${y}" x2="${margin.left}" y2="${y}" stroke="black" />\n`;
-        svg += `  <text x="${margin.left - 10}" y="${y + 5}" text-anchor="end" font-family="Arial" font-size="12">${i * 10}%</text>\n`;
+      // Add extended types
+      for (const extendedType of type.extendsTypes) {
+        referencedTypes.add(extendedType);
       }
       
-      // Add bars
-      sortedFiles.forEach(([file, coverageValue], index) => {
-        const x = margin.left + index * (chartWidth / sortedFiles.length) + (chartWidth / sortedFiles.length - barWidth) / 2;
-        const barHeight = (coverageValue / 100) * chartHeight;
-        const y = height - margin.bottom - barHeight;
-        
-        // Calculate color based on coverage (red to green)
-        const red = Math.round(255 * (1 - coverageValue / 100));
-        const green = Math.round(255 * (coverageValue / 100));
-        const color = `rgb(${red}, ${green}, 100)`;
-        
-        svg += `  <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" fill="${color}" stroke="#333" />\n`;
-        svg += `  <text x="${x + barWidth / 2}" y="${height - margin.bottom + 15}" text-anchor="middle" font-family="Arial" font-size="10" transform="rotate(45, ${x + barWidth / 2}, ${height - margin.bottom + 15})">${trimFileName(file)}</text>\n`;
-        svg += `  <text x="${x + barWidth / 2}" y="${y - 5}" text-anchor="middle" font-family="Arial" font-size="10">${coverageValue.toFixed(0)}%</text>\n`;
-      });
-      
-      // Add legend
-      svg += `  <rect x="${width - 220}" y="${margin.top}" width="180" height="100" fill="white" stroke="#999" />\n`;
-      svg += `  <text x="${width - 130}" y="${margin.top + 25}" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold">Legend</text>\n`;
-      
-      svg += `  <rect x="${width - 200}" y="${margin.top + 40}" width="20" height="20" fill="rgb(0, 255, 100)" stroke="#333" />\n`;
-      svg += `  <text x="${width - 170}" y="${margin.top + 55}" font-family="Arial" font-size="12" text-anchor="start">100% Coverage</text>\n`;
-      
-      svg += `  <rect x="${width - 200}" y="${margin.top + 70}" width="20" height="20" fill="rgb(255, 0, 100)" stroke="#333" />\n`;
-      svg += `  <text x="${width - 170}" y="${margin.top + 85}" font-family="Arial" font-size="12" text-anchor="start">0% Coverage</text>\n`;
-      
-      svg += '</svg>';
-      return svg;
-      
-    default:
-      throw new Error(`Unsupported visualization format: ${format}`);
+      // Add implemented types
+      for (const implementedType of type.implementsTypes) {
+        referencedTypes.add(implementedType);
+      }
+    }
+    
+    for (const typeName of referencedTypes) {
+      if (!typeMap[typeName] && !hierarchy.typeMap[typeName]) {
+        lines.push(`  "${typeName}" [label="${typeName}\\n(missing)", fillcolor="${colors.missing}"];`);
+      }
+    }
   }
+  
+  // Add edges
+  for (const typeName in typeMap) {
+    const type = typeMap[typeName];
+    
+    // Add edges for extended types
+    for (const extendedType of type.extendsTypes) {
+      lines.push(`  "${typeName}" -> "${extendedType}" [label="extends"];`);
+    }
+    
+    // Add edges for implemented types
+    for (const implementedType of type.implementsTypes) {
+      lines.push(`  "${typeName}" -> "${implementedType}" [label="implements", style="dashed"];`);
+    }
+  }
+  
+  lines.push('}');
+  
+  const result = lines.join('\n');
+  
+  // Save to file if outputPath is provided
+  if (options.outputPath) {
+    fs.writeFileSync(options.outputPath, result);
+  }
+  
+  return result;
 }
 
 /**
- * Trims a file name for display in visualizations
+ * Generates a Mermaid diagram visualization
+ * 
+ * @param hierarchy Type hierarchy analysis
+ * @param options Visualization options
+ * @returns Mermaid diagram representation
  */
-function trimFileName(file: string): string {
-  // Get the file name without the path
-  const parts = file.split(/[\/\\]/);
-  const fileName = parts[parts.length - 1];
+function generateMermaidDiagram(
+  hierarchy: TypeHierarchyAnalysis,
+  options: VisualizationOptions
+): string {
+  const lines: string[] = [
+    '```mermaid',
+    'classDiagram'
+  ];
   
-  // If the file name is too long, truncate it
-  return fileName.length > 20 ? fileName.substring(0, 17) + '...' : fileName;
+  const circularTypes = new Set(hierarchy.circularDependencies.flat());
+  
+  // Filter types if focusTypes is specified
+  const typeMap = options.focusTypes
+    ? filterTypesByFocus(hierarchy.typeMap, options.focusTypes, hierarchy.inheritanceGraph, options.maxDepth)
+    : hierarchy.typeMap;
+  
+  // Add class definitions
+  for (const typeName in typeMap) {
+    const type = typeMap[typeName];
+    
+    // Check if this type is orphaned
+    if (hierarchy.orphanedTypes.includes(typeName) && !options.includeOrphans) {
+      continue;
+    }
+    
+    // Add class
+    lines.push(`  class ${escapeTypeName(typeName)} {`);
+    
+    // Add properties
+    if (options.includeProperties) {
+      for (const prop of type.properties.slice(0, 5)) {
+        lines.push(`    ${prop.isOptional ? '+?' : '+'} ${prop.name} ${truncateType(prop.type)}`);
+      }
+      if (type.properties.length > 5) {
+        lines.push(`    ... ${type.properties.length - 5} more ...`);
+      }
+    }
+    
+    // Add methods
+    if (options.includeMethods) {
+      for (const method of type.methods.slice(0, 3)) {
+        lines.push(`    + ${method.name}() ${truncateType(method.returnType)}`);
+      }
+      if (type.methods.length > 3) {
+        lines.push(`    ... ${type.methods.length - 3} more ...`);
+      }
+    }
+    
+    lines.push('  }');
+    
+    // Add annotations
+    if (type.kind !== 'class') {
+      lines.push(`  <<${type.kind}>> ${escapeTypeName(typeName)}`);
+    }
+    
+    if (circularTypes.has(typeName)) {
+      lines.push(`  <<circular>> ${escapeTypeName(typeName)}`);
+    }
+    
+    if (hierarchy.orphanedTypes.includes(typeName)) {
+      lines.push(`  <<orphan>> ${escapeTypeName(typeName)}`);
+    }
+  }
+  
+  // Add missing types if they are referenced by the filtered types
+  if (options.focusTypes) {
+    const referencedTypes = new Set<string>();
+    
+    for (const typeName in typeMap) {
+      const type = typeMap[typeName];
+      
+      // Add extended types
+      for (const extendedType of type.extendsTypes) {
+        referencedTypes.add(extendedType);
+      }
+      
+      // Add implemented types
+      for (const implementedType of type.implementsTypes) {
+        referencedTypes.add(implementedType);
+      }
+    }
+    
+    for (const typeName of referencedTypes) {
+      if (!typeMap[typeName] && !hierarchy.typeMap[typeName]) {
+        lines.push(`  class ${escapeTypeName(typeName)} {`);
+        lines.push('  }');
+        lines.push(`  <<missing>> ${escapeTypeName(typeName)}`);
+      }
+    }
+  }
+  
+  // Add relationships
+  for (const typeName in typeMap) {
+    const type = typeMap[typeName];
+    
+    // Add relationships for extended types
+    for (const extendedType of type.extendsTypes) {
+      lines.push(`  ${escapeTypeName(extendedType)} <|-- ${escapeTypeName(typeName)} : extends`);
+    }
+    
+    // Add relationships for implemented types
+    for (const implementedType of type.implementsTypes) {
+      lines.push(`  ${escapeTypeName(implementedType)} <|.. ${escapeTypeName(typeName)} : implements`);
+    }
+  }
+  
+  lines.push('```');
+  
+  const result = lines.join('\n');
+  
+  // Save to file if outputPath is provided
+  if (options.outputPath) {
+    fs.writeFileSync(options.outputPath, result);
+  }
+  
+  return result;
+}
+
+/**
+ * Generates a JSON visualization
+ * 
+ * @param hierarchy Type hierarchy analysis
+ * @param options Visualization options
+ * @returns JSON representation
+ */
+function generateJSON(
+  hierarchy: TypeHierarchyAnalysis,
+  options: VisualizationOptions
+): string {
+  // Filter types if focusTypes is specified
+  const typeMap = options.focusTypes
+    ? filterTypesByFocus(hierarchy.typeMap, options.focusTypes, hierarchy.inheritanceGraph, options.maxDepth)
+    : hierarchy.typeMap;
+  
+  const nodes: any[] = [];
+  const edges: any[] = [];
+  
+  const circularTypes = new Set(hierarchy.circularDependencies.flat());
+  
+  // Create nodes
+  for (const typeName in typeMap) {
+    const type = typeMap[typeName];
+    
+    // Check if this type is orphaned
+    if (hierarchy.orphanedTypes.includes(typeName) && !options.includeOrphans) {
+      continue;
+    }
+    
+    const node: any = {
+      id: typeName,
+      name: type.name,
+      kind: type.kind,
+      isGeneric: type.isGeneric,
+      isExported: type.isExported,
+      isOrphan: hierarchy.orphanedTypes.includes(typeName),
+      isCircular: circularTypes.has(typeName),
+      file: path.basename(type.filePath),
+      complexity: type.complexity
+    };
+    
+    if (options.includeProperties) {
+      node.properties = type.properties;
+    }
+    
+    if (options.includeMethods) {
+      node.methods = type.methods;
+    }
+    
+    nodes.push(node);
+  }
+  
+  // Create edges
+  for (const typeName in typeMap) {
+    const type = typeMap[typeName];
+    
+    // Add edges for extended types
+    for (const extendedType of type.extendsTypes) {
+      edges.push({
+        source: typeName,
+        target: extendedType,
+        relationship: 'extends'
+      });
+    }
+    
+    // Add edges for implemented types
+    for (const implementedType of type.implementsTypes) {
+      edges.push({
+        source: typeName,
+        target: implementedType,
+        relationship: 'implements'
+      });
+    }
+  }
+  
+  const result = JSON.stringify({
+    nodes,
+    edges,
+    statistics: {
+      typeCount: Object.keys(typeMap).length,
+      interfaceCount: Object.values(typeMap).filter(t => t.kind === 'interface').length,
+      enumCount: Object.values(typeMap).filter(t => t.kind === 'enum').length,
+      typeAliasCount: Object.values(typeMap).filter(t => t.kind === 'type').length,
+      genericTypeCount: Object.values(typeMap).filter(t => t.isGeneric).length,
+      orphanCount: hierarchy.orphanedTypes.filter(t => !!typeMap[t]).length,
+      circularCount: Array.from(circularTypes).filter(t => !!typeMap[t]).length
+    }
+  }, null, 2);
+  
+  // Save to file if outputPath is provided
+  if (options.outputPath) {
+    fs.writeFileSync(options.outputPath, result);
+  }
+  
+  return result;
+}
+
+/**
+ * Filters types by focus
+ * 
+ * @param typeMap Original type map
+ * @param focusTypes Types to focus on
+ * @param inheritanceGraph Graph of type inheritance
+ * @param maxDepth Maximum depth to include related types
+ * @returns Filtered type map
+ */
+function filterTypesByFocus(
+  typeMap: Record<string, TypeInfo>,
+  focusTypes: string[],
+  inheritanceGraph: Record<string, string[]>,
+  maxDepth: number
+): Record<string, TypeInfo> {
+  const result: Record<string, TypeInfo> = {};
+  const visited = new Set<string>();
+  
+  // Perform a breadth-first search from each focus type
+  function bfs(typeName: string, depth: number) {
+    if (depth > maxDepth || visited.has(typeName)) return;
+    visited.add(typeName);
+    
+    // Add the type to the result
+    if (typeMap[typeName]) {
+      result[typeName] = typeMap[typeName];
+      
+      // Add related types
+      if (depth < maxDepth) {
+        // Add extended types
+        for (const extendedType of typeMap[typeName].extendsTypes) {
+          bfs(extendedType, depth + 1);
+        }
+        
+        // Add implemented types
+        for (const implementedType of typeMap[typeName].implementsTypes) {
+          bfs(implementedType, depth + 1);
+        }
+        
+        // Add types that extend this type
+        for (const otherTypeName in inheritanceGraph) {
+          if (inheritanceGraph[otherTypeName].includes(typeName)) {
+            bfs(otherTypeName, depth + 1);
+          }
+        }
+      }
+    }
+  }
+  
+  for (const focusType of focusTypes) {
+    bfs(focusType, 0);
+  }
+  
+  return result;
+}
+
+/**
+ * Truncates a type name if it's too long
+ * 
+ * @param typeName Name of the type
+ * @returns Truncated type name
+ */
+function truncateType(typeName: string): string {
+  if (typeName.length <= 30) return typeName;
+  return typeName.substring(0, 27) + '...';
+}
+
+/**
+ * Escapes a type name for Mermaid diagrams
+ * 
+ * @param typeName Name of the type
+ * @returns Escaped type name
+ */
+function escapeTypeName(typeName: string): string {
+  // Replace characters that might cause issues in Mermaid diagrams
+  return typeName
+    .replace(/[<>]/g, '_')
+    .replace(/\./g, '_')
+    .replace(/\s/g, '_')
+    .replace(/\[|\]/g, '_')
+    .replace(/\{|\}/g, '_')
+    .replace(/\(|\)/g, '_')
+    .replace(/,/g, '_');
+}
+
+/**
+ * Creates a visualization for the most complex types in a project
+ * 
+ * @param hierarchy Type hierarchy analysis
+ * @param options Visualization options
+ * @returns Visualization of the most complex types
+ */
+export function visualizeComplexTypes(
+  hierarchy: TypeHierarchyAnalysis,
+  options?: Partial<VisualizationOptions>
+): string {
+  // Get the 10 most complex types
+  const complexTypes = hierarchy.largestTypes.map(t => t.name);
+  
+  return visualizeTypeHierarchy(hierarchy, {
+    ...options,
+    focusTypes: complexTypes,
+    includeProperties: true,
+    includeMethods: true
+  });
+}
+
+/**
+ * Creates a visualization of circular dependencies
+ * 
+ * @param hierarchy Type hierarchy analysis
+ * @param options Visualization options
+ * @returns Visualization of circular dependencies
+ */
+export function visualizeCircularDependencies(
+  hierarchy: TypeHierarchyAnalysis,
+  options?: Partial<VisualizationOptions>
+): string {
+  // Get all types involved in circular dependencies
+  const circularTypes = Array.from(new Set(hierarchy.circularDependencies.flat()));
+  
+  return visualizeTypeHierarchy(hierarchy, {
+    ...options,
+    focusTypes: circularTypes,
+    maxDepth: 1
+  });
+}
+
+/**
+ * Creates an HTML report with all visualizations
+ * 
+ * @param hierarchy Type hierarchy analysis
+ * @param outputDir Directory to write the report to
+ */
+export function createTypeVisualizationReport(
+  hierarchy: TypeHierarchyAnalysis,
+  outputDir: string
+): void {
+  // Create output directory if it doesn't exist
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+  
+  // Generate visualizations
+  const fullGraph = visualizeTypeHierarchy(hierarchy, {
+    format: 'dot',
+    includeOrphans: false,
+    includeProperties: false,
+    includeMethods: false,
+    outputPath: path.join(outputDir, 'full-graph.dot')
+  });
+  
+  const complexTypesGraph = visualizeComplexTypes(hierarchy, {
+    format: 'dot',
+    includeProperties: true,
+    includeMethods: true,
+    outputPath: path.join(outputDir, 'complex-types.dot')
+  });
+  
+  const circularDependenciesGraph = visualizeCircularDependencies(hierarchy, {
+    format: 'dot',
+    outputPath: path.join(outputDir, 'circular-dependencies.dot')
+  });
+  
+  const mermaidDiagram = visualizeTypeHierarchy(hierarchy, {
+    format: 'mermaid',
+    includeOrphans: false,
+    maxDepth: 2,
+    includeProperties: false,
+    includeMethods: false,
+    outputPath: path.join(outputDir, 'type-hierarchy.md')
+  });
+  
+  const jsonData = visualizeTypeHierarchy(hierarchy, {
+    format: 'json',
+    includeOrphans: true,
+    includeProperties: true,
+    includeMethods: true,
+    outputPath: path.join(outputDir, 'type-data.json')
+  });
+  
+  // Create HTML report
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Type Visualization Report</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h1, h2, h3 {
+      color: #1a73e8;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #1a73e8;
+      margin: 10px 0;
+    }
+    .section {
+      margin: 30px 0;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .download-links {
+      margin-top: 20px;
+    }
+    .download-links a {
+      display: inline-block;
+      margin-right: 15px;
+      margin-bottom: 10px;
+      padding: 8px 15px;
+      background-color: #1a73e8;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .warning {
+      background-color: #feefe3;
+      border-left: 4px solid #f6a54c;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>TypeScript Type Foundation Report</h1>
+    
+    <div class="section">
+      <h2>Overview</h2>
+      <div class="stats">
+        <div class="stat-card">
+          <div>Total Types</div>
+          <div class="number">${hierarchy.typeCount}</div>
+        </div>
+        <div class="stat-card">
+          <div>Interfaces</div>
+          <div class="number">${hierarchy.interfaceCount}</div>
+        </div>
+        <div class="stat-card">
+          <div>Type Aliases</div>
+          <div class="number">${hierarchy.typeAliasCount}</div>
+        </div>
+        <div class="stat-card">
+          <div>Enums</div>
+          <div class="number">${hierarchy.enumCount}</div>
+        </div>
+        <div class="stat-card">
+          <div>Generic Types</div>
+          <div class="number">${hierarchy.genericTypeCount}</div>
+        </div>
+        <div class="stat-card">
+          <div>Orphaned Types</div>
+          <div class="number">${hierarchy.orphanedTypes.length}</div>
+        </div>
+        <div class="stat-card">
+          <div>Missing Types</div>
+          <div class="number">${hierarchy.missingTypes.length}</div>
+        </div>
+        <div class="stat-card">
+          <div>Circular Dependencies</div>
+          <div class="number">${hierarchy.circularDependencies.length}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>Most Complex Types</h2>
+      <p>These types have the highest complexity scores based on properties, methods, and inheritance.</p>
+      <table>
+        <tr>
+          <th>Type Name</th>
+          <th>Complexity Score</th>
+        </tr>
+        ${hierarchy.largestTypes.map(type => `
+        <tr>
+          <td>${type.name}</td>
+          <td>${type.complexity}</td>
+        </tr>
+        `).join('')}
+      </table>
+    </div>
+    
+    ${hierarchy.circularDependencies.length > 0 ? `
+    <div class="section">
+      <h2>Circular Dependencies</h2>
+      <div class="warning">
+        <strong>Warning:</strong> Circular dependencies can lead to harder-to-maintain code and potential runtime issues.
+      </div>
+      <ul>
+        ${hierarchy.circularDependencies.map(cycle => `
+        <li>${cycle.join(' → ')} → ${cycle[0]}</li>
+        `).join('')}
+      </ul>
+    </div>
+    ` : ''}
+    
+    ${hierarchy.missingTypes.length > 0 ? `
+    <div class="section">
+      <h2>Missing Types</h2>
+      <p>These types are referenced in the codebase but not defined.</p>
+      <ul>
+        ${hierarchy.missingTypes.slice(0, 20).map(type => `<li>${type}</li>`).join('')}
+        ${hierarchy.missingTypes.length > 20 ? `<li>...and ${hierarchy.missingTypes.length - 20} more</li>` : ''}
+      </ul>
+    </div>
+    ` : ''}
+    
+    <div class="section">
+      <h2>Download Visualizations</h2>
+      <p>You can use GraphViz to render .dot files into visual diagrams. For Mermaid diagrams, you can use the Mermaid Live Editor or any markdown previewer that supports Mermaid.</p>
+      <div class="download-links">
+        <a href="full-graph.dot" download>Full Type Graph (DOT)</a>
+        <a href="complex-types.dot" download>Complex Types (DOT)</a>
+        <a href="circular-dependencies.dot" download>Circular Dependencies (DOT)</a>
+        <a href="type-hierarchy.md" download>Type Hierarchy (Mermaid)</a>
+        <a href="type-data.json" download>Type Data (JSON)</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+  
+  fs.writeFileSync(path.join(outputDir, 'index.html'), html);
 }

@@ -1,154 +1,478 @@
 /**
  * @file ts-type-analyzer.ts
- * @description Type foundation analysis utilities for TypeScript error management
+ * @description TypeScript type analyzer for code bases
  * 
- * This module provides tools for analyzing the type foundation of a TypeScript project,
- * identifying missing types, and generating type coverage metrics.
+ * This module provides utilities for analyzing TypeScript type hierarchies,
+ * generating coverage reports, and identifying type-related hotspots in the codebase.
  */
 
 import * as ts from 'typescript';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
 import { glob } from 'glob';
 
 /**
- * Represents the type hierarchy of a TypeScript project
+ * Type hierarchy analysis results
  */
-export interface TypeHierarchy {
-  interfaces: Record<string, string[]>;     // Interface name -> extended interfaces
-  types: Record<string, string[]>;          // Type name -> dependent types
-  missingTypes: string[];                   // Types referenced but not defined
-  circularDependencies: string[][];         // Circular type dependencies
+export interface TypeHierarchyAnalysis {
+  typeCount: number;
+  interfaceCount: number;
+  enumCount: number;
+  typeAliasCount: number;
+  genericTypeCount: number;
+  typeMap: Record<string, TypeInfo>;
+  inheritanceGraph: Record<string, string[]>;
+  circularDependencies: string[][];
+  orphanedTypes: string[];
+  missingTypes: string[];
+  largestTypes: {
+    name: string;
+    complexity: number;
+  }[];
 }
 
 /**
- * Represents type coverage metrics for a TypeScript project
+ * Type coverage report
  */
-export interface TypeCoverage {
-  coverage: number;                         // Percentage of typed variables/parameters
-  filesCovered: number;                     // Number of files with complete type coverage
-  totalFiles: number;                       // Total number of TypeScript files
-  missingCoverage: string[];                // Files with incomplete type coverage
-  implicitAnyCount: number;                 // Number of implicit any types
-  explicitTypeCount: number;                // Number of explicitly typed variables/parameters
-  typeByFileMap: Record<string, number>;    // Type coverage percentage by file
+export interface TypeCoverageReport {
+  totalNodes: number;
+  anyTypeCount: number;
+  implicitAnyCount: number;
+  unknownTypeCount: number;
+  explicitTypeCount: number;
+  coverage: number; // percentage of explicitly typed nodes
+  filesCoverage: Record<string, {
+    totalNodes: number;
+    anyTypeCount: number;
+    implicitAnyCount: number;
+    coverage: number;
+  }>;
+  missingTypeDeclarations: {
+    filePath: string;
+    name: string;
+    line: number;
+    column: number;
+  }[];
 }
 
 /**
- * Represents a missing type interface that could be generated
+ * Information about a type
  */
-export interface MissingInterface {
+export interface TypeInfo {
   name: string;
+  kind: 'interface' | 'type' | 'enum' | 'class' | 'unknown';
+  filePath: string;
+  line: number;
+  column: number;
   properties: {
     name: string;
     type: string;
-    optional: boolean;
+    isOptional: boolean;
   }[];
-  typeParams: string[];
-  documentation: string;
+  methods: {
+    name: string;
+    returnType: string;
+    parameters: {
+      name: string;
+      type: string;
+    }[];
+  }[];
+  extendsTypes: string[];
+  implementsTypes: string[];
+  isGeneric: boolean;
+  typeParameters: string[];
+  isExported: boolean;
+  usages: {
+    filePath: string;
+    line: number;
+    column: number;
+  }[];
+  complexity: number; // Calculated based on number of properties, methods, inheritance, etc.
 }
 
 /**
- * Analyzes the type hierarchy of a TypeScript project
+ * Finds all TypeScript files in a directory
  * 
- * @param projectPath Root path of the TypeScript project
- * @returns Type hierarchy analysis results
+ * @param rootDir Root directory to start search from
+ * @returns Array of file paths
  */
-export async function analyzeTypeHierarchy(projectPath: string): Promise<TypeHierarchy> {
-  const tsConfigPath = ts.findConfigFile(projectPath, ts.sys.fileExists, 'tsconfig.json');
+export async function findTypeScriptFiles(rootDir: string): Promise<string[]> {
+  const tsFiles = await glob('**/*.ts', {
+    cwd: rootDir,
+    absolute: true,
+    ignore: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**']
+  });
+  
+  const tsxFiles = await glob('**/*.tsx', {
+    cwd: rootDir,
+    absolute: true,
+    ignore: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**']
+  });
+  
+  return [...tsFiles, ...tsxFiles];
+}
+
+/**
+ * Analyzes a TypeScript project and generates a type hierarchy
+ * 
+ * @param projectPath Path to the TypeScript project
+ * @returns Type hierarchy analysis
+ */
+export async function analyzeTypeHierarchy(projectPath: string): Promise<TypeHierarchyAnalysis> {
+  const tsConfigPath = ts.findConfigFile(
+    projectPath,
+    ts.sys.fileExists,
+    'tsconfig.json'
+  );
   
   if (!tsConfigPath) {
-    throw new Error("Could not find tsconfig.json in the project path");
+    throw new Error(`Could not find tsconfig.json in ${projectPath}`);
   }
   
   const configFile = ts.readConfigFile(tsConfigPath, ts.sys.readFile);
-  const parsedConfig = ts.parseJsonConfigFileContent(configFile.config, ts.sys, path.dirname(tsConfigPath));
+  const parsedConfig = ts.parseJsonConfigFileContent(
+    configFile.config,
+    ts.sys,
+    path.dirname(tsConfigPath)
+  );
   
-  // Create a program from the tsconfig.json
-  const program = ts.createProgram({
-    rootNames: parsedConfig.fileNames,
-    options: parsedConfig.options,
-  });
+  const program = ts.createProgram(
+    parsedConfig.fileNames,
+    parsedConfig.options
+  );
   
   const typeChecker = program.getTypeChecker();
   
-  // Initialize result objects
-  const interfaces: Record<string, string[]> = {};
-  const types: Record<string, string[]> = {};
-  const missingTypes: Set<string> = new Set();
-  const circularDeps: string[][] = [];
+  const typeMap: Record<string, TypeInfo> = {};
+  const inheritanceGraph: Record<string, string[]> = {};
+  const usageMap: Record<string, { filePath: string; line: number; column: number; }[]> = {};
   
-  // Helper function to check if a type exists
-  const typeExists = (typeName: string): boolean => {
-    return interfaces[typeName] !== undefined || types[typeName] !== undefined;
+  // Visit all source files
+  for (const sourceFile of program.getSourceFiles()) {
+    if (sourceFile.isDeclarationFile) continue;
+    if (sourceFile.fileName.includes('node_modules')) continue;
+    
+    visitNodeAndCollectTypes(sourceFile);
+  }
+  
+  // Find circular dependencies
+  const circularDependencies = findCircularDependencies(inheritanceGraph);
+  
+  // Find orphaned types (types not used anywhere)
+  const orphanedTypes = Object.keys(typeMap).filter(typeName => 
+    !usageMap[typeName] || usageMap[typeName].length === 0
+  );
+  
+  // Find missing types (types used but not defined)
+  const missingTypes = findMissingTypes(usageMap, typeMap);
+  
+  // Calculate type complexity
+  for (const typeName in typeMap) {
+    typeMap[typeName].complexity = calculateTypeComplexity(typeName, typeMap, inheritanceGraph);
+  }
+  
+  // Get largest types by complexity
+  const largestTypes = Object.values(typeMap)
+    .sort((a, b) => b.complexity - a.complexity)
+    .slice(0, 10)
+    .map(type => ({
+      name: type.name,
+      complexity: type.complexity
+    }));
+  
+  return {
+    typeCount: Object.keys(typeMap).length,
+    interfaceCount: Object.values(typeMap).filter(t => t.kind === 'interface').length,
+    enumCount: Object.values(typeMap).filter(t => t.kind === 'enum').length,
+    typeAliasCount: Object.values(typeMap).filter(t => t.kind === 'type').length,
+    genericTypeCount: Object.values(typeMap).filter(t => t.isGeneric).length,
+    typeMap,
+    inheritanceGraph,
+    circularDependencies,
+    orphanedTypes,
+    missingTypes,
+    largestTypes
   };
   
-  // Process each source file
-  for (const sourceFile of program.getSourceFiles()) {
-    // Skip declaration files and node_modules
-    if (sourceFile.isDeclarationFile || sourceFile.fileName.includes('node_modules')) {
-      continue;
-    }
-    
-    // Visit each node in the source file
-    ts.forEachChild(sourceFile, (node) => {
-      // Process interface declarations
-      if (ts.isInterfaceDeclaration(node) && node.name) {
-        const interfaceName = node.name.text;
-        interfaces[interfaceName] = [];
+  /**
+   * Visits a TypeScript node and collects type information
+   */
+  function visitNodeAndCollectTypes(node: ts.Node) {
+    // Interface declaration
+    if (ts.isInterfaceDeclaration(node)) {
+      const symbol = typeChecker.getSymbolAtLocation(node.name);
+      if (symbol) {
+        const interfaceName = symbol.getName();
+        const { line, character } = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.name.getStart());
         
-        // Find extended interfaces
+        const properties: TypeInfo['properties'] = [];
+        const methods: TypeInfo['methods'] = [];
+        const extendsTypes: string[] = [];
+        
+        // Get extended types
         if (node.heritageClauses) {
-          for (const heritage of node.heritageClauses) {
-            for (const type of heritage.types) {
-              if (ts.isIdentifier(type.expression)) {
-                const extendedName = type.expression.text;
-                interfaces[interfaceName].push(extendedName);
+          for (const clause of node.heritageClauses) {
+            if (clause.token === ts.SyntaxKind.ExtendsKeyword) {
+              for (const type of clause.types) {
+                const extendedType = type.expression.getText();
+                extendsTypes.push(extendedType);
                 
-                // Check if extended interface exists
-                if (!typeExists(extendedName)) {
-                  missingTypes.add(extendedName);
+                // Update inheritance graph
+                if (!inheritanceGraph[interfaceName]) {
+                  inheritanceGraph[interfaceName] = [];
                 }
+                inheritanceGraph[interfaceName].push(extendedType);
               }
             }
           }
         }
-      }
-      
-      // Process type aliases
-      if (ts.isTypeAliasDeclaration(node) && node.name) {
-        const typeName = node.name.text;
-        types[typeName] = [];
         
-        // Find referenced types
-        const addReferencedType = (n: ts.Node) => {
-          if (ts.isTypeReferenceNode(n) && ts.isIdentifier(n.typeName)) {
-            const referencedType = n.typeName.text;
-            if (!types[typeName].includes(referencedType)) {
-              types[typeName].push(referencedType);
+        // Get properties and methods
+        if (symbol.members) {
+          symbol.members.forEach((member, memberName) => {
+            const memberDeclarations = member.getDeclarations();
+            if (!memberDeclarations || memberDeclarations.length === 0) return;
+            
+            const memberDeclaration = memberDeclarations[0];
+            
+            if (ts.isPropertySignature(memberDeclaration)) {
+              const type = memberDeclaration.type 
+                ? memberDeclaration.type.getText() 
+                : 'any';
               
-              // Check if referenced type exists
-              if (!typeExists(referencedType)) {
-                missingTypes.add(referencedType);
+              properties.push({
+                name: memberName.toString(),
+                type,
+                isOptional: !!memberDeclaration.questionToken
+              });
+            } else if (ts.isMethodSignature(memberDeclaration)) {
+              const returnType = memberDeclaration.type 
+                ? memberDeclaration.type.getText() 
+                : 'any';
+              
+              const parameters = memberDeclaration.parameters.map(param => ({
+                name: param.name.getText(),
+                type: param.type ? param.type.getText() : 'any'
+              }));
+              
+              methods.push({
+                name: memberName.toString(),
+                returnType,
+                parameters
+              });
+            }
+          });
+        }
+        
+        typeMap[interfaceName] = {
+          name: interfaceName,
+          kind: 'interface',
+          filePath: node.getSourceFile().fileName,
+          line: line + 1,
+          column: character + 1,
+          properties,
+          methods,
+          extendsTypes,
+          implementsTypes: [],
+          isGeneric: node.typeParameters !== undefined && node.typeParameters.length > 0,
+          typeParameters: node.typeParameters 
+            ? node.typeParameters.map(tp => tp.name.getText()) 
+            : [],
+          isExported: hasExportModifier(node),
+          usages: [],
+          complexity: 0
+        };
+      }
+    }
+    // Type alias
+    else if (ts.isTypeAliasDeclaration(node)) {
+      const symbol = typeChecker.getSymbolAtLocation(node.name);
+      if (symbol) {
+        const typeName = symbol.getName();
+        const { line, character } = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.name.getStart());
+        
+        typeMap[typeName] = {
+          name: typeName,
+          kind: 'type',
+          filePath: node.getSourceFile().fileName,
+          line: line + 1,
+          column: character + 1,
+          properties: [],
+          methods: [],
+          extendsTypes: [],
+          implementsTypes: [],
+          isGeneric: node.typeParameters !== undefined && node.typeParameters.length > 0,
+          typeParameters: node.typeParameters 
+            ? node.typeParameters.map(tp => tp.name.getText()) 
+            : [],
+          isExported: hasExportModifier(node),
+          usages: [],
+          complexity: 0
+        };
+      }
+    }
+    // Enum declaration
+    else if (ts.isEnumDeclaration(node)) {
+      const symbol = typeChecker.getSymbolAtLocation(node.name);
+      if (symbol) {
+        const enumName = symbol.getName();
+        const { line, character } = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.name.getStart());
+        
+        typeMap[enumName] = {
+          name: enumName,
+          kind: 'enum',
+          filePath: node.getSourceFile().fileName,
+          line: line + 1,
+          column: character + 1,
+          properties: node.members.map(member => ({
+            name: member.name.getText(),
+            type: 'enum member',
+            isOptional: false
+          })),
+          methods: [],
+          extendsTypes: [],
+          implementsTypes: [],
+          isGeneric: false,
+          typeParameters: [],
+          isExported: hasExportModifier(node),
+          usages: [],
+          complexity: 0
+        };
+      }
+    }
+    // Class declaration
+    else if (ts.isClassDeclaration(node)) {
+      const symbol = typeChecker.getSymbolAtLocation(node.name!);
+      if (symbol) {
+        const className = symbol.getName();
+        const { line, character } = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.name!.getStart());
+        
+        const properties: TypeInfo['properties'] = [];
+        const methods: TypeInfo['methods'] = [];
+        const extendsTypes: string[] = [];
+        const implementsTypes: string[] = [];
+        
+        // Get extended classes
+        if (node.heritageClauses) {
+          for (const clause of node.heritageClauses) {
+            if (clause.token === ts.SyntaxKind.ExtendsKeyword) {
+              for (const type of clause.types) {
+                const extendedType = type.expression.getText();
+                extendsTypes.push(extendedType);
+                
+                // Update inheritance graph
+                if (!inheritanceGraph[className]) {
+                  inheritanceGraph[className] = [];
+                }
+                inheritanceGraph[className].push(extendedType);
+              }
+            } else if (clause.token === ts.SyntaxKind.ImplementsKeyword) {
+              for (const type of clause.types) {
+                const implementedType = type.expression.getText();
+                implementsTypes.push(implementedType);
               }
             }
           }
-          
-          ts.forEachChild(n, addReferencedType);
-        };
+        }
         
-        addReferencedType(node.type);
+        // Get properties and methods
+        for (const member of node.members) {
+          if (ts.isPropertyDeclaration(member)) {
+            const propertyName = member.name.getText();
+            const type = member.type 
+              ? member.type.getText() 
+              : 'any';
+            
+            properties.push({
+              name: propertyName,
+              type,
+              isOptional: !!member.questionToken
+            });
+          } else if (ts.isMethodDeclaration(member)) {
+            const methodName = member.name.getText();
+            const returnType = member.type 
+              ? member.type.getText() 
+              : 'any';
+            
+            const parameters = member.parameters.map(param => ({
+              name: param.name.getText(),
+              type: param.type ? param.type.getText() : 'any'
+            }));
+            
+            methods.push({
+              name: methodName,
+              returnType,
+              parameters
+            });
+          }
+        }
+        
+        typeMap[className] = {
+          name: className,
+          kind: 'class',
+          filePath: node.getSourceFile().fileName,
+          line: line + 1,
+          column: character + 1,
+          properties,
+          methods,
+          extendsTypes,
+          implementsTypes,
+          isGeneric: node.typeParameters !== undefined && node.typeParameters.length > 0,
+          typeParameters: node.typeParameters 
+            ? node.typeParameters.map(tp => tp.name.getText()) 
+            : [],
+          isExported: hasExportModifier(node),
+          usages: [],
+          complexity: 0
+        };
       }
-    });
+    }
+    // Type reference
+    else if (ts.isTypeReferenceNode(node)) {
+      const typeName = node.typeName.getText();
+      const { line, character } = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.typeName.getStart());
+      
+      if (!usageMap[typeName]) {
+        usageMap[typeName] = [];
+      }
+      
+      usageMap[typeName].push({
+        filePath: node.getSourceFile().fileName,
+        line: line + 1,
+        column: character + 1
+      });
+    }
+    
+    ts.forEachChild(node, visitNodeAndCollectTypes);
   }
   
-  // Detect circular dependencies
+  /**
+   * Checks if a node has an export modifier
+   */
+  function hasExportModifier(node: ts.Node): boolean {
+    return node.modifiers !== undefined && 
+      node.modifiers.some(modifier => 
+        modifier.kind === ts.SyntaxKind.ExportKeyword
+      );
+  }
+}
+
+/**
+ * Finds circular dependencies in the inheritance graph
+ * 
+ * @param inheritanceGraph Graph of type inheritance
+ * @returns List of circular dependencies
+ */
+function findCircularDependencies(inheritanceGraph: Record<string, string[]>): string[][] {
+  const circularDependencies: string[][] = [];
   const visited = new Set<string>();
-  const recursionStack = new Set<string>();
+  const currentPath: string[] = [];
   
-  function detectCircular(typeName: string, path: string[] = []): void {
-    if (recursionStack.has(typeName)) {
-      circularDeps.push([...path, typeName]);
+  function dfs(typeName: string) {
+    if (currentPath.includes(typeName)) {
+      const cycle = currentPath.slice(currentPath.indexOf(typeName));
+      cycle.push(typeName);
+      circularDependencies.push(cycle);
       return;
     }
     
@@ -157,299 +481,415 @@ export async function analyzeTypeHierarchy(projectPath: string): Promise<TypeHie
     }
     
     visited.add(typeName);
-    recursionStack.add(typeName);
+    currentPath.push(typeName);
     
-    const deps = [...(interfaces[typeName] || []), ...(types[typeName] || [])];
-    for (const dep of deps) {
-      detectCircular(dep, [...path, typeName]);
+    const dependencies = inheritanceGraph[typeName] || [];
+    for (const dependency of dependencies) {
+      dfs(dependency);
     }
     
-    recursionStack.delete(typeName);
+    currentPath.pop();
   }
   
-  // Check each type for circular dependencies
-  for (const typeName of [...Object.keys(interfaces), ...Object.keys(types)]) {
-    detectCircular(typeName);
+  for (const typeName in inheritanceGraph) {
+    dfs(typeName);
   }
   
-  return {
-    interfaces,
-    types,
-    missingTypes: Array.from(missingTypes),
-    circularDependencies: circularDeps
-  };
+  return circularDependencies;
 }
 
 /**
- * Generates a type coverage report for a TypeScript project
+ * Finds types that are used but not defined
  * 
- * @param projectPath Root path of the TypeScript project
- * @returns Type coverage metrics
+ * @param usageMap Map of type usages
+ * @param typeMap Map of defined types
+ * @returns List of missing types
  */
-export async function generateTypeCoverageReport(projectPath: string): Promise<TypeCoverage> {
-  const tsConfigPath = ts.findConfigFile(projectPath, ts.sys.fileExists, 'tsconfig.json');
+function findMissingTypes(
+  usageMap: Record<string, { filePath: string; line: number; column: number; }[]>,
+  typeMap: Record<string, TypeInfo>
+): string[] {
+  const missingTypes: string[] = [];
+  
+  for (const typeName in usageMap) {
+    if (!typeMap[typeName]) {
+      missingTypes.push(typeName);
+    }
+  }
+  
+  return missingTypes;
+}
+
+/**
+ * Calculates the complexity of a type
+ * 
+ * @param typeName Name of the type
+ * @param typeMap Map of all types
+ * @param inheritanceGraph Inheritance graph
+ * @returns Complexity score
+ */
+function calculateTypeComplexity(
+  typeName: string,
+  typeMap: Record<string, TypeInfo>,
+  inheritanceGraph: Record<string, string[]>
+): number {
+  const type = typeMap[typeName];
+  if (!type) return 0;
+  
+  // Base complexity: properties + methods
+  let complexity = type.properties.length + type.methods.length;
+  
+  // Add complexity for generic parameters
+  complexity += type.typeParameters.length * 2;
+  
+  // Add complexity for inheritance
+  const inheritedTypes = inheritanceGraph[typeName] || [];
+  complexity += inheritedTypes.length * 3;
+  
+  // Add complexity for method parameters
+  for (const method of type.methods) {
+    complexity += method.parameters.length;
+  }
+  
+  return complexity;
+}
+
+/**
+ * Generates a coverage report for TypeScript types in a project
+ * 
+ * @param projectPath Path to the TypeScript project
+ * @returns Coverage report
+ */
+export async function generateTypeCoverageReport(projectPath: string): Promise<TypeCoverageReport> {
+  const tsConfigPath = ts.findConfigFile(
+    projectPath,
+    ts.sys.fileExists,
+    'tsconfig.json'
+  );
   
   if (!tsConfigPath) {
-    throw new Error("Could not find tsconfig.json in the project path");
+    throw new Error(`Could not find tsconfig.json in ${projectPath}`);
   }
   
   const configFile = ts.readConfigFile(tsConfigPath, ts.sys.readFile);
-  const parsedConfig = ts.parseJsonConfigFileContent(configFile.config, ts.sys, path.dirname(tsConfigPath));
-  
-  // Create a program from the tsconfig.json
-  const program = ts.createProgram({
-    rootNames: parsedConfig.fileNames,
-    options: parsedConfig.options,
-  });
-  
-  let implicitAnyCount = 0;
-  let explicitTypeCount = 0;
-  const fileStats: Record<string, { implicitAnys: number; explicitTypes: number }> = {};
-  const missingCoverage: string[] = [];
-  
-  // Process each source file
-  for (const sourceFile of program.getSourceFiles()) {
-    // Skip declaration files and node_modules
-    if (sourceFile.isDeclarationFile || sourceFile.fileName.includes('node_modules')) {
-      continue;
-    }
-    
-    const fileName = path.relative(projectPath, sourceFile.fileName);
-    fileStats[fileName] = { implicitAnys: 0, explicitTypes: 0 };
-    
-    // Visit each node in the source file
-    const visitNode = (node: ts.Node) => {
-      // Check variable declarations
-      if (ts.isVariableDeclaration(node)) {
-        if (node.type) {
-          fileStats[fileName].explicitTypes++;
-          explicitTypeCount++;
-        } else {
-          fileStats[fileName].implicitAnys++;
-          implicitAnyCount++;
-        }
-      }
-      
-      // Check parameter declarations
-      if (ts.isParameter(node)) {
-        if (node.type) {
-          fileStats[fileName].explicitTypes++;
-          explicitTypeCount++;
-        } else {
-          fileStats[fileName].implicitAnys++;
-          implicitAnyCount++;
-        }
-      }
-      
-      // Check function return types
-      if ((ts.isFunctionDeclaration(node) || ts.isMethodDeclaration(node) || ts.isArrowFunction(node)) 
-          && !ts.isConstructorDeclaration(node)) {
-        if (node.type) {
-          fileStats[fileName].explicitTypes++;
-          explicitTypeCount++;
-        } else {
-          fileStats[fileName].implicitAnys++;
-          implicitAnyCount++;
-        }
-      }
-      
-      ts.forEachChild(node, visitNode);
-    };
-    
-    visitNode(sourceFile);
-    
-    // Check if file has incomplete type coverage
-    if (fileStats[fileName].implicitAnys > 0) {
-      missingCoverage.push(fileName);
-    }
-  }
-  
-  // Calculate type coverage by file
-  const typeByFileMap: Record<string, number> = {};
-  for (const [file, stats] of Object.entries(fileStats)) {
-    const total = stats.explicitTypes + stats.implicitAnys;
-    typeByFileMap[file] = total > 0 ? (stats.explicitTypes / total) * 100 : 100;
-  }
-  
-  // Calculate overall type coverage
-  const totalTypes = implicitAnyCount + explicitTypeCount;
-  const coverage = totalTypes > 0 ? (explicitTypeCount / totalTypes) * 100 : 100;
-  
-  return {
-    coverage,
-    filesCovered: Object.keys(fileStats).length - missingCoverage.length,
-    totalFiles: Object.keys(fileStats).length,
-    missingCoverage,
-    implicitAnyCount,
-    explicitTypeCount,
-    typeByFileMap
-  };
-}
-
-/**
- * Automatically generates missing interface definitions for a file
- * 
- * @param filePath Path to the TypeScript file
- * @param missingTypes Array of missing type names
- * @returns Record of type name to generated interface definition
- */
-export async function generateMissingInterfaces(
-  filePath: string, 
-  missingTypes: string[]
-): Promise<Record<string, string>> {
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`File ${filePath} does not exist`);
-  }
-  
-  const fileContent = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(
-    filePath,
-    fileContent,
-    ts.ScriptTarget.Latest,
-    true
+  const parsedConfig = ts.parseJsonConfigFileContent(
+    configFile.config,
+    ts.sys,
+    path.dirname(tsConfigPath)
   );
   
-  const interfaces: Record<string, MissingInterface> = {};
+  const program = ts.createProgram(
+    parsedConfig.fileNames,
+    parsedConfig.options
+  );
   
-  // Find usage of missing types to infer properties
-  const findTypeUsage = (node: ts.Node) => {
-    // Check property access expressions that might use the missing type
-    if (ts.isPropertyAccessExpression(node)) {
-      const objectType = getTypeOfExpressionWithFallback(node.expression, fileContent);
-      
-      if (missingTypes.includes(objectType)) {
-        // This property access is on a missing type
-        if (ts.isIdentifier(node.name)) {
-          if (!interfaces[objectType]) {
-            interfaces[objectType] = {
-              name: objectType,
-              properties: [],
-              typeParams: [],
-              documentation: `Interface for ${objectType} auto-generated by the TypeScript error management system`
-            };
-          }
-          
-          // Add property if it doesn't exist
-          if (!interfaces[objectType].properties.some(p => p.name === node.name.text)) {
-            interfaces[objectType].properties.push({
-              name: node.name.text,
-              type: 'any', // Default to any, will refine later
-              optional: false // Default to required
-            });
-          }
-        }
-      }
-    }
+  const typeChecker = program.getTypeChecker();
+  
+  let totalNodes = 0;
+  let anyTypeCount = 0;
+  let implicitAnyCount = 0;
+  let unknownTypeCount = 0;
+  let explicitTypeCount = 0;
+  
+  const filesCoverage: Record<string, {
+    totalNodes: number;
+    anyTypeCount: number;
+    implicitAnyCount: number;
+    coverage: number;
+  }> = {};
+  
+  const missingTypeDeclarations: {
+    filePath: string;
+    name: string;
+    line: number;
+    column: number;
+  }[] = [];
+  
+  // Visit all source files
+  for (const sourceFile of program.getSourceFiles()) {
+    if (sourceFile.isDeclarationFile) continue;
+    if (sourceFile.fileName.includes('node_modules')) continue;
     
-    // Recursively examine children
-    ts.forEachChild(node, findTypeUsage);
+    const filePath = sourceFile.fileName;
+    
+    filesCoverage[filePath] = {
+      totalNodes: 0,
+      anyTypeCount: 0,
+      implicitAnyCount: 0,
+      coverage: 0
+    };
+    
+    // Get type coverage for the file
+    analyzeCoverage(sourceFile, filePath);
+    
+    // Calculate coverage percentage
+    if (filesCoverage[filePath].totalNodes > 0) {
+      const fileCoverage = 100 * (1 - filesCoverage[filePath].anyTypeCount / filesCoverage[filePath].totalNodes);
+      filesCoverage[filePath].coverage = Math.round(fileCoverage * 100) / 100;
+    }
+  }
+  
+  // Calculate overall coverage
+  const coverage = totalNodes > 0 
+    ? Math.round(100 * (1 - (anyTypeCount + implicitAnyCount) / totalNodes) * 100) / 100
+    : 0;
+  
+  return {
+    totalNodes,
+    anyTypeCount,
+    implicitAnyCount,
+    unknownTypeCount,
+    explicitTypeCount,
+    coverage,
+    filesCoverage,
+    missingTypeDeclarations
   };
   
-  findTypeUsage(sourceFile);
-  
-  // Refine property types based on usage
-  // This is a simplified version - a full implementation would analyze how properties are used
-  const refinePropertyTypes = (node: ts.Node) => {
-    // If property is used in a comparison with a string
-    if (ts.isBinaryExpression(node) && 
-        (node.operatorToken.kind === ts.SyntaxKind.EqualsEqualsToken || 
-         node.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken)) {
+  /**
+   * Analyzes type coverage in a file
+   * 
+   * @param node Current node to analyze
+   * @param filePath Path to the file
+   */
+  function analyzeCoverage(node: ts.Node, filePath: string) {
+    // Variables, parameters, and properties with types
+    if (
+      ts.isVariableDeclaration(node) ||
+      ts.isParameter(node) ||
+      ts.isPropertyDeclaration(node) ||
+      ts.isPropertySignature(node)
+    ) {
+      totalNodes++;
+      filesCoverage[filePath].totalNodes++;
       
-      if (ts.isPropertyAccessExpression(node.left)) {
-        const objectType = getTypeOfExpressionWithFallback(node.left.expression, fileContent);
+      // Has explicit type annotation
+      if (node.type) {
+        const typeText = node.type.getText();
         
-        if (missingTypes.includes(objectType) && ts.isIdentifier(node.left.name)) {
-          const propName = node.left.name.text;
-          const prop = interfaces[objectType]?.properties.find(p => p.name === propName);
+        if (typeText === 'any') {
+          anyTypeCount++;
+          filesCoverage[filePath].anyTypeCount++;
+        } else if (typeText === 'unknown') {
+          unknownTypeCount++;
+        } else {
+          explicitTypeCount++;
+        }
+      }
+      // No explicit type (implicit any)
+      else {
+        implicitAnyCount++;
+        filesCoverage[filePath].implicitAnyCount++;
+        
+        if (ts.isIdentifier(node.name)) {
+          const { line, character } = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.name.getStart());
           
-          if (prop) {
-            // If compared with a string literal, likely a string
-            if (ts.isStringLiteral(node.right)) {
-              prop.type = 'string';
-            }
-            // If compared with a number literal, likely a number
-            else if (ts.isNumericLiteral(node.right)) {
-              prop.type = 'number';
-            }
-            // If compared with true/false, likely a boolean
-            else if (node.right.kind === ts.SyntaxKind.TrueKeyword || 
-                    node.right.kind === ts.SyntaxKind.FalseKeyword) {
-              prop.type = 'boolean';
-            }
-          }
+          missingTypeDeclarations.push({
+            filePath,
+            name: node.name.getText(),
+            line: line + 1,
+            column: character + 1
+          });
+        }
+      }
+    }
+    // Function with return type
+    else if (
+      ts.isFunctionDeclaration(node) ||
+      ts.isMethodDeclaration(node) ||
+      ts.isMethodSignature(node)
+    ) {
+      totalNodes++;
+      filesCoverage[filePath].totalNodes++;
+      
+      // Has explicit return type
+      if (node.type) {
+        const typeText = node.type.getText();
+        
+        if (typeText === 'any') {
+          anyTypeCount++;
+          filesCoverage[filePath].anyTypeCount++;
+        } else if (typeText === 'unknown') {
+          unknownTypeCount++;
+        } else {
+          explicitTypeCount++;
+        }
+      }
+      // No explicit return type (implicit any)
+      else {
+        implicitAnyCount++;
+        filesCoverage[filePath].implicitAnyCount++;
+        
+        if (node.name && ts.isIdentifier(node.name)) {
+          const { line, character } = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.name.getStart());
+          
+          missingTypeDeclarations.push({
+            filePath,
+            name: `${node.name.getText()} (return type)`,
+            line: line + 1,
+            column: character + 1
+          });
         }
       }
     }
     
-    // Recursively examine children
-    ts.forEachChild(node, refinePropertyTypes);
-  };
-  
-  refinePropertyTypes(sourceFile);
-  
-  // Generate interface definitions
-  const result: Record<string, string> = {};
-  
-  for (const [name, interfaceInfo] of Object.entries(interfaces)) {
-    let interfaceDef = `/**\n * ${interfaceInfo.documentation}\n */\nexport interface ${name}`;
-    
-    // Add type parameters if any
-    if (interfaceInfo.typeParams.length > 0) {
-      interfaceDef += `<${interfaceInfo.typeParams.join(', ')}>`;
-    }
-    
-    interfaceDef += ` {\n`;
-    
-    // Add properties
-    for (const prop of interfaceInfo.properties) {
-      interfaceDef += `  ${prop.name}${prop.optional ? '?' : ''}: ${prop.type};\n`;
-    }
-    
-    interfaceDef += `}\n`;
-    result[name] = interfaceDef;
+    ts.forEachChild(node, n => analyzeCoverage(n, filePath));
   }
-  
-  return result;
 }
 
 /**
- * Helper function to get the type name of an expression with fallback to textual analysis
- */
-function getTypeOfExpressionWithFallback(expression: ts.Expression, fileContent: string): string {
-  // This is a simplified version - ideally we would use the TypeChecker from a Program
-  // As a fallback, we'll use the text representation
-  if (ts.isIdentifier(expression)) {
-    return expression.text;
-  }
-  
-  // This is very simplified - a real implementation would use the TypeChecker
-  return 'unknown';
-}
-
-/**
- * Find all TypeScript files in a project
- * 
- * @param projectPath Root path of the TypeScript project
- * @returns Array of TypeScript file paths
- */
-export async function findTypeScriptFiles(projectPath: string): Promise<string[]> {
-  return glob('**/*.{ts,tsx}', {
-    cwd: projectPath,
-    ignore: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**'],
-    absolute: true
-  });
-}
-
-/**
- * Identifies files with the most type issues
+ * Identifies files with type issues (hotspots)
  * 
  * @param coverage Type coverage report
- * @param limit Maximum number of files to return
- * @returns Array of file paths ordered by most type issues
+ * @returns List of file paths with type issues
  */
-export function identifyTypeHotspots(coverage: TypeCoverage, limit = 10): string[] {
-  return Object.entries(coverage.typeByFileMap)
-    .sort(([, coverageA], [, coverageB]) => coverageA - coverageB)
-    .map(([file]) => file)
-    .slice(0, limit);
+export function identifyTypeHotspots(coverage: TypeCoverageReport): string[] {
+  const hotspots: string[] = [];
+  
+  // Files with lowest coverage
+  const sortedFiles = Object.entries(coverage.filesCoverage)
+    .sort(([, a], [, b]) => a.coverage - b.coverage)
+    .filter(([, stats]) => stats.totalNodes > 10) // Only consider files with significant size
+    .slice(0, 20) // Top 20 worst files
+    .map(([filePath]) => filePath);
+  
+  // Files with most missing type declarations
+  const missingTypesByFile: Record<string, number> = {};
+  for (const missing of coverage.missingTypeDeclarations) {
+    missingTypesByFile[missing.filePath] = (missingTypesByFile[missing.filePath] || 0) + 1;
+  }
+  
+  const filesMissingTypes = Object.entries(missingTypesByFile)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 20) // Top 20 worst files
+    .map(([filePath]) => filePath);
+  
+  // Combine both lists
+  return [...new Set([...sortedFiles, ...filesMissingTypes])];
+}
+
+/**
+ * Generates a missing type definition
+ * 
+ * @param missingType Name of the missing type
+ * @param usages List of usages of the type
+ * @param codeContext Code context where the type is used
+ * @returns Suggested type definition
+ */
+export function generateMissingTypeDefinition(
+  missingType: string,
+  usages: { filePath: string; line: number; column: number; }[],
+  codeContext: string
+): string {
+  // Simple heuristic for now - in a more advanced version, we could
+  // use OpenAI to generate type definitions based on usage
+  return `/**
+ * Auto-generated type definition for ${missingType}
+ * This type was used but not defined in the codebase.
+ * Consider replacing this with a proper type definition.
+ */
+export type ${missingType} = any;
+`;
+}
+
+/**
+ * Generates a visualization of type relationships
+ * 
+ * @param hierarchy Type hierarchy analysis
+ * @returns DOT graph representation
+ */
+export function visualizeTypeHierarchy(hierarchy: TypeHierarchyAnalysis): string {
+  const lines: string[] = [
+    'digraph TypeHierarchy {',
+    '  rankdir=LR;',
+    '  node [shape=box, style=filled, fillcolor=lightblue];'
+  ];
+  
+  // Add nodes
+  for (const typeName in hierarchy.typeMap) {
+    const type = hierarchy.typeMap[typeName];
+    const label = `${type.name}\\n(${type.kind})\\n${type.properties.length} props, ${type.methods.length} methods`;
+    const color = type.kind === 'interface' ? 'lightblue' : 
+                 type.kind === 'class' ? 'lightgreen' : 
+                 type.kind === 'type' ? 'lightyellow' : 'lightgrey';
+    
+    lines.push(`  "${typeName}" [label="${label}", fillcolor="${color}"];`);
+  }
+  
+  // Add edges
+  for (const typeName in hierarchy.inheritanceGraph) {
+    for (const dependency of hierarchy.inheritanceGraph[typeName]) {
+      lines.push(`  "${typeName}" -> "${dependency}";`);
+    }
+  }
+  
+  lines.push('}');
+  
+  return lines.join('\n');
+}
+
+/**
+ * Gets a list of files with missing types
+ * 
+ * @param coverage Type coverage report
+ * @returns List of files with missing types
+ */
+export function getFilesWithMissingTypes(coverage: TypeCoverageReport): string[] {
+  const fileSet = new Set<string>();
+  
+  for (const missingType of coverage.missingTypeDeclarations) {
+    fileSet.add(missingType.filePath);
+  }
+  
+  return Array.from(fileSet);
+}
+
+/**
+ * Exports type definitions to a file
+ * 
+ * @param hierarchy Type hierarchy analysis
+ * @param outputPath Path to save the exported types
+ */
+export function exportTypeDefinitions(
+  hierarchy: TypeHierarchyAnalysis,
+  outputPath: string
+): void {
+  const lines: string[] = ['/**\n * Auto-generated type definitions\n */\n'];
+  
+  for (const typeName in hierarchy.typeMap) {
+    const type = hierarchy.typeMap[typeName];
+    
+    if (type.kind === 'interface') {
+      lines.push(`export interface ${type.name}${
+        type.typeParameters.length > 0 ? `<${type.typeParameters.join(', ')}>` : ''
+      }${
+        type.extendsTypes.length > 0 ? ` extends ${type.extendsTypes.join(', ')}` : ''
+      } {`);
+      
+      for (const prop of type.properties) {
+        lines.push(`  ${prop.name}${prop.isOptional ? '?' : ''}: ${prop.type};`);
+      }
+      
+      for (const method of type.methods) {
+        const params = method.parameters.map(p => `${p.name}: ${p.type}`).join(', ');
+        lines.push(`  ${method.name}(${params}): ${method.returnType};`);
+      }
+      
+      lines.push('}\n');
+    } else if (type.kind === 'type') {
+      // Simple placeholder - we would need more context to recreate the actual type
+      lines.push(`export type ${type.name}${
+        type.typeParameters.length > 0 ? `<${type.typeParameters.join(', ')}>` : ''
+      } = any; // Auto-generated, please replace with actual type\n`);
+    } else if (type.kind === 'enum') {
+      lines.push(`export enum ${type.name} {`);
+      
+      for (const prop of type.properties) {
+        lines.push(`  ${prop.name},`);
+      }
+      
+      lines.push('}\n');
+    }
+  }
+  
+  fs.writeFileSync(outputPath, lines.join('\n'));
 }

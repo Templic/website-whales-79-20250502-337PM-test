@@ -1,727 +1,972 @@
 /**
  * @file ts-batch-fixer.ts
- * @description Batch processing utilities for TypeScript error management
+ * @description Batch processing and dependency-aware fixing for TypeScript errors
  * 
- * This module provides functionality for intelligently fixing multiple TypeScript errors
- * in a batch, with dependency awareness and transaction-like rollback capabilities.
+ * This module provides utilities for batch processing TypeScript errors, including
+ * dependency analysis, error grouping, and prioritized fixing.
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import * as ts from 'typescript';
-import { TypeScriptError, ErrorFix } from '../types/core/error-types';
-import { generateMissingInterfaces } from './ts-type-analyzer';
-import { getTypescriptError, updateTypescriptError } from '../tsErrorStorage';
+import * as tsErrorStorage from '../tsErrorStorage';
+import * as openAI from './openai-integration';
+import { TypeScriptError, ErrorFix, ErrorFixHistory, ErrorCategory, ErrorStatus } from '../types/core/error-types';
 
 /**
- * Represents a group of related errors that should be fixed together
+ * Dependency relationship between errors
  */
-interface ErrorGroup {
-  id: string;
-  errors: TypeScriptError[];
-  commonRootCause: string;
-  fixStrategy: string;
-  priority: number;
+export interface ErrorDependency {
+  sourceErrorId: number;
+  targetErrorId: number;
+  dependencyType: 'same-file' | 'import' | 'extends' | 'implements' | 'uses' | 'unknown';
+  weight: number; // Higher weight means stronger dependency
 }
 
 /**
- * Represents the dependency relationship between errors
+ * Error group with shared root cause
  */
-interface ErrorDependencyGraph {
-  graph: Record<string, string[]>; // Error ID -> Dependent error IDs
-  fixOrder: string[];              // Optimal order to fix errors
+export interface ErrorGroup {
+  id: string; // Generated ID for the group
+  rootCause: string;
+  category: ErrorCategory;
+  errors: number[]; // Error IDs
+  pattern?: number; // Pattern ID if available
+  fixPriority: number;
+  suggestedFix?: string;
 }
 
 /**
- * Result of a batch fix operation
+ * Options for batch fixing
  */
-interface BatchFixResult {
-  success: boolean;
-  appliedFixes: {
-    error: TypeScriptError;
-    fix: ErrorFix;
-    success: boolean;
-  }[];
-  rolledBackFixes: {
-    error: TypeScriptError;
-    fix: ErrorFix;
-    reason: string;
-  }[];
-  newErrorsCount: number;
+export interface BatchFixOptions {
+  dryRun: boolean;
+  autoCommit: boolean;
+  useAI: boolean;
+  groupSimilarErrors: boolean;
+  stopOnError: boolean;
+  maxErrorsToFix: number;
 }
 
 /**
- * Analyzes dependencies between TypeScript errors
+ * Default batch fix options
+ */
+const defaultBatchFixOptions: BatchFixOptions = {
+  dryRun: true,
+  autoCommit: false,
+  useAI: true,
+  groupSimilarErrors: true,
+  stopOnError: true,
+  maxErrorsToFix: 50
+};
+
+/**
+ * Build a dependency graph of TypeScript errors
  * 
- * @param errors Array of TypeScript errors to analyze
- * @returns Dependency graph and optimal fix order
+ * @param errors List of TypeScript errors
+ * @returns Dependency graph as an adjacency list
  */
-export function buildErrorDependencyGraph(errors: TypeScriptError[]): ErrorDependencyGraph {
-  const graph: Record<string, string[]> = {};
+export function buildErrorDependencyGraph(
+  errors: TypeScriptError[]
+): Record<number, ErrorDependency[]> {
+  const graph: Record<number, ErrorDependency[]> = {};
   
-  // Helper function to check if an error B depends on error A
-  const doesErrorDependOn = (errorA: TypeScriptError, errorB: TypeScriptError): boolean => {
-    // If they're in the same file, errors on earlier lines might affect later lines
-    if (errorA.filePath === errorB.filePath) {
-      if (errorA.lineNumber < errorB.lineNumber) {
-        return true;
-      }
-      if (errorA.lineNumber === errorB.lineNumber && errorA.columnNumber < errorB.columnNumber) {
-        return true;
-      }
-    }
-    
-    // Type definition errors affect usage errors
-    if (errorA.category === 'missing_type' && errorB.category === 'type_mismatch') {
-      // Simplified check - in a real implementation, we would check if the missing type
-      // is actually used in the type mismatch error
-      return true;
-    }
-    
-    // Interface errors affect implementation errors
-    if (errorA.category === 'interface_mismatch' && errorB.category === 'type_mismatch') {
-      // Simplified check - in a real implementation, we would check the actual types
-      return true;
-    }
-    
-    // Import errors affect other errors in the same file
-    if (errorA.category === 'import_error' && errorA.filePath === errorB.filePath) {
-      return true;
-    }
-    
-    return false;
-  };
-  
-  // Build initial dependency graph
+  // Initialize the graph
   for (const error of errors) {
-    graph[error.id.toString()] = [];
-    
-    for (const otherError of errors) {
-      if (error.id !== otherError.id && doesErrorDependOn(error, otherError)) {
-        graph[error.id.toString()].push(otherError.id.toString());
+    graph[error.id] = [];
+  }
+  
+  // Build the dependency graph
+  for (const sourceError of errors) {
+    for (const targetError of errors) {
+      if (sourceError.id === targetError.id) continue;
+      
+      // Check for dependencies
+      const dependency = findDependency(sourceError, targetError);
+      if (dependency) {
+        graph[sourceError.id].push(dependency);
       }
     }
   }
   
-  // Topological sort to determine optimal fix order
-  const fixOrder = topologicalSort(graph);
-  
-  return { graph, fixOrder };
+  return graph;
 }
 
 /**
- * Groups related TypeScript errors based on common root causes
+ * Find dependency between two errors
  * 
- * @param errors Array of TypeScript errors to group
- * @returns Array of error groups
+ * @param sourceError Source error
+ * @param targetError Target error
+ * @returns Dependency if found, otherwise undefined
+ */
+function findDependency(
+  sourceError: TypeScriptError,
+  targetError: TypeScriptError
+): ErrorDependency | undefined {
+  // Same file dependency
+  if (sourceError.filePath === targetError.filePath) {
+    // Line number-based dependency (errors on later lines may depend on earlier ones)
+    if (sourceError.lineNumber > targetError.lineNumber) {
+      return {
+        sourceErrorId: sourceError.id,
+        targetErrorId: targetError.id,
+        dependencyType: 'same-file',
+        weight: 5 + (10 / (sourceError.lineNumber - targetError.lineNumber + 1))
+      };
+    }
+  }
+  
+  // Import dependency
+  if (isImportDependency(sourceError, targetError)) {
+    return {
+      sourceErrorId: sourceError.id,
+      targetErrorId: targetError.id,
+      dependencyType: 'import',
+      weight: 10
+    };
+  }
+  
+  // Type hierarchy dependency (extends, implements)
+  const typeRelation = findTypeHierarchyDependency(sourceError, targetError);
+  if (typeRelation) {
+    return {
+      sourceErrorId: sourceError.id,
+      targetErrorId: targetError.id,
+      dependencyType: typeRelation,
+      weight: typeRelation === 'extends' ? 8 : 6
+    };
+  }
+  
+  // Related by error category (e.g., missing_type and type_mismatch)
+  if (hasCategoryDependency(sourceError.category, targetError.category)) {
+    return {
+      sourceErrorId: sourceError.id,
+      targetErrorId: targetError.id,
+      dependencyType: 'unknown',
+      weight: 3
+    };
+  }
+  
+  return undefined;
+}
+
+/**
+ * Check if there's an import dependency between two errors
+ * 
+ * @param sourceError Source error
+ * @param targetError Target error
+ * @returns Whether there's an import dependency
+ */
+function isImportDependency(
+  sourceError: TypeScriptError,
+  targetError: TypeScriptError
+): boolean {
+  // Simple heuristic: check if the source file imports the target file
+  // In a more sophisticated implementation, we'd parse the imports
+  
+  try {
+    const sourceContent = fs.readFileSync(sourceError.filePath, 'utf-8');
+    const sourceDir = path.dirname(sourceError.filePath);
+    const targetPath = path.relative(sourceDir, targetError.filePath);
+    
+    const normalizedTargetPath = targetPath
+      .replace(/\\/g, '/')
+      .replace(/\.tsx?$/, '');
+    
+    const importRegex = new RegExp(
+      `import\\s+(?:.+\\s+from\\s+)?['"](.+?)['"]`, 'g'
+    );
+    
+    let match;
+    while ((match = importRegex.exec(sourceContent)) !== null) {
+      const importPath = match[1];
+      if (
+        importPath === normalizedTargetPath ||
+        importPath === './' + normalizedTargetPath ||
+        importPath === '../' + normalizedTargetPath
+      ) {
+        return true;
+      }
+    }
+  } catch (error) {
+    // If there's any error reading the file, assume no dependency
+    console.error(`Error checking import dependency: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  
+  return false;
+}
+
+/**
+ * Find type hierarchy dependency between two errors
+ * 
+ * @param sourceError Source error
+ * @param targetError Target error
+ * @returns Type of dependency if found, otherwise undefined
+ */
+function findTypeHierarchyDependency(
+  sourceError: TypeScriptError,
+  targetError: TypeScriptError
+): 'extends' | 'implements' | undefined {
+  // Simple heuristic: check error messages for extends/implements keywords
+  
+  const sourceMsg = sourceError.errorMessage.toLowerCase();
+  const targetMsg = targetError.errorMessage.toLowerCase();
+  
+  // Extract type names from error messages
+  const sourceTypeMatch = sourceMsg.match(/['"]([^'"]+)['"]/);
+  const targetTypeMatch = targetMsg.match(/['"]([^'"]+)['"]/);
+  
+  if (sourceTypeMatch && targetTypeMatch) {
+    const sourceType = sourceTypeMatch[1];
+    const targetType = targetTypeMatch[1];
+    
+    // Check for extends relationship
+    if (
+      sourceMsg.includes(`extends ${targetType}`) ||
+      targetMsg.includes(`${sourceType} extends`)
+    ) {
+      return 'extends';
+    }
+    
+    // Check for implements relationship
+    if (
+      sourceMsg.includes(`implements ${targetType}`) ||
+      targetMsg.includes(`${sourceType} implements`)
+    ) {
+      return 'implements';
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Check if there's a category dependency between two error categories
+ * 
+ * @param sourceCategory Source error category
+ * @param targetCategory Target error category
+ * @returns Whether there's a category dependency
+ */
+function hasCategoryDependency(
+  sourceCategory: ErrorCategory,
+  targetCategory: ErrorCategory
+): boolean {
+  // Define category dependencies
+  const categoryDependencies: Record<ErrorCategory, ErrorCategory[]> = {
+    'type_mismatch': ['missing_type', 'interface_mismatch'],
+    'missing_type': [],
+    'undefined_variable': ['missing_type', 'import_error'],
+    'null_reference': [],
+    'interface_mismatch': ['missing_type'],
+    'import_error': [],
+    'syntax_error': [],
+    'generic_constraint': ['missing_type'],
+    'declaration_error': ['missing_type', 'import_error'],
+    'other': []
+  };
+  
+  return categoryDependencies[sourceCategory]?.includes(targetCategory) || false;
+}
+
+/**
+ * Group errors by similar root causes
+ * 
+ * @param errors List of TypeScript errors
+ * @returns Groups of errors with similar root causes
  */
 export function clusterErrorsByRootCause(errors: TypeScriptError[]): ErrorGroup[] {
   const groups: ErrorGroup[] = [];
   const processedErrors = new Set<number>();
   
-  // Helper function to check if two errors are related
-  const areErrorsRelated = (errorA: TypeScriptError, errorB: TypeScriptError): boolean => {
-    // Same error code in the same file
-    if (errorA.errorCode === errorB.errorCode && errorA.filePath === errorB.filePath) {
-      return true;
-    }
-    
-    // Same error category and similar error messages
-    if (errorA.category === errorB.category && 
-        similarityScore(errorA.errorMessage, errorB.errorMessage) > 0.7) {
-      return true;
-    }
-    
-    // Same pattern ID (if available)
-    if (errorA.patternId && errorB.patternId && errorA.patternId === errorB.patternId) {
-      return true;
-    }
-    
-    return false;
-  };
-  
-  // Group errors by similarity
+  // Group by file path first
+  const errorsByFile: Record<string, TypeScriptError[]> = {};
   for (const error of errors) {
-    if (processedErrors.has(error.id)) {
-      continue;
+    const filePath = error.filePath;
+    if (!errorsByFile[filePath]) {
+      errorsByFile[filePath] = [];
+    }
+    errorsByFile[filePath].push(error);
+  }
+  
+  // Group by error category within each file
+  for (const filePath in errorsByFile) {
+    const fileErrors = errorsByFile[filePath];
+    
+    const errorsByCategory: Record<ErrorCategory, TypeScriptError[]> = {};
+    for (const error of fileErrors) {
+      if (!errorsByCategory[error.category]) {
+        errorsByCategory[error.category] = [];
+      }
+      errorsByCategory[error.category].push(error);
     }
     
-    const relatedErrors = [error];
-    processedErrors.add(error.id);
-    
-    for (const otherError of errors) {
-      if (!processedErrors.has(otherError.id) && areErrorsRelated(error, otherError)) {
-        relatedErrors.push(otherError);
-        processedErrors.add(otherError.id);
+    // Create groups for each category
+    for (const category in errorsByCategory) {
+      const categoryErrors = errorsByCategory[category as ErrorCategory];
+      
+      // Skip if only one error in category
+      if (categoryErrors.length <= 1) continue;
+      
+      // Group by error code
+      const errorsByCode: Record<string, TypeScriptError[]> = {};
+      for (const error of categoryErrors) {
+        if (!errorsByCode[error.errorCode]) {
+          errorsByCode[error.errorCode] = [];
+        }
+        errorsByCode[error.errorCode].push(error);
+      }
+      
+      // Create groups for each error code
+      for (const errorCode in errorsByCode) {
+        const codeErrors = errorsByCode[errorCode];
+        
+        // Skip if only one error with this code
+        if (codeErrors.length <= 1) continue;
+        
+        // Create a group
+        const groupId = `group_${filePath}_${category}_${errorCode}`.replace(/[^a-zA-Z0-9_]/g, '_');
+        
+        groups.push({
+          id: groupId,
+          rootCause: `Multiple errors with code ${errorCode} in file ${path.basename(filePath)}`,
+          category: category as ErrorCategory,
+          errors: codeErrors.map(e => e.id),
+          fixPriority: calculateFixPriority(category as ErrorCategory),
+          suggestedFix: getSuggestedFix(codeErrors[0])
+        });
+        
+        // Mark errors as processed
+        for (const error of codeErrors) {
+          processedErrors.add(error.id);
+        }
+      }
+      
+      // Group remaining errors by line proximity
+      const remainingErrors = categoryErrors.filter(e => !processedErrors.has(e.id));
+      if (remainingErrors.length > 1) {
+        // Sort by line number
+        remainingErrors.sort((a, b) => a.lineNumber - b.lineNumber);
+        
+        // Group errors that are close to each other
+        const proximityGroups: TypeScriptError[][] = [];
+        let currentGroup: TypeScriptError[] = [remainingErrors[0]];
+        
+        for (let i = 1; i < remainingErrors.length; i++) {
+          const prevError = remainingErrors[i - 1];
+          const currError = remainingErrors[i];
+          
+          // If the errors are within 5 lines of each other, add to current group
+          if (currError.lineNumber - prevError.lineNumber <= 5) {
+            currentGroup.push(currError);
+          } else {
+            // Start a new group
+            proximityGroups.push(currentGroup);
+            currentGroup = [currError];
+          }
+        }
+        
+        // Add the last group
+        if (currentGroup.length > 0) {
+          proximityGroups.push(currentGroup);
+        }
+        
+        // Create groups for each proximity group
+        for (let i = 0; i < proximityGroups.length; i++) {
+          const proximityGroup = proximityGroups[i];
+          
+          // Skip if only one error in proximity group
+          if (proximityGroup.length <= 1) continue;
+          
+          // Create a group
+          const groupId = `group_${filePath}_${category}_proximity_${i}`.replace(/[^a-zA-Z0-9_]/g, '_');
+          
+          groups.push({
+            id: groupId,
+            rootCause: `Multiple ${category} errors around line ${proximityGroup[0].lineNumber} in file ${path.basename(filePath)}`,
+            category: category as ErrorCategory,
+            errors: proximityGroup.map(e => e.id),
+            fixPriority: calculateFixPriority(category as ErrorCategory),
+            suggestedFix: getSuggestedFix(proximityGroup[0])
+          });
+          
+          // Mark errors as processed
+          for (const error of proximityGroup) {
+            processedErrors.add(error.id);
+          }
+        }
       }
     }
-    
-    if (relatedErrors.length > 0) {
+  }
+  
+  // Add remaining errors as individual groups
+  for (const error of errors) {
+    if (!processedErrors.has(error.id)) {
+      const groupId = `group_error_${error.id}`;
+      
       groups.push({
-        id: `group_${groups.length + 1}`,
-        errors: relatedErrors,
-        commonRootCause: inferCommonRootCause(relatedErrors),
-        fixStrategy: inferFixStrategy(relatedErrors),
-        priority: calculateGroupPriority(relatedErrors)
+        id: groupId,
+        rootCause: error.errorMessage,
+        category: error.category,
+        errors: [error.id],
+        fixPriority: calculateFixPriority(error.category),
+        suggestedFix: getSuggestedFix(error)
       });
     }
   }
   
-  // Sort groups by priority (higher first)
-  return groups.sort((a, b) => b.priority - a.priority);
+  // Sort groups by fix priority
+  groups.sort((a, b) => b.fixPriority - a.fixPriority);
+  
+  return groups;
 }
 
 /**
- * Apply batch fixes to TypeScript errors with rollback capability
+ * Calculate fix priority based on error category
  * 
- * @param fixes Fixes to apply
- * @param errors Errors to fix
- * @returns Result of the batch fix operation
+ * @param category Error category
+ * @returns Fix priority (higher is more important)
  */
-export async function applyBatchFixesWithRollback(
-  fixes: ErrorFix[],
-  errors: TypeScriptError[]
-): Promise<BatchFixResult> {
-  // Create a map of file backup contents
-  const fileBackups: Record<string, string> = {};
-  const errorMap: Record<string, TypeScriptError> = {};
-  errors.forEach(error => {
-    errorMap[error.id.toString()] = error;
-    
-    // Backup file if not already backed up
-    if (!fileBackups[error.filePath] && fs.existsSync(error.filePath)) {
-      fileBackups[error.filePath] = fs.readFileSync(error.filePath, 'utf-8');
+function calculateFixPriority(category: ErrorCategory): number {
+  // Prioritize fixing fundamental issues first
+  const categoryPriorities: Record<ErrorCategory, number> = {
+    'syntax_error': 10,
+    'import_error': 9,
+    'missing_type': 8,
+    'declaration_error': 7,
+    'interface_mismatch': 6,
+    'generic_constraint': 5,
+    'type_mismatch': 4,
+    'undefined_variable': 3,
+    'null_reference': 2,
+    'other': 1
+  };
+  
+  return categoryPriorities[category] || 1;
+}
+
+/**
+ * Get suggested fix for an error
+ * 
+ * @param error TypeScript error
+ * @returns Suggested fix if available
+ */
+function getSuggestedFix(error: TypeScriptError): string | undefined {
+  // Extract suggested fix from error message if available
+  const message = error.errorMessage;
+  
+  if (message.includes('Did you mean')) {
+    const match = message.match(/Did you mean ['"]([^'"]+)['"]/);
+    if (match) {
+      return match[1];
     }
-  });
+  }
   
-  const appliedFixes: {
-    error: TypeScriptError;
-    fix: ErrorFix;
-    success: boolean;
-  }[] = [];
+  if (message.includes('Property') && message.includes('does not exist on type')) {
+    // Missing property error
+    const propMatch = message.match(/Property ['"]([^'"]+)['"]/);
+    const typeMatch = message.match(/type ['"]([^'"]+)['"]/);
+    
+    if (propMatch && typeMatch) {
+      return `Add the '${propMatch[1]}' property to the '${typeMatch[1]}' type`;
+    }
+  }
   
-  const rolledBackFixes: {
-    error: TypeScriptError;
-    fix: ErrorFix;
-    reason: string;
-  }[] = [];
+  if (message.includes('is not assignable to type')) {
+    // Type mismatch error
+    const sourceMatch = message.match(/Type ['"]([^'"]+)['"]/);
+    const targetMatch = message.match(/to type ['"]([^'"]+)['"]/);
+    
+    if (sourceMatch && targetMatch) {
+      return `Convert '${sourceMatch[1]}' to '${targetMatch[1]}'`;
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Topologically sort errors based on dependencies
+ * 
+ * @param dependencyGraph Error dependency graph
+ * @returns Sorted list of error IDs (from independent to dependent)
+ */
+export function topologicalSortErrors(
+  dependencyGraph: Record<number, ErrorDependency[]>
+): number[] {
+  const visited = new Set<number>();
+  const tempVisited = new Set<number>();
+  const result: number[] = [];
+  
+  function visit(errorId: number) {
+    if (tempVisited.has(errorId)) {
+      // Cyclic dependency, but continue with the algorithm
+      return;
+    }
+    
+    if (visited.has(errorId)) {
+      return;
+    }
+    
+    tempVisited.add(errorId);
+    
+    // Visit dependencies
+    for (const dependency of dependencyGraph[errorId] || []) {
+      visit(dependency.targetErrorId);
+    }
+    
+    tempVisited.delete(errorId);
+    visited.add(errorId);
+    result.push(errorId);
+  }
+  
+  // Visit all errors
+  for (const errorId in dependencyGraph) {
+    if (!visited.has(parseInt(errorId))) {
+      visit(parseInt(errorId));
+    }
+  }
+  
+  // Reverse to get the correct order
+  return result.reverse();
+}
+
+/**
+ * Apply fixes to a batch of errors
+ * 
+ * @param errorIds List of error IDs to fix
+ * @param options Batch fix options
+ * @returns Results of the batch fix operation
+ */
+export async function applyBatchFixes(
+  errorIds: number[],
+  options: Partial<BatchFixOptions> = {}
+): Promise<{
+  success: boolean;
+  fixedErrors: number[];
+  failedErrors: number[];
+  errorMessages: Record<number, string>;
+}> {
+  const opts = { ...defaultBatchFixOptions, ...options };
+  const result = {
+    success: true,
+    fixedErrors: [] as number[],
+    failedErrors: [] as number[],
+    errorMessages: {} as Record<number, string>
+  };
+  
+  // Limit the number of errors to fix
+  const limitedErrorIds = errorIds.slice(0, opts.maxErrorsToFix);
   
   try {
-    // Sort fixes by dependency order if available
-    const fixOrder = buildErrorDependencyGraph(errors).fixOrder;
-    const orderedFixes = fixOrder
-      .map(errorId => {
-        const error = errorMap[errorId];
-        const fix = fixes.find(f => f.errorId === Number(errorId));
-        return fix ? { error, fix } : null;
+    // Load errors
+    const errors = await Promise.all(
+      limitedErrorIds.map(async id => {
+        const error = await tsErrorStorage.getTypescriptError(id);
+        if (!error) {
+          throw new Error(`Error not found: ${id}`);
+        }
+        return error;
       })
-      .filter((item): item is { error: TypeScriptError; fix: ErrorFix } => item !== null);
+    );
     
-    // Apply each fix in order
-    for (const { error, fix } of orderedFixes) {
-      try {
-        // Read current file content
-        if (!fs.existsSync(error.filePath)) {
-          rolledBackFixes.push({
-            error,
-            fix,
-            reason: `File ${error.filePath} does not exist`
-          });
-          continue;
+    // Build dependency graph
+    const dependencyGraph = buildErrorDependencyGraph(errors);
+    
+    // Get topologically sorted errors
+    const sortedErrorIds = topologicalSortErrors(dependencyGraph);
+    
+    // Group similar errors if enabled
+    let errorGroups: ErrorGroup[] = [];
+    if (opts.groupSimilarErrors) {
+      errorGroups = clusterErrorsByRootCause(errors);
+      
+      // Re-sort based on topological order and priority
+      const errorIdToGroupIdx: Record<number, number> = {};
+      for (let i = 0; i < errorGroups.length; i++) {
+        for (const errorId of errorGroups[i].errors) {
+          errorIdToGroupIdx[errorId] = i;
+        }
+      }
+      
+      // Sort groups based on the topological order of their first error
+      errorGroups.sort((a, b) => {
+        const aIndex = Math.min(...a.errors.map(id => sortedErrorIds.indexOf(id)));
+        const bIndex = Math.min(...b.errors.map(id => sortedErrorIds.indexOf(id)));
+        
+        if (aIndex === bIndex) {
+          // If same topological position, use fix priority
+          return b.fixPriority - a.fixPriority;
         }
         
-        const fileContent = fs.readFileSync(error.filePath, 'utf-8');
+        return aIndex - bIndex;
+      });
+    } else {
+      // Create individual groups for each error
+      errorGroups = errors.map(error => ({
+        id: `group_error_${error.id}`,
+        rootCause: error.errorMessage,
+        category: error.category,
+        errors: [error.id],
+        fixPriority: calculateFixPriority(error.category)
+      }));
+      
+      // Sort groups based on topological order
+      errorGroups.sort((a, b) => {
+        const aIndex = sortedErrorIds.indexOf(a.errors[0]);
+        const bIndex = sortedErrorIds.indexOf(b.errors[0]);
+        return aIndex - bIndex;
+      });
+    }
+    
+    // Process each group
+    for (const group of errorGroups) {
+      try {
+        // Get the pattern for the group if available
+        const pattern = group.pattern 
+          ? await tsErrorStorage.getErrorPattern(group.pattern) 
+          : undefined;
         
-        // Apply the fix
-        const fixedContent = applyFixToFile(fileContent, error, fix);
+        // Track modified files to avoid redundant reads/writes
+        const modifiedFiles: Record<string, string> = {};
         
-        // Write the fixed content
-        fs.writeFileSync(error.filePath, fixedContent);
-        
-        // Update error status
-        await updateTypescriptError(error.id, {
-          status: 'fixed',
-          fixId: fix.id,
-          resolvedAt: new Date()
-        });
-        
-        appliedFixes.push({
-          error,
-          fix,
-          success: true
-        });
+        // Process each error in the group
+        for (const errorId of group.errors) {
+          try {
+            const error = errors.find(e => e.id === errorId);
+            if (!error) continue;
+            
+            // Skip if already fixed
+            if (error.status === 'fixed') {
+              result.fixedErrors.push(errorId);
+              continue;
+            }
+            
+            // Get fixes for this error
+            let fixes: ErrorFix[] = await tsErrorStorage.getErrorFixesByError(errorId);
+            
+            // If no fixes available and AI is enabled, generate a fix
+            if (fixes.length === 0 && opts.useAI) {
+              try {
+                const fixSuggestion = await openAI.generateErrorFix(error);
+                
+                // Add the fix to the database
+                const fix = await tsErrorStorage.addErrorFix({
+                  errorId: error.id,
+                  fixTitle: `AI-generated fix for ${error.errorCode}`,
+                  fixDescription: fixSuggestion.fixExplanation,
+                  fixCode: fixSuggestion.fixCode,
+                  originalCode: fixSuggestion.originalCode,
+                  fixScope: fixSuggestion.fixScope,
+                  fixType: 'semi-automatic',
+                  fixPriority: 5,
+                  successRate: fixSuggestion.confidence * 100
+                });
+                
+                fixes = [fix as ErrorFix];
+              } catch (err) {
+                console.error(`Failed to generate AI fix for error ${errorId}: ${err instanceof Error ? err.message : String(err)}`);
+                
+                // Try to get a pattern-based fix if available
+                if (pattern) {
+                  const patternFixes = await tsErrorStorage.getErrorFixesByPattern(pattern.id);
+                  if (patternFixes.length > 0) {
+                    fixes = patternFixes as ErrorFix[];
+                  }
+                }
+              }
+            }
+            
+            // If still no fixes, skip this error
+            if (fixes.length === 0) {
+              result.failedErrors.push(errorId);
+              result.errorMessages[errorId] = 'No fixes available';
+              continue;
+            }
+            
+            // Sort fixes by success rate and priority
+            fixes.sort((a, b) => {
+              if (a.successRate !== b.successRate) {
+                return (b.successRate || 0) - (a.successRate || 0);
+              }
+              return b.fixPriority - a.fixPriority;
+            });
+            
+            // Get the best fix
+            const fix = fixes[0];
+            
+            // Get or read the file content
+            let fileContent: string;
+            if (modifiedFiles[error.filePath] !== undefined) {
+              fileContent = modifiedFiles[error.filePath];
+            } else {
+              try {
+                if (!fs.existsSync(error.filePath)) {
+                  result.failedErrors.push(errorId);
+                  result.errorMessages[errorId] = `File not found: ${error.filePath}`;
+                  continue;
+                }
+                
+                fileContent = fs.readFileSync(error.filePath, 'utf-8');
+                modifiedFiles[error.filePath] = fileContent;
+              } catch (err) {
+                result.failedErrors.push(errorId);
+                result.errorMessages[errorId] = `Failed to read file: ${err instanceof Error ? err.message : String(err)}`;
+                continue;
+              }
+            }
+            
+            // Apply the fix
+            let fixedContent: string = fileContent;
+            
+            try {
+              const lines = fileContent.split('\n');
+              
+              switch (fix.fixScope) {
+                case 'line':
+                  // Replace the entire line
+                  lines[error.lineNumber - 1] = fix.fixCode;
+                  fixedContent = lines.join('\n');
+                  break;
+                  
+                case 'token':
+                  // Replace just the token at the error position
+                  const line = lines[error.lineNumber - 1];
+                  const tokenStart = error.columnNumber - 1;
+                  let tokenEnd = tokenStart;
+                  
+                  // Find token boundaries
+                  while (tokenEnd < line.length && 
+                        !/[\s\(\)\[\]\{\}\:\;\,\.\<\>\=\+\-\*\/\&\|\^\!\~\?\@\#\%]/.test(line[tokenEnd])) {
+                    tokenEnd++;
+                  }
+                  
+                  const newLine = line.substring(0, tokenStart) + fix.fixCode + line.substring(tokenEnd);
+                  lines[error.lineNumber - 1] = newLine;
+                  fixedContent = lines.join('\n');
+                  break;
+                  
+                case 'custom':
+                  // Replace the exact code specified in originalCode
+                  if (fix.originalCode && fileContent.includes(fix.originalCode)) {
+                    fixedContent = fileContent.replace(fix.originalCode, fix.fixCode);
+                  } else {
+                    result.failedErrors.push(errorId);
+                    result.errorMessages[errorId] = 'Cannot apply custom fix: originalCode not found in file';
+                    continue;
+                  }
+                  break;
+              }
+              
+              // Update the modified file cache
+              modifiedFiles[error.filePath] = fixedContent;
+              
+              // If not a dry run, write the fixed content back to the file
+              if (!opts.dryRun) {
+                fs.writeFileSync(error.filePath, fixedContent);
+                
+                // Add fix history entry
+                await tsErrorStorage.addErrorFixHistory({
+                  errorId: error.id,
+                  fixId: fix.id,
+                  originalCode: fileContent,
+                  fixedCode: fixedContent,
+                  fixedAt: new Date(),
+                  fixMethod: 'assisted',
+                  fixResult: 'success'
+                });
+                
+                // Update error status
+                await tsErrorStorage.updateTypescriptError(error.id, {
+                  status: 'fixed',
+                  fixId: fix.id,
+                  resolvedAt: new Date()
+                });
+              }
+              
+              result.fixedErrors.push(errorId);
+            } catch (err) {
+              result.failedErrors.push(errorId);
+              result.errorMessages[errorId] = `Failed to apply fix: ${err instanceof Error ? err.message : String(err)}`;
+              
+              if (opts.stopOnError) {
+                throw err;
+              }
+            }
+          } catch (err) {
+            if (opts.stopOnError) {
+              throw err;
+            }
+            
+            result.failedErrors.push(errorId);
+            result.errorMessages[errorId] = `Error processing error ${errorId}: ${err instanceof Error ? err.message : String(err)}`;
+          }
+        }
       } catch (err) {
-        rolledBackFixes.push({
-          error,
-          fix,
-          reason: `Failed to apply fix: ${err instanceof Error ? err.message : String(err)}`
-        });
+        if (opts.stopOnError) {
+          throw err;
+        }
+        
+        // Mark all errors in this group as failed
+        for (const errorId of group.errors) {
+          if (!result.fixedErrors.includes(errorId)) {
+            result.failedErrors.push(errorId);
+            result.errorMessages[errorId] = `Error processing group ${group.id}: ${err instanceof Error ? err.message : String(err)}`;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    result.success = false;
+    console.error('Error in batch fix process:', err);
+    
+    // Mark all remaining errors as failed
+    for (const errorId of limitedErrorIds) {
+      if (!result.fixedErrors.includes(errorId) && !result.failedErrors.includes(errorId)) {
+        result.failedErrors.push(errorId);
+        result.errorMessages[errorId] = `Batch processing error: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    }
+  }
+  
+  // Update overall success flag
+  result.success = result.failedErrors.length === 0;
+  
+  return result;
+}
+
+/**
+ * Create a transaction for batch fixing
+ * 
+ * @param errorIds List of error IDs to fix
+ * @returns Transaction object
+ */
+export async function createFixTransaction(
+  errorIds: number[]
+): Promise<{
+  id: string;
+  errorIds: number[];
+  backupFiles: Record<string, string>;
+  createdAt: Date;
+}> {
+  const id = `fix_transaction_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+  const transaction = {
+    id,
+    errorIds,
+    backupFiles: {} as Record<string, string>,
+    createdAt: new Date()
+  };
+  
+  try {
+    // Load errors
+    const errors = await Promise.all(
+      errorIds.map(async id => {
+        const error = await tsErrorStorage.getTypescriptError(id);
+        if (!error) {
+          throw new Error(`Error not found: ${id}`);
+        }
+        return error;
+      })
+    );
+    
+    // Create unique list of files to back up
+    const filePaths = Array.from(new Set(errors.map(e => e.filePath)));
+    
+    // Back up each file
+    for (const filePath of filePaths) {
+      try {
+        if (fs.existsSync(filePath)) {
+          const content = fs.readFileSync(filePath, 'utf-8');
+          transaction.backupFiles[filePath] = content;
+        }
+      } catch (err) {
+        console.error(`Failed to back up file ${filePath}: ${err instanceof Error ? err.message : String(err)}`);
+        // Continue with other files
       }
     }
     
-    // Check if applying the fixes introduced new errors
-    const newErrorsCount = await checkForNewErrors();
+    // Save transaction to disk
+    const backupDir = path.join('.', 'tmp', 'ts-fix-backups');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
     
-    if (newErrorsCount > 0 && rolledBackFixes.length === 0) {
-      // Rollback all changes if new errors were introduced and no other rollbacks occurred
-      await rollbackChanges(fileBackups);
-      
-      // Move all applied fixes to rolled back fixes
-      rolledBackFixes.push(
-        ...appliedFixes.map(applied => ({
-          error: applied.error,
-          fix: applied.fix,
-          reason: 'Rolled back due to new errors being introduced'
-        }))
-      );
-      
-      // Clear applied fixes
-      appliedFixes.length = 0;
-      
+    const transactionPath = path.join(backupDir, `${id}.json`);
+    fs.writeFileSync(transactionPath, JSON.stringify({
+      id,
+      errorIds,
+      filePaths,
+      createdAt: transaction.createdAt.toISOString()
+    }));
+    
+    // Save backups to separate files
+    for (const filePath in transaction.backupFiles) {
+      const backupPath = path.join(backupDir, `${id}_${path.basename(filePath)}.bak`);
+      fs.writeFileSync(backupPath, transaction.backupFiles[filePath]);
+    }
+  } catch (err) {
+    console.error('Failed to create fix transaction:', err);
+    throw err;
+  }
+  
+  return transaction;
+}
+
+/**
+ * Roll back a batch fix transaction
+ * 
+ * @param transactionId Transaction ID
+ * @returns Whether the rollback was successful
+ */
+export async function rollbackFixTransaction(
+  transactionId: string
+): Promise<{
+  success: boolean;
+  restoredFiles: string[];
+  errorMessage?: string;
+}> {
+  const result = {
+    success: true,
+    restoredFiles: [] as string[]
+  };
+  
+  try {
+    // Load transaction metadata
+    const backupDir = path.join('.', 'tmp', 'ts-fix-backups');
+    const transactionPath = path.join(backupDir, `${transactionId}.json`);
+    
+    if (!fs.existsSync(transactionPath)) {
       return {
         success: false,
-        appliedFixes,
-        rolledBackFixes,
-        newErrorsCount
+        restoredFiles: [],
+        errorMessage: `Transaction not found: ${transactionId}`
       };
     }
     
-    return {
-      success: rolledBackFixes.length === 0,
-      appliedFixes,
-      rolledBackFixes,
-      newErrorsCount
-    };
-  } catch (err) {
-    // Rollback all changes on critical error
-    await rollbackChanges(fileBackups);
+    const transaction = JSON.parse(fs.readFileSync(transactionPath, 'utf-8'));
     
-    return {
-      success: false,
-      appliedFixes: [],
-      rolledBackFixes: fixes.map(fix => ({
-        error: errorMap[fix.errorId.toString()],
-        fix,
-        reason: `Critical error during batch fix: ${err instanceof Error ? err.message : String(err)}`
-      })),
-      newErrorsCount: 0
-    };
-  }
-}
-
-/**
- * Generate and apply missing interface definitions for a file
- * 
- * @param filePath Path to the TypeScript file
- * @param missingTypes Array of missing type names
- * @returns Generated interface definitions
- */
-export async function generateAndApplyMissingInterfaces(
-  filePath: string,
-  missingTypes: string[]
-): Promise<Record<string, string>> {
-  // Generate interfaces
-  const interfaces = await generateMissingInterfaces(filePath, missingTypes);
-  
-  if (Object.keys(interfaces).length === 0) {
-    return {};
-  }
-  
-  // Read file content
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`File ${filePath} does not exist`);
-  }
-  
-  let fileContent = fs.readFileSync(filePath, 'utf-8');
-  
-  // Find a good position to insert the interfaces
-  // Either after imports or at the beginning of the file
-  const sourceFile = ts.createSourceFile(
-    filePath,
-    fileContent,
-    ts.ScriptTarget.Latest,
-    true
-  );
-  
-  let insertPosition = 0;
-  let lastImportEnd = 0;
-  
-  // Find the end of the last import
-  ts.forEachChild(sourceFile, node => {
-    if (ts.isImportDeclaration(node)) {
-      lastImportEnd = node.end;
-    }
-  });
-  
-  insertPosition = lastImportEnd > 0 ? lastImportEnd + 1 : 0;
-  
-  // Insert interfaces
-  const interfaceText = '\n\n' + Object.values(interfaces).join('\n\n') + '\n';
-  fileContent = fileContent.slice(0, insertPosition) + interfaceText + fileContent.slice(insertPosition);
-  
-  // Write the updated content
-  fs.writeFileSync(filePath, fileContent);
-  
-  return interfaces;
-}
-
-/**
- * Apply multiple fixes to a file in a single operation
- * 
- * @param filePath Path to the TypeScript file
- * @param fixes Fixes to apply to the file
- * @returns Whether the operation was successful
- */
-export async function applyMultipleFixesToFile(
-  filePath: string,
-  fixes: { error: TypeScriptError; fix: ErrorFix }[]
-): Promise<boolean> {
-  // Only process fixes for the specified file
-  const fileSpecificFixes = fixes.filter(f => f.error.filePath === filePath);
-  
-  if (fileSpecificFixes.length === 0) {
-    return true;
-  }
-  
-  // Read file content
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`File ${filePath} does not exist`);
-  }
-  
-  const originalContent = fs.readFileSync(filePath, 'utf-8');
-  
-  // Sort fixes by line number and column (reverse order to avoid position shifts)
-  const sortedFixes = [...fileSpecificFixes].sort((a, b) => {
-    if (a.error.lineNumber !== b.error.lineNumber) {
-      return b.error.lineNumber - a.error.lineNumber;
-    }
-    return b.error.columnNumber - a.error.columnNumber;
-  });
-  
-  let currentContent = originalContent;
-  
-  // Apply each fix
-  for (const { error, fix } of sortedFixes) {
-    try {
-      currentContent = applyFixToFile(currentContent, error, fix);
+    // Restore each file
+    for (const filePath of transaction.filePaths) {
+      const backupPath = path.join(backupDir, `${transactionId}_${path.basename(filePath)}.bak`);
       
-      // Update error status
-      await updateTypescriptError(error.id, {
-        status: 'fixed',
-        fixId: fix.id,
-        resolvedAt: new Date()
+      if (fs.existsSync(backupPath)) {
+        const content = fs.readFileSync(backupPath, 'utf-8');
+        fs.writeFileSync(filePath, content);
+        result.restoredFiles.push(filePath);
+      }
+    }
+    
+    // Update error statuses
+    for (const errorId of transaction.errorIds) {
+      await tsErrorStorage.updateTypescriptError(errorId, {
+        status: 'detected',
+        fixId: undefined,
+        resolvedAt: undefined
       });
-    } catch (err) {
-      // Revert to original content on error
-      fs.writeFileSync(filePath, originalContent);
-      return false;
     }
-  }
-  
-  // Write the fixed content
-  fs.writeFileSync(filePath, currentContent);
-  
-  return true;
-}
-
-//
-// Helper functions
-//
-
-/**
- * Apply a fix to a file
- */
-function applyFixToFile(
-  fileContent: string,
-  error: TypeScriptError,
-  fix: ErrorFix
-): string {
-  // Convert line and column to character position
-  const lines = fileContent.split('\n');
-  
-  // Ensure line and column are 0-based for internal calculations
-  const lineIndex = error.lineNumber - 1;
-  const columnIndex = error.columnNumber - 1;
-  
-  // Calculate start position
-  let startPos = 0;
-  for (let i = 0; i < lineIndex; i++) {
-    startPos += lines[i].length + 1; // +1 for the newline character
-  }
-  startPos += columnIndex;
-  
-  // Get context around the error
-  const contextLines = 3;
-  const startLine = Math.max(0, lineIndex - contextLines);
-  const endLine = Math.min(lines.length - 1, lineIndex + contextLines);
-  const errorContext = lines.slice(startLine, endLine + 1).join('\n');
-  
-  // Determine the fix to apply
-  if (fix.fixCode) {
-    // If we have specific fix code, apply it directly
-    
-    // Determine the scope of the fix (line, token, or custom range)
-    switch (fix.fixScope) {
-      case 'line':
-        // Replace the entire line
-        lines[lineIndex] = fix.fixCode;
-        break;
-        
-      case 'token':
-        // Replace just the token at the error position
-        // This is a simplified implementation - a real one would use the TypeScript compiler
-        // to identify token boundaries
-        const line = lines[lineIndex];
-        const tokenStart = findTokenStart(line, columnIndex);
-        const tokenEnd = findTokenEnd(line, columnIndex);
-        lines[lineIndex] = line.substring(0, tokenStart) + fix.fixCode + line.substring(tokenEnd);
-        break;
-        
-      case 'custom':
-        // The fix specifies a custom replacement pattern
-        if (fix.originalCode && errorContext.includes(fix.originalCode)) {
-          // Replace the original code with the fix code
-          const contextStartPos = startPos - (lineIndex - startLine) * (lines[0].length + 1) - columnIndex;
-          const replaceStartPos = contextStartPos + errorContext.indexOf(fix.originalCode);
-          const replaceEndPos = replaceStartPos + fix.originalCode.length;
-          
-          return fileContent.substring(0, replaceStartPos) + 
-                 fix.fixCode + 
-                 fileContent.substring(replaceEndPos);
-        } else {
-          // If we can't find the exact match, apply the fix to the error line
-          lines[lineIndex] = fix.fixCode;
-        }
-        break;
-        
-      default:
-        // Default to replacing the entire line
-        lines[lineIndex] = fix.fixCode;
-    }
-    
-    return lines.join('\n');
-  } else {
-    // No specific fix code provided
-    throw new Error('No fix code provided for error');
-  }
-}
-
-/**
- * Find the start position of a token in a line
- */
-function findTokenStart(line: string, position: number): number {
-  const tokenDelimiters = /[ \t\n\r\(\)\[\]\{\}\:\;\,\.\<\>\=\+\-\*\/\&\|\^\!\~\?\@\#\%]/;
-  let start = position;
-  
-  while (start > 0 && !tokenDelimiters.test(line[start - 1])) {
-    start--;
-  }
-  
-  return start;
-}
-
-/**
- * Find the end position of a token in a line
- */
-function findTokenEnd(line: string, position: number): number {
-  const tokenDelimiters = /[ \t\n\r\(\)\[\]\{\}\:\;\,\.\<\>\=\+\-\*\/\&\|\^\!\~\?\@\#\%]/;
-  let end = position;
-  
-  while (end < line.length && !tokenDelimiters.test(line[end])) {
-    end++;
-  }
-  
-  return end;
-}
-
-/**
- * Rollback changes to files
- */
-async function rollbackChanges(fileBackups: Record<string, string>): Promise<void> {
-  for (const [filePath, content] of Object.entries(fileBackups)) {
-    fs.writeFileSync(filePath, content);
-  }
-}
-
-/**
- * Check if applying fixes introduced new errors
- */
-async function checkForNewErrors(): Promise<number> {
-  // This is a placeholder implementation
-  // In a real implementation, we would run the TypeScript compiler
-  // and check for new errors
-  return 0;
-}
-
-/**
- * Calculate the similarity between two strings
- */
-function similarityScore(a: string, b: string): number {
-  // Simple implementation of Levenshtein distance
-  const m = a.length;
-  const n = b.length;
-  
-  // Fast path for equality
-  if (a === b) return 1;
-  if (m === 0) return 0;
-  if (n === 0) return 0;
-  
-  const matrix: number[][] = Array(m + 1).fill(0).map(() => Array(n + 1).fill(0));
-  
-  for (let i = 0; i <= m; i++) {
-    matrix[i][0] = i;
-  }
-  
-  for (let j = 0; j <= n; j++) {
-    matrix[0][j] = j;
-  }
-  
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(
-        matrix[i - 1][j] + 1,       // deletion
-        matrix[i][j - 1] + 1,       // insertion
-        matrix[i - 1][j - 1] + cost // substitution
-      );
-    }
-  }
-  
-  const maxLength = Math.max(m, n);
-  const distance = matrix[m][n];
-  return 1 - distance / maxLength;
-}
-
-/**
- * Infer the common root cause of a group of errors
- */
-function inferCommonRootCause(errors: TypeScriptError[]): string {
-  // Check for common error codes
-  const errorCodes = new Set(errors.map(e => e.errorCode));
-  if (errorCodes.size === 1) {
-    return `Common error code: ${Array.from(errorCodes)[0]}`;
-  }
-  
-  // Check for common categories
-  const categories = new Set(errors.map(e => e.category));
-  if (categories.size === 1) {
-    return `Common error category: ${Array.from(categories)[0]}`;
-  }
-  
-  // Check for common patterns
-  const patterns = new Set(errors.map(e => e.patternId).filter(Boolean));
-  if (patterns.size === 1) {
-    return `Common error pattern: ${Array.from(patterns)[0]}`;
-  }
-  
-  // Default to a generic description
-  return 'Related errors based on analysis';
-}
-
-/**
- * Infer the best fix strategy for a group of errors
- */
-function inferFixStrategy(errors: TypeScriptError[]): string {
-  // Check if all errors are in the same file
-  const files = new Set(errors.map(e => e.filePath));
-  if (files.size === 1) {
-    return 'Apply fixes to single file';
-  }
-  
-  // Check if all errors are of the same category
-  const categories = new Set(errors.map(e => e.category));
-  if (categories.size === 1) {
-    const category = Array.from(categories)[0];
-    
-    switch (category) {
-      case 'missing_type':
-        return 'Generate and add missing types';
-        
-      case 'interface_mismatch':
-        return 'Update interface definitions';
-        
-      case 'import_error':
-        return 'Fix import statements';
-        
-      case 'type_mismatch':
-        return 'Apply type conversions';
-        
-      default:
-        return `Fix ${category} errors`;
-    }
-  }
-  
-  // Default strategy
-  return 'Apply individual fixes in dependency order';
-}
-
-/**
- * Calculate priority for an error group
- */
-function calculateGroupPriority(errors: TypeScriptError[]): number {
-  let priority = 0;
-  
-  // Count errors by severity
-  const severityCounts: Record<string, number> = {};
-  for (const error of errors) {
-    severityCounts[error.severity] = (severityCounts[error.severity] || 0) + 1;
-  }
-  
-  // Assign priority based on severity
-  priority += (severityCounts['critical'] || 0) * 100;
-  priority += (severityCounts['high'] || 0) * 10;
-  priority += (severityCounts['medium'] || 0) * 3;
-  priority += (severityCounts['low'] || 0) * 1;
-  
-  // Prioritize certain categories
-  const categories = new Set(errors.map(e => e.category));
-  if (categories.has('missing_type')) priority += 50;
-  if (categories.has('interface_mismatch')) priority += 40;
-  if (categories.has('import_error')) priority += 30;
-  
-  // Prioritize errors that affect multiple files
-  const files = new Set(errors.map(e => e.filePath));
-  priority += files.size * 5;
-  
-  return priority;
-}
-
-/**
- * Perform a topological sort on a dependency graph
- */
-function topologicalSort(graph: Record<string, string[]>): string[] {
-  const result: string[] = [];
-  const visited = new Set<string>();
-  const temp = new Set<string>();
-  
-  // Helper function for depth-first search
-  const visit = (node: string): void => {
-    // Skip if already visited
-    if (visited.has(node)) {
-      return;
-    }
-    
-    // Check for cycles
-    if (temp.has(node)) {
-      // In case of a cycle, we'll just continue and accept that the sort won't be perfect
-      return;
-    }
-    
-    temp.add(node);
-    
-    // Visit dependencies
-    for (const dep of graph[node] || []) {
-      visit(dep);
-    }
-    
-    temp.delete(node);
-    visited.add(node);
-    result.unshift(node); // Add to the beginning of the result
-  };
-  
-  // Visit each node
-  for (const node of Object.keys(graph)) {
-    visit(node);
+  } catch (err) {
+    result.success = false;
+    result.errorMessage = err instanceof Error ? err.message : String(err);
+    console.error('Failed to roll back fix transaction:', err);
   }
   
   return result;
