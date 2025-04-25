@@ -25,7 +25,8 @@ import {
   Eye,
   ShieldCheck,
   Calendar,
-  Zap
+  Zap,
+  Code
 } from "lucide-react";
 import {
   Tooltip,
@@ -359,6 +360,12 @@ export default function AdminPortalPage() {
                     <Link href="/admin/shop">
                       <ShoppingBag className="h-8 w-8 text-primary" />
                       <span>Shop</span>
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="h-24 flex flex-col gap-2 items-center justify-center" asChild>
+                    <Link href="/admin/typescript-errors">
+                      <Code className="h-8 w-8 text-primary" />
+                      <span>TypeScript Errors</span>
                     </Link>
                   </Button>
                 </div>

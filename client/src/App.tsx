@@ -106,6 +106,9 @@ import { LoginPage } from '@/pages/Login'; //Import added here
 import EditButtonPageFC from '@/pages/admin/EditButtonPage';
 const EditButtonPage = () => <EditButtonPageFC />;
 
+// TypeScript Error Management
+import TypeScriptErrorDashboard from "@/pages/admin/TypeScriptErrorDashboard";
+
 // Search Pages
 import SearchPage from "@/pages/SearchPage";
 import MusicSearchPage from "@/pages/music/MusicSearchPage";
@@ -208,6 +211,7 @@ function AppRouter() {
           <ProtectedRoute path="/admin/media/video" component={VideoPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/media/audio" component={AudioPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/edit-button" component={EditButtonPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/typescript-errors" component={TypeScriptErrorDashboard} requiredRole="admin" />
 
           {/* Resource Pages */}
           <Route path="/resources" component={ResourcesPage} />
