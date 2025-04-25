@@ -98,6 +98,7 @@ import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search/index';
 import csrfRoutes from './routes/csrf-routes';
 import typescriptErrorRoutes from './routes/typescript-error-routes';
+import typescriptErrorSimpleRoutes from './routes/typescript-error-simple-routes';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 import { protectApiRoutes } from './security/apiRoutesProtector';
 
@@ -224,6 +225,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use TypeScript error management routes with Replit Auth protection for admin-only operations
   app.use('/api/typescript/admin', isAuthenticated, typescriptErrorRoutes);
+  
+  // Use simplified TypeScript error management routes for better performance
+  app.use('/api/typescript-simple', typescriptErrorSimpleRoutes);
   
   // Use secure API routes with comprehensive security checks
   app.use('/api/secure/public', publicRouter);
