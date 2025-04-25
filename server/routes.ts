@@ -222,8 +222,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Use CSRF routes
   app.use('/api', csrfRoutes);
   
-  // Use TypeScript error management routes with Replit Auth protection
-  app.use('/api/typescript', isAuthenticated, typescriptErrorRoutes);
+  // Use TypeScript error management routes with Replit Auth protection for admin-only operations
+  app.use('/api/typescript/admin', isAuthenticated, typescriptErrorRoutes);
   
   // Use secure API routes with comprehensive security checks
   app.use('/api/secure/public', publicRouter);
@@ -2206,7 +2206,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   app.use('/api/content', contentRoutes);
   app.use('/api/content/workflow', contentWorkflowRoutes);
   app.use('/api/notifications', notificationsRoutes);
-  app.use('/api/typescript', typescriptErrorRoutes); // Add TypeScript error management routes
+  app.use('/api/typescript/public', typescriptErrorRoutes); // Add TypeScript error management routes for public access
   app.use(mediaRoutes); // Adding media routes for file uploads and management
 
   // Security routes
