@@ -1,28 +1,35 @@
-import { pgTable, text, serial, boolean, timestamp, integer, numeric, pgEnum, varchar, json, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, timestamp, integer, numeric, pgEnum, varchar, json, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { sql, relations } from "drizzle-orm";
 
-// Users table with role-based authentication and two-factor authentication
+// Session storage table.
+// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table.
+// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  email: text("email").notNull().unique(),
+  id: varchar("id").primaryKey().notNull(),
+  username: varchar("username").unique().notNull(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  bio: text("bio"),
+  profileImageUrl: varchar("profile_image_url"),
   role: text("role", { enum: ["user", "admin", "super_admin"] }).notNull().default("user"),
   isBanned: boolean("is_banned").notNull().default(false),
-  // Two-factor authentication fields
-  twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
-  twoFactorSecret: text("two_factor_secret"),
-  backupCodes: text("backup_codes").array(), // Array of backup codes
   lastLogin: timestamp("last_login"),
-  lastLoginIp: text("last_login_ip"),
-  loginAttempts: integer("login_attempts").notNull().default(0),
-  lockedUntil: timestamp("locked_until"), // Account lockout timestamp
-  mustChangePassword: boolean("must_change_password").notNull().default(false),
-  passwordUpdatedAt: timestamp("password_updated_at"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at")
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Existing subscribers table
@@ -86,15 +93,7 @@ export const comments = pgTable("comments", {
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users)
-  .omit({ id: true, createdAt: true, updatedAt: true })
-  .extend({
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string()
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"]
-  });
+  .omit({ id: true, createdAt: true, updatedAt: true });
 
 export const insertSubscriberSchema = createInsertSchema(subscribers)
   .pick({
@@ -183,6 +182,7 @@ export type Album = typeof albums.$inferSelect;
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type UpsertUser = typeof users.$inferInsert;
 
 export type InsertSubscriber = z.infer<typeof insertSubscriberSchema>;
 export type Subscriber = typeof subscribers.$inferSelect;

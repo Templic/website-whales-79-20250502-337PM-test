@@ -10,6 +10,7 @@ const __dirname = dirname(__filename);
 import { storage } from "./storage";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { nanoid } from 'nanoid';
 import { validate } from './middlewares/validationMiddleware';
 import { body } from 'express-validator'; // Add body to imports
@@ -111,13 +112,20 @@ const transporter = createTransport({
 // CSRF protection middleware is already imported at the top of the file
 
 export async function registerRoutes(app: express.Application): Promise<Server> {
+  // Set up Replit Auth
+  await setupAuth(app);
+
+  // Add Replit Auth routes to CSRF exempt list
   // Apply enhanced CSRF protection to all routes
   // Exempt certain routes that should not require CSRF (like webhooks and health checks)
   const csrfExemptRoutes = [
     '/api/health',
     '/api/webhooks',
     '/api/external-callbacks',
-    '/api/stripe-webhook'
+    '/api/stripe-webhook',
+    '/api/login',
+    '/api/callback',
+    '/api/logout'
   ];
   
   // Apply CSRF protection with exemptions
@@ -151,8 +159,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Use CSRF routes
   app.use('/api', csrfRoutes);
   
-  // Use TypeScript error management routes
-  app.use('/api/typescript', typescriptErrorRoutes);
+  // Use TypeScript error management routes with Replit Auth protection
+  app.use('/api/typescript', isAuthenticated, typescriptErrorRoutes);
   
   // Use secure API routes with comprehensive security checks
   app.use('/api/secure/public', publicRouter);
@@ -196,6 +204,31 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(safeUser);
     } else {
       res.status(401).json({ message: 'Not authenticated' });
+    }
+  });
+  
+  // Replit Auth specific user endpoint
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      console.log("Replit Auth user claims:", req.user?.claims);
+      
+      if (!req.user?.claims?.sub) {
+        return res.status(400).json({ message: "Invalid user data" });
+      }
+      
+      // Get the complete user profile from our database using the Replit ID
+      const user = await storage.getUser(req.user.claims.sub);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found in database" });
+      }
+      
+      // Return safe user data
+      const safeUser = createSafeUser(user);
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error fetching Replit Auth user:", error);
+      res.status(500).json({ message: "Failed to fetch user data" });
     }
   });
   
