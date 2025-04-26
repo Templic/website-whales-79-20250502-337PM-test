@@ -28,7 +28,7 @@ export interface PerformanceResult {
  * @returns PerformanceResult with various performance metrics
  */
 export async function measureComponentPerformance(
-  Component: React.ComponentType<any>
+  Component: React.ComponentType<unknown>
 ): Promise<PerformanceResult> {
   // Create a container for mounting
   const container = document.createElement('div');
@@ -146,8 +146,8 @@ export async function measureComponentPerformance(
  * @returns Promise resolving to performance results for both components
  */
 export async function compareComponentPerformance(
-  OriginalComponent: React.ComponentType<any>,
-  OptimizedComponent: React.ComponentType<any>
+  OriginalComponent: React.ComponentType<unknown>,
+  OptimizedComponent: React.ComponentType<unknown>
 ): Promise<[PerformanceResult, PerformanceResult]> {
   console.log('Starting performance comparison...');
   

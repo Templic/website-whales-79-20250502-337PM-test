@@ -190,7 +190,7 @@ export function createApiHandler<
       sendSuccessResponse(res, result, options);
     } catch (error) {
       // Pass to next middleware if this isn't for us
-      if ((error as any)?.isPassthrough) {
+      if ((error as unknown)?.isPassthrough) {
         return next(error);
       }
       
@@ -314,8 +314,7 @@ function sendSuccessResponse<T>(
 /**
  * Sends an empty response
  */
-function sendEmptyResponse(
-  res: any,
+function sendEmptyResponse(res: unknown,
   options: ApiHandlerOptions<any, any> = {}
 ): void {
   // Set status code
@@ -342,8 +341,7 @@ function sendEmptyResponse(
 /**
  * Sends an error response
  */
-function sendErrorResponse(
-  res: any,
+function sendErrorResponse(res: unknown,
   error: any
 ): void {
   // Extract error information
@@ -369,8 +367,7 @@ function sendErrorResponse(
 /**
  * Handles special responses like redirects, streams, etc.
  */
-function handleSpecialResponse(
-  res: any,
+function handleSpecialResponse(res: unknown,
   response: SpecialResponse
 ): void {
   switch (response.type) {
@@ -403,7 +400,7 @@ function handleSpecialResponse(
 }
 
 /**
- * Checks if a user has any of the required roles
+ * Checks if a user has unknown of the required roles
  */
 function checkUserRoles(
   user: AuthenticatedUser,
@@ -433,7 +430,7 @@ function checkUserPermissions(
 /**
  * Type guard to check if response is a special response
  */
-function isSpecialResponse(response: any): response is SpecialResponse {
+function isSpecialResponse(response: unknown): response is SpecialResponse {
   return (
     response &&
     typeof response === 'object' &&
@@ -473,7 +470,7 @@ export function createMethodHandler(
   return (req: any, res: any, next: (error?: any) => void) => {
     const method = req.method.toUpperCase();
     
-    if (!methods.includes(method as any)) {
+    if (!methods.includes(method as unknown)) {
       // Pass to next handler if method doesn't match
       return next();
     }

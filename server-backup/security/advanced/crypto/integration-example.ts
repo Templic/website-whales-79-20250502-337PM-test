@@ -75,7 +75,7 @@ async function distributeQuantumKey() {
         message: 'Share verification failed'
       };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Key distribution failed', {
       error: (error as Error).message,
       timestamp: Date.now()
@@ -158,7 +158,7 @@ async function signDocumentWithDualMethods(document: string) {
         afterKeyEvolution: fsVerifiedAfterUpdate
       }
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Document signing failed', {
       error: (error as Error).message,
       timestamp: Date.now()
@@ -239,7 +239,7 @@ async function verifyTransactionWithPrivacy(transactionAmount: number) {
         message: 'Transaction amount outside allowed range'
       };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Transaction processing failed', {
       error: (error as Error).message,
       timestamp: Date.now()

@@ -118,7 +118,7 @@ async function verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[]
       
       // Attempt to access without authentication
       const response = await axios({
-        method: endpoint.method as any,
+        method: endpoint.method as unknown,
         url: `${baseUrl}${endpoint.path}`,
         validateStatus: () => true, // Don't throw on 4xx/5xx
       });
@@ -203,7 +203,7 @@ async function verifyApiRateLimiting(baseUrl: string, endpoints: ApiEndpoint[]):
     
     for (let i = 0; i < maxRequests; i++) {
       const response = await axios({
-        method: testEndpoint.method as any,
+        method: testEndpoint.method as unknown,
         url: `${baseUrl}${testEndpoint.path}`,
         validateStatus: () => true,
       });

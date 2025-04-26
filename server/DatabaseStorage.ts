@@ -22,7 +22,7 @@ import {
 const PostgresSessionStore = connectPg(session);
 
 export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
-  sessionStore: any; // Fix for express-session Store type
+  sessionStore: unknown; // Fix for express-session Store type
   
   // Alias methods for compatibility with IStorage
   async createTypescriptError(error: InsertTypeScriptError): Promise<TypeScriptError> {
@@ -180,15 +180,15 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     try {
       // Map our InsertTypeScriptError to the actual database schema
       const dbError = {
-        error_code: (error as any).code?.toString() || '0',
-        file_path: (error as any).filePath || (error as any).file || '',
-        line_number: (error as any).line || 0,
-        column_number: (error as any).column || 0, 
-        error_message: (error as any).message || '',
-        error_context: (error as any).lineContent || '',
-        category: (error as any).category || 'OTHER',
-        severity: (error as any).severity || 'MEDIUM',
-        status: (error as any).status || 'PENDING',
+        error_code: (error as unknown).code?.toString() || '0',
+        file_path: (error as unknown).filePath || (error as unknown).file || '',
+        line_number: (error as unknown).line || 0,
+        column_number: (error as unknown).column || 0, 
+        error_message: (error as unknown).message || '',
+        error_context: (error as unknown).lineContent || '',
+        category: (error as unknown).category || 'OTHER',
+        severity: (error as unknown).severity || 'MEDIUM',
+        status: (error as unknown).status || 'PENDING',
         detected_at: new Date(),
         first_detected_at: new Date(),
         occurrence_count: 1,
@@ -222,11 +222,11 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
       // Map the update fields to the actual database schema
       const updateFields: any = {};
       
-      if ((error as any).status) updateFields.status = (error as any).status;
-      if ((error as any).severity) updateFields.severity = (error as any).severity;
-      if ((error as any).category) updateFields.category = (error as any).category;
-      if ((error as any).fixId) updateFields.fix_id = (error as any).fixId;
-      if ((error as any).resolved_at || ((error as any).status === 'fixed')) updateFields.resolved_at = new Date();
+      if ((error as unknown).status) updateFields.status = (error as unknown).status;
+      if ((error as unknown).severity) updateFields.severity = (error as unknown).severity;
+      if ((error as unknown).category) updateFields.category = (error as unknown).category;
+      if ((error as unknown).fixId) updateFields.fix_id = (error as unknown).fixId;
+      if ((error as unknown).resolved_at || ((error as unknown).status === 'fixed')) updateFields.resolved_at = new Date();
       
       if (Object.keys(updateFields).length === 0) {
         // Nothing to update

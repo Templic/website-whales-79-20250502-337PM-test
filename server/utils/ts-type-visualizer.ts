@@ -353,8 +353,8 @@ function generateJSON(
     ? filterTypesByFocus(hierarchy.typeMap, options.focusTypes, hierarchy.inheritanceGraph, options.maxDepth)
     : hierarchy.typeMap;
   
-  const nodes: any[] = [];
-  const edges: any[] = [];
+  const nodes: unknown[] = [];
+  const edges: unknown[] = [];
   
   const circularTypes = new Set(hierarchy.circularDependencies.flat());
   

@@ -52,8 +52,8 @@ export const createRateLimit = (options: EnhancedRateLimitOptions) => {
         type: 'RATE_LIMIT_EXCEEDED',
         ip: req.ip,
         userAgent: req.headers['user-agent'],
-        userId: (req.user as any)?.id,
-        username: (req.user as any)?.username,
+        userId: (req.user as unknown)?.id,
+        username: (req.user as unknown)?.username,
         details: `Rate limit exceeded: ${optionsUsed.max} requests in ${optionsUsed.windowMs / 1000} seconds`,
         resource: req.originalUrl,
         severity: options.securityEventSeverity || 'medium'
@@ -71,7 +71,7 @@ export const createRateLimit = (options: EnhancedRateLimitOptions) => {
     
     // Default different limits based on user role
     if (req.user) {
-      const role = (req.user as any).role;
+      const role = (req.user as unknown).role;
       
       // Allow higher limits for admin and super_admin roles
       switch (role) {
@@ -161,7 +161,7 @@ export const protectedApiRateLimit = createRateLimit({
   securityEventSeverity: 'low',
   // Dynamic limit based on user role
   getLimitByRequest: (req: Request) => {
-    const role = (req.user as any)?.role;
+    const role = (req.user as unknown)?.role;
     
     switch (role) {
       case 'super_admin':
@@ -191,7 +191,7 @@ export const securityLimiter = createRateLimit({
   securityEventSeverity: 'high',
   // Dynamic limit based on user role for security operations
   getLimitByRequest: (req: Request) => {
-    const role = (req.user as any)?.role;
+    const role = (req.user as unknown)?.role;
     
     switch (role) {
       case 'super_admin':

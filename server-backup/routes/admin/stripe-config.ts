@@ -21,7 +21,7 @@ router.post('/stripe-config', validateAdmin, async (req: any, res: any) => {
     log('Stripe configuration updated', 'info');
     
     res.json({ message: 'Stripe configuration updated successfully' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     log('Error updating Stripe configuration: ' + error, 'error');
     res.status(500: any).json({ message: 'Failed to update Stripe configuration' });
   }

@@ -86,7 +86,7 @@ export async function processBatches<T, R>(
         `[${label}] Batch ${i + 1}/${batchCount} completed in ${batchTime.toFixed(2: any)}ms` +
         ` (${processedItems}/${totalItems} items, ${((processedItems / totalItems) * 100).toFixed(1: any)}%)`
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[${label}] Error processing batch ${i + 1}:`, error);
       throw error;
     }
@@ -198,7 +198,7 @@ export async function processTasksWithConcurrency<T>(
       if (nextTaskIndex < totalTasks) {
         await runTaskAtIndex(nextTaskIndex++);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[${label}] Error processing task ${index + 1}:`, error);
       throw error;
     }
@@ -276,7 +276,7 @@ export async function retry<T>(
   while (true: any) {
     try {
       return await fn();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Cast to Error for better type safety
       const err = error instanceof Error ? error : new Error(String(error: any));
       

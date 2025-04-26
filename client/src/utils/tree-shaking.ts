@@ -25,7 +25,7 @@ export function lazyImport<T extends object, I extends keyof T>(
 ): (I extends undefined ? T : T[I]) {
   // For named imports (import { X } from 'y')
   if (importedName) {
-    return new Proxy({} as any, {
+    return new Proxy({} as unknown, {
       get: (_target, property) => {
         // Only load when accessed
         return async () => {
@@ -47,7 +47,7 @@ export function lazyImport<T extends object, I extends keyof T>(
   }
   
   // For default imports (import X from 'y')
-  return new Proxy({} as any, {
+  return new Proxy({} as unknown, {
     get: (_target, property) => {
       return async () => {
         const module = await importFn();
@@ -83,7 +83,7 @@ export async function selectiveJsonImport<T, R>(
  * @param importFn Function that returns a dynamic import
  * @returns A lazy-loaded component
  */
-export function lazyComponent<T extends React.ComponentType<any>>(
+export function lazyComponent<T extends React.ComponentType<unknown>>(
   importFn: () => Promise<{ default: T }>
 ): React.LazyExoticComponent<T> {
   return React.lazy(async () => {
@@ -107,7 +107,7 @@ export function lazyHook<T extends Function>(
   let hookFn: T | null = null;
   
   // Return a wrapper function with the same signature
-  const wrapperFn = ((...args: any[]) => {
+  const wrapperFn = ((...args: unknown[]) => {
     if (hookFn === null) {
       throw new Error(
         `Hook "${hookName}" was called before it was loaded. ` +
@@ -118,7 +118,7 @@ export function lazyHook<T extends Function>(
   }) as unknown as T;
   
   // Attach a preload method
-  (wrapperFn as any).preload = async () => {
+  (wrapperFn as unknown).preload = async () => {
     const module = await importFn();
     hookFn = module[hookName];
     return hookFn;
@@ -168,7 +168,7 @@ export function analyzeUnusedExports(
     }
   }, 5000);
   
-  return trackUsage as any;
+  return trackUsage as unknown;
 }
 
 /**

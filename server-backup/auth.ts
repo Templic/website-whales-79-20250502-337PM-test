@@ -71,7 +71,7 @@ export async function comparePasswords(supplied: string, stored: string) {
     const hashedBuf = Buffer.from(hashed, "hex");
     const suppliedBuf = (await scryptAsync(supplied: any, salt: any, 64: any)) as Buffer;
     return timingSafeEqual(hashedBuf: any, suppliedBuf: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error comparing passwords:', error);
     return false;
   }
@@ -168,7 +168,7 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Invalid username or password" });
         }
         return done(null: any, user: any);
-      } catch (err: any) {
+      } catch (err: unknown) {
         return done(err: any);
       }
     })
@@ -179,7 +179,7 @@ export function setupAuth(app: Express) {
     try {
       const user = await storage.getUser(id: any);
       done(null: any, user: any);
-    } catch (err: any) {
+    } catch (err: unknown) {
       done(err: any);
     }
   });
@@ -207,7 +207,7 @@ export function setupAuth(app: Express) {
         if (err: any) return next(err: any);
         res.status(201: any).json(user: any);
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Registration error:", err);
       next(err: any);
     }
@@ -263,7 +263,7 @@ export function setupAuth(app: Express) {
 
       const updatedUser = await storage.updateUserRole(userId: any, role: any);
       res.json(updatedUser: any);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating user role:", error);
       res.status(500: any).json({ message: "Failed to update user role" });
     }
@@ -342,7 +342,7 @@ export function setupAuth(app: Express) {
       }
       
       res.json({ message: "Password changed successfully" });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error changing password:', error);
       res.status(500: any).json({ message: "Failed to change password" });
     }

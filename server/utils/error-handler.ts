@@ -17,7 +17,7 @@ import {
 } from '../types/core/error-types';
 
 // Import for security logging if available
-let securityLogger: any;
+let securityLogger: unknown;
 try {
   // Dynamic import to avoid circular dependencies
   const { logSecurityEvent } = require('../security/utils/securityLogger');
@@ -80,9 +80,9 @@ export function handleError(
       name,
       message,
       stack,
-      code: (error as any).code || 'ERR_UNKNOWN',
-      statusCode: (error as any).statusCode || 500,
-      timestamp: (error as any).timestamp || Date.now()
+      code: (error as unknown).code || 'ERR_UNKNOWN',
+      statusCode: (error as unknown).statusCode || 500,
+      timestamp: (error as unknown).timestamp || Date.now()
     };
     
     return baseError;
@@ -178,7 +178,7 @@ export function handleDatabaseError(
   // Check for common Postgres error codes
   let dbErrorCode: string | number | undefined;
   if (error && typeof error === 'object' && 'code' in error) {
-    dbErrorCode = (error as any).code;
+    dbErrorCode = (error as unknown).code;
   }
   
   const dbError: DatabaseError = {

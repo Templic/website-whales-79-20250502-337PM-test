@@ -14,7 +14,7 @@ import { securityFabric, SecurityEventCategory, SecurityEventSeverity } from '..
 export interface SecurityBlock {
   index: number;
   timestamp: string;
-  data: any;
+  data: unknown;
   previousHash: string;
   hash: string;
   nonce: number;
@@ -26,7 +26,7 @@ export class ImmutableSecurityLogs {
   private chain: SecurityBlock[];
   private blockchainFile: string;
   private difficulty: number;
-  private pendingLogs: any[];
+  private pendingLogs: unknown[];
   private autoSaveInterval: NodeJS.Timeout | null;
   private maxPendingLogs: number;
   
@@ -140,8 +140,8 @@ export class ImmutableSecurityLogs {
     category?: SecurityEventCategory | SecurityEventCategory[];
     severity?: SecurityEventSeverity | SecurityEventSeverity[];
     keyword?: string;
-  }): any[] {
-    const results: any[] = [];
+  }): unknown[] {
+    const results: unknown[] = [];
     
     // Process query parameters
     const fromDate = query.fromDate ? new Date(query.fromDate).getTime() : 0;
@@ -241,7 +241,7 @@ export class ImmutableSecurityLogs {
   /**
    * Create a new block
    */
-  private createBlock(data: any[]): SecurityBlock {
+  private createBlock(data: unknown[]): SecurityBlock {
     const previousBlock = this.getLastBlock();
     const index = previousBlock ? previousBlock.index + 1 : 0;
     const timestamp = new Date().toISOString();

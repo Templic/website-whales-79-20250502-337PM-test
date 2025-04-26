@@ -28,7 +28,7 @@ async function simulateNormalRequest() {
       timestamp: new Date(),
       securityChecks: {}
     }
-  } as any;
+  } as unknown;
   
   console.log('\n--- Testing normal API request ---');
   const result = await detectAnomaly(req);
@@ -59,7 +59,7 @@ async function simulateSqlInjectionAttack() {
       timestamp: new Date(),
       securityChecks: {}
     }
-  } as any;
+  } as unknown;
   
   console.log('\n--- Testing SQL injection attack ---');
   const result = await detectAnomaly(req);
@@ -96,7 +96,7 @@ async function simulateRateLimitAttack() {
         timestamp: new Date(),
         securityChecks: {}
       }
-    } as any;
+    } as unknown;
     
     const result = await detectAnomaly(req);
     results.push(result);
@@ -134,7 +134,7 @@ async function simulatePathTraversalAttack() {
       timestamp: new Date(),
       securityChecks: {}
     }
-  } as any;
+  } as unknown;
   
   console.log('\n--- Testing path traversal attack ---');
   const result = await detectAnomaly(req);
@@ -167,7 +167,7 @@ async function simulateXssAttack() {
       timestamp: new Date(),
       securityChecks: {}
     }
-  } as any;
+  } as unknown;
   
   console.log('\n--- Testing XSS attack ---');
   const result = await detectAnomaly(req);
@@ -200,7 +200,7 @@ async function simulateDataExfiltrationAttempt() {
       timestamp: new Date(),
       securityChecks: {}
     }
-  } as any;
+  } as unknown;
   
   console.log('\n--- Testing data exfiltration attempt ---');
   const result = await detectAnomaly(req);
@@ -236,7 +236,7 @@ async function simulateSensitiveDataExposure() {
       timestamp: new Date(),
       securityChecks: {}
     }
-  } as any;
+  } as unknown;
   
   console.log('\n--- Testing sensitive data exposure ---');
   const result = await detectAnomaly(req);
@@ -275,7 +275,7 @@ async function simulateUnusualUserBehavior() {
         timestamp: new Date(),
         securityChecks: {}
       }
-    } as any;
+    } as unknown;
     
     await detectAnomaly(req);
     // Small delay between requests
@@ -299,7 +299,7 @@ async function simulateUnusualUserBehavior() {
       timestamp: new Date(),
       securityChecks: {}
     }
-  } as any;
+  } as unknown;
   
   const result = await detectAnomaly(req);
   console.log('Anomaly detected:', result.isAnomaly);
@@ -334,7 +334,7 @@ async function runAllTests() {
           timestamp: new Date(),
           securityChecks: {}
         }
-      } as any;
+      } as unknown;
       
       await detectAnomaly(req);
       // Small delay to avoid rate limiting

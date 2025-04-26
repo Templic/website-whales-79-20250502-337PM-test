@@ -154,7 +154,7 @@ export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'bod
       }
       
       next();
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         // Log validation failure
         logSecurityEvent({
@@ -199,7 +199,7 @@ export function validateApiRequest<T extends AnyZodObject>(data: any, schema: T)
       success: true,
       data: validatedData
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       return {
         success: false,

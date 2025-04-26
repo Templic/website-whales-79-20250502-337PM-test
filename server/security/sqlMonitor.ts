@@ -75,7 +75,7 @@ const SQL_INJECTION_PATTERNS = [
  */
 interface DBQuery {
   sql: string;
-  params?: any[];
+  params?: unknown[];
   source?: string;
   timestamp: Date;
 }
@@ -141,7 +141,7 @@ export class SQLMonitor {
   /**
    * Check if a query is safe to execute
    */
-  public checkQuery(sql: string, params: any[] = [], source?: string): boolean {
+  public checkQuery(sql: string, params: unknown[] = [], source?: string): boolean {
     const query: DBQuery = {
       sql,
       params,
@@ -157,7 +157,7 @@ export class SQLMonitor {
     // Check query type
     const queryType = this.detectQueryType(sql);
     if (queryType && this.options.allowedQueryTypes && 
-        !this.options.allowedQueryTypes.includes(queryType as any)) {
+        !this.options.allowedQueryTypes.includes(queryType as unknown)) {
       this.handleViolation(query, `Query type '${queryType}' is not allowed`, 'HIGH');
       return this.options.mode === 'monitor'; // return false in enforce mode
     }
@@ -277,12 +277,12 @@ export class SQLMonitor {
   /**
    * Wrap a database connection with SQL injection protection
    */
-  public wrapConnection(db: any) {
+  public wrapConnection(db: unknown) {
     const self = this;
     const originalQuery = db.query;
     
     // Override the query method with security checks
-    db.query = async function(sql: string, params: any[] = []): Promise<unknown> {
+    db.query = async function(sql: string, params: unknown[] = []): Promise<unknown> {
       // Get the call stack to determine the source
       const stack = new Error().stack;
       const source = stack?.split('\n')[2]?.trim() || 'unknown';

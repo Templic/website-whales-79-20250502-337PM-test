@@ -171,7 +171,7 @@ export function xssProtectionMiddleware(options: {
       }
       
       next();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log error
       console.error('[XSS-PROTECTION] Error in XSS protection middleware:', error);
       
@@ -245,7 +245,7 @@ function logXssAttempt(data: any): void {
         timestamp: new Date().toISOString()
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[XSS-PROTECTION] Error logging to blockchain:', error);
   }
 }

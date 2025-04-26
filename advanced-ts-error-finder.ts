@@ -653,13 +653,13 @@ if (require.main === module) {
       options.outputPath = args[i + 1];
       i++;
     } else if (args[i] === '--format' && i + 1 < args.length) {
-      options.outputFormat = args[i + 1] as any;
+      options.outputFormat = args[i + 1] as unknown;
       i++;
     } else if (args[i] === '--max-errors' && i + 1 < args.length) {
       options.maxErrors = parseInt(args[i + 1]);
       i++;
     } else if (args[i] === '--sort-by' && i + 1 < args.length) {
-      options.sortBy = args[i + 1] as any;
+      options.sortBy = args[i + 1] as unknown;
       i++;
     } else if (args[i] === '--no-warnings') {
       options.includeWarnings = false;

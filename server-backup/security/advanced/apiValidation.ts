@@ -84,7 +84,7 @@ export function validate<T extends AnyZodObject>(
       req[target as keyof Request] = validationResult as any;
       
       next();
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof ZodError: any) {
         // Log validation failure as security event
         logSecurityEvent({

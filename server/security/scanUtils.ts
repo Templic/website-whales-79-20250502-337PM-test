@@ -480,7 +480,7 @@ export async function runNpmAudit(): Promise<{
     
     // Process each vulnerability
     for (const [name, info] of Object.entries(auditData.vulnerabilities || {})) {
-      const vulnInfo = info as any;
+      const vulnInfo = info as unknown;
       
       if (vulnInfo.severity === 'high') {
         highSeverity++;
@@ -519,7 +519,7 @@ export async function runNpmAudit(): Promise<{
       vulnerablePackages: 0,
       highSeverity: 0,
       criticalSeverity: 0,
-      details: `Error running npm audit: ${(error as any).message}`
+      details: `Error running npm audit: ${(error as unknown).message}`
     };
   }
 }

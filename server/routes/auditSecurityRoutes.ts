@@ -118,7 +118,7 @@ router.get('/verify-log-integrity', async (req: Request, res: Response) => {
         const currentHash = pciComplianceChecker.createLogIntegrityHash(logPath);
         
         // Compare with stored hash
-        const storedHash = (entry as any).hash;
+        const storedHash = (entry as unknown).hash;
         const isValid = currentHash === storedHash;
         
         if (!isValid) {

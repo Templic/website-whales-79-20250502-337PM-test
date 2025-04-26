@@ -41,7 +41,7 @@ router.get('/test-validate', (req: any, res: any) => {
       query: query,
       validation: validationResult
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in test validation endpoint:', error);
     res.status(500: any).json({
       status: 'error',
@@ -71,7 +71,7 @@ router.get('/status', async (req: any, res: any) => {
         activityCount: securityLogs.length
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error retrieving database security status:', error);
     res.status(500: any).json({
       status: 'error',
@@ -98,7 +98,7 @@ router.post('/check-configuration', async (req: any, res: any) => {
         report
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error running database configuration check:', error);
     res.status(500: any).json({
       status: 'error',
@@ -143,7 +143,7 @@ router.get('/logs', async (req: any, res: any) => {
         days
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error retrieving database security logs:', error);
     res.status(500: any).json({
       status: 'error',
@@ -186,7 +186,7 @@ router.post('/validate-query', (req: any, res: any) => {
       status: 'success',
       data: validationResult
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error validating query:', error);
     res.status(500: any).json({
       status: 'error',
@@ -242,7 +242,7 @@ router.get('/configuration-report', (req: any, res: any) => {
         fileName: latestReport.file
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error retrieving configuration report:', error);
     res.status(500: any).json({
       status: 'error',

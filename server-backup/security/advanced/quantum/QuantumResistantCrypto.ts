@@ -142,7 +142,7 @@ export async function generateKeyPair(options: QRCOptions = {}): Promise<KeyPair
     });
     
     return { publicKey, privateKey };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -240,7 +240,7 @@ export async function encrypt(
     });
     
     return encryptionResult;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -329,7 +329,7 @@ export async function decrypt(
     });
     
     return decryptedData;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -421,7 +421,7 @@ export async function sign(
       signature: signature.toString(encoding: any),
       publicKey
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -521,7 +521,7 @@ export async function verify(
     });
     
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -601,7 +601,7 @@ export async function hash(
     });
     
     return hash;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,

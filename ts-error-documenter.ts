@@ -101,7 +101,7 @@ export async function generateErrorDocumentation(options: Partial<DocumentOption
 /**
  * Identify patterns in TypeScript errors
  */
-function identifyErrorPatterns(errors: any[]): ErrorPattern[] {
+function identifyErrorPatterns(errors: unknown[]): ErrorPattern[] {
   // Group errors by error code
   const errorsByCode: Record<string, any[]> = {};
   for (const error of errors) {
@@ -613,13 +613,13 @@ if (require.main === module) {
     if (arg === '--output' && i + 1 < args.length) {
       options.outputDir = args[++i];
     } else if (arg === '--format' && i + 1 < args.length) {
-      options.format = args[++i] as any;
+      options.format = args[++i] as unknown;
     } else if (arg === '--no-examples') {
       options.includeExamples = false;
     } else if (arg === '--max-examples' && i + 1 < args.length) {
       options.maxExamples = parseInt(args[++i], 10);
     } else if (arg === '--group-by' && i + 1 < args.length) {
-      options.groupBy = args[++i] as any;
+      options.groupBy = args[++i] as unknown;
     }
   }
   

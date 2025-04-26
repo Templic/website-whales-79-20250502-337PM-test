@@ -97,7 +97,7 @@ export async function memoizedQuery<T = any>(
     }
     
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log error and rethrow
     console.error(`[DB Optimization] Query error:`, error);
     throw error;
@@ -256,7 +256,7 @@ export async function analyzeDb(
     
     dbMetrics.lastAnalyze = new Date();
     return { analyzed, skipped };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[DB Optimization] Error during ANALYZE:', error);
     return { analyzed, skipped, error: error as Error };
   }
@@ -300,7 +300,7 @@ export async function vacuumDb(
     
     dbMetrics.lastVacuum = new Date();
     return { vacuumed, skipped };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[DB Optimization] Error during VACUUM:', error);
     return { vacuumed, skipped, error: error as Error };
   }
@@ -374,7 +374,7 @@ export async function analyzeIndexNeeds(
         usage: parseInt(row.usage, 10),
       })),
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[DB Optimization] Error analyzing index needs:', error);
     return { missingIndexes: [], unusedIndexes: [] };
   }
@@ -416,7 +416,7 @@ export async function getTableSizes(
       totalSize: row.total_size,
       indexSize: row.index_size,
     }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[DB Optimization] Error getting table sizes:', error);
     return [];
   }
@@ -475,7 +475,7 @@ export async function getTransactionStats(
       idleInTransactions,
       longestTransaction,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[DB Optimization] Error getting transaction stats:', error);
     return {
       activeTransactions: 0,

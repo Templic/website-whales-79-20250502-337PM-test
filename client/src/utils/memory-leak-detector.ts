@@ -82,8 +82,8 @@ export function generateMemoryLeakReport(): void {
   
   // Get current memory usage if available
   let memoryUsage = 0;
-  if (typeof performance !== 'undefined' && (performance as any).memory) {
-    memoryUsage = (performance as any).memory.usedJSHeapSize || 0;
+  if (typeof performance !== 'undefined' && (performance as unknown).memory) {
+    memoryUsage = (performance as unknown).memory.usedJSHeapSize || 0;
   }
   
   // Log the report

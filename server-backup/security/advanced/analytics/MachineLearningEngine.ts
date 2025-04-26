@@ -148,7 +148,7 @@ export interface ModelConfig {
   /**
    * Model hyperparameters
    */
-  hyperparameters: Record<string, any>;
+  hyperparameters: Record<string, unknown>;
   
   /**
    * Learning rate (for applicable models: any)
@@ -218,7 +218,7 @@ interface TrainingSample {
   /**
    * Sample metadata
    */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -380,7 +380,7 @@ class IsolationForestModel extends MLModel {
       
       // Mark as ready
       this.status = ModelStatus.READY;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[IsolationForestModel] Error training model:', error);
       this.status = ModelStatus.FAILED;
       throw error;
@@ -468,7 +468,7 @@ class IsolationForestModel extends MLModel {
       this.performance.lastEvaluationDate = new Date();
       
       return { ...this.performance };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[IsolationForestModel] Error evaluating model:', error);
       throw error;
     } finally {
@@ -1047,7 +1047,7 @@ export class MachineLearningEngine {
         console.log(`[MachineLearningEngine] Training model: ${name}`);
         await model.train();
         console.log(`[MachineLearningEngine] Model ${name} trained successfully`);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`[MachineLearningEngine] Error training model ${name}:`, error);
       }
     }

@@ -165,8 +165,8 @@ export function useSelectiveState<T extends object>(
     
     for (const path of dependencies) {
       const pathParts = path.split('.');
-      let oldValue = stateRef.current as any;
-      let newValue = newPartialState as any;
+      let oldValue = stateRef.current as unknown;
+      let newValue = newPartialState as unknown;
       let isAffected = false;
       
       // Navigate to the specific path in both old and new state
@@ -298,7 +298,7 @@ export function useSelectiveState<T extends object>(
 export function useSelectiveSelector<T extends object, R>(
   state: T,
   selector: TrackedSelector<T, R>,
-  deps: any[] = []
+  deps: unknown[] = []
 ): R {
   const trackedState = useRef<T>({} as T);
   const previousResult = useRef<R | undefined>(undefined);
@@ -383,8 +383,8 @@ export function useSelectiveSelector<T extends object, R>(
   };
   
   // Update the result only when needed
-  if (!previousResult.current || haveDependenciesChanged() || deps.some((dep, i) => dep !== (deps as any)._prevDeps?.[i])) {
-    (deps as any)._prevDeps = deps;
+  if (!previousResult.current || haveDependenciesChanged() || deps.some((dep, i) => dep !== (deps as unknown)._prevDeps?.[i])) {
+    (deps as unknown)._prevDeps = deps;
     return getResult();
   }
   

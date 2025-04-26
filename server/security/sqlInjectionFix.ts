@@ -9,7 +9,7 @@
  * Database connection interface - minimal definition for compatibility
  */
 interface DatabaseConnection {
-  query: (sql: string, params?: any[]) => Promise<any>;
+  query: (sql: string, params?: unknown[]) => Promise<unknown>;
 }
 
 /**
@@ -29,7 +29,7 @@ export class SQLInjectionFix {
    * @param params Parameters to bind to the query
    * @returns Query result
    */
-  async query<T = any>(sql: string, params: any[] = []): Promise<T> {
+  async query<T = any>(sql: string, params: unknown[] = []): Promise<T> {
     try {
       // Execute the parameterized query using the provided connection
       return await this.db.query(sql, params) as T;
@@ -57,8 +57,8 @@ export class SQLInjectionFix {
    * @param conditions Object with field-value pairs for WHERE conditions
    * @returns Object with sql fragment and params array
    */
-  buildWhereClause(conditions: Record<string, unknown>): { sql: string, params: any[] } {
-    const params: any[] = [];
+  buildWhereClause(conditions: Record<string, unknown>): { sql: string, params: unknown[] } {
+    const params: unknown[] = [];
     const clauses: string[] = [];
     
     let paramIndex = 1;
@@ -120,7 +120,7 @@ export class SQLInjectionFix {
     const safeTable = this.escapeIdentifier(table);
     const columns: string[] = [];
     const placeholders: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     
     let paramIndex = 1;
     
@@ -159,7 +159,7 @@ export class SQLInjectionFix {
     
     const safeTable = this.escapeIdentifier(table);
     const setClauses: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     
     let paramIndex = 1;
     

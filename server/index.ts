@@ -324,8 +324,8 @@ function initializeNonCriticalServices() {
     setTimeout(() => {
       // Check if full security mode is enabled
       // Look for either security.scanMode or features.enableDeepSecurityScanning
-      if ((config.security as any)?.scanMode === 'maximum' || 
-          (config.features as any)?.enableDeepSecurityScanning) {
+      if ((config.security as unknown)?.scanMode === 'maximum' || 
+          (config.features as unknown)?.enableDeepSecurityScanning) {
         log('Activating MAXIMUM security scan mode', 'security');
         enableMaximumSecurity(app); // Pass the app parameter
       } else {

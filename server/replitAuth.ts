@@ -44,8 +44,7 @@ export function getSession() {
   });
 }
 
-function updateUserSession(
-  user: any,
+function updateUserSession(user: unknown,
   tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
 ) {
   user.claims = tokens.claims();
@@ -54,8 +53,7 @@ function updateUserSession(
   user.expires_at = user.claims?.exp;
 }
 
-async function upsertUser(
-  claims: any,
+async function upsertUser(claims: unknown,
 ) {
   try {
     await storage.upsertUser({
@@ -135,7 +133,7 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
+  const user = req.user as unknown;
 
   if (!req.isAuthenticated() || !user.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });

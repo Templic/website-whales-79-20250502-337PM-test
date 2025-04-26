@@ -74,7 +74,7 @@ export interface SecurityEvent {
   timestamp: number;
   
   // Additional metadata
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -97,7 +97,7 @@ export interface SecurityEventFilter {
   searchTerms?: string[];
   
   // Metadata filters
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**

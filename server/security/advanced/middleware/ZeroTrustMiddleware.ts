@@ -68,7 +68,7 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       const securityContext = securityFabric.createSecurityContext(req, res);
       
       // Attach context to request for later use
-      (req as any).securityContext = securityContext;
+      (req as unknown).securityContext = securityContext;
       
       // Set resource information
       securityContext.setResource({
@@ -149,8 +149,8 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       
       // Check required permissions first
       const requiredPermissions = mergedOptions.requiredPermissions || [];
-      const userPermissions = (req.user as any)?.permissions || [];
-      const userRoles = (req.user as any)?.roles || [(req.user as any)?.role].filter(Boolean);
+      const userPermissions = (req.user as unknown)?.permissions || [];
+      const userRoles = (req.user as unknown)?.roles || [(req.user as unknown)?.role].filter(Boolean);
       
       const hasRequiredPermissions = requiredPermissions.length === 0 || 
         requiredPermissions.every(perm => userPermissions.includes(perm));

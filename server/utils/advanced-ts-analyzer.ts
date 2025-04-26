@@ -26,7 +26,7 @@ interface DeepScanOptions {
 
 // Interface for deep scan results
 interface DeepScanResults {
-  basicResults: any;
+  basicResults: unknown;
   advancedResults: {
     rootCauseErrors: number;
     cascadingErrors: number;
@@ -56,7 +56,7 @@ interface DeepScanResults {
       reason: string;
     }>;
   };
-  patterns: any[];
+  patterns: unknown[];
 }
 
 /**
@@ -115,8 +115,7 @@ export async function runDeepScan(options: DeepScanOptions = {}): Promise<DeepSc
  * @param options Analysis options
  * @returns Advanced analysis results
  */
-export async function runAdvancedAnalysis(
-  basicResults: any,
+export async function runAdvancedAnalysis(basicResults: unknown,
   options: DeepScanOptions = {}
 ): Promise<{
   rootCauseErrors: number;
@@ -174,8 +173,8 @@ export async function runAdvancedAnalysis(
     // Build dependency graph
     console.log('Building error dependency graph...');
     const dependencies: Array<{
-      sourceError: any;
-      affectedErrors: any[];
+      sourceError: unknown;
+      affectedErrors: unknown[];
       impact: number;
     }> = [];
     
@@ -270,12 +269,11 @@ export async function runAdvancedAnalysis(
  * @param errorsByFile Errors grouped by file
  * @returns Array of potential dependent errors
  */
-function findPotentialDependents(
-  error: any,
-  fileErrors: any[],
+function findPotentialDependents(error: unknown,
+  fileErrors: unknown[],
   errorsByFile: Record<string, any[]>
-): any[] {
-  const dependents: any[] = [];
+): unknown[] {
+  const dependents: unknown[] = [];
   
   // Check for potential dependents in the same file
   for (const otherError of fileErrors) {
@@ -343,11 +341,10 @@ function findPotentialDependents(
  * @param independentErrorIds Set of independent error IDs
  * @returns Array of fix priorities
  */
-function calculateFixPriorities(
-  errors: any[],
+function calculateFixPriorities(errors: unknown[],
   dependencies: Array<{
-    sourceError: any;
-    affectedErrors: any[];
+    sourceError: unknown;
+    affectedErrors: unknown[];
     impact: number;
   }>,
   rootCauseErrorIds: Set<number>,
@@ -405,11 +402,11 @@ function calculateFixPriorities(
  */
 async function enhanceWithAI(
   dependencies: Array<{
-    sourceError: any;
-    affectedErrors: any[];
+    sourceError: unknown;
+    affectedErrors: unknown[];
     impact: number;
   }>,
-  errors: any[]
+  errors: unknown[]
 ): Promise<void> {
   // Only analyze the top 5 root cause errors
   const topRootCauses = dependencies

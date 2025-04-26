@@ -144,13 +144,13 @@ class AnimationFrameBatch {
    * @returns Throttled function
    */
   createAnimationThrottled(
-    callback: (...args: any[]) => void, 
+    callback: (...args: unknown[]) => void, 
     phase: 'measure' | 'mutate' = 'mutate'
-  ): (...args: any[]) => void {
+  ): (...args: unknown[]) => void {
     let taskId: number | null = null;
-    let lastArgs: any[] = [];
+    let lastArgs: unknown[] = [];
     
-    return (...args: any[]) => {
+    return (...args: unknown[]) => {
       lastArgs = args;
       
       if (taskId === null) {
@@ -170,7 +170,7 @@ class AnimationFrameBatch {
    */
   createReadWriteSequence(
     measure: () => any, 
-    mutate: (measureResult: any) => void
+    mutate: ((measureResult: any): unknown) => void
   ): () => void {
     return () => {
       this.add(() => {
@@ -196,7 +196,7 @@ import { useCallback, useEffect, useRef } from 'react';
  * @returns Throttled function
  */
 export function useAnimationFrameThrottled(
-  callback: (...args: any[]) => void,
+  callback: (...args: unknown[]) => void,
   phase: 'measure' | 'mutate' = 'mutate'
 ) {
   const callbackRef = useRef(callback);
@@ -208,7 +208,7 @@ export function useAnimationFrameThrottled(
   
   return useCallback(
     AnimationBatch.createAnimationThrottled(
-      (...args: any[]) => callbackRef.current(...args),
+      (...args: unknown[]) => callbackRef.current(...args),
       phase
     ),
     [phase]
@@ -223,7 +223,7 @@ export function useAnimationFrameThrottled(
  */
 export function useReadWriteSequence(
   measure: () => any,
-  mutate: (measureResult: any) => void
+  mutate: ((measureResult: any): unknown) => void
 ) {
   const measureRef = useRef(measure);
   const mutateRef = useRef(mutate);

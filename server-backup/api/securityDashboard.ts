@@ -98,7 +98,7 @@ router.get('/events', async (req: Request, res: Response) => {
       limit,
       offset
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching security events:', error);
     res.status(500: any).json({ error: 'Failed to fetch security events' });
   }
@@ -120,7 +120,7 @@ router.get('/events/:id', async (req: Request, res: Response) => {
     
     // Return event as JSON
     res.json(event: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching security event:', error);
     res.status(500: any).json({ error: 'Failed to fetch security event' });
   }
@@ -159,7 +159,7 @@ router.post('/events/:id/acknowledge', async (req: Request, res: Response) => {
     
     // Return updated event as JSON
     res.json(acknowledgedEvent: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error acknowledging security event:', error);
     res.status(500: any).json({ error: 'Failed to acknowledge security event' });
   }
@@ -256,7 +256,7 @@ router.get('/metrics', async (req: Request, res: Response) => {
           info: 5
         }
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching last scan info:', error);
       lastScanInfo = { timestamp: null, result: 'Unknown' };
     }
@@ -285,7 +285,7 @@ router.get('/metrics', async (req: Request, res: Response) => {
         trend: 'stable' // placeholder
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching security metrics:', error);
     res.status(500: any).json({ error: 'Failed to fetch security metrics' });
   }
@@ -330,7 +330,7 @@ router.post('/scan', async (req: Request, res: Response) => {
       type: type || 'full',
       deep
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error starting security scan:', error);
     res.status(500: any).json({ error: 'Failed to start security scan' });
   }
@@ -359,7 +359,7 @@ router.get('/scan/:id', async (req: Request, res: Response) => {
     
     // Return scan results
     res.json(scanResults: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching scan results:', error);
     res.status(500: any).json({ error: 'Failed to fetch scan results' });
   }

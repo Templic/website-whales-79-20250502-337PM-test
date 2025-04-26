@@ -15,7 +15,7 @@ import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockch
  * Database connection interface
  */
 interface DatabaseConnection {
-  query: (sql: string, params?: any[]) => Promise<any>;
+  query: (sql: string, params?: unknown[]) => Promise<unknown>;
 }
 
 /**
@@ -96,7 +96,7 @@ export class SafeDatabase {
     // Log initialization
     securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
-      category: SecurityEventCategory.SECURITY_INITIALIZATION as any,
+      category: SecurityEventCategory.SECURITY_INITIALIZATION as unknown,
       message: 'Safe database wrapper initialized',
       metadata: {
         options: {
@@ -114,7 +114,7 @@ export class SafeDatabase {
   /**
    * Execute a parameterized query safely
    */
-  async query<T = any>(sql: string, params: any[] = []): Promise<T> {
+  async query<T = any>(sql: string, params: unknown[] = []): Promise<T> {
     // Get call stack
     const stack = new Error().stack;
     const caller = stack?.split('\n')[2]?.trim() || 'unknown';
@@ -150,7 +150,7 @@ export class SafeDatabase {
       // Log to blockchain
       securityBlockchain.addSecurityEvent({
         severity: SecurityEventSeverity.ERROR,
-        category: SecurityEventCategory.DATABASE_ERROR as any,
+        category: SecurityEventCategory.DATABASE_ERROR as unknown,
         message: `Database query error: ${error.message}`,
         metadata: {
           sql,
@@ -184,7 +184,7 @@ export class SafeDatabase {
     
     // Build query parts
     let sql = `SELECT ${safeColumns} FROM ${safeTable}`;
-    const params: any[] = [];
+    const params: unknown[] = [];
     
     // Add WHERE clause
     if (Object.keys(where).length > 0) {
@@ -253,7 +253,7 @@ export class SafeDatabase {
     // Prepare columns and values
     const columns: string[] = [];
     const placeholders: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     
     Object.entries(data).forEach(([column, value], index) => {
       columns.push(databaseSecurity.sanitizeIdentifier(column));
@@ -291,7 +291,7 @@ export class SafeDatabase {
     
     // Prepare SET clause
     const setClauses: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     
     Object.entries(data).forEach(([column, value], index) => {
       setClauses.push(`${databaseSecurity.sanitizeIdentifier(column)} = $${index + 1}`);
@@ -346,7 +346,7 @@ export class SafeDatabase {
     
     // Prepare WHERE clause
     const whereClauses: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     
     Object.entries(where).forEach(([column, value], index) => {
       const safeColumn = databaseSecurity.sanitizeIdentifier(column);

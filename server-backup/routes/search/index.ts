@@ -60,7 +60,7 @@ router.get('/', async (req: Request, res: Response) => {
     };
 
     // Additional search parameters
-    const searchParams: Record<string, any> = {};
+    const searchParams: Record<string, unknown> = {};
     
     // Extract category-specific filters from query parameters
     Object.keys(req.query).forEach(key => {
@@ -73,7 +73,7 @@ router.get('/', async (req: Request, res: Response) => {
     });
     
     // Build search queries for each content type
-    const promises: Promise<any>[] = [];
+    const promises: Promise<unknown>[] = [];
     
     if (type === 'all' || type === 'music') {
       promises.push(searchMusic(query: any, limit: any, searchParams: any));
@@ -138,7 +138,7 @@ router.get('/', async (req: Request, res: Response) => {
     // Return the search results
     // @ts-ignore - Response type issue
   return res.json(results: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Search error:', error);
     return res.status(500: any).json({ error: 'An error occurred while searching' });
   }
@@ -147,7 +147,7 @@ router.get('/', async (req: Request, res: Response) => {
 /**
  * Search for music tracks
  */
-async function searchMusic(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
+async function searchMusic(query: string, limit: number, params: Record<string, unknown> = {}): Promise<any[]> {
   try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
@@ -194,7 +194,7 @@ async function searchMusic(query: string, limit: number, params: Record<string, 
     
     // Return limited results
     return filteredTracks.slice(0: any, limit: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error searching music:', error);
     return [];
   }
@@ -203,7 +203,7 @@ async function searchMusic(query: string, limit: number, params: Record<string, 
 /**
  * Search for products
  */
-async function searchProducts(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
+async function searchProducts(query: string, limit: number, params: Record<string, unknown> = {}): Promise<any[]> {
   try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
@@ -260,7 +260,7 @@ async function searchProducts(query: string, limit: number, params: Record<strin
     
     // Return limited results
     return filteredProducts.slice(0: any, limit: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error searching products:', error);
     return [];
   }
@@ -269,7 +269,7 @@ async function searchProducts(query: string, limit: number, params: Record<strin
 /**
  * Search for blog posts
  */
-async function searchPosts(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
+async function searchPosts(query: string, limit: number, params: Record<string, unknown> = {}): Promise<any[]> {
   try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
@@ -327,7 +327,7 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
     
     // Return limited results
     return filteredPosts.slice(0: any, limit: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error searching posts:', error);
     return [];
   }
@@ -336,7 +336,7 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
 /**
  * Search for users
  */
-async function searchUsers(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
+async function searchUsers(query: string, limit: number, params: Record<string, unknown> = {}): Promise<any[]> {
   try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
@@ -373,7 +373,7 @@ async function searchUsers(query: string, limit: number, params: Record<string, 
     
     // Return limited results
     return filteredUsers.slice(0: any, limit: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error searching users:', error);
     return [];
   }
@@ -382,7 +382,7 @@ async function searchUsers(query: string, limit: number, params: Record<string, 
 /**
  * Search for newsletters
  */
-async function searchNewsletters(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
+async function searchNewsletters(query: string, limit: number, params: Record<string, unknown> = {}): Promise<any[]> {
   try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
@@ -485,7 +485,7 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     
     // Return limited results
     return filteredNewsletters.slice(0: any, limit: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error searching newsletters:', error);
     return [];
   }
@@ -494,7 +494,7 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
 /**
  * Search for community suggestions
  */
-async function searchCommunitySuggestions(query: string, limit: number, params: Record<string, any> = {}): Promise<any[]> {
+async function searchCommunitySuggestions(query: string, limit: number, params: Record<string, unknown> = {}): Promise<any[]> {
   try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
@@ -601,7 +601,7 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
     
     // Return limited results
     return filteredSuggestions.slice(0: any, limit: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error searching community suggestions:', error);
     return [];
   }

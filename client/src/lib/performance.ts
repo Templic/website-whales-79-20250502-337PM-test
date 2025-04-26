@@ -56,7 +56,7 @@ export interface PerformanceProfilerProps {
   /** Whether to log metrics to console */
   logToConsole?: boolean;
   /** Custom metrics callback */
-  onMetrics?: (metrics: any) => void;
+  onMetrics?: (metrics: any) => unknown;
   /** Whether to show a visual indicator */
   showVisualIndicator?: boolean;
 }
@@ -146,7 +146,7 @@ export const PerformanceProfiler: FC<PerformanceProfilerProps> = ({
  * @param delay Delay in ms
  * @returns Throttled function
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => any>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => ReturnType<T> | undefined {
@@ -170,7 +170,7 @@ export function throttle<T extends (...args: any[]) => any>(
  * @param immediate Whether to execute immediately on first call
  * @returns Debounced function
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => any>(
   fn: T,
   delay: number,
   immediate = false
@@ -207,7 +207,7 @@ export function debounce<T extends (...args: any[]) => any>(
  * @param getKey Function to generate a cache key from arguments
  * @returns Memoized function
  */
-export function memoize<T extends (...args: any[]) => any>(
+export function memoize<T extends (...args: unknown[]) => any>(
   fn: T,
   getKey: (...args: Parameters<T>) => string = (...args) => JSON.stringify(args)
 ): T {

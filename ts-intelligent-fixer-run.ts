@@ -78,7 +78,7 @@ const fixPatterns = [
   {
     pattern: /:\s*Promise\s*<\s*any\s*>/g,
     replacement: ': Promise<unknown>',
-    description: 'Replace Promise<any> with Promise<unknown>',
+    description: 'Replace Promise<unknown> with Promise<unknown>',
     category: ErrorCategory.TypeMismatch,
   },
   {

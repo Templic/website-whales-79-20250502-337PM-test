@@ -13,7 +13,7 @@ import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs'
  * Database connection interface
  */
 interface DatabaseConnection {
-  query: (sql: string, params?: any[]) => Promise<any>;
+  query: (sql: string, params?: unknown[]) => Promise<unknown>;
   prepare?: (sql: string) => any;
 }
 
@@ -63,7 +63,7 @@ export class SQLInjectionPrevention {
     let sql = `SELECT ${sanitizedColumns.join(', ')} FROM ${sanitizedTable}`;
     
     // Build the WHERE clause with parameterized values
-    const params: any[] = [];
+    const params: unknown[] = [];
     if (Object.keys(whereConditions).length > 0) {
       const whereClauses: string[] = [];
       
@@ -146,7 +146,7 @@ export class SQLInjectionPrevention {
     const sanitizedTable = databaseSecurity.sanitizeIdentifier(table);
     const columns: string[] = [];
     const placeholders: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     
     // Process each column and value
     Object.entries(data).forEach(([column, value], index) => {
@@ -198,7 +198,7 @@ export class SQLInjectionPrevention {
     
     // Build the SET clause
     const setClauses: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     
     Object.entries(data).forEach(([column, value]) => {
       const sanitizedColumn = databaseSecurity.sanitizeIdentifier(column);
@@ -230,7 +230,7 @@ export class SQLInjectionPrevention {
       // Log a security warning
       securityBlockchain.addSecurityEvent({
         severity: SecurityEventSeverity.HIGH,
-        category: SecurityEventCategory.DATABASE_SECURITY as any,
+        category: SecurityEventCategory.DATABASE_SECURITY as unknown,
         message: 'Attempted to perform UPDATE without WHERE clause',
         metadata: {
           table,
@@ -282,7 +282,7 @@ export class SQLInjectionPrevention {
     
     // Build the WHERE clause
     const whereClauses: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     
     Object.entries(whereConditions).forEach(([key, value]) => {
       const sanitizedKey = databaseSecurity.sanitizeIdentifier(key);
@@ -305,7 +305,7 @@ export class SQLInjectionPrevention {
       // Log a security warning
       securityBlockchain.addSecurityEvent({
         severity: SecurityEventSeverity.HIGH,
-        category: SecurityEventCategory.DATABASE_SECURITY as any,
+        category: SecurityEventCategory.DATABASE_SECURITY as unknown,
         message: 'Attempted to perform DELETE without WHERE clause',
         metadata: {
           table,
@@ -349,13 +349,13 @@ export class SQLInjectionPrevention {
    */
   public async rawQuery<T = any>(
     sql: string,
-    params: any[] = [],
+    params: unknown[] = [],
     caller?: string
   ): Promise<T> {
     // Log a warning for raw query usage
     securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.MEDIUM,
-      category: SecurityEventCategory.DATABASE_SECURITY as any,
+      category: SecurityEventCategory.DATABASE_SECURITY as unknown,
       message: 'Raw SQL query executed',
       metadata: {
         caller: caller || new Error().stack?.split('\n')[1]

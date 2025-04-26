@@ -87,7 +87,7 @@ export const requestLoggingMiddleware = async (req: Request, res: Response, next
     
     // Continue processing
     next();
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in request logging middleware:', error);
     next();
   }
@@ -119,7 +119,7 @@ export const suspiciousActivityMiddleware = (req: Request, res: Response, next: 
     
     // Continue processing
     next();
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in suspicious activity middleware:', error);
     next();
   }

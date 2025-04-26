@@ -59,7 +59,7 @@ export async function initBackgroundServices() {
     await scheduleRecurringJobs();
     
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to initialize database background services:', error);
     return false;
   }
@@ -79,7 +79,7 @@ async function registerWorkers() {
       
       logBackground(`Cleaned up ${result.rowCount} expired sessions`);
       return { success: true, cleanedCount: result.rowCount };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logBackground(`Session cleanup failed: ${(error as Error).message}`, 'error');
       return { success: false, error: (error as Error).message };
     }
@@ -136,7 +136,7 @@ async function registerWorkers() {
       
       logBackground('Database metrics collected successfully');
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logBackground(`Database metrics collection failed: ${(error as Error).message}`, 'error');
       return { success: false, error: (error as Error).message };
     }
@@ -165,7 +165,7 @@ async function registerWorkers() {
       
       logBackground(`Auto-vacuum completed for ${tables.length} tables`);
       return { success: true, results };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logBackground(`Auto-vacuum failed: ${(error as Error).message}`, 'error');
       return { success: false, error: (error as Error).message };
     }
@@ -195,7 +195,7 @@ async function scheduleRecurringJobs() {
     
     // Schedule auto-vacuum for large tables (weekly: any)
     await boss.schedule('identify-large-tables', '0 1 * * 0'); // Every Sunday at 1am
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error scheduling recurring jobs:', error);
   }
   
@@ -225,7 +225,7 @@ async function scheduleRecurringJobs() {
       }
       
       return { success: true, tablesIdentified: result.rows.length };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logBackground(`Large table identification failed: ${(error as Error).message}`, 'error');
       return { success: false, error: (error as Error).message };
     }

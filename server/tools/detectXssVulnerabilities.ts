@@ -80,7 +80,7 @@ async function main() {
     // Log the scan start
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
-      category: SecurityEventCategory.SECURITY_SCAN as any,
+      category: SecurityEventCategory.SECURITY_SCAN as unknown,
       message: 'XSS vulnerability scan started',
       metadata: {
         directories: dirsToScan,
@@ -136,7 +136,7 @@ async function main() {
     // Log the scan completion
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
-      category: SecurityEventCategory.SECURITY_SCAN as any,
+      category: SecurityEventCategory.SECURITY_SCAN as unknown,
       message: 'XSS vulnerability scan completed',
       metadata: {
         vulnerabilitiesFound: vulnerabilities.length,
@@ -162,7 +162,7 @@ async function main() {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.ERROR,
-      category: SecurityEventCategory.SECURITY_SCAN as any,
+      category: SecurityEventCategory.SECURITY_SCAN as unknown,
       message: 'XSS vulnerability scan error',
       metadata: {
         error: error.message,

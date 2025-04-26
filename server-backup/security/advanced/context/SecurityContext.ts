@@ -614,7 +614,7 @@ export class SecurityContext {
   /**
    * Get a summary of the security context
    */
-  public getSummary(): Record<string, any> {
+  public getSummary(): Record<string, unknown> {
     return {
       request: this.request,
       user: this.user ? { id: this.user.id, roles: this.user.roles } : null,

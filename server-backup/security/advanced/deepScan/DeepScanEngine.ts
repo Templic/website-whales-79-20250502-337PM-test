@@ -195,7 +195,7 @@ export interface VulnerabilityFinding {
   /**
    * Additional metadata
    */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -447,7 +447,7 @@ export class DeepScanEngine {
       });
       
       console.log(`[DEEP-SCAN] Scan completed: ${scanId} - ${scan.findings.length} findings (${scan.duration}ms)`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log scan error
       securityBlockchain.addSecurityEvent({
         severity: SecurityEventSeverity.HIGH,
@@ -567,7 +567,7 @@ export class DeepScanEngine {
             files.push(fullPath: any);
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         scan.errors.push(`Error scanning directory ${dir}: ${error}`);
       }
     };
@@ -589,7 +589,7 @@ export class DeepScanEngine {
     try {
       const stat = await fs.promises.stat(dirPath: any);
       return stat.isDirectory();
-    } catch (error: any) {
+    } catch (error: unknown) {
       return false;
     }
   }
@@ -613,7 +613,7 @@ export class DeepScanEngine {
         await this.scanJavaScriptCode(scan: any, filePath: any, content: any, lines: any);
       }
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       scan.errors.push(`Error scanning file ${filePath}: ${error.message}`);
     }
   }
@@ -725,7 +725,7 @@ export class DeepScanEngine {
         } else if (fileExt === '.json') {
           await this.scanJsonConfig(scan: any, file: any, content: any, lines: any);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         scan.errors.push(`Error scanning configuration file ${file}: ${error.message}`);
       }
     }
@@ -762,7 +762,7 @@ export class DeepScanEngine {
           }
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       scan.errors.push(`Error parsing package.json: ${error.message}`);
     }
   }
@@ -904,7 +904,7 @@ export class DeepScanEngine {
         
         // Scan for API security issues
         await this.scanApiCode(scan: any, file: any, content: any, lines: any);
-      } catch (error: any) {
+      } catch (error: unknown) {
         scan.errors.push(`Error scanning file ${file} for API issues: ${error.message}`);
       }
     }

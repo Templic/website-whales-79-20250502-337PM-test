@@ -9,14 +9,14 @@
 type ComputationTask = 
   | { type: 'COMPLEX_CALCULATION'; data: number[]; operation: 'sum' | 'average' | 'max' | 'min' | 'median' }
   | { type: 'MATRIX_OPERATION'; matrices: number[][][]; operation: 'multiply' | 'transpose' | 'inverse' }
-  | { type: 'DATA_PROCESSING'; rawData: any[]; transformations: string[] }
+  | { type: 'DATA_PROCESSING'; rawData: unknown[]; transformations: string[] }
   | { type: 'IMAGE_PROCESSING'; imageData: ImageData; filters: string[] }
   | { type: 'AUDIO_PROCESSING'; audioData: Float32Array; sampleRate: number; operation: string };
 
 type WorkerResponse = {
   taskId?: string;
   type: string;
-  result: any;
+  result: unknown;
   error?: string;
   processingTime?: number;
 };
@@ -30,7 +30,7 @@ self.addEventListener('message', (event: MessageEvent<ComputationTask & { taskId
   const startTime = performance.now();
   
   try {
-    let result: any;
+    let result: unknown;
     
     switch (task.type) {
       case 'COMPLEX_CALCULATION':
@@ -54,7 +54,7 @@ self.addEventListener('message', (event: MessageEvent<ComputationTask & { taskId
         break;
         
       default:
-        throw new Error(`Unknown task type: ${(task as any).type}`);
+        throw new Error(`Unknown task type: ${(task as unknown).type}`);
     }
     
     const processingTime = performance.now() - startTime;
@@ -199,7 +199,7 @@ function performMatrixOperation(matrices: number[][][], operation: string): numb
  * @param transformations Array of transformation operations to apply
  * @returns Transformed data
  */
-function processData(rawData: any[], transformations: string[]): any[] {
+function processData(rawData: unknown[], transformations: string[]): unknown[] {
   if (!rawData || rawData.length === 0) {
     return [];
   }

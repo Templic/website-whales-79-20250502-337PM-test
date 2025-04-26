@@ -13,8 +13,8 @@ import { sqlMonitor } from './sqlMonitor';
  * Drizzle database interface
  */
 interface DrizzleDB {
-  execute: (query: any) => Promise<any>;
-  query: (query: any) => Promise<any>;
+  execute: ((query: any): unknown) => Promise<unknown>;
+  query: ((query: any): unknown) => Promise<unknown>;
   // Other Drizzle methods as needed
 }
 
@@ -227,7 +227,7 @@ export function secureDrizzle(
 /**
  * Patch Drizzle models for better security
  */
-export function patchDrizzleModel(model: any) {
+export function patchDrizzleModel(model: unknown) {
   // Make a copy of the original methods
   const originalFindFirst = model.findFirst;
   const originalFindMany = model.findMany;
@@ -236,7 +236,7 @@ export function patchDrizzleModel(model: any) {
   
   // Patch the findFirst method to add security logging
   if (originalFindFirst) {
-    model.findFirst = async function(...args: any[]): Promise<unknown> {
+    model.findFirst = async function(...args: unknown[]): Promise<unknown> {
       try {
         return await originalFindFirst.apply(this, args);
       } catch (error) {
@@ -262,7 +262,7 @@ export function patchDrizzleModel(model: any) {
   
   // Patch the findMany method to add security logging
   if (originalFindMany) {
-    model.findMany = async function(...args: any[]): Promise<unknown> {
+    model.findMany = async function(...args: unknown[]): Promise<unknown> {
       try {
         return await originalFindMany.apply(this, args);
       } catch (error) {
@@ -288,7 +288,7 @@ export function patchDrizzleModel(model: any) {
   
   // Patch the update method to add safety checks and security logging
   if (originalUpdate) {
-    model.update = async function(...args: any[]): Promise<unknown> {
+    model.update = async function(...args: unknown[]): Promise<unknown> {
       try {
         // Check for WHERE clause
         if (args.length > 0 && args[0] && (!args[0].where || Object.keys(args[0].where).length === 0)) {
@@ -320,7 +320,7 @@ export function patchDrizzleModel(model: any) {
   
   // Patch the delete method to add safety checks and security logging
   if (originalDelete) {
-    model.delete = async function(...args: any[]): Promise<unknown> {
+    model.delete = async function(...args: unknown[]): Promise<unknown> {
       try {
         // Check for WHERE clause
         if (args.length > 0 && args[0] && (!args[0].where || Object.keys(args[0].where).length === 0)) {

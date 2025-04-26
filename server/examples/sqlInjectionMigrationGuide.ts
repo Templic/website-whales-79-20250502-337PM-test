@@ -255,7 +255,7 @@ async function getUsersByIds_Secure(userIds: string[]) {
  */
 
 // VULNERABLE: Multiple operations without transaction
-async function createOrderAndItems_Vulnerable(userId: string, items: any[]) {
+async function createOrderAndItems_Vulnerable(userId: string, items: unknown[]) {
   // VULNERABLE: Multiple operations that should be in a transaction
   const orderQuery = `
     INSERT INTO orders (user_id, created_at)
@@ -277,7 +277,7 @@ async function createOrderAndItems_Vulnerable(userId: string, items: any[]) {
 }
 
 // SECURE: Using transaction
-async function createOrderAndItems_Secure(userId: string, items: any[]) {
+async function createOrderAndItems_Secure(userId: string, items: unknown[]) {
   // SECURE: Using transaction for atomic operations
   return await db.transaction(async (txDb) => {
     // Create the order

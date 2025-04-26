@@ -106,7 +106,7 @@ async function testHandleDatabaseError() {
   
   // Test with database error
   const error = new Error('Database connection failed');
-  (error as any).code = 'ECONNREFUSED';
+  (error as unknown).code = 'ECONNREFUSED';
   
   const dbError = handleDatabaseError(error, 'query', 'SELECT * FROM users');
   
@@ -137,7 +137,7 @@ async function testHandleApiError() {
     name: apiError.name === 'ApiError',
     endpoint: apiError.endpoint === '/api/users',
     method: apiError.method === 'GET',
-    hasRequestData: apiError.requestData && (apiError.requestData as any).id === '123'
+    hasRequestData: apiError.requestData && (apiError.requestData as unknown).id === '123'
   });
   
   console.log('handleApiError test completed');
@@ -188,7 +188,7 @@ async function testCreateErrorResponse() {
     message: errorResponse.error.message === 'Operation failed',
     code: errorResponse.error.code === 'INVALID_INPUT',
     statusCode: errorResponse.error.statusCode === 400,
-    hasData: errorResponse.data && (errorResponse.data as any).details === 'Missing required fields',
+    hasData: errorResponse.data && (errorResponse.data as unknown).details === 'Missing required fields',
     hasTimestamp: !!errorResponse.timestamp
   });
   
@@ -239,7 +239,7 @@ async function testWithErrorHandling() {
           ...error,
           code: 'CUSTOM_ERROR',
           handled: true
-        } as any;
+        } as unknown;
       }
     );
     

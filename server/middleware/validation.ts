@@ -51,8 +51,8 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
             type: 'VALIDATION_FAILURE',
             ip: req.ip,
             userAgent: req.headers['user-agent']?.toString(),
-            userId: (req.user as any)?.id,
-            username: (req.user as any)?.username,
+            userId: (req.user as unknown)?.id,
+            username: (req.user as unknown)?.username,
             details: `Body validation failed: ${validationError.message}`,
             resource: req.originalUrl,
             severity: 'medium'
@@ -68,7 +68,7 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
       
       // Add validated data to request if enabled
       if (options.addValidatedData) {
-        (req as any).validatedData = result.data;
+        (req as unknown).validatedData = result.data;
       }
       
       return next();
@@ -80,8 +80,8 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
           type: 'VALIDATION_ERROR',
           ip: req.ip,
           userAgent: req.headers['user-agent']?.toString(),
-          userId: (req.user as any)?.id,
-          username: (req.user as any)?.username,
+          userId: (req.user as unknown)?.id,
+          username: (req.user as unknown)?.username,
           details: `Validation middleware error: ${error instanceof Error ? error.message : String(error)}`,
           resource: req.originalUrl,
           severity: 'high'
@@ -112,8 +112,8 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
             type: 'VALIDATION_FAILURE',
             ip: req.ip,
             userAgent: req.headers['user-agent']?.toString(),
-            userId: (req.user as any)?.id,
-            username: (req.user as any)?.username,
+            userId: (req.user as unknown)?.id,
+            username: (req.user as unknown)?.username,
             details: `Query validation failed: ${validationError.message}`,
             resource: req.originalUrl,
             severity: 'medium'
@@ -128,7 +128,7 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
       }
       
       if (options.addValidatedData) {
-        (req as any).validatedQuery = result.data;
+        (req as unknown).validatedQuery = result.data;
       }
       
       return next();
@@ -140,8 +140,8 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
           type: 'VALIDATION_ERROR',
           ip: req.ip,
           userAgent: req.headers['user-agent']?.toString(),
-          userId: (req.user as any)?.id,
-          username: (req.user as any)?.username,
+          userId: (req.user as unknown)?.id,
+          username: (req.user as unknown)?.username,
           details: `Query validation middleware error: ${error instanceof Error ? error.message : String(error)}`,
           resource: req.originalUrl,
           severity: 'high'
@@ -172,8 +172,8 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
             type: 'VALIDATION_FAILURE',
             ip: req.ip,
             userAgent: req.headers['user-agent']?.toString(),
-            userId: (req.user as any)?.id,
-            username: (req.user as any)?.username,
+            userId: (req.user as unknown)?.id,
+            username: (req.user as unknown)?.username,
             details: `URL parameters validation failed: ${validationError.message}`,
             resource: req.originalUrl,
             severity: 'medium'
@@ -188,7 +188,7 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
       }
       
       if (options.addValidatedData) {
-        (req as any).validatedParams = result.data;
+        (req as unknown).validatedParams = result.data;
       }
       
       return next();
@@ -200,8 +200,8 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
           type: 'VALIDATION_ERROR',
           ip: req.ip,
           userAgent: req.headers['user-agent']?.toString(),
-          userId: (req.user as any)?.id,
-          username: (req.user as any)?.username,
+          userId: (req.user as unknown)?.id,
+          username: (req.user as unknown)?.username,
           details: `Params validation middleware error: ${error instanceof Error ? error.message : String(error)}`,
           resource: req.originalUrl,
           severity: 'high'

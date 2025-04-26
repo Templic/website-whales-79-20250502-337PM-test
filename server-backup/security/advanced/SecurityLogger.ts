@@ -74,7 +74,7 @@ class SecurityLogger {
       try {
         // Just set to null for now, we'll initialize it properly later
         this.blockchainLogger = null;
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[SecurityLogger] Failed to initialize blockchain logger:', error);
       }
     }
@@ -106,7 +106,7 @@ class SecurityLogger {
         // Placeholder for actual blockchain init code
         // In a real implementation, this would initialize or get the blockchain logger
         this.blockchainLogger = null;
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[SecurityLogger] Failed to initialize blockchain logger:', error);
       }
     }
@@ -144,7 +144,7 @@ class SecurityLogger {
             // Database logging would be implemented here
             break;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Fallback to console if target logging fails
         console.error(`[SecurityLogger] Failed to log to ${target}:`, error);
         this.logToConsole(level: any, logData: any);
@@ -184,7 +184,7 @@ class SecurityLogger {
     
     try {
       fs.appendFileSync(this.config.logFilePath, logEntry);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[SecurityLogger] Failed to write to log file:', error);
     }
   }
@@ -212,7 +212,7 @@ class SecurityLogger {
       
       // Log to blockchain would happen here
       console.debug('[SecurityLogger] Log added to blockchain:', logWithHash.hash);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[SecurityLogger] Failed to log to blockchain:', error);
     }
   }

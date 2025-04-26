@@ -18,7 +18,7 @@ export type CartItem = CartItemType;
 export interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
   resultIndex: number;
-  interpretation: any;
+  interpretation: unknown;
 }
 
 export interface SpeechRecognitionResultList {
@@ -45,7 +45,7 @@ export interface SpeechRecognitionConstructor {
 }
 
 export interface SpeechRecognition extends EventTarget {
-  grammars: any;
+  grammars: unknown;
   lang: string;
   continuous: boolean;
   interimResults: boolean;

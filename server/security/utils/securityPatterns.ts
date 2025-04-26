@@ -65,7 +65,7 @@ export function secureAdminRoute(schema: AnyZodObject, handler: (req: Request, r
         logSecurityEvent('ACCESS_DENIED', {
           ip: req.ip,
           path: req.path,
-          userId: (req.session as any)?.userId,
+          userId: (req.session as unknown)?.userId,
           reason: 'Missing admin role',
           timestamp: new Date()
         });
@@ -137,7 +137,7 @@ export function securePasswordRoute(schema: AnyZodObject, handler: (req: Request
       // Log password change attempt
       logSecurityEvent('PASSWORD_CHANGE_ATTEMPTED', {
         ip: req.ip,
-        userId: (req.session as any)?.userId,
+        userId: (req.session as unknown)?.userId,
         timestamp: new Date()
       });
       
@@ -156,7 +156,7 @@ export function securePasswordRoute(schema: AnyZodObject, handler: (req: Request
 export function secureResponse(res: Response, data, status = 200) {
   // Apply security headers if they haven't been applied yet
   if (!res.headersSent) {
-    securityHeadersMiddleware(null as any, res, () => {});
+    securityHeadersMiddleware(null as unknown, res, () => {});
   }
   
   return res.status(status).json({
@@ -183,7 +183,7 @@ export function secureErrorResponse(
 ) {
   // Apply security headers if they haven't been applied yet
   if (!res.headersSent) {
-    securityHeadersMiddleware(null as any, res, () => {});
+    securityHeadersMiddleware(null as unknown, res, () => {});
   }
   
   const response: any = {
@@ -278,7 +278,7 @@ export function apiUsageTracker(req: Request, res: Response, next: NextFunction)
         duration,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
-        userId: (req.session as any)?.userId || 'anonymous',
+        userId: (req.session as unknown)?.userId || 'anonymous',
         timestamp: new Date()
       };
       

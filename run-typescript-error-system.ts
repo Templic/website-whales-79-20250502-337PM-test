@@ -69,7 +69,7 @@ async function runDetectionPhase() {
   }
 }
 
-async function runAnalysisPhase(scanResult: any) {
+async function runAnalysisPhase(scanResult: unknown) {
   console.log('\n=== Phase 2: Analysis ===');
   console.time('Analysis Phase');
   
@@ -151,7 +151,7 @@ async function runAnalysisPhase(scanResult: any) {
   }
 }
 
-async function runFixPhase(analysisResult: { sortedErrorIds: number[], clusters: any[] }) {
+async function runFixPhase(analysisResult: { sortedErrorIds: number[], clusters: unknown[] }) {
   console.log('\n=== Phase 3: Fix ===');
   console.time('Fix Phase');
   

@@ -296,7 +296,7 @@ export async function unregisterServiceWorker(): Promise<boolean> {
  * @param {any} message The message to send
  * @returns {Promise<void>} Promise that resolves when the message is sent
  */
-export async function sendMessage(message: any): Promise<void> {
+export async function sendMessage(message: unknown): Promise<void> {
   if (!navigator.serviceWorker.controller) {
     throw new Error('No active Service Worker');
   }
@@ -403,7 +403,7 @@ export async function clearCache(cacheName: string): Promise<void> {
 
 /**
  * Gets caches information from the Service Worker
- * @returns {Promise<any>} Promise that resolves with cache information
+ * @returns {Promise<unknown>} Promise that resolves with cache information
  */
 export async function getCachesInfo(): Promise<unknown> {
   if (!navigator.serviceWorker.controller) {

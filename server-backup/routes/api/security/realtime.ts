@@ -171,7 +171,7 @@ export function setupSecurityWebSockets(server: http.Server): WebSocketServer {
             });
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         logSecurityEvent({
           category: SecurityEventCategory.SYSTEM,
           severity: SecurityEventSeverity.ERROR,

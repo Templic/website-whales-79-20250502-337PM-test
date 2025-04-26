@@ -225,7 +225,7 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req, res) => {
         mimeType: file.mimetype,
         size: file.size,
         path: filePath,
-        uploadedBy: (req.user as any).id, // User ID from auth middleware
+        uploadedBy: (req.user as unknown).id, // User ID from auth middleware
         description: req.body.description || null,
         status: 'active',
         altText: req.body.altText || null

@@ -366,7 +366,7 @@ export class DeepScanEngine {
     // Log scan start
     securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
-      category: SecurityEventCategory.SECURITY_SCAN as any,
+      category: SecurityEventCategory.SECURITY_SCAN as unknown,
       message: `Deep scan started: ${scanTypes.join(', ')}`,
       metadata: {
         scanId,
@@ -432,7 +432,7 @@ export class DeepScanEngine {
       // Log scan completion
       securityBlockchain.addSecurityEvent({
         severity: SecurityEventSeverity.INFO,
-        category: SecurityEventCategory.SECURITY_SCAN as any,
+        category: SecurityEventCategory.SECURITY_SCAN as unknown,
         message: `Deep scan completed: ${scan.scanTypes.join(', ')}`,
         metadata: {
           scanId,
@@ -451,7 +451,7 @@ export class DeepScanEngine {
       // Log scan error
       securityBlockchain.addSecurityEvent({
         severity: SecurityEventSeverity.HIGH,
-        category: SecurityEventCategory.SECURITY_SCAN as any,
+        category: SecurityEventCategory.SECURITY_SCAN as unknown,
         message: `Deep scan error: ${scan.scanTypes.join(', ')}`,
         metadata: {
           scanId,
@@ -1012,7 +1012,7 @@ export class DeepScanEngine {
     // Log finding
     securityBlockchain.addSecurityEvent({
       severity: this.mapVulnerabilitySeverityToEventSeverity(finding.severity),
-      category: SecurityEventCategory.VULNERABILITY_FOUND as any,
+      category: SecurityEventCategory.VULNERABILITY_FOUND as unknown,
       message: `Deep scan found ${finding.severity} ${finding.type} vulnerability`,
       metadata: {
         scanId: scan.scanId,

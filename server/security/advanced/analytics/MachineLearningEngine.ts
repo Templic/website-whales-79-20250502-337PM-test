@@ -103,7 +103,7 @@ export interface PredictionResult {
   /**
    * Prediction value
    */
-  prediction: any;
+  prediction: unknown;
   
   /**
    * Confidence score (0-1)
@@ -329,7 +329,7 @@ class IsolationForestModel extends MLModel {
   /**
    * Tree ensemble
    */
-  private trees: any[] = [];
+  private trees: unknown[] = [];
   
   /**
    * Feature normalizers
@@ -941,8 +941,8 @@ export class MachineLearningEngine {
    */
   public analyzeRequestBehavior(req: Request, context?: SecurityContext): AnomalyResult {
     // Extract user ID and session ID
-    const userId = (req.user as any)?.id || 'anonymous';
-    const sessionId = (req as any).sessionID || 'unknown';
+    const userId = (req.user as unknown)?.id || 'anonymous';
+    const sessionId = (req as unknown).sessionID || 'unknown';
     
     // Extract features
     const features = this.extractBehaviorFeatures(req, context);
@@ -975,7 +975,7 @@ export class MachineLearningEngine {
         zScore: 3 // Placeholder
       })),
       timestamp: new Date(),
-      requestId: (req as any).id || Math.random().toString(36).substring(2, 15)
+      requestId: (req as unknown).id || Math.random().toString(36).substring(2, 15)
     };
   }
   
@@ -1026,14 +1026,14 @@ export class MachineLearningEngine {
     }
     
     // Authentication features
-    features.is_authenticated = (req as any).user ? 1 : 0;
+    features.is_authenticated = (req as unknown).user ? 1 : 0;
     
-    if ((req as any).user) {
-      features.user_has_role = ((req as any).user.role || (req as any).user.roles?.length > 0) ? 1 : 0;
+    if ((req as unknown).user) {
+      features.user_has_role = ((req as unknown).user.role || (req as unknown).user.roles?.length > 0) ? 1 : 0;
     }
     
     // Rate features
-    features.requests_per_minute = (req as any).requestsPerMinute || 0;
+    features.requests_per_minute = (req as unknown).requestsPerMinute || 0;
     
     return features;
   }

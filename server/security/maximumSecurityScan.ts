@@ -93,7 +93,7 @@ export interface SecurityScanOptions {
   /**
    * Custom rules for the scan
    */
-  customRules?: any[];
+  customRules?: unknown[];
 }
 
 /**

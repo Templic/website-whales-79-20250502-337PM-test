@@ -202,7 +202,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
         });
       });
     })(req: any, res: any, next: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Login error:', error);
     
     logSecurityEvent({
@@ -326,7 +326,7 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
         }
       });
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('2FA verification error:', error);
     
     logSecurityEvent({
@@ -456,7 +456,7 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
         backupCodesRemaining: remainingCodes.length
       });
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Backup code verification error:', error);
     
     logSecurityEvent({
@@ -532,7 +532,7 @@ router.post('/setup-2fa', isAuthenticated, async (req: Request, res: Response) =
       backupCodes,
       message: 'Scan the QR code with your authenticator app, then verify with the generated code'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('2FA setup error:', error);
     
     logSecurityEvent({
@@ -619,7 +619,7 @@ router.post('/activate-2fa', isAuthenticated, async (req: Request, res: Response
       success: true,
       message: 'Two-factor authentication has been activated'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('2FA activation error:', error);
     
     logSecurityEvent({
@@ -720,7 +720,7 @@ router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response)
       success: true,
       message: 'Two-factor authentication has been disabled'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('2FA disable error:', error);
     
     logSecurityEvent({
@@ -821,7 +821,7 @@ router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, re
       backupCodes: newBackupCodes,
       message: 'New backup codes have been generated'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Backup codes regeneration error:', error);
     
     logSecurityEvent({

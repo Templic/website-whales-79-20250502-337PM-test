@@ -68,7 +68,7 @@ export async function initBackgroundServices(): Promise<void> {
       .map(service => service.name);
     
     log(`Active background services: ${activeServices.join(', ')}`, 'background');
-  } catch (error: any) {
+  } catch (error: unknown) {
     log(`Error initializing background services: ${error}`, 'background');
     console.error('Background services initialization error:', error);
   }
@@ -93,7 +93,7 @@ async function initDatabaseMaintenance(): Promise<void> {
     };
     
     log('Database maintenance service initialized successfully', 'background');
-  } catch (error: any) {
+  } catch (error: unknown) {
     log(`Failed to initialize database maintenance: ${error}`, 'background');
     backgroundServices.databaseMaintenance = {
       name: 'Database Maintenance',
@@ -126,7 +126,7 @@ async function initSecurityScanning(): Promise<void> {
     };
     
     log(`Security scanning service initialized with ${scanInterval / (1000 * 60 * 60)} hour interval`, 'background');
-  } catch (error: any) {
+  } catch (error: unknown) {
     log(`Failed to initialize security scanning: ${error}`, 'background');
     backgroundServices.securityScans = {
       name: 'Security Scanning',
@@ -165,7 +165,7 @@ async function initMetricsCollection(): Promise<void> {
     };
     
     log('Metrics collection service initialized successfully', 'background');
-  } catch (error: any) {
+  } catch (error: unknown) {
     log(`Failed to initialize metrics collection: ${error}`, 'background');
     backgroundServices.metricsCollection = {
       name: 'Metrics Collection',
@@ -198,7 +198,7 @@ async function initDataCleanupServices(): Promise<void> {
     };
     
     log('Data cleanup service initialized successfully', 'background');
-  } catch (error: any) {
+  } catch (error: unknown) {
     log(`Failed to initialize data cleanup: ${error}`, 'background');
     backgroundServices.dataCleanup = {
       name: 'Data Cleanup',
@@ -272,7 +272,7 @@ async function initContentScheduler(): Promise<void> {
     };
     
     log('Content scheduler service initialized with 5 minute interval', 'background');
-  } catch (error: any) {
+  } catch (error: unknown) {
     log(`Failed to initialize content scheduler: ${error}`, 'background');
     backgroundServices.contentScheduler = {
       name: 'Content Scheduler',
@@ -302,7 +302,7 @@ export async function stopBackgroundServices(): Promise<void> {
       stopContentScheduler();
       backgroundServices.contentScheduler.status = 'inactive';
       log('Content scheduler stopped', 'background');
-    } catch (error: any) {
+    } catch (error: unknown) {
       log(`Error stopping content scheduler: ${error}`, 'background');
     }
   }

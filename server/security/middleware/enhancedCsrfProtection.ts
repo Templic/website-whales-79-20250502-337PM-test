@@ -238,9 +238,9 @@ export function enhancedCsrfProtection(options: {
       if (req.session) {
         // We need to use type assertion here because the SessionData interface
         // doesn't include our custom fields by default
-        (req.session as any).csrfToken = token;
+        (req.session as unknown).csrfToken = token;
         if (useNonce) {
-          (req.session as any).csrfNonce = nonce;
+          (req.session as unknown).csrfNonce = nonce;
         }
       }
       
@@ -329,9 +329,9 @@ export function enhancedCsrfProtection(options: {
     
     // Update session
     if (req.session) {
-      (req.session as any).csrfToken = newToken;
+      (req.session as unknown).csrfToken = newToken;
       if (useNonce) {
-        (req.session as any).csrfNonce = newNonce;
+        (req.session as unknown).csrfNonce = newNonce;
       }
     }
     
@@ -360,10 +360,10 @@ export function enhancedCsrfProtection(options: {
  * @returns The CSRF token and optional nonce
  */
 export function getEnhancedCsrfToken(req: Request): { token?: string; nonce?: string } {
-  if (req.session && (req.session as any).csrfToken) {
+  if (req.session && (req.session as unknown).csrfToken) {
     return { 
-      token: (req.session as any).csrfToken,
-      nonce: (req.session as any).csrfNonce
+      token: (req.session as unknown).csrfToken,
+      nonce: (req.session as unknown).csrfNonce
     };
   } else if (req.cookies && req.cookies[CSRF_COOKIE]) {
     const cookieValue = req.cookies[CSRF_COOKIE];

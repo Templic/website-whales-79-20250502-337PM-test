@@ -114,7 +114,7 @@ export async function generateMFAChallenge(
       default:
         return false;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
@@ -228,7 +228,7 @@ export async function verifyMFAResponse(
       
       return false;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
@@ -285,7 +285,7 @@ export async function completeMFASetup(
     });
     
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,

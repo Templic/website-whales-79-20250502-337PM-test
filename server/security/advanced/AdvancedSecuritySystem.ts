@@ -66,7 +66,7 @@ function setupBaselineSecurity(app: express.Application): void {
   
   // Create request ID for all requests
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as any).id = require('crypto').randomBytes(16).toString('hex');
+    (req as unknown).id = require('crypto').randomBytes(16).toString('hex');
     next();
   });
   
@@ -154,7 +154,7 @@ export function getSecurityStatus(): Record<string, unknown> {
 /**
  * Creates an Express middleware that applies zero-trust security to a route
  */
-export function secureRoute(options: any = {}) {
+export function secureRoute(options: unknown= {}) {
   return createZeroTrustMiddleware(options);
 }
 

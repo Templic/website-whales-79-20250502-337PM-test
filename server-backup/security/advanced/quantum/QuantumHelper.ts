@@ -115,7 +115,7 @@ export async function secureData(
       signature,
       publicKey
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -213,7 +213,7 @@ export async function processSecuredData(
       verified,
       verificationReason
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -273,7 +273,7 @@ export async function secureHash(
     });
     
     return hash;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -302,7 +302,7 @@ export async function secureHash(
  * @returns Promise resolving to the secure token
  */
 export async function createSecureToken(
-  payload: Record<string, any>,
+  payload: Record<string, unknown>,
   privateKey: string,
   options: {
     expiresIn?: number; // milliseconds
@@ -356,7 +356,7 @@ export async function createSecureToken(
     });
     
     return token;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -392,7 +392,7 @@ export async function verifySecureToken(
     encoding?: qrc.QRCOptions['encoding'];
   } = {}
 ): Promise<{
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   valid: boolean;
   expired?: boolean;
   reason?: string;
@@ -450,7 +450,7 @@ export async function verifySecureToken(
       expired,
       reason: expired ? 'Token expired' : verificationResult.reason
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,

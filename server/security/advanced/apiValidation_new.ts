@@ -81,7 +81,7 @@ export function validate<T extends AnyZodObject>(
       }
       
       // Replace the original data with the validated data
-      req[target as keyof Request] = validationResult as any;
+      req[target as keyof Request] = validationResult as unknown;
       
       next();
     } catch (error) {

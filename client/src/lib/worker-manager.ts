@@ -11,14 +11,14 @@ import { v4 as uuidv4 } from 'uuid';
 export type ComputationTask = 
   | { type: 'COMPLEX_CALCULATION'; data: number[]; operation: 'sum' | 'average' | 'max' | 'min' | 'median' }
   | { type: 'MATRIX_OPERATION'; matrices: number[][][]; operation: 'multiply' | 'transpose' | 'inverse' }
-  | { type: 'DATA_PROCESSING'; rawData: any[]; transformations: string[] }
+  | { type: 'DATA_PROCESSING'; rawData: unknown[]; transformations: string[] }
   | { type: 'IMAGE_PROCESSING'; imageData: ImageData; filters: string[] }
   | { type: 'AUDIO_PROCESSING'; audioData: Float32Array; sampleRate: number; operation: string };
 
 export type WorkerResponse = {
   taskId?: string;
   type: string;
-  result: any;
+  result: unknown;
   error?: string;
   processingTime?: number;
 };
@@ -27,8 +27,8 @@ export type WorkerResponse = {
 type QueuedTask = {
   taskId: string;
   task: ComputationTask;
-  resolve: (value: any) => void;
-  reject: (reason: any) => void;
+  resolve: ((value: any): unknown) => void;
+  reject: ((reason: any): unknown) => void;
   timestamp: number;
 };
 
@@ -262,11 +262,11 @@ class WorkerManager {
     const originalResolve = nextTask.resolve;
     const originalReject = nextTask.reject;
     this.taskCallbacks.set(nextTask.taskId, {
-      resolve: (value: any) => {
+      resolve: ((value: any): unknown) => {
         clearTimeout(timeoutId);
         originalResolve(value);
       },
-      reject: (reason: any) => {
+      reject: ((reason: any): unknown) => {
         clearTimeout(timeoutId);
         originalReject(reason);
       }
@@ -419,7 +419,7 @@ export async function performMatrixOperation(
  * @returns Promise with processed data
  */
 export async function processData<T = any>(
-  rawData: any[],
+  rawData: unknown[],
   transformations: string[]
 ): Promise<T[]> {
   return workerManager.executeTask<T[]>({

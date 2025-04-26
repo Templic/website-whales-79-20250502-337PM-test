@@ -69,7 +69,7 @@ export interface SQLAnalysisResult {
   /**
    * Parameters used in the query
    */
-  parameters: any[];
+  parameters: unknown[];
   
   /**
    * Whether the query is safe
@@ -285,7 +285,7 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
 /**
  * Calculates a hash for a query string
  */
-function calculateQueryHash(query: string, parameters: any[]): string {
+function calculateQueryHash(query: string, parameters: unknown[]): string {
   // In a real implementation, we would use a proper hash function
   // For simplicity, we'll use a basic string manipulation
   const normalized = query.replace(/\s+/g, ' ').trim().toLowerCase();
@@ -324,7 +324,7 @@ export class SQLInjectionPrevention {
   /**
    * Analyze a SQL query for potential injection attacks
    */
-  public analyzeQuery(query: string, parameters: any[] = []): SQLAnalysisResult {
+  public analyzeQuery(query: string, parameters: unknown[] = []): SQLAnalysisResult {
     // Calculate query hash
     const queryHash = calculateQueryHash(query, parameters);
     
@@ -450,7 +450,7 @@ export function createDatabaseProtectionMiddleware() {
   /**
    * Middleware function to protect SQL queries
    */
-  return (query: string, parameters: any[] = [], context?: any) => {
+  return (query: string, parameters: unknown[] = [], context?: any) => {
     // Analyze the query
     const analysisResult = sqlInjectionPrevention.analyzeQuery(query, parameters);
     

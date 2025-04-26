@@ -127,7 +127,7 @@ program
       
       // Log scan initiation to blockchain
       await securityBlockchain.addSecurityEvent({
-        category: SecurityEventCategory.SECURITY_SCAN as any,
+        category: SecurityEventCategory.SECURITY_SCAN as unknown,
         severity: SecurityEventSeverity.INFO,
         message: `Security scan initiated: ${scanLevel}`,
         timestamp: Date.now(),
@@ -466,7 +466,7 @@ program
         },
         body: data ? JSON.parse(data) : undefined,
         ip: '127.0.0.1'
-      } as any;
+      } as unknown;
       
       // Run anomaly detection on the mock request
       const anomalyResult = await detectAnomaly(mockRequest);

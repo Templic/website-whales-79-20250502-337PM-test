@@ -273,8 +273,8 @@ export function monitorMemoryUsage(): {
   };
   
   // Get memory info if available
-  if (performance && (performance as any).memory) {
-    const memory = (performance as any).memory;
+  if (performance && (performance as unknown).memory) {
+    const memory = (performance as unknown).memory;
     metrics.jsHeapSizeLimit = memory.jsHeapSizeLimit;
     metrics.totalJSHeapSize = memory.totalJSHeapSize;
     metrics.usedJSHeapSize = memory.usedJSHeapSize;

@@ -98,7 +98,7 @@ export async function secureData(
     
     // Log the operation
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Data secured with quantum-resistant cryptography`,
       timestamp: Date.now(),
@@ -118,7 +118,7 @@ export async function secureData(
   } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.ERROR,
       message: `Failed to secure data: ${error.message}`,
       timestamp: Date.now(),
@@ -195,7 +195,7 @@ export async function processSecuredData(
     
     // Log the operation
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Secured data processed successfully`,
       timestamp: Date.now(),
@@ -216,7 +216,7 @@ export async function processSecuredData(
   } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.ERROR,
       message: `Failed to process secured data: ${error.message}`,
       timestamp: Date.now(),
@@ -261,7 +261,7 @@ export async function secureHash(
     
     // Log the operation
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Data hashed with quantum-resistant algorithm`,
       timestamp: Date.now(),
@@ -276,7 +276,7 @@ export async function secureHash(
   } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.ERROR,
       message: `Failed to hash data: ${error.message}`,
       timestamp: Date.now(),
@@ -343,7 +343,7 @@ export async function createSecureToken(
     
     // Log the operation
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Secure token created with quantum-resistant algorithm`,
       timestamp: Date.now(),
@@ -359,7 +359,7 @@ export async function createSecureToken(
   } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.ERROR,
       message: `Failed to create secure token: ${error.message}`,
       timestamp: Date.now(),
@@ -430,7 +430,7 @@ export async function verifySecureToken(
     
     // Log the operation
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: verificationResult.valid ? SecurityEventSeverity.INFO : SecurityEventSeverity.WARNING,
       message: `Secure token verification ${verificationResult.valid ? 'succeeded' : 'failed'}`,
       timestamp: Date.now(),
@@ -453,7 +453,7 @@ export async function verifySecureToken(
   } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.ERROR,
       message: `Failed to verify secure token: ${error.message}`,
       timestamp: Date.now(),

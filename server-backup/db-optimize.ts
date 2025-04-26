@@ -77,14 +77,14 @@ export async function initDatabaseOptimization() {
     setTimeout(async () => {
       try {
         await setupMaintenanceTasks();
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error during delayed maintenance setup:', err);
       }
     }, 3000); // 3 second delay
     
     log('Database optimization initialized', 'db-optimize');
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to initialize database optimization:', error);
     return false;
   }
@@ -112,7 +112,7 @@ async function setupMaintenanceTasks() {
         await pgPool.query('VACUUM ANALYZE');
         log('VACUUM ANALYZE completed successfully', 'db-maintenance');
         return { success: true };
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('VACUUM ANALYZE failed:', error);
         return { success: false, error };
       }
@@ -172,7 +172,7 @@ async function setupMaintenanceTasks() {
         
         log('Database reindexing completed', 'db-maintenance');
         return { success: true, tablesReindexed: tablesResult.rows.length };
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Database reindexing failed:', error);
         return { success: false, error };
       }
@@ -218,12 +218,12 @@ async function setupMaintenanceTasks() {
           log('Basic query stats analysis completed', 'db-performance');
           return { success: true, basicQueryStats: result.rows };
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Slow query analysis failed:', error);
         return { success: false, error };
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error setting up maintenance tasks:', error);
   }
 }
@@ -262,7 +262,7 @@ export async function executeOptimizedQuery(query: string, params?: any[], retry
     }
     
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     const duration = Date.now() - start;
     
     // Check if this is a connection error that we should retry
@@ -325,7 +325,7 @@ export async function getConnectionPoolStats(retryCount = 0) {
       idle: safeParseInt(stats.idle),
       waiting: safeParseInt(stats.waiting),
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to get connection pool stats:', error);
     
     // Return default values instead of error to prevent frontend from crashing
@@ -352,7 +352,7 @@ export async function triggerDatabaseMaintenance(task: 'vacuum' | 'reindex' | 'a
       default:
         throw new Error(`Unknown maintenance task: ${task}`);
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Failed to trigger ${task} task:`, error);
     throw error;
   }

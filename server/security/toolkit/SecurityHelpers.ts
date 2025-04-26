@@ -124,12 +124,12 @@ export function createSecureDecorator() {
  * @returns Class decorator
  */
 export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDARD) {
-  return function <T extends { new(...args: any[]): {} }>(constructor: T) {
+  return function <T extends { new(...args: unknown[]): {} }>(constructor: T) {
     // Store the original constructor
     const originalConstructor = constructor;
     
     // Create a new constructor function
-    const newConstructor: any = function(...args: any[]) {
+    const newConstructor: any = function(...args: unknown[]) {
       const instance = new originalConstructor(...args);
       
       // Wrap all methods with security middleware
@@ -138,16 +138,16 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
         if (methodName === 'constructor') return;
         
         // Get the method
-        const method = (instance as any)[methodName];
+        const method = (instance as unknown)[methodName];
         
         // Skip non-functions
         if (typeof method !== 'function') return;
         
         // Check if method already has security applied (from method decorator)
-        if ((method as any).__secured) return;
+        if ((method as unknown).__secured) return;
         
         // Wrap method with security
-        (instance as any)[methodName] = async function(req: Request, res: Response, next: NextFunction) {
+        (instance as unknown)[methodName] = async function(req: Request, res: Response, next: NextFunction) {
           try {
             // Create security toolkit with base level
             const toolkit = new SecurityToolkit(baseLevel);
@@ -189,7 +189,7 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
         };
         
         // Mark method as secured
-        (instance as any)[methodName].__secured = true;
+        (instance as unknown)[methodName].__secured = true;
       });
       
       return instance;

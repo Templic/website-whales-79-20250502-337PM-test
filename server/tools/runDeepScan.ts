@@ -28,7 +28,7 @@ async function runDeepScan() {
     // Log scan start event
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
-      category: SecurityEventCategory.SECURITY_SCAN as any,
+      category: SecurityEventCategory.SECURITY_SCAN as unknown,
       message: 'Deep security scan initiated',
       metadata: {
         timestamp: new Date().toISOString(),
@@ -38,7 +38,7 @@ async function runDeepScan() {
     });
     
     // Register event listeners for scan events
-    const findingsCollector: any[] = [];
+    const findingsCollector: unknown[] = [];
     
     securityFabric.on('security:scan:finding', (finding) => {
       findingsCollector.push(finding);
@@ -113,7 +113,7 @@ async function runDeepScan() {
     // Log scan completion event
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
-      category: SecurityEventCategory.SECURITY_SCAN as any,
+      category: SecurityEventCategory.SECURITY_SCAN as unknown,
       message: 'Deep security scan completed',
       metadata: {
         scanId: scanResult.scanId,
@@ -133,7 +133,7 @@ async function runDeepScan() {
     // Log scan error event
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.HIGH,
-      category: SecurityEventCategory.SECURITY_SCAN as any,
+      category: SecurityEventCategory.SECURITY_SCAN as unknown,
       message: 'Deep security scan failed',
       metadata: {
         timestamp: new Date().toISOString(),

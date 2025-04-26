@@ -112,7 +112,7 @@ async function generateServerKeyPair(): Promise<{
   try {
     // Generate a new key pair for the server
     const generatedKeyPair = await qrc.generateKeyPair({
-      algorithm: DEFAULT_CONFIG.encryptionAlgorithm as any,
+      algorithm: DEFAULT_CONFIG.encryptionAlgorithm as unknown,
       strength: 'high'
     });
     
@@ -376,7 +376,7 @@ async function processResponseBody(
         try {
           // Encrypt the value
           const encryptionResult = await qrc.encrypt(value, clientPublicKey, {
-            algorithm: algorithm as any
+            algorithm: algorithm as unknown
           });
           
           // Replace the original value with the encrypted one

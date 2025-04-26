@@ -472,7 +472,7 @@ const testSecurityRouter = Router();
 securityRouter.get('/status', async (req: Request, res: Response) => {
   try {
     // Check if the user is authenticated to determine level of detail to return
-    const isAdmin = req.isAuthenticated() && req.user && (req.user as any).role === 'admin';
+    const isAdmin = req.isAuthenticated() && req.user && (req.user as unknown).role === 'admin';
     
     // Basic security measures that are always visible
     const securityMeasures = [

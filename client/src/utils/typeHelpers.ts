@@ -62,7 +62,7 @@ export function getNestedValue<T, K extends string>(
   path: K
 ): unknown {
   return path.split('.').reduce((acc, part) => {
-    return acc && typeof acc === 'object' ? (acc as any)[part] : undefined;
+    return acc && typeof acc === 'object' ? (acc as unknown)[part] : undefined;
   }, obj as unknown);
 }
 

@@ -25,7 +25,7 @@ const requireSecurityAdmin = (req: Request, res: Response, next: NextFunction) =
   }
   
   // Ensure user has security admin role
-  const user = req.user as any;
+  const user = req.user as unknown;
   if (!user?.roles?.includes('admin') && !user?.roles?.includes('security_admin')) {
     return res.status(403).json({ error: 'Security administrator access required' });
   }
@@ -132,7 +132,7 @@ router.get('/events/:id', async (req: Request, res: Response) => {
 router.post('/events/:id/acknowledge', async (req: Request, res: Response) => {
   try {
     const eventId = req.params.id;
-    const user = req.user as any;
+    const user = req.user as unknown;
     
     // Fetch event from blockchain
     const event = await securityBlockchain.getSecurityEventById(eventId);

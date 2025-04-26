@@ -315,7 +315,7 @@ function pushResources(req: Request, res: Response, html: string) {
       if (pushStream: any) {
         serveResource(pushStream, resource.path);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Error pushing resource ${resource.path}:`, error);
     }
   });

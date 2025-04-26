@@ -97,22 +97,22 @@ export function http2OptimizationMiddleware(options: Http2OptimizationOptions = 
     const originalSend = res.send;
     
     // Extend response to include resource hint capabilities
-    (res as any).preload = (url: string, as?: ResourceAsType, crossorigin?: boolean) => {
+    (res as unknown).preload = (url: string, as?: ResourceAsType, crossorigin?: boolean) => {
       addResourceHint(res, { url, type: 'preload', as, crossorigin });
       return res;
     };
     
-    (res as any).prefetch = (url: string, as?: ResourceAsType) => {
+    (res as unknown).prefetch = (url: string, as?: ResourceAsType) => {
       addResourceHint(res, { url, type: 'prefetch', as });
       return res;
     };
     
-    (res as any).preconnect = (url: string, crossorigin?: boolean) => {
+    (res as unknown).preconnect = (url: string, crossorigin?: boolean) => {
       addResourceHint(res, { url, type: 'preconnect', crossorigin });
       return res;
     };
     
-    (res as any).dnsPrefetch = (url: string) => {
+    (res as unknown).dnsPrefetch = (url: string) => {
       addResourceHint(res, { url, type: 'dns-prefetch' });
       return res;
     };
@@ -170,7 +170,7 @@ function isHtmlResponse(res: Response): boolean {
  */
 function isHttp2(req: Request): boolean {
   // Check if HTTP/2 is available (using Express or Node.js HTTP/2 APIs)
-  return !!(req.httpVersion === '2.0' || (req as any).socket?.alpnProtocol === 'h2');
+  return !!(req.httpVersion === '2.0' || (req as unknown).socket?.alpnProtocol === 'h2');
 }
 
 /**
@@ -294,7 +294,7 @@ function pushResources(req: Request, res: Response, html: string) {
   }
   
   // Check if response has push capability
-  const push = (res as any).push;
+  const push = (res as unknown).push;
   if (typeof push !== 'function') {
     return;
   }

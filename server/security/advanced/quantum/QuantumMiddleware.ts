@@ -85,7 +85,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Add quantum context to request
-      (req as any).quantumContext = {
+      (req as unknown).quantumContext = {
         verified: false,
         encrypted: false,
         algorithm: opts.algorithm,
@@ -116,11 +116,11 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
             );
             
             if (verificationResult.valid) {
-              (req as any).quantumContext.verified = true;
+              (req as unknown).quantumContext.verified = true;
               
               if (opts.logToBlockchain) {
                 await securityBlockchain.addSecurityEvent({
-                  category: SecurityEventCategory.CRYPTOGRAPHY as any,
+                  category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
                   severity: SecurityEventSeverity.INFO,
                   message: 'Request signature verified successfully',
                   timestamp: Date.now(),
@@ -137,7 +137,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
               // If verification is required and failed, reject the request
               if (opts.logToBlockchain) {
                 await securityBlockchain.addSecurityEvent({
-                  category: SecurityEventCategory.CRYPTOGRAPHY as any,
+                  category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
                   severity: SecurityEventSeverity.WARNING,
                   message: 'Request signature verification failed',
                   timestamp: Date.now(),
@@ -161,7 +161,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
             if (opts.verifySignature === 'required') {
               if (opts.logToBlockchain) {
                 await securityBlockchain.addSecurityEvent({
-                  category: SecurityEventCategory.CRYPTOGRAPHY as any,
+                  category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
                   severity: SecurityEventSeverity.ERROR,
                   message: `Request signature verification error: ${error.message}`,
                   timestamp: Date.now(),
@@ -187,7 +187,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
           // If signature is required but not provided, reject the request
           if (opts.logToBlockchain) {
             await securityBlockchain.addSecurityEvent({
-              category: SecurityEventCategory.CRYPTOGRAPHY as any,
+              category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
               severity: SecurityEventSeverity.WARNING,
               message: 'Required request signature missing',
               timestamp: Date.now(),
@@ -220,7 +220,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
             
             if (opts.logToBlockchain) {
               await securityBlockchain.addSecurityEvent({
-                category: SecurityEventCategory.CRYPTOGRAPHY as any,
+                category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
                 severity: SecurityEventSeverity.INFO,
                 message: 'Encrypted request data received',
                 timestamp: Date.now(),
@@ -236,7 +236,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
           } catch (error) {
             if (opts.logToBlockchain) {
               await securityBlockchain.addSecurityEvent({
-                category: SecurityEventCategory.CRYPTOGRAPHY as any,
+                category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
                 severity: SecurityEventSeverity.ERROR,
                 message: `Request decryption error: ${error.message}`,
                 timestamp: Date.now(),
@@ -286,7 +286,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
               
               if (opts.logToBlockchain) {
                 securityBlockchain.addSecurityEvent({
-                  category: SecurityEventCategory.CRYPTOGRAPHY as any,
+                  category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
                   severity: SecurityEventSeverity.INFO,
                   message: 'Response signed with quantum-resistant algorithm',
                   timestamp: Date.now(),
@@ -308,7 +308,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
               
               if (opts.logToBlockchain) {
                 securityBlockchain.addSecurityEvent({
-                  category: SecurityEventCategory.CRYPTOGRAPHY as any,
+                  category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
                   severity: SecurityEventSeverity.ERROR,
                   message: `Response signing error: ${error.message}`,
                   timestamp: Date.now(),
@@ -337,7 +337,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
           
           if (opts.logToBlockchain) {
             securityBlockchain.addSecurityEvent({
-              category: SecurityEventCategory.CRYPTOGRAPHY as any,
+              category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
               severity: SecurityEventSeverity.ERROR,
               message: `Key generation error: ${error.message}`,
               timestamp: Date.now(),
@@ -384,7 +384,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
       // Log any errors that occur during middleware execution
       if (opts.logToBlockchain) {
         securityBlockchain.addSecurityEvent({
-          category: SecurityEventCategory.CRYPTOGRAPHY as any,
+          category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
           severity: SecurityEventSeverity.ERROR,
           message: `Quantum middleware error: ${error.message}`,
           timestamp: Date.now(),

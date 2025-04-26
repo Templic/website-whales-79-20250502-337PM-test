@@ -450,6 +450,141 @@ export const errorAnalysisRelations = relations(errorAnalysis, ({ one }) => ({
   }),
 }));
 
+// Error Fix History table
+export const errorFixHistory = pgTable('error_fix_history', {
+  id: serial('id').primaryKey(),
+  error_id: integer('error_id').notNull().references(() => typeScriptErrors.id),
+  fix_id: integer('fix_id').references(() => errorFixes.id),
+  fixed_by: integer('fixed_by'),
+  fixed_at: timestamp('fixed_at').defaultNow().notNull(),
+  fix_method: fixMethodEnum('fix_method').notNull(),
+  fix_details: text('fix_details'),
+  is_successful: boolean('is_successful').notNull().default(true),
+  applied_code: text('applied_code'),
+  fix_duration_ms: integer('fix_duration_ms'),
+  metadata: json('metadata')
+});
+
+// Project Analysis table
+export const projectAnalyses = pgTable('project_analyses', {
+  id: serial('id').primaryKey(),
+  analysis_date: timestamp('analysis_date').defaultNow().notNull(),
+  analysis_type: text('analysis_type').notNull(),
+  total_files: integer('total_files').notNull(),
+  total_lines: integer('total_lines').notNull(),
+  error_count: integer('error_count').notNull(),
+  critical_count: integer('critical_count').notNull(),
+  high_count: integer('high_count').notNull(),
+  medium_count: integer('medium_count').notNull(),
+  low_count: integer('low_count').notNull(),
+  analysis_duration_ms: integer('analysis_duration_ms').notNull(),
+  is_deep_analysis: boolean('is_deep_analysis').notNull().default(false),
+  metadata: json('metadata'),
+  created_by: integer('created_by')
+});
+
+// Project File table
+export const projectFiles = pgTable('project_files', {
+  id: serial('id').primaryKey(),
+  file_path: text('file_path').notNull().unique(),
+  file_type: text('file_type').notNull(),
+  line_count: integer('line_count').notNull(),
+  char_count: integer('char_count').notNull(),
+  last_analyzed: timestamp('last_analyzed').defaultNow().notNull(),
+  last_modified: timestamp('last_modified'),
+  error_count: integer('error_count').notNull().default(0),
+  is_generated: boolean('is_generated').notNull().default(false),
+  is_test_file: boolean('is_test_file').notNull().default(false),
+  dependency_count: integer('dependency_count'),
+  complexity_score: integer('complexity_score'),
+  metadata: json('metadata')
+});
+
+// Content management tables
+export const contentItems = pgTable('content_items', {
+  id: serial('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  type: text('type').notNull(), // e.g., 'text', 'image', 'html', 'json'
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  page: text('page').notNull(),
+  section: text('section').notNull(),
+  imageUrl: text('image_url'),
+  status: text('status').notNull().default('draft'), // draft, review, approved, published, archived
+  version: integer('version').notNull().default(1),
+  reviewerId: integer('reviewer_id'),
+  reviewStatus: text('review_status'),
+  reviewStartedAt: timestamp('review_started_at'),
+  reviewCompletedAt: timestamp('review_completed_at'),
+  reviewNotes: text('review_notes'),
+  scheduledPublishAt: timestamp('scheduled_publish_at'),
+  expirationDate: timestamp('expiration_date'),
+  lastModifiedBy: integer('last_modified_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  metadata: json('metadata')
+});
+
+export const contentHistory = pgTable('content_history', {
+  id: serial('id').primaryKey(),
+  contentId: integer('content_id').notNull().references(() => contentItems.id),
+  version: integer('version').notNull(),
+  type: text('type').notNull(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  page: text('page'),
+  section: text('section'),
+  imageUrl: text('image_url'),
+  modifiedAt: timestamp('modified_at').defaultNow().notNull(),
+  modifiedBy: integer('modified_by'),
+  changeDescription: text('change_description')
+});
+
+export const contentUsage = pgTable('content_usage', {
+  id: serial('id').primaryKey(),
+  contentId: integer('content_id').notNull().references(() => contentItems.id),
+  location: text('location').notNull(), // e.g., 'homepage', 'blog', 'product'
+  path: text('path').notNull(), // URL path
+  views: integer('views').notNull().default(0),
+  lastViewed: timestamp('last_viewed').defaultNow().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+export const contentWorkflowHistory = pgTable('content_workflow_history', {
+  id: serial('id').primaryKey(),
+  contentId: integer('content_id').notNull().references(() => contentItems.id),
+  fromStatus: text('from_status').notNull(),
+  toStatus: text('to_status').notNull(),
+  actorId: integer('actor_id').notNull(),
+  actionAt: timestamp('action_at').defaultNow().notNull(),
+  comments: text('comments')
+});
+
+// Simple track and album tables for the music section
+export const tracks = pgTable('tracks', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  artist: text('artist').notNull(),
+  duration: text('duration').notNull(),
+  audioUrl: text('audio_url').notNull(),
+  published: boolean('published').default(false).notNull(),
+  albumId: integer('album_id'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+export const albums = pgTable('albums', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  artist: text('artist').notNull(),
+  coverImage: text('cover_image'),
+  releaseDate: timestamp('release_date'),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
 // ===================================================================
 // Insert Schemas
 // ===================================================================
@@ -553,6 +688,56 @@ export const insertScanResultSchema = createInsertSchema(scanResults).omit({
   createdAt: true,
 });
 
+// Additional insert schemas for the new tables
+export const insertErrorFixHistorySchema = createInsertSchema(errorFixHistory).omit({
+  id: true,
+  fixed_at: true,
+});
+
+export const insertProjectAnalysisSchema = createInsertSchema(projectAnalyses).omit({
+  id: true,
+  analysis_date: true,
+});
+
+export const insertProjectFileSchema = createInsertSchema(projectFiles).omit({
+  id: true,
+  last_analyzed: true,
+});
+
+export const insertContentItemSchema = createInsertSchema(contentItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertContentHistorySchema = createInsertSchema(contentHistory).omit({
+  id: true,
+  modifiedAt: true,
+});
+
+export const insertContentUsageSchema = createInsertSchema(contentUsage).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertContentWorkflowHistorySchema = createInsertSchema(contentWorkflowHistory).omit({
+  id: true,
+  actionAt: true,
+});
+
+export const insertTrackSchema = createInsertSchema(tracks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAlbumSchema = createInsertSchema(albums).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // ===================================================================
 // Types
 // ===================================================================
@@ -609,3 +794,31 @@ export type InsertErrorAnalysis = z.infer<typeof insertErrorAnalysisSchema>;
 
 export type ScanResult = typeof scanResults.$inferSelect;
 export type InsertScanResult = z.infer<typeof insertScanResultSchema>;
+
+// Types for the new tables
+export type ErrorFixHistory = typeof errorFixHistory.$inferSelect;
+export type InsertErrorFixHistory = z.infer<typeof insertErrorFixHistorySchema>;
+
+export type ProjectAnalysis = typeof projectAnalyses.$inferSelect;
+export type InsertProjectAnalysis = z.infer<typeof insertProjectAnalysisSchema>;
+
+export type ProjectFile = typeof projectFiles.$inferSelect;
+export type InsertProjectFile = z.infer<typeof insertProjectFileSchema>;
+
+export type ContentItem = typeof contentItems.$inferSelect;
+export type InsertContentItem = z.infer<typeof insertContentItemSchema>;
+
+export type ContentHistory = typeof contentHistory.$inferSelect;
+export type InsertContentHistory = z.infer<typeof insertContentHistorySchema>;
+
+export type ContentUsage = typeof contentUsage.$inferSelect;
+export type InsertContentUsage = z.infer<typeof insertContentUsageSchema>;
+
+export type ContentWorkflowHistory = typeof contentWorkflowHistory.$inferSelect;
+export type InsertContentWorkflowHistory = z.infer<typeof insertContentWorkflowHistorySchema>;
+
+export type Track = typeof tracks.$inferSelect;
+export type InsertTrack = z.infer<typeof insertTrackSchema>;
+
+export type Album = typeof albums.$inferSelect;
+export type InsertAlbum = z.infer<typeof insertAlbumSchema>;

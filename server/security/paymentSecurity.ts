@@ -297,7 +297,7 @@ class PaymentSecurityService {
         timestamp: new Date().toISOString(),
         transaction_id: details.transactionId || this.generateTransactionId(),
         payment_gateway: details.gateway || 'unknown',
-        transaction_type: transactionType as any,
+        transaction_type: transactionType as unknown,
         status: eventType === 'payment_success' ? 'succeeded' : 
           eventType === 'payment_failure' ? 'failed' : 'pending',
         amount: details.amount,

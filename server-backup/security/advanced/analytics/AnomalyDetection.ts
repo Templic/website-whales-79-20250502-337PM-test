@@ -775,7 +775,7 @@ export class AnomalyDetection {
   /**
    * Get current status of the anomaly detection system
    */
-  public getStatus(): Record<string, any> {
+  public getStatus(): Record<string, unknown> {
     return {
       initialized: this.initialized,
       mode: this.options.mode,
@@ -847,7 +847,7 @@ export class AnomalyDetection {
       // Normalize numeric IDs and UUIDs in URL segments
       return pathOnly.replace(/\/[0-9]+\/?/g, '/ID/')
                      .replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?/gi, '/UUID/');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[AnomalyDetection] Error normalizing URL:', error);
       return url;
     }

@@ -82,7 +82,7 @@ export async function generateMFAChallenge(
         };
         
         // Store SMS code in session (for demo purposes only)
-        (req.session as any).smsCode = smsCode;
+        (req.session as unknown).smsCode = smsCode;
         
         return true;
         
@@ -99,7 +99,7 @@ export async function generateMFAChallenge(
         };
         
         // Store email code in session (for demo purposes only)
-        (req.session as any).emailCode = emailCode;
+        (req.session as unknown).emailCode = emailCode;
         
         return true;
         
@@ -183,7 +183,7 @@ export async function verifyMFAResponse(
       case MFAType.SMS:
         // In a real application, this would verify against the SMS code sent to the user
         // For demo purposes, verify against the code stored in session
-        result = code === (req.session as any).smsCode
+        result = code === (req.session as unknown).smsCode
           ? MFAVerificationStatus.SUCCESS
           : MFAVerificationStatus.FAILED;
         break;
@@ -191,7 +191,7 @@ export async function verifyMFAResponse(
       case MFAType.EMAIL:
         // In a real application, this would verify against the email code sent to the user
         // For demo purposes, verify against the code stored in session
-        result = code === (req.session as any).emailCode
+        result = code === (req.session as unknown).emailCode
           ? MFAVerificationStatus.SUCCESS
           : MFAVerificationStatus.FAILED;
         break;
@@ -257,7 +257,7 @@ export function requireMFAVerification(redirectUrl: string) {
     
     // Initialize MFA if not already done
     if (!req.session.mfa) {
-      initializeMFAVerification(req, (req.user as any).id);
+      initializeMFAVerification(req, (req.user as unknown).id);
     }
     
     // Redirect to MFA verification page

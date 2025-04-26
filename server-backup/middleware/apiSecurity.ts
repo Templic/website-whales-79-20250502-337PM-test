@@ -152,7 +152,7 @@ export function verifyApiAuthentication(req: Request, res: Response, next: NextF
     logApiSecurityEvent(req, 'AUTHENTICATION_SUCCESS', securityVerifications);
     
     next();
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('API authentication error:', error);
     
     securityVerifications.push({
@@ -328,7 +328,7 @@ export function validateApiRequest(schema: any) {
       req.body = validationResult.data;
       
       next();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('API validation error:', error);
       
       const verification: APISecurityVerification = {

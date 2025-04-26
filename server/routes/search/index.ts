@@ -44,12 +44,12 @@ router.get('/', async (req: Request, res: Response) => {
     
     // Setup search results with default empty arrays
     const results: {
-      music: any[];
-      products: any[];
-      posts: any[];
-      users: any[];
-      newsletters?: any[];
-      suggestions?: any[];
+      music: unknown[];
+      products: unknown[];
+      posts: unknown[];
+      users: unknown[];
+      newsletters?: unknown[];
+      suggestions?: unknown[];
     } = {
       music: [],
       products: [],

@@ -344,7 +344,7 @@ program
       const fixOptions: fixer.ErrorFixerOptions = {
         dryRun: options.dryRun,
         backupFiles: options.backup !== false,
-        applyStrategy: options.strategy as any,
+        applyStrategy: options.strategy as unknown,
         maxErrorsToFix: parseInt(options.limit, 10)
       };
       

@@ -191,7 +191,7 @@ export class QuantumKeyGenerator {
         keySize,
         generatedAt: Date.now()
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[QuantumCrypto] Error generating key pair:`, error);
       throw error;
     }
@@ -249,7 +249,7 @@ export class QuantumEncryption {
         algorithm,
         timestamp: Date.now()
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[QuantumCrypto] Error encrypting data:`, error);
       throw error;
     }
@@ -297,7 +297,7 @@ export class QuantumEncryption {
       decrypted += decipher.final('utf8');
       
       return decrypted;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[QuantumCrypto] Error decrypting data:`, error);
       throw error;
     }
@@ -330,7 +330,7 @@ export class QuantumSignature {
         algorithm,
         timestamp: Date.now()
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[QuantumCrypto] Error signing data:`, error);
       throw error;
     }
@@ -359,7 +359,7 @@ export class QuantumSignature {
       );
       
       return isValid;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[QuantumCrypto] Error verifying signature:`, error);
       return false;
     }
@@ -411,7 +411,7 @@ export class HybridEncryptionSystem {
         encryptedData: encrypted,
         encryptionDetails
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[QuantumCrypto] Error in hybrid encryption:`, error);
       throw error;
     }
@@ -440,7 +440,7 @@ export class HybridEncryptionSystem {
       decrypted += decipher.final('utf8');
       
       return decrypted;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[QuantumCrypto] Error in hybrid decryption:`, error);
       throw error;
     }
@@ -501,7 +501,7 @@ export class PerfectForwardSecrecy {
       const derivedKey = crypto.createHash('sha512').update(sharedSecret: any).digest();
       
       return derivedKey;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[QuantumCrypto] Error establishing shared secret:`, error);
       throw error;
     }
@@ -532,7 +532,7 @@ export class PerfectForwardSecrecy {
         algorithm: QuantumAlgorithmType.LATTICE_NTRU, // Simulated
         timestamp: Date.now()
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[QuantumCrypto] Error encrypting with session key:`, error);
       throw error;
     }
@@ -555,7 +555,7 @@ export class PerfectForwardSecrecy {
       decrypted += decipher.final('utf8');
       
       return decrypted;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[QuantumCrypto] Error decrypting with session key:`, error);
       throw error;
     }
@@ -586,7 +586,7 @@ export class SecureMultiPartyComputation {
         default:
           throw new Error(`Unsupported operation: ${operation}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[QuantumCrypto] Error in secure computation:`, error);
       throw error;
     }
@@ -617,7 +617,7 @@ export class SecureMultiPartyComputation {
       shares.push(secret - sum);
       
       return shares;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[QuantumCrypto] Error creating secret shares:`, error);
       throw error;
     }
@@ -635,7 +635,7 @@ export class SecureMultiPartyComputation {
       
       // Sum the shares to get the secret
       return shares.reduce((a: any, b: any) => a + b, 0);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[QuantumCrypto] Error reconstructing secret:`, error);
       throw error;
     }

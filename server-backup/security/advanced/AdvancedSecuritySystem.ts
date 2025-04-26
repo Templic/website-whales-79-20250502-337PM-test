@@ -41,7 +41,7 @@ export async function initializeAdvancedSecurity(app: express.Application, confi
     
     // Update threat level periodically based on security metrics
     setupThreatLevelUpdates();
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AdvancedSecurity] Failed to initialize advanced security system:', error);
     throw error;
   }
@@ -115,7 +115,7 @@ function setupThreatLevelUpdates(): void {
           securityFabric.adjustSecurityPosture(latestMetrics.threat.globalThreatLevel);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[AdvancedSecurity] Error updating threat level:', error);
     }
   }, 5 * 60 * 1000); // 5 minutes
@@ -134,7 +134,7 @@ export async function shutdownAdvancedSecurity(): Promise<void> {
     await securityFabric.shutdown();
     
     console.log('[AdvancedSecurity] Advanced security system shut down successfully');
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AdvancedSecurity] Error shutting down advanced security system:', error);
     throw error;
   }
@@ -143,7 +143,7 @@ export async function shutdownAdvancedSecurity(): Promise<void> {
 /**
  * Gets the current status of the advanced security system
  */
-export function getSecurityStatus(): Record<string, any> {
+export function getSecurityStatus(): Record<string, unknown> {
   return {
     securityPosture: securityFabric.getSecurityPosture(),
     threatLevel: securityFabric.getThreatLevel(),

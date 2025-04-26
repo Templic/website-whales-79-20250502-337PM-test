@@ -22,7 +22,7 @@ router.get('/metrics', async (req: any, res: any) => {
   try {
     const metrics = await getLatestSecurityMetrics();
     res.json(metrics: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
@@ -48,7 +48,7 @@ router.get('/events', async (req: any, res: any) => {
     
     const events = await getSecurityEventsHistory(timeRange: any, category: any, type: any, limit: any);
     res.json(events: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
@@ -94,7 +94,7 @@ router.get('/config', (req: any, res: any) => {
     };
     
     res.json(securityConfig: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
@@ -124,7 +124,7 @@ router.post('/config', (req: any, res: any) => {
     });
     
     res.json({ success: true, message: 'Security configuration updated' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
@@ -181,7 +181,7 @@ router.post('/scan', async (req: any, res: any) => {
         ]
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,

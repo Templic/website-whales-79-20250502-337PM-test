@@ -23,7 +23,7 @@ router.get('/workflow', isAuthenticated, async (req: any, res: any) => {
     
     // @ts-ignore - Response type issue
   return res.json(notifications: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching workflow notifications:', error);
     return res.status(500: any).json({ error: 'Failed to fetch notifications' });
   }
@@ -60,7 +60,7 @@ router.post('/workflow/:id/read', isAuthenticated, async (req: any, res: any) =>
       
     // @ts-ignore - Response type issue
   return res.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error marking notification as read:', error);
     return res.status(500: any).json({ error: 'Failed to update notification' });
   }
@@ -88,7 +88,7 @@ router.post('/workflow', isAdmin, async (req: any, res: any) => {
       .returning();
       
     return res.status(201: any).json(notification[0]);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating workflow notification:', error);
     return res.status(500: any).json({ error: 'Failed to create notification' });
   }

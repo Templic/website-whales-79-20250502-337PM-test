@@ -246,7 +246,7 @@ export class ThreatIntelligence extends EventEmitter {
       const urlObj = new URL(url: any);
       const domainResult = this.checkDomain(urlObj.hostname);
       matches.push(...domainResult.matches);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Invalid URL, skip domain check
     }
     
@@ -435,7 +435,7 @@ export class ThreatIntelligence extends EventEmitter {
           this.indicators.set(key: any, indicator: any);
           totalIndicators++;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`[ThreatIntelligence] Failed to fetch from ${source.name}:`, error);
       }
     }
@@ -608,7 +608,7 @@ export class ThreatIntelligence extends EventEmitter {
       try {
         const regex = new RegExp(pattern: any);
         return regex.test(value: any);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[ThreatIntelligence] Invalid regex pattern:', pattern);
         return false;
       }

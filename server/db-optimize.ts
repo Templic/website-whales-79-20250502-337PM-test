@@ -46,7 +46,7 @@ async function setupMonitoring() {
 }
 
 // Initialize task queue for background optimization
-let boss: any; // Using 'any' temporarily to avoid type issues
+let boss: unknown; // Using 'any' temporarily to avoid type issues
 
 export async function initDatabaseOptimization() {
   try {
@@ -237,7 +237,7 @@ const MAX_RETRY_ATTEMPTS = 3;
 const BASE_RETRY_DELAY = 300;
 
 // Utility function to execute query with detailed performance metrics, SQL injection protection, and robust error handling
-export async function executeOptimizedQuery(query: string, params?: any[], retryCount = 0) {
+export async function executeOptimizedQuery(query: string, params?: unknown[], retryCount = 0) {
   const start = Date.now();
   try {
     // Analyze the query for potential SQL injection

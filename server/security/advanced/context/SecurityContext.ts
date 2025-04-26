@@ -291,7 +291,7 @@ export class SecurityContext {
   ) {
     // Extract request information
     this.request = {
-      id: (req as any).id || Math.random().toString(36).substring(2, 15),
+      id: (req as unknown).id || Math.random().toString(36).substring(2, 15),
       method: req.method,
       url: req.originalUrl,
       ip: req.ip || req.socket.remoteAddress || 'unknown',
@@ -322,23 +322,23 @@ export class SecurityContext {
     // Extract user information if available
     if (req.user) {
       this.setUser({
-        id: (req.user as any).id || 'unknown',
-        roles: Array.isArray((req.user as any).roles)
-          ? (req.user as any).roles
-          : [(req.user as any).role].filter(Boolean),
-        permissions: Array.isArray((req.user as any).permissions)
-          ? (req.user as any).permissions
+        id: (req.user as unknown).id || 'unknown',
+        roles: Array.isArray((req.user as unknown).roles)
+          ? (req.user as unknown).roles
+          : [(req.user as unknown).role].filter(Boolean),
+        permissions: Array.isArray((req.user as unknown).permissions)
+          ? (req.user as unknown).permissions
           : [],
-        riskLevel: (req.user as any).riskLevel || 0.5,
-        trustLevel: (req.user as any).trustLevel || 0.5
+        riskLevel: (req.user as unknown).riskLevel || 0.5,
+        trustLevel: (req.user as unknown).trustLevel || 0.5
       });
       
       // Set authentication status
       this.setAuthentication({
         isAuthenticated: true,
-        method: (req.user as any).authMethod || 'unknown',
-        strength: (req.user as any).authStrength || 0.5,
-        factors: (req.user as any).authFactors || ['password'],
+        method: (req.user as unknown).authMethod || 'unknown',
+        strength: (req.user as unknown).authStrength || 0.5,
+        factors: (req.user as unknown).authFactors || ['password'],
         timeSinceAuthentication: 0
       });
     } else {

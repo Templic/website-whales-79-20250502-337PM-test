@@ -14,7 +14,7 @@ const securityEvents: Array<{
   type: string;
   timestamp: Date;
   level: string;
-  data: any;
+  data: unknown;
 }> = [];
 
 /**
@@ -81,7 +81,7 @@ export function getSecurityEvents(
   type: string;
   timestamp: Date;
   level: string;
-  data: any;
+  data: unknown;
 }> {
   // Filter events by type and level
   let filteredEvents = securityEvents;

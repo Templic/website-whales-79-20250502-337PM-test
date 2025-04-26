@@ -23,7 +23,7 @@ router.get('/status', (req, res) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
   
-  const userId = (req.user as any).id;
+  const userId = (req.user as unknown).id;
   
   // In a real application, this would fetch the user's MFA status from the database
   
@@ -42,8 +42,8 @@ router.post('/totp/setup', async (req, res) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
   
-  const userId = (req.user as any).id;
-  const username = (req.user as any).username || `user-${userId}`;
+  const userId = (req.user as unknown).id;
+  const username = (req.user as unknown).username || `user-${userId}`;
   
   try {
     // Generate TOTP secret and QR code
@@ -84,7 +84,7 @@ router.post('/totp/verify', async (req, res) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
   
-  const userId = (req.user as any).id;
+  const userId = (req.user as unknown).id;
   const { token, secret } = req.body;
   
   if (!token || !secret) {
@@ -157,7 +157,7 @@ router.post('/recovery/generate', async (req, res) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
   
-  const userId = (req.user as any).id;
+  const userId = (req.user as unknown).id;
   
   try {
     // Generate recovery codes
@@ -204,7 +204,7 @@ router.post('/disable', async (req, res) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
   
-  const userId = (req.user as any).id;
+  const userId = (req.user as unknown).id;
   
   try {
     // In a real application, this would disable MFA for the user in the database

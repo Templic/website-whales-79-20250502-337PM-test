@@ -760,7 +760,7 @@ export function setupWebSockets(httpServer: Server) {
           } 
           // Then try to get from payload if it's an object
           else if (typeof data.payload === 'object' && data.payload !== null && 'csrfToken' in data.payload) {
-            messageToken = (data.payload as any).csrfToken;
+            messageToken = (data.payload as unknown).csrfToken;
           }
           
           // Verify CSRF token (must match what we issued to this client)

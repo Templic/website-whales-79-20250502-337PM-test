@@ -224,7 +224,7 @@ export class RASPManager {
         blockRequests: this.blockRequests,
         detected: false,
         detectionCategory: null as RASPProtectionCategory | null,
-        detectionDetails: null as any,
+        detectionDetails: null as unknown,
       };
       
       // Apply protections

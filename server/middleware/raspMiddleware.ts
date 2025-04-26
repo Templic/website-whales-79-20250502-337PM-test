@@ -75,7 +75,7 @@ export const requestLoggingMiddleware = async (req: Request, res: Response, next
       severity: SecurityEventSeverity.INFO,
       category: SecurityEventCategory.API,
       message: `API request: ${req.method} ${req.originalUrl}`,
-      user: (req.user as any)?.id || 'anonymous',
+      user: (req.user as unknown)?.id || 'anonymous',
       ipAddress: req.ip || req.socket.remoteAddress || 'unknown',
       metadata: {
         method: req.method,
@@ -105,7 +105,7 @@ export const suspiciousActivityMiddleware = (req: Request, res: Response, next: 
         severity: SecurityEventSeverity.MEDIUM,
         category: SecurityEventCategory.ATTACK_ATTEMPT,
         message: 'Suspiciously large request detected',
-        user: (req.user as any)?.id || 'anonymous',
+        user: (req.user as unknown)?.id || 'anonymous',
         ipAddress: req.ip || req.socket.remoteAddress || 'unknown',
         metadata: {
           contentLength,

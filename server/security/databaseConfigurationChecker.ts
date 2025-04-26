@@ -150,7 +150,7 @@ export class DatabaseConfigurationChecker {
             }
             
             report.categories.auditLogging.issues.push({
-              severity: check.severity as any,
+              severity: check.severity as unknown,
               message: `Parameter '${check.param}' is set to '${currentValue}' instead of recommended '${check.expected}'`,
               remediation: `Set ${check.param}=${check.expected} in PostgreSQL configuration`
             });

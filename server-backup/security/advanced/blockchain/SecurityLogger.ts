@@ -46,11 +46,11 @@ export enum SecurityEventType {
  * Interface for security logging
  */
 export interface ISecurityLogger {
-  debug(message: string, metadata?: Record<string, any>): void;
-  info(message: string, metadata?: Record<string, any>): void;
-  warn(message: string, metadata?: Record<string, any>): void;
-  error(message: string, metadata?: Record<string, any>): void;
-  critical(message: string, metadata?: Record<string, any>): void;
+  debug(message: string, metadata?: Record<string, unknown>): void;
+  info(message: string, metadata?: Record<string, unknown>): void;
+  warn(message: string, metadata?: Record<string, unknown>): void;
+  error(message: string, metadata?: Record<string, unknown>): void;
+  critical(message: string, metadata?: Record<string, unknown>): void;
 }
 
 /**
@@ -74,42 +74,42 @@ export class ImmutableSecurityLogger implements ISecurityLogger {
   /**
    * Log a debug message
    */
-  public debug(message: string, metadata: Record<string, any> = {}): void {
+  public debug(message: string, metadata: Record<string, unknown> = {}): void {
     this.log(LogLevel.DEBUG, message, metadata);
   }
   
   /**
    * Log an informational message
    */
-  public info(message: string, metadata: Record<string, any> = {}): void {
+  public info(message: string, metadata: Record<string, unknown> = {}): void {
     this.log(LogLevel.INFO, message, metadata);
   }
   
   /**
    * Log a warning message
    */
-  public warn(message: string, metadata: Record<string, any> = {}): void {
+  public warn(message: string, metadata: Record<string, unknown> = {}): void {
     this.log(LogLevel.WARN, message, metadata);
   }
   
   /**
    * Log an error message
    */
-  public error(message: string, metadata: Record<string, any> = {}): void {
+  public error(message: string, metadata: Record<string, unknown> = {}): void {
     this.log(LogLevel.ERROR, message, metadata);
   }
   
   /**
    * Log a critical message
    */
-  public critical(message: string, metadata: Record<string, any> = {}): void {
+  public critical(message: string, metadata: Record<string, unknown> = {}): void {
     this.log(LogLevel.CRITICAL, message, metadata);
   }
   
   /**
    * Internal logging method
    */
-  private log(level: LogLevel, message: string, metadata: Record<string, any>): void {
+  private log(level: LogLevel, message: string, metadata: Record<string, unknown>): void {
     const timestamp = Date.now();
     
     // Ensure metadata has a timestamp
@@ -140,7 +140,7 @@ export class ImmutableSecurityLogger implements ISecurityLogger {
   /**
    * Determine the security event type based on metadata
    */
-  private determineEventType(metadata: Record<string, any>): SecurityEventType {
+  private determineEventType(metadata: Record<string, unknown>): SecurityEventType {
     // If the metadata explicitly includes an event type, use that
     if (metadata.eventType && Object.values(SecurityEventType: any).includes(metadata.eventType)) {
       return metadata.eventType as SecurityEventType;

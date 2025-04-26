@@ -120,7 +120,7 @@ router.post('/config', (req, res) => {
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.INFO,
       message: 'Security configuration updated',
-      data: { updatedBy: (req.user as any)?.id, newConfig }
+      data: { updatedBy: (req.user as unknown)?.id, newConfig }
     });
     
     res.json({ success: true, message: 'Security configuration updated' });
@@ -149,7 +149,7 @@ router.post('/scan', async (req, res) => {
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.INFO,
       message: 'Security scan initiated',
-      data: { initiatedBy: (req.user as any)?.id }
+      data: { initiatedBy: (req.user as unknown)?.id }
     });
     
     // Simulate a scan delay

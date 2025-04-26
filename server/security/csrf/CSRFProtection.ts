@@ -361,7 +361,7 @@ export class CSRFProtection {
     res.setHeader(this.options.header, token);
 
     // Attach the token to the request for use in views/templates
-    (req as any).csrfToken = token;
+    (req as unknown).csrfToken = token;
   }
 
   /**

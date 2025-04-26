@@ -11,7 +11,7 @@ import { createSQLFix } from './sqlInjectionFix';
  * Database connection interface
  */
 interface DatabaseConnection {
-  query: (sql: string, params?: any[]) => Promise<any>;
+  query: (sql: string, params?: unknown[]) => Promise<unknown>;
 }
 
 /**
@@ -21,7 +21,7 @@ interface DatabaseConnection {
  */
 export class SecureDatabase {
   private db: DatabaseConnection;
-  private sqlFix: any;
+  private sqlFix: unknown;
   
   constructor(db: DatabaseConnection) {
     this.db = db;
@@ -35,7 +35,7 @@ export class SecureDatabase {
    * @param params Parameters to bind to the query
    * @returns Query result
    */
-  async query<T = any>(sql: string, params: any[] = []): Promise<T> {
+  async query<T = any>(sql: string, params: unknown[] = []): Promise<T> {
     const result = await this.sqlFix.query(sql, params);
     return result as T;
   }
@@ -121,12 +121,12 @@ export function createSecureDatabase(db: DatabaseConnection): SecureDatabase {
  * WARNING: This approach is more invasive and should be used with caution.
  * It's better to use the SecureDatabase wrapper if possible.
  */
-export function patchDatabaseModule(db: any): void {
+export function patchDatabaseModule(db: unknown): void {
   const originalQuery = db.query;
   const sqlFix = createSQLFix(db);
   
   // Replace the query method with a secure version
-  db.query = async function(sql: string, params: any[] = []): Promise<unknown> {
+  db.query = async function(sql: string, params: unknown[] = []): Promise<unknown> {
     // Check if this is a potentially unsafe query
     const hasDynamicContent = typeof sql === 'string' && 
       (sql.includes('${') || sql.includes('+') || sql.includes('concat'));

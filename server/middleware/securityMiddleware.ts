@@ -19,7 +19,7 @@ export function applySecurityMiddleware(app: Express) {
   
   // Log initialization
   securityBlockchain.addSecurityEvent({
-    category: SecurityEventCategory.SECURITY_INITIALIZATION as any,
+    category: SecurityEventCategory.SECURITY_INITIALIZATION as unknown,
     severity: SecurityEventSeverity.INFO,
     message: 'Security middleware initialization started',
     timestamp: Date.now(),
@@ -88,7 +88,7 @@ export function applySecurityMiddleware(app: Express) {
     
     // Log successful initialization
     securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.SECURITY_INITIALIZATION as any,
+      category: SecurityEventCategory.SECURITY_INITIALIZATION as unknown,
       severity: SecurityEventSeverity.INFO,
       message: 'Security middleware initialization completed successfully',
       timestamp: Date.now(),
@@ -109,7 +109,7 @@ export function applySecurityMiddleware(app: Express) {
   } catch (error) {
     // Log initialization failure
     securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.SECURITY_ERROR as any,
+      category: SecurityEventCategory.SECURITY_ERROR as unknown,
       severity: SecurityEventSeverity.ERROR,
       message: 'Security middleware initialization failed',
       timestamp: Date.now(),
@@ -162,7 +162,7 @@ export function createCustomSecurityMiddleware(options: {
     if (enableBlockchainLogging) {
       // Log request start
       securityBlockchain.addSecurityEvent({
-        category: SecurityEventCategory.REQUEST as any,
+        category: SecurityEventCategory.REQUEST as unknown,
         severity: SecurityEventSeverity.INFO,
         message: 'Request received',
         timestamp: Date.now(),
@@ -179,9 +179,9 @@ export function createCustomSecurityMiddleware(options: {
       
       // Capture response for logging
       const originalEnd = res.end;
-      res.end = function(...args: any[]) {
+      res.end = function(...args: unknown[]) {
         securityBlockchain.addSecurityEvent({
-          category: SecurityEventCategory.REQUEST as any,
+          category: SecurityEventCategory.REQUEST as unknown,
           severity: SecurityEventSeverity.INFO,
           message: 'Request completed',
           timestamp: Date.now(),
@@ -243,7 +243,7 @@ export function createCustomSecurityMiddleware(options: {
             }
             
             securityBlockchain.addSecurityEvent({
-              category: category as any,
+              category: category as unknown,
               severity: severity,
               message: 'ML anomaly detection triggered',
               timestamp: Date.now(),
@@ -295,7 +295,7 @@ export function createCustomSecurityMiddleware(options: {
           
           if (result.threatDetected) {
             securityBlockchain.addSecurityEvent({
-              category: SecurityEventCategory.THREAT_DETECTED as any,
+              category: SecurityEventCategory.THREAT_DETECTED as unknown,
               severity: SecurityEventSeverity.HIGH,
               message: 'Runtime protection detected threat',
               timestamp: Date.now(),
@@ -433,7 +433,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
   // Create secure route methods
   const createSecureRoute = (method: 'get' | 'post' | 'put' | 'patch' | 'delete') => {
     return (path: string, handler: SecureRouteHandler, options: RouteOptions = {}) => {
-      const middlewares: any[] = [];
+      const middlewares: unknown[] = [];
       
       // Apply authentication if required
       if (authenticate) {
@@ -548,7 +548,7 @@ export function createAdminRouter(): SecureRouter {
   // Admin role check middleware
   const adminCheck = (req: Request, res: Response, next: NextFunction) => {
     // In a real app, this would check if user has admin role
-    if (req.user && (req.user as any).role === 'admin') {
+    if (req.user && (req.user as unknown).role === 'admin') {
       next();
     } else {
       // Log unauthorized access attempt
@@ -560,7 +560,7 @@ export function createAdminRouter(): SecureRouter {
         metadata: {
           path: req.path,
           method: req.method,
-          userId: req.user ? (req.user as any).id : null,
+          userId: req.user ? (req.user as unknown).id : null,
           ip: req.ip
         }
       }).catch(err => {

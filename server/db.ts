@@ -67,16 +67,16 @@ let isConnectionDown = false;
 let reconnectAttempts = 0;
 
 // Enhanced error handler for the pool
-pool.on('error', async (err: any) => {
+pool.on('error', async (err: unknown) => {
   console.error('Database pool error:', err);
   
   // Handle specific Postgres error codes
-  if (err.code === '57P01') { // Admin shutdown or connection timeout
+  if ((err as any).code === '57P01') { // Admin shutdown or connection timeout
     console.warn('Database connection terminated. This is usually temporary.');
     isConnectionDown = true;
     reconnectAttempts = 0;
     await attemptReconnect();
-  } else if (err.code === '08006' || err.code === '08001' || err.code === '08004') { // Connection failure errors
+  } else if ((err as any).code === '08006' || (err as any).code === '08001' || (err as any).code === '08004') { // Connection failure errors
     console.warn('Database connection failure. Will attempt to reconnect.');
     isConnectionDown = true;
     reconnectAttempts = 0;

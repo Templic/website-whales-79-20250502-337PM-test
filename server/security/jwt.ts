@@ -176,7 +176,7 @@ export function verifyRefreshToken(token: string): jwt.JwtPayload | null {
 export function revokeToken(token: string): boolean {
   try {
     // Try both secrets since we don't know which type of token it is
-    let decoded: any;
+    let decoded: unknown;
     
     try {
       decoded = jwt.decode(token);

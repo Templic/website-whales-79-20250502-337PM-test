@@ -46,7 +46,7 @@ export interface SQLInjectionPreventionConfig {
  * Database connection interface
  */
 interface DatabaseConnection {
-  query: (sql: string, params?: any[]) => Promise<any>;
+  query: (sql: string, params?: unknown[]) => Promise<unknown>;
 }
 
 /**
@@ -82,7 +82,7 @@ export class SQLInjectionPrevention {
     // Log initialization
     securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
-      category: SecurityEventCategory.SECURITY_INITIALIZATION as any,
+      category: SecurityEventCategory.SECURITY_INITIALIZATION as unknown,
       message: 'SQL Injection Prevention System initialized',
       metadata: {
         config: this.config
@@ -210,7 +210,7 @@ export class SQLInjectionPrevention {
     // Log the security scan
     securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
-      category: SecurityEventCategory.SECURITY_SCAN as any,
+      category: SecurityEventCategory.SECURITY_SCAN as unknown,
       message: 'Database security scan completed',
       metadata: {
         timestamp: new Date().toISOString(),

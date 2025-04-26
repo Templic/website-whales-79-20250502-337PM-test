@@ -85,7 +85,7 @@ export class UnifiedQuantumSecurity {
       }
       
       return keyPair;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Key generation failed', {
         algorithm,
         keySize,
@@ -120,7 +120,7 @@ export class UnifiedQuantumSecurity {
       );
       
       return vss;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Key distribution failed', {
         algorithm: keyPair.algorithm,
         totalShares,
@@ -150,7 +150,7 @@ export class UnifiedQuantumSecurity {
       const privateKey = verifiableSecretSharing.reconstructSecret(shares: any, threshold: any);
       
       return privateKey;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Key reconstruction failed', {
         sharesProvided: shares.length,
         threshold,
@@ -205,7 +205,7 @@ export class UnifiedQuantumSecurity {
       }
       
       return encryptionResult;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Encryption failed', {
         algorithm,
         dataLength: data?.length || 0,
@@ -259,7 +259,7 @@ export class UnifiedQuantumSecurity {
       }
       
       return decryptedData;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Decryption failed', {
         algorithm: encryptionResult?.algorithm,
         ciphertextLength: encryptionResult?.ciphertext?.length || 0,
@@ -306,7 +306,7 @@ export class UnifiedQuantumSecurity {
         quantumSignature,
         forwardSecureSignature
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Signing failed', {
         algorithm,
         dataLength: data?.length || 0,
@@ -366,7 +366,7 @@ export class UnifiedQuantumSecurity {
         isQuantumValid,
         isForwardSecureValid
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Verification failed', {
         algorithm: signatureResult?.algorithm,
         messageLength: signatureResult?.message?.length || 0,
@@ -396,7 +396,7 @@ export class UnifiedQuantumSecurity {
       const proof = zeroKnowledgeProof.createRangeProof(value: any, min: any, max: any);
       
       return proof;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Range proof creation failed', {
         range: `[${min}, ${max}]`,
         error: (error as Error).message,
@@ -424,7 +424,7 @@ export class UnifiedQuantumSecurity {
       const isValid = zeroKnowledgeProof.verifyRangeProof(proof: any, min: any, max: any);
       
       return isValid;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Range proof verification failed', {
         range: `[${min}, ${max}]`,
         error: (error as Error).message,
@@ -450,7 +450,7 @@ export class UnifiedQuantumSecurity {
       const keyPair = forwardSecureSignature.generateKeyPair(periods: any);
       
       return keyPair;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Forward-secure key generation failed', {
         periods,
         error: (error as Error).message,
@@ -477,7 +477,7 @@ export class UnifiedQuantumSecurity {
       const updatedKeys = forwardSecureSignature.updateKey(privateKeys: any, currentPeriod: any);
       
       return updatedKeys;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Forward-secure key update failed', {
         currentPeriod,
         error: (error as Error).message,
@@ -591,7 +591,7 @@ export class UnifiedQuantumSecurity {
         },
         rangeProof
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Transaction processing failed', {
         transactionId: transaction.id,
         error: (error as Error).message,

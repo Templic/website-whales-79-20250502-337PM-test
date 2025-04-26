@@ -23,7 +23,7 @@ class Logger {
   /**
    * Format a log message with optional timestamp and color
    */
-  private formatMessage(level: LogLevel, message: string, ...args: any[]): string {
+  private formatMessage(level: LogLevel, message: string, ...args: unknown[]): string {
     let formattedMessage = message;
     
     // Add timestamp if enabled
@@ -54,28 +54,28 @@ class Logger {
   /**
    * Debug level logging (verbose information for debugging)
    */
-  debug(message: string, ...args: any[]): void {
+  debug(message: string, ...args: unknown[]): void {
     console.debug(this.formatMessage('debug', message), ...args);
   }
 
   /**
    * Info level logging (general information about application operation)
    */
-  info(message: string, ...args: any[]): void {
+  info(message: string, ...args: unknown[]): void {
     console.info(this.formatMessage('info', message), ...args);
   }
 
   /**
    * Warning level logging (potential issues that don't prevent operation)
    */
-  warn(message: string, ...args: any[]): void {
+  warn(message: string, ...args: unknown[]): void {
     console.warn(this.formatMessage('warn', message), ...args);
   }
 
   /**
    * Error level logging (errors that may prevent proper operation)
    */
-  error(message: string, ...args: any[]): void {
+  error(message: string, ...args: unknown[]): void {
     console.error(this.formatMessage('error', message), ...args);
   }
 }

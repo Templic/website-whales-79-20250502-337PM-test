@@ -26,7 +26,7 @@ const dbMetrics = {
     query: string;
     duration: number;
     timestamp: Date;
-    params?: any[];
+    params?: unknown[];
   }>,
   averageQueryTime: 0,
   queryTimes: [] as number[],
@@ -47,9 +47,9 @@ const dbMetrics = {
  * @returns Query results
  */
 export async function memoizedQuery<T = any>(
-  db: NodePgDatabase<any>,
+  db: NodePgDatabase<unknown>,
   query: SQL<unknown>,
-  params?: any[],
+  params?: unknown[],
   options?: {
     ttl?: number;
     bypassCache?: boolean;
@@ -110,7 +110,7 @@ export async function memoizedQuery<T = any>(
  * @param duration Query execution time in ms
  * @param params Optional query parameters
  */
-function trackQueryPerformance(query: string, duration: number, params?: any[]): void {
+function trackQueryPerformance(query: string, duration: number, params?: unknown[]): void {
   // Add to query times
   dbMetrics.queryTimes.push(duration);
   
@@ -235,7 +235,7 @@ export function resetDbMetrics() {
  * @returns Results of the operation
  */
 export async function analyzeDb(
-  db: NodePgDatabase<any>,
+  db: NodePgDatabase<unknown>,
   tables?: string[]
 ): Promise<{ analyzed: string[]; skipped: string[]; error?: Error }> {
   const analyzed: string[] = [];
@@ -270,7 +270,7 @@ export async function analyzeDb(
  * @returns Results of the operation
  */
 export async function vacuumDb(
-  db: NodePgDatabase<any>,
+  db: NodePgDatabase<unknown>,
   tables?: string[],
   full: boolean = false
 ): Promise<{ vacuumed: string[]; skipped: string[]; error?: Error }> {
@@ -312,7 +312,7 @@ export async function vacuumDb(
  * @returns Analysis results
  */
 export async function analyzeIndexNeeds(
-  db: NodePgDatabase<any>
+  db: NodePgDatabase<unknown>
 ): Promise<{
   missingIndexes: Array<{ table: string; column: string; benefit: number }>;
   unusedIndexes: Array<{ table: string; index: string; usage: number }>;
@@ -363,12 +363,12 @@ export async function analyzeIndexNeeds(
     ]);
     
     return {
-      missingIndexes: (missingResults as any[]).map(row => ({
+      missingIndexes: (missingResults as unknown[]).map(row => ({
         table: row.table,
         column: row.column,
         benefit: parseFloat(row.potentialbenefit),
       })),
-      unusedIndexes: (unusedResults as any[]).map(row => ({
+      unusedIndexes: (unusedResults as unknown[]).map(row => ({
         table: row.table,
         index: row.index,
         usage: parseInt(row.usage, 10),
@@ -386,7 +386,7 @@ export async function analyzeIndexNeeds(
  * @returns Table size information
  */
 export async function getTableSizes(
-  db: NodePgDatabase<any>
+  db: NodePgDatabase<unknown>
 ): Promise<Array<{
   table: string;
   size: string;
@@ -410,7 +410,7 @@ export async function getTableSizes(
   try {
     const results = await db.execute(query);
     
-    return (results as any[]).map(row => ({
+    return (results as unknown[]).map(row => ({
       table: row.table,
       size: row.size,
       totalSize: row.total_size,
@@ -428,7 +428,7 @@ export async function getTableSizes(
  * @returns Transaction statistics
  */
 export async function getTransactionStats(
-  db: NodePgDatabase<any>
+  db: NodePgDatabase<unknown>
 ): Promise<{
   activeTransactions: number;
   totalTransactions: number;
@@ -456,7 +456,7 @@ export async function getTransactionStats(
     let idleInTransactions = 0;
     let longestTransaction = 0;
     
-    (results as any[]).forEach(row => {
+    (results as unknown[]).forEach(row => {
       if (row.state === 'active') {
         activeTransactions = parseInt(row.count, 10);
       } else if (row.state === 'idle in transaction') {

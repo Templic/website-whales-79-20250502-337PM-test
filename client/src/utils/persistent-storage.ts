@@ -97,10 +97,10 @@ interface GetOptions {
  */
 export class PersistentStorage {
   private config: StorageConfig;
-  private memoryStorage: Map<string, StorageItem<any>>;
+  private memoryStorage: Map<string, StorageItem<unknown>>;
   private availableEngines: StorageEngine[];
   private totalSize: number;
-  private schemas: Map<string, z.ZodType<any>>;
+  private schemas: Map<string, z.ZodType<unknown>>;
   
   /**
    * Initialize persistent storage with configuration
@@ -440,7 +440,7 @@ export class PersistentStorage {
           try {
             const itemJson = localStorage.getItem(key);
             if (itemJson) {
-              const item: StorageItem<any> = JSON.parse(itemJson);
+              const item: StorageItem<unknown> = JSON.parse(itemJson);
               if (item.meta.expiresAt > 0 && item.meta.expiresAt < now) {
                 localStorage.removeItem(key);
                 removedCount++;

@@ -68,7 +68,7 @@ authRouter.get('/mfa', (req, res) => {
   
   // Initialize MFA verification if not already done
   if (!req.session.mfa) {
-    initializeMFAVerification(req, (req.user as any).id);
+    initializeMFAVerification(req, (req.user as unknown).id);
   }
   
   res.render('auth/mfa-verify', {

@@ -44,7 +44,7 @@ export function applySecurityMiddleware(app: Express) {
         }));
         app.set('helmet-applied', true);
         console.log('[SECURITY] Helmet middleware applied');
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.warn('[SECURITY] Helmet is not installed. Consider installing it for additional security headers.');
       }
     }
@@ -81,7 +81,7 @@ export function applySecurityMiddleware(app: Express) {
         
         app.set('rate-limit-applied', true);
         console.log('[SECURITY] Rate limiting middleware applied');
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.warn('[SECURITY] express-rate-limit is not installed. Consider installing it for rate limiting.');
       }
     }
@@ -106,7 +106,7 @@ export function applySecurityMiddleware(app: Express) {
     });
     
     console.log('[SECURITY] Comprehensive security middleware applied successfully');
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log initialization failure
     securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.SECURITY_ERROR as any,
@@ -278,7 +278,7 @@ export function createCustomSecurityMiddleware(options: {
         }).catch(err => {
           console.error('[SECURITY ERROR] Error in anomaly detection:', err);
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.warn('[SECURITY] ML anomaly detection module not available:', error);
       }
     }
@@ -314,7 +314,7 @@ export function createCustomSecurityMiddleware(options: {
         }).catch(err => {
           console.error('[SECURITY ERROR] Error in runtime protection:', err);
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.warn('[SECURITY] Runtime protection module not available');
       }
     }
@@ -392,7 +392,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
         });
         
         next();
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Log validation error
         securityBlockchain.addSecurityEvent({
           category: SecurityEventCategory.VALIDATION,
@@ -485,7 +485,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
           }
           
           middlewares.push(limiter: any);
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.warn('[SECURITY] express-rate-limit is not installed. Rate limiting disabled.');
         }
       }
@@ -501,7 +501,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
       router[method](path, ...middlewares, async (req: Request, res: Response, next: NextFunction) => {
         try {
           await handler(req: any, res: any);
-        } catch (error: any) {
+        } catch (error: unknown) {
           // Log error
           securityBlockchain.addSecurityEvent({
             category: SecurityEventCategory.API_ERROR,

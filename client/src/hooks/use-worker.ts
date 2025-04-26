@@ -139,7 +139,7 @@ export function useMatrixOperation(
  * @returns Hook API with loading state and execution function
  */
 export function useDataProcessing<T = any>(
-  initialData?: any[],
+  initialData?: unknown[],
   initialTransformations?: string[]
 ) {
   const [loading, setLoading] = useState(false);
@@ -150,7 +150,7 @@ export function useDataProcessing<T = any>(
 
   // Execute data processing
   const processDataWithWorker = useCallback(async (
-    data: any[],
+    data: unknown[],
     transformations: string[]
   ) => {
     setLoading(true);

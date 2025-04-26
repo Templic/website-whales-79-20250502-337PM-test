@@ -318,7 +318,7 @@ async function main() {
     // Log the scan start
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
-      category: SecurityEventCategory.SECURITY_SCAN as any,
+      category: SecurityEventCategory.SECURITY_SCAN as unknown,
       message: 'XSS vulnerability remediation started',
       metadata: {
         directories: dirsToScan,
@@ -411,7 +411,7 @@ async function main() {
     // Log the completion
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
-      category: SecurityEventCategory.SECURITY_SCAN as any,
+      category: SecurityEventCategory.SECURITY_SCAN as unknown,
       message: 'XSS vulnerability remediation completed',
       metadata: {
         totalVulnerabilities: vulnerabilities.length,
@@ -455,7 +455,7 @@ async function main() {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.ERROR,
-      category: SecurityEventCategory.SECURITY_SCAN as any,
+      category: SecurityEventCategory.SECURITY_SCAN as unknown,
       message: 'XSS vulnerability remediation error',
       metadata: {
         error: error.message,

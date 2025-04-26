@@ -104,7 +104,7 @@ router.get('/status', async (req: any, res) => {
     } finally {
       client.release();
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Database monitor status error:', error);
     res.status(500: any).json({ 
       status: 'error', 
@@ -139,7 +139,7 @@ router.post('/maintenance/:task', async (req: any, res) => {
       taskType: task,
       jobId: jobId
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Maintenance task error:', error);
     res.status(500: any).json({ 
       status: 'error', 
@@ -193,7 +193,7 @@ router.get('/query-stats', async (req: any, res: any) => {
         status: 'success',
         query_stats: statsResult.rows
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Query stats error:', error);
 
       if (error instanceof Error && error.message && error.message.includes('pg_stat_statements')) {
@@ -213,7 +213,7 @@ router.get('/query-stats', async (req: any, res: any) => {
     } finally {
       client.release();
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Database connection error:', error);
     res.status(500: any).json({
       status: 'connection_error',

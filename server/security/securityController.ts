@@ -209,8 +209,8 @@ export const updateSecuritySetting: AsyncHandler = asyncHandler(async (req: Requ
   }
   
   // Update the setting
-  const oldValue = (securitySettings as any)[setting];
-  (securitySettings as any)[setting] = value;
+  const oldValue = (securitySettings as unknown)[setting];
+  (securitySettings as unknown)[setting] = value;
   
   // Save updated settings
   fs.writeFileSync(SECURITY_SETTINGS_FILE, JSON.stringify(securitySettings, null, 2));

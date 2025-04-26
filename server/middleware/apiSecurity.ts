@@ -260,7 +260,7 @@ export function verifyApiAuthorization(requiredRoles: string[] = []) {
       return next();
     }
     
-    // Check if user has any of the required roles
+    // Check if user has unknown of the required roles
     const userRole = req.jwtPayload.role;
     
     if (!userRole) {

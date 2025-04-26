@@ -94,7 +94,7 @@ class MemoryTokenStore implements TokenStore {
  * Uses Redis for distributed token storage in multi-server environments
  */
 class RedisTokenStore implements TokenStore {
-  private client: any; // Redis client
+  private client: unknown; // Redis client
   private prefix: string = 'csrf:token:';
   private isConnected: boolean = false;
   

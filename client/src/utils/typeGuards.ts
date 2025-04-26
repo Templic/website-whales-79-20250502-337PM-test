@@ -22,7 +22,7 @@ import {
  * @param value Any value to check
  * @returns True if value is a Product
  */
-export function isProduct(value: any): value is Product {
+export function isProduct(value: unknown): value is Product {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -39,7 +39,7 @@ export function isProduct(value: any): value is Product {
  * @param value Any value to check
  * @returns True if value is a User
  */
-export function isUser(value: any): value is User {
+export function isUser(value: unknown): value is User {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -57,7 +57,7 @@ export function isUser(value: any): value is User {
  * @param value Any value to check
  * @returns True if value is a CartItem
  */
-export function isCartItem(value: any): value is CartItem {
+export function isCartItem(value: unknown): value is CartItem {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -74,7 +74,7 @@ export function isCartItem(value: any): value is CartItem {
  * @param value Any value to check
  * @returns True if value is an Order
  */
-export function isOrder(value: any): value is Order {
+export function isOrder(value: unknown): value is Order {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -94,7 +94,7 @@ export function isOrder(value: any): value is Order {
  * @param value Any value to check
  * @returns True if value is an Address
  */
-export function isAddress(value: any): value is Address {
+export function isAddress(value: unknown): value is Address {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -114,7 +114,7 @@ export function isAddress(value: any): value is Address {
  * @param value Any value to check
  * @returns True if value is a BlogPost
  */
-export function isBlogPost(value: any): value is BlogPost {
+export function isBlogPost(value: unknown): value is BlogPost {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -136,7 +136,7 @@ export function isBlogPost(value: any): value is BlogPost {
  * @param value Any value to check
  * @returns True if value is a Track
  */
-export function isTrack(value: any): value is Track {
+export function isTrack(value: unknown): value is Track {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -154,7 +154,7 @@ export function isTrack(value: any): value is Track {
  * @param value Any value to check
  * @returns True if value is an Album
  */
-export function isAlbum(value: any): value is Album {
+export function isAlbum(value: unknown): value is Album {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -174,7 +174,7 @@ export function isAlbum(value: any): value is Album {
  * @param value Any value to check
  * @returns True if value is a TourDate
  */
-export function isTourDate(value: any): value is TourDate {
+export function isTourDate(value: unknown): value is TourDate {
   return (
     value !== null &&
     typeof value === 'object' &&

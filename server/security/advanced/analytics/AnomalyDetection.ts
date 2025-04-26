@@ -218,7 +218,7 @@ export const defaultRequestFeatureExtractor: FeatureExtractor = (req: Request) =
   features.body_size = req.body ? JSON.stringify(req.body).length : 0;
   
   // Authentication
-  features.is_authenticated = (req as any).user ? 1 : 0;
+  features.is_authenticated = (req as unknown).user ? 1 : 0;
   
   // Request timing
   const hour = new Date().getHours();
@@ -236,25 +236,25 @@ export const userBehaviorFeatureExtractor: FeatureExtractor = (req: Request, con
   const features: Record<string, number> = {};
   
   // User ID
-  const user = (req as any).user;
+  const user = (req as unknown).user;
   const userId = user?.id || 'anonymous';
   features.is_anonymous = userId === 'anonymous' ? 1 : 0;
   
   // Time since last activity
-  features.time_since_last_activity = (req as any).timeSinceLastActivity || 0;
+  features.time_since_last_activity = (req as unknown).timeSinceLastActivity || 0;
   
   // Session features
-  features.session_age = (req as any).sessionAge || 0;
-  features.requests_in_session = (req as any).requestsInSession || 0;
+  features.session_age = (req as unknown).sessionAge || 0;
+  features.requests_in_session = (req as unknown).requestsInSession || 0;
   
   // IP change
-  features.ip_changed = (req as any).ipChanged ? 1 : 0;
+  features.ip_changed = (req as unknown).ipChanged ? 1 : 0;
   
   // User agent change
-  features.ua_changed = (req as any).uaChanged ? 1 : 0;
+  features.ua_changed = (req as unknown).uaChanged ? 1 : 0;
   
   // Location change
-  features.location_changed = (req as any).locationChanged ? 1 : 0;
+  features.location_changed = (req as unknown).locationChanged ? 1 : 0;
   
   // Authentication strength
   if (context?.getAuthentication()) {
@@ -296,15 +296,15 @@ export const networkPatternFeatureExtractor: FeatureExtractor = (req: Request) =
     ip.startsWith('192.168.') ? 1 : 0;
   
   // Request rate features (if available)
-  features.requests_per_minute = (req as any).requestsPerMinute || 0;
-  features.requests_per_hour = (req as any).requestsPerHour || 0;
-  features.api_requests_per_minute = (req as any).apiRequestsPerMinute || 0;
+  features.requests_per_minute = (req as unknown).requestsPerMinute || 0;
+  features.requests_per_hour = (req as unknown).requestsPerHour || 0;
+  features.api_requests_per_minute = (req as unknown).apiRequestsPerMinute || 0;
   
   // Error rate
-  features.error_rate = (req as any).errorRate || 0;
+  features.error_rate = (req as unknown).errorRate || 0;
   
   // Concurrent sessions
-  features.concurrent_sessions = (req as any).concurrentSessions || 0;
+  features.concurrent_sessions = (req as unknown).concurrentSessions || 0;
   
   return features;
 };
@@ -863,7 +863,7 @@ export class AnomalyDetection {
     const normalizedPath = this.normalizeUrlPath(req.originalUrl || req.url);
     
     // Calculate request frequency patterns (if available)
-    const requestsPerMinute = (req as any).requestsPerMinute || 0;
+    const requestsPerMinute = (req as unknown).requestsPerMinute || 0;
     
     // Detect high-frequency API requests
     patterns.high_frequency_requests = requestsPerMinute > 30;
@@ -872,16 +872,16 @@ export class AnomalyDetection {
     patterns.potential_scraping = requestsPerMinute > 20 && req.method === 'GET';
     
     // Detect API enumeration/scanning
-    patterns.potential_enumeration = (req as any).distinctEndpointsPerMinute > 10;
+    patterns.potential_enumeration = (req as unknown).distinctEndpointsPerMinute > 10;
     
     // Detect distributed requests 
-    patterns.distributed_requests = (req as any).distinctIpsPerMinute > 3;
+    patterns.distributed_requests = (req as unknown).distinctIpsPerMinute > 3;
     
     // Detect sequential ID access
-    patterns.sequential_id_access = (req as any).sequentialIdAccess || false;
+    patterns.sequential_id_access = (req as unknown).sequentialIdAccess || false;
     
     // Detect credential stuffing
-    patterns.credential_stuffing = (req as any).failedLoginsPerMinute > 5;
+    patterns.credential_stuffing = (req as unknown).failedLoginsPerMinute > 5;
     
     return patterns;
   }

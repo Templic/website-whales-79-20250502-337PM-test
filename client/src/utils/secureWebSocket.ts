@@ -17,7 +17,7 @@
 // Types for WebSocket messages
 export interface WebSocketMessage {
   type: string;
-  payload: any;
+  payload: unknown;
   timestamp?: number;
   csrfToken?: string;
 }

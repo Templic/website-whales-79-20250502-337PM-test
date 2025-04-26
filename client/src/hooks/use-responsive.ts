@@ -183,7 +183,7 @@ export function useDeviceCapabilities(): {
       
       // Detect memory capabilities
       let memoryLevel: DeviceCapabilityLevel = 'medium';
-      const deviceMemory = (navigator as any).deviceMemory || 4; // in GB, defaults to 4
+      const deviceMemory = (navigator as unknown).deviceMemory || 4; // in GB, defaults to 4
       
       if (deviceMemory <= capabilityThresholds.memory.medium) {
         memoryLevel = 'low';
@@ -195,7 +195,7 @@ export function useDeviceCapabilities(): {
       
       // Detect connection capabilities
       let connectionLevel: DeviceCapabilityLevel = 'medium';
-      const connection = (navigator as any).connection;
+      const connection = (navigator as unknown).connection;
       let connectionScore = 1; // Default to 3G
       
       if (connection) {
@@ -311,7 +311,7 @@ export function useDeviceCapabilities(): {
     window.addEventListener('resize', detectCapabilities);
     
     // Re-detect on connection change if available
-    const connection = (navigator as any).connection;
+    const connection = (navigator as unknown).connection;
     if (connection) {
       connection.addEventListener('change', detectCapabilities);
     }

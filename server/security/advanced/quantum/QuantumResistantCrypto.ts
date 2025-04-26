@@ -98,7 +98,7 @@ export async function generateKeyPair(options: QRCOptions = {}): Promise<KeyPair
   try {
     // Log key pair generation
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Generating quantum-resistant key pair (${algorithm}, ${strength})`,
       timestamp: Date.now(),
@@ -130,7 +130,7 @@ export async function generateKeyPair(options: QRCOptions = {}): Promise<KeyPair
     
     // Log success
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Successfully generated quantum-resistant key pair (${algorithm}, ${strength})`,
       timestamp: Date.now(),
@@ -145,7 +145,7 @@ export async function generateKeyPair(options: QRCOptions = {}): Promise<KeyPair
   } catch (error) {
     // Log error
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.ERROR,
       message: `Failed to generate quantum-resistant key pair: ${error.message}`,
       timestamp: Date.now(),
@@ -184,7 +184,7 @@ export async function encrypt(
     
     // Log encryption attempt
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Encrypting data using quantum-resistant encryption (${algorithm}, ${strength})`,
       timestamp: Date.now(),
@@ -227,7 +227,7 @@ export async function encrypt(
     
     // Log success
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Successfully encrypted data using quantum-resistant encryption (${algorithm}, ${strength})`,
       timestamp: Date.now(),
@@ -243,7 +243,7 @@ export async function encrypt(
   } catch (error) {
     // Log error
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.ERROR,
       message: `Failed to encrypt data: ${error.message}`,
       timestamp: Date.now(),
@@ -279,7 +279,7 @@ export async function decrypt(
   try {
     // Log decryption attempt
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Decrypting data using quantum-resistant encryption (${algorithm}, ${strength})`,
       timestamp: Date.now(),
@@ -316,7 +316,7 @@ export async function decrypt(
     
     // Log success
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Successfully decrypted data using quantum-resistant encryption (${algorithm}, ${strength})`,
       timestamp: Date.now(),
@@ -332,7 +332,7 @@ export async function decrypt(
   } catch (error) {
     // Log error
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.ERROR,
       message: `Failed to decrypt data: ${error.message}`,
       timestamp: Date.now(),
@@ -371,7 +371,7 @@ export async function sign(
     
     // Log signing attempt
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Signing data using quantum-resistant algorithm (${algorithm}, ${strength})`,
       timestamp: Date.now(),
@@ -405,7 +405,7 @@ export async function sign(
     
     // Log success
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Successfully signed data using quantum-resistant algorithm (${algorithm}, ${strength})`,
       timestamp: Date.now(),
@@ -424,7 +424,7 @@ export async function sign(
   } catch (error) {
     // Log error
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.ERROR,
       message: `Failed to sign data: ${error.message}`,
       timestamp: Date.now(),
@@ -468,7 +468,7 @@ export async function verify(
     
     // Log verification attempt
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Verifying signature using quantum-resistant algorithm (${algorithm}, ${strength})`,
       timestamp: Date.now(),
@@ -507,7 +507,7 @@ export async function verify(
     
     // Log result
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: isValid ? SecurityEventSeverity.INFO : SecurityEventSeverity.WARNING,
       message: `Signature verification ${isValid ? 'succeeded' : 'failed'} (${algorithm}, ${strength})`,
       timestamp: Date.now(),
@@ -524,7 +524,7 @@ export async function verify(
   } catch (error) {
     // Log error
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.ERROR,
       message: `Failed to verify signature: ${error.message}`,
       timestamp: Date.now(),
@@ -564,7 +564,7 @@ export async function hash(
     
     // Log hashing attempt
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Hashing data using quantum-resistant function (${strength})`,
       timestamp: Date.now(),
@@ -588,7 +588,7 @@ export async function hash(
     
     // Log success
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.INFO,
       message: `Successfully hashed data using quantum-resistant function (${strength})`,
       timestamp: Date.now(),
@@ -604,7 +604,7 @@ export async function hash(
   } catch (error) {
     // Log error
     await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY as any,
+      category: SecurityEventCategory.CRYPTOGRAPHY as unknown,
       severity: SecurityEventSeverity.ERROR,
       message: `Failed to hash data: ${error.message}`,
       timestamp: Date.now(),

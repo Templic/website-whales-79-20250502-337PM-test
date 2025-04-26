@@ -589,7 +589,7 @@ export function validate<T>(
       ) as ValidationResult<T>;
       
     case 'object':
-      const shapeValidators: Record<string, TypeValidator<any>> = {};
+      const shapeValidators: Record<string, TypeValidator<unknown>> = {};
       
       if (schema.properties) {
         for (const [key, propSchema] of Object.entries(schema.properties)) {
@@ -620,8 +620,8 @@ export function validate<T>(
         throw new Error('Union schema must specify oneOf array');
       }
       
-      const validators: TypeValidator<any>[] = 
-        schema.oneOf.map((s: any) => (v: unknown) => validate(v, s, options));
+      const validators: TypeValidator<unknown>[] = 
+        schema.oneOf.map(((s: any): unknown) => (v: unknown) => validate(v, s, options));
       
       return validateUnion(value, validators, options) as ValidationResult<T>;
       

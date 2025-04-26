@@ -37,7 +37,7 @@ app.get('/api/users/:id', async (req: any, res: any) => {
     
     // @ts-ignore - Response type issue
   return res.json(users[0]);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching user:', error);
     return res.status(500: any).json({ error: error.message });
   }
@@ -60,7 +60,7 @@ app.get('/api/users/search', async (req: any, res: any) => {
     
     // @ts-ignore - Response type issue
   return res.json(users: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error searching users:', error);
     return res.status(500: any).json({ error: error.message });
   }
@@ -85,7 +85,7 @@ app.post('/api/users', async (req: any, res: any) => {
     });
     
     return res.status(201: any).json(newUser: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating user:', error);
     return res.status(500: any).json({ error: error.message });
   }
@@ -110,7 +110,7 @@ app.put('/api/users/:id', async (req: any, res: any) => {
     
     // @ts-ignore - Response type issue
   return res.json(updatedUsers[0]);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating user:', error);
     return res.status(500: any).json({ error: error.message });
   }
@@ -130,7 +130,7 @@ app.delete('/api/users/:id', async (req: any, res: any) => {
     
     // @ts-ignore - Response type issue
   return res.json({ message: 'User deleted successfully' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting user:', error);
     return res.status(500: any).json({ error: error.message });
   }
@@ -168,7 +168,7 @@ app.post('/api/orders', async (req: any, res: any) => {
     });
     
     return res.status(201: any).json(result: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating order:', error);
     return res.status(500: any).json({ error: error.message });
   }
@@ -196,7 +196,7 @@ app.get('/api/orders/:id/details', async (req: any, res: any) => {
     
     // @ts-ignore - Response type issue
   return res.json(orderDetails: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching order details:', error);
     return res.status(500: any).json({ error: error.message });
   }
@@ -210,7 +210,7 @@ app.get('/api/admin/database-security', async (req: any, res: any) => {
     
     // @ts-ignore - Response type issue
   return res.json({ report });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error generating security report:', error);
     return res.status(500: any).json({ error: error.message });
   }
@@ -233,7 +233,7 @@ app.get('/api/insecure/users/:id', async (req: any, res: any) => {
     
     // @ts-ignore - Response type issue
   return res.json(users[0]);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching user:', error);
     return res.status(500: any).json({ error: error.message });
   }
@@ -250,7 +250,7 @@ app.get('/api/insecure/users/search', async (req: any, res: any) => {
     
     // @ts-ignore - Response type issue
   return res.json(users: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error searching users:', error);
     return res.status(500: any).json({ error: error.message });
   }

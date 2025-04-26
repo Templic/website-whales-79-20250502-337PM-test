@@ -150,7 +150,7 @@ export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'bod
       } else if (target === 'query') {
         req.query = validatedData;
       } else {
-        req.params = validatedData as any;
+        req.params = validatedData as unknown;
       }
       
       next();

@@ -130,8 +130,8 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   
   // Log error to security blockchain
   securityToolkit.logSecurityEvent(
-    'API_ERROR' as any,
-    'ERROR' as any,
+    'API_ERROR' as unknown,
+    'ERROR' as unknown,
     'API error occurred',
     {
       error: err.message,
