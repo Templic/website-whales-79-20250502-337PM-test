@@ -190,6 +190,182 @@ export const orderStatusEnum = pgEnum('order_status', [
   'refunded'
 ]);
 
+// ============== Content Management Tables ==============
+export const contentItems = pgTable('content_items', {
+  id: serial('id').primaryKey(),
+  key: varchar('key', { length: 255 }).notNull().unique(),
+  type: varchar('type', { length: 50 }).notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  content: text('content').notNull(),
+  page: varchar('page', { length: 100 }),
+  version: integer('version').notNull().default(1),
+  status: varchar('status', { length: 50 }).notNull().default('draft'),
+  createdBy: integer('created_by').references(() => users.id),
+  updatedBy: integer('updated_by').references(() => users.id),
+  publishedAt: timestamp('published_at'),
+  expiresAt: timestamp('expires_at'),
+  viewCount: integer('view_count').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  metadata: jsonb('metadata')
+});
+
+export const contentHistory = pgTable('content_history', {
+  id: serial('id').primaryKey(),
+  contentId: integer('content_id').notNull().references(() => contentItems.id),
+  version: integer('version').notNull(),
+  content: text('content').notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  createdBy: integer('created_by').references(() => users.id),
+  changeDescription: text('change_description'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  metadata: jsonb('metadata')
+});
+
+export const contentUsage = pgTable('content_usage', {
+  id: serial('id').primaryKey(),
+  contentId: integer('content_id').notNull().references(() => contentItems.id),
+  location: varchar('location', { length: 255 }).notNull(),
+  path: varchar('path', { length: 255 }).notNull(),
+  count: integer('count').notNull().default(1),
+  firstUsedAt: timestamp('first_used_at').notNull().defaultNow(),
+  lastUsedAt: timestamp('last_used_at').notNull().defaultNow(),
+  metadata: jsonb('metadata')
+});
+
+export const contentWorkflowHistory = pgTable('content_workflow_history', {
+  id: serial('id').primaryKey(),
+  contentId: integer('content_id').notNull().references(() => contentItems.id),
+  fromStatus: varchar('from_status', { length: 50 }).notNull(),
+  toStatus: varchar('to_status', { length: 50 }).notNull(),
+  performedBy: integer('performed_by').references(() => users.id),
+  reviewNotes: text('review_notes'),
+  performedAt: timestamp('performed_at').notNull().defaultNow(),
+  metadata: jsonb('metadata')
+});
+
+export const workflowNotifications = pgTable('workflow_notifications', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  type: text('type').notNull(),
+  contentId: integer('content_id').references(() => contentItems.id),
+  contentTitle: text('content_title'),
+  userId: integer('user_id').notNull().references(() => users.id),
+  isRead: boolean('is_read').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+export const mediaFiles = pgTable('media_files', {
+  id: serial('id').primaryKey(),
+  fileName: text('file_name').notNull(),
+  originalFileName: text('original_file_name').notNull(),
+  filePath: text('file_path').notNull(),
+  fileSize: integer('file_size').notNull(),
+  mimeType: text('mime_type').notNull(),
+  fileType: text('file_type').notNull(), // image, video, audio, document, etc.
+  userId: integer('user_id').references(() => users.id),
+  title: text('title'),
+  description: text('description'),
+  tags: text('tags').array(),
+  isPublic: boolean('is_public').default(true).notNull(),
+  uploadedAt: timestamp('uploaded_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  metadata: jsonb('metadata')
+});
+
+export const posts = pgTable('posts', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  slug: text('slug').notNull().unique(),
+  content: text('content').notNull(),
+  excerpt: text('excerpt'),
+  authorId: integer('author_id').references(() => users.id),
+  categoryId: integer('category_id'),
+  status: text('status').notNull().default('draft'),
+  featuredImage: text('featured_image'),
+  tags: text('tags').array(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  publishedAt: timestamp('published_at'),
+  metadata: jsonb('metadata')
+});
+
+export const categories = pgTable('categories', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull().unique(),
+  slug: text('slug').notNull().unique(),
+  description: text('description'),
+  parentId: integer('parent_id'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  metadata: jsonb('metadata')
+});
+
+export const comments = pgTable('comments', {
+  id: serial('id').primaryKey(),
+  postId: integer('post_id').notNull().references(() => posts.id),
+  parentId: integer('parent_id'),
+  userId: integer('user_id').references(() => users.id),
+  authorName: text('author_name'),
+  authorEmail: text('author_email'),
+  content: text('content').notNull(),
+  status: text('status').notNull().default('pending'), // pending, approved, spam, trash
+  isApproved: boolean('is_approved').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  metadata: jsonb('metadata')
+});
+
+export const contactMessages = pgTable('contact_messages', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  subject: text('subject'),
+  message: text('message').notNull(),
+  phone: text('phone'),
+  status: text('status').default('unread').notNull(), // unread, read, replied, archived
+  isRead: boolean('is_read').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  repliedAt: timestamp('replied_at'),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  metadata: jsonb('metadata')
+});
+
+export const subscribers = pgTable('subscribers', {
+  id: serial('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  name: text('name'),
+  status: text('status').default('active').notNull(), // active, unsubscribed, bounced, complained
+  confirmedAt: timestamp('confirmed_at'),
+  unsubscribedAt: timestamp('unsubscribed_at'),
+  source: text('source'), // form, import, api
+  interests: jsonb('interests'),
+  tags: jsonb('tags'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  metadata: jsonb('metadata')
+});
+
+export const newsletters = pgTable('newsletters', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  subject: text('subject').notNull(),
+  content: text('content').notNull(),
+  htmlContent: text('html_content'),
+  scheduledFor: timestamp('scheduled_for'),
+  sentAt: timestamp('sent_at'),
+  status: text('status').default('draft').notNull(), // draft, scheduled, sent, canceled
+  recipientCount: integer('recipient_count').default(0).notNull(),
+  openCount: integer('open_count').default(0).notNull(),
+  clickCount: integer('click_count').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdBy: integer('created_by').references(() => users.id),
+  metadata: jsonb('metadata')
+});
+
 // ============== E-commerce Tables ==============
 
 // Product Categories
@@ -318,6 +494,43 @@ export const coupons = pgTable('coupons', {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
+// Content Management Types
+export type ContentItem = typeof contentItems.$inferSelect;
+export type InsertContentItem = typeof contentItems.$inferInsert;
+
+export type ContentHistory = typeof contentHistory.$inferSelect;
+export type InsertContentHistory = typeof contentHistory.$inferInsert;
+
+export type ContentUsage = typeof contentUsage.$inferSelect;
+export type InsertContentUsage = typeof contentUsage.$inferInsert;
+
+export type ContentWorkflowHistory = typeof contentWorkflowHistory.$inferSelect;
+export type InsertContentWorkflowHistory = typeof contentWorkflowHistory.$inferInsert;
+
+export type WorkflowNotification = typeof workflowNotifications.$inferSelect;
+export type InsertWorkflowNotification = typeof workflowNotifications.$inferInsert;
+
+export type MediaFile = typeof mediaFiles.$inferSelect;
+export type InsertMediaFile = typeof mediaFiles.$inferInsert;
+
+export type Post = typeof posts.$inferSelect;
+export type InsertPost = typeof posts.$inferInsert;
+
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = typeof categories.$inferInsert;
+
+export type Comment = typeof comments.$inferSelect;
+export type InsertComment = typeof comments.$inferInsert;
+
+export type ContactMessage = typeof contactMessages.$inferSelect;
+export type InsertContactMessage = typeof contactMessages.$inferInsert;
+
+export type Newsletter = typeof newsletters.$inferSelect;
+export type InsertNewsletter = typeof newsletters.$inferInsert;
+
+export type Subscriber = typeof subscribers.$inferSelect;
+export type InsertSubscriber = typeof subscribers.$inferInsert;
+
 // Error Management Types
 export type TypeScriptError = typeof typescriptErrors.$inferSelect;
 export type InsertTypeScriptError = typeof typescriptErrors.$inferInsert;
@@ -360,6 +573,20 @@ export type InsertCoupon = typeof coupons.$inferInsert;
 // User Schemas
 export const insertUserSchema = createInsertSchema(users);
 
+// Content Management Schemas
+export const insertContentItemSchema = createInsertSchema(contentItems);
+export const insertContentHistorySchema = createInsertSchema(contentHistory);
+export const insertContentUsageSchema = createInsertSchema(contentUsage);
+export const insertContentWorkflowHistorySchema = createInsertSchema(contentWorkflowHistory);
+export const insertWorkflowNotificationSchema = createInsertSchema(workflowNotifications);
+export const insertMediaFileSchema = createInsertSchema(mediaFiles);
+export const insertPostSchema = createInsertSchema(posts);
+export const insertCategorySchema = createInsertSchema(categories);
+export const insertCommentSchema = createInsertSchema(comments);
+export const insertContactSchema = createInsertSchema(contactMessages);
+export const insertNewsletterSchema = createInsertSchema(newsletters);
+export const insertSubscriberSchema = createInsertSchema(subscribers);
+
 // Error Management Schemas
 export const insertTypeScriptErrorSchema = createInsertSchema(typescriptErrors);
 export const insertErrorPatternSchema = createInsertSchema(errorPatterns);
@@ -379,6 +606,18 @@ export const insertCouponSchema = createInsertSchema(coupons);
 // Export all schema elements
 export default {
   users,
+  contentItems,
+  contentHistory,
+  contentUsage,
+  contentWorkflowHistory,
+  workflowNotifications,
+  mediaFiles,
+  posts,
+  categories,
+  comments,
+  contactMessages,
+  newsletters,
+  subscribers,
   typescriptErrors,
   errorPatterns,
   errorFixes,

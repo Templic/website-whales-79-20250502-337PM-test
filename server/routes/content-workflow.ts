@@ -1,6 +1,6 @@
 import express from 'express';
 import { db } from '../db';
-import { contentItems, contentVersions, contentWorkflowHistory } from '../../shared/schema';
+import { contentItems, contentHistory, contentWorkflowHistory } from '../../shared/schema';
 import { eq, and, between, like, desc, asc, gte, lte, isNull, ne } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../middleware/authMiddleware';
 import { logger } from '../logger';
@@ -114,9 +114,9 @@ router.get('/content/:id', requireAuth, async (req, res) => {
     
     // Get content versions
     const versions = await db.select()
-      .from(contentVersions)
-      .where(eq(contentVersions.contentId, contentId))
-      .orderBy(desc(contentVersions.version));
+      .from(contentHistory)
+      .where(eq(contentHistory.contentId, contentId))
+      .orderBy(desc(contentHistory.version));
     
     // Get workflow history
     const workflowHistory = await db.select()
@@ -176,11 +176,12 @@ router.post('/content', requireAuth, async (req, res) => {
       .returning();
     
     // Create initial version
-    await db.insert(contentVersions)
+    await db.insert(contentHistory)
       .values({
         contentId: newContent.id,
         version: 1,
         content: content,
+        title: title,
         createdBy: userId,
         createdAt: new Date()
       });
@@ -267,11 +268,12 @@ router.put('/content/:id', requireAuth, async (req, res) => {
       .returning();
     
     // Create new version
-    await db.insert(contentVersions)
+    await db.insert(contentHistory)
       .values({
         contentId: contentId,
         version: newVersion,
         content: content || existingContent[0].content,
+        title: title || existingContent[0].title,
         createdBy: userId,
         createdAt: new Date()
       });

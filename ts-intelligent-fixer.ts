@@ -444,7 +444,7 @@ function detectErrorPatterns(errors: TypeScriptError[]): ErrorPattern[] {
   if (missingPropertyErrors.length > 0) {
     patterns.push({
       name: 'Missing Properties',
-      description: 'Properties that are accessed but don't exist on their types',
+      description: 'Properties that are accessed but do not exist on their types',
       regex: missingPropertyRegex.source,
       category: ErrorCategory.InterfaceMismatch,
       severity: ErrorSeverity.High,

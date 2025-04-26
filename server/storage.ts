@@ -12,11 +12,21 @@ import {
   type ErrorFix, type InsertErrorFix,
   type ErrorFixHistory, type InsertErrorFixHistory,
   type ProjectAnalysis, type InsertProjectAnalysis,
+  // Newsletter and subscriber types
+  type Newsletter, type InsertNewsletter,
+  type Subscriber, type InsertSubscriber,
+  // Blog types
+  type Post, type InsertPost,
+  type Category, type InsertCategory,
+  type Comment, type InsertComment,
+  type ContactMessage, type InsertContactMessage,
   // Tables
   users,
   // TypeScript error management tables
   typescriptErrors, errorPatterns, errorFixes, errorFixHistory,
-  projectAnalyses
+  projectAnalyses,
+  // Additional tables
+  newsletters, subscribers, posts, categories, comments, contactMessages
 } from "../shared/schema";
 import { sql, eq, and, desc, gt, count, max } from "drizzle-orm";
 import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";
@@ -809,10 +819,11 @@ export class PostgresStorage implements IStorage {
 
   async initializeSampleData() {
     try {
-      // Initialize subscribers
-      const existingSubscribers = await db.select().from(subscribers);
-      if (existingSubscribers.length === 0) {
-        await db.insert(subscribers).values([
+      // Initialize subscribers if the table exists
+      try {
+        const existingSubscribers = await db.select().from(subscribers);
+        if (existingSubscribers.length === 0) {
+          await db.insert(subscribers).values([
           {
             name: "Emily Johnson",
             email: "emily.j@example.com",
@@ -834,10 +845,15 @@ export class PostgresStorage implements IStorage {
         ]);
       }
 
+      } catch (error) {
+        console.error("Error initializing subscribers:", error);
+      }
+
       // Initialize sample newsletters
-      const existingNewsletters = await db.select().from(newsletters);
-      if (existingNewsletters.length === 0) {
-        await db.insert(newsletters).values([
+      try {
+        const existingNewsletters = await db.select().from(newsletters);
+        if (existingNewsletters.length === 0) {
+          await db.insert(newsletters).values([
           {
             title: "Cosmic Waves - Spring Edition",
             content: `
@@ -900,11 +916,16 @@ export class PostgresStorage implements IStorage {
         ]);
       }
 
+      } catch (error) {
+        console.error("Error initializing newsletters:", error);
+      }
+      
       // Initialize blog categories
-      const existingCategories = await db.select().from(categories);
-      if (existingCategories.length === 0) {
-        console.log("Initializing blog categories...");
-        await db.insert(categories).values([
+      try {
+        const existingCategories = await db.select().from(categories);
+        if (existingCategories.length === 0) {
+          console.log("Initializing blog categories...");
+          await db.insert(categories).values([
           {
             name: "Music",
             slug: "music",
