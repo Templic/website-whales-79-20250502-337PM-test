@@ -128,7 +128,7 @@ export function enableMaximumSecurity(): void {
       message: 'Maximum security mode activated',
       data: { features: activeSecurityFeatures }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[SECURITY] Error enabling maximum security mode:', error);
     
     // Log the error

@@ -621,7 +621,7 @@ export function validate<T>(
       }
       
       const validators: TypeValidator<unknown>[] = 
-        schema.oneOf.map(((s: any): unknown) => (v: unknown) => validate(v, s, options));
+        schema.oneOf.map((s: any) => (v: unknown) => validate(v, s, options));
       
       return validateUnion(value, validators, options) as ValidationResult<T>;
       

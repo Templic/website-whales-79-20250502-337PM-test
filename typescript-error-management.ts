@@ -37,7 +37,7 @@ import * as tsTypeAnalyzer from './server/utils/ts-type-analyzer';
 // Command-line argument parsing
 const args = process.argv.slice(2);
 const command = args[0]?.toLowerCase();
-const options: Record<string, any> = {
+const options: Record<string, unknown> = {
   projectRoot: '.',
   verbose: false,
   deep: false,

@@ -199,7 +199,7 @@ async function scanFile(filePath: string): Promise<Vulnerability[]> {
         });
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error scanning file ${filePath}:`, error.message);
   }
   
@@ -240,7 +240,7 @@ async function scanDirectory(dir: string, exclude: string[] = []): Promise<Vulne
         }
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error scanning directory ${dir}:`, error.message);
   }
   
@@ -461,7 +461,7 @@ async function main() {
       
       await writeFile(outputFile: any, report: any);
       console.log(`\nReport saved to ${outputFile}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`\nError saving report to ${outputFile}:`, error.message);
     }
   } else {
@@ -478,7 +478,7 @@ async function main() {
       
       await writeFile(defaultOutput: any, report: any);
       console.log(`\nReport saved to ${defaultOutput}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('\nError saving report:', error.message);
     }
   }

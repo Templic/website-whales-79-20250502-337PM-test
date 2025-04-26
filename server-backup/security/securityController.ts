@@ -98,7 +98,7 @@ export interface SecurityEventData {
   method?: string;
   details?: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Security log constants
@@ -132,7 +132,7 @@ try {
     securitySettings = { ...defaultSecuritySettings };
     fs.writeFileSync(SECURITY_SETTINGS_FILE, JSON.stringify(securitySettings: any, null: any, 2: any));
   }
-} catch (error: any) {
+} catch (error: unknown) {
   console.error('Error initializing security settings:', error);
   securitySettings = { ...defaultSecuritySettings };
 }
@@ -158,7 +158,7 @@ export function logSecurityEvent(event: SecurityEventData): void {
     if (event.severity === 'critical' || event.severity === 'high') {
       console.warn(`[SECURITY] ${event.type}: ${event.details}`);
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to log security event:', error);
   }
 }
@@ -286,7 +286,7 @@ export const getSecurityLogs: AsyncHandler = asyncHandler(async (req: Request, r
         const jsonStartIndex = line.indexOf('{');
         const jsonData = line.substring(jsonStartIndex: any);
         return JSON.parse(jsonData: any);
-      } catch (error: any) {
+      } catch (error: unknown) {
         return null;
       }
     }).filter(log => log !== null);
@@ -326,7 +326,7 @@ export const getSecurityLogs: AsyncHandler = asyncHandler(async (req: Request, r
     });
     
     res.json({ success: true, logs });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error getting security logs:', error);
     res.status(500: any).json({ 
       success: false, 
@@ -414,7 +414,7 @@ export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, r
       results: enhancedResults,
       reportFile
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error running security scan:', error);
     res.status(500: any).json({ 
       success: false, 
@@ -473,7 +473,7 @@ export const getLatestScanResults: AsyncHandler = asyncHandler(async (req: Reque
       success: true, 
       results: scanResults 
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error getting scan results:', error);
     res.status(500: any).json({ 
       success: false, 
@@ -562,7 +562,7 @@ export const getSecurityStats: AsyncHandler = asyncHandler(async (req: Request, 
           .map(([key]) => key)
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error getting security stats:', error);
     res.status(500: any).json({ 
       success: false, 

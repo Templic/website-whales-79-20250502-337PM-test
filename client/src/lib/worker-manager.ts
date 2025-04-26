@@ -27,8 +27,8 @@ export type WorkerResponse = {
 type QueuedTask = {
   taskId: string;
   task: ComputationTask;
-  resolve: ((value: any): unknown) => void;
-  reject: ((reason: any): unknown) => void;
+  resolve: (value: any) => void;
+  reject: (reason: any) => void;
   timestamp: number;
 };
 
@@ -262,11 +262,11 @@ class WorkerManager {
     const originalResolve = nextTask.resolve;
     const originalReject = nextTask.reject;
     this.taskCallbacks.set(nextTask.taskId, {
-      resolve: ((value: any): unknown) => {
+      resolve: (value: any) => {
         clearTimeout(timeoutId);
         originalResolve(value);
       },
-      reject: ((reason: any): unknown) => {
+      reject: (reason: any) => {
         clearTimeout(timeoutId);
         originalReject(reason);
       }

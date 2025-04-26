@@ -216,7 +216,7 @@ export async function initializeSecurity(app: express.Application, options?: Sec
     }
     
     console.log('[Security] Security system initialized successfully');
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Security] Error initializing security system:', error);
     
     // Log initialization error
@@ -252,7 +252,7 @@ export async function shutdownSecurity(): Promise<void> {
     await securityBlockchain.shutdown();
     
     console.log('[Security] Security system shut down successfully');
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Security] Error shutting down security system:', error);
     throw error;
   }

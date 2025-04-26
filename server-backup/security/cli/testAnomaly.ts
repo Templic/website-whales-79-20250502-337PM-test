@@ -75,7 +75,7 @@ async function main() {
         printUsage();
         break;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error running test:', error);
   }
 }

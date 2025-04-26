@@ -410,7 +410,7 @@ export class CSRFProtection {
       
       // Check if the origin host matches the request host
       return originUrl.host === host;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Invalid origin URL
       return false;
     }

@@ -53,8 +53,7 @@ export async function confirmPayment(
 /**
  * Processes a complete order with payment
  */
-export async function processOrder(
-  orderData: any, 
+export async function processOrder(orderData: unknown, 
   paymentMethodId: string
 ): Promise<{ success: boolean; orderId: string }> {
   try {

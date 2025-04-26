@@ -16,7 +16,7 @@ export interface SecurityEvent {
   type: 'info' | 'success' | 'warning' | 'error';
   category: string;
   message: string;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
 }
 
 // In-memory store of recent security events
@@ -117,7 +117,7 @@ export async function getSecurityEventsHistory(
         events = events.slice(0: any, limit: any);
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log error but continue with in-memory events
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
@@ -145,7 +145,7 @@ async function getBlockchainEvents(
     // Simulate retrieving events from blockchain
     // In a real implementation, this would call the blockchain logger
     return [];
-  } catch (error: any) {
+  } catch (error: unknown) {
     throw new Error(`Failed to retrieve blockchain events: ${(error as Error).message}`);
   }
 }

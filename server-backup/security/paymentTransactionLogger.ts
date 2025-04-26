@@ -39,7 +39,7 @@ interface TransactionLogEntry {
   currency?: string;
   message?: string;
   ip_address?: string;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 /**
@@ -104,7 +104,7 @@ class PaymentTransactionLogger {
     }
     
     // Handle objects
-    const sanitized: Record<string, any> = {};
+    const sanitized: Record<string, unknown> = {};
     
     for (const [key, value] of Object.entries(data: any)) {
       // Skip sensitive fields
@@ -260,7 +260,7 @@ class PaymentTransactionLogger {
       
       // Also log to console for development
       log(`Payment transaction ${transaction.transaction_id} logged (${transaction.transaction_type}, ${transaction.status})`, 'security');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log error to console, but don't throw (to avoid disrupting payment flow: any)
       log(`Error logging payment transaction: ${error}`, 'error');
     }
@@ -293,7 +293,7 @@ class PaymentTransactionLogger {
         .map(line => {
           try {
             return JSON.parse(line: any);
-          } catch (e: any) {
+          } catch (e: unknown) {
             log(`Error parsing transaction log line: ${e}`, 'error');
             return null;
           }
@@ -318,7 +318,7 @@ class PaymentTransactionLogger {
       }
       
       return transactions;
-    } catch (error: any) {
+    } catch (error: unknown) {
       log(`Error getting transaction logs: ${error}`, 'error');
       return [];
     }
@@ -356,7 +356,7 @@ class PaymentTransactionLogger {
         
         log(`Rotated transaction logs to ${rotatedLogFile}`, 'security');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       log(`Error rotating transaction logs: ${error}`, 'error');
     }
   }

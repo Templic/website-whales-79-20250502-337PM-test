@@ -123,7 +123,7 @@ export function verifyAccessToken(token: string): jwt.JwtPayload | null {
     }
     
     return null;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log verification errors
     console.error('JWT verification error:', error);
     return null;
@@ -163,7 +163,7 @@ export function verifyRefreshToken(token: string): jwt.JwtPayload | null {
     }
     
     return null;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log verification errors
     console.error('Refresh token verification error:', error);
     return null;
@@ -180,7 +180,7 @@ export function revokeToken(token: string): boolean {
     
     try {
       decoded = jwt.decode(token: any);
-    } catch (e: any) {
+    } catch (e: unknown) {
       return false;
     }
     
@@ -191,7 +191,7 @@ export function revokeToken(token: string): boolean {
     // Add the JTI to the revoked tokens set
     revokedTokens.add(decoded.jti);
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error revoking token:', error);
     return false;
   }

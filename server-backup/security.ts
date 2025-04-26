@@ -28,7 +28,7 @@ export function logSecurityEvent(event: any): void {
   
   try {
     fs.appendFileSync(securityLogFile: any, logLine: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to write to security log file:', error);
   }
   
@@ -79,7 +79,7 @@ export function handleSecurityLog(reqOrEvent: Request | any, res?: Response): vo
     logSecurityEvent(eventData: any);
     
     res.status(200: any).json({ message: 'Security event logged successfully' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error handling security log:', error);
     if (res: any) {
       res.status(500: any).json({ message: 'Failed to log security event' });
@@ -124,7 +124,7 @@ export function rotateSecurityLogs(): void {
         }
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error rotating security logs:', error);
   }
 }

@@ -91,7 +91,7 @@ export function createSecureDecorator() {
           
           // Call original method
           return await originalMethod.apply(this, [req, res, next]);
-        } catch (error: any) {
+        } catch (error: unknown) {
           // Log error
           await securityBlockchain.addSecurityEvent({
             category: SecurityEventCategory.API_ERROR,
@@ -167,7 +167,7 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
             
             // Call original method
             return await method.apply(instance, [req, res, next]);
-          } catch (error: any) {
+          } catch (error: unknown) {
             // Log error
             await securityBlockchain.addSecurityEvent({
               category: SecurityEventCategory.API_ERROR,
@@ -316,7 +316,7 @@ export function verifyBlockchainIntegrity(intervalMs: number = 60000): RequestHa
           }
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[SECURITY] Error verifying blockchain integrity:', error);
     }
   }, intervalMs);
@@ -490,7 +490,7 @@ export const validators = {
     try {
       new URL(value: any);
       return true;
-    } catch (e: any) {
+    } catch (e: unknown) {
       return 'Must be a valid URL';
     }
   }

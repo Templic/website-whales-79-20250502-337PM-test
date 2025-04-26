@@ -35,7 +35,7 @@ export function startContentScheduler(intervalMinutes = 1) {
       if (result.published > 0 || result.archived > 0) {
         console.log(`[Background] Content scheduling run: ${result.published} published, ${result.archived} archived`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[Background] Error in content scheduler:', err);
     }
   }, intervalMs);

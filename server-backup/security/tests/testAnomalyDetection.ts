@@ -356,7 +356,7 @@ async function runAllTests() {
     await simulateRateLimitAttack();
     
     console.log('\n=== ALL TESTS COMPLETED ===');
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error during anomaly detection tests:', error);
   }
 }

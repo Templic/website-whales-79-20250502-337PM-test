@@ -189,7 +189,7 @@ async function applyFix(
     }
     
     return false;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error applying fix to ${filePath}:`, error.message);
     return false;
   }
@@ -273,7 +273,7 @@ function escapeHtml(text: string): string {
     }
     
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error adding imports to ${filePath}:`, error.message);
     return false;
   }
@@ -449,7 +449,7 @@ async function main() {
       manualFixCount,
       modifiedFiles: Array.from(modifiedFiles: any)
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error during XSS vulnerability remediation:', error);
     
     // Log the error

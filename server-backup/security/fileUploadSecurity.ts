@@ -211,7 +211,7 @@ export async function validateFileType(
     }
     // If fileTypeResult is null, it might be a text file or unsupported format
     // In that case, rely on the declared MIME type (already validated above: any)
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Error && error.message.includes('File contents')) {
       throw error;
     }
@@ -308,7 +308,7 @@ export async function scanFileForMalware(file: fileUpload.UploadedFile): Promise
     }
     
     log(`File ${file.name} scanned, no malware detected`, 'security');
-  } catch (error: any) {
+  } catch (error: unknown) {
     // If error is related to malware detection, rethrow it
     if (error instanceof Error && error.message.includes('Malware detected')) {
       throw error;
@@ -393,7 +393,7 @@ export async function validateUploadedFile(
     }
     
     return { sanitizedFileName, fileMetadata };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log the security failure
     log(`File security validation failed: ${file.name} - ${error instanceof Error ? error.message : error}`, 'security');
     
@@ -439,7 +439,7 @@ export async function cleanupTempFiles(tempDir: string): Promise<number> {
             log(`Cleaned up temporary file: ${filePath} (age: ${Math.round(fileAgeMs / 1000)} seconds)`, 'security');
           }
         }
-      } catch (fileError: any) {
+      } catch (fileError: unknown) {
         log(`Error cleaning up file: ${file} - ${fileError instanceof Error ? fileError.message : fileError}`, 'error');
       }
     }
@@ -449,7 +449,7 @@ export async function cleanupTempFiles(tempDir: string): Promise<number> {
     }
     
     return cleanedCount;
-  } catch (error: any) {
+  } catch (error: unknown) {
     log(`Error during temporary file cleanup: ${error instanceof Error ? error.message : error}`, 'error');
     return 0;
   }

@@ -231,7 +231,7 @@ class PaymentSecurityService {
         log(`WARNING: ${criticalIssues} critical PCI compliance issues found!`, 'security');
         // In a real application, we would send alerts here
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       log(`Error running PCI compliance scan: ${error}`, 'error');
     }
   }
@@ -264,7 +264,7 @@ class PaymentSecurityService {
    */
   public logSecurityEvent(
     eventType: string,
-    details: Record<string, any>,
+    details: Record<string, unknown>,
     severity: 'info' | 'warning' | 'critical' = 'info'
   ): void {
     // Sanitize any potentially sensitive data
@@ -394,7 +394,7 @@ export async function runPaymentSecurityScan(): Promise<PaymentSecurityScanResul
     log(`Payment security scan completed. Found ${results.length} checks.`, 'security');
     
     return results;
-  } catch (error: any) {
+  } catch (error: unknown) {
     log(`Error in payment security scan: ${error}`, 'error');
     
     // Return error result

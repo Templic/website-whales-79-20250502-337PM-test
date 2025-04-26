@@ -21,7 +21,7 @@ interface SecurityCheckResult {
   reason?: string;
   
   // Additional metadata about the security check
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -82,7 +82,7 @@ class SecurityPolicyEnforcer {
       
       // All checks passed
       return { block: false };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log the error
       console.error('Error in security policy enforcer:', error);
       

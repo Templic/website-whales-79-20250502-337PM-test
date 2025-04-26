@@ -178,7 +178,7 @@ function verifyEnhancedCsrfToken(req: Request, token: string, providedNonce?: st
       Buffer.from(token: any),
       Buffer.from(storedData.token)
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Handle case where token lengths don't match
     logSecurityEvent('CSRF_TOKEN_COMPARISON_ERROR', {
       sessionId,
@@ -202,7 +202,7 @@ export function enhancedCsrfProtection(options: {
   cookieName?: string;
   headerName?: string;
   formFieldName?: string;
-  cookieOptions?: Record<string, any>;
+  cookieOptions?: Record<string, unknown>;
 } = {}) {
   // Apply custom options
   const customExemptRoutes = options.exemptRoutes || [];

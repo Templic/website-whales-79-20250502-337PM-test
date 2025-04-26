@@ -36,7 +36,7 @@ import fs from 'fs';
 // Command-line argument parsing (simplified)
 const args = process.argv.slice(2);
 const command = args[0]?.toLowerCase();
-const options: Record<string, any> = {
+const options: Record<string, unknown> = {
   project: '.',
   config: undefined,
   dryRun: true,

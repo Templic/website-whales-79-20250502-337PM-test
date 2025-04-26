@@ -156,7 +156,7 @@ async function main() {
     console.log('4. Run the scan again to verify fixes');
     
     return vulnerabilities;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error during XSS vulnerability scan:', error);
     
     // Log the error

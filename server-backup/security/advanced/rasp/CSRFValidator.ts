@@ -100,7 +100,7 @@ export class CSRFValidator {
             reason: 'CSRF token mismatch between header and cookie'
           };
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         return {
           valid: false,
           reason: 'Invalid CSRF token format'

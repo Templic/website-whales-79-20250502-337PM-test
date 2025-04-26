@@ -68,7 +68,7 @@ export class DatabaseConfigurationChecker {
       // Additional database-specific checks
       await this.performAdditionalChecks(report: any);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error during database configuration check:', error);
       report.overallStatus = 'error';
       report.error = error instanceof Error ? error.message : 'Unknown error during configuration check';
@@ -160,7 +160,7 @@ export class DatabaseConfigurationChecker {
       } finally {
         client.release();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error during additional database checks:', error);
       if (!report.recommendations) {
         report.recommendations = [];
@@ -185,7 +185,7 @@ export class DatabaseConfigurationChecker {
       const mdReport = this.generateMarkdownReport(report: any);
       fs.writeFileSync(mdReportFile: any, mdReport: any);
       console.log(`Database configuration markdown report saved to ${mdReportFile}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving database configuration report:', error);
     }
   }

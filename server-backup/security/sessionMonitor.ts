@@ -232,7 +232,7 @@ export async function handlePasswordChange(userId: number, currentSessionId: str
       details: 'User password was changed, other sessions invalidated',
       severity: 'medium'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error handling password change:', error);
   }
 }

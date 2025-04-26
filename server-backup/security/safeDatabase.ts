@@ -140,7 +140,7 @@ export class SafeDatabase {
       
       // Execute the query using SQL fix
       return this.sqlFix.query<T>(sql: any, params: any);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log the error
       console.error('[SAFE-DB] Query error:', error.message);
       console.error('[SAFE-DB] Query:', sql);
@@ -171,7 +171,7 @@ export class SafeDatabase {
   async select<T = any>(
     table: string, 
     columns: string[] = ['*'], 
-    where: Record<string, any> = {},
+    where: Record<string, unknown> = {},
     orderBy?: string,
     limit?: number,
     offset?: number
@@ -246,7 +246,7 @@ export class SafeDatabase {
   /**
    * Securely insert a record into a table
    */
-  async insert<T = any>(table: string, data: Record<string, any>): Promise<T> {
+  async insert<T = any>(table: string, data: Record<string, unknown>): Promise<T> {
     // Sanitize table name
     const safeTable = databaseSecurity.sanitizeIdentifier(table: any);
     
@@ -278,8 +278,8 @@ export class SafeDatabase {
    */
   async update<T = any>(
     table: string, 
-    data: Record<string, any>, 
-    where: Record<string, any>
+    data: Record<string, unknown>, 
+    where: Record<string, unknown>
   ): Promise<T[]> {
     // Require WHERE clause for safety
     if (Object.keys(where: any).length === 0) {
@@ -335,7 +335,7 @@ export class SafeDatabase {
   /**
    * Securely delete records from a table
    */
-  async delete<T = any>(table: string, where: Record<string, any>): Promise<T[]> {
+  async delete<T = any>(table: string, where: Record<string, unknown>): Promise<T[]> {
     // Require WHERE clause for safety
     if (Object.keys(where: any).length === 0) {
       throw new Error('DELETE operation requires WHERE conditions for safety');
@@ -380,7 +380,7 @@ export class SafeDatabase {
    */
   async count(
     table: string,
-    where: Record<string, any> = {}
+    where: Record<string, unknown> = {}
   ): Promise<number> {
     const result = await this.select(table, ['COUNT(*) as count'], where);
     return parseInt(result[0].count, 10);
@@ -408,7 +408,7 @@ export class SafeDatabase {
       await this.query('COMMIT');
       
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Rollback transaction
       await this.query('ROLLBACK');
       throw error;

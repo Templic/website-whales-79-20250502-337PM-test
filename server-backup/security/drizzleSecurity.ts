@@ -74,7 +74,7 @@ export class SecureDrizzle {
       
       // Execute the query
       return await this.db.execute(query: any);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log the error
       this.logError(error: any, query: any);
       throw error;
@@ -98,7 +98,7 @@ export class SecureDrizzle {
       
       // Execute the query
       return await this.db.query(query: any);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log the error
       this.logError(error: any, query: any);
       throw error;
@@ -226,7 +226,7 @@ export function secureDrizzle(
 /**
  * Patch Drizzle models for better security
  */
-export function patchDrizzleModel(model: any): any {
+export function patchDrizzleModel(model: any): unknown {
   // Make a copy of the original methods
   const originalFindFirst = model.findFirst;
   const originalFindMany = model.findMany;
@@ -235,10 +235,10 @@ export function patchDrizzleModel(model: any): any {
   
   // Patch the findFirst method to add security logging
   if (originalFindFirst: any) {
-    model.findFirst = async function(...args: any: any[]): Promise<any> {
+    model.findFirst = async function(...args: any: any[]): Promise<unknown> {
       try {
         return await originalFindFirst.apply(this: any, args: any);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Log the error
         securityBlockchain.addSecurityEvent({
           severity: SecurityEventSeverity.ERROR,
@@ -260,10 +260,10 @@ export function patchDrizzleModel(model: any): any {
   
   // Patch the findMany method to add security logging
   if (originalFindMany: any) {
-    model.findMany = async function(...args: any: any[]): Promise<any> {
+    model.findMany = async function(...args: any: any[]): Promise<unknown> {
       try {
         return await originalFindMany.apply(this: any, args: any);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Log the error
         securityBlockchain.addSecurityEvent({
           severity: SecurityEventSeverity.ERROR,
@@ -285,7 +285,7 @@ export function patchDrizzleModel(model: any): any {
   
   // Patch the update method to add safety checks and security logging
   if (originalUpdate: any) {
-    model.update = async function(...args: any: any[]): Promise<any> {
+    model.update = async function(...args: any: any[]): Promise<unknown> {
       try {
         // Check for WHERE clause
         if (args.length > 0 && args[0] && (!args[0].where || Object.keys(args[0].where).length === 0)) {
@@ -294,7 +294,7 @@ export function patchDrizzleModel(model: any): any {
         }
         
         return await originalUpdate.apply(this: any, args: any);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Log the error
         securityBlockchain.addSecurityEvent({
           severity: SecurityEventSeverity.ERROR,
@@ -316,7 +316,7 @@ export function patchDrizzleModel(model: any): any {
   
   // Patch the delete method to add safety checks and security logging
   if (originalDelete: any) {
-    model.delete = async function(...args: any: any[]): Promise<any> {
+    model.delete = async function(...args: any: any[]): Promise<unknown> {
       try {
         // Check for WHERE clause
         if (args.length > 0 && args[0] && (!args[0].where || Object.keys(args[0].where).length === 0)) {
@@ -325,7 +325,7 @@ export function patchDrizzleModel(model: any): any {
         }
         
         return await originalDelete.apply(this: any, args: any);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Log the error
         securityBlockchain.addSecurityEvent({
           severity: SecurityEventSeverity.ERROR,

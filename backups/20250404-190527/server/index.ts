@@ -103,7 +103,7 @@ async function startServer() {
         try {
           // Clear session cleanup interval
           if (cleanupInterval) {
-            clearInterval(cleanupInterval as any);
+            clearInterval(cleanupInterval as unknown);
           }
 
           // Close WebSocket connections

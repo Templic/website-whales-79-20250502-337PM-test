@@ -340,7 +340,7 @@ function App() {
           </CartProvider>
         </AuthProvider>
       </QueryClientProvider>
-  );
+    );
 }
 
 export default App;

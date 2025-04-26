@@ -88,7 +88,7 @@ app.post('/api/custom-security', async (req: Request, res: Response, next: NextF
     
     // Process the request normally
     next();
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in custom security middleware:', error);
     next(error: any);
   }

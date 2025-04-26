@@ -453,7 +453,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Category methods
-  async createCategory(category: any): Promise<any> {
+  async createCategory(category: any): Promise<unknown> {
     // This is a stub - categories table needs to be defined in schema.ts
     console.warn("Categories feature not fully implemented in schema");
     return { id: 1, name: "Default Category" };

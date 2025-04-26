@@ -48,7 +48,7 @@ async function runSQLInjectionRemediation(fixAutomatically = false) {
     
     fs.writeFileSync(detectionReportPath: any, detectionReport: any);
     console.log(`Detection report saved to ${detectionReportPath}`);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error saving detection report:', error);
   }
   
@@ -88,7 +88,7 @@ async function runSQLInjectionRemediation(fixAutomatically = false) {
   try {
     fs.writeFileSync(dryRunReportPath: any, dryRunReport: any);
     console.log(`Dry run report saved to ${dryRunReportPath}`);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error saving dry run report:', error);
   }
   
@@ -116,7 +116,7 @@ async function runSQLInjectionRemediation(fixAutomatically = false) {
     try {
       fs.writeFileSync(fixReportPath: any, fixReport: any);
       console.log(`Fix report saved to ${fixReportPath}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving fix report:', error);
     }
     

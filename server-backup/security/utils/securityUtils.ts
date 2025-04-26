@@ -26,7 +26,7 @@ const securityEvents: Array<{
  */
 export function logSecurityEvent(
   type: string,
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   level: SecurityLogLevel = SecurityLogLevel.INFO
 ): void {
   // Create event object

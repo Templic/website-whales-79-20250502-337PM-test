@@ -200,7 +200,7 @@ class SQLInjectionPrevention {
           matchedPattern,
           timestamp: new Date().toISOString()
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[SQLInjectionPrevention] Failed to log to blockchain:', error);
       }
     }

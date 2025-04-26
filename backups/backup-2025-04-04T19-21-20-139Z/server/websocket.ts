@@ -6,7 +6,7 @@ import { log } from './vite';
 // Define message types
 interface WebSocketMessage {
   type: 'file_upload' | 'file_delete' | 'status_update';
-  payload: any;
+  payload: unknown;
 }
 
 // Extend WebSocket to include isAlive property

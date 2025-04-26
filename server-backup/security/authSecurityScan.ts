@@ -80,7 +80,7 @@ export async function runAuthSecurityScan(): Promise<ScanResult> {
       lowIssues,
       vulnerabilities
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     log(`Error during authentication security scan: ${error}`, 'error');
     
     // Return minimal result on error
@@ -157,7 +157,7 @@ async function checkPasswordHashing(vulnerabilities: AuthVulnerability[]): Promi
         recommendation: 'Use timingSafeEqual from crypto to prevent timing attacks'
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error checking password hashing:', error);
   }
 }
@@ -222,7 +222,7 @@ async function checkBruteForceProtection(vulnerabilities: AuthVulnerability[]): 
         recommendation: 'Implement temporary account lockout after multiple failed login attempts'
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error checking brute force protection:', error);
   }
 }
@@ -284,7 +284,7 @@ async function checkMultiFactorAuth(vulnerabilities: AuthVulnerability[]): Promi
         recommendation: 'Implement backup codes for account recovery'
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error checking multi-factor authentication:', error);
   }
 }
@@ -369,7 +369,7 @@ async function checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promis
         recommendation: 'Implement password history to prevent reuse of previous passwords'
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error checking password policy:', error);
   }
 }
@@ -453,7 +453,7 @@ async function checkSessionManagement(vulnerabilities: AuthVulnerability[]): Pro
         recommendation: 'Implement proper session invalidation on logout and security events'
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error checking session management:', error);
   }
 }
@@ -537,7 +537,7 @@ async function checkBypassVulnerabilities(vulnerabilities: AuthVulnerability[]):
         recommendation: 'Implement CSRF token verification for state-changing operations'
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error checking authentication bypass vulnerabilities:', error);
   }
 }
@@ -599,7 +599,7 @@ async function checkLogout(vulnerabilities: AuthVulnerability[]): Promise<void> 
         recommendation: 'Implement token revocation/blacklisting for JWT-based authentication'
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error checking logout implementation:', error);
   }
 }
@@ -681,7 +681,7 @@ async function checkJwtSecurity(vulnerabilities: AuthVulnerability[]): Promise<v
         recommendation: 'Implement token blacklisting or revocation'
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error checking JWT security:', error);
   }
 }

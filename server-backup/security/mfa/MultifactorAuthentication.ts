@@ -146,7 +146,7 @@ class MFAManager {
       });
       
       return { secret, qrCode };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -202,7 +202,7 @@ class MFAManager {
       });
       
       return MFAVerificationStatus.FAILED;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -238,7 +238,7 @@ class MFAManager {
       
       // Get 6 digits
       return code % 1000000;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -273,7 +273,7 @@ class MFAManager {
       });
       
       return code;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -308,7 +308,7 @@ class MFAManager {
       });
       
       return code;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -347,7 +347,7 @@ class MFAManager {
       });
       
       return codes;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -374,7 +374,7 @@ class MFAManager {
       }
       
       return hashedCodes;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -421,7 +421,7 @@ class MFAManager {
       });
       
       return MFAVerificationStatus.FAILED;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,

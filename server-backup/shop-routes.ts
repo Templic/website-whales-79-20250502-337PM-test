@@ -144,7 +144,7 @@ router.get('/products', async (req: Request, res: Response) => {
 
     const result = await query;
     res.json(result: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching products:', error);
     res.status(500: any).json({ error: 'Failed to fetch products' });
   }
@@ -189,7 +189,7 @@ router.post('/products', async (req: Request, res: Response) => {
     }).returning();
     
     res.status(201: any).json(newProduct[0]);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating product:', error);
     res.status(500: any).json({ message: 'Error creating product' });
   }
@@ -236,7 +236,7 @@ router.patch('/products/:id', async (req: Request, res: Response) => {
       .returning();
       
     res.json(updatedProduct[0]);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating product:', error);
     res.status(500: any).json({ message: 'Error updating product' });
   }
@@ -269,7 +269,7 @@ router.delete('/products/:id', async (req: Request, res: Response) => {
       .where(eq(products.id, productId));
       
     res.json({ message: 'Product deleted successfully' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting product:', error);
     res.status(500: any).json({ message: 'Error deleting product' });
   }
@@ -292,7 +292,7 @@ router.get('/products/:idOrSlug', async (req: Request, res: Response) => {
     }
     
     res.json(result[0]);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching product:', error);
     res.status(500: any).json({ error: 'Failed to fetch product' });
   }
@@ -303,7 +303,7 @@ router.get('/categories', async (req: Request, res: Response) => {
   try {
     const result = await db.select().from(productCategories: any);
     res.json(result: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching categories:', error);
     res.status(500: any).json({ error: 'Failed to fetch categories' });
   }
@@ -335,7 +335,7 @@ router.post('/categories', async (req: Request, res: Response) => {
     }).returning();
     
     res.status(201: any).json(newCategory[0]);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating product category:', error);
     res.status(500: any).json({ message: 'Error creating product category' });
   }
@@ -374,7 +374,7 @@ router.patch('/categories/:id', async (req: Request, res: Response) => {
       .returning();
       
     res.json(updatedCategory[0]);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating product category:', error);
     res.status(500: any).json({ message: 'Error updating product category' });
   }
@@ -433,7 +433,7 @@ router.delete('/categories/:id', async (req: Request, res: Response) => {
       .where(eq(productCategories.id, categoryId));
       
     res.json({ message: 'Category deleted successfully' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting product category:', error);
     res.status(500: any).json({ message: 'Error deleting product category' });
   }
@@ -456,7 +456,7 @@ router.get('/categories/:idOrSlug', async (req: Request, res: Response) => {
     }
     
     res.json(result[0]);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching category:', error);
     res.status(500: any).json({ error: 'Failed to fetch category' });
   }
@@ -482,7 +482,7 @@ router.get('/categories/:categoryId/products', async (req: Request, res: Respons
     
     const result = await query;
     res.json(result: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching category products:', error);
     res.status(500: any).json({ error: 'Failed to fetch category products' });
   }
@@ -532,7 +532,7 @@ router.get('/cart', async (req: Request, res: Response) => {
       cart,
       items: cartItemsResult
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching cart:', error);
     res.status(500: any).json({ error: 'Failed to fetch cart' });
   }
@@ -638,7 +638,7 @@ router.post('/cart/items', async (req: Request, res: Response) => {
     };
     
     res.status(201: any).json(newItem: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error adding item to cart:', error);
     res.status(500: any).json({ error: 'Failed to add item to cart' });
   }
@@ -718,7 +718,7 @@ router.patch('/cart/items/:itemId', async (req: Request, res: Response) => {
     };
     
     res.json(updatedItem: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating cart item:', error);
     res.status(500: any).json({ error: 'Failed to update cart item' });
   }
@@ -753,7 +753,7 @@ router.delete('/cart/items/:itemId', async (req: Request, res: Response) => {
       ));
     
     res.status(204: any).end();
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error removing item from cart:', error);
     res.status(500: any).json({ error: 'Failed to remove item from cart' });
   }
@@ -783,7 +783,7 @@ router.delete('/cart', async (req: Request, res: Response) => {
       .where(eq(cartItems.cartId, cart.id));
     
     res.status(204: any).end();
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error clearing cart:', error);
     res.status(500: any).json({ error: 'Failed to clear cart' });
   }
@@ -908,7 +908,7 @@ router.post('/orders', async (req: Request, res: Response) => {
     };
     
     res.status(201: any).json(completeOrder: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating order:', error);
     res.status(500: any).json({ error: 'Failed to create order' });
   }
@@ -947,7 +947,7 @@ router.get('/orders/:orderId', async (req: Request, res: Response) => {
     };
     
     res.json(completeOrder: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching order:', error);
     res.status(500: any).json({ error: 'Failed to fetch order' });
   }
@@ -967,7 +967,7 @@ router.get('/user/orders', async (req: Request, res: Response) => {
       .orderBy(desc(orders.createdAt));
     
     res.json(result: any);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching user orders:', error);
     res.status(500: any).json({ error: 'Failed to fetch user orders' });
   }
@@ -1083,7 +1083,7 @@ router.post('/cart/coupon', async (req: Request, res: Response) => {
       subtotal,
       total: subtotal - discount
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error applying coupon:', error);
     res.status(500: any).json({ error: 'Failed to apply coupon' });
   }

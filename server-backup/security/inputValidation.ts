@@ -124,7 +124,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
       if (result.errors.length > 0) {
         result.valid = false;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Add unexpected error
       result.valid = false;
       result.errors.push({
@@ -393,7 +393,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
       
       // Continue to next middleware
       next();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log error to blockchain
       securityBlockchain.addSecurityEvent({
         category: SecurityEventCategory.API,

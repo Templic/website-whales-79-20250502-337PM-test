@@ -227,7 +227,7 @@ export async function scanFileForXssVulnerabilities(filePath: string): Promise<X
         });
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error scanning file ${filePath}:`, error.message);
   }
   
@@ -267,7 +267,7 @@ export async function scanDirectoryForXssVulnerabilities(
         }
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error scanning directory ${dir}:`, error.message);
   }
   

@@ -85,7 +85,7 @@ export async function scanProject(): Promise<SecurityScanResult> {
       lowIssues,
       vulnerabilities
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error during security scan:', error);
     
     // Add an error about the scan itself
@@ -149,7 +149,7 @@ async function checkDependencies(vulnerabilities: SecurityVulnerability[]): Prom
           }
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error checking dependencies:', error);
       vulnerabilities.push({
         id: uuidv4(),
@@ -194,7 +194,7 @@ async function checkForSecrets(vulnerabilities: SecurityVulnerability[]): Promis
         }
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error checking for secrets:', error);
   }
 }

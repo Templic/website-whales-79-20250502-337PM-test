@@ -54,7 +54,7 @@ app.get('/api/keys/generate', async (req: any, res: any) => {
       publicKey: keyPair.publicKey,
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500: any).json({
       error: 'Failed to generate key pair',
       message: error.message
@@ -85,7 +85,7 @@ app.post('/api/encrypt', async (req: any, res: any) => {
       encryptedData,
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500: any).json({
       error: 'Failed to encrypt data',
       message: error.message
@@ -116,7 +116,7 @@ app.post('/api/decrypt', async (req: any, res: any) => {
       decryptedData: decryptedData.toString(),
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500: any).json({
       error: 'Failed to decrypt data',
       message: error.message
@@ -148,7 +148,7 @@ app.post('/api/sign', async (req: any, res: any) => {
       publicKey: signatureResult.publicKey,
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500: any).json({
       error: 'Failed to sign data',
       message: error.message
@@ -180,7 +180,7 @@ app.post('/api/verify', async (req: any, res: any) => {
       reason: verificationResult.reason,
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500: any).json({
       error: 'Failed to verify signature',
       message: error.message
@@ -210,7 +210,7 @@ app.post('/api/hash', async (req: any, res: any) => {
       hash: hashedData,
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500: any).json({
       error: 'Failed to hash data',
       message: error.message
@@ -248,7 +248,7 @@ app.post('/api/tokens/create', async (req: any, res: any) => {
       token,
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500: any).json({
       error: 'Failed to create token',
       message: error.message
@@ -283,7 +283,7 @@ app.post('/api/tokens/verify', async (req: any, res: any) => {
       payload: verificationResult.payload,
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500: any).json({
       error: 'Failed to verify token',
       message: error.message

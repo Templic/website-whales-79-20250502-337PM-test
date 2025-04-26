@@ -33,7 +33,7 @@ export class SQLInjectionFix {
     try {
       // Execute the parameterized query using the provided connection
       return await this.db.query(sql: any, params: any) as T;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('SQL Error:', error.message);
       throw error;
     }
@@ -57,7 +57,7 @@ export class SQLInjectionFix {
    * @param conditions Object with field-value pairs for WHERE conditions
    * @returns Object with sql fragment and params array
    */
-  buildWhereClause(conditions: Record<string, any>): { sql: string, params: any[] } {
+  buildWhereClause(conditions: Record<string, unknown>): { sql: string, params: any[] } {
     const params: any[] = [];
     const clauses: string[] = [];
     
@@ -96,7 +96,7 @@ export class SQLInjectionFix {
   async select<T = any>(
     table: string, 
     columns: string[] = ['*'], 
-    where: Record<string, any> = {}
+    where: Record<string, unknown> = {}
   ): Promise<T[]> {
     const safeTable = this.escapeIdentifier(table: any);
     const safeColumns = columns.map(col => 
@@ -116,7 +116,7 @@ export class SQLInjectionFix {
    * @param data Object with field-value pairs to insert
    * @returns Query result
    */
-  async insert<T = any>(table: string, data: Record<string, any>): Promise<T> {
+  async insert<T = any>(table: string, data: Record<string, unknown>): Promise<T> {
     const safeTable = this.escapeIdentifier(table: any);
     const columns: string[] = [];
     const placeholders: string[] = [];
@@ -150,8 +150,8 @@ export class SQLInjectionFix {
    */
   async update<T = any>(
     table: string, 
-    data: Record<string, any>, 
-    where: Record<string, any>
+    data: Record<string, unknown>, 
+    where: Record<string, unknown>
   ): Promise<T[]> {
     if (Object.keys(where: any).length === 0) {
       throw new Error('Update requires WHERE conditions for safety');
@@ -192,7 +192,7 @@ export class SQLInjectionFix {
    * @param where Where conditions
    * @returns Query result
    */
-  async delete<T = any>(table: string, where: Record<string, any>): Promise<T[]> {
+  async delete<T = any>(table: string, where: Record<string, unknown>): Promise<T[]> {
     if (Object.keys(where: any).length === 0) {
       throw new Error('Delete requires WHERE conditions for safety');
     }

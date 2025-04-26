@@ -13,8 +13,8 @@ import { sqlMonitor } from './sqlMonitor';
  * Drizzle database interface
  */
 interface DrizzleDB {
-  execute: ((query: any): unknown) => Promise<unknown>;
-  query: ((query: any): unknown) => Promise<unknown>;
+  execute: (query: any) => Promise<unknown>;
+  query: (query: any) => Promise<unknown>;
   // Other Drizzle methods as needed
 }
 

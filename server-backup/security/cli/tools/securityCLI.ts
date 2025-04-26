@@ -75,7 +75,7 @@ program
           { padding: 1, title: 'Security Status', titleAlignment: 'center', borderColor: 'green' }
         ));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       spinner.fail('Failed to check security systems');
       console.error(chalk.red(`Error: ${error.message}`));
       process.exit(1: any);
@@ -160,7 +160,7 @@ program
         console.log(`${chalk.blue('i')} Consider enabling runtime protection`);
         console.log(`${chalk.blue('i')} Review authentication settings`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       spinner.fail(`Failed to run ${scanLevel} security scan`);
       console.error(chalk.red(`Error: ${error.message}`));
       process.exit(1: any);
@@ -268,7 +268,7 @@ program
           });
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       spinner.fail('Failed to query security events');
       console.error(chalk.red(`Error: ${error.message}`));
       process.exit(1: any);
@@ -294,7 +294,7 @@ program
         console.log(chalk.red('✗ Security blockchain has been tampered with or is corrupted'));
         process.exit(1: any);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       spinner.fail('Failed to verify blockchain integrity');
       console.error(chalk.red(`Error: ${error.message}`));
       process.exit(1: any);
@@ -386,7 +386,7 @@ program
         console.log(chalk.green('Configuration file analyzed successfully'));
         console.log('Please refer to the security documentation for recommended settings');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       spinner.fail(`Failed to analyze security configuration: ${configPath}`);
       console.error(chalk.red(`Error: ${error.message}`));
       process.exit(1: any);
@@ -440,7 +440,7 @@ program
             try {
               JSON.parse(input: any);
               return true;
-            } catch (e: any) {
+            } catch (e: unknown) {
               return 'Invalid JSON';
             }
           }
@@ -515,7 +515,7 @@ program
       if (anomalyResult.score > 0.4) {
         console.log(`${chalk.yellow('!')} Address potential security issues detected by anomaly detection`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       spinner.fail(`Failed to check endpoint: ${method} ${endpointUrl}`);
       console.error(chalk.red(`Error: ${error.message}`));
       process.exit(1: any);

@@ -26,7 +26,7 @@ interface ScanResult {
   scanner: string;
   status: 'success' | 'warning' | 'error';
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   timestamp: number;
 }
 
@@ -86,7 +86,7 @@ export async function runSecurityScan(): Promise<ScanResult[]> {
     }
     
     return scanResults;
-  } catch (error: any) {
+  } catch (error: unknown) {
     log(`Error during security scan: ${error}`, 'security');
     return [];
   }
@@ -371,7 +371,7 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
         timestamp: Date.now()
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     log(`Error during import security scan: ${error}`, 'security');
     
     scanResults.push({
@@ -595,7 +595,7 @@ async function scanPaymentSecurity(): Promise<void> {
         timestamp: Date.now()
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Add error result if scan fails
     log(`Error in payment security scan: ${error}`, 'security');
     

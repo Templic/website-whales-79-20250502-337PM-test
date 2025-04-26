@@ -1,6 +1,6 @@
 declare module 'connect-pg-simple' {
   import session from 'express-session';
-  export default function connectPgSimple(session: typeof import('express-session')): new (options: any) => session.Store;
+  export default function connectPgSimple(session: typeof import('express-session')): new ((options: any): unknown) => session.Store;
 }
 
 import { type Subscriber, type InsertSubscriber, type Post, type InsertPost, type Category, type InsertCategory, type Comment, type InsertComment, type User, type InsertUser, type Track, type Album, type Newsletter, type InsertNewsletter, subscribers, posts, categories, comments, users, tracks, albums, newsletters } from "@shared/schema";
@@ -69,7 +69,7 @@ export interface IStorage {
   // Music methods
   getTracks(): Promise<Track[]>;
   getAlbums(): Promise<Album[]>;
-  uploadMusic(params: { file: any; targetPage: string; uploadedBy: number; userRole: 'admin' | 'super_admin' }): Promise<Track>;
+  uploadMusic(params: { file: unknown; targetPage: string; uploadedBy: number; userRole: 'admin' | 'super_admin' }): Promise<Track>;
   deleteMusic(trackId: number, userId: number, userRole: 'admin' | 'super_admin'): Promise<void>;
 
   // Session management methods
@@ -879,7 +879,7 @@ export class PostgresStorage implements IStorage {
         super_admin: 0
       };
 
-      userRolesResult.rows.forEach((row: any) => {
+      userRolesResult.rows.forEach(((row: any): unknown) => {
         if (row.role && userRolesDistribution.hasOwnProperty(row.role)) {
           userRolesDistribution[row.role as keyof typeof userRolesDistribution] = parseInt(row.count);
         }
@@ -900,7 +900,7 @@ export class PostgresStorage implements IStorage {
       const months: string[] = [];
       const activeUsersOverTime: number[] = [];
 
-      userActivityData.rows.forEach((row: any) => {
+      userActivityData.rows.forEach(((row: any): unknown) => {
         months.push(row.month);
         activeUsersOverTime.push(parseInt(row.count));
       });

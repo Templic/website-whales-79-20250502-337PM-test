@@ -153,7 +153,7 @@ async function setupMaintenanceTasks() {
 }
 
 // Utility function to execute query with detailed performance metrics
-export async function executeOptimizedQuery(query: string, params?: any[]) {
+export async function executeOptimizedQuery(query: string, params?: unknown[]) {
   const start = Date.now();
   try {
     const result = await pgPool.query(query, params);
