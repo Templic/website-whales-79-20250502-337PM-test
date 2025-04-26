@@ -37,6 +37,7 @@ import { db } from "./db";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { randomBytes } from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
 import path from 'path';
 import { hashPassword } from './auth';
@@ -251,7 +252,9 @@ export class PostgresStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     try {
-      const [newUser] = await db.insert(users).values(user).returning();
+      // Generate a UUID for the user
+      const userWithId = { ...user, id: uuidv4() };
+      const [newUser] = await db.insert(users).values(userWithId).returning();
       return newUser;
     } catch (error) {
       console.error("Error creating user:", error);
@@ -772,9 +775,33 @@ export class PostgresStorage implements IStorage {
   async createInitialUsers() {
     try {
       const initialUsers = [
-        { username: 'admin', password: await hashPassword('admin123'), email: 'admin@example.com', role: 'admin' },
-        { username: 'superadmin', password: await hashPassword('superadmin123'), email: 'superadmin@example.com', role: 'super_admin' },
-        { username: 'user', password: await hashPassword('user123'), email: 'user@example.com', role: 'user' }
+        { 
+          username: 'admin', 
+          password: await hashPassword('admin123'), 
+          email: 'admin@example.com', 
+          role: 'admin' as 'admin',
+          isBanned: false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        { 
+          username: 'superadmin', 
+          password: await hashPassword('superadmin123'), 
+          email: 'superadmin@example.com', 
+          role: 'super_admin' as 'super_admin',
+          isBanned: false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        { 
+          username: 'user', 
+          password: await hashPassword('user123'), 
+          email: 'user@example.com', 
+          role: 'user' as 'user',
+          isBanned: false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
       ];
 
       for (const userData of initialUsers) {
