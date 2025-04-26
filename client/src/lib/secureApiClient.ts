@@ -181,10 +181,15 @@ export function CsrfFormField(): JSX.Element {
   const token = getCsrfToken();
   
   if (!token) {
-    return <></>;
+    return null;
   }
   
-  return <input type="hidden" name="_csrf" value={token} />;
+  // Create a hidden input element for CSRF protection
+  const input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = '_csrf';
+  input.value = token;
+  return input as unknown as JSX.Element;
 }
 
 // Default export for convenience

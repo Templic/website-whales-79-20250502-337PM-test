@@ -1,334 +1,300 @@
 /**
- * OpenAI Integration for TypeScript Error Management
+ * OpenAI Integration Module for TypeScript Error Analysis
  * 
- * This module provides functions to use OpenAI's API for analyzing and fixing TypeScript errors.
+ * This module provides intelligent analysis of TypeScript errors using OpenAI's GPT models.
+ * It helps with understanding complex errors, suggesting fixes, and providing context-aware explanations.
  */
 
-import OpenAI from 'openai';
+import OpenAI from "openai";
+import { TypeScriptError, ErrorAnalysis, InsertErrorAnalysis } from "../tsErrorStorage";
+import { db } from "../db";
+import { errorAnalysis } from "../../shared/schema";
 import fs from 'fs';
 import path from 'path';
-import { TypeScriptError } from './ts-error-analyzer';
-import { ErrorPattern } from './ts-pattern-finder';
+import { tsErrorStorage } from "../tsErrorStorage";
 
-// Initialize OpenAI
-const apiKey = process.env.OPENAI_API_KEY;
-// The newest OpenAI model is "gpt-4o" which was released May 13, 2024. Do not change this unless explicitly requested by user
-const model = 'gpt-4o';
+// Initialize OpenAI client
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Initialize OpenAI client if API key is available
-let openai: OpenAI | undefined;
-if (apiKey) {
-  openai = new OpenAI({ apiKey });
-}
+// Default system prompt for TypeScript error analysis
+const DEFAULT_SYSTEM_PROMPT = `
+You are an expert TypeScript developer specializing in error analysis and resolution.
+Your task is to analyze TypeScript errors, explain them clearly, and suggest fixes.
 
-// Interfaces
-export interface AIAnalysisResult {
-  error: TypeScriptError;
-  rootCause: string;
-  suggestedFix: string;
-  confidence: number;
-  relatedErrors?: string[];
-  explanation: string;
-}
+For each error:
+1. Explain the error in simple terms
+2. Identify the root cause
+3. Suggest a precise fix with code examples
+4. Consider the broader context and potential side effects of the fix
+5. Rate the severity and complexity of the error
 
-export interface AIFixResult {
-  error: TypeScriptError;
-  fixedCode: string;
-  explanation: string;
-  confidence: number;
-  alternativeFixes?: string[];
-}
+Focus on providing accurate, practical solutions that follow TypeScript best practices.
+`;
 
-export interface AIPatternResult {
-  pattern: ErrorPattern;
-  enhancedDescription: string;
-  enhancedSuggestedFix: string;
-  generalSolution: string;
-  exampleFix: string;
+/**
+ * Configuration options for OpenAI analysis
+ */
+export interface OpenAIAnalysisOptions {
+  model?: string;
+  temperature?: number;
+  systemPrompt?: string;
+  includeProjectContext?: boolean;
+  maxFilesToInclude?: number;
+  maxTokens?: number;
 }
 
 /**
- * Analyzes a TypeScript error using AI
- * 
- * @param error - TypeScript error to analyze
- * @param fileContent - Content of the file containing the error
- * @param projectContext - Additional context about the project
- * @returns AI analysis result
+ * Default configuration for OpenAI analysis
  */
-export async function analyzeErrorWithAI(
+const DEFAULT_OPTIONS: OpenAIAnalysisOptions = {
+  model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+  temperature: 0.2,
+  systemPrompt: DEFAULT_SYSTEM_PROMPT,
+  includeProjectContext: true,
+  maxFilesToInclude: 3,
+  maxTokens: 1000
+};
+
+/**
+ * Analyze a TypeScript error using OpenAI
+ * 
+ * @param error The TypeScript error to analyze
+ * @param options Configuration options for the analysis
+ * @returns A structured analysis of the error
+ */
+export async function analyzeErrorWithOpenAI(
   error: TypeScriptError,
-  fileContent: string,
-  projectContext?: string
-): Promise<AIAnalysisResult | undefined> {
-  if (!openai) {
-    console.warn('OpenAI API key not available. AI analysis skipped.');
-    return undefined;
+  options: OpenAIAnalysisOptions = {}
+): Promise<ErrorAnalysis> {
+  // Merge provided options with defaults
+  const config = { ...DEFAULT_OPTIONS, ...options };
+  
+  // Check if the OpenAI API key is available
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OpenAI API key not found. Please set the OPENAI_API_KEY environment variable.");
   }
   
   try {
-    // Extract context around the error
-    const errorContext = extractErrorContext(fileContent, error.line);
-    
-    // Prepare prompt
-    const prompt = `
-I need help analyzing a TypeScript error. Here are the details:
-
-Error Code: TS${error.code}
-Message: ${error.message}
-File: ${error.file}
-Line: ${error.line}
-Column: ${error.column}
-
-Here's the code context:
-\`\`\`typescript
-${errorContext}
-\`\`\`
-
-${projectContext ? `Additional project context:\n${projectContext}\n` : ''}
-
-Please analyze this error and provide the following information in JSON format:
-1. rootCause: What is the root cause of this error?
-2. suggestedFix: How can I fix this error? Provide a specific code suggestion.
-3. confidence: Your confidence in this analysis (0-1).
-4. relatedErrors: Any related errors that might be caused by the same root issue.
-5. explanation: A detailed explanation of why this error occurs and how the fix addresses it.
-`;
-
-    // Call OpenAI API
-    const response = await openai.chat.completions.create({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.2, // Lower temperature for more deterministic results
-    });
-
-    // Parse and validate response
-    const content = response.choices[0].message.content;
-    if (!content) {
-      throw new Error('Empty response from OpenAI');
+    // Read the file content for context
+    let fileContent = "";
+    try {
+      if (fs.existsSync(error.file_path)) {
+        fileContent = fs.readFileSync(error.file_path, 'utf8');
+      }
+    } catch (err) {
+      console.warn(`Failed to read file ${error.file_path}: ${err}`);
     }
-
-    const result = JSON.parse(content);
     
-    // Return analysis result
-    return {
-      error,
-      rootCause: result.rootCause || 'Unknown',
-      suggestedFix: result.suggestedFix || 'No suggestion available',
-      confidence: result.confidence || 0.5,
-      relatedErrors: result.relatedErrors,
-      explanation: result.explanation || 'No explanation available'
+    // Build related file context if needed
+    let projectContext = "";
+    if (config.includeProjectContext) {
+      projectContext = await buildProjectContext(error, config.maxFilesToInclude || 3);
+    }
+    
+    // Prepare the prompt for OpenAI
+    const prompt = `
+    I'm analyzing a TypeScript error. Here are the details:
+    
+    Error Code: ${error.error_code}
+    Error Message: ${error.error_message}
+    File: ${error.file_path}
+    Line: ${error.line_number}, Column: ${error.column_number}
+    
+    Error Context from the source code:
+    \`\`\`typescript
+    ${error.error_context}
+    \`\`\`
+    
+    ${fileContent ? `Full file content:\n\`\`\`typescript\n${fileContent}\n\`\`\`` : ""}
+    
+    ${projectContext ? `Additional project context:\n${projectContext}` : ""}
+    
+    Please analyze this TypeScript error comprehensively:
+    1. Provide a clear explanation of what's wrong
+    2. Identify the root cause
+    3. Suggest a specific fix with code examples
+    4. Consider any side effects or broader implications of the fix
+    5. Rate the error's severity and complexity on a scale of 1-10
+    
+    Format your response as a JSON object with these fields:
+    {
+      "explanation": "Detailed explanation of the error",
+      "rootCause": "The fundamental issue causing the error",
+      "suggestedFix": "Code example showing how to fix the error",
+      "sideEffects": "Potential implications of applying the fix",
+      "complexityRating": number,
+      "severityRating": number,
+      "additionalNotes": "Any other relevant information"
+    }
+    `;
+    
+    // Call OpenAI API for analysis
+    const response = await openai.chat.completions.create({
+      model: config.model || "gpt-4o",
+      messages: [
+        { role: "system", content: config.systemPrompt || DEFAULT_SYSTEM_PROMPT },
+        { role: "user", content: prompt }
+      ],
+      temperature: config.temperature || 0.2,
+      max_tokens: config.maxTokens || 1000,
+      response_format: { type: "json_object" }
+    });
+    
+    // Parse the response
+    const analysisContent = response.choices[0].message.content;
+    if (!analysisContent) {
+      throw new Error("Empty response from OpenAI");
+    }
+    
+    let analysisData;
+    try {
+      analysisData = JSON.parse(analysisContent);
+    } catch (err) {
+      console.error("Failed to parse OpenAI response as JSON:", err);
+      console.log("Raw response:", analysisContent);
+      analysisData = { explanation: "Failed to parse analysis response", rawResponse: analysisContent };
+    }
+    
+    // Calculate confidence score (0-100) based on complexity and OpenAI's reported metrics
+    const complexityRating = analysisData.complexityRating || 5;
+    const confidenceScore = Math.max(0, Math.min(100, Math.round(100 - complexityRating * 10)));
+    
+    // Store the analysis in the database
+    const insertAnalysis: InsertErrorAnalysis = {
+      error_id: error.id,
+      analysis_type: 'openai',
+      analysis_data: analysisData,
+      confidence_score: confidenceScore,
+      suggested_fix: analysisData.suggestedFix || null,
+      is_ai_generated: true
     };
+    
+    // Save the analysis to the database
+    const savedAnalysis = await tsErrorStorage.createErrorAnalysis(insertAnalysis);
+    
+    return savedAnalysis;
   } catch (error) {
-    console.error('Error analyzing with OpenAI:', error);
-    return undefined;
+    console.error("OpenAI analysis failed:", error);
+    throw error;
   }
 }
 
 /**
- * Generates a fix for a TypeScript error using AI
+ * Build context from related project files that might be relevant to the error
  * 
- * @param error - TypeScript error to fix
- * @param fileContent - Content of the file containing the error
- * @param projectContext - Additional context about the project
- * @returns AI fix result
+ * @param error The TypeScript error to analyze
+ * @param maxFiles Maximum number of related files to include
+ * @returns A string with relevant context from related files
  */
-export async function generateFixWithAI(
-  error: TypeScriptError,
-  fileContent: string,
-  projectContext?: string
-): Promise<AIFixResult | undefined> {
-  if (!openai) {
-    console.warn('OpenAI API key not available. AI fix generation skipped.');
-    return undefined;
-  }
+async function buildProjectContext(error: TypeScript.Error, maxFiles: number): Promise<string> {
+  // Placeholder for project context building
+  // In a real implementation, this would:
+  // 1. Find imported files related to the error
+  // 2. Identify dependent files
+  // 3. Extract relevant snippets
   
+  let context = "Related file context is not available.";
+  
+  // This is a placeholder implementation that would be expanded
+  // based on the actual codebase structure and error types
   try {
-    // Extract context around the error
-    const errorContext = extractErrorContext(fileContent, error.line, 10);
+    // Get the directory of the error file
+    const errorDir = path.dirname(error.file_path);
     
-    // Prepare prompt
-    const prompt = `
-I need help fixing a TypeScript error. Here are the details:
-
-Error Code: TS${error.code}
-Message: ${error.message}
-Category: ${error.category}
-Severity: ${error.severity}
-File: ${error.file}
-Line: ${error.line}
-Column: ${error.column}
-
-Here's the code context (the error occurs in this snippet, focus on this for the fix):
-\`\`\`typescript
-${errorContext}
-\`\`\`
-
-${projectContext ? `Additional project context:\n${projectContext}\n` : ''}
-
-Please provide the following information in JSON format:
-1. fixedCode: The complete fixed code snippet that replaces the given context.
-2. explanation: A detailed explanation of the fix.
-3. confidence: Your confidence in this fix (0-1).
-4. alternativeFixes: Any alternative approaches to fix this error.
-
-Important guidelines:
-- Keep the fix minimal and focused on addressing this specific error.
-- Preserve the original code's intent and style.
-- Make sure the fixed code is valid TypeScript.
-- The fixedCode should be a direct replacement for the given code context.
-`;
-
-    // Call OpenAI API
-    const response = await openai.chat.completions.create({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.2, // Lower temperature for more deterministic results
-    });
-
-    // Parse and validate response
-    const content = response.choices[0].message.content;
-    if (!content) {
-      throw new Error('Empty response from OpenAI');
-    }
-
-    const result = JSON.parse(content);
+    // Check for related files (importers and imports)
+    // This would be replaced with actual dependency analysis
     
-    // Return fix result
-    return {
-      error,
-      fixedCode: result.fixedCode || errorContext,
-      explanation: result.explanation || 'No explanation available',
-      confidence: result.confidence || 0.5,
-      alternativeFixes: result.alternativeFixes
-    };
-  } catch (error) {
-    console.error('Error generating fix with OpenAI:', error);
-    return undefined;
-  }
-}
-
-/**
- * Analyzes an error pattern using AI
- * 
- * @param pattern - Error pattern to analyze
- * @param examples - Example errors in this pattern
- * @returns AI pattern result
- */
-export async function analyzePatternWithAI(
-  pattern: ErrorPattern,
-  examples: TypeScriptError[]
-): Promise<AIPatternResult | undefined> {
-  if (!openai) {
-    console.warn('OpenAI API key not available. AI pattern analysis skipped.');
-    return undefined;
+    // For now, we'll just look for files in the same directory
+    // with similar names or related functionality
+    const errorFileName = path.basename(error.file_path, '.ts');
+    
+    // Build context string
+    context = "Related files will be analyzed here based on project dependencies.";
+  } catch (err) {
+    console.warn("Failed to build project context:", err);
   }
   
-  try {
-    // Prepare examples
-    const exampleText = examples.map(ex => 
-      `Example ${ex.file}:${ex.line}: ${ex.message}\nCode: ${ex.lineContent || 'N/A'}`
-    ).join('\n\n');
-    
-    // Prepare prompt
-    const prompt = `
-I need help analyzing a TypeScript error pattern. Here are the details:
-
-Pattern Name: ${pattern.name}
-Category: ${pattern.category}
-Severity: ${pattern.severity}
-Occurrences: ${pattern.occurrences}
-Description: ${pattern.description}
-Current Suggested Fix: ${pattern.suggestedFix || 'None'}
-Auto-fixable: ${pattern.autoFixable}
-
-Examples of this pattern:
-${exampleText}
-
-Please analyze this error pattern and provide the following information in JSON format:
-1. enhancedDescription: A more detailed description of this error pattern.
-2. enhancedSuggestedFix: An improved suggestion for fixing this error pattern.
-3. generalSolution: A general approach to avoid this type of error in the future.
-4. exampleFix: A concrete example of fixing one of the provided examples.
-`;
-
-    // Call OpenAI API
-    const response = await openai.chat.completions.create({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.2, // Lower temperature for more deterministic results
-    });
-
-    // Parse and validate response
-    const content = response.choices[0].message.content;
-    if (!content) {
-      throw new Error('Empty response from OpenAI');
-    }
-
-    const result = JSON.parse(content);
-    
-    // Return pattern result
-    return {
-      pattern,
-      enhancedDescription: result.enhancedDescription || pattern.description,
-      enhancedSuggestedFix: result.enhancedSuggestedFix || pattern.suggestedFix || 'No suggestion available',
-      generalSolution: result.generalSolution || 'No general solution available',
-      exampleFix: result.exampleFix || 'No example fix available'
-    };
-  } catch (error) {
-    console.error('Error analyzing pattern with OpenAI:', error);
-    return undefined;
-  }
+  return context;
 }
 
 /**
- * Extracts context around an error
+ * Get existing analysis for an error if available, or create a new one
  * 
- * @param fileContent - Content of the file
- * @param line - Line number of the error
- * @param contextLines - Number of context lines to include around the error
- * @returns Code context around the error
+ * @param errorId The ID of the error to analyze
+ * @param forceRefresh Whether to force a new analysis even if one exists
+ * @returns The error analysis
  */
-function extractErrorContext(
-  fileContent: string,
-  line: number,
-  contextLines: number = 5
-): string {
-  const lines = fileContent.split('\n');
-  const start = Math.max(0, line - contextLines - 1);
-  const end = Math.min(lines.length, line + contextLines);
+export async function getOrCreateAnalysis(
+  errorId: number,
+  forceRefresh: boolean = false
+): Promise<ErrorAnalysis> {
+  // Check if analysis already exists
+  let analysis = await tsErrorStorage.getAnalysisForError(errorId);
   
-  return lines.slice(start, end).map((text, i) => {
-    const lineNumber = start + i + 1;
-    const marker = lineNumber === line ? '> ' : '  ';
-    return `${marker}${lineNumber}: ${text}`;
-  }).join('\n');
+  // If no analysis exists or force refresh is enabled, create a new one
+  if (!analysis || forceRefresh) {
+    // Get the error details
+    const error = await tsErrorStorage.getTypeScriptErrorById(errorId);
+    if (!error) {
+      throw new Error(`Error with ID ${errorId} not found`);
+    }
+    
+    // Create a new analysis
+    analysis = await analyzeErrorWithOpenAI(error);
+  }
+  
+  return analysis;
 }
 
 /**
- * Checks if OpenAI integration is available
+ * Batch analyze multiple errors to optimize API usage
  * 
- * @returns Whether OpenAI integration is available
+ * @param errorIds Array of error IDs to analyze
+ * @param options Configuration options for the analysis
+ * @returns Array of error analyses
  */
-export function isOpenAIAvailable(): boolean {
-  return !!openai;
+export async function batchAnalyzeErrors(
+  errorIds: number[],
+  options: OpenAIAnalysisOptions = {}
+): Promise<ErrorAnalysis[]> {
+  const analyses: ErrorAnalysis[] = [];
+  
+  // Process in batches of 5 to avoid overloading the API
+  const batchSize = 5;
+  for (let i = 0; i < errorIds.length; i += batchSize) {
+    const batch = errorIds.slice(i, i + batchSize);
+    
+    // Process each error in the batch concurrently
+    const batchPromises = batch.map(async (errorId) => {
+      try {
+        const error = await tsErrorStorage.getTypeScriptErrorById(errorId);
+        if (!error) {
+          throw new Error(`Error with ID ${errorId} not found`);
+        }
+        
+        return await analyzeErrorWithOpenAI(error, options);
+      } catch (err) {
+        console.error(`Failed to analyze error ${errorId}:`, err);
+        return null;
+      }
+    });
+    
+    // Wait for all analyses in this batch to complete
+    const batchResults = await Promise.all(batchPromises);
+    analyses.push(...batchResults.filter(Boolean) as ErrorAnalysis[]);
+    
+    // Slight delay between batches to respect API rate limits
+    if (i + batchSize < errorIds.length) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  
+  return analyses;
 }
 
-/**
- * Returns the current OpenAI model being used
- * 
- * @returns The OpenAI model name
- */
-export function getOpenAIModel(): string {
-  return model;
-}
-
+// Export the module
 export default {
-  analyzeErrorWithAI,
-  generateFixWithAI,
-  analyzePatternWithAI,
-  isOpenAIAvailable,
-  getOpenAIModel
+  analyzeErrorWithOpenAI,
+  getOrCreateAnalysis,
+  batchAnalyzeErrors
 };

@@ -28,7 +28,7 @@ const DEBUG_MODE = process.env.NODE_ENV !== 'production';
 /**
  * Generate a CSRF token
  */
-export const generateToken = (req: Request): string: string => {
+export const generateToken = (req: Request): string => {
   // Create a random token
   const token = crypto.randomBytes(TOKEN_SIZE).toString('hex');
   
