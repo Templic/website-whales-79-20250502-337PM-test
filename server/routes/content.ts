@@ -1,7 +1,32 @@
 import express from 'express';
 import { storage } from '../storage';
 import { z } from 'zod';
-import { insertContentHistorySchema, insertContentItemSchema, insertContentUsageSchema } from '../../shared/schema';
+
+// Define Zod schemas for content items since they're not in shared/schema.ts
+const insertContentItemSchema = z.object({
+  key: z.string(),
+  title: z.string(),
+  content: z.string(),
+  type: z.string().default('text'),
+  page: z.string().optional(),
+  status: z.string().default('draft'),
+  metadata: z.record(z.any()).optional(),
+  publishDate: z.date().optional(),
+  expiryDate: z.date().optional()
+});
+
+const insertContentHistorySchema = z.object({
+  contentId: z.number(),
+  versionData: z.record(z.any()),
+  userId: z.number().optional(),
+  changeDescription: z.string().optional()
+});
+
+const insertContentUsageSchema = z.object({
+  contentId: z.number(),
+  location: z.string(),
+  path: z.string()
+});
 
 const router = express.Router();
 

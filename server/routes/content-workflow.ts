@@ -1,6 +1,7 @@
 import express from 'express';
 import { db } from '../db';
-import { contentItems, contentHistory, contentWorkflowHistory } from '../../shared/schema';
+import { contentItems } from '../services/contentScheduler';
+import { pgTable, serial, text, timestamp, integer, json, boolean } from 'drizzle-orm/pg-core';
 import { eq, and, between, like, desc, asc, gte, lte, isNull, ne } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../middleware/authMiddleware';
 import { logger } from '../logger';
@@ -16,6 +17,25 @@ import {
 } from '../services/contentAnalytics';
 import { format, parseISO, startOfDay, endOfDay, subDays } from 'date-fns';
 
+// Define missing tables locally since they're not in shared/schema.ts
+const contentHistory = pgTable('content_history', {
+  id: serial('id').primaryKey(),
+  contentId: integer('content_id').notNull(),
+  version: integer('version').notNull(),
+  content: text('content').notNull(),
+  title: text('title').notNull(),
+  createdBy: integer('created_by'),
+  createdAt: timestamp('created_at').notNull().defaultNow()
+});
+
+const contentWorkflowHistory = pgTable('content_workflow_history', {
+  id: serial('id').primaryKey(),
+  contentId: integer('content_id').notNull(),
+  userId: integer('user_id'),
+  action: text('action').notNull(),
+  comments: text('comments'),
+  createdAt: timestamp('created_at').notNull().defaultNow()
+});
 const router = express.Router();
 
 // Get all content with pagination, filtering and sorting

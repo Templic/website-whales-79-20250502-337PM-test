@@ -1,8 +1,7 @@
 import { db } from '../db';
-import { contentItems } from '../../shared/schema';
 import { eq, and, lte, gte, ne, desc, count, sql, sum } from 'drizzle-orm';
 import { logger } from '../logger';
-import { ContentSchedulingMetrics } from './contentScheduler';
+import { ContentSchedulingMetrics, contentItems } from './contentScheduler';
 
 /**
  * Interface for content throughput statistics

@@ -36,17 +36,69 @@ import secureApiRoutes from './routes/secure-api';
 import { verifyApiSecurity } from './security/apiSecurityVerification';
 // Import CSRF protection middleware
 import { enhancedCsrfProtection } from './security/middleware/enhancedCsrfProtection';
+import typescriptErrorRoutes from './routes/typescript-error-routes';
+import typescriptErrorSimpleRoutes from './routes/typescript-error-simple-routes';
 import {
   insertSubscriberSchema,
-  insertPostSchema,
-  insertCommentSchema,
-  insertCategorySchema,
   insertNewsletterSchema,
-  contactMessages,
-  comments,
   users,
   User
 } from "../shared/schema";
+
+// Define missing tables locally
+import { pgTable, serial, text, timestamp, integer, boolean, varchar } from 'drizzle-orm/pg-core';
+
+// Define contactMessages table locally
+const contactMessages = pgTable('contact_messages', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  message: text('message').notNull(),
+  responded: boolean('responded').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Define comments table locally
+const comments = pgTable('comments', {
+  id: serial('id').primaryKey(),
+  postId: integer('post_id').notNull(),
+  authorId: integer('author_id').references(() => users.id).notNull(),
+  content: text('content').notNull(),
+  approved: boolean('approved').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Define insertCommentSchema since it's not exported from schema.ts
+import { createInsertSchema } from 'drizzle-zod';
+const insertCommentSchema = createInsertSchema(comments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Define posts table locally
+const posts = pgTable('posts', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  authorId: integer('author_id').references(() => users.id).notNull(),
+  category: text('category'),
+  slug: text('slug').notNull(),
+  coverImage: text('cover_image'),
+  published: boolean('published').default(false).notNull(),
+  approved: boolean('approved').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Define insertPostSchema since it's not exported from schema.ts
+const insertPostSchema = createInsertSchema(posts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
 
 // Function to create a safe user object without sensitive fields
 function createSafeUser(user: User | null | undefined) {

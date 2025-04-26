@@ -304,18 +304,14 @@ export const commentValidation = [
     .withMessage('Comment must be between 2 and 1000 characters')
     .escape(),
   
-  body('authorName')
-    .trim()
-    .notEmpty()
-    .withMessage('Author name is required')
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Author name must be between 2 and 100 characters')
-    .escape(),
+  body('authorId')
+    .optional()
+    .isInt()
+    .withMessage('Author ID must be an integer'),
   
-  body('authorEmail')
-    .isEmail()
-    .withMessage('Must be a valid email address')
-    .normalizeEmail()
+  body('postId')
+    .isInt()
+    .withMessage('Post ID must be an integer')
 ];
 
 /**

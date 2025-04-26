@@ -3,49 +3,33 @@ declare module 'connect-pg-simple' {
   export default function connectPgSimple(session: typeof import('express-session')): new (options: any) => session.Store;
 }
 
+// Import only what we need from the shared schema
 import { 
   // User types
   type User, type InsertUser,
+  // Blog post types
+  type Post, type InsertPost,
+  type Comment, type InsertComment,
+  type ProductCategory, type InsertProductCategory,
+  type Category, type InsertCategory,
+  type Subscriber, type InsertSubscriber,
+  type Newsletter, type InsertNewsletter,
+  type Product, type InsertProduct,
   // TypeScript error management types
-  type TypescriptError, type InsertTypescriptError,
+  type TypeScriptError, type InsertTypeScriptError,
   type ErrorPattern, type InsertErrorPattern,
   type ErrorFix, type InsertErrorFix,
   type ErrorFixHistory, type InsertErrorFixHistory,
   type ProjectAnalysis, type InsertProjectAnalysis,
   type ProjectFile, type InsertProjectFile,
-  // Content management types
-  type ContentItem, type InsertContentItem,
-  type ContentUsage, type InsertContentUsage,
-  type ContentHistory, type InsertContentHistory,
-  type ContentWorkflowHistory, type InsertContentWorkflowHistory,
-  type WorkflowNotification, type InsertWorkflowNotification,
-  type MediaFile, type InsertMediaFile,
-  // Newsletter and subscriber types
-  type Newsletter, type InsertNewsletter,
-  type Subscriber, type InsertSubscriber,
-  // Blog types
-  type Post, type InsertPost,
-  type Category, type InsertCategory,
-  type Comment, type InsertComment,
-  type ContactMessage, type InsertContactMessage,
-  // Music types
-  type Track, type InsertTrack,
-  type Album, type InsertAlbum,
-  // Product types
-  type Product, type InsertProduct,
-  // Tables
-  users,
+  // Custom types for our application
+  type Track, type Album, type ContentItem, type ContentHistory, type ContentUsage, type ContentWorkflowHistory,
+  // Tables we need
+  users, posts, comments,
   // TypeScript error management tables
-  typescriptErrors, errorPatterns, errorFixes, errorFixHistory,
-  projectAnalyses, projectFiles,
-  // Content management tables
-  contentItems, contentUsage, contentHistory, contentWorkflowHistory, workflowNotifications, mediaFiles,
-  // Additional tables
-  newsletters, subscribers, posts, categories, comments, contactMessages, 
-  // Music tables
-  tracks, albums,
-  // E-commerce tables
-  products, productCategories
+  typeScriptErrors, errorPatterns, errorFixes, errorAnalysis, scanResults,
+  // Product tables for e-commerce
+  products, productCategories, newsletters, subscribers
 } from "../shared/schema";
 import { sql, eq, and, desc, gt, count, max } from "drizzle-orm";
 import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";

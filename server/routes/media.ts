@@ -18,7 +18,8 @@
 
 import express from 'express';
 import { db } from '../db';
-import { mediaFiles } from '../../shared/schema';
+import { pgTable, serial, text, timestamp, integer, boolean, varchar } from 'drizzle-orm/pg-core';
+import { eq } from 'drizzle-orm';
 import path from 'path';
 import fs from 'fs';
 import fileUpload from 'express-fileupload';
@@ -29,6 +30,21 @@ import {
 } from '../security/fileUploadSecurity';
 import { log } from '../vite';
 import crypto from 'crypto';
+
+// Define mediaFiles locally since it's not in shared/schema.ts
+const mediaFiles = pgTable('media_files', {
+  id: serial('id').primaryKey(),
+  filename: text('filename').notNull(),
+  originalFilename: text('original_filename').notNull(),
+  mimeType: text('mime_type').notNull(),
+  size: integer('size').notNull(),
+  path: text('path').notNull(),
+  uploadedBy: integer('uploaded_by'),
+  uploadedAt: timestamp('uploaded_at').defaultNow().notNull(),
+  description: text('description'),
+  status: varchar('status', { length: 50 }).default('active').notNull(),
+  altText: text('alt_text')
+});
 
 // Import middleware for authentication
 // Using isAuthenticated for standard auth check
@@ -46,7 +62,6 @@ const requireAdmin = (req, res, next) => {
   }
   return res.status(403).json({ error: 'Forbidden: Admin access required' });
 };
-import { eq } from 'drizzle-orm';
 
 // Initialize file upload security module
 initFileUploadSecurity();
@@ -207,17 +222,13 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req, res) => {
       const newMediaFile = await db.insert(mediaFiles).values({
         filename: sanitizedFileName,
         originalFilename: file.name,
-        fileType,
-        mimeType,
-        fileSize: file.size,
-        fileUrl,
-        // thumbnailUrl will be generated for images later
-        thumbnailUrl: fileType === 'image' ? fileUrl : null,
-        page,
-        section,
-        position,
-        metadata,
+        mimeType: file.mimetype,
+        size: file.size,
+        path: filePath,
         uploadedBy: (req.user as any).id, // User ID from auth middleware
+        description: req.body.description || null,
+        status: 'active',
+        altText: req.body.altText || null
       }).returning();
       
       log(`File successfully recorded in database with ID ${newMediaFile?.[0]?.id || 'unknown'}`, 'security');

@@ -1,574 +1,322 @@
 /**
  * TypeScript Error Pattern Finder
  * 
- * This module analyzes TypeScript errors to find common patterns
- * and provides mechanisms for categorizing and fixing them.
+ * This module provides functions to identify common patterns in TypeScript errors.
+ * It analyzes errors found by the ts-error-analyzer and groups them into patterns
+ * based on similarities in code, message, and location.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { tsErrorStorage } from '../tsErrorStorage';
-import { analyzePatternWithAI, isOpenAIConfigured } from './openai-integration';
+import path from 'path';
+import fs from 'fs';
+import ts from 'typescript';
+import { analyzeTypeScriptErrors, TypeScriptError } from './ts-error-analyzer';
+import { ErrorCategory, ErrorSeverity } from '../../shared/schema';
 
-// Interface for error pattern
-interface ErrorPattern {
+// Interfaces
+export interface ErrorPattern {
+  id?: number;
   name: string;
+  pattern: string;
+  category: ErrorCategory;
+  severity: ErrorSeverity;
   description: string;
-  category: string;
-  severity: string;
-  regex?: string;
+  suggestedFix?: string;
+  autoFixable: boolean;
   occurrences: number;
-  autoFixable: boolean;
-  examples: Array<{
-    errorCode: string;
-    errorMessage: string;
-    filePath: string;
-    lineNumber: number;
-    columnNumber: number;
-    errorContext: string;
-  }>;
+  examples: ErrorExample[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-// Known error patterns that we can detect
-const knownPatterns: Array<{
-  name: string;
-  description: string;
-  category: string;
-  severity: string;
-  regex: RegExp;
-  messageMatchers: string[];
-  codeMatchers: string[];
-  autoFixable: boolean;
-}> = [
-  {
-    name: 'Missing Type Declaration',
-    description: 'Variable or parameter is missing explicit type declaration',
-    category: 'missing_type',
-    severity: 'medium',
-    regex: /Parameter '(\w+)' implicitly has an '(\w+)' type./,
-    messageMatchers: [
-      'implicitly has an',
-      'implicit any',
-      'type any'
-    ],
-    codeMatchers: [
-      'TS7006'
-    ],
-    autoFixable: true
-  },
-  {
-    name: 'Type Mismatch in Assignment',
-    description: 'Value being assigned has a different type than the variable',
-    category: 'type_mismatch',
-    severity: 'high',
-    regex: /Type '(.+)' is not assignable to type '(.+)'/,
-    messageMatchers: [
-      'is not assignable to type',
-      'not assignable to parameter'
-    ],
-    codeMatchers: [
-      'TS2322',
-      'TS2345'
-    ],
-    autoFixable: true
-  },
-  {
-    name: 'Property Does Not Exist',
-    description: 'Trying to access a property that does not exist on an object',
-    category: 'undefined_variable',
-    severity: 'high',
-    regex: /Property '(\w+)' does not exist on type '(.+)'/,
-    messageMatchers: [
-      'does not exist on type',
-      'has no property'
-    ],
-    codeMatchers: [
-      'TS2339'
-    ],
-    autoFixable: false
-  },
-  {
-    name: 'Module Not Found',
-    description: 'Import statement references a module that cannot be found',
-    category: 'import_error',
-    severity: 'critical',
-    regex: /Cannot find module '(.+)' or its corresponding type declarations/,
-    messageMatchers: [
-      'Cannot find module',
-      'Module not found'
-    ],
-    codeMatchers: [
-      'TS2307'
-    ],
-    autoFixable: false
-  },
-  {
-    name: 'Interface Implementation Missing',
-    description: 'Class does not implement all members of an interface',
-    category: 'interface_mismatch',
-    severity: 'high',
-    regex: /Class '(.+)' incorrectly implements interface '(.+)'/,
-    messageMatchers: [
-      'incorrectly implements interface',
-      'missing the following properties'
-    ],
-    codeMatchers: [
-      'TS2420'
-    ],
-    autoFixable: false
-  },
-  {
-    name: 'Null/Undefined Reference',
-    description: 'Attempting to use a value that could be null or undefined',
-    category: 'null_reference',
-    severity: 'high',
-    regex: /Object is possibly '(null|undefined)'/,
-    messageMatchers: [
-      'possibly null',
-      'possibly undefined',
-      'Object is possibly'
-    ],
-    codeMatchers: [
-      'TS2531',
-      'TS2532'
-    ],
-    autoFixable: true
-  },
-  {
-    name: 'Type Import Error',
-    description: 'Error in type import statement or reference',
-    category: 'import_error',
-    severity: 'medium',
-    regex: /Module '(.+)' has no exported member '(.+)'/,
-    messageMatchers: [
-      'has no exported member',
-      'export declaration'
-    ],
-    codeMatchers: [
-      'TS2305'
-    ],
-    autoFixable: true
-  },
-  {
-    name: 'Function Signature Mismatch',
-    description: 'Function called with incorrect parameter types or count',
-    category: 'type_mismatch',
-    severity: 'high',
-    regex: /No overload matches this call/,
-    messageMatchers: [
-      'No overload matches this call',
-      'Expected',
-      'parameters'
-    ],
-    codeMatchers: [
-      'TS2769'
-    ],
-    autoFixable: false
-  },
-  {
-    name: 'Generic Type Constraint',
-    description: 'Generic type parameter does not satisfy its constraints',
-    category: 'generic_constraint',
-    severity: 'medium',
-    regex: /Type '(.+)' does not satisfy the constraint '(.+)'/,
-    messageMatchers: [
-      'does not satisfy the constraint',
-      'Type argument'
-    ],
-    codeMatchers: [
-      'TS2344'
-    ],
-    autoFixable: false
-  },
-  {
-    name: 'Duplicate Identifier',
-    description: 'Variable, function, or class name already declared',
-    category: 'declaration_error',
-    severity: 'medium',
-    regex: /Duplicate identifier '(.+)'/,
-    messageMatchers: [
-      'Duplicate identifier',
-      'already declared'
-    ],
-    codeMatchers: [
-      'TS2300'
-    ],
-    autoFixable: true
-  }
-];
+export interface ErrorExample {
+  file: string;
+  line: number;
+  code: string;
+  errorHash: string;
+}
+
+export interface PatternFinderOptions {
+  minOccurrences?: number;
+  saveToDb?: boolean;
+}
 
 /**
- * Find common error patterns in a set of TypeScript errors
+ * Finds common error patterns in TypeScript errors
  * 
- * @param analysisResults Results from error analysis
- * @returns Array of identified patterns
+ * @param rootDir - The root directory of the project
+ * @param tsconfigPath - Path to the tsconfig.json file
+ * @param options - Pattern finder options
+ * @returns Array of error patterns
  */
-export async function findErrorPatterns(analysisResults: any): Promise<ErrorPattern[]> {
-  try {
-    const errors = analysisResults.errors || [];
-    
-    if (errors.length === 0) {
-      return [];
-    }
-    
-    // Group errors by message pattern
-    const errorGroups: Record<string, any[]> = {};
-    
-    // First pass: group by error code
-    for (const error of errors) {
-      if (!errorGroups[error.errorCode]) {
-        errorGroups[error.errorCode] = [];
-      }
-      
-      errorGroups[error.errorCode].push(error);
-    }
-    
-    // Find patterns from the groups
-    const patterns: ErrorPattern[] = [];
-    
-    // Process each error group
-    for (const [errorCode, codeErrors] of Object.entries(errorGroups)) {
-      // Skip groups with only one error
-      if (codeErrors.length < 2) {
-        continue;
-      }
-      
-      // Try to match against known patterns
-      const matchedPattern = matchKnownPattern(errorCode, codeErrors);
-      
-      if (matchedPattern) {
-        patterns.push(matchedPattern);
-      } else {
-        // Try to create a new pattern
-        const newPattern = await createNewPattern(errorCode, codeErrors);
-        
-        if (newPattern) {
-          patterns.push(newPattern);
-        }
-      }
-    }
-    
-    // Second pass: group by similarity in error messages
-    const messageGroups: Record<string, any[]> = {};
-    
-    for (const error of errors) {
-      // Skip errors already processed
-      if (patterns.some(p => p.examples.some(e => e.errorCode === error.errorCode && e.errorMessage === error.errorMessage))) {
-        continue;
-      }
-      
-      // Extract the first 5 words of the error message as a key
-      const messageKey = error.errorMessage.split(' ').slice(0, 5).join(' ');
-      
-      if (!messageGroups[messageKey]) {
-        messageGroups[messageKey] = [];
-      }
-      
-      messageGroups[messageKey].push(error);
-    }
-    
-    // Process message groups
-    for (const [messageKey, messageErrors] of Object.entries(messageGroups)) {
-      // Skip groups with only one error
-      if (messageErrors.length < 2) {
-        continue;
-      }
-      
-      // Try to create a new pattern
-      const newPattern = await createNewPattern(messageErrors[0].errorCode, messageErrors);
-      
-      if (newPattern) {
-        patterns.push(newPattern);
-      }
-    }
-    
-    return patterns;
-  } catch (error) {
-    console.error('Error finding error patterns:', error);
+export async function findErrorPatterns(
+  rootDir: string,
+  tsconfigPath: string,
+  options: PatternFinderOptions = {}
+): Promise<ErrorPattern[]> {
+  // Set default options
+  const opts = {
+    minOccurrences: options.minOccurrences || 3,
+    saveToDb: options.saveToDb !== undefined ? options.saveToDb : true
+  };
+  
+  // First, analyze the project to get errors
+  const analysis = await analyzeTypeScriptErrors(rootDir, tsconfigPath, { saveToDb: false });
+  
+  // Get all errors
+  const allErrors: TypeScriptError[] = [];
+  Object.values(analysis.errorsByCategory).forEach(errors => {
+    allErrors.push(...errors);
+  });
+  
+  // No errors, no patterns
+  if (allErrors.length === 0) {
     return [];
   }
-}
-
-/**
- * Match errors against known patterns
- * 
- * @param errorCode Error code
- * @param errors Array of errors with the same code
- * @returns Matched pattern or null
- */
-function matchKnownPattern(errorCode: string, errors: any[]): ErrorPattern | null {
-  try {
-    // Find matching known pattern
-    const matchingPatterns = knownPatterns.filter(
-      knownPattern => 
-        knownPattern.codeMatchers.includes(errorCode) ||
-        errors.some(error => 
-          knownPattern.messageMatchers.some(matcher => 
-            error.errorMessage.includes(matcher)
-          )
-        )
-    );
-    
-    if (matchingPatterns.length === 0) {
-      return null;
+  
+  // Group errors by code and simplified message
+  const errorGroups = groupErrorsBySignature(allErrors);
+  
+  // Convert groups to patterns
+  const patterns: ErrorPattern[] = [];
+  
+  for (const [signature, errors] of Object.entries(errorGroups)) {
+    // Skip if not enough occurrences
+    if (errors.length < opts.minOccurrences) {
+      continue;
     }
     
-    // Use the first matching pattern
-    const pattern = matchingPatterns[0];
-    
-    // Extract examples (up to 5)
-    const examples = errors.slice(0, 5).map(error => ({
-      errorCode: error.errorCode,
-      errorMessage: error.errorMessage,
-      filePath: error.filePath,
-      lineNumber: error.lineNumber,
-      columnNumber: error.columnNumber,
-      errorContext: error.errorContext || ''
-    }));
-    
-    // Create pattern object
-    return {
-      name: pattern.name,
-      description: pattern.description,
-      category: pattern.category,
-      severity: pattern.severity,
-      regex: pattern.regex.source,
-      occurrences: errors.length,
-      autoFixable: pattern.autoFixable,
-      examples
-    };
-  } catch (error) {
-    console.error('Error matching known pattern:', error);
-    return null;
+    // Create pattern from group
+    const pattern = createPatternFromGroup(signature, errors, rootDir);
+    patterns.push(pattern);
   }
-}
-
-/**
- * Create a new pattern from a group of errors
- * 
- * @param errorCode Error code
- * @param errors Array of errors with the same code
- * @returns New pattern or null
- */
-async function createNewPattern(errorCode: string, errors: any[]): Promise<ErrorPattern | null> {
-  try {
-    if (errors.length < 2) {
-      return null;
-    }
-    
-    // Get the first error for reference
-    const firstError = errors[0];
-    
-    // Extract common words from error messages
-    const commonWords = extractCommonWords(errors.map(e => e.errorMessage));
-    
-    // Create pattern name
-    let name = `Unknown Error ${errorCode}`;
-    
-    if (commonWords.length > 0) {
-      name = commonWords.slice(0, 4).join(' ');
-      // Capitalize first letter
-      name = name.charAt(0).toUpperCase() + name.slice(1);
-    }
-    
-    // Get file context for a better description
-    let description = errors[0].errorMessage;
-    
-    // Try to use AI for a better description if available
-    if (isOpenAIConfigured() && errors.length >= 3) {
-      try {
-        const aiAnalysis = await analyzePatternWithAI(
-          {
-            name,
-            description,
-            category: 'other',
-            severity: 'medium',
-            occurrences: errors.length
-          },
-          errors.slice(0, 3).map(e => ({
-            errorCode: e.errorCode,
-            errorMessage: e.errorMessage,
-            errorContext: e.errorContext || ''
-          }))
-        );
-        
-        if (aiAnalysis.patternRootCause) {
-          description = aiAnalysis.patternRootCause;
-        }
-      } catch (error) {
-        console.error('Error using AI for pattern analysis:', error);
-      }
-    }
-    
-    // Determine category
-    let category = 'other';
-    
-    if (firstError.errorMessage.includes('type')) {
-      category = 'type_mismatch';
-    } else if (firstError.errorMessage.includes('import') || firstError.errorMessage.includes('module')) {
-      category = 'import_error';
-    } else if (firstError.errorMessage.includes('undefined') || firstError.errorMessage.includes('null')) {
-      category = 'null_reference';
-    } else if (firstError.errorMessage.includes('interface')) {
-      category = 'interface_mismatch';
-    }
-    
-    // Determine severity
-    let severity = 'medium';
-    
-    if (
-      firstError.errorMessage.includes('cannot') ||
-      firstError.errorMessage.includes('undefined') ||
-      errors.length > 10
-    ) {
-      severity = 'high';
-    } else if (
-      firstError.errorMessage.includes('warning') ||
-      errors.length < 3
-    ) {
-      severity = 'low';
-    }
-    
-    // Extract examples (up to 5)
-    const examples = errors.slice(0, 5).map(error => ({
-      errorCode: error.errorCode,
-      errorMessage: error.errorMessage,
-      filePath: error.filePath,
-      lineNumber: error.lineNumber,
-      columnNumber: error.columnNumber,
-      errorContext: error.errorContext || ''
-    }));
-    
-    // Create pattern object
-    return {
-      name,
-      description,
-      category,
-      severity,
-      occurrences: errors.length,
-      autoFixable: false, // Default to false for new patterns
-      examples
-    };
-  } catch (error) {
-    console.error('Error creating new pattern:', error);
-    return null;
+  
+  // Sort patterns by occurrences (descending)
+  patterns.sort((a, b) => b.occurrences - a.occurrences);
+  
+  // Save patterns to database if enabled
+  if (opts.saveToDb) {
+    await savePatterns(patterns);
   }
+  
+  return patterns;
 }
 
 /**
- * Extract common words from a list of strings
+ * Groups errors by their signature (code + simplified message)
  * 
- * @param strings Array of strings
- * @returns Array of common words
+ * @param errors - Array of TypeScript errors
+ * @returns Record of error signatures to arrays of errors
  */
-function extractCommonWords(strings: string[]): string[] {
-  try {
-    // Tokenize all strings
-    const tokenizedStrings = strings.map(str => 
-      str.toLowerCase()
-        .replace(/[^\w\s]/g, ' ')
-        .split(/\s+/)
-        .filter(word => word.length > 2)
-    );
+function groupErrorsBySignature(
+  errors: TypeScriptError[]
+): Record<string, TypeScriptError[]> {
+  const groups: Record<string, TypeScriptError[]> = {};
+  
+  for (const error of errors) {
+    // Create a simplified message by removing specific names, paths, etc.
+    const simplifiedMessage = simplifyErrorMessage(error.message);
     
-    // Count word occurrences
-    const wordCounts: Record<string, number> = {};
+    // Create a signature for the error
+    const signature = `${error.code}:${simplifiedMessage}`;
     
-    for (const tokens of tokenizedStrings) {
-      const uniqueTokens = [...new Set(tokens)];
-      
-      for (const token of uniqueTokens) {
-        wordCounts[token] = (wordCounts[token] || 0) + 1;
-      }
+    // Add to group
+    if (!groups[signature]) {
+      groups[signature] = [];
     }
-    
-    // Find common words (appearing in at least half of the strings)
-    const threshold = Math.max(2, Math.floor(strings.length / 2));
-    const commonWords = Object.entries(wordCounts)
-      .filter(([_, count]) => count >= threshold)
-      .map(([word]) => word)
-      // Skip common words that aren't informative
-      .filter(word => !['the', 'and', 'this', 'that', 'with', 'from'].includes(word));
-    
-    return commonWords;
-  } catch (error) {
-    console.error('Error extracting common words:', error);
-    return [];
+    groups[signature].push(error);
   }
+  
+  return groups;
 }
 
 /**
- * Save an error pattern to the database
+ * Simplifies an error message by replacing specific identifiers with placeholders
  * 
- * @param pattern Error pattern
+ * @param message - Original error message
+ * @returns Simplified message
  */
-export async function saveErrorPattern(pattern: ErrorPattern): Promise<void> {
-  try {
-    // Check if pattern already exists
-    const existingPatterns = await tsErrorStorage.getErrorPatterns({
-      name: pattern.name
-    });
+function simplifyErrorMessage(message: string): string {
+  return message
+    // Replace specific types with placeholders
+    .replace(/'[^']*'/g, "'X'")
+    .replace(/"[^"]*"/g, '"X"')
     
-    if (existingPatterns.length > 0) {
-      // Update existing pattern
-      await tsErrorStorage.updateErrorPattern(existingPatterns[0].id, {
-        description: pattern.description,
-        category: pattern.category,
-        severity: pattern.severity,
-        detectionRules: {
-          regex: pattern.regex || null,
-          examples: pattern.examples.slice(0, 2).map(e => ({
-            errorCode: e.errorCode,
-            errorMessage: e.errorMessage
-          }))
-        },
-        autoFixable: pattern.autoFixable
+    // Replace specific properties and variables
+    .replace(/property '([^']*)'/, "property 'X'")
+    .replace(/variable '([^']*)'/, "variable 'X'")
+    .replace(/parameter '([^']*)'/, "parameter 'X'")
+    .replace(/function '([^']*)'/, "function 'X'")
+    .replace(/class '([^']*)'/, "class 'X'")
+    
+    // Replace specific file paths
+    .replace(/in file '([^']*)'/, "in file 'X'")
+    
+    // Replace specific numbers
+    .replace(/\b\d+\b/g, "N");
+}
+
+/**
+ * Creates an error pattern from a group of errors
+ * 
+ * @param signature - Error signature
+ * @param errors - Array of errors with the same signature
+ * @param rootDir - Root directory of the project
+ * @returns Error pattern
+ */
+function createPatternFromGroup(
+  signature: string,
+  errors: TypeScriptError[],
+  rootDir: string
+): ErrorPattern {
+  // Get a representative error
+  const representative = errors[0];
+  
+  // Generate a name for the pattern
+  const [codeStr, messageStr] = signature.split(':', 2);
+  const name = `TS${codeStr}: ${messageStr.substring(0, 50)}${messageStr.length > 50 ? '...' : ''}`;
+  
+  // Get category and severity from representative
+  const category = representative.category;
+  const severity = representative.severity;
+  
+  // Create examples
+  const examples: ErrorExample[] = [];
+  
+  for (const error of errors.slice(0, 5)) { // Limit to 5 examples
+    if (error.file && error.lineContent) {
+      examples.push({
+        file: path.relative(rootDir, error.file),
+        line: error.line,
+        code: error.lineContent.trim(),
+        errorHash: error.hash
       });
-      
-      console.log(`Updated existing pattern: ${pattern.name}`);
-    } else {
-      // Create new pattern
-      const newPattern = await tsErrorStorage.createErrorPattern({
-        name: pattern.name,
-        description: pattern.description,
-        regex: pattern.regex || null,
-        category: pattern.category,
-        severity: pattern.severity,
-        detectionRules: {
-          examples: pattern.examples.slice(0, 2).map(e => ({
-            errorCode: e.errorCode,
-            errorMessage: e.errorMessage
-          }))
-        },
-        autoFixable: pattern.autoFixable
-      });
-      
-      console.log(`Created new pattern: ${pattern.name} (ID: ${newPattern.id})`);
-      
-      // Update typescript errors with the pattern ID
-      for (const example of pattern.examples) {
-        const errors = await tsErrorStorage.getAllTypescriptErrors({
-          errorCode: example.errorCode,
-          filePath: example.filePath,
-          lineNumber: example.lineNumber,
-          columnNumber: example.columnNumber,
-          limit: 1
-        });
-        
-        if (errors.length > 0) {
-          await tsErrorStorage.updateTypescriptError(errors[0].id, {
-            patternId: newPattern.id
-          });
-        }
-      }
     }
-  } catch (error) {
-    console.error('Error saving error pattern:', error);
-    throw error;
+  }
+  
+  // Determine if automatically fixable
+  const autoFixable = isAutoFixable(representative);
+  
+  // Create pattern description
+  const description = createPatternDescription(representative, errors.length);
+  
+  // Create suggested fix
+  const suggestedFix = createSuggestedFix(representative);
+  
+  return {
+    name,
+    pattern: signature,
+    category,
+    severity,
+    description,
+    suggestedFix,
+    autoFixable,
+    occurrences: errors.length,
+    examples
+  };
+}
+
+/**
+ * Determines if an error is automatically fixable
+ * 
+ * @param error - TypeScript error
+ * @returns Whether the error is auto-fixable
+ */
+function isAutoFixable(error: TypeScriptError): boolean {
+  // Errors that are typically auto-fixable
+  const autoFixableCodes = [
+    // Missing semicolons, parentheses, etc.
+    1005, // ',' expected
+    1003, // ';' expected
+    
+    // Import errors
+    2307, // Cannot find module 'X'
+    
+    // Missing types
+    7006, // Parameter 'X' implicitly has an 'any' type
+    7005, // Variable 'X' implicitly has an 'any' type
+    7010, // 'X', which lacks return-type annotation, implicitly has an 'any' return type
+    
+    // Simple property access
+    2339, // Property 'X' does not exist on type 'Y'
+    
+    // Duplicate imports, identifiers
+    2300, // Duplicate identifier 'X'
+    2451  // Cannot redeclare block-scoped variable 'X'
+  ];
+  
+  return autoFixableCodes.includes(error.code);
+}
+
+/**
+ * Creates a description for an error pattern
+ * 
+ * @param error - Representative error
+ * @param occurrences - Number of occurrences
+ * @returns Pattern description
+ */
+function createPatternDescription(error: TypeScriptError, occurrences: number): string {
+  const categoryStr = error.category.replace(/_/g, ' ').toLowerCase();
+  const severityStr = error.severity.toLowerCase();
+  
+  return `This is a ${severityStr} severity ${categoryStr} error that occurs ${occurrences} times in the codebase. ` +
+    `It is triggered by TypeScript error code TS${error.code}: ${error.message}`;
+}
+
+/**
+ * Creates a suggested fix for an error
+ * 
+ * @param error - Representative error
+ * @returns Suggested fix or undefined
+ */
+function createSuggestedFix(error: TypeScriptError): string | undefined {
+  // Return existing suggested fix if available
+  if (error.suggestedFix) {
+    return error.suggestedFix;
+  }
+  
+  // Otherwise, suggest based on error code and category
+  switch (error.category) {
+    case ErrorCategory.TYPE_MISMATCH:
+      return 'Ensure the types match or add explicit type conversion. Consider using type guards or type assertions if necessary.';
+      
+    case ErrorCategory.MISSING_TYPE:
+      return 'Add explicit type annotations to variables, parameters, or function return types.';
+      
+    case ErrorCategory.IMPORT_ERROR:
+      return 'Check that the module exists and the import path is correct. Verify that the imported member is exported by the module.';
+      
+    case ErrorCategory.NULL_REFERENCE:
+      return 'Add null checks before accessing properties or use optional chaining (?.) and nullish coalescing operators (??) for safer access.';
+      
+    case ErrorCategory.INTERFACE_MISMATCH:
+      return 'Ensure all required properties from the interface are implemented correctly with matching types.';
+      
+    case ErrorCategory.GENERIC_CONSTRAINT:
+      return 'Update the type to satisfy the constraint, or modify the constraint if appropriate.';
+      
+    case ErrorCategory.DECLARATION_ERROR:
+      return 'Rename the duplicate identifier or remove one of the declarations.';
+      
+    case ErrorCategory.SYNTAX_ERROR:
+      return 'Fix the syntax according to TypeScript language rules.';
+      
+    default:
+      return 'Review the error message and fix accordingly.';
   }
 }
 
-export default {
-  findErrorPatterns,
-  saveErrorPattern
-};
+/**
+ * Saves patterns to the database
+ * 
+ * @param patterns - Array of error patterns
+ */
+async function savePatterns(patterns: ErrorPattern[]): Promise<void> {
+  // This is a placeholder for database integration
+  // In a real implementation, this would save patterns to the database
+  
+  console.log(`Patterns would be saved to database (${patterns.length} patterns)`);
+  
+  // TODO: Implement database integration
+}
+
+export default findErrorPatterns;

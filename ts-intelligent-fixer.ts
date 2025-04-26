@@ -1,541 +1,369 @@
-#!/usr/bin/env node
-
+#!/usr/bin/env ts-node
 /**
- * TypeScript Intelligent Error Fixer
+ * TypeScript Intelligent Fixer
  * 
  * A comprehensive command-line tool that combines error analysis and automated fixing
  * to address TypeScript errors in a project. This tool uses semantic understanding
  * of TypeScript errors to apply targeted fixes that preserve code behavior.
  * 
- * @version 1.1.0
+ * @version 1.0.0
  */
 
+import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { Command } from 'commander';
-import chalk from 'chalk';
-import { analyzeTypeScriptErrors } from './server/utils/ts-error-analyzer';
-import { fixTypeScriptErrors } from './server/utils/ts-error-fixer';
-import { findErrorPatterns } from './server/utils/ts-pattern-finder';
-import { initializeAnalysis, recordAnalysisResults } from './server/tsErrorStorage';
-import { ErrorCategory, ErrorSeverity } from './shared/schema';
+import { analyzeTypeScriptErrors, AnalysisOptions } from './server/utils/ts-error-analyzer';
+import { findErrorPatterns, PatternFinderOptions } from './server/utils/ts-pattern-finder';
+import { fixTypeScriptErrors, FixOptions, FixResult } from './server/utils/ts-error-fixer';
+import { isOpenAIAvailable, getOpenAIModel } from './server/utils/openai-integration';
 
-// Get current directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Interface definitions
-interface AnalysisOptions {
-  project: string;
-  root: string;
-  output?: string;
-  verbose: boolean;
-  deep: boolean;
-  ai: boolean;
-  categories?: string[];
-  exclude?: string[];
-  saveToDb: boolean;
-}
-
-interface FixOptions {
-  project: string;
-  root: string;
-  backup: string | boolean;
-  categories?: string[];
-  maxErrors?: number;
-  dryRun: boolean;
-  verbose: boolean;
-  interfaces: boolean;
-  props: boolean;
-  any: boolean;
-  deepFix: boolean;
-  ai: boolean;
-  batch: boolean;
-  exclude?: string[];
-  saveToDb: boolean;
-}
-
-interface PatternOptions {
-  project: string;
-  root: string;
-  output?: string;
-  verbose: boolean;
-  minOccurrences: number;
-  saveToDb: boolean;
-}
-
-// Initialize commander
+// Setup command line interface
 const program = new Command();
 
-// Define the program
 program
   .name('ts-intelligent-fixer')
-  .description('Intelligent TypeScript error analysis and fixing tool')
-  .version('1.1.0');
+  .description('Intelligent TypeScript error management tool')
+  .version('1.0.0');
 
-// Define analysis command
-program
-  .command('analyze')
-  .description('Analyze TypeScript errors without fixing them')
-  .option('-p, --project <path>', 'Path to tsconfig.json', './tsconfig.json')
-  .option('-r, --root <path>', 'Project root directory', '.')
+// Common options
+const addCommonOptions = (command: Command) => {
+  return command
+    .option('-p, --project <path>', 'Path to tsconfig.json', './tsconfig.json')
+    .option('-r, --root <path>', 'Project root directory', '.')
+    .option('-v, --verbose', 'Enable verbose output');
+};
+
+// Analyze command
+const analyzeCommand = program.command('analyze')
+  .description('Analyze TypeScript errors without fixing them');
+
+addCommonOptions(analyzeCommand);
+
+analyzeCommand
   .option('-o, --output <path>', 'Output file for analysis results (JSON format)')
-  .option('-v, --verbose', 'Enable verbose output')
   .option('-d, --deep', 'Perform deep analysis with dependency tracking')
-  .option('-a, --ai', 'Use OpenAI to enhance analysis (requires OPENAI_API_KEY)')
+  .option('-a, --ai', 'Use OpenAI to enhance analysis')
   .option('-c, --categories <list>', 'Comma-separated list of error categories to analyze')
   .option('-e, --exclude <list>', 'Comma-separated list of files or directories to exclude')
   .option('--no-save', 'Don\'t save analysis results to the database')
   .action(async (options) => {
     try {
-      console.log(chalk.blue('\n🔍 Analyzing TypeScript errors...\n'));
+      // Check OpenAI availability if AI option is enabled
+      if (options.ai && !isOpenAIAvailable()) {
+        console.warn('OpenAI integration is not available. Set OPENAI_API_KEY environment variable to enable AI features.');
+        console.warn('Continuing without AI assistance...');
+      }
       
-      // Parse categories and exclusions if provided
-      const categories = options.categories 
-        ? options.categories.split(',').map(c => c.trim())
-        : undefined;
-      
-      const exclude = options.exclude
-        ? options.exclude.split(',').map(e => e.trim())
-        : undefined;
-      
+      // Prepare analysis options
       const analysisOptions: AnalysisOptions = {
-        project: options.project,
-        root: options.root,
-        output: options.output,
-        verbose: options.verbose || false,
         deep: options.deep || false,
-        ai: options.ai || false,
-        categories,
-        exclude,
-        saveToDb: options.save !== false
+        useAI: options.ai && isOpenAIAvailable(),
+        categories: options.categories ? options.categories.split(',') : [],
+        exclude: options.exclude ? options.exclude.split(',') : [],
+        saveToDb: options.save
       };
       
-      let analysisId: number | undefined;
+      console.log('Analyzing TypeScript errors...');
       
-      // Initialize analysis in database if saving is enabled
-      if (analysisOptions.saveToDb) {
-        analysisId = await initializeAnalysis({
-          projectRoot: analysisOptions.root,
-          startedAt: new Date(),
-          status: 'in_progress',
-          analysisType: analysisOptions.deep ? 'deep' : 'basic',
-          totalFiles: 0,
-          totalErrors: 0
-        });
-      }
+      // Run analysis
+      const startTime = new Date();
+      const result = await analyzeTypeScriptErrors(options.root, options.project, analysisOptions);
+      const endTime = new Date();
+      const duration = (endTime.getTime() - startTime.getTime()) / 1000;
       
-      const analysis = await analyzeTypeScriptErrors(
-        analysisOptions.root, 
-        analysisOptions.project,
-        {
-          deep: analysisOptions.deep,
-          useAI: analysisOptions.ai,
-          categories: analysisOptions.categories,
-          exclude: analysisOptions.exclude
-        }
-      );
+      // Display results
+      console.log(`\nAnalysis completed in ${duration.toFixed(2)} seconds`);
+      console.log(`Total errors: ${result.totalErrors}`);
+      console.log(`Critical errors: ${result.criticalErrors}`);
+      console.log(`High severity errors: ${result.highSeverityErrors}`);
+      console.log(`Medium severity errors: ${result.mediumSeverityErrors}`);
+      console.log(`Low severity errors: ${result.lowSeverityErrors}`);
       
-      // Save analysis results to database if enabled
-      if (analysisOptions.saveToDb && analysisId) {
-        await recordAnalysisResults(analysisId, analysis);
-      }
-      
-      // Print summary
-      console.log(chalk.blue(`\n📊 Found ${chalk.yellow(analysis.totalErrors.toString())} TypeScript errors:`));
-      console.log(`  ${chalk.red('🔴 Critical:')} ${analysis.criticalErrors}`);
-      console.log(`  ${chalk.hex('#FF7700')('🟠 High:')} ${analysis.highSeverityErrors}`);
-      console.log(`  ${chalk.yellow('🟡 Medium:')} ${analysis.mediumSeverityErrors}`);
-      console.log(`  ${chalk.green('🟢 Low:')} ${analysis.lowSeverityErrors}`);
-      
-      // Print errors by category
-      console.log(chalk.blue('\n📋 Errors by category:'));
-      for (const category in analysis.errorsByCategory) {
-        const count = analysis.errorsByCategory[category].length;
-        if (count > 0) {
-          console.log(`  ${category}: ${count}`);
+      // Display errors by category
+      console.log('\nErrors by category:');
+      for (const [category, errors] of Object.entries(result.errorsByCategory)) {
+        if (errors.length > 0) {
+          console.log(`- ${category}: ${errors.length}`);
         }
       }
       
-      // Print files with errors
-      console.log(chalk.blue('\n📁 Files with errors:'));
-      const sortedFiles = Object.entries(analysis.errorsByFile)
+      // Display files with most errors
+      console.log('\nTop 5 files with most errors:');
+      const sortedFiles = Object.entries(result.errorsByFile)
         .sort((a, b) => b[1].length - a[1].length)
-        .slice(0, 10);
+        .slice(0, 5);
       
       for (const [file, errors] of sortedFiles) {
-        console.log(`  ${path.relative(options.root, file)}: ${errors.length} errors`);
+        console.log(`- ${path.relative(options.root, file)}: ${errors.length} errors`);
       }
       
-      if (sortedFiles.length < Object.keys(analysis.errorsByFile).length) {
-        console.log(`  ... and ${Object.keys(analysis.errorsByFile).length - sortedFiles.length} more files`);
-      }
-      
-      // Print detailed errors if verbose
-      if (options.verbose) {
-        console.log(chalk.blue('\n🔬 Detailed errors:'));
-        for (const [file, errors] of Object.entries(analysis.errorsByFile)) {
-          console.log(`\n  📄 ${path.relative(options.root, file)}:`);
-          
-          for (const error of errors) {
-            console.log(`    Line ${error.line}: ${error.message}`);
-            if (error.lineContent) {
-              console.log(`      ${error.lineContent.trim()}`);
-            }
-            if (error.suggestedFix) {
-              console.log(`      💡 Suggestion: ${error.suggestedFix}`);
-            }
-          }
-        }
-      }
-      
-      // Print dependency information if deep analysis
-      if (options.deep && analysis.dependencyInfo) {
-        console.log(chalk.blue('\n🔄 Dependency Information:'));
-        console.log(`  Root cause errors: ${analysis.dependencyInfo.rootCauses.length}`);
-        console.log(`  Cascading errors: ${analysis.dependencyInfo.cascadingErrors.length}`);
-        
-        if (options.verbose) {
-          console.log(chalk.blue('\n🌲 Root Cause Errors:'));
-          for (const rootCause of analysis.dependencyInfo.rootCauses) {
-            console.log(`  ${rootCause.file}:${rootCause.line} - ${rootCause.message}`);
-            console.log(`    Impacts ${rootCause.impactedErrors.length} other errors`);
-          }
-        }
-      }
-      
-      // Save to file if requested
+      // Write output to file if specified
       if (options.output) {
-        fs.writeFileSync(options.output, JSON.stringify(analysis, null, 2));
-        console.log(chalk.blue(`\n💾 Analysis saved to ${options.output}`));
+        const outputPath = path.resolve(options.output);
+        fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));
+        console.log(`\nAnalysis results written to ${outputPath}`);
       }
       
-      console.log(chalk.green('\n✅ Analysis complete'));
+      // If deep analysis was performed, show dependency information
+      if (options.deep && result.dependencyInfo) {
+        console.log('\nRoot causes:');
+        for (const rootCause of result.dependencyInfo.rootCauses.slice(0, 5)) {
+          console.log(`- ${path.relative(options.root, rootCause.file)}:${rootCause.line} (impacts ${rootCause.impactedErrors.length} other errors)`);
+        }
+      }
+      
+      process.exit(0);
     } catch (error) {
-      console.error(chalk.red(`\n❌ Error analyzing TypeScript errors:`), error);
+      console.error('Error during analysis:', error);
       process.exit(1);
     }
   });
 
-// Define fix command
-program
-  .command('fix')
-  .description('Fix TypeScript errors automatically')
-  .option('-p, --project <path>', 'Path to tsconfig.json', './tsconfig.json')
-  .option('-r, --root <path>', 'Project root directory', '.')
+// Fix command
+const fixCommand = program.command('fix')
+  .description('Automatically fix TypeScript errors');
+
+addCommonOptions(fixCommand);
+
+fixCommand
   .option('-b, --backup <dir>', 'Directory for backups', './ts-error-fixes-backup')
   .option('--no-backup', 'Disable file backups')
   .option('-c, --categories <list>', 'Comma-separated list of error categories to fix')
   .option('-m, --max-errors <number>', 'Maximum number of errors to fix per file')
   .option('-d, --dry-run', 'Show what would be fixed without making changes')
-  .option('-v, --verbose', 'Enable verbose output')
   .option('--no-interfaces', 'Disable generating interface definitions')
   .option('--no-props', 'Disable fixing missing properties')
   .option('--no-any', 'Disable fixing implicit any types')
   .option('--deep-fix', 'Enable fixing dependencies and cascading errors')
-  .option('-a, --ai', 'Use OpenAI to enhance fixes (requires OPENAI_API_KEY)')
+  .option('-a, --ai', 'Use OpenAI to enhance fixes')
   .option('--no-batch', 'Disable batch fixing (fix one at a time)')
+  .option('-t, --target <files>', 'Comma-separated list of files to fix')
   .option('-e, --exclude <list>', 'Comma-separated list of files or directories to exclude')
   .option('--no-save', 'Don\'t save fix results to the database')
   .action(async (options) => {
     try {
-      console.log(chalk.blue('\n🔧 Fixing TypeScript errors...\n'));
+      // Check OpenAI availability if AI option is enabled
+      if (options.ai && !isOpenAIAvailable()) {
+        console.warn('OpenAI integration is not available. Set OPENAI_API_KEY environment variable to enable AI features.');
+        console.warn('Continuing without AI assistance...');
+      }
       
-      // Parse categories if provided
-      const categories = options.categories 
-        ? options.categories.split(',').map(c => c.trim())
-        : undefined;
-      
-      const exclude = options.exclude
-        ? options.exclude.split(',').map(e => e.trim())
-        : undefined;
-      
-      const fixOptions: FixOptions = {
-        project: options.project,
-        root: options.root,
-        backup: options.backup,
-        categories,
-        maxErrors: options.maxErrors ? parseInt(options.maxErrors, 10) : undefined,
+      // Prepare fix options
+      const fixOptions: Partial<FixOptions> = {
+        createBackups: options.backup,
+        backupDir: options.backup,
+        categories: options.categories ? options.categories.split(',') : [],
+        maxErrorsPerFile: options.maxErrors ? parseInt(options.maxErrors) : undefined,
+        logLevel: options.verbose ? 'verbose' : 'normal',
         dryRun: options.dryRun || false,
-        verbose: options.verbose || false,
-        interfaces: options.interfaces !== false,
-        props: options.props !== false,
-        any: options.any !== false,
-        deepFix: options.deepFix || false,
-        ai: options.ai || false,
-        batch: options.batch !== false,
-        exclude,
-        saveToDb: options.save !== false
-      };
-      
-      // Convert options to the format expected by fixTypeScriptErrors
-      const fixerOptions = {
-        createBackups: fixOptions.backup !== false,
-        backupDir: typeof fixOptions.backup === 'string' ? fixOptions.backup : './ts-error-fixes-backup',
-        categories: fixOptions.categories,
-        maxErrorsPerFile: fixOptions.maxErrors,
-        logLevel: fixOptions.verbose ? 'verbose' : 'normal',
-        dryRun: fixOptions.dryRun,
-        generateTypeDefinitions: fixOptions.interfaces,
-        fixMissingInterfaces: fixOptions.interfaces,
-        fixImplicitAny: fixOptions.any,
-        fixMissingProperties: fixOptions.props,
+        generateTypeDefinitions: options.interfaces,
+        fixMissingInterfaces: options.interfaces,
+        fixImplicitAny: options.any,
+        fixMissingProperties: options.props,
         prioritizeCriticalErrors: true,
-        fixDependencies: fixOptions.deepFix,
-        useAI: fixOptions.ai,
-        batchFix: fixOptions.batch,
-        exclude: fixOptions.exclude,
-        saveToDb: fixOptions.saveToDb
+        fixDependencies: options.deepFix || false,
+        useAI: options.ai && isOpenAIAvailable(),
+        batchFix: options.batch,
+        targetFiles: options.target ? options.target.split(',') : [],
+        exclude: options.exclude ? options.exclude.split(',') : [],
+        saveToDb: options.save
       };
       
-      const result = await fixTypeScriptErrors(fixOptions.root, fixOptions.project, fixerOptions);
+      console.log(`${options.dryRun ? 'Simulating fixes' : 'Fixing'} for TypeScript errors...`);
       
-      // Print summary
-      console.log(chalk.blue(`\n📊 Fixed ${chalk.green(result.fixedErrors.toString())} of ${chalk.yellow(result.totalErrors.toString())} TypeScript errors`));
-      console.log(`  ${chalk.green('✅ Fixed files:')} ${result.fixedFiles.length}`);
-      console.log(`  ${chalk.yellow('⚠️ Files with remaining errors:')} ${result.unfixableFiles.length}`);
+      // Run fixer
+      const result = await fixTypeScriptErrors(options.root, options.project, fixOptions);
+      
+      // Display results
+      const duration = (result.duration / 1000).toFixed(2);
+      console.log(`\nFixing ${options.dryRun ? 'simulation ' : ''}completed in ${duration} seconds`);
+      console.log(`Total errors: ${result.totalErrors}`);
+      console.log(`Fixed errors: ${result.fixedErrors}`);
+      console.log(`Unfixed errors: ${result.unfixedErrors}`);
+      console.log(`Files fixed: ${result.fixedFiles.length}`);
+      console.log(`Files not fixed: ${result.unfixableFiles.length}`);
+      
+      // Show detailed fix information if verbose
+      if (options.verbose && result.fixDetails) {
+        console.log('\nDetailed fix information:');
+        for (const detail of result.fixDetails.slice(0, 10)) { // Limit to 10 for brevity
+          console.log(`- ${path.relative(options.root, detail.file)}:${detail.line}: ${detail.fixDescription}`);
+        }
+        
+        if (result.fixDetails.length > 10) {
+          console.log(`... and ${result.fixDetails.length - 10} more fixes`);
+        }
+      }
       
       if (options.dryRun) {
-        console.log(chalk.yellow('\n⚠️ This was a dry run. No files were modified.'));
+        console.log('\nThis was a dry run. No files were modified.');
       }
       
-      // Print fixed files if verbose
-      if (options.verbose) {
-        console.log(chalk.blue('\n📄 Fixed files:'));
-        for (const file of result.fixedFiles) {
-          console.log(`  ${path.relative(options.root, file)}`);
-        }
-        
-        if (result.unfixableFiles.length > 0) {
-          console.log(chalk.blue('\n❌ Files with remaining errors:'));
-          for (const file of result.unfixableFiles) {
-            console.log(`  ${path.relative(options.root, file)}`);
-          }
-        }
-        
-        // Print fix details if available
-        if (result.fixDetails && result.fixDetails.length > 0) {
-          console.log(chalk.blue('\n🛠️ Fix details:'));
-          for (const fix of result.fixDetails) {
-            console.log(`  ${fix.file}:${fix.line} - ${fix.errorMessage}`);
-            console.log(`    ${chalk.green('✓')} Applied fix: ${fix.fixDescription}`);
-          }
-        }
-      }
-      
-      console.log(chalk.blue(`\n✅ Fix operation completed in ${chalk.yellow((result.duration / 1000).toFixed(2))}s`));
-      
-      if (result.unfixedErrors > 0) {
-        console.log(chalk.yellow(`\n⚠️ ${result.unfixedErrors} errors could not be fixed automatically.`));
-        console.log(chalk.yellow('   Run the analyze command for more details.'));
-      }
+      process.exit(0);
     } catch (error) {
-      console.error(chalk.red(`\n❌ Error fixing TypeScript errors:`), error);
+      console.error('Error during fix:', error);
       process.exit(1);
     }
   });
 
-// Define pattern finding command
-program
-  .command('patterns')
-  .description('Find common error patterns in TypeScript code')
-  .option('-p, --project <path>', 'Path to tsconfig.json', './tsconfig.json')
-  .option('-r, --root <path>', 'Project root directory', '.')
+// Patterns command
+const patternsCommand = program.command('patterns')
+  .description('Find common error patterns in TypeScript code');
+
+addCommonOptions(patternsCommand);
+
+patternsCommand
   .option('-o, --output <path>', 'Output file for pattern results (JSON format)')
-  .option('-v, --verbose', 'Enable verbose output')
   .option('-m, --min-occurrences <number>', 'Minimum number of occurrences to consider a pattern', '3')
   .option('--no-save', 'Don\'t save patterns to the database')
   .action(async (options) => {
     try {
-      console.log(chalk.blue('\n🔍 Finding TypeScript error patterns...\n'));
-      
-      const patternOptions: PatternOptions = {
-        project: options.project,
-        root: options.root,
-        output: options.output,
-        verbose: options.verbose || false,
-        minOccurrences: parseInt(options.minOccurrences, 10),
-        saveToDb: options.save !== false
+      // Prepare pattern finder options
+      const patternOptions: PatternFinderOptions = {
+        minOccurrences: parseInt(options.minOccurrences),
+        saveToDb: options.save
       };
       
-      const patterns = await findErrorPatterns(
-        patternOptions.root,
-        patternOptions.project,
-        {
-          minOccurrences: patternOptions.minOccurrences,
-          saveToDb: patternOptions.saveToDb
-        }
-      );
+      console.log('Finding error patterns...');
       
-      // Print patterns
-      console.log(chalk.blue(`\n📊 Found ${chalk.yellow(patterns.length.toString())} error patterns:`));
+      // Run pattern finder
+      const startTime = new Date();
+      const patterns = await findErrorPatterns(options.root, options.project, patternOptions);
+      const endTime = new Date();
+      const duration = (endTime.getTime() - startTime.getTime()) / 1000;
       
-      for (const pattern of patterns) {
-        console.log(`\n  ${chalk.underline(pattern.name)} (${pattern.occurrences} occurrences)`);
-        console.log(`  Category: ${pattern.category}`);
-        console.log(`  Severity: ${pattern.severity}`);
-        console.log(`  Auto-fixable: ${pattern.autoFixable ? chalk.green('Yes') : chalk.red('No')}`);
-        
-        if (options.verbose) {
-          console.log(`  Pattern: ${pattern.pattern}`);
-          console.log(`  Description: ${pattern.description}`);
-          
-          if (pattern.suggestedFix) {
-            console.log(`  Suggested fix: ${pattern.suggestedFix}`);
-          }
-          
-          console.log(`  Example files:`);
-          for (const example of pattern.examples.slice(0, 3)) {
-            console.log(`    ${example.file}:${example.line}`);
+      // Display results
+      console.log(`\nPattern analysis completed in ${duration.toFixed(2)} seconds`);
+      console.log(`Found ${patterns.length} patterns`);
+      
+      if (patterns.length > 0) {
+        console.log('\nTop patterns:');
+        for (const pattern of patterns.slice(0, 5)) {
+          console.log(`- ${pattern.name} (${pattern.occurrences} occurrences, ${pattern.autoFixable ? 'auto-fixable' : 'not auto-fixable'})`);
+          if (options.verbose) {
+            console.log(`  Description: ${pattern.description}`);
+            console.log(`  Suggested fix: ${pattern.suggestedFix || 'None'}`);
+            console.log('');
           }
         }
       }
       
-      // Save to file if requested
+      // Write output to file if specified
       if (options.output) {
-        fs.writeFileSync(options.output, JSON.stringify(patterns, null, 2));
-        console.log(chalk.blue(`\n💾 Patterns saved to ${options.output}`));
+        const outputPath = path.resolve(options.output);
+        fs.writeFileSync(outputPath, JSON.stringify(patterns, null, 2));
+        console.log(`\nPattern results written to ${outputPath}`);
       }
       
-      console.log(chalk.green('\n✅ Pattern analysis complete'));
+      process.exit(0);
     } catch (error) {
-      console.error(chalk.red(`\n❌ Error finding TypeScript error patterns:`), error);
+      console.error('Error during pattern analysis:', error);
       process.exit(1);
     }
   });
 
-// Define verify command
-program
-  .command('verify')
-  .description('Verify that TypeScript errors were fixed correctly')
-  .option('-p, --project <path>', 'Path to tsconfig.json', './tsconfig.json')
-  .option('-r, --root <path>', 'Project root directory', '.')
-  .option('-v, --verbose', 'Enable verbose output')
+// Verify command
+const verifyCommand = program.command('verify')
+  .description('Verify that TypeScript errors were fixed correctly');
+
+addCommonOptions(verifyCommand);
+
+verifyCommand
   .action(async (options) => {
     try {
-      console.log(chalk.blue('\n🔍 Verifying TypeScript errors after fixing...\n'));
+      console.log('Verifying fixes...');
       
-      // Run analysis again to verify fixes
-      const analysis = await analyzeTypeScriptErrors(
-        options.root, 
-        options.project,
-        { saveToDb: false }
-      );
+      // Run analysis to check for remaining errors
+      const result = await analyzeTypeScriptErrors(options.root, options.project, { saveToDb: false });
       
-      if (analysis.totalErrors === 0) {
-        console.log(chalk.green('✅ Great news! No TypeScript errors found.'));
-        console.log(chalk.green('   Your codebase is now TypeScript error-free!'));
-      } else {
-        console.log(chalk.yellow(`⚠️ Found ${analysis.totalErrors} remaining TypeScript errors:`));
-        console.log(`  ${chalk.red('🔴 Critical:')} ${analysis.criticalErrors}`);
-        console.log(`  ${chalk.hex('#FF7700')('🟠 High:')} ${analysis.highSeverityErrors}`);
-        console.log(`  ${chalk.yellow('🟡 Medium:')} ${analysis.mediumSeverityErrors}`);
-        console.log(`  ${chalk.green('🟢 Low:')} ${analysis.lowSeverityErrors}`);
-        
-        console.log(chalk.blue('\n📋 Remaining errors by category:'));
-        for (const category in analysis.errorsByCategory) {
-          const count = analysis.errorsByCategory[category].length;
-          if (count > 0) {
-            console.log(`  ${category}: ${count}`);
-          }
-        }
-
-        if (options.verbose) {
-          console.log(chalk.blue('\n📁 Files with remaining errors:'));
-          const sortedFiles = Object.entries(analysis.errorsByFile)
-            .sort((a, b) => b[1].length - a[1].length);
-          
-          for (const [file, errors] of sortedFiles) {
-            console.log(`  ${path.relative(options.root, file)}: ${errors.length} errors`);
+      console.log(`\nVerification completed`);
+      console.log(`Remaining errors: ${result.totalErrors}`);
+      console.log(`Critical errors: ${result.criticalErrors}`);
+      console.log(`High severity errors: ${result.highSeverityErrors}`);
+      console.log(`Medium severity errors: ${result.mediumSeverityErrors}`);
+      console.log(`Low severity errors: ${result.lowSeverityErrors}`);
+      
+      if (options.verbose && result.totalErrors > 0) {
+        console.log('\nErrors by category:');
+        for (const [category, errors] of Object.entries(result.errorsByCategory)) {
+          if (errors.length > 0) {
+            console.log(`- ${category}: ${errors.length}`);
           }
         }
         
-        console.log(chalk.blue('\n💡 Suggestion: Run the fix command again to address more errors,'));
-        console.log(chalk.blue('   or inspect errors using the analyze command.'));
-      }
-    } catch (error) {
-      console.error(chalk.red(`\n❌ Error verifying TypeScript errors:`), error);
-      process.exit(1);
-    }
-  });
-
-// Define stats command
-program
-  .command('stats')
-  .description('Show statistics about TypeScript errors and fixes')
-  .option('-r, --root <path>', 'Project root directory', '.')
-  .option('-p, --project <path>', 'Path to tsconfig.json', './tsconfig.json')
-  .option('-d, --days <number>', 'Number of days to include in stats', '30')
-  .option('-v, --verbose', 'Enable verbose output')
-  .action(async (options) => {
-    try {
-      console.log(chalk.blue('\n📊 TypeScript Error Statistics\n'));
-      
-      // Run analysis to get current state
-      const analysis = await analyzeTypeScriptErrors(
-        options.root, 
-        options.project,
-        { saveToDb: false }
-      );
-
-      // Print current stats
-      console.log(chalk.blue('Current Status:'));
-      console.log(`  Total errors: ${analysis.totalErrors}`);
-      console.log(`  Files with errors: ${Object.keys(analysis.errorsByFile).length}`);
-      console.log(`  Error distribution:`);
-      console.log(`    Critical: ${analysis.criticalErrors}`);
-      console.log(`    High: ${analysis.highSeverityErrors}`);
-      console.log(`    Medium: ${analysis.mediumSeverityErrors}`);
-      console.log(`    Low: ${analysis.lowSeverityErrors}`);
-      
-      // TODO: Add historical stats from database
-
-      if (options.verbose) {
-        console.log(chalk.blue('\nTop error categories:'));
-        const categories = Object.entries(analysis.errorsByCategory)
-          .sort((a, b) => b[1].length - a[1].length);
-        
-        for (const [category, errors] of categories) {
-          console.log(`  ${category}: ${errors.length}`);
-        }
-        
-        console.log(chalk.blue('\nTop error files:'));
-        const files = Object.entries(analysis.errorsByFile)
+        console.log('\nTop 5 files with remaining errors:');
+        const sortedFiles = Object.entries(result.errorsByFile)
           .sort((a, b) => b[1].length - a[1].length)
-          .slice(0, 10);
+          .slice(0, 5);
         
-        for (const [file, errors] of files) {
-          console.log(`  ${path.relative(options.root, file)}: ${errors.length}`);
+        for (const [file, errors] of sortedFiles) {
+          console.log(`- ${path.relative(options.root, file)}: ${errors.length} errors`);
         }
       }
+      
+      process.exit(0);
     } catch (error) {
-      console.error(chalk.red(`\n❌ Error getting TypeScript statistics:`), error);
+      console.error('Error during verification:', error);
       process.exit(1);
     }
   });
 
-// Define fix-file command
-program
-  .command('fix-file')
-  .description('Fix TypeScript errors in a specific file')
-  .argument('<file>', 'Path to the file to fix')
-  .option('-p, --project <path>', 'Path to tsconfig.json', './tsconfig.json')
-  .option('-r, --root <path>', 'Project root directory', '.')
+// Stats command
+const statsCommand = program.command('stats')
+  .description('Show statistics about TypeScript errors and fixes');
+
+addCommonOptions(statsCommand);
+
+statsCommand
+  .option('-d, --days <number>', 'Number of days to include in stats', '30')
+  .action(async (options) => {
+    try {
+      console.log('Collecting statistics...');
+      console.log(`\nStatistics for the last ${options.days} days:`);
+      console.log('Note: This feature requires database integration to be implemented');
+      
+      // TODO: Implement database integration for statistics
+      console.log('Statistics functionality not yet implemented');
+      
+      process.exit(0);
+    } catch (error) {
+      console.error('Error collecting statistics:', error);
+      process.exit(1);
+    }
+  });
+
+// Fix-file command
+const fixFileCommand = program.command('fix-file <file>')
+  .description('Fix TypeScript errors in a specific file');
+
+addCommonOptions(fixFileCommand);
+
+fixFileCommand
   .option('-b, --backup <dir>', 'Directory for backups', './ts-error-fixes-backup')
   .option('--no-backup', 'Disable file backups')
   .option('-d, --dry-run', 'Show what would be fixed without making changes')
-  .option('-v, --verbose', 'Enable verbose output')
-  .option('-a, --ai', 'Use OpenAI to enhance fixes (requires OPENAI_API_KEY)')
+  .option('-a, --ai', 'Use OpenAI to enhance fixes')
   .action(async (file, options) => {
     try {
-      const filePath = path.resolve(options.root, file);
-      console.log(chalk.blue(`\n🔧 Fixing TypeScript errors in ${file}...\n`));
+      // Check OpenAI availability if AI option is enabled
+      if (options.ai && !isOpenAIAvailable()) {
+        console.warn('OpenAI integration is not available. Set OPENAI_API_KEY environment variable to enable AI features.');
+        console.warn('Continuing without AI assistance...');
+      }
       
-      // Convert options to the format expected by fixTypeScriptErrors
-      const fixerOptions = {
-        createBackups: options.backup !== false,
-        backupDir: typeof options.backup === 'string' ? options.backup : './ts-error-fixes-backup',
+      // Resolve file path
+      const filePath = path.resolve(options.root, file);
+      
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        console.error(`Error: File not found: ${filePath}`);
+        process.exit(1);
+      }
+      
+      // Prepare fix options targeting only this file
+      const fixOptions: Partial<FixOptions> = {
+        createBackups: options.backup,
+        backupDir: options.backup,
         logLevel: options.verbose ? 'verbose' : 'normal',
         dryRun: options.dryRun || false,
         generateTypeDefinitions: true,
@@ -543,45 +371,56 @@ program
         fixImplicitAny: true,
         fixMissingProperties: true,
         prioritizeCriticalErrors: true,
-        useAI: options.ai || false,
-        targetFiles: [filePath],
-        saveToDb: true
+        useAI: options.ai && isOpenAIAvailable(),
+        batchFix: true,
+        targetFiles: [filePath]
       };
       
-      const result = await fixTypeScriptErrors(options.root, options.project, fixerOptions);
+      console.log(`${options.dryRun ? 'Simulating fixes' : 'Fixing'} for: ${file}`);
       
-      // Print summary
+      // Run fixer targeting only this file
+      const result = await fixTypeScriptErrors(options.root, options.project, fixOptions);
+      
+      // Display results
+      const duration = (result.duration / 1000).toFixed(2);
+      console.log(`\nFixing ${options.dryRun ? 'simulation ' : ''}completed in ${duration} seconds`);
+      
       if (result.fixedFiles.includes(filePath)) {
-        console.log(chalk.green(`\n✅ Successfully fixed errors in ${file}`));
+        // Get the number of fixed errors in this file
+        const fileFixDetails = result.fixDetails?.filter(d => d.file === filePath) || [];
+        console.log(`Fixed ${fileFixDetails.length} errors in ${file}`);
         
-        if (options.verbose && result.fixDetails) {
-          const fileFixDetails = result.fixDetails.filter(d => d.file === filePath);
-          console.log(chalk.blue('\n🛠️ Fixes applied:'));
-          for (const fix of fileFixDetails) {
-            console.log(`  Line ${fix.line}: ${fix.errorMessage}`);
-            console.log(`    ${chalk.green('✓')} ${fix.fixDescription}`);
+        // Show detailed fix information if verbose
+        if (options.verbose && fileFixDetails.length > 0) {
+          console.log('\nDetailed fix information:');
+          for (const detail of fileFixDetails) {
+            console.log(`- Line ${detail.line}: ${detail.fixDescription}`);
+            if (detail.beforeFix && detail.afterFix) {
+              console.log(`  Before: ${detail.beforeFix}`);
+              console.log(`  After:  ${detail.afterFix}`);
+              console.log('');
+            }
           }
         }
-      } else if (result.unfixableFiles.includes(filePath)) {
-        console.log(chalk.yellow(`\n⚠️ Some errors in ${file} could not be fixed automatically`));
-        console.log(chalk.yellow('   Run the analyze command for more details.'));
       } else {
-        console.log(chalk.green(`\n✅ No errors found in ${file}`));
+        console.log(`No errors fixed in ${file}`);
       }
       
       if (options.dryRun) {
-        console.log(chalk.yellow('\n⚠️ This was a dry run. No files were modified.'));
+        console.log('\nThis was a dry run. No files were modified.');
       }
+      
+      process.exit(0);
     } catch (error) {
-      console.error(chalk.red(`\n❌ Error fixing TypeScript errors in file:`), error);
+      console.error('Error fixing file:', error);
       process.exit(1);
     }
   });
 
 // Parse command line arguments
-program.parse(process.argv);
+program.parse();
 
 // Show help if no command is provided
-if (!process.argv.slice(2).length) {
-  program.outputHelp();
+if (!program.args.length) {
+  program.help();
 }

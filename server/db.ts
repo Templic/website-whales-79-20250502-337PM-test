@@ -10,6 +10,40 @@ neonConfig.webSocketConstructor = ws;
 const MAX_RETRIES = 5;
 const RETRY_DELAY_MS = 2000;
 
+// This preflight function helps diagnose connectivity issues
+async function checkDatabaseConnectivityPreFlight() {
+  if (!process.env.DATABASE_URL) {
+    console.error("DATABASE_URL environment variable is not set");
+    return false;
+  }
+  
+  try {
+    console.log("Creating temporary pool for connectivity check...");
+    const testPool = new Pool({ 
+      connectionString: process.env.DATABASE_URL,
+      max: 1,
+      idleTimeoutMillis: 5000,
+      connectionTimeoutMillis: 5000
+    });
+    
+    console.log("Attempting to connect to database...");
+    const client = await testPool.connect();
+    console.log("Successfully connected to database for preflight check");
+    
+    try {
+      await client.query('SELECT 1');
+      console.log("Successfully executed test query");
+      return true;
+    } finally {
+      client.release();
+      await testPool.end();
+    }
+  } catch (error) {
+    console.error("Database preflight connectivity check failed:", error);
+    return false;
+  }
+}
+
 if (!process.env.DATABASE_URL) {
   throw new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?",

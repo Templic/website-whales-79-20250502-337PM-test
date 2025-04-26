@@ -1,153 +1,91 @@
 #!/bin/bash
+# TypeScript Error Analyzer and Fixer Script
+# A simple shell script wrapper for ts-intelligent-fixer.ts
 
-# TypeScript Error Management System
-# This script is a wrapper for the TypeScript Intelligent Fixer
+# Ensure this script is executable (run chmod +x analyze-ts-errors.sh once)
 
-# Set terminal colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+# Check if ts-node is installed
+if ! command -v ts-node &> /dev/null; then
+  echo "Error: ts-node is not installed. Please install it with 'npm install -g ts-node'."
+  exit 1
+fi
 
-# Default values
-PROJECT_ROOT="."
-TSCONFIG_PATH="./tsconfig.json"
+# Check if typescript is installed
+if ! command -v tsc &> /dev/null; then
+  echo "Error: TypeScript is not installed. Please install it with 'npm install -g typescript'."
+  exit 1
+fi
 
-# Function to display help message
-show_help() {
-  echo -e "${BLUE}TypeScript Error Management System${NC}"
+# Function to show usage
+show_usage() {
+  echo "TypeScript Error Analyzer and Fixer"
   echo ""
-  echo "Usage: ./analyze-ts-errors.sh [command] [options]"
+  echo "Usage: $0 [command] [options]"
   echo ""
   echo "Commands:"
-  echo "  analyze         Analyze TypeScript errors without fixing them"
-  echo "  fix             Fix TypeScript errors automatically"
-  echo "  patterns        Find common error patterns in TypeScript code"
-  echo "  verify          Verify that TypeScript errors were fixed correctly"
-  echo "  stats           Show statistics about TypeScript errors and fixes"
-  echo "  fix-file        Fix TypeScript errors in a specific file"
+  echo "  analyze     Analyze TypeScript errors without fixing them"
+  echo "  fix         Automatically fix TypeScript errors"
+  echo "  patterns    Find common error patterns in TypeScript code"
+  echo "  verify      Verify that TypeScript errors were fixed correctly"
+  echo "  stats       Show statistics about TypeScript errors and fixes"
+  echo "  fix-file    Fix TypeScript errors in a specific file"
   echo ""
-  echo "Options:"
-  echo "  -h, --help      Display this help message"
-  echo "  --deep          Perform deep analysis with dependency tracking"
-  echo "  --ai            Use OpenAI to enhance analysis/fixes (requires OPENAI_API_KEY)"
-  echo "  -v, --verbose   Enable verbose output"
-  echo "  -p, --project   Path to tsconfig.json (default: ./tsconfig.json)"
-  echo "  -r, --root      Project root directory (default: .)"
+  echo "For command-specific options, run: $0 [command] --help"
   echo ""
   echo "Examples:"
-  echo "  ./analyze-ts-errors.sh analyze --deep"
-  echo "  ./analyze-ts-errors.sh fix --ai"
-  echo "  ./analyze-ts-errors.sh patterns"
-  echo "  ./analyze-ts-errors.sh fix-file ./src/components/Button.tsx"
+  echo "  $0 analyze                            # Analyze all TypeScript errors"
+  echo "  $0 analyze --deep                     # Perform deep analysis with dependency tracking"
+  echo "  $0 fix                                # Fix all TypeScript errors"
+  echo "  $0 fix --dry-run                      # Show what would be fixed without making changes"
+  echo "  $0 fix-file src/component.tsx         # Fix errors in a specific file"
+  echo "  $0 patterns                           # Find common error patterns"
+  echo "  $0 verify                             # Verify fixes"
   echo ""
-  echo "For more options and details, see the documentation:"
-  echo "  ./analyze-ts-errors.sh [command] --help"
 }
 
-# Function to check if npx is available
-check_npx() {
-  if ! command -v npx &> /dev/null; then
-    echo -e "${RED}Error: npx is not installed or not in your PATH.${NC}"
-    echo "Please make sure Node.js and npm are properly installed."
-    exit 1
-  fi
-}
-
-# Process arguments
+# Check if a command was provided
 if [ $# -eq 0 ]; then
-  show_help
+  show_usage
   exit 0
 fi
 
-COMMAND=$1
+# Get the command
+COMMAND="$1"
 shift
 
-case $COMMAND in
+# Validate the command
+case "$COMMAND" in
   analyze|fix|patterns|verify|stats|fix-file)
-    # Valid command, continue processing
+    # Valid command, proceed
     ;;
-  -h|--help)
-    show_help
+  --help|-h|help)
+    show_usage
     exit 0
     ;;
   *)
-    echo -e "${RED}Error: Unknown command '$COMMAND'${NC}"
-    show_help
+    echo "Error: Unknown command '$COMMAND'"
+    show_usage
     exit 1
     ;;
 esac
 
-# Parse remaining options
-EXTRA_ARGS=""
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    -p|--project)
-      TSCONFIG_PATH="$2"
-      shift 2
-      ;;
-    -r|--root)
-      PROJECT_ROOT="$2"
-      shift 2
-      ;;
-    -h|--help)
-      # Pass --help directly to the fixer
-      EXTRA_ARGS="$EXTRA_ARGS --help"
-      shift
-      ;;
-    --deep)
-      if [ "$COMMAND" == "analyze" ]; then
-        EXTRA_ARGS="$EXTRA_ARGS --deep"
-      elif [ "$COMMAND" == "fix" ]; then
-        EXTRA_ARGS="$EXTRA_ARGS --deep-fix"
-      else
-        echo -e "${YELLOW}Warning: --deep option is only applicable to analyze and fix commands${NC}"
-      fi
-      shift
-      ;;
-    --ai)
-      EXTRA_ARGS="$EXTRA_ARGS --ai"
-      
-      # Check if OPENAI_API_KEY is set
-      if [ -z "$OPENAI_API_KEY" ]; then
-        echo -e "${YELLOW}Warning: OPENAI_API_KEY environment variable is not set.${NC}"
-        echo "The --ai option requires an OpenAI API key."
-        echo "You can set it with: export OPENAI_API_KEY=your-api-key"
-      fi
-      shift
-      ;;
-    -v|--verbose)
-      EXTRA_ARGS="$EXTRA_ARGS --verbose"
-      shift
-      ;;
-    *)
-      # Pass any other arguments directly to the fixer
-      EXTRA_ARGS="$EXTRA_ARGS $1"
-      shift
-      ;;
-  esac
-done
+# Generate temporary log file name
+LOG_FILE="/tmp/ts-error-analyzer-$$.log"
 
-# Run the fixer
-echo -e "${CYAN}Running TypeScript Intelligent Fixer...${NC}"
-echo -e "${CYAN}Command: $COMMAND${NC}"
-echo -e "${CYAN}Project: $TSCONFIG_PATH${NC}"
-echo -e "${CYAN}Root: $PROJECT_ROOT${NC}"
-echo ""
+# Run the command
+echo "Running TypeScript Error $COMMAND..."
+ts-node ts-intelligent-fixer.ts "$COMMAND" "$@" 2> "$LOG_FILE"
 
-# Check for npx
-check_npx
-
-# Run the appropriate command
-npx ts-node ts-intelligent-fixer.ts $COMMAND --project "$TSCONFIG_PATH" --root "$PROJECT_ROOT" $EXTRA_ARGS
-
-# Check the exit status
-EXIT_CODE=$?
-if [ $EXIT_CODE -eq 0 ]; then
-  echo -e "${GREEN}Command completed successfully.${NC}"
-else
-  echo -e "${RED}Command failed with exit code $EXIT_CODE.${NC}"
-  exit $EXIT_CODE
+# Check for errors
+if [ $? -ne 0 ]; then
+  echo "Error: Command failed"
+  echo "Error log:"
+  cat "$LOG_FILE"
+  rm "$LOG_FILE"
+  exit 1
 fi
+
+# Clean up
+rm "$LOG_FILE"
+
+exit 0

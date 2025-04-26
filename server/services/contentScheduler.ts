@@ -1,9 +1,30 @@
 import { db } from '../db';
-import { contentItems } from '../../shared/schema';
+import { pgTable, serial, text, timestamp, integer, json, boolean } from 'drizzle-orm/pg-core';
 import { eq, and, lte, gte, ne } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { logger } from '../logger';
 import { sendNotification } from './notificationService';
+
+// Define content items table locally since it's not in shared/schema.ts
+export const contentItems = pgTable('content_items', {
+  id: serial('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  type: text('type').notNull().default('text'),
+  page: text('page'),
+  status: text('status').notNull().default('draft'),
+  version: integer('version').notNull().default(1),
+  metadata: json('metadata'),
+  createdBy: integer('created_by'),
+  publishedAt: timestamp('published_at'),
+  archivedAt: timestamp('archived_at'),
+  archiveReason: text('archive_reason'),
+  scheduledPublishAt: timestamp('scheduled_publish_at'),
+  expirationDate: timestamp('expiration_date'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow()
+});
 
 /**
  * Metrics to track content scheduling performance

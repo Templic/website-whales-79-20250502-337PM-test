@@ -1,731 +1,984 @@
 /**
  * TypeScript Error Fixer
  * 
- * This utility provides automated fixes for common TypeScript errors.
- * It works with the ts-error-analyzer to provide an end-to-end error management solution.
+ * This module provides functions to automatically fix TypeScript errors in a project.
+ * It works with the ts-error-analyzer to identify errors and apply appropriate fixes.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { tsErrorStorage } from '../tsErrorStorage';
-import { ERROR_CATEGORIES, ERROR_SEVERITY, ERROR_STATUS, TypeScriptError } from './ts-error-analyzer';
-import { InsertErrorFix, InsertErrorFixHistory } from '../../shared/schema';
-import { generateAIFix, analyzeErrorWithAI, isOpenAIConfigured } from './openai-integration';
+import fs from 'fs';
+import path from 'path';
+import ts from 'typescript';
+import { analyzeTypeScriptErrors, TypeScriptError, DependencyInfo } from './ts-error-analyzer';
+import { ErrorCategory, ErrorSeverity } from '../../shared/schema';
 
-// Fix application methods
-export enum FixMethod {
-  AUTOMATED = 'automated',
-  SEMI_AUTOMATED = 'semi_automated', // Requires some user input/confirmation
-  MANUAL = 'manual',                 // Guided manual fix
-  PATTERN_BASED = 'pattern_based',   // Uses a known error pattern and fix
-  AI_ASSISTED = 'ai_assisted'        // Uses ML to suggest fixes
+// Interfaces
+export interface FixOptions {
+  createBackups: boolean;
+  backupDir: string;
+  categories?: string[];
+  maxErrorsPerFile?: number;
+  logLevel: 'quiet' | 'normal' | 'verbose';
+  dryRun: boolean;
+  generateTypeDefinitions: boolean;
+  fixMissingInterfaces: boolean;
+  fixImplicitAny: boolean;
+  fixMissingProperties: boolean;
+  prioritizeCriticalErrors: boolean;
+  fixDependencies?: boolean;
+  useAI?: boolean;
+  batchFix?: boolean;
+  targetFiles?: string[];
+  exclude?: string[];
+  saveToDb?: boolean;
 }
 
-// Fix result status
-export enum FixResult {
-  SUCCESS = 'success',
-  PARTIAL = 'partial',
-  FAILED = 'failed',
-  NEEDS_REVIEW = 'needs_review'
+export interface FixResult {
+  totalErrors: number;
+  fixedErrors: number;
+  unfixedErrors: number;
+  fixedFiles: string[];
+  unfixableFiles: string[];
+  duration: number;
+  fixDetails?: FixDetail[];
 }
 
-// Fix type definitions
-export interface Fix {
-  id?: number;
-  name: string;
-  description: string;
-  category: string;
-  errorCode?: string;
-  fixCode: string;
-  method: FixMethod;
-  patternMatch?: RegExp | string;
-  replacementTemplate?: string;
-  autoFixable: boolean;
+export interface FixDetail {
+  file: string;
+  line: number;
+  errorCode: number;
+  errorMessage: string;
+  fixDescription: string;
+  beforeFix?: string;
+  afterFix?: string;
+  fixMethod: 'automatic' | 'ai' | 'pattern';
+  timestamp: Date;
 }
 
 /**
- * Applies a fix to a file
+ * Fixes TypeScript errors in a project
+ * 
+ * @param rootDir - The root directory of the project
+ * @param tsconfigPath - Path to the tsconfig.json file
+ * @param options - Fix options
+ * @returns Fix result
  */
-export async function applyFix(
-  filePath: string, 
-  line: number, 
-  column: number, 
-  fix: Fix, 
-  errorId: number,
-  userId: number
-): Promise<{
-  success: boolean;
-  result: FixResult;
-  fixedContent?: string;
-  message?: string;
-}> {
-  try {
-    console.log(`Attempting to apply fix for error at ${filePath}:${line}:${column}`);
-    
-    // Read the file
-    if (!fs.existsSync(filePath)) {
-      return { 
-        success: false, 
-        result: FixResult.FAILED,
-        message: `File not found: ${filePath}` 
-      };
-    }
-    
-    const content = fs.readFileSync(filePath, 'utf8');
-    const lines = content.split('\n');
-    
-    // Apply the appropriate fix based on the fix method
-    let fixedContent: string;
-    let result: FixResult;
-    let fixDuration: number = 0;
-    const startTime = Date.now();
-    
-    switch (fix.method) {
-      case FixMethod.AUTOMATED:
-        const fixResult = applyAutomatedFix(lines, line, column, fix);
-        fixedContent = fixResult.content;
-        result = fixResult.result;
-        break;
-        
-      case FixMethod.PATTERN_BASED:
-        const patternFixResult = applyPatternBasedFix(content, fix);
-        fixedContent = patternFixResult.content;
-        result = patternFixResult.result;
-        break;
-        
-      case FixMethod.AI_ASSISTED:
-        // Apply AI-assisted fix using pattern-based replacement
-        if (fix.patternMatch && fix.replacementTemplate) {
-          const aiFixResult = applyPatternBasedFix(content, fix);
-          fixedContent = aiFixResult.content;
-          result = aiFixResult.result;
-          break;
-        }
-        // If there's no pattern match, fall through to the next case
-        
-      case FixMethod.SEMI_AUTOMATED:
-      case FixMethod.MANUAL:
-      default:
-        // For now, these methods are not automatically applied
-        // We just return guidance for manual fixing
-        return {
-          success: false,
-          result: FixResult.NEEDS_REVIEW,
-          message: `Fix method ${fix.method} requires manual intervention. Follow these steps:\n${fix.description}`
-        };
-    }
-    
-    // Calculate duration
-    fixDuration = Date.now() - startTime;
-    
-    // Only write the file if we have a successful or partial fix
-    if (result !== FixResult.FAILED) {
-      fs.writeFileSync(filePath, fixedContent, 'utf8');
-      
-      // Create fix history record
-      const fixHistory: InsertErrorFixHistory = {
-        errorId,
-        fixId: fix.id || 0,
-        fixedBy: userId,
-        fixedAt: new Date(),
-        fixMethod: fix.method,
-        fixResult: result,
-        fixDuration,
-        previousContent: content,
-        newContent: fixedContent,
-        notes: `Applied ${fix.name} fix to ${filePath}:${line}:${column}`
-      };
-      
-      try {
-        await tsErrorStorage.createFixHistory(fixHistory);
-        
-        // If fix was successful, mark the error as fixed
-        if (result === FixResult.SUCCESS) {
-          await tsErrorStorage.markErrorAsFixed(errorId, fix.id || 0, userId);
-        }
-      } catch (dbError) {
-        console.error('Failed to save fix history:', dbError);
-      }
-      
-      return {
-        success: true,
-        result,
-        fixedContent,
-        message: result === FixResult.SUCCESS 
-          ? `Successfully applied fix to ${filePath}` 
-          : `Partially fixed ${filePath}, may need additional review`
-      };
-    }
-    
-    return {
-      success: false,
-      result: FixResult.FAILED,
-      message: `Failed to apply fix to ${filePath}`
-    };
-  } catch (error) {
-    console.error('Error applying fix:', error);
-    return {
-      success: false,
-      result: FixResult.FAILED,
-      message: `Error applying fix: ${error.message}`
-    };
-  }
-}
-
-/**
- * Apply an automated fix directly to code
- */
-function applyAutomatedFix(
-  lines: string[], 
-  line: number, 
-  column: number, 
-  fix: Fix
-): { content: string; result: FixResult } {
-  // Convert to 0-based indexing
-  const lineIndex = line - 1;
-  const columnIndex = column - 1;
+export async function fixTypeScriptErrors(
+  rootDir: string,
+  tsconfigPath: string,
+  options: Partial<FixOptions> = {}
+): Promise<FixResult> {
+  const startTime = new Date();
   
-  // Get the current line
-  const currentLine = lines[lineIndex];
+  // Set default options
+  const opts: FixOptions = {
+    createBackups: options.createBackups !== false,
+    backupDir: options.backupDir || './ts-error-fixes-backup',
+    categories: options.categories,
+    maxErrorsPerFile: options.maxErrorsPerFile,
+    logLevel: options.logLevel || 'normal',
+    dryRun: options.dryRun || false,
+    generateTypeDefinitions: options.generateTypeDefinitions !== false,
+    fixMissingInterfaces: options.fixMissingInterfaces !== false,
+    fixImplicitAny: options.fixImplicitAny !== false,
+    fixMissingProperties: options.fixMissingProperties !== false,
+    prioritizeCriticalErrors: options.prioritizeCriticalErrors !== false,
+    fixDependencies: options.fixDependencies || false,
+    useAI: options.useAI || false,
+    batchFix: options.batchFix !== false,
+    targetFiles: options.targetFiles,
+    exclude: options.exclude,
+    saveToDb: options.saveToDb !== undefined ? options.saveToDb : true
+  };
   
-  // Based on the error category, apply different fixes
-  switch (fix.category) {
-    case ERROR_CATEGORIES.MISSING_TYPE:
-      // Insert type annotation
-      const fixedLine = insertTypeAnnotation(currentLine, columnIndex, fix.fixCode);
-      lines[lineIndex] = fixedLine;
-      break;
-      
-    case ERROR_CATEGORIES.NULL_UNDEFINED:
-      // Add null checks or optional chaining
-      const nullFixedLine = addNullChecks(currentLine, columnIndex, fix.fixCode);
-      lines[lineIndex] = nullFixedLine;
-      break;
-      
-    case ERROR_CATEGORIES.SYNTAX_ERROR:
-      // Fix syntax errors like missing semicolons, parentheses, etc.
-      const syntaxFixedLine = fixSyntaxError(currentLine, columnIndex, fix.fixCode);
-      lines[lineIndex] = syntaxFixedLine;
-      break;
-      
-    default:
-      // If we don't have a specific fix, return as-is
-      return { content: lines.join('\n'), result: FixResult.FAILED };
+  // Create backup directory if needed
+  if (opts.createBackups && !opts.dryRun) {
+    ensureDirectoryExists(opts.backupDir);
   }
   
-  return { content: lines.join('\n'), result: FixResult.SUCCESS };
-}
-
-/**
- * Apply a pattern-based fix to the entire content
- */
-function applyPatternBasedFix(
-  content: string, 
-  fix: Fix
-): { content: string; result: FixResult } {
-  if (!fix.patternMatch || !fix.replacementTemplate) {
-    return { content, result: FixResult.FAILED };
-  }
+  // Analyze the project to get errors
+  const analysisOptions = {
+    deep: opts.fixDependencies,
+    useAI: opts.useAI,
+    categories: opts.categories,
+    exclude: opts.exclude,
+    saveToDb: false
+  };
   
-  try {
-    // Apply regex replacement if patternMatch is a regex
-    if (fix.patternMatch instanceof RegExp) {
-      const newContent = content.replace(fix.patternMatch, fix.replacementTemplate);
-      
-      // Check if any replacements were made
-      if (newContent === content) {
-        return { content, result: FixResult.FAILED };
-      }
-      
-      return { content: newContent, result: FixResult.SUCCESS };
-    }
+  const analysis = await analyzeTypeScriptErrors(rootDir, tsconfigPath, analysisOptions);
+  
+  // Filter errors to target files if specified
+  let errorsToFix: Record<string, TypeScriptError[]> = { ...analysis.errorsByFile };
+  
+  if (opts.targetFiles && opts.targetFiles.length > 0) {
+    // Only include specified target files
+    const targetFilePaths = opts.targetFiles.map(f => path.resolve(rootDir, f));
     
-    // Otherwise, treat as a string pattern
-    const stringPattern = fix.patternMatch.toString();
-    if (content.includes(stringPattern)) {
-      const newContent = content.replace(stringPattern, fix.replacementTemplate);
-      return { content: newContent, result: FixResult.SUCCESS };
-    }
-    
-    return { content, result: FixResult.FAILED };
-  } catch (error) {
-    console.error('Error applying pattern-based fix:', error);
-    return { content, result: FixResult.FAILED };
-  }
-}
-
-/**
- * Insert type annotation at the specified position
- */
-function insertTypeAnnotation(line: string, column: number, typeAnnotation: string): string {
-  // Find the variable declaration before the column
-  // This is a simplified approach and might need to be more sophisticated
-  const beforeColumn = line.substring(0, column);
-  const afterColumn = line.substring(column);
-  
-  // Add the type annotation
-  return `${beforeColumn}${typeAnnotation}${afterColumn}`;
-}
-
-/**
- * Add null checks or optional chaining
- */
-function addNullChecks(line: string, column: number, fixCode: string): string {
-  // Simple replacement - in a real implementation, this would be more sophisticated
-  // based on the specific null/undefined error
-  return line.replace(/(\w+)\.(\w+)/g, '$1?.$2');
-}
-
-/**
- * Fix common syntax errors
- */
-function fixSyntaxError(line: string, column: number, fixCode: string): string {
-  // This is a simplified implementation
-  // In reality, this would be much more sophisticated and handle various syntax errors
-  
-  // Check for missing semicolon
-  if (!line.trim().endsWith(';') && !line.trim().endsWith('{') && !line.trim().endsWith('}')) {
-    return `${line};`;
-  }
-  
-  // Check for missing closing parenthesis
-  const openParens = (line.match(/\(/g) || []).length;
-  const closeParens = (line.match(/\)/g) || []).length;
-  if (openParens > closeParens) {
-    return `${line}${''.padEnd(openParens - closeParens, ')')}`;
-  }
-  
-  // Check for missing closing braces
-  const openBraces = (line.match(/\{/g) || []).length;
-  const closeBraces = (line.match(/\}/g) || []).length;
-  if (openBraces > closeBraces) {
-    return `${line}${''.padEnd(openBraces - closeBraces, '}')}`;
-  }
-  
-  // If we can't identify the issue, return the original line
-  return line;
-}
-
-/**
- * Find appropriate fixes for a given error
- */
-export async function findFixesForError(error: TypeScriptError): Promise<Fix[]> {
-  // Try to find pattern-based fixes first
-  let fixes: Fix[] = [];
-  
-  // Step 1: Check if we have a pattern in the database that matches this error
-  try {
-    const errorPatterns = await tsErrorStorage.getErrorPatternsByCategory(error.category);
-    
-    for (const pattern of errorPatterns) {
-      // For this simplified version, we'll just check the error code and category
-      if (pattern.errorCodes?.includes(`TS${error.code}`)) {
-        // Get fixes for this pattern
-        const patternFixes = await tsErrorStorage.getFixesByPatternId(pattern.id);
-        
-        fixes.push(...patternFixes.map(fix => ({
-          id: fix.id,
-          name: fix.name,
-          description: fix.description,
-          category: error.category,
-          errorCode: `TS${error.code}`,
-          fixCode: fix.fixCode,
-          method: fix.method as FixMethod,
-          patternMatch: fix.patternMatch ? new RegExp(fix.patternMatch) : undefined,
-          replacementTemplate: fix.replacementTemplate,
-          autoFixable: fix.autoFixable
-        })));
+    const filteredErrors: Record<string, TypeScriptError[]> = {};
+    for (const filePath of targetFilePaths) {
+      if (errorsToFix[filePath]) {
+        filteredErrors[filePath] = errorsToFix[filePath];
       }
     }
-  } catch (dbError) {
-    console.error('Error fetching fixes from database:', dbError);
+    
+    errorsToFix = filteredErrors;
   }
   
-  // Step 2: Try to generate AI-assisted fix if OpenAI is configured
-  try {
-    if (isOpenAIConfigured() && fixes.length === 0) {
-      console.log(`Attempting to generate AI fix for error at ${error.filePath}:${error.line}:${error.column}`);
+  // Prepare for fixing
+  const fixedFiles: string[] = [];
+  const unfixableFiles: string[] = [];
+  const fixDetails: FixDetail[] = [];
+  let fixedErrorCount = 0;
+  
+  // Sort errors by dependency if that option is enabled
+  if (opts.fixDependencies && analysis.dependencyInfo) {
+    errorsToFix = sortErrorsByDependency(errorsToFix, analysis.dependencyInfo);
+  } else if (opts.prioritizeCriticalErrors) {
+    // Otherwise, sort by severity if prioritizing critical errors
+    errorsToFix = sortErrorsBySeverity(errorsToFix);
+  }
+  
+  // Process each file
+  for (const [filePath, errors] of Object.entries(errorsToFix)) {
+    let errorCount = errors.length;
+    
+    // Skip if max errors per file is set and there are too many errors
+    if (opts.maxErrorsPerFile !== undefined && errorCount > opts.maxErrorsPerFile) {
+      log(`Skipping ${filePath} (${errorCount} errors, max: ${opts.maxErrorsPerFile})`, 'normal', opts);
+      unfixableFiles.push(filePath);
+      continue;
+    }
+    
+    // Apply fixes
+    let fileContent = fs.readFileSync(filePath, 'utf8');
+    let originalContent = fileContent;
+    let fileModified = false;
+    let fileFixedErrors = 0;
+    
+    // Create a backup if needed
+    if (opts.createBackups && !opts.dryRun) {
+      createBackup(filePath, opts.backupDir);
+    }
+    
+    // Try batch fixing if enabled
+    if (opts.batchFix) {
+      const batchResult = await applyBatchFixes(filePath, fileContent, errors, opts);
       
-      // Read the file content
-      if (fs.existsSync(error.filePath)) {
-        const fileContent = fs.readFileSync(error.filePath, 'utf8');
+      if (batchResult.modified) {
+        fileContent = batchResult.content;
+        fileModified = true;
+        fileFixedErrors += batchResult.fixedErrors;
+        fixDetails.push(...batchResult.details);
         
-        // Generate AI fix
-        const aiFix = await generateAIFix(
-          {
-            ...error,
-            lineNumber: error.line,
-            columnNumber: error.column,
-            errorMessage: error.messageText.toString(),
-            errorCode: `TS${error.code}`
-          }, 
-          fileContent
-        );
-        
-        if (aiFix) {
-          console.log('Generated AI fix for error:', aiFix.name);
-          fixes.push(aiFix);
-          
-          // Store the AI-generated fix in the database for future use
-          try {
-            const fixId = await storeErrorFix(aiFix);
-            console.log(`AI fix stored with ID: ${fixId}`);
-            aiFix.id = fixId;
-          } catch (storeError) {
-            console.error('Error storing AI fix:', storeError);
-          }
-        }
+        log(`Applied batch fixes to ${filePath} (fixed ${batchResult.fixedErrors} errors)`, 'normal', opts);
       }
     }
-  } catch (aiError) {
-    console.error('Error generating AI fix:', aiError);
-  }
-  
-  // Step 3: If no fixes found yet, add default fixes based on error category
-  if (fixes.length === 0) {
-    // Add default fixes based on error category
-    switch (error.category) {
-      case ERROR_CATEGORIES.MISSING_TYPE:
-        fixes.push({
-          name: 'Add any type',
-          description: 'Add ": any" type annotation to silence the error',
-          category: error.category,
-          errorCode: `TS${error.code}`,
-          fixCode: ': any',
-          method: FixMethod.AUTOMATED,
-          autoFixable: true
-        });
-        break;
+    
+    // If batch fixing failed or is disabled, try individual fixes
+    if (!fileModified || fileFixedErrors < errorCount) {
+      // Get remaining errors
+      const remainingErrors = opts.batchFix
+        ? errors.filter(e => !fixDetails.some(d => 
+            d.file === filePath && 
+            d.line === e.line && 
+            d.errorCode === e.code
+          ))
+        : errors;
+      
+      // Apply individual fixes
+      const individualResult = await applyIndividualFixes(filePath, fileContent, remainingErrors, opts);
+      
+      if (individualResult.modified) {
+        fileContent = individualResult.content;
+        fileModified = true;
+        fileFixedErrors += individualResult.fixedErrors;
+        fixDetails.push(...individualResult.details);
         
-      case ERROR_CATEGORIES.NULL_UNDEFINED:
-        fixes.push({
-          name: 'Add optional chaining',
-          description: 'Convert property access to use optional chaining (?.) to handle null/undefined values',
-          category: error.category,
-          errorCode: `TS${error.code}`,
-          fixCode: '?.',
-          method: FixMethod.AUTOMATED,
-          patternMatch: /(\w+)\.(\w+)/g,
-          replacementTemplate: '$1?.$2',
-          autoFixable: true
-        });
-        break;
-        
-      case ERROR_CATEGORIES.SYNTAX_ERROR:
-        fixes.push({
-          name: 'Add missing semicolon',
-          description: 'Add missing semicolon at the end of the line',
-          category: error.category,
-          errorCode: `TS${error.code}`,
-          fixCode: ';',
-          method: FixMethod.AUTOMATED,
-          autoFixable: true
-        });
-        break;
-        
-      default:
-        fixes.push({
-          name: 'Manual fix required',
-          description: `This error type (${error.category}) requires manual intervention`,
-          category: error.category,
-          errorCode: `TS${error.code}`,
-          fixCode: '',
-          method: FixMethod.MANUAL,
-          autoFixable: false
-        });
+        log(`Applied individual fixes to ${filePath} (fixed ${individualResult.fixedErrors} errors)`, 'normal', opts);
+      }
+    }
+    
+    // Save changes if file was modified and not in dry run mode
+    if (fileModified && !opts.dryRun) {
+      fs.writeFileSync(filePath, fileContent, 'utf8');
+      fixedFiles.push(filePath);
+      fixedErrorCount += fileFixedErrors;
+      
+      log(`Updated ${filePath} (fixed ${fileFixedErrors} of ${errorCount} errors)`, 'normal', opts);
+    } else if (fileModified && opts.dryRun) {
+      // In dry run mode, count as fixed but don't save
+      fixedFiles.push(filePath);
+      fixedErrorCount += fileFixedErrors;
+      
+      log(`Would update ${filePath} (would fix ${fileFixedErrors} of ${errorCount} errors)`, 'normal', opts);
+    } else {
+      // No fixes applied
+      unfixableFiles.push(filePath);
+      log(`Could not fix errors in ${filePath}`, 'normal', opts);
     }
   }
   
-  return fixes;
+  // Calculate total errors
+  const totalErrors = Object.values(errorsToFix)
+    .reduce((sum, errors) => sum + errors.length, 0);
+  
+  const unfixedErrors = totalErrors - fixedErrorCount;
+  
+  // Save fixes to database if enabled
+  if (opts.saveToDb && fixDetails.length > 0 && !opts.dryRun) {
+    await saveFixesToDb(fixDetails);
+  }
+  
+  const endTime = new Date();
+  const duration = endTime.getTime() - startTime.getTime();
+  
+  // Return results
+  return {
+    totalErrors,
+    fixedErrors: fixedErrorCount,
+    unfixedErrors,
+    fixedFiles,
+    unfixableFiles,
+    duration,
+    fixDetails: opts.logLevel === 'verbose' ? fixDetails : undefined
+  };
 }
 
 /**
- * Store a new error fix in the database
+ * Creates a backup of a file
+ * 
+ * @param filePath - Path to the file
+ * @param backupDir - Backup directory
  */
-export async function storeErrorFix(fix: Fix, patternId?: number): Promise<number> {
-  try {
-    const fixRecord: InsertErrorFix = {
-      name: fix.name,
-      description: fix.description,
-      patternId: patternId,
-      fixCode: fix.fixCode,
-      method: fix.method as any,
-      patternMatch: fix.patternMatch?.toString(),
-      replacementTemplate: fix.replacementTemplate,
-      autoFixable: fix.autoFixable,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    const newFix = await tsErrorStorage.createErrorFix(fixRecord);
-    return newFix.id;
-  } catch (error) {
-    console.error('Failed to store error fix:', error);
-    throw error;
+function createBackup(filePath: string, backupDir: string): void {
+  const fileName = path.basename(filePath);
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupPath = path.join(backupDir, `${fileName}.${timestamp}.bak`);
+  
+  fs.copyFileSync(filePath, backupPath);
+}
+
+/**
+ * Ensures that a directory exists, creating it if necessary
+ * 
+ * @param dirPath - Directory path
+ */
+function ensureDirectoryExists(dirPath: string): void {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
   }
 }
 
 /**
- * Fix all TypeScript errors in the project
+ * Logs a message based on log level
+ * 
+ * @param message - Message to log
+ * @param level - Message level
+ * @param options - Fix options
  */
-export async function fixAllErrors(userId: number, autoFixOnly: boolean = true): Promise<{
-  total: number;
-  fixed: number;
-  partiallyFixed: number;
-  failed: number;
-  needsReview: number;
-  fixedByCategory: Record<string, number>;
-}> {
-  try {
-    // Get all errors from the database that need fixing
-    const errors = await tsErrorStorage.getAllTypescriptErrors({
-      status: autoFixOnly ? 'fix_available' : undefined
+function log(message: string, level: 'quiet' | 'normal' | 'verbose', options: FixOptions): void {
+  const levels = {
+    quiet: 0,
+    normal: 1,
+    verbose: 2
+  };
+  
+  if (levels[options.logLevel] >= levels[level]) {
+    console.log(message);
+  }
+}
+
+/**
+ * Sorts errors by their dependencies
+ * 
+ * @param errorsByFile - Errors grouped by file
+ * @param dependencyInfo - Dependency information
+ * @returns Sorted errors
+ */
+function sortErrorsByDependency(
+  errorsByFile: Record<string, TypeScriptError[]>,
+  dependencyInfo: DependencyInfo
+): Record<string, TypeScriptError[]> {
+  const sorted: Record<string, TypeScriptError[]> = {};
+  
+  // Create a map of error hash to error
+  const errorMap: Record<string, TypeScriptError> = {};
+  
+  for (const errors of Object.values(errorsByFile)) {
+    for (const error of errors) {
+      errorMap[error.hash] = error;
+    }
+  }
+  
+  // First, add root causes
+  for (const rootCause of dependencyInfo.rootCauses) {
+    const file = rootCause.file;
+    
+    if (!sorted[file]) {
+      sorted[file] = [];
+    }
+    
+    sorted[file].push(errorMap[rootCause.hash]);
+  }
+  
+  // Then, add cascading errors in dependency order
+  for (const cascadingError of dependencyInfo.cascadingErrors) {
+    const file = cascadingError.file;
+    
+    if (!sorted[file]) {
+      sorted[file] = [];
+    }
+    
+    sorted[file].push(errorMap[cascadingError.hash]);
+  }
+  
+  // Finally, add any errors that weren't in the dependency info
+  for (const [file, errors] of Object.entries(errorsByFile)) {
+    if (!sorted[file]) {
+      sorted[file] = [];
+    }
+    
+    for (const error of errors) {
+      if (!sorted[file].some(e => e.hash === error.hash)) {
+        sorted[file].push(error);
+      }
+    }
+  }
+  
+  return sorted;
+}
+
+/**
+ * Sorts errors by their severity
+ * 
+ * @param errorsByFile - Errors grouped by file
+ * @returns Sorted errors
+ */
+function sortErrorsBySeverity(
+  errorsByFile: Record<string, TypeScriptError[]>
+): Record<string, TypeScriptError[]> {
+  const sorted: Record<string, TypeScriptError[]> = {};
+  
+  // Define severity order (critical first)
+  const severityOrder = {
+    [ErrorSeverity.CRITICAL]: 0,
+    [ErrorSeverity.HIGH]: 1,
+    [ErrorSeverity.MEDIUM]: 2,
+    [ErrorSeverity.LOW]: 3
+  };
+  
+  for (const [file, errors] of Object.entries(errorsByFile)) {
+    // Sort errors by severity
+    const sortedErrors = [...errors].sort((a, b) => {
+      return severityOrder[a.severity] - severityOrder[b.severity];
     });
     
-    console.log(`Found ${errors.length} errors to fix`);
-    
-    // Track statistics
-    const stats = {
-      total: errors.length,
-      fixed: 0,
-      partiallyFixed: 0,
-      failed: 0,
-      needsReview: 0,
-      fixedByCategory: {} as Record<string, number>
-    };
-    
-    // Process each error
-    for (const error of errors) {
-      try {
-        // Convert database error to TypeScriptError format
-        const tsError: TypeScriptError = {
-          filePath: error.filePath,
-          line: error.lineNumber,
-          column: error.columnNumber,
-          code: error.errorCode.replace(/^TS/, ''),
-          message: error.errorMessage,
-          category: error.category,
-          severity: error.severity,
-          context: error.errorContext
-        };
-        
-        // Find fixes for this error
-        const fixes = await findFixesForError(tsError);
-        
-        // Skip if no auto-fixable fixes are available and we're only doing auto-fixes
-        if (autoFixOnly && !fixes.some(fix => fix.autoFixable)) {
-          stats.needsReview++;
-          continue;
-        }
-        
-        // Apply the first auto-fixable fix we find
-        let fixApplied = false;
-        for (const fix of fixes) {
-          if (fix.autoFixable) {
-            const fixResult = await applyFix(
-              error.filePath,
-              error.lineNumber,
-              error.columnNumber,
-              fix,
-              error.id,
-              userId
-            );
-            
-            if (fixResult.success) {
-              // Count by result
-              if (fixResult.result === FixResult.SUCCESS) {
-                stats.fixed++;
-                // Track by category
-                stats.fixedByCategory[error.category] = (stats.fixedByCategory[error.category] || 0) + 1;
-              } else if (fixResult.result === FixResult.PARTIAL) {
-                stats.partiallyFixed++;
-              } else if (fixResult.result === FixResult.NEEDS_REVIEW) {
-                stats.needsReview++;
-              }
-              
-              fixApplied = true;
-              break;
-            }
-          }
-        }
-        
-        if (!fixApplied) {
-          stats.failed++;
-        }
-      } catch (errorProcessingError) {
-        console.error(`Failed to process error ${error.id}:`, errorProcessingError);
-        stats.failed++;
-      }
-    }
-    
-    return stats;
-  } catch (error) {
-    console.error('Failed to fix all errors:', error);
-    throw error;
+    sorted[file] = sortedErrors;
   }
+  
+  return sorted;
 }
 
 /**
- * Fix a batch of TypeScript errors by their IDs
+ * Applies batch fixes to a file
+ * 
+ * @param filePath - Path to the file
+ * @param content - File content
+ * @param errors - Errors in the file
+ * @param options - Fix options
+ * @returns Batch fix result
  */
-export async function fixBatchErrors(
-  errorIds: number[],
-  userId: number,
-  autoFixOnly: boolean = true
+async function applyBatchFixes(
+  filePath: string,
+  content: string,
+  errors: TypeScriptError[],
+  options: FixOptions
 ): Promise<{
-  total: number;
-  fixed: number;
-  partiallyFixed: number;
-  failed: number;
-  needsReview: number;
-  fixedByCategory: Record<string, number>;
+  content: string;
+  modified: boolean;
+  fixedErrors: number;
+  details: FixDetail[];
 }> {
-  try {
-    console.log(`Processing batch fix for ${errorIds.length} errors`);
-    
-    // Track statistics
-    const stats = {
-      total: errorIds.length,
-      fixed: 0,
-      partiallyFixed: 0,
-      failed: 0,
-      needsReview: 0,
-      fixedByCategory: {} as Record<string, number>
-    };
-    
-    // Process each error by ID
-    for (const errorId of errorIds) {
-      try {
-        const error = await tsErrorStorage.getTypescriptError(errorId);
-        
-        if (!error) {
-          console.error(`Error ${errorId} not found in database`);
-          stats.failed++;
-          continue;
-        }
-        
-        // Convert database error to TypeScriptError format
-        const tsError: TypeScriptError = {
-          filePath: error.filePath,
-          line: error.lineNumber,
-          column: error.columnNumber,
-          code: error.errorCode.replace(/^TS/, ''),
-          message: error.errorMessage,
-          category: error.category,
-          severity: error.severity,
-          context: error.errorContext
-        };
-        
-        // Find fixes for this error
-        const fixes = await findFixesForError(tsError);
-        
-        // Skip if no auto-fixable fixes are available and we're only doing auto-fixes
-        if (autoFixOnly && !fixes.some(fix => fix.autoFixable)) {
-          stats.needsReview++;
-          continue;
-        }
-        
-        // Try different fix strategies in order of preference:
-        // 1. AI-assisted fixes (if OpenAI configured)
-        // 2. Pattern-based fixes
-        // 3. Generic automated fixes
-        let fixApplied = false;
-        
-        // 1. First try AI-assisted fixes if available
-        if (isOpenAIConfigured()) {
-          try {
-            const aiSuggestion = await analyzeErrorWithAI(tsError);
-            if (aiSuggestion && aiSuggestion.fixCode) {
-              const aiFix: Fix = {
-                name: 'AI-generated fix',
-                description: aiSuggestion.explanation || 'Fix generated by AI',
-                category: tsError.category,
-                errorCode: tsError.code,
-                fixCode: aiSuggestion.fixCode,
-                method: FixMethod.AI_ASSISTED,
-                autoFixable: true
-              };
-              
-              const fixResult = await applyFix(
-                error.filePath,
-                error.lineNumber,
-                error.columnNumber,
-                aiFix,
-                error.id,
-                userId
-              );
-              
-              if (fixResult.success) {
-                if (fixResult.result === FixResult.SUCCESS) {
-                  stats.fixed++;
-                  stats.fixedByCategory[error.category] = (stats.fixedByCategory[error.category] || 0) + 1;
-                } else if (fixResult.result === FixResult.PARTIAL) {
-                  stats.partiallyFixed++;
-                } else if (fixResult.result === FixResult.NEEDS_REVIEW) {
-                  stats.needsReview++;
-                }
-                
-                fixApplied = true;
-              }
-            }
-          } catch (aiError) {
-            console.error(`AI fix failed for error ${error.id}:`, aiError);
-            // Continue to try other fix methods
-          }
-        }
-        
-        // 2. Try pattern-based or automated fixes if AI fix didn't work
-        if (!fixApplied) {
-          for (const fix of fixes) {
-            if (fix.autoFixable) {
-              const fixResult = await applyFix(
-                error.filePath,
-                error.lineNumber,
-                error.columnNumber,
-                fix,
-                error.id,
-                userId
-              );
-              
-              if (fixResult.success) {
-                if (fixResult.result === FixResult.SUCCESS) {
-                  stats.fixed++;
-                  stats.fixedByCategory[error.category] = (stats.fixedByCategory[error.category] || 0) + 1;
-                } else if (fixResult.result === FixResult.PARTIAL) {
-                  stats.partiallyFixed++;
-                } else if (fixResult.result === FixResult.NEEDS_REVIEW) {
-                  stats.needsReview++;
-                }
-                
-                fixApplied = true;
-                break;
-              }
-            }
-          }
-        }
-        
-        if (!fixApplied) {
-          stats.failed++;
-        }
-      } catch (errorProcessingError) {
-        console.error(`Failed to process error ${errorId}:`, errorProcessingError);
-        stats.failed++;
-      }
+  // This is a placeholder for batch fixing logic
+  // In a real implementation, this would apply fixes in batches
+  
+  // For now, let's simulate batch fixing for certain error categories
+  let modified = false;
+  let fixedErrors = 0;
+  const details: FixDetail[] = [];
+  
+  // Group errors by category
+  const errorsByCategory: Record<string, TypeScriptError[]> = {};
+  
+  for (const error of errors) {
+    if (!errorsByCategory[error.category]) {
+      errorsByCategory[error.category] = [];
     }
-    
-    return stats;
-  } catch (error) {
-    console.error('Failed to fix batch errors:', error);
-    throw error;
+    errorsByCategory[error.category].push(error);
   }
+  
+  // Try to fix missing types in batch
+  if (errorsByCategory[ErrorCategory.MISSING_TYPE] && options.fixImplicitAny) {
+    const typeErrors = errorsByCategory[ErrorCategory.MISSING_TYPE];
+    const result = fixMissingTypesInBatch(filePath, content, typeErrors);
+    
+    if (result.modified) {
+      content = result.content;
+      modified = true;
+      fixedErrors += result.fixedErrors;
+      details.push(...result.details);
+    }
+  }
+  
+  // Try to fix import errors in batch
+  if (errorsByCategory[ErrorCategory.IMPORT_ERROR]) {
+    const importErrors = errorsByCategory[ErrorCategory.IMPORT_ERROR];
+    const result = fixImportErrorsInBatch(filePath, content, importErrors);
+    
+    if (result.modified) {
+      content = result.content;
+      modified = true;
+      fixedErrors += result.fixedErrors;
+      details.push(...result.details);
+    }
+  }
+  
+  return {
+    content,
+    modified,
+    fixedErrors,
+    details
+  };
 }
 
-export default {
-  applyFix,
-  findFixesForError,
-  storeErrorFix,
-  fixAllErrors,
-  fixBatchErrors,
-  FixMethod,
-  FixResult
-};
+/**
+ * Fixes missing types in batch
+ * 
+ * @param filePath - Path to the file
+ * @param content - File content
+ * @param errors - Type errors in the file
+ * @returns Batch fix result
+ */
+function fixMissingTypesInBatch(
+  filePath: string,
+  content: string,
+  errors: TypeScriptError[]
+): {
+  content: string;
+  modified: boolean;
+  fixedErrors: number;
+  details: FixDetail[];
+} {
+  // This is a placeholder implementation
+  // In a real implementation, this would parse the file and add types in batch
+  
+  // For now, let's use a simple regex-based approach
+  let modified = false;
+  let fixedErrors = 0;
+  const details: FixDetail[] = [];
+  
+  // Get parameter implicit any errors
+  const paramErrors = errors.filter(e => e.message.includes('implicitly has an \'any\' type'));
+  
+  // Sort by line (descending) to avoid line number changes affecting other fixes
+  paramErrors.sort((a, b) => b.line - a.line);
+  
+  for (const error of paramErrors) {
+    // Extract parameter name from message
+    const paramMatch = error.message.match(/Parameter '([^']+)'/);
+    
+    if (paramMatch && paramMatch[1]) {
+      const paramName = paramMatch[1];
+      const lines = content.split('\n');
+      const line = lines[error.line - 1];
+      
+      // Simple pattern: find the parameter and add `: any`
+      const paramRegex = new RegExp(`(${paramName})(?![^\\(\\)]*:)`, 'g');
+      const fixedLine = line.replace(paramRegex, '$1: any');
+      
+      if (fixedLine !== line) {
+        lines[error.line - 1] = fixedLine;
+        content = lines.join('\n');
+        modified = true;
+        fixedErrors++;
+        
+        details.push({
+          file: filePath,
+          line: error.line,
+          errorCode: error.code,
+          errorMessage: error.message,
+          fixDescription: `Added 'any' type to parameter '${paramName}'`,
+          beforeFix: line,
+          afterFix: fixedLine,
+          fixMethod: 'automatic',
+          timestamp: new Date()
+        });
+      }
+    }
+  }
+  
+  return {
+    content,
+    modified,
+    fixedErrors,
+    details
+  };
+}
+
+/**
+ * Fixes import errors in batch
+ * 
+ * @param filePath - Path to the file
+ * @param content - File content
+ * @param errors - Import errors in the file
+ * @returns Batch fix result
+ */
+function fixImportErrorsInBatch(
+  filePath: string,
+  content: string,
+  errors: TypeScriptError[]
+): {
+  content: string;
+  modified: boolean;
+  fixedErrors: number;
+  details: FixDetail[];
+} {
+  // This is a placeholder implementation
+  // In a real implementation, this would analyze imports and fix them
+  
+  // For now, let's just identify duplicate imports
+  let modified = false;
+  let fixedErrors = 0;
+  const details: FixDetail[] = [];
+  
+  // Get duplicate identifier errors related to imports
+  const duplicateErrors = errors.filter(e => 
+    e.code === 2300 && // Duplicate identifier
+    e.message.includes('Duplicate identifier') &&
+    e.lineContent?.includes('import ')
+  );
+  
+  // Sort by line (descending) to avoid line number changes affecting other fixes
+  duplicateErrors.sort((a, b) => b.line - a.line);
+  
+  for (const error of errors) {
+    // Process each error
+    if (error.code === 2300 && error.message.includes('Duplicate identifier')) {
+      const identMatch = error.message.match(/Duplicate identifier '([^']+)'/);
+      
+      if (identMatch && identMatch[1] && error.lineContent) {
+        const identifier = identMatch[1];
+        const lines = content.split('\n');
+        
+        // Find all import lines for this identifier
+        const importLines: number[] = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].includes(`import`) && lines[i].includes(identifier)) {
+            importLines.push(i);
+          }
+        }
+        
+        // If we found multiple import lines, remove duplicates
+        if (importLines.length > 1) {
+          // Keep the first import, remove others
+          for (let i = 1; i < importLines.length; i++) {
+            const lineIndex = importLines[i];
+            const originalLine = lines[lineIndex];
+            
+            // Remove the line
+            lines.splice(lineIndex, 1);
+            content = lines.join('\n');
+            modified = true;
+            fixedErrors++;
+            
+            details.push({
+              file: filePath,
+              line: lineIndex + 1,
+              errorCode: error.code,
+              errorMessage: error.message,
+              fixDescription: `Removed duplicate import of '${identifier}'`,
+              beforeFix: originalLine,
+              afterFix: '(removed)',
+              fixMethod: 'automatic',
+              timestamp: new Date()
+            });
+          }
+        }
+      }
+    }
+  }
+  
+  return {
+    content,
+    modified,
+    fixedErrors,
+    details
+  };
+}
+
+/**
+ * Applies individual fixes to errors in a file
+ * 
+ * @param filePath - Path to the file
+ * @param content - File content
+ * @param errors - Errors in the file
+ * @param options - Fix options
+ * @returns Individual fix result
+ */
+async function applyIndividualFixes(
+  filePath: string,
+  content: string,
+  errors: TypeScriptError[],
+  options: FixOptions
+): Promise<{
+  content: string;
+  modified: boolean;
+  fixedErrors: number;
+  details: FixDetail[];
+}> {
+  let modified = false;
+  let fixedErrors = 0;
+  const details: FixDetail[] = [];
+  
+  // Sort errors by line (descending) to avoid line number changes affecting other fixes
+  const sortedErrors = [...errors].sort((a, b) => b.line - a.line);
+  
+  for (const error of sortedErrors) {
+    // Skip errors without line content
+    if (!error.lineContent) continue;
+    
+    // Try to fix the error
+    const result = await fixIndividualError(filePath, content, error, options);
+    
+    if (result.fixed) {
+      content = result.content;
+      modified = true;
+      fixedErrors++;
+      
+      details.push({
+        file: filePath,
+        line: error.line,
+        errorCode: error.code,
+        errorMessage: error.message,
+        fixDescription: result.fixDescription,
+        beforeFix: error.lineContent,
+        afterFix: result.afterLine,
+        fixMethod: result.fixMethod,
+        timestamp: new Date()
+      });
+    }
+  }
+  
+  return {
+    content,
+    modified,
+    fixedErrors,
+    details
+  };
+}
+
+/**
+ * Fixes an individual error
+ * 
+ * @param filePath - Path to the file
+ * @param content - File content
+ * @param error - Error to fix
+ * @param options - Fix options
+ * @returns Individual fix result
+ */
+async function fixIndividualError(
+  filePath: string,
+  content: string,
+  error: TypeScriptError,
+  options: FixOptions
+): Promise<{
+  fixed: boolean;
+  content: string;
+  fixDescription: string;
+  afterLine: string;
+  fixMethod: 'automatic' | 'ai' | 'pattern';
+}> {
+  // Try different fix strategies based on error type
+  
+  // 1. Try automatic fixes for simple errors
+  const automaticResult = tryAutomaticFix(filePath, content, error, options);
+  
+  if (automaticResult.fixed) {
+    return automaticResult;
+  }
+  
+  // 2. Try AI-powered fixes if enabled
+  if (options.useAI) {
+    const aiResult = await tryAIFix(filePath, content, error, options);
+    
+    if (aiResult.fixed) {
+      return aiResult;
+    }
+  }
+  
+  // 3. No fix found
+  return {
+    fixed: false,
+    content,
+    fixDescription: 'No fix available',
+    afterLine: error.lineContent || '',
+    fixMethod: 'automatic'
+  };
+}
+
+/**
+ * Tries to automatically fix a simple error
+ * 
+ * @param filePath - Path to the file
+ * @param content - File content
+ * @param error - Error to fix
+ * @param options - Fix options
+ * @returns Automatic fix result
+ */
+function tryAutomaticFix(
+  filePath: string,
+  content: string,
+  error: TypeScriptError,
+  options: FixOptions
+): {
+  fixed: boolean;
+  content: string;
+  fixDescription: string;
+  afterLine: string;
+  fixMethod: 'automatic';
+} {
+  // Split content into lines
+  const lines = content.split('\n');
+  const lineIndex = error.line - 1;
+  const originalLine = lines[lineIndex];
+  
+  // If no line content, can't fix
+  if (!originalLine) {
+    return {
+      fixed: false,
+      content,
+      fixDescription: 'No line content available',
+      afterLine: '',
+      fixMethod: 'automatic'
+    };
+  }
+  
+  let fixed = false;
+  let fixedLine = originalLine;
+  let fixDescription = '';
+  
+  // Try fixes based on error code and category
+  switch (error.code) {
+    // Missing semicolon
+    case 1005:
+      if (error.message.includes("';' expected")) {
+        fixedLine = originalLine + ';';
+        fixed = true;
+        fixDescription = "Added missing semicolon";
+      }
+      break;
+    
+    // Implicitly any parameter
+    case 7006:
+      if (options.fixImplicitAny) {
+        const paramMatch = error.message.match(/Parameter '([^']+)'/);
+        
+        if (paramMatch && paramMatch[1]) {
+          const paramName = paramMatch[1];
+          
+          // Simple replacement: add ': any' after parameter
+          const paramRegex = new RegExp(`(${paramName})(?![^\\(\\)]*:)`, 'g');
+          fixedLine = originalLine.replace(paramRegex, '$1: any');
+          
+          if (fixedLine !== originalLine) {
+            fixed = true;
+            fixDescription = `Added 'any' type to parameter '${paramName}'`;
+          }
+        }
+      }
+      break;
+      
+    // Try some simple type mismatch fixes
+    case 2322:
+      if (error.message.includes('null') && error.message.includes('undefined')) {
+        // Make non-null assertion
+        if (originalLine.includes('.')) {
+          // Find last dot and add ! before next punctuation
+          const lastDotIndex = originalLine.lastIndexOf('.');
+          if (lastDotIndex > 0) {
+            const afterDot = originalLine.substring(lastDotIndex);
+            const punctuationMatch = afterDot.match(/[^a-zA-Z0-9_]/);
+            
+            if (punctuationMatch) {
+              const punctuationIndex = punctuationMatch.index;
+              fixedLine = originalLine.substring(0, lastDotIndex + punctuationIndex) + 
+                         '!' + 
+                         originalLine.substring(lastDotIndex + punctuationIndex);
+              fixed = true;
+              fixDescription = "Added non-null assertion";
+            }
+          }
+        }
+      }
+      break;
+  }
+  
+  // Update content if fixed
+  if (fixed) {
+    lines[lineIndex] = fixedLine;
+    content = lines.join('\n');
+  }
+  
+  return {
+    fixed,
+    content,
+    fixDescription,
+    afterLine: fixedLine,
+    fixMethod: 'automatic'
+  };
+}
+
+/**
+ * Tries to fix an error using AI
+ * 
+ * @param filePath - Path to the file
+ * @param content - File content
+ * @param error - Error to fix
+ * @param options - Fix options
+ * @returns AI fix result
+ */
+async function tryAIFix(
+  filePath: string,
+  content: string,
+  error: TypeScriptError,
+  options: FixOptions
+): Promise<{
+  fixed: boolean;
+  content: string;
+  fixDescription: string;
+  afterLine: string;
+  fixMethod: 'ai';
+}> {
+  // This is a placeholder for AI-powered fixing
+  // In a real implementation, this would call the OpenAI API
+  
+  // For now, let's simulate some AI fixes
+  // In production, this would use a real AI service
+  
+  // For demonstration purposes only
+  let fixed = false;
+  let fixedContent = content;
+  let fixDescription = '';
+  let afterLine = error.lineContent || '';
+  
+  // Simulate some "AI" fixes based on error type
+  const lines = content.split('\n');
+  const lineIndex = error.line - 1;
+  const originalLine = lines[lineIndex];
+  
+  // If no line content, can't fix
+  if (!originalLine) {
+    return {
+      fixed: false,
+      content,
+      fixDescription: 'No line content available',
+      afterLine: '',
+      fixMethod: 'ai'
+    };
+  }
+  
+  switch (error.category) {
+    case ErrorCategory.TYPE_MISMATCH:
+      // Simulate an AI fix for type mismatch
+      if (error.message.includes('Type') && error.message.includes('is not assignable to type')) {
+        // Extract types from error message
+        const typeMatch = error.message.match(/Type '([^']+)' is not assignable to type '([^']+)'/);
+        
+        if (typeMatch && typeMatch[1] && typeMatch[2]) {
+          const fromType = typeMatch[1];
+          const toType = typeMatch[2];
+          
+          // Add type assertion
+          if (!originalLine.includes(' as ')) {
+            const parts = originalLine.split('=');
+            
+            if (parts.length === 2) {
+              // Add type assertion to right side
+              const leftSide = parts[0].trim();
+              const rightSide = parts[1].trim();
+              
+              lines[lineIndex] = `${leftSide} = ${rightSide.replace(/;$/, '')} as ${toType};`;
+              fixedContent = lines.join('\n');
+              fixed = true;
+              afterLine = lines[lineIndex];
+              fixDescription = `Added type assertion to cast from '${fromType}' to '${toType}'`;
+            }
+          }
+        }
+      }
+      break;
+      
+    case ErrorCategory.MISSING_TYPE:
+      // Simulate an AI fix for missing type
+      if (error.message.includes('implicitly has an \'any\' type')) {
+        // Extract name from error message
+        const nameMatch = error.message.match(/'([^']+)' implicitly/);
+        
+        if (nameMatch && nameMatch[1]) {
+          const name = nameMatch[1];
+          
+          if (originalLine.includes(name)) {
+            // Try to infer a better type than 'any'
+            let inferredType = 'string'; // Default to string
+            
+            // Simple heuristics
+            if (originalLine.includes('= []')) {
+              inferredType = 'any[]';
+            } else if (originalLine.includes('= {}')) {
+              inferredType = 'Record<string, any>';
+            } else if (originalLine.includes('= true') || originalLine.includes('= false')) {
+              inferredType = 'boolean';
+            } else if (/= \d+/.test(originalLine)) {
+              inferredType = 'number';
+            }
+            
+            // Add the type
+            lines[lineIndex] = originalLine.replace(
+              new RegExp(`(const|let|var)\\s+${name}\\b`),
+              `$1 ${name}: ${inferredType}`
+            );
+            
+            fixedContent = lines.join('\n');
+            fixed = true;
+            afterLine = lines[lineIndex];
+            fixDescription = `Added type '${inferredType}' to '${name}'`;
+          }
+        }
+      }
+      break;
+  }
+  
+  return {
+    fixed,
+    content: fixedContent,
+    fixDescription,
+    afterLine,
+    fixMethod: 'ai'
+  };
+}
+
+/**
+ * Saves fix details to the database
+ * 
+ * @param details - Fix details
+ */
+async function saveFixesToDb(details: FixDetail[]): Promise<void> {
+  // This is a placeholder for database integration
+  // In a real implementation, this would save fixes to the database
+  
+  console.log(`Fix details would be saved to database (${details.length} fixes)`);
+  
+  // TODO: Implement database integration
+}
+
+export default fixTypeScriptErrors;

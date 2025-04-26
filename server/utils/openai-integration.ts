@@ -1,330 +1,334 @@
 /**
  * OpenAI Integration for TypeScript Error Management
  * 
- * This module provides AI-powered analysis and fixing of TypeScript errors
- * using the OpenAI API.
+ * This module provides functions to use OpenAI's API for analyzing and fixing TypeScript errors.
  */
 
 import OpenAI from 'openai';
+import fs from 'fs';
+import path from 'path';
+import { TypeScriptError } from './ts-error-analyzer';
+import { ErrorPattern } from './ts-pattern-finder';
 
-// Initialize OpenAI client 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Initialize OpenAI
+const apiKey = process.env.OPENAI_API_KEY;
+// The newest OpenAI model is "gpt-4o" which was released May 13, 2024. Do not change this unless explicitly requested by user
+const model = 'gpt-4o';
 
-/**
- * Check if OpenAI is configured
- * 
- * @returns Whether the OpenAI API key is set
- */
-export function isOpenAIConfigured(): boolean {
-  return !!process.env.OPENAI_API_KEY;
+// Initialize OpenAI client if API key is available
+let openai: OpenAI | undefined;
+if (apiKey) {
+  openai = new OpenAI({ apiKey });
+}
+
+// Interfaces
+export interface AIAnalysisResult {
+  error: TypeScriptError;
+  rootCause: string;
+  suggestedFix: string;
+  confidence: number;
+  relatedErrors?: string[];
+  explanation: string;
+}
+
+export interface AIFixResult {
+  error: TypeScriptError;
+  fixedCode: string;
+  explanation: string;
+  confidence: number;
+  alternativeFixes?: string[];
+}
+
+export interface AIPatternResult {
+  pattern: ErrorPattern;
+  enhancedDescription: string;
+  enhancedSuggestedFix: string;
+  generalSolution: string;
+  exampleFix: string;
 }
 
 /**
- * Analyze an error using AI
+ * Analyzes a TypeScript error using AI
  * 
- * @param error Error to analyze
- * @param fileContent Content of the file with the error
- * @returns AI analysis
+ * @param error - TypeScript error to analyze
+ * @param fileContent - Content of the file containing the error
+ * @param projectContext - Additional context about the project
+ * @returns AI analysis result
  */
 export async function analyzeErrorWithAI(
-  error: {
-    errorCode: string;
-    errorMessage: string;
-    filePath: string;
-    lineNumber: number;
-    columnNumber: number;
-    errorContext: string;
-    category?: string;
-    severity?: string;
-  },
-  fileContent: string
-): Promise<{
-  rootCause: string;
-  suggestedFix: string;
-  codeSnippet: string;
-  confidence: number;
-  relatedErrors?: string[];
-}> {
+  error: TypeScriptError,
+  fileContent: string,
+  projectContext?: string
+): Promise<AIAnalysisResult | undefined> {
+  if (!openai) {
+    console.warn('OpenAI API key not available. AI analysis skipped.');
+    return undefined;
+  }
+  
   try {
-    if (!isOpenAIConfigured()) {
-      throw new Error('OpenAI API key is not configured');
-    }
+    // Extract context around the error
+    const errorContext = extractErrorContext(fileContent, error.line);
     
-    // Build the prompt for AI
+    // Prepare prompt
     const prompt = `
-You are a TypeScript expert tasked with analyzing and fixing TypeScript errors. 
-Please analyze the following TypeScript error:
+I need help analyzing a TypeScript error. Here are the details:
 
-File: ${error.filePath}
-Line: ${error.lineNumber}, Column: ${error.columnNumber}
-Error Code: ${error.errorCode}
-Error Message: ${error.errorMessage}
-Error Category: ${error.category || 'Unknown'}
-Error Severity: ${error.severity || 'Unknown'}
+Error Code: TS${error.code}
+Message: ${error.message}
+File: ${error.file}
+Line: ${error.line}
+Column: ${error.column}
 
-Context around the error:
+Here's the code context:
 \`\`\`typescript
-${error.errorContext}
+${errorContext}
 \`\`\`
 
-Full file content:
-\`\`\`typescript
-${fileContent}
-\`\`\`
+${projectContext ? `Additional project context:\n${projectContext}\n` : ''}
 
-Analyze this error and provide the following information in JSON format:
-1. rootCause: A detailed explanation of what is causing this error
-2. suggestedFix: A precise description of how to fix this error
-3. codeSnippet: The corrected code that fixes the error
-4. confidence: Your confidence level in this fix (0.0 to 1.0)
-5. relatedErrors: Any other errors that might be related or caused by this one
-
-Focus on TypeScript-specific issues like type compatibility, interface implementations, 
-null/undefined handling, etc. Be very precise about the root cause.
-
-JSON Response:`;
+Please analyze this error and provide the following information in JSON format:
+1. rootCause: What is the root cause of this error?
+2. suggestedFix: How can I fix this error? Provide a specific code suggestion.
+3. confidence: Your confidence in this analysis (0-1).
+4. relatedErrors: Any related errors that might be caused by the same root issue.
+5. explanation: A detailed explanation of why this error occurs and how the fix addresses it.
+`;
 
     // Call OpenAI API
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model,
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
-      temperature: 0.2,
-      max_tokens: 1500
+      temperature: 0.2, // Lower temperature for more deterministic results
     });
 
-    // Parse the response
-    const content = response.choices[0].message.content || '{}';
+    // Parse and validate response
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error('Empty response from OpenAI');
+    }
+
     const result = JSON.parse(content);
     
+    // Return analysis result
     return {
-      rootCause: result.rootCause || 'Unable to determine root cause',
-      suggestedFix: result.suggestedFix || 'No fix suggested',
-      codeSnippet: result.codeSnippet || '',
-      confidence: typeof result.confidence === 'number' ? result.confidence : 0,
-      relatedErrors: Array.isArray(result.relatedErrors) ? result.relatedErrors : []
+      error,
+      rootCause: result.rootCause || 'Unknown',
+      suggestedFix: result.suggestedFix || 'No suggestion available',
+      confidence: result.confidence || 0.5,
+      relatedErrors: result.relatedErrors,
+      explanation: result.explanation || 'No explanation available'
     };
   } catch (error) {
-    console.error('Error analyzing with AI:', error);
-    return {
-      rootCause: 'AI analysis failed',
-      suggestedFix: 'Could not generate a fix',
-      codeSnippet: '',
-      confidence: 0
-    };
+    console.error('Error analyzing with OpenAI:', error);
+    return undefined;
   }
 }
 
 /**
- * Analyze an error pattern using AI
+ * Generates a fix for a TypeScript error using AI
  * 
- * @param pattern Error pattern to analyze
- * @param examples Examples of errors in this pattern
- * @returns AI analysis
+ * @param error - TypeScript error to fix
+ * @param fileContent - Content of the file containing the error
+ * @param projectContext - Additional context about the project
+ * @returns AI fix result
+ */
+export async function generateFixWithAI(
+  error: TypeScriptError,
+  fileContent: string,
+  projectContext?: string
+): Promise<AIFixResult | undefined> {
+  if (!openai) {
+    console.warn('OpenAI API key not available. AI fix generation skipped.');
+    return undefined;
+  }
+  
+  try {
+    // Extract context around the error
+    const errorContext = extractErrorContext(fileContent, error.line, 10);
+    
+    // Prepare prompt
+    const prompt = `
+I need help fixing a TypeScript error. Here are the details:
+
+Error Code: TS${error.code}
+Message: ${error.message}
+Category: ${error.category}
+Severity: ${error.severity}
+File: ${error.file}
+Line: ${error.line}
+Column: ${error.column}
+
+Here's the code context (the error occurs in this snippet, focus on this for the fix):
+\`\`\`typescript
+${errorContext}
+\`\`\`
+
+${projectContext ? `Additional project context:\n${projectContext}\n` : ''}
+
+Please provide the following information in JSON format:
+1. fixedCode: The complete fixed code snippet that replaces the given context.
+2. explanation: A detailed explanation of the fix.
+3. confidence: Your confidence in this fix (0-1).
+4. alternativeFixes: Any alternative approaches to fix this error.
+
+Important guidelines:
+- Keep the fix minimal and focused on addressing this specific error.
+- Preserve the original code's intent and style.
+- Make sure the fixed code is valid TypeScript.
+- The fixedCode should be a direct replacement for the given code context.
+`;
+
+    // Call OpenAI API
+    const response = await openai.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+      temperature: 0.2, // Lower temperature for more deterministic results
+    });
+
+    // Parse and validate response
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error('Empty response from OpenAI');
+    }
+
+    const result = JSON.parse(content);
+    
+    // Return fix result
+    return {
+      error,
+      fixedCode: result.fixedCode || errorContext,
+      explanation: result.explanation || 'No explanation available',
+      confidence: result.confidence || 0.5,
+      alternativeFixes: result.alternativeFixes
+    };
+  } catch (error) {
+    console.error('Error generating fix with OpenAI:', error);
+    return undefined;
+  }
+}
+
+/**
+ * Analyzes an error pattern using AI
+ * 
+ * @param pattern - Error pattern to analyze
+ * @param examples - Example errors in this pattern
+ * @returns AI pattern result
  */
 export async function analyzePatternWithAI(
-  pattern: {
-    name: string;
-    description: string;
-    category: string;
-    severity: string;
-    occurrences: number;
-  },
-  examples: Array<{
-    errorCode: string;
-    errorMessage: string;
-    errorContext?: string;
-  }>
-): Promise<{
-  patternRootCause: string;
-  patternFixStrategy: string;
-  isAutoFixable: boolean;
-  confidence: number;
-}> {
+  pattern: ErrorPattern,
+  examples: TypeScriptError[]
+): Promise<AIPatternResult | undefined> {
+  if (!openai) {
+    console.warn('OpenAI API key not available. AI pattern analysis skipped.');
+    return undefined;
+  }
+  
   try {
-    if (!isOpenAIConfigured()) {
-      throw new Error('OpenAI API key is not configured');
-    }
+    // Prepare examples
+    const exampleText = examples.map(ex => 
+      `Example ${ex.file}:${ex.line}: ${ex.message}\nCode: ${ex.lineContent || 'N/A'}`
+    ).join('\n\n');
     
-    // Build the prompt for AI
+    // Prepare prompt
     const prompt = `
-You are a TypeScript expert tasked with analyzing patterns in TypeScript errors.
-Please analyze the following error pattern:
+I need help analyzing a TypeScript error pattern. Here are the details:
 
 Pattern Name: ${pattern.name}
-Description: ${pattern.description}
 Category: ${pattern.category}
 Severity: ${pattern.severity}
 Occurrences: ${pattern.occurrences}
+Description: ${pattern.description}
+Current Suggested Fix: ${pattern.suggestedFix || 'None'}
+Auto-fixable: ${pattern.autoFixable}
 
-Examples:
-${examples.map((example, index) => `
-Example ${index + 1}:
-Error Code: ${example.errorCode}
-Error Message: ${example.errorMessage}
-${example.errorContext ? `Context:\n\`\`\`typescript\n${example.errorContext}\n\`\`\`` : ''}
-`).join('\n')}
+Examples of this pattern:
+${exampleText}
 
-Analyze this error pattern and provide the following information in JSON format:
-1. patternRootCause: A detailed explanation of the common root cause behind this pattern
-2. patternFixStrategy: A generic strategy for fixing errors of this pattern
-3. isAutoFixable: Whether this pattern could be automatically fixed (boolean)
-4. confidence: Your confidence level in this analysis (0.0 to 1.0)
-
-Focus on identifying common themes across these errors and propose a general
-approach that would work for most or all instances of this pattern.
-
-JSON Response:`;
+Please analyze this error pattern and provide the following information in JSON format:
+1. enhancedDescription: A more detailed description of this error pattern.
+2. enhancedSuggestedFix: An improved suggestion for fixing this error pattern.
+3. generalSolution: A general approach to avoid this type of error in the future.
+4. exampleFix: A concrete example of fixing one of the provided examples.
+`;
 
     // Call OpenAI API
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model,
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
-      temperature: 0.2,
-      max_tokens: 1000
+      temperature: 0.2, // Lower temperature for more deterministic results
     });
 
-    // Parse the response
-    const content = response.choices[0].message.content || '{}';
+    // Parse and validate response
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error('Empty response from OpenAI');
+    }
+
     const result = JSON.parse(content);
     
+    // Return pattern result
     return {
-      patternRootCause: result.patternRootCause || 'Unable to determine pattern root cause',
-      patternFixStrategy: result.patternFixStrategy || 'No fix strategy suggested',
-      isAutoFixable: !!result.isAutoFixable,
-      confidence: typeof result.confidence === 'number' ? result.confidence : 0
+      pattern,
+      enhancedDescription: result.enhancedDescription || pattern.description,
+      enhancedSuggestedFix: result.enhancedSuggestedFix || pattern.suggestedFix || 'No suggestion available',
+      generalSolution: result.generalSolution || 'No general solution available',
+      exampleFix: result.exampleFix || 'No example fix available'
     };
   } catch (error) {
-    console.error('Error analyzing pattern with AI:', error);
-    return {
-      patternRootCause: 'AI analysis failed',
-      patternFixStrategy: 'Could not generate a fix strategy',
-      isAutoFixable: false,
-      confidence: 0
-    };
+    console.error('Error analyzing pattern with OpenAI:', error);
+    return undefined;
   }
 }
 
 /**
- * Generate a fix for an error using AI
+ * Extracts context around an error
  * 
- * @param error Error to fix
- * @param fileContent Content of the file with the error
- * @param pattern Optional pattern information for this error
- * @returns Generated fix
+ * @param fileContent - Content of the file
+ * @param line - Line number of the error
+ * @param contextLines - Number of context lines to include around the error
+ * @returns Code context around the error
  */
-export async function generateAIFix(
-  error: {
-    errorCode: string;
-    errorMessage: string;
-    filePath: string;
-    lineNumber: number;
-    columnNumber: number;
-    errorContext: string;
-    category?: string;
-    severity?: string;
-  },
+function extractErrorContext(
   fileContent: string,
-  pattern?: {
-    name: string;
-    description: string;
-    fixStrategy?: string;
-  }
-): Promise<{
-  fixedCode: string;
-  changes: Array<{
-    startLine: number;
-    endLine: number;
-    originalCode: string;
-    newCode: string;
-  }>;
-  explanation: string;
-  confidence: number;
-}> {
-  try {
-    if (!isOpenAIConfigured()) {
-      throw new Error('OpenAI API key is not configured');
-    }
-    
-    // Build the prompt for AI
-    const prompt = `
-You are a TypeScript expert tasked with fixing TypeScript errors in code.
-Please generate a fix for the following TypeScript error:
+  line: number,
+  contextLines: number = 5
+): string {
+  const lines = fileContent.split('\n');
+  const start = Math.max(0, line - contextLines - 1);
+  const end = Math.min(lines.length, line + contextLines);
+  
+  return lines.slice(start, end).map((text, i) => {
+    const lineNumber = start + i + 1;
+    const marker = lineNumber === line ? '> ' : '  ';
+    return `${marker}${lineNumber}: ${text}`;
+  }).join('\n');
+}
 
-File: ${error.filePath}
-Line: ${error.lineNumber}, Column: ${error.columnNumber}
-Error Code: ${error.errorCode}
-Error Message: ${error.errorMessage}
-Error Category: ${error.category || 'Unknown'}
-Error Severity: ${error.severity || 'Unknown'}
-${pattern ? `
-This error matches pattern: ${pattern.name}
-Pattern description: ${pattern.description}
-${pattern.fixStrategy ? `Pattern fix strategy: ${pattern.fixStrategy}` : ''}
-` : ''}
+/**
+ * Checks if OpenAI integration is available
+ * 
+ * @returns Whether OpenAI integration is available
+ */
+export function isOpenAIAvailable(): boolean {
+  return !!openai;
+}
 
-Context around the error:
-\`\`\`typescript
-${error.errorContext}
-\`\`\`
-
-Full file content:
-\`\`\`typescript
-${fileContent}
-\`\`\`
-
-Generate a precise fix for this error. Your changes should be minimal, focused only on fixing the error.
-Do not refactor unrelated code. Follow TypeScript best practices and maintain the existing coding style.
-
-Provide your response in JSON format with the following fields:
-1. fixedCode: The complete fixed code for the entire file
-2. changes: An array of changes made, each with:
-   - startLine: Line number where the change starts (1-indexed)
-   - endLine: Line number where the change ends (1-indexed)
-   - originalCode: The original code snippet that was changed
-   - newCode: The new code that replaces the original
-3. explanation: A clear explanation of the fix and why it resolves the error
-4. confidence: Your confidence level in this fix (0.0 to 1.0)
-
-JSON Response:`;
-
-    // Call OpenAI API
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.2,
-      max_tokens: 2500
-    });
-
-    // Parse the response
-    const content = response.choices[0].message.content || '{}';
-    const result = JSON.parse(content);
-    
-    return {
-      fixedCode: result.fixedCode || fileContent,
-      changes: Array.isArray(result.changes) ? result.changes : [],
-      explanation: result.explanation || 'No explanation provided',
-      confidence: typeof result.confidence === 'number' ? result.confidence : 0
-    };
-  } catch (error) {
-    console.error('Error generating fix with AI:', error);
-    return {
-      fixedCode: fileContent,
-      changes: [],
-      explanation: 'AI fix generation failed',
-      confidence: 0
-    };
-  }
+/**
+ * Returns the current OpenAI model being used
+ * 
+ * @returns The OpenAI model name
+ */
+export function getOpenAIModel(): string {
+  return model;
 }
 
 export default {
-  isOpenAIConfigured,
   analyzeErrorWithAI,
+  generateFixWithAI,
   analyzePatternWithAI,
-  generateAIFix
+  isOpenAIAvailable,
+  getOpenAIModel
 };

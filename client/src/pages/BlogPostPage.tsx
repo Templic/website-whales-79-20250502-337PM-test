@@ -1,3 +1,4 @@
+import React from 'react';
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { Post, Comment, insertCommentSchema } from "@shared/schema";
@@ -51,9 +52,8 @@ export default function BlogPostPage() {
     resolver: zodResolver(insertCommentSchema),
     defaultValues: {
       content: "",
-      authorName: "",
-      authorEmail: "",
       postId,
+      authorId: user?.id || null,
       approved: false
     }
   });
@@ -198,28 +198,15 @@ export default function BlogPostPage() {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(data => commentMutation.mutate(data))} className="space-y-6 mb-12">
-            <div>
-              <label htmlFor="authorName" className="block text-sm font-medium mb-2">Name</label>
-              <Input
-                id="authorName"
-                {...form.register("authorName")}
-                className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
-                placeholder="Your name"
-                aria-label="Your name"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="authorEmail" className="block text-sm font-medium mb-2">Email</label>
-              <Input
-                id="authorEmail"
-                {...form.register("authorEmail")}
-                type="email"
-                className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
-                placeholder="your@email.com"
-                aria-label="Your email address"
-              />
-            </div>
+            {!user && (
+              <div className="text-center mb-4 p-2 bg-[rgba(10,50,92,0.3)] rounded">
+                <p className="text-yellow-300 text-sm">You're commenting as a guest. Sign in for better comment management.</p>
+              </div>
+            )}
+            
+            {/* Hidden inputs for user ID and post ID */}
+            <input type="hidden" {...form.register("authorId")} value={user?.id || ""} />
+            <input type="hidden" {...form.register("postId")} value={postId} />
 
             <div>
               <label htmlFor="content" className="block text-sm font-medium mb-2">Comment</label>
@@ -258,7 +245,11 @@ export default function BlogPostPage() {
             comments.map(comment => (
               <div key={comment.id} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="font-medium">{comment.authorName}</span>
+                  <span className="font-medium">
+                    {comment.author ? 
+                      `${comment.author.username || 'User'}` : 
+                      'Anonymous User'}
+                  </span>
                   <time dateTime={comment.createdAt ? comment.createdAt.toString() : ''}>
                     {formatDisplayDate(comment.createdAt ? comment.createdAt.toString() : null)}
                   </time>

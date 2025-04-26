@@ -1,649 +1,313 @@
-/**
- * @file typescript-error-routes.ts
- * @description API routes for TypeScript error management
- * 
- * This module provides routes for scanning, analyzing, and fixing TypeScript errors.
- */
+import express from 'express';
+import { body, param, query } from 'express-validator';
+import { validate } from '../middlewares/validationMiddleware';
+import { tsErrorStorage } from '../tsErrorStorage';
+import { ErrorCategory, ErrorSeverity, ErrorStatus, FixMethod } from '../../shared/schema';
 
-import { Router } from 'express';
-import * as tsErrorFinder from '../utils/ts-error-finder';
-import * as tsTypeAnalyzer from '../utils/ts-type-analyzer';
-import * as tsTypeVisualizer from '../utils/ts-type-visualizer';
-import * as tsBatchFixer from '../utils/ts-batch-fixer';
-import * as openAI from '../utils/openai-integration';
-import * as tsErrorStorage from '../tsErrorStorage';
-import * as fs from 'fs';
-import * as path from 'path';
+const router = express.Router();
 
-const router = Router();
+// Validation middleware 
+const createErrorValidation = [
+  body('message').notEmpty().withMessage('Error message is required'),
+  body('filePath').notEmpty().withMessage('File path is required'),
+  body('line').isInt({ min: 1 }).withMessage('Line must be a positive integer'),
+  body('column').isInt({ min: 0 }).withMessage('Column must be a non-negative integer'),
+  body('severity')
+    .isIn(Object.values(ErrorSeverity))
+    .withMessage(`Severity must be one of: ${Object.values(ErrorSeverity).join(', ')}`),
+  body('category')
+    .isIn(Object.values(ErrorCategory))
+    .withMessage(`Category must be one of: ${Object.values(ErrorCategory).join(', ')}`),
+  body('code').optional().isString(),
+  body('stackTrace').optional().isString(),
+  body('rawErrorText').optional().isString(),
+];
 
-/**
- * Scan project for TypeScript errors
- * 
- * @route POST /api/typescript-errors/scan
- */
-router.post('/scan', async (req, res) => {
+const createPatternValidation = [
+  body('regex').notEmpty().withMessage('Regex pattern is required'),
+  body('description').notEmpty().withMessage('Description is required'),
+  body('category')
+    .isIn(Object.values(ErrorCategory))
+    .withMessage(`Category must be one of: ${Object.values(ErrorCategory).join(', ')}`),
+  body('priority').isInt({ min: 1, max: 10 }).withMessage('Priority must be between 1 and 10'),
+  body('hasAutoFix').isBoolean(),
+  body('autoFixStrategy').optional().isString(),
+];
+
+const createFixValidation = [
+  body('patternId').isInt({ min: 1 }).withMessage('Pattern ID must be a positive integer'),
+  body('replacementTemplate').notEmpty().withMessage('Replacement template is required'),
+  body('description').notEmpty().withMessage('Description is required'),
+  body('method')
+    .isIn(Object.values(FixMethod))
+    .withMessage(`Method must be one of: ${Object.values(FixMethod).join(', ')}`),
+];
+
+// Error routes
+router.post('/errors', createErrorValidation, validate, async (req, res) => {
   try {
-    const { projectRoot, recursive, severity, userId } = req.body;
-    
-    // Validate required parameters
-    if (!projectRoot) {
-      return res.status(400).json({
-        success: false,
-        message: 'Project root is required'
-      });
-    }
-    
-    // Scan for errors
-    const result = await tsErrorFinder.findTypeScriptErrors(projectRoot, {
-      recursive: recursive !== false,
-      severity: severity || 'high'
+    const error = await tsErrorStorage.createTypescriptError({
+      ...req.body,
+      status: ErrorStatus.PENDING,
+      discoveredAt: new Date(),
+      updatedAt: new Date(),
     });
-    
-    // Create project analysis record
-    const analysisId = await tsErrorFinder.createProjectAnalysis(result, userId ? Number(userId) : undefined);
-    
-    return res.json({
-      success: true,
-      errorCount: result.errorCount,
-      warningCount: result.warningCount,
-      fileCount: result.fileCount,
-      processingTimeMs: result.processingTimeMs,
-      analysisId,
-      addedErrors: result.addedErrors
-    });
-  } catch (error) {
-    console.error('Error scanning for TypeScript errors:', error);
-    return res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
-    });
+    res.status(201).json(error);
+  } catch (err) {
+    console.error('Error creating TypeScript error:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-/**
- * Scan a specific file for TypeScript errors
- * 
- * @route POST /api/typescript-errors/scan-file
- */
-router.post('/scan-file', async (req, res) => {
+router.get('/errors', async (req, res) => {
   try {
-    const { filePath, severity } = req.body;
+    const filters = {
+      status: req.query.status as string | undefined,
+      severity: req.query.severity as string | undefined,
+      category: req.query.category as string | undefined,
+      filePath: req.query.filePath as string | undefined,
+      fromDate: req.query.fromDate ? new Date(req.query.fromDate as string) : undefined,
+      toDate: req.query.toDate ? new Date(req.query.toDate as string) : undefined,
+    };
     
-    // Validate required parameters
-    if (!filePath) {
-      return res.status(400).json({
-        success: false,
-        message: 'File path is required'
-      });
-    }
-    
-    // Scan file for errors
-    const result = await tsErrorFinder.findErrorsInFile(filePath, {
-      severity: severity || 'high'
-    });
-    
-    return res.json({
-      success: true,
-      errorCount: result.errorCount,
-      warningCount: result.warningCount,
-      processingTimeMs: result.processingTimeMs,
-      addedErrors: result.addedErrors
-    });
-  } catch (error) {
-    console.error('Error scanning file for TypeScript errors:', error);
-    return res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
-    });
+    const errors = await tsErrorStorage.getAllTypescriptErrors(filters);
+    res.json(errors);
+  } catch (err) {
+    console.error('Error fetching TypeScript errors:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-/**
- * Get project compilation status
- * 
- * @route POST /api/typescript-errors/status
- */
-router.post('/status', async (req, res) => {
+router.get('/errors/stats', async (req, res) => {
   try {
-    const { projectRoot } = req.body;
+    const fromDate = req.query.fromDate ? new Date(req.query.fromDate as string) : undefined;
+    const toDate = req.query.toDate ? new Date(req.query.toDate as string) : undefined;
     
-    // Validate required parameters
-    if (!projectRoot) {
-      return res.status(400).json({
-        success: false,
-        message: 'Project root is required'
-      });
-    }
-    
-    // Get compilation status
-    const status = await tsErrorFinder.getProjectCompilationStatus({
-      projectRoot
-    });
-    
-    return res.json({
-      ...status,
-      message: status.success 
-        ? 'Project compiles successfully' 
-        : `Project has ${status.errorCount} errors and ${status.warningCount} warnings`
-    });
-  } catch (error) {
-    console.error('Error checking project compilation status:', error);
-    return res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
-    });
+    const stats = await tsErrorStorage.getTypescriptErrorStats(fromDate, toDate);
+    res.json(stats);
+  } catch (err) {
+    console.error('Error fetching TypeScript error stats:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-/**
- * Analyze TypeScript type hierarchy
- * 
- * @route POST /api/typescript-errors/analyze-types
- */
-router.post('/analyze-types', async (req, res) => {
+router.get('/errors/:id', param('id').isInt({ min: 1 }), validate, async (req, res) => {
   try {
-    const { projectRoot, outputDir } = req.body;
-    
-    // Validate required parameters
-    if (!projectRoot) {
-      return res.status(400).json({
-        success: false,
-        message: 'Project root is required'
-      });
-    }
-    
-    // Analyze type hierarchy
-    const hierarchy = await tsTypeAnalyzer.analyzeTypeHierarchy(projectRoot);
-    
-    // Generate visualizations if requested
-    if (outputDir) {
-      const fullPath = path.isAbsolute(outputDir) 
-        ? outputDir 
-        : path.join(projectRoot, outputDir);
-      
-      // Create output directory if it doesn't exist
-      if (!fs.existsSync(fullPath)) {
-        fs.mkdirSync(fullPath, { recursive: true });
-      }
-      
-      // Generate visualization report
-      tsTypeVisualizer.createTypeVisualizationReport(hierarchy, fullPath);
-      
-      // Generate JSON data
-      fs.writeFileSync(
-        path.join(fullPath, 'type-hierarchy.json'),
-        JSON.stringify(hierarchy, null, 2)
-      );
-    }
-    
-    // Return summary (without full type details to keep response size manageable)
-    return res.json({
-      success: true,
-      summary: {
-        typeCount: hierarchy.typeCount,
-        interfaceCount: hierarchy.interfaceCount,
-        enumCount: hierarchy.enumCount,
-        typeAliasCount: hierarchy.typeAliasCount,
-        genericTypeCount: hierarchy.genericTypeCount,
-        circularDependencies: hierarchy.circularDependencies,
-        orphanedTypes: hierarchy.orphanedTypes.length,
-        missingTypes: hierarchy.missingTypes,
-        largestTypes: hierarchy.largestTypes
-      },
-      visualizationPath: outputDir ? path.join(outputDir, 'index.html') : undefined
-    });
-  } catch (error) {
-    console.error('Error analyzing TypeScript type hierarchy:', error);
-    return res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
-    });
-  }
-});
-
-/**
- * Generate type coverage report
- * 
- * @route POST /api/typescript-errors/type-coverage
- */
-router.post('/type-coverage', async (req, res) => {
-  try {
-    const { projectRoot } = req.body;
-    
-    // Validate required parameters
-    if (!projectRoot) {
-      return res.status(400).json({
-        success: false,
-        message: 'Project root is required'
-      });
-    }
-    
-    // Generate type coverage report
-    const coverage = await tsTypeAnalyzer.generateTypeCoverageReport(projectRoot);
-    
-    // Identify hotspots
-    const hotspots = tsTypeAnalyzer.identifyTypeHotspots(coverage);
-    
-    // Return summary (without full file details to keep response size manageable)
-    return res.json({
-      success: true,
-      summary: {
-        totalNodes: coverage.totalNodes,
-        anyTypeCount: coverage.anyTypeCount,
-        implicitAnyCount: coverage.implicitAnyCount,
-        unknownTypeCount: coverage.unknownTypeCount,
-        explicitTypeCount: coverage.explicitTypeCount,
-        coverage: coverage.coverage,
-        missingTypeDeclarations: coverage.missingTypeDeclarations.length,
-        hotspots
-      }
-    });
-  } catch (error) {
-    console.error('Error generating TypeScript type coverage report:', error);
-    return res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
-    });
-  }
-});
-
-/**
- * Analyze a TypeScript error using OpenAI
- * 
- * @route POST /api/typescript-errors/:id/analyze
- */
-router.post('/:id/analyze', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Get the error
-    const error = await tsErrorStorage.getTypescriptError(Number(id));
+    const error = await tsErrorStorage.getTypescriptErrorById(parseInt(req.params.id));
     if (!error) {
-      return res.status(404).json({
-        success: false,
-        message: `Error with ID ${id} not found`
-      });
+      return res.status(404).json({ message: 'Error not found' });
     }
-    
-    // Analyze the error
-    const analysis = await openAI.analyzeError(error);
-    
-    // Update the error with the analysis results
-    await tsErrorStorage.updateTypescriptError(Number(id), {
-      category: analysis.category,
-      severity: analysis.severity,
-      status: 'analyzed',
-      metadata: {
-        ...error.metadata,
-        rootCause: analysis.rootCause,
-        explanation: analysis.explanation,
-        cascading: analysis.cascading,
-        analyzedAt: new Date().toISOString()
-      }
-    });
-    
-    return res.json({
-      success: true,
-      analysis
-    });
-  } catch (error) {
-    console.error('Error analyzing TypeScript error:', error);
-    return res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
-    });
+    res.json(error);
+  } catch (err) {
+    console.error('Error fetching TypeScript error:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-/**
- * Generate a fix for a TypeScript error using OpenAI
- * 
- * @route POST /api/typescript-errors/:id/fix
- */
-router.post('/:id/fix', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Get the error
-    const error = await tsErrorStorage.getTypescriptError(Number(id));
-    if (!error) {
-      return res.status(404).json({
-        success: false,
-        message: `Error with ID ${id} not found`
-      });
-    }
-    
-    // Generate a fix
-    const fixSuggestion = await openAI.generateErrorFix(error);
-    
-    // Add the fix to the database
-    const fix = await tsErrorStorage.addErrorFix({
-      errorId: Number(id),
-      fixTitle: `AI-generated fix for ${error.errorCode}`,
-      fixDescription: fixSuggestion.fixExplanation,
-      fixCode: fixSuggestion.fixCode,
-      originalCode: fixSuggestion.originalCode,
-      fixScope: fixSuggestion.fixScope,
-      fixType: 'semi-automatic',
-      fixPriority: 5,
-      successRate: fixSuggestion.confidence * 100
-    });
-    
-    return res.json({
-      success: true,
-      fix,
-      suggestion: fixSuggestion
-    });
-  } catch (error) {
-    console.error('Error generating fix for TypeScript error:', error);
-    return res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
-    });
-  }
-});
-
-/**
- * Apply a fix to a TypeScript error
- * 
- * @route POST /api/typescript-errors/:id/apply-fix/:fixId
- */
-router.post('/:id/apply-fix/:fixId', async (req, res) => {
-  try {
-    const { id, fixId } = req.params;
-    
-    // Get the error
-    const error = await tsErrorStorage.getTypescriptError(Number(id));
-    if (!error) {
-      return res.status(404).json({
-        success: false,
-        message: `Error with ID ${id} not found`
-      });
-    }
-    
-    // Get the fix
-    const fix = await tsErrorStorage.getErrorFix(Number(fixId));
-    if (!fix) {
-      return res.status(404).json({
-        success: false,
-        message: `Fix with ID ${fixId} not found`
-      });
-    }
-    
-    // Make sure the fix is for this error
-    if (fix.errorId !== Number(id)) {
-      return res.status(400).json({
-        success: false,
-        message: `Fix ${fixId} is not associated with error ${id}`
-      });
-    }
-    
-    // Apply the fix
+router.patch('/errors/:id', 
+  [
+    param('id').isInt({ min: 1 }),
+    body('status').optional().isIn(Object.values(ErrorStatus)),
+    body('severity').optional().isIn(Object.values(ErrorSeverity)),
+    body('category').optional().isIn(Object.values(ErrorCategory)),
+    body('fixId').optional().isInt({ min: 1 }),
+  ], 
+  validate, 
+  async (req, res) => {
     try {
-      // Read the file
-      const fileContent = fs.readFileSync(error.filePath, 'utf-8');
-      let fixedContent: string;
-      
-      // Apply the fix based on fix scope
-      switch (fix.fixScope) {
-        case 'line':
-          const lines = fileContent.split('\n');
-          lines[error.lineNumber - 1] = fix.fixCode;
-          fixedContent = lines.join('\n');
-          break;
-          
-        case 'token':
-          const tokenLines = fileContent.split('\n');
-          const line = tokenLines[error.lineNumber - 1];
-          const tokenStart = error.columnNumber - 1;
-          let tokenEnd = tokenStart;
-          
-          // Find token boundaries
-          while (tokenEnd < line.length && 
-                 !/[\s\(\)\[\]\{\}\:\;\,\.\<\>\=\+\-\*\/\&\|\^\!\~\?\@\#\%]/.test(line[tokenEnd])) {
-            tokenEnd++;
-          }
-          
-          const newLine = line.substring(0, tokenStart) + fix.fixCode + line.substring(tokenEnd);
-          tokenLines[error.lineNumber - 1] = newLine;
-          fixedContent = tokenLines.join('\n');
-          break;
-          
-        case 'custom':
-          if (fix.originalCode && fileContent.includes(fix.originalCode)) {
-            fixedContent = fileContent.replace(fix.originalCode, fix.fixCode);
-          } else {
-            return res.status(400).json({
-              success: false,
-              message: 'Cannot apply custom fix: originalCode not found in file'
-            });
-          }
-          break;
-          
-        default:
-          return res.status(400).json({
-            success: false,
-            message: `Unsupported fix scope: ${fix.fixScope}`
-          });
-      }
-      
-      // Write the fixed content back to the file
-      fs.writeFileSync(error.filePath, fixedContent);
-      
-      // Add fix history entry
-      await tsErrorStorage.addErrorFixHistory({
-        errorId: Number(id),
-        fixId: Number(fixId),
-        originalCode: fileContent,
-        fixedCode: fixedContent,
-        fixedAt: new Date(),
-        fixMethod: 'assisted',
-        fixResult: 'success'
+      const error = await tsErrorStorage.updateTypescriptError(parseInt(req.params.id), {
+        ...req.body,
+        updatedAt: new Date(),
+        ...(req.body.status === 'fixed' ? { fixedAt: new Date() } : {}),
       });
-      
-      // Update error status
-      await tsErrorStorage.updateTypescriptError(Number(id), {
-        status: 'fixed',
-        fixId: Number(fixId),
-        resolvedAt: new Date()
-      });
-      
-      return res.json({
-        success: true,
-        message: `Fix applied to ${error.filePath}`
-      });
+      res.json(error);
     } catch (err) {
-      console.error('Error applying fix:', err);
-      return res.status(500).json({
-        success: false,
-        message: err instanceof Error ? err.message : String(err)
-      });
+      console.error('Error updating TypeScript error:', err);
+      res.status(500).json({ message: 'Internal server error' });
     }
-  } catch (error) {
-    console.error('Error applying fix:', error);
-    return res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
-    });
   }
-});
+);
 
-/**
- * Apply batch fixes to multiple errors
- * 
- * @route POST /api/typescript-errors/batch-fix
- */
-router.post('/batch-fix', async (req, res) => {
+router.post('/errors/:id/fix', 
+  [
+    param('id').isInt({ min: 1 }),
+    body('fixId').isInt({ min: 1 }),
+    body('userId').isInt({ min: 1 }),
+  ], 
+  validate, 
+  async (req, res) => {
+    try {
+      const error = await tsErrorStorage.markErrorAsFixed(
+        parseInt(req.params.id),
+        parseInt(req.body.fixId),
+        parseInt(req.body.userId)
+      );
+      res.json(error);
+    } catch (err) {
+      console.error('Error marking TypeScript error as fixed:', err);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+);
+
+// Pattern routes
+router.post('/patterns', createPatternValidation, validate, async (req, res) => {
   try {
-    const { errorIds, options } = req.body;
-    
-    // Validate required parameters
-    if (!errorIds || !Array.isArray(errorIds) || errorIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Error IDs are required'
-      });
-    }
-    
-    // Create a fix transaction for rollback capability
-    const transaction = await tsBatchFixer.createFixTransaction(errorIds);
-    
-    // Apply batch fixes
-    const result = await tsBatchFixer.applyBatchFixes(errorIds, options);
-    
-    return res.json({
-      success: result.success,
-      transactionId: transaction.id,
-      fixedErrors: result.fixedErrors,
-      failedErrors: result.failedErrors,
-      errorMessages: result.errorMessages
+    const pattern = await tsErrorStorage.createErrorPattern({
+      ...req.body,
+      detectionCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
-  } catch (error) {
-    console.error('Error applying batch fixes:', error);
-    return res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
-    });
+    res.status(201).json(pattern);
+  } catch (err) {
+    console.error('Error creating error pattern:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-/**
- * Roll back a batch fix transaction
- * 
- * @route POST /api/typescript-errors/rollback-transaction
- */
-router.post('/rollback-transaction', async (req, res) => {
+router.get('/patterns', async (req, res) => {
   try {
-    const { transactionId } = req.body;
-    
-    // Validate required parameters
-    if (!transactionId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Transaction ID is required'
-      });
-    }
-    
-    // Roll back the transaction
-    const result = await tsBatchFixer.rollbackFixTransaction(transactionId);
-    
-    return res.json({
-      success: result.success,
-      restoredFiles: result.restoredFiles,
-      errorMessage: result.errorMessage
-    });
-  } catch (error) {
-    console.error('Error rolling back transaction:', error);
-    return res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
-    });
+    const patterns = await tsErrorStorage.getAllErrorPatterns();
+    res.json(patterns);
+  } catch (err) {
+    console.error('Error fetching error patterns:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-/**
- * Generate missing type definitions
- * 
- * @route POST /api/typescript-errors/generate-missing-types
- */
-router.post('/generate-missing-types', async (req, res) => {
+router.get('/patterns/category/:category', param('category').isString(), validate, async (req, res) => {
   try {
-    const { projectRoot, outputPath } = req.body;
-    
-    // Validate required parameters
-    if (!projectRoot) {
-      return res.status(400).json({
-        success: false,
-        message: 'Project root is required'
-      });
-    }
-    
-    // Analyze type hierarchy
-    const hierarchy = await tsTypeAnalyzer.analyzeTypeHierarchy(projectRoot);
-    
-    // Get missing types
-    const missingTypes = hierarchy.missingTypes;
-    
-    if (missingTypes.length === 0) {
-      return res.json({
-        success: true,
-        message: 'No missing types found',
-        generatedTypes: []
-      });
-    }
-    
-    // Generate definitions for missing types
-    const generatedTypes: Record<string, string> = {};
-    
-    for (const typeName of missingTypes.slice(0, 10)) { // Limit to 10 types to avoid excessive API calls
-      try {
-        // Find usages of the type in the codebase
-        const usages: string[] = [];
-        
-        // Get type coverage report to find missing type usages
-        const coverage = await tsTypeAnalyzer.generateTypeCoverageReport(projectRoot);
-        
-        // Find declarations with this type
-        const relatedDeclarations = coverage.missingTypeDeclarations
-          .filter(decl => decl.name.includes(typeName))
-          .map(decl => `${decl.filePath}:${decl.line}:${decl.column} - ${decl.name}`);
-        
-        usages.push(...relatedDeclarations);
-        
-        // Generate type definition
-        const typeDefinition = await openAI.generateMissingType(typeName, usages);
-        generatedTypes[typeName] = typeDefinition;
-      } catch (err) {
-        console.error(`Error generating type for ${typeName}:`, err);
-        generatedTypes[typeName] = `// Error generating type: ${err instanceof Error ? err.message : String(err)}\n` + 
-                                  `export type ${typeName} = any; // Generated as a fallback`;
-      }
-    }
-    
-    // Write generated types to a file if outputPath is provided
-    if (outputPath) {
-      const fullPath = path.isAbsolute(outputPath) 
-        ? outputPath 
-        : path.join(projectRoot, outputPath);
-      
-      // Create directory if it doesn't exist
-      const outputDir = path.dirname(fullPath);
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-      }
-      
-      // Generate the type definitions file
-      const typeDefContent = `/**
- * Generated type definitions
- * 
- * This file contains auto-generated type definitions for types
- * that were referenced but not defined in the codebase.
- * 
- * Generated on: ${new Date().toISOString()}
- */
-
-${Object.entries(generatedTypes)
-  .map(([typeName, definition]) => definition)
-  .join('\n\n')}
-`;
-      
-      fs.writeFileSync(fullPath, typeDefContent);
-    }
-    
-    return res.json({
-      success: true,
-      message: `Generated ${Object.keys(generatedTypes).length} of ${missingTypes.length} missing types`,
-      generatedTypes,
-      outputPath: outputPath || undefined
-    });
-  } catch (error) {
-    console.error('Error generating missing types:', error);
-    return res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
-    });
+    const patterns = await tsErrorStorage.getErrorPatternsByCategory(req.params.category);
+    res.json(patterns);
+  } catch (err) {
+    console.error('Error fetching error patterns by category:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+router.get('/patterns/autofixable', async (req, res) => {
+  try {
+    const patterns = await tsErrorStorage.getAutoFixablePatterns();
+    res.json(patterns);
+  } catch (err) {
+    console.error('Error fetching auto-fixable patterns:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/patterns/:id', param('id').isInt({ min: 1 }), validate, async (req, res) => {
+  try {
+    const pattern = await tsErrorStorage.getErrorPatternById(parseInt(req.params.id));
+    if (!pattern) {
+      return res.status(404).json({ message: 'Pattern not found' });
+    }
+    res.json(pattern);
+  } catch (err) {
+    console.error('Error fetching error pattern:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.patch('/patterns/:id', 
+  [
+    param('id').isInt({ min: 1 }),
+    body('regex').optional().isString(),
+    body('description').optional().isString(),
+    body('category').optional().isIn(Object.values(ErrorCategory)),
+    body('priority').optional().isInt({ min: 1, max: 10 }),
+    body('hasAutoFix').optional().isBoolean(),
+    body('autoFixStrategy').optional().isString(),
+  ], 
+  validate, 
+  async (req, res) => {
+    try {
+      const pattern = await tsErrorStorage.updateErrorPattern(parseInt(req.params.id), {
+        ...req.body,
+        updatedAt: new Date(),
+      });
+      res.json(pattern);
+    } catch (err) {
+      console.error('Error updating error pattern:', err);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+);
+
+// Fix routes
+router.post('/fixes', createFixValidation, validate, async (req, res) => {
+  try {
+    const fix = await tsErrorStorage.createErrorFix({
+      ...req.body,
+      successRate: 0,
+      usageCount: 0,
+      successCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    res.status(201).json(fix);
+  } catch (err) {
+    console.error('Error creating fix:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/fixes', async (req, res) => {
+  try {
+    const fixes = await tsErrorStorage.getAllErrorFixes();
+    res.json(fixes);
+  } catch (err) {
+    console.error('Error fetching fixes:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/fixes/pattern/:patternId', param('patternId').isInt({ min: 1 }), validate, async (req, res) => {
+  try {
+    const fixes = await tsErrorStorage.getFixesByPatternId(parseInt(req.params.patternId));
+    res.json(fixes);
+  } catch (err) {
+    console.error('Error fetching fixes by pattern:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/fixes/:id', param('id').isInt({ min: 1 }), validate, async (req, res) => {
+  try {
+    const fix = await tsErrorStorage.getErrorFixById(parseInt(req.params.id));
+    if (!fix) {
+      return res.status(404).json({ message: 'Fix not found' });
+    }
+    res.json(fix);
+  } catch (err) {
+    console.error('Error fetching fix:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.patch('/fixes/:id', 
+  [
+    param('id').isInt({ min: 1 }),
+    body('replacementTemplate').optional().isString(),
+    body('description').optional().isString(),
+    body('method').optional().isIn(Object.values(FixMethod)),
+    body('successRate').optional().isNumeric(),
+    body('usageCount').optional().isInt({ min: 0 }),
+    body('successCount').optional().isInt({ min: 0 }),
+  ], 
+  validate, 
+  async (req, res) => {
+    try {
+      const fix = await tsErrorStorage.updateErrorFix(parseInt(req.params.id), {
+        ...req.body,
+        updatedAt: new Date(),
+      });
+      res.json(fix);
+    } catch (err) {
+      console.error('Error updating fix:', err);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+);
 
 export default router;

@@ -1,8 +1,21 @@
 import express from 'express';
 import { eq, desc } from 'drizzle-orm';
 import { db } from '../db';
-import { workflowNotifications } from '../../shared/schema';
+import { pgTable, serial, text, timestamp, integer, boolean, varchar } from 'drizzle-orm/pg-core';
 import { isAdmin, isAuthenticated } from '../middleware/auth';
+
+// Define workflowNotifications locally since it's not in shared/schema.ts
+const workflowNotifications = pgTable('workflow_notifications', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  type: varchar('type', { length: 50 }).notNull(),
+  contentId: integer('content_id'),
+  contentTitle: text('content_title'),
+  userId: integer('user_id').notNull(),
+  isRead: boolean('is_read').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
 
 const router = express.Router();
 
@@ -15,11 +28,11 @@ router.get('/workflow', isAuthenticated, async (req, res) => {
     }
     
     // Get notifications for the current user
-    const notifications = await db.query.workflowNotifications.findMany({
-      where: eq(workflowNotifications.userId, userId),
-      orderBy: [desc(workflowNotifications.createdAt)],
-      limit: 20,
-    });
+    const notifications = await db.select()
+      .from(workflowNotifications)
+      .where(eq(workflowNotifications.userId, userId))
+      .orderBy(desc(workflowNotifications.createdAt))
+      .limit(20);
     
     // @ts-ignore - Response type issue
   return res.json(notifications);
@@ -40,9 +53,10 @@ router.post('/workflow/:id/read', isAuthenticated, async (req, res) => {
     }
     
     // Find notification
-    const notification = await db.query.workflowNotifications.findFirst({
-      where: eq(workflowNotifications.id, notificationId)
-    });
+    const [notification] = await db.select()
+      .from(workflowNotifications)
+      .where(eq(workflowNotifications.id, notificationId))
+      .limit(1);
     
     if (!notification) {
       return res.status(404).json({ error: 'Notification not found' });
