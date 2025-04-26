@@ -227,7 +227,7 @@ export function secureDrizzle(
 /**
  * Patch Drizzle models for better security
  */
-export function patchDrizzleModel(model) {
+export function patchDrizzleModel(model: any) {
   // Make a copy of the original methods
   const originalFindFirst = model.findFirst;
   const originalFindMany = model.findMany;

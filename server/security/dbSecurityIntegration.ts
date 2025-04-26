@@ -36,7 +36,8 @@ export class SecureDatabase {
    * @returns Query result
    */
   async query<T = any>(sql: string, params: any[] = []): Promise<T> {
-    return this.sqlFix.query<T>(sql, params);
+    const result = await this.sqlFix.query(sql, params);
+    return result as T;
   }
   
   /**
@@ -52,7 +53,8 @@ export class SecureDatabase {
     columns: string[] = ['*'], 
     where: Record<string, any> = {}
   ): Promise<T[]> {
-    return this.sqlFix.select<T[]>(table, columns, where);
+    const result = await this.sqlFix.select(table, columns, where);
+    return result as T[];
   }
   
   /**
@@ -63,7 +65,8 @@ export class SecureDatabase {
    * @returns Query result
    */
   async insert<T = any>(table: string, data: Record<string, any>): Promise<T> {
-    return this.sqlFix.insert<T>(table, data);
+    const result = await this.sqlFix.insert(table, data);
+    return result as T;
   }
   
   /**
@@ -79,7 +82,8 @@ export class SecureDatabase {
     data: Record<string, any>, 
     where: Record<string, any>
   ): Promise<T[]> {
-    return this.sqlFix.update<T[]>(table, data, where);
+    const result = await this.sqlFix.update(table, data, where);
+    return result as T[];
   }
   
   /**
@@ -90,7 +94,8 @@ export class SecureDatabase {
    * @returns Query result
    */
   async delete<T = any>(table: string, where: Record<string, any>): Promise<T[]> {
-    return this.sqlFix.delete<T[]>(table, where);
+    const result = await this.sqlFix.delete(table, where);
+    return result as T[];
   }
   
   /**
@@ -116,7 +121,7 @@ export function createSecureDatabase(db: DatabaseConnection): SecureDatabase {
  * WARNING: This approach is more invasive and should be used with caution.
  * It's better to use the SecureDatabase wrapper if possible.
  */
-export function patchDatabaseModule(db): void {
+export function patchDatabaseModule(db: any): void {
   const originalQuery = db.query;
   const sqlFix = createSQLFix(db);
   
@@ -140,14 +145,16 @@ export function patchDatabaseModule(db): void {
     columns: string[] = ['*'], 
     where: Record<string, any> = {}
   ): Promise<T[]> {
-    return sqlFix.select<T[]>(table, columns, where);
+    const result = await sqlFix.select(table, columns, where);
+    return result as T[];
   };
   
   db.insertSecure = async function<T = any>(
     table: string, 
     data: Record<string, any>
   ): Promise<T> {
-    return sqlFix.insert<T>(table, data);
+    const result = await sqlFix.insert(table, data);
+    return result as T;
   };
   
   db.updateSecure = async function<T = any>(
@@ -155,14 +162,16 @@ export function patchDatabaseModule(db): void {
     data: Record<string, any>, 
     where: Record<string, any>
   ): Promise<T[]> {
-    return sqlFix.update<T[]>(table, data, where);
+    const result = await sqlFix.update(table, data, where);
+    return result as T[];
   };
   
   db.deleteSecure = async function<T = any>(
     table: string, 
     where: Record<string, any>
   ): Promise<T[]> {
-    return sqlFix.delete<T[]>(table, where);
+    const result = await sqlFix.delete(table, where);
+    return result as T[];
   };
   
   console.log('[DATABASE-SECURITY] Database module patched with secure query methods');

@@ -2047,7 +2047,7 @@ export class PostgresStorage implements IStorage {
 
   // TypeScript Error Management Methods
   // Error tracking methods
-  async createTypescriptError(error: InsertTypescriptError): Promise<TypescriptError> {
+  async createTypeScriptError(error: InsertTypeScriptError): Promise<TypeScriptError> {
     try {
       // Check if error already exists
       const existingErrors = await db.select()
@@ -2092,12 +2092,12 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getTypescriptErrorById(id: number): Promise<TypescriptError | null> {
-    const result = await db.select().from(typescriptErrors).where(eq(typescriptErrors.id, id));
+  async getTypeScriptErrorById(id: number): Promise<TypeScriptError | null> {
+    const result = await db.select().from(typeScriptErrors).where(eq(typeScriptErrors.id, id));
     return result[0] || null;
   }
 
-  async updateTypescriptError(id: number, error: Partial<InsertTypescriptError>): Promise<TypescriptError> {
+  async updateTypeScriptError(id: number, error: Partial<InsertTypeScriptError>): Promise<TypeScriptError> {
     const [updatedError] = await db.update(typescriptErrors)
       .set({ ...error })
       .where(eq(typescriptErrors.id, id))
@@ -2105,14 +2105,14 @@ export class PostgresStorage implements IStorage {
     return updatedError;
   }
 
-  async getAllTypescriptErrors(filters?: {
+  async getAllTypeScriptErrors(filters?: {
     status?: string;
     severity?: string;
     category?: string;
-    filePath?: string;
-    fromDate?: Date;
-    toDate?: Date;
-  }): Promise<TypescriptError[]> {
+    file_path?: string;
+    detected_after?: Date;
+    detected_before?: Date;
+  }): Promise<TypeScriptError[]> {
     let query = db.select().from(typescriptErrors);
     
     if (filters) {
@@ -2156,7 +2156,7 @@ export class PostgresStorage implements IStorage {
     return await query;
   }
 
-  async getTypescriptErrorStats(fromDate?: Date, toDate?: Date): Promise<{
+  async getTypeScriptErrorStats(fromDate?: Date, toDate?: Date): Promise<{
     totalErrors: number;
     bySeverity: Record<string, number>;
     byCategory: Record<string, number>;
@@ -2249,7 +2249,7 @@ export class PostgresStorage implements IStorage {
     };
   }
 
-  async markErrorAsFixed(id: number, fixId: number, userId: number): Promise<TypescriptError> {
+  async markErrorAsFixed(id: number, fixId: number, userId: number): Promise<TypeScriptError> {
     const now = new Date();
     const [updatedError] = await db.update(typescriptErrors)
       .set({
