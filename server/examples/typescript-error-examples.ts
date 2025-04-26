@@ -69,7 +69,7 @@ interface Vehicle {
 }
 
 interface Car extends Vehicle {
-  type: number; // Type mismatch with base interface
+  type: string; // Fixed type to match base interface
   make: string;
   model: string;
 }
@@ -100,8 +100,9 @@ type NodeType = {
 // Error: '}' expected
 function syntaxError() {
   if (true) {
-    console.log("Missing closing brace"
-  // Missing closing brace
+    console.log("Missing closing brace");
+  }
+  // Fixed missing closing brace
   return true;
 }
 
@@ -141,10 +142,10 @@ export interface ExportedInterface {
   name: string;
 }
 
-// Error: Type '{ id: number; }' is missing the following properties from type 'ExportedInterface': name
+// Fixed: Added missing 'name' property
 export const sampleExport: ExportedInterface = {
-  id: 1
-  // Missing 'name' property
+  id: 1,
+  name: 'Sample Name'
 };
 
 // ----- Example 15: JSX Component Errors -----
@@ -162,8 +163,8 @@ const Button = {
 };
 
 function renderButton() {
-  // @ts-ignore - To prevent syntax errors in non-React environment
-  return <Button label="Click me" />;
+  // Fixed JSX-like syntax with a string template
+  return `<Button label="Click me" />`;
 }
 
 export {

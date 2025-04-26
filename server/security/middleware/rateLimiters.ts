@@ -176,7 +176,7 @@ export function createRateLimiter(options: Partial<RateLimiterOptions> = {}) {
     // If skipSuccessfulRequests is true, decrement the counter when the response is successful
     if (opts.skipSuccessfulRequests) {
       const originalEnd = res.end;
-      res.end = function(chunk?: any, encoding?: BufferEncoding, callback: any: any?: () => void) {
+      res.end = function(chunk?: any, encoding?: BufferEncoding, callback?: () => void) {
         if (res.statusCode < 400) {
           limiterData.count = Math.max(0, limiterData.count - 1);
         }

@@ -135,7 +135,7 @@ export function apiRequestLogger(req: Request, res: Response, next: NextFunction
   
   // Capture response details
   const originalEnd = res.end;
-  res.end = function(chunk?: any, encoding?: BufferEncoding, callback: any: any?: () => void) {
+  res.end = function(chunk?: any, encoding?: BufferEncoding, callback?: () => void) {
     const responseTime = Date.now() - startTime;
     
     // Log response details for non-successful responses
