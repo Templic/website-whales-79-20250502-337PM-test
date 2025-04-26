@@ -53,18 +53,16 @@ export const comments = pgTable("comments", {
 
 // Users table with role-based authentication
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: varchar("id", { length: 255 }).primaryKey(),
   username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  email: text("email").notNull().unique(),
+  email: text("email").unique(),
   role: text("role", { enum: ["user", "admin", "super_admin"] }).notNull().default("user"),
   isBanned: boolean("is_banned").notNull().default(false),
   firstName: text("first_name"),
   lastName: text("last_name"),
   bio: text("bio"),
   profileImageUrl: text("profile_image_url"),
-  passwordUpdatedAt: timestamp("password_updated_at"),
-  mustChangePassword: boolean("must_change_password").default(false),
+  lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
 });
