@@ -1,116 +1,158 @@
 #!/bin/bash
+# TypeScript Error Analysis and Fixing Utility
 
-# TypeScript Error Management Shell Script
-# This script provides a convenient way to use the TypeScript error management system
+# Ensure the script stops on first error
+set -e
 
-# Define colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
-BOLD='\033[1m'
-
-# Define functions
-print_header() {
-  echo -e "\n${BOLD}${BLUE}======== $1 ========${NC}\n"
+# Function to display usage information
+function show_usage {
+  echo "TypeScript Error Management Utility"
+  echo "=================================="
+  echo "Usage: $0 [command] [options]"
+  echo ""
+  echo "Commands:"
+  echo "  analyze         Analyze the project and find TypeScript errors"
+  echo "  fix             Apply automatic fixes to TypeScript errors"
+  echo "  patterns        Identify common error patterns"
+  echo "  stats           Show error statistics"
+  echo "  fix-file        Fix errors in a specific file"
+  echo "  verify          Verify that fixes didn't introduce new errors"
+  echo ""
+  echo "Options:"
+  echo "  --deep          Perform deep analysis with dependency tracking"
+  echo "  --ai            Use AI to enhance analysis and fixes (requires OPENAI_API_KEY)"
+  echo "  --all           Fix all errors (not just auto-fixable ones)"
+  echo "  --severity=X    Only analyze/fix errors with severity X (critical, high, medium, low)"
+  echo "  --category=X    Only analyze/fix errors in category X"
+  echo "  --file=X        Only analyze/fix errors in file X"
+  echo "  --limit=X       Limit to X errors (default: no limit)"
+  echo "  --dry-run       Don't apply fixes, just show what would be done"
+  echo ""
+  echo "Examples:"
+  echo "  $0 analyze                   # Basic analysis"
+  echo "  $0 analyze --deep            # Deep analysis with dependency tracking"
+  echo "  $0 fix --all                 # Fix all errors"
+  echo "  $0 fix --severity=critical   # Fix only critical errors"
+  echo "  $0 fix-file path/to/file.ts  # Fix errors in a specific file"
+  echo ""
 }
 
-print_usage() {
-  print_header "TypeScript Error Management System"
-  
-  echo -e "${BOLD}USAGE:${NC}"
-  echo -e "  ./analyze-ts-errors.sh <command> [options]"
-  echo ""
-  
-  echo -e "${BOLD}COMMANDS:${NC}"
-  echo -e "  ${GREEN}analyze${NC}             Analyze the project for TypeScript errors"
-  echo -e "  ${GREEN}patterns${NC}            Find common error patterns"
-  echo -e "  ${GREEN}stats${NC}               Show error statistics"
-  echo -e "  ${GREEN}fix${NC}                 Fix errors (if possible)"
-  echo -e "  ${GREEN}fix-file <filepath>${NC} Fix errors in a specific file"
-  echo -e "  ${GREEN}verify${NC}              Verify that fixes were successful"
-  echo -e "  ${GREEN}help${NC}                Show this help message"
-  echo ""
-  
-  echo -e "${BOLD}OPTIONS:${NC}"
-  echo -e "  ${YELLOW}-o, --output <file>${NC}    Output results to a file"
-  echo -e "  ${YELLOW}-d, --deep${NC}             Perform deep analysis"
-  echo -e "  ${YELLOW}--trace${NC}                Enable symbol tracing (deep scan only)"
-  echo -e "  ${YELLOW}--ai${NC}                   Use AI to assist in analysis/fixing"
-  echo -e "  ${YELLOW}-i, --input <file>${NC}     Use existing analysis results"
-  echo -e "  ${YELLOW}--auto${NC}                 Fix without confirmation"
-  echo -e "  ${YELLOW}--dryRun${NC}               Show fixes without applying"
-  echo ""
-  
-  echo -e "${BOLD}EXAMPLES:${NC}"
-  echo -e "  ${BLUE}./analyze-ts-errors.sh analyze${NC}"
-  echo -e "  ${BLUE}./analyze-ts-errors.sh analyze --deep --ai${NC}"
-  echo -e "  ${BLUE}./analyze-ts-errors.sh patterns -i analysis-results.json${NC}"
-  echo -e "  ${BLUE}./analyze-ts-errors.sh fix --auto${NC}"
-  echo -e "  ${BLUE}./analyze-ts-errors.sh fix-file src/components/Button.tsx${NC}"
-}
-
-# Check for prerequisites
-check_prerequisites() {
-  # Check if Node.js is installed
-  if ! command -v node &> /dev/null; then
-    echo -e "${RED}Error: Node.js is not installed${NC}"
-    echo -e "Please install Node.js to use this script"
-    exit 1
-  fi
-  
-  # Check if tsx is installed
-  if ! command -v tsx &> /dev/null; then
-    echo -e "${YELLOW}Warning: tsx is not installed${NC}"
-    echo -e "Installing tsx globally..."
-    npm install -g tsx
-  fi
-  
-  # Check if the CLI script exists
-  if [ ! -f "./scripts/ts-analyzer-cli.ts" ]; then
-    echo -e "${RED}Error: CLI script not found${NC}"
-    echo -e "The script should be located at ./scripts/ts-analyzer-cli.ts"
-    exit 1
-  }
-}
-
-# Process the command
+# Check if we have enough arguments
 if [ $# -lt 1 ]; then
-  print_usage
+  show_usage
   exit 1
 fi
 
-# Check prerequisites
-check_prerequisites
+# Set up environment
+NODE_EXEC="npx tsx"
+SCRIPT_PATH="ts-intelligent-fixer.ts"
 
-# Get the command
+# Check if TypeScript and tsx are available
+if ! command -v npx &> /dev/null; then
+  echo "Error: npx is not installed. Please install Node.js and npm."
+  exit 1
+fi
+
+if ! npx tsx --version &> /dev/null; then
+  echo "Installing tsx..."
+  npm install -D tsx
+fi
+
+# Main command
 COMMAND=$1
-shift # Remove the command from the arguments
+shift
 
-# Route to appropriate CLI command
+# Process options
+OPTIONS=""
+
+for arg in "$@"; do
+  case $arg in
+    --deep)
+      OPTIONS="$OPTIONS --deep"
+      shift
+      ;;
+    --ai)
+      OPTIONS="$OPTIONS --ai"
+      shift
+      ;;
+    --all)
+      OPTIONS="$OPTIONS --all"
+      shift
+      ;;
+    --dry-run)
+      OPTIONS="$OPTIONS --dry-run"
+      shift
+      ;;
+    --severity=*)
+      SEVERITY="${arg#*=}"
+      OPTIONS="$OPTIONS --severity $SEVERITY"
+      shift
+      ;;
+    --category=*)
+      CATEGORY="${arg#*=}"
+      OPTIONS="$OPTIONS --category $CATEGORY"
+      shift
+      ;;
+    --file=*)
+      FILE="${arg#*=}"
+      OPTIONS="$OPTIONS --file $FILE"
+      shift
+      ;;
+    --limit=*)
+      LIMIT="${arg#*=}"
+      OPTIONS="$OPTIONS --limit $LIMIT"
+      shift
+      ;;
+    *)
+      # Unknown option - assume it's a file path
+      TARGET_FILE="$arg"
+      shift
+      ;;
+  esac
+done
+
+# Execute the appropriate command
 case $COMMAND in
-  analyze|patterns|stats|fix|verify)
-    echo -e "${CYAN}Running: $COMMAND${NC}"
-    tsx ./scripts/ts-analyzer-cli.ts $COMMAND "$@"
+  analyze)
+    echo "Analyzing TypeScript project..."
+    $NODE_EXEC $SCRIPT_PATH analyze $OPTIONS
+    ;;
+  fix)
+    echo "Fixing TypeScript errors..."
+    $NODE_EXEC $SCRIPT_PATH fix $OPTIONS
+    ;;
+  patterns)
+    echo "Identifying error patterns..."
+    $NODE_EXEC $SCRIPT_PATH analyze $OPTIONS
+    # Future enhancement: Add a dedicated patterns command
+    ;;
+  stats)
+    echo "Generating error statistics..."
+    $NODE_EXEC $SCRIPT_PATH analyze $OPTIONS
+    # Future enhancement: Add a dedicated stats command
     ;;
   fix-file)
-    if [ $# -lt 1 ]; then
-      echo -e "${RED}Error: Missing file path${NC}"
-      echo -e "Usage: ./analyze-ts-errors.sh fix-file <filepath> [options]"
+    if [ -z "$TARGET_FILE" ]; then
+      echo "Error: No file specified for fix-file command."
+      show_usage
       exit 1
     fi
-    echo -e "${CYAN}Running: fix-file $1${NC}"
-    tsx ./scripts/ts-analyzer-cli.ts fix-file "$@"
+    echo "Fixing errors in $TARGET_FILE..."
+    $NODE_EXEC $SCRIPT_PATH fix --file "$TARGET_FILE" $OPTIONS
     ;;
-  help|--help|-h)
-    print_usage
+  verify)
+    echo "Verifying fixes..."
+    $NODE_EXEC $SCRIPT_PATH analyze $OPTIONS
+    # Future enhancement: Add a dedicated verify command
+    ;;
+  help)
+    show_usage
     ;;
   *)
-    echo -e "${RED}Error: Unknown command '$COMMAND'${NC}"
-    print_usage
+    echo "Error: Unknown command '$COMMAND'"
+    show_usage
     exit 1
     ;;
 esac
+
+echo "Done!"
