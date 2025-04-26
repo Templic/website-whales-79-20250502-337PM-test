@@ -12,6 +12,14 @@ import {
   type ErrorFix, type InsertErrorFix,
   type ErrorFixHistory, type InsertErrorFixHistory,
   type ProjectAnalysis, type InsertProjectAnalysis,
+  type ProjectFile, type InsertProjectFile,
+  // Content management types
+  type ContentItem, type InsertContentItem,
+  type ContentUsage, type InsertContentUsage,
+  type ContentHistory, type InsertContentHistory,
+  type ContentWorkflowHistory, type InsertContentWorkflowHistory,
+  type WorkflowNotification, type InsertWorkflowNotification,
+  type MediaFile, type InsertMediaFile,
   // Newsletter and subscriber types
   type Newsletter, type InsertNewsletter,
   type Subscriber, type InsertSubscriber,
@@ -29,11 +37,15 @@ import {
   users,
   // TypeScript error management tables
   typescriptErrors, errorPatterns, errorFixes, errorFixHistory,
-  projectAnalyses,
+  projectAnalyses, projectFiles,
+  // Content management tables
+  contentItems, contentUsage, contentHistory, contentWorkflowHistory, workflowNotifications, mediaFiles,
   // Additional tables
   newsletters, subscribers, posts, categories, comments, contactMessages, 
   // Music tables
-  tracks, albums
+  tracks, albums,
+  // E-commerce tables
+  products, productCategories
 } from "../shared/schema";
 import { sql, eq, and, desc, gt, count, max } from "drizzle-orm";
 import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";

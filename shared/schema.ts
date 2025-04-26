@@ -207,21 +207,26 @@ export const orderStatusEnum = pgEnum('order_status', [
 // ============== Content Management Tables ==============
 export const contentItems = pgTable('content_items', {
   id: serial('id').primaryKey(),
-  key: varchar('key', { length: 255 }).notNull().unique(),
-  type: varchar('type', { length: 50 }).notNull(),
-  title: varchar('title', { length: 255 }).notNull(),
-  content: text('content').notNull(),
-  page: varchar('page', { length: 100 }),
-  version: integer('version').notNull().default(1),
-  status: varchar('status', { length: 50 }).notNull().default('draft'),
-  createdBy: integer('created_by').references(() => users.id),
-  updatedBy: integer('updated_by').references(() => users.id),
-  publishedAt: timestamp('published_at'),
-  expiresAt: timestamp('expires_at'),
-  viewCount: integer('view_count').notNull().default(0),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  metadata: jsonb('metadata')
+  type: text('type'),
+  key: text('key'),
+  title: text('title'),
+  content: text('content'),
+  page: text('page'),
+  section: text('section'),
+  imageUrl: text('image_url'),
+  status: text('status'),
+  reviewerId: integer('reviewer_id'),
+  reviewStatus: text('review_status'),
+  reviewStartedAt: timestamp('review_started_at'),
+  reviewCompletedAt: timestamp('review_completed_at'),
+  scheduledPublishAt: timestamp('scheduled_publish_at'),
+  expirationDate: timestamp('expiration_date'),
+  reviewNotes: text('review_notes'),
+  createdAt: timestamp('created_at'),
+  updatedAt: timestamp('updated_at'),
+  version: integer('version'),
+  createdBy: integer('created_by'),
+  lastModifiedBy: integer('last_modified_by')
 });
 
 export const contentHistory = pgTable('content_history', {
@@ -239,23 +244,23 @@ export const contentHistory = pgTable('content_history', {
 export const contentUsage = pgTable('content_usage', {
   id: serial('id').primaryKey(),
   contentId: integer('content_id').notNull().references(() => contentItems.id),
-  location: varchar('location', { length: 255 }).notNull(),
-  path: varchar('path', { length: 255 }).notNull(),
-  count: integer('count').notNull().default(1),
-  firstUsedAt: timestamp('first_used_at').notNull().defaultNow(),
-  lastUsedAt: timestamp('last_used_at').notNull().defaultNow(),
-  metadata: jsonb('metadata')
+  location: text('location'),
+  path: text('path'),
+  views: integer('views'),
+  lastViewed: timestamp('last_viewed'),
+  createdAt: timestamp('created_at'),
+  updatedAt: timestamp('updated_at')
 });
 
 export const contentWorkflowHistory = pgTable('content_workflow_history', {
   id: serial('id').primaryKey(),
   contentId: integer('content_id').notNull().references(() => contentItems.id),
-  fromStatus: varchar('from_status', { length: 50 }).notNull(),
-  toStatus: varchar('to_status', { length: 50 }).notNull(),
-  performedBy: integer('performed_by').references(() => users.id),
-  reviewNotes: text('review_notes'),
-  performedAt: timestamp('performed_at').notNull().defaultNow(),
-  metadata: jsonb('metadata')
+  fromStatus: text('from_status'),
+  toStatus: text('to_status'),
+  actorId: integer('actor_id'),
+  actionAt: timestamp('action_at'),
+  comments: text('comments'),
+  version: integer('version')
 });
 
 export const workflowNotifications = pgTable('workflow_notifications', {
@@ -556,8 +561,8 @@ export type Track = typeof tracks.$inferSelect;
 export type InsertTrack = typeof tracks.$inferInsert;
 
 // Error Management Types
-export type TypeScriptError = typeof typescriptErrors.$inferSelect;
-export type InsertTypeScriptError = typeof typescriptErrors.$inferInsert;
+export type TypescriptError = typeof typescriptErrors.$inferSelect;
+export type InsertTypescriptError = typeof typescriptErrors.$inferInsert;
 
 export type ErrorPattern = typeof errorPatterns.$inferSelect;
 export type InsertErrorPattern = typeof errorPatterns.$inferInsert;
