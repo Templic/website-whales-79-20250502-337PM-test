@@ -23,6 +23,51 @@ const PostgresSessionStore = connectPg(session);
 
 export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   sessionStore: session.Store;
+  
+  // Alias methods for compatibility with IStorage
+  async createTypescriptError(error: InsertTypeScriptError): Promise<TypeScriptError> {
+    return await this.createTypeScriptError(error);
+  }
+  
+  async getTypescriptErrorById(id: number): Promise<TypeScriptError | null> {
+    return await this.getTypeScriptErrorById(id);
+  }
+  
+  async updateTypescriptError(id: number, error: Partial<InsertTypeScriptError>): Promise<TypeScriptError> {
+    return await this.updateTypeScriptError(id, error);
+  }
+  
+  async getAllTypescriptErrors(filters?: {
+    status?: string;
+    severity?: string;
+    category?: string;
+    filePath?: string;
+    fromDate?: Date;
+    toDate?: Date;
+  }): Promise<TypeScriptError[]> {
+    // Map the legacy filter names to the new ones
+    const mappedFilters: any = {};
+    if (filters) {
+      mappedFilters.status = filters.status;
+      mappedFilters.severity = filters.severity;
+      mappedFilters.category = filters.category;
+      mappedFilters.file_path = filters.filePath;
+      mappedFilters.detected_after = filters.fromDate;
+      mappedFilters.detected_before = filters.toDate;
+    }
+    return await this.getAllTypeScriptErrors(mappedFilters);
+  }
+  
+  async getTypescriptErrorStats(fromDate?: Date, toDate?: Date): Promise<{
+    totalErrors: number;
+    bySeverity: Record<string, number>;
+    byCategory: Record<string, number>;
+    byStatus: Record<string, number>;
+    topFiles: Array<{ filePath: string; count: number }>;
+    fixRate: number;
+  }> {
+    return await this.getTypeScriptErrorStats(fromDate, toDate);
+  }
 
   constructor() {
     // Initialize session store with PostgreSQL
@@ -172,7 +217,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
 
-  async updateTypescriptError(id: number, error: any): Promise<any> {
+  async updateTypeScriptError(id: number, error: Partial<InsertTypeScriptError>): Promise<TypeScriptError> {
     try {
       // Map the update fields to the actual database schema
       const updateFields: any = {};
@@ -181,11 +226,11 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
       if (error.severity) updateFields.severity = error.severity;
       if (error.category) updateFields.category = error.category;
       if (error.fixId) updateFields.fix_id = error.fixId;
-      if (error.resolved_at || (error.status === 'FIXED')) updateFields.resolved_at = new Date();
+      if (error.resolved_at || (error.status === 'fixed')) updateFields.resolved_at = new Date();
       
       if (Object.keys(updateFields).length === 0) {
         // Nothing to update
-        return await this.getTypescriptErrorById(id);
+        return await this.getTypeScriptErrorById(id);
       }
       
       const [updatedError] = await db
@@ -201,14 +246,14 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
 
-  async getAllTypescriptErrors(filters?: {
+  async getAllTypeScriptErrors(filters?: {
     status?: string;
     severity?: string;
     category?: string;
-    filePath?: string;
-    fromDate?: Date;
-    toDate?: Date;
-  }): Promise<any[]> {
+    file_path?: string;
+    detected_after?: Date;
+    detected_before?: Date;
+  }): Promise<TypeScriptError[]> {
     try {
       let query = db.select().from(typeScriptErrors);
       
@@ -222,14 +267,14 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
         if (filters.category) {
           query = query.where(eq(typeScriptErrors.category, filters.category));
         }
-        if (filters.filePath) {
-          query = query.where(sql`${typeScriptErrors.file_path} LIKE ${`%${filters.filePath}%`}`);
+        if (filters.file_path) {
+          query = query.where(sql`${typeScriptErrors.file_path} LIKE ${`%${filters.file_path}%`}`);
         }
-        if (filters.fromDate) {
-          query = query.where(sql`${typeScriptErrors.detected_at} >= ${filters.fromDate}`);
+        if (filters.detected_after) {
+          query = query.where(sql`${typeScriptErrors.detected_at} >= ${filters.detected_after}`);
         }
-        if (filters.toDate) {
-          query = query.where(sql`${typeScriptErrors.detected_at} <= ${filters.toDate}`);
+        if (filters.detected_before) {
+          query = query.where(sql`${typeScriptErrors.detected_at} <= ${filters.detected_before}`);
         }
       }
       
@@ -240,7 +285,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
 
-  async getTypescriptErrorStats(fromDate?: Date, toDate?: Date): Promise<{
+  async getTypeScriptErrorStats(fromDate?: Date, toDate?: Date): Promise<{
     totalErrors: number;
     bySeverity: Record<string, number>;
     byCategory: Record<string, number>;
@@ -251,9 +296,9 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     try {
       // This is a placeholder implementation
       // In a real implementation, we would use SQL aggregation queries
-      const errors = await this.getAllTypescriptErrors({
-        fromDate,
-        toDate
+      const errors = await this.getAllTypeScriptErrors({
+        detected_after: fromDate,
+        detected_before: toDate
       });
       
       const result = {
@@ -302,7 +347,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
         .slice(0, 10);
       
       // Calculate fix rate
-      const fixedCount = errors.filter(error => error.status === 'FIXED').length;
+      const fixedCount = errors.filter(error => error.status === 'fixed').length;
       result.fixRate = errors.length > 0 ? fixedCount / errors.length : 0;
       
       return result;
@@ -319,12 +364,12 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
 
-  async markErrorAsFixed(id: number, fixId: number, userId: number): Promise<any> {
+  async markErrorAsFixed(id: number, fixId: number, userId: number): Promise<TypeScriptError> {
     try {
       const [updatedError] = await db
         .update(typeScriptErrors)
         .set({
-          status: 'FIXED',
+          status: 'fixed',
           resolved_at: new Date(),
           fix_id: fixId,
           user_id: userId
@@ -339,6 +384,76 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
   
+  // Error Analysis methods
+  async createErrorAnalysis(analysis: InsertErrorAnalysis): Promise<ErrorAnalysis> {
+    try {
+      const [newAnalysis] = await db.insert(errorAnalysis).values(analysis).returning();
+      return newAnalysis;
+    } catch (error) {
+      console.error('Error creating error analysis:', error);
+      throw error;
+    }
+  }
+
+  async getErrorAnalysisById(id: number): Promise<ErrorAnalysis | null> {
+    try {
+      const [analysis] = await db.select().from(errorAnalysis).where(eq(errorAnalysis.id, id));
+      return analysis || null;
+    } catch (error) {
+      console.error('Error getting error analysis by ID:', error);
+      return null;
+    }
+  }
+
+  async getAnalysisForError(errorId: number): Promise<ErrorAnalysis | null> {
+    try {
+      const [analysis] = await db
+        .select()
+        .from(errorAnalysis)
+        .where(eq(errorAnalysis.error_id, errorId))
+        .orderBy(desc(errorAnalysis.created_at))
+        .limit(1);
+      return analysis || null;
+    } catch (error) {
+      console.error('Error getting analysis for error:', error);
+      return null;
+    }
+  }
+
+  // Scan Result methods
+  async createScanResult(result: InsertScanResult): Promise<ScanResult> {
+    try {
+      const [newScanResult] = await db.insert(scanResults).values(result).returning();
+      return newScanResult;
+    } catch (error) {
+      console.error('Error creating scan result:', error);
+      throw error;
+    }
+  }
+
+  async getScanResultById(id: number): Promise<ScanResult | null> {
+    try {
+      const [scanResult] = await db.select().from(scanResults).where(eq(scanResults.id, id));
+      return scanResult || null;
+    } catch (error) {
+      console.error('Error getting scan result by ID:', error);
+      return null;
+    }
+  }
+
+  async getLatestScanResults(limit: number): Promise<ScanResult[]> {
+    try {
+      return await db
+        .select()
+        .from(scanResults)
+        .orderBy(desc(scanResults.scan_date))
+        .limit(limit);
+    } catch (error) {
+      console.error('Error getting latest scan results:', error);
+      return [];
+    }
+  }
+
   // Error pattern methods
   async createErrorPattern(pattern: any): Promise<any> {
     try {

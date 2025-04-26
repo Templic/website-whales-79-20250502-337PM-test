@@ -154,18 +154,18 @@ export interface IStorage {
 
   // TypeScript Error Management methods
   // Error tracking methods
-  createTypescriptError(error: InsertTypescriptError): Promise<TypescriptError>;
-  getTypescriptErrorById(id: number): Promise<TypescriptError | null>;
-  updateTypescriptError(id: number, error: Partial<InsertTypescriptError>): Promise<TypescriptError>;
-  getAllTypescriptErrors(filters?: {
+  createTypeScriptError(error: InsertTypeScriptError): Promise<TypeScriptError>;
+  getTypeScriptErrorById(id: number): Promise<TypeScriptError | null>;
+  updateTypeScriptError(id: number, error: Partial<InsertTypeScriptError>): Promise<TypeScriptError>;
+  getAllTypeScriptErrors(filters?: {
     status?: string;
     severity?: string;
     category?: string;
-    filePath?: string;
-    fromDate?: Date;
-    toDate?: Date;
-  }): Promise<TypescriptError[]>;
-  getTypescriptErrorStats(fromDate?: Date, toDate?: Date): Promise<{
+    file_path?: string;
+    detected_after?: Date;
+    detected_before?: Date;
+  }): Promise<TypeScriptError[]>;
+  getTypeScriptErrorStats(fromDate?: Date, toDate?: Date): Promise<{
     totalErrors: number;
     bySeverity: Record<string, number>;
     byCategory: Record<string, number>;
@@ -173,7 +173,7 @@ export interface IStorage {
     topFiles: Array<{ filePath: string; count: number }>;
     fixRate: number;
   }>;
-  markErrorAsFixed(id: number, fixId: number, userId: number): Promise<TypescriptError>;
+  markErrorAsFixed(id: number, fixId: number, userId: number): Promise<TypeScriptError>;
   
   // Error pattern methods
   createErrorPattern(pattern: InsertErrorPattern): Promise<ErrorPattern>;
@@ -246,8 +246,13 @@ export class PostgresStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    try {
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      return user;
+    } catch (error) {
+      console.error("Error finding user by username:", error);
+      return undefined;
+    }
   }
 
   async createUser(user: InsertUser): Promise<User> {
