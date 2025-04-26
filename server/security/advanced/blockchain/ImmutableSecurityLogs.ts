@@ -65,7 +65,7 @@ export class ImmutableSecurityLogs {
   /**
    * Add a log entry to the blockchain
    */
-  public addLog(data): void {
+  public addLog(data: Record<string, any>): void {
     this.pendingLogs.push({
       ...data,
       timestamp: data.timestamp || new Date().toISOString()

@@ -5,8 +5,8 @@
  * SQL injection vulnerabilities when using this specific ORM.
  */
 
-import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
+import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from './advanced/SecurityFabric';
 import { sqlMonitor } from './sqlMonitor';
 
 /**

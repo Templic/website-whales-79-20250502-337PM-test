@@ -5,8 +5,8 @@
  * best practices and blocking potentially unsafe queries.
  */
 
-import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
+import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from './advanced/SecurityFabric';
 
 /**
  * SQL query type detection patterns
@@ -231,19 +231,20 @@ export class SQLMonitor {
     }
     
     // Log to blockchain
-    securityBlockchain.addSecurityEvent({
-      severity: eventSeverity,
-      category: SecurityEventCategory.DATABASE_SECURITY as any,
-      message: `SQL security violation: ${reason}`,
-      metadata: {
+    try {
+      securityBlockchain.addLog({
+        type: 'sql_security_violation',
+        severity: eventSeverity,
+        category: SecurityEventCategory.DATA,
+        message: `SQL security violation: ${reason}`,
         query: query.sql,
-        source: query.source,
-        severity
-      },
-      timestamp: new Date()
-    }).catch(error => {
+        source: query.source || 'unknown',
+        severityLevel: severity,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
       console.error('[SQL-MONITOR] Error logging to blockchain:', error);
-    });
+    }
   }
   
   /**

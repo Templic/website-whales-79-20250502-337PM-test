@@ -307,6 +307,86 @@ export class DatabaseSecurityManager {
   public getSQLInjectionStats(): { totalBlocked: number } {
     return sqlInjectionPrevention.getStats();
   }
+  
+  /**
+   * Validate a database query
+   */
+  public validateQuery(query: string): { valid: boolean; risks: string[] } {
+    const hasSQLInjection = sqlInjectionPrevention.hasSQLInjection(query);
+    
+    if (hasSQLInjection) {
+      return {
+        valid: false,
+        risks: ['Potential SQL injection detected']
+      };
+    }
+    
+    return {
+      valid: true,
+      risks: []
+    };
+  }
+  
+  /**
+   * Sanitize a parameter
+   */
+  public sanitizeParameter(param: any): any {
+    if (typeof param === 'string') {
+      // Basic sanitization for string parameters
+      return param
+        .replace(/'/g, "''")
+        .replace(/;/g, '')
+        .replace(/--/g, '')
+        .replace(/\/\*/g, '')
+        .replace(/\*\//g, '')
+        .replace(/#/g, '');
+    }
+    
+    // Non-string parameters are returned as is
+    return param;
+  }
+  
+  /**
+   * Log database activity
+   */
+  public logDatabaseActivity(
+    activity: string,
+    userId: string | number | undefined,
+    details: Record<string, any>
+  ): void {
+    // Log to security fabric
+    securityFabric.emitEvent({
+      category: SecurityEventCategory.SQL_INJECTION,
+      severity: SecurityEventSeverity.INFO,
+      message: `Database activity: ${activity}`,
+      data: {
+        userId,
+        ...details,
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+  
+  /**
+   * Verify user access to database resources
+   */
+  public async verifyUserAccess(
+    userId: string | number,
+    resource: string,
+    action: string
+  ): Promise<boolean> {
+    // For now, always return true as we don't have a full permissions system
+    // In a real application, this would check against defined roles and permissions
+    
+    // Log the access check
+    this.logDatabaseActivity(
+      `Access check: ${action} on ${resource}`,
+      userId,
+      { resource, action, granted: true }
+    );
+    
+    return true;
+  }
 }
 
 // Export singleton instance
