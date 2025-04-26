@@ -62,21 +62,18 @@ export const analysisStatusEnum = pgEnum('analysis_status', [
 
 // ============== User Tables ==============
 export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
+  id: varchar('id').primaryKey(),
   username: varchar('username', { length: 100 }).notNull().unique(),
   email: varchar('email', { length: 255 }).notNull().unique(),
-  fullName: varchar('full_name', { length: 255 }),
-  password: varchar('password', { length: 255 }).notNull(),
+  firstName: varchar('first_name', { length: 255 }),
+  lastName: varchar('last_name', { length: 255 }),
+  bio: text('bio'),
+  profileImageUrl: varchar('profile_image_url', { length: 255 }),
   role: userRoleEnum('role').notNull().default('user'),
-  isActive: boolean('is_active').notNull().default(true),
   isBanned: boolean('is_banned').notNull().default(false),
-  mustChangePassword: boolean('must_change_password').notNull().default(false),
-  passwordUpdatedAt: timestamp('password_updated_at'),
-  lastLoginAt: timestamp('last_login_at'),
-  failedLoginAttempts: integer('failed_login_attempts').notNull().default(0),
+  lastLogin: timestamp('last_login'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  metadata: jsonb('metadata')
+  updatedAt: timestamp('updated_at').notNull().defaultNow()
 });
 
 // ============== Error Management Tables ==============
@@ -170,6 +167,23 @@ export const projectAnalyses = pgTable('project_analyses', {
   executedBy: text('executed_by'),
   analysisOptions: jsonb('analysis_options'),
   analysisResults: jsonb('analysis_results'),
+  metadata: jsonb('metadata')
+});
+
+export const projectFiles = pgTable('project_files', {
+  id: serial('id').primaryKey(),
+  filePath: text('file_path').notNull().unique(),
+  fileName: text('file_name').notNull(),
+  fileType: text('file_type').notNull(), // ts, tsx, js, jsx, etc.
+  loc: integer('loc').default(0), // lines of code
+  errorCount: integer('error_count').default(0),
+  lastScannedAt: timestamp('last_scanned_at'),
+  lastModifiedAt: timestamp('last_modified_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  gitBlame: jsonb('git_blame'), // information about who authored each line
+  dependencies: jsonb('dependencies'), // list of files this file depends on
+  dependents: jsonb('dependents'), // list of files that depend on this file
   metadata: jsonb('metadata')
 });
 
@@ -277,44 +291,32 @@ export const mediaFiles = pgTable('media_files', {
 export const posts = pgTable('posts', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
-  slug: text('slug').notNull().unique(),
   content: text('content').notNull(),
   excerpt: text('excerpt'),
-  authorId: integer('author_id').references(() => users.id),
-  categoryId: integer('category_id'),
-  status: text('status').notNull().default('draft'),
   featuredImage: text('featured_image'),
-  tags: text('tags').array(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  publishedAt: timestamp('published_at'),
-  metadata: jsonb('metadata')
+  published: boolean('published').notNull().default(false),
+  approved: boolean('approved').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at'),
+  authorId: integer('author_id').references(() => users.id)
 });
 
 export const categories = pgTable('categories', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
   slug: text('slug').notNull().unique(),
-  description: text('description'),
-  parentId: integer('parent_id'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  metadata: jsonb('metadata')
+  description: text('description')
 });
 
 export const comments = pgTable('comments', {
   id: serial('id').primaryKey(),
   postId: integer('post_id').notNull().references(() => posts.id),
-  parentId: integer('parent_id'),
   userId: integer('user_id').references(() => users.id),
   authorName: text('author_name'),
   authorEmail: text('author_email'),
   content: text('content').notNull(),
-  status: text('status').notNull().default('pending'), // pending, approved, spam, trash
-  isApproved: boolean('is_approved').default(false).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  metadata: jsonb('metadata')
+  approved: boolean('approved').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
 export const contactMessages = pgTable('contact_messages', {
@@ -351,19 +353,34 @@ export const subscribers = pgTable('subscribers', {
 export const newsletters = pgTable('newsletters', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
-  subject: text('subject').notNull(),
   content: text('content').notNull(),
-  htmlContent: text('html_content'),
-  scheduledFor: timestamp('scheduled_for'),
-  sentAt: timestamp('sent_at'),
   status: text('status').default('draft').notNull(), // draft, scheduled, sent, canceled
-  recipientCount: integer('recipient_count').default(0).notNull(),
-  openCount: integer('open_count').default(0).notNull(),
-  clickCount: integer('click_count').default(0).notNull(),
+  sentAt: timestamp('sent_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  createdBy: integer('created_by').references(() => users.id),
-  metadata: jsonb('metadata')
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Music-related tables
+export const albums = pgTable('albums', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  artist: text('artist').notNull(),
+  releaseDate: timestamp('release_date'),
+  coverImage: text('cover_image'),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+export const tracks = pgTable('tracks', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  artist: text('artist').notNull(),
+  albumId: integer('album_id').references(() => albums.id),
+  duration: text('duration'),
+  audioUrl: text('audio_url'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
 
 // ============== E-commerce Tables ==============
@@ -531,6 +548,13 @@ export type InsertNewsletter = typeof newsletters.$inferInsert;
 export type Subscriber = typeof subscribers.$inferSelect;
 export type InsertSubscriber = typeof subscribers.$inferInsert;
 
+// Music-related types
+export type Album = typeof albums.$inferSelect;
+export type InsertAlbum = typeof albums.$inferInsert;
+
+export type Track = typeof tracks.$inferSelect;
+export type InsertTrack = typeof tracks.$inferInsert;
+
 // Error Management Types
 export type TypeScriptError = typeof typescriptErrors.$inferSelect;
 export type InsertTypeScriptError = typeof typescriptErrors.$inferInsert;
@@ -546,6 +570,9 @@ export type InsertErrorFixHistory = typeof errorFixHistory.$inferInsert;
 
 export type ProjectAnalysis = typeof projectAnalyses.$inferSelect;
 export type InsertProjectAnalysis = typeof projectAnalyses.$inferInsert;
+
+export type ProjectFile = typeof projectFiles.$inferSelect;
+export type InsertProjectFile = typeof projectFiles.$inferInsert;
 
 // E-commerce Types
 export type ProductCategory = typeof productCategories.$inferSelect;
@@ -586,6 +613,8 @@ export const insertCommentSchema = createInsertSchema(comments);
 export const insertContactSchema = createInsertSchema(contactMessages);
 export const insertNewsletterSchema = createInsertSchema(newsletters);
 export const insertSubscriberSchema = createInsertSchema(subscribers);
+export const insertAlbumSchema = createInsertSchema(albums);
+export const insertTrackSchema = createInsertSchema(tracks);
 
 // Error Management Schemas
 export const insertTypeScriptErrorSchema = createInsertSchema(typescriptErrors);
@@ -593,6 +622,7 @@ export const insertErrorPatternSchema = createInsertSchema(errorPatterns);
 export const insertErrorFixSchema = createInsertSchema(errorFixes);
 export const insertErrorFixHistorySchema = createInsertSchema(errorFixHistory);
 export const insertProjectAnalysisSchema = createInsertSchema(projectAnalyses);
+export const insertProjectFileSchema = createInsertSchema(projectFiles);
 
 // E-commerce Schemas
 export const insertProductCategorySchema = createInsertSchema(productCategories);
@@ -618,11 +648,14 @@ export default {
   contactMessages,
   newsletters,
   subscribers,
+  albums,
+  tracks,
   typescriptErrors,
   errorPatterns,
   errorFixes,
   errorFixHistory,
   projectAnalyses,
+  projectFiles,
   productCategories,
   products,
   carts,

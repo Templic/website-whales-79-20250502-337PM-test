@@ -20,13 +20,20 @@ import {
   type Category, type InsertCategory,
   type Comment, type InsertComment,
   type ContactMessage, type InsertContactMessage,
+  // Music types
+  type Track, type InsertTrack,
+  type Album, type InsertAlbum,
+  // Product types
+  type Product, type InsertProduct,
   // Tables
   users,
   // TypeScript error management tables
   typescriptErrors, errorPatterns, errorFixes, errorFixHistory,
   projectAnalyses,
   // Additional tables
-  newsletters, subscribers, posts, categories, comments, contactMessages
+  newsletters, subscribers, posts, categories, comments, contactMessages, 
+  // Music tables
+  tracks, albums
 } from "../shared/schema";
 import { sql, eq, and, desc, gt, count, max } from "drizzle-orm";
 import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";
