@@ -2051,20 +2051,20 @@ export class PostgresStorage implements IStorage {
     try {
       // Check if error already exists
       const existingErrors = await db.select()
-        .from(typescriptErrors)
+        .from(typeScriptErrors)
         .where(
           and(
-            eq(typescriptErrors.errorCode, error.errorCode),
-            eq(typescriptErrors.filePath, error.filePath),
-            eq(typescriptErrors.lineNumber, error.lineNumber),
-            eq(typescriptErrors.columnNumber, error.columnNumber)
+            eq(typeScriptErrors.errorCode, error.errorCode),
+            eq(typeScriptErrors.filePath, error.filePath),
+            eq(typeScriptErrors.lineNumber, error.lineNumber),
+            eq(typeScriptErrors.columnNumber, error.columnNumber)
           )
         );
 
       // If error already exists, increment the occurrence count
       if (existingErrors.length > 0) {
         const existingError = existingErrors[0];
-        const [updatedError] = await db.update(typescriptErrors)
+        const [updatedError] = await db.update(typeScriptErrors)
           .set({
             occurrenceCount: existingError.occurrenceCount + 1,
             lastOccurrenceAt: new Date(),
@@ -2076,13 +2076,13 @@ export class PostgresStorage implements IStorage {
             severity: error.severity || existingError.severity,
             metadata: error.metadata || existingError.metadata
           })
-          .where(eq(typescriptErrors.id, existingError.id))
+          .where(eq(typeScriptErrors.id, existingError.id))
           .returning();
         return updatedError;
       }
 
       // Otherwise, create a new error
-      const [newError] = await db.insert(typescriptErrors)
+      const [newError] = await db.insert(typeScriptErrors)
         .values(error)
         .returning();
       return newError;
@@ -2098,9 +2098,9 @@ export class PostgresStorage implements IStorage {
   }
 
   async updateTypeScriptError(id: number, error: Partial<InsertTypeScriptError>): Promise<TypeScriptError> {
-    const [updatedError] = await db.update(typescriptErrors)
+    const [updatedError] = await db.update(typeScriptErrors)
       .set({ ...error })
-      .where(eq(typescriptErrors.id, id))
+      .where(eq(typeScriptErrors.id, id))
       .returning();
     return updatedError;
   }
@@ -2113,33 +2113,33 @@ export class PostgresStorage implements IStorage {
     detected_after?: Date;
     detected_before?: Date;
   }): Promise<TypeScriptError[]> {
-    let query = db.select().from(typescriptErrors);
+    let query = db.select().from(typeScriptErrors);
     
     if (filters) {
       const conditions = [];
       
       if (filters.status) {
-        conditions.push(eq(typescriptErrors.status, filters.status as any));
+        conditions.push(eq(typeScriptErrors.status, filters.status as any));
       }
       
       if (filters.severity) {
-        conditions.push(eq(typescriptErrors.severity, filters.severity as any));
+        conditions.push(eq(typeScriptErrors.severity, filters.severity as any));
       }
       
       if (filters.category) {
-        conditions.push(eq(typescriptErrors.category, filters.category as any));
+        conditions.push(eq(typeScriptErrors.category, filters.category as any));
       }
       
       if (filters.filePath) {
-        conditions.push(eq(typescriptErrors.filePath, filters.filePath));
+        conditions.push(eq(typeScriptErrors.filePath, filters.filePath));
       }
       
       if (filters.fromDate) {
-        conditions.push(sql`${typescriptErrors.detectedAt} >= ${filters.fromDate}`);
+        conditions.push(sql`${typeScriptErrors.detectedAt} >= ${filters.fromDate}`);
       }
       
       if (filters.toDate) {
-        conditions.push(sql`${typescriptErrors.detectedAt} <= ${filters.toDate}`);
+        conditions.push(sql`${typeScriptErrors.detectedAt} <= ${filters.toDate}`);
       }
       
       if (conditions.length > 0) {
@@ -2148,9 +2148,9 @@ export class PostgresStorage implements IStorage {
     }
     
     query = query.orderBy(
-      desc(typescriptErrors.severity),
-      desc(typescriptErrors.occurrenceCount),
-      desc(typescriptErrors.lastOccurrenceAt)
+      desc(typeScriptErrors.severity),
+      desc(typeScriptErrors.occurrenceCount),
+      desc(typeScriptErrors.lastOccurrenceAt)
     );
     
     return await query;
@@ -2167,27 +2167,27 @@ export class PostgresStorage implements IStorage {
     // Create date filters if provided
     const dateFilters = [];
     if (fromDate) {
-      dateFilters.push(sql`${typescriptErrors.detectedAt} >= ${fromDate}`);
+      dateFilters.push(sql`${typeScriptErrors.detectedAt} >= ${fromDate}`);
     }
     if (toDate) {
-      dateFilters.push(sql`${typescriptErrors.detectedAt} <= ${toDate}`);
+      dateFilters.push(sql`${typeScriptErrors.detectedAt} <= ${toDate}`);
     }
     
     // Get total errors
     const totalErrorsResult = await db.select({
       count: count()
-    }).from(typescriptErrors)
+    }).from(typeScriptErrors)
     .where(dateFilters.length > 0 ? and(...dateFilters) : undefined);
     
     const totalErrors = totalErrorsResult[0]?.count || 0;
     
     // Get errors by severity
     const bySeverityResult = await db.select({
-      severity: typescriptErrors.severity,
+      severity: typeScriptErrors.severity,
       count: count()
-    }).from(typescriptErrors)
+    }).from(typeScriptErrors)
     .where(dateFilters.length > 0 ? and(...dateFilters) : undefined)
-    .groupBy(typescriptErrors.severity);
+    .groupBy(typeScriptErrors.severity);
     
     const bySeverity: Record<string, number> = {};
     bySeverityResult.forEach(row => {
@@ -2196,11 +2196,11 @@ export class PostgresStorage implements IStorage {
     
     // Get errors by category
     const byCategoryResult = await db.select({
-      category: typescriptErrors.category,
+      category: typeScriptErrors.category,
       count: count()
-    }).from(typescriptErrors)
+    }).from(typeScriptErrors)
     .where(dateFilters.length > 0 ? and(...dateFilters) : undefined)
-    .groupBy(typescriptErrors.category);
+    .groupBy(typeScriptErrors.category);
     
     const byCategory: Record<string, number> = {};
     byCategoryResult.forEach(row => {
@@ -2209,11 +2209,11 @@ export class PostgresStorage implements IStorage {
     
     // Get errors by status
     const byStatusResult = await db.select({
-      status: typescriptErrors.status,
+      status: typeScriptErrors.status,
       count: count()
-    }).from(typescriptErrors)
+    }).from(typeScriptErrors)
     .where(dateFilters.length > 0 ? and(...dateFilters) : undefined)
-    .groupBy(typescriptErrors.status);
+    .groupBy(typeScriptErrors.status);
     
     const byStatus: Record<string, number> = {};
     byStatusResult.forEach(row => {
@@ -2222,11 +2222,11 @@ export class PostgresStorage implements IStorage {
     
     // Get top files with errors
     const topFilesResult = await db.select({
-      filePath: typescriptErrors.filePath,
+      filePath: typeScriptErrors.filePath,
       count: count()
-    }).from(typescriptErrors)
+    }).from(typeScriptErrors)
     .where(dateFilters.length > 0 ? and(...dateFilters) : undefined)
-    .groupBy(typescriptErrors.filePath)
+    .groupBy(typeScriptErrors.filePath)
     .orderBy(sql`count(*) desc`)
     .limit(10);
     
@@ -2251,14 +2251,14 @@ export class PostgresStorage implements IStorage {
 
   async markErrorAsFixed(id: number, fixId: number, userId: number): Promise<TypeScriptError> {
     const now = new Date();
-    const [updatedError] = await db.update(typescriptErrors)
+    const [updatedError] = await db.update(typeScriptErrors)
       .set({
         status: 'fixed',
         resolvedAt: now,
         fixId: fixId,
         userId: userId
       })
-      .where(eq(typescriptErrors.id, id))
+      .where(eq(typeScriptErrors.id, id))
       .returning();
     return updatedError;
   }

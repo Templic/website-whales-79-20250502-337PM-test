@@ -491,18 +491,19 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   }
 
   // Error pattern methods
-  async createErrorPattern(pattern: any): Promise<any> {
+  async createErrorPattern(pattern: InsertErrorPattern): Promise<ErrorPattern> {
     try {
-      const dbPattern = {
+      // Create a properly typed object for insertion
+      const dbPattern: Partial<typeof errorPatterns.$inferInsert> = {
         name: pattern.name || `Pattern ${Date.now()}`,
         description: pattern.description || '',
-        regex: pattern.regex || pattern.pattern || null,
+        regex: pattern.regex || null,
         category: pattern.category || 'OTHER',
         severity: pattern.severity || 'MEDIUM',
-        auto_fixable: pattern.autoFixable || pattern.hasAutoFix || false,
+        auto_fixable: pattern.auto_fixable || false,
         created_at: new Date(),
-        detection_rules: pattern.detectionRules ? JSON.stringify(pattern.detectionRules) : null,
-        created_by: pattern.userId || null
+        detection_rules: pattern.detection_rules,
+        created_by: pattern.created_by || null
       };
       
       const [newPattern] = await db.insert(errorPatterns).values(dbPattern).returning();
@@ -513,7 +514,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
 
-  async getErrorPatternById(id: number): Promise<any> {
+  async getErrorPatternById(id: number): Promise<ErrorPattern | null> {
     try {
       const [pattern] = await db.select().from(errorPatterns).where(eq(errorPatterns.id, id));
       return pattern || null;
@@ -523,27 +524,29 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
 
-  async updateErrorPattern(id: number, pattern: any): Promise<any> {
+  async updateErrorPattern(id: number, pattern: Partial<InsertErrorPattern>): Promise<ErrorPattern> {
     try {
-      const updateFields: any = {};
+      // Create a properly typed update object
+      const updateFields: Partial<typeof errorPatterns.$inferInsert> = {
+        updated_at: new Date()
+      };
       
+      // Map the incoming pattern to the database fields
       if (pattern.name) updateFields.name = pattern.name;
       if (pattern.description) updateFields.description = pattern.description;
-      if (pattern.regex || pattern.pattern) updateFields.regex = pattern.regex || pattern.pattern;
+      if (pattern.regex) updateFields.regex = pattern.regex;
       if (pattern.category) updateFields.category = pattern.category;
       if (pattern.severity) updateFields.severity = pattern.severity;
-      if ('autoFixable' in pattern || 'hasAutoFix' in pattern) {
-        updateFields.auto_fixable = pattern.autoFixable || pattern.hasAutoFix;
+      if (pattern.auto_fixable !== undefined) {
+        updateFields.auto_fixable = pattern.auto_fixable;
       }
-      if (pattern.detectionRules) {
-        updateFields.detection_rules = JSON.stringify(pattern.detectionRules);
+      if (pattern.detection_rules) {
+        updateFields.detection_rules = pattern.detection_rules;
       }
       
-      updateFields.updated_at = new Date();
-      
-      if (Object.keys(updateFields).length === 0) {
-        // Nothing to update
-        return await this.getErrorPatternById(id);
+      if (Object.keys(updateFields).length === 1) {
+        // Only updated_at was set, nothing else to update
+        return await this.getErrorPatternById(id) as ErrorPattern;
       }
       
       const [updatedPattern] = await db
@@ -559,7 +562,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
 
-  async getAllErrorPatterns(): Promise<any[]> {
+  async getAllErrorPatterns(): Promise<ErrorPattern[]> {
     try {
       return await db.select().from(errorPatterns).orderBy(errorPatterns.category);
     } catch (error) {
@@ -568,7 +571,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
 
-  async getErrorPatternsByCategory(category: string): Promise<any[]> {
+  async getErrorPatternsByCategory(category: string): Promise<ErrorPattern[]> {
     try {
       return await db
         .select()
@@ -581,7 +584,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
 
-  async getAutoFixablePatterns(): Promise<any[]> {
+  async getAutoFixablePatterns(): Promise<ErrorPattern[]> {
     try {
       return await db
         .select()
@@ -595,18 +598,19 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   }
   
   // Fix methods
-  async createErrorFix(fix: any): Promise<any> {
+  async createErrorFix(fix: InsertErrorFix): Promise<ErrorFix> {
     try {
-      const dbFix = {
-        pattern_id: fix.patternId || null,
-        fix_title: fix.title || fix.description || 'Fix',
-        fix_description: fix.description || '',
-        fix_code: fix.code || fix.replacementTemplate || '',
-        fix_type: fix.type || fix.method || 'MANUAL',
-        fix_priority: fix.priority || 1,
-        success_rate: fix.successRate || 0,
+      // Create a properly typed object for insertion
+      const dbFix: Partial<typeof errorFixes.$inferInsert> = {
+        pattern_id: fix.pattern_id || null,
+        fix_title: fix.fix_title || 'Fix',
+        fix_description: fix.fix_description || '',
+        fix_code: fix.fix_code || '',
+        fix_type: fix.fix_type || 'MANUAL',
+        fix_priority: fix.fix_priority || 1,
+        success_rate: fix.success_rate || 0,
         created_at: new Date(),
-        created_by: fix.userId || null
+        created_by: fix.created_by || null
       };
       
       const [newFix] = await db.insert(errorFixes).values(dbFix).returning();
@@ -617,7 +621,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
 
-  async getErrorFixById(id: number): Promise<any> {
+  async getErrorFixById(id: number): Promise<ErrorFix | null> {
     try {
       const [fix] = await db.select().from(errorFixes).where(eq(errorFixes.id, id));
       return fix || null;
@@ -627,22 +631,24 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
 
-  async updateErrorFix(id: number, fix: any): Promise<any> {
+  async updateErrorFix(id: number, fix: Partial<InsertErrorFix>): Promise<ErrorFix> {
     try {
-      const updateFields: any = {};
+      // Create a properly typed update object
+      const updateFields: Partial<typeof errorFixes.$inferInsert> = {
+        updated_at: new Date()
+      };
       
-      if (fix.title) updateFields.fix_title = fix.title;
-      if (fix.description) updateFields.fix_description = fix.description;
-      if (fix.code || fix.replacementTemplate) updateFields.fix_code = fix.code || fix.replacementTemplate;
-      if (fix.type || fix.method) updateFields.fix_type = fix.type || fix.method;
-      if (fix.priority) updateFields.fix_priority = fix.priority;
-      if (fix.successRate !== undefined) updateFields.success_rate = fix.successRate;
+      // Map the incoming fix properties to the database fields
+      if (fix.fix_title) updateFields.fix_title = fix.fix_title;
+      if (fix.fix_description) updateFields.fix_description = fix.fix_description;
+      if (fix.fix_code) updateFields.fix_code = fix.fix_code;
+      if (fix.fix_type) updateFields.fix_type = fix.fix_type;
+      if (fix.fix_priority) updateFields.fix_priority = fix.fix_priority;
+      if (fix.success_rate !== undefined) updateFields.success_rate = fix.success_rate;
       
-      updateFields.updated_at = new Date();
-      
-      if (Object.keys(updateFields).length === 0) {
-        // Nothing to update
-        return await this.getErrorFixById(id);
+      if (Object.keys(updateFields).length === 1) {
+        // Only updated_at was set, nothing else to update
+        return await this.getErrorFixById(id) as ErrorFix;
       }
       
       const [updatedFix] = await db
@@ -658,7 +664,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
 
-  async getAllErrorFixes(): Promise<any[]> {
+  async getAllErrorFixes(): Promise<ErrorFix[]> {
     try {
       return await db.select().from(errorFixes).orderBy(errorFixes.pattern_id, errorFixes.created_at);
     } catch (error) {
@@ -667,7 +673,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     }
   }
 
-  async getFixesByPatternId(patternId: number): Promise<any[]> {
+  async getFixesByPatternId(patternId: number): Promise<ErrorFix[]> {
     try {
       return await db
         .select()
@@ -904,44 +910,275 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   async getCategories(): Promise<any[]> {
     throw new Error("Method not implemented");
   }
-  async createFixHistory(fixHistory: any): Promise<any> {
-    throw new Error("Method not implemented");
+  async createFixHistory(fixHistory: InsertErrorFixHistory): Promise<ErrorFixHistory> {
+    try {
+      const [newFixHistory] = await db.insert(errorFixHistory).values(fixHistory).returning();
+      return newFixHistory;
+    } catch (error) {
+      console.error('Error creating fix history:', error);
+      throw error;
+    }
   }
-  async getFixHistoryByErrorId(errorId: number): Promise<any[]> {
-    throw new Error("Method not implemented");
+  
+  async getFixHistoryByErrorId(errorId: number): Promise<ErrorFixHistory[]> {
+    try {
+      return await db
+        .select()
+        .from(errorFixHistory)
+        .where(eq(errorFixHistory.error_id, errorId))
+        .orderBy(desc(errorFixHistory.created_at));
+    } catch (error) {
+      console.error('Error getting fix history by error ID:', error);
+      return [];
+    }
   }
-  async getFixHistoryStats(userId?: number, fromDate?: Date, toDate?: Date): Promise<any> {
-    throw new Error("Method not implemented");
+  
+  async getFixHistoryStats(userId?: number, fromDate?: Date, toDate?: Date): Promise<{
+    totalFixes: number;
+    automaticFixes: number;
+    manualFixes: number;
+    fixesByDate: { date: string; count: number }[];
+    fixesByType: { type: string; count: number }[];
+  }> {
+    try {
+      // Create date filters
+      const dateFilters = [];
+      if (fromDate) {
+        dateFilters.push(gte(errorFixHistory.created_at, fromDate));
+      }
+      if (toDate) {
+        dateFilters.push(lte(errorFixHistory.created_at, toDate));
+      }
+      
+      // Create user filter
+      const filters = dateFilters.length > 0 ? [and(...dateFilters)] : [];
+      if (userId) {
+        filters.push(eq(errorFixHistory.user_id, userId));
+      }
+      
+      // Perform query with filters
+      const fixHistory = await db
+        .select()
+        .from(errorFixHistory)
+        .where(filters.length > 0 ? and(...filters) : undefined);
+      
+      // Calculate stats
+      const totalFixes = fixHistory.length;
+      const automaticFixes = fixHistory.filter(h => h.fix_method === 'AUTO' || h.fix_method === 'AUTOMATIC').length;
+      const manualFixes = totalFixes - automaticFixes;
+      
+      // Group by date
+      const fixesByDateMap = new Map<string, number>();
+      // Group by type
+      const fixesByTypeMap = new Map<string, number>();
+      
+      for (const fix of fixHistory) {
+        // Format date as YYYY-MM-DD
+        const date = fix.created_at.toISOString().split('T')[0];
+        fixesByDateMap.set(date, (fixesByDateMap.get(date) || 0) + 1);
+        
+        const type = fix.fix_method || 'UNKNOWN';
+        fixesByTypeMap.set(type, (fixesByTypeMap.get(type) || 0) + 1);
+      }
+      
+      const fixesByDate = Array.from(fixesByDateMap.entries()).map(([date, count]) => ({ date, count }));
+      const fixesByType = Array.from(fixesByTypeMap.entries()).map(([type, count]) => ({ type, count }));
+      
+      return {
+        totalFixes,
+        automaticFixes,
+        manualFixes,
+        fixesByDate,
+        fixesByType
+      };
+    } catch (error) {
+      console.error('Error getting fix history stats:', error);
+      return {
+        totalFixes: 0,
+        automaticFixes: 0,
+        manualFixes: 0,
+        fixesByDate: [],
+        fixesByType: []
+      };
+    }
   }
-  async createProjectAnalysis(analysis: any): Promise<any> {
-    throw new Error("Method not implemented");
+  async createProjectAnalysis(analysis: InsertProjectAnalysis): Promise<ProjectAnalysis> {
+    try {
+      const [newAnalysis] = await db.insert(projectAnalysis).values(analysis).returning();
+      return newAnalysis;
+    } catch (error) {
+      console.error('Error creating project analysis:', error);
+      throw error;
+    }
   }
-  async getProjectAnalysisById(id: number): Promise<any> {
-    throw new Error("Method not implemented");
+  
+  async getProjectAnalysisById(id: number): Promise<ProjectAnalysis | null> {
+    try {
+      const [analysis] = await db
+        .select()
+        .from(projectAnalysis)
+        .where(eq(projectAnalysis.id, id));
+      return analysis || null;
+    } catch (error) {
+      console.error('Error getting project analysis by ID:', error);
+      return null;
+    }
   }
-  async updateProjectAnalysis(id: number, analysis: any): Promise<any> {
-    throw new Error("Method not implemented");
+  
+  async updateProjectAnalysis(id: number, analysis: Partial<InsertProjectAnalysis>): Promise<ProjectAnalysis> {
+    try {
+      // Create a properly typed update object
+      const updateFields: Partial<typeof projectAnalysis.$inferInsert> = {
+        updated_at: new Date()
+      };
+      
+      // Map the incoming analysis to database fields
+      if (analysis.error_count !== undefined) updateFields.error_count = analysis.error_count;
+      if (analysis.warning_count !== undefined) updateFields.warning_count = analysis.warning_count;
+      if (analysis.files_analyzed !== undefined) updateFields.files_analyzed = analysis.files_analyzed;
+      if (analysis.lines_of_code !== undefined) updateFields.lines_of_code = analysis.lines_of_code;
+      if (analysis.status !== undefined) updateFields.status = analysis.status;
+      if (analysis.summary !== undefined) updateFields.summary = analysis.summary;
+      if (analysis.completion_time !== undefined) updateFields.completion_time = analysis.completion_time;
+      
+      if (Object.keys(updateFields).length === 1) {
+        // Only updated_at was set, nothing else to update
+        const [analysis] = await db
+          .select()
+          .from(projectAnalysis)
+          .where(eq(projectAnalysis.id, id));
+        return analysis;
+      }
+      
+      const [updatedAnalysis] = await db
+        .update(projectAnalysis)
+        .set(updateFields)
+        .where(eq(projectAnalysis.id, id))
+        .returning();
+        
+      return updatedAnalysis;
+    } catch (error) {
+      console.error('Error updating project analysis:', error);
+      throw error;
+    }
   }
-  async getAllProjectAnalyses(limit?: number): Promise<any[]> {
-    throw new Error("Method not implemented");
+  
+  async getAllProjectAnalyses(limit?: number): Promise<ProjectAnalysis[]> {
+    try {
+      let query = db.select().from(projectAnalysis).orderBy(desc(projectAnalysis.created_at));
+      
+      if (limit) {
+        query = query.limit(limit);
+      }
+      
+      return await query;
+    } catch (error) {
+      console.error('Error getting all project analyses:', error);
+      return [];
+    }
   }
-  async getLatestProjectAnalysis(): Promise<any> {
-    throw new Error("Method not implemented");
+  
+  async getLatestProjectAnalysis(): Promise<ProjectAnalysis | null> {
+    try {
+      const [analysis] = await db
+        .select()
+        .from(projectAnalysis)
+        .orderBy(desc(projectAnalysis.created_at))
+        .limit(1);
+      
+      return analysis || null;
+    } catch (error) {
+      console.error('Error getting latest project analysis:', error);
+      return null;
+    }
   }
-  async createProjectFile(file: any): Promise<any> {
-    throw new Error("Method not implemented");
+  async createProjectFile(file: InsertProjectFile): Promise<ProjectFile> {
+    try {
+      const [newFile] = await db.insert(projectFiles).values(file).returning();
+      return newFile;
+    } catch (error) {
+      console.error('Error creating project file:', error);
+      throw error;
+    }
   }
-  async updateProjectFile(id: number, file: any): Promise<any> {
-    throw new Error("Method not implemented");
+  
+  async updateProjectFile(id: number, file: Partial<InsertProjectFile>): Promise<ProjectFile> {
+    try {
+      // Create a properly typed update object
+      const updateFields: Partial<typeof projectFiles.$inferInsert> = {
+        updated_at: new Date()
+      };
+      
+      // Map the incoming file updates to database fields
+      if (file.file_path !== undefined) updateFields.file_path = file.file_path;
+      if (file.file_name !== undefined) updateFields.file_name = file.file_name;
+      if (file.file_size !== undefined) updateFields.file_size = file.file_size;
+      if (file.lines_of_code !== undefined) updateFields.lines_of_code = file.lines_of_code; 
+      if (file.error_count !== undefined) updateFields.error_count = file.error_count;
+      if (file.warning_count !== undefined) updateFields.warning_count = file.warning_count;
+      if (file.last_modified !== undefined) updateFields.last_modified = file.last_modified;
+      if (file.file_type !== undefined) updateFields.file_type = file.file_type;
+      if (file.status !== undefined) updateFields.status = file.status;
+      
+      if (Object.keys(updateFields).length === 1) {
+        // Only updated_at was set, nothing else to update
+        const [file] = await db
+          .select()
+          .from(projectFiles)
+          .where(eq(projectFiles.id, id));
+        return file;
+      }
+      
+      const [updatedFile] = await db
+        .update(projectFiles)
+        .set(updateFields)
+        .where(eq(projectFiles.id, id))
+        .returning();
+        
+      return updatedFile;
+    } catch (error) {
+      console.error('Error updating project file:', error);
+      throw error;
+    }
   }
-  async getProjectFileByPath(filePath: string): Promise<any> {
-    throw new Error("Method not implemented");
+  
+  async getProjectFileByPath(filePath: string): Promise<ProjectFile | null> {
+    try {
+      const [file] = await db
+        .select()
+        .from(projectFiles)
+        .where(eq(projectFiles.file_path, filePath));
+      
+      return file || null;
+    } catch (error) {
+      console.error('Error getting project file by path:', error);
+      return null;
+    }
   }
-  async getAllProjectFiles(): Promise<any[]> {
-    throw new Error("Method not implemented");
+  
+  async getAllProjectFiles(): Promise<ProjectFile[]> {
+    try {
+      return await db
+        .select()
+        .from(projectFiles)
+        .orderBy(projectFiles.file_path);
+    } catch (error) {
+      console.error('Error getting all project files:', error);
+      return [];
+    }
   }
-  async getProjectFilesWithErrors(): Promise<any[]> {
-    throw new Error("Method not implemented");
+  
+  async getProjectFilesWithErrors(): Promise<ProjectFile[]> {
+    try {
+      return await db
+        .select()
+        .from(projectFiles)
+        .where(gt(projectFiles.error_count, 0))
+        .orderBy(desc(projectFiles.error_count));
+    } catch (error) {
+      console.error('Error getting project files with errors:', error);
+      return [];
+    }
   }
   
   // Initialization methods

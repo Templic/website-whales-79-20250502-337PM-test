@@ -7,7 +7,7 @@
 
 // Placeholder for actual blockchain logging
 // In a real implementation, this would import from the blockchain module
-function recordSecurityEvent(event): void {
+function recordSecurityEvent(event: Record<string, any>): void {
   console.log(`[BLOCKCHAIN-SECURITY] ${event.level || 'INFO'} - ${event.message || event.type}`, 
                event.details || {});
 }
