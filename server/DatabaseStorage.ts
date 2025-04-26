@@ -22,7 +22,7 @@ import {
 const PostgresSessionStore = connectPg(session);
 
 export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
-  sessionStore: session.Store;
+  sessionStore: any; // Fix for express-session Store type
   
   // Alias methods for compatibility with IStorage
   async createTypescriptError(error: InsertTypeScriptError): Promise<TypeScriptError> {
@@ -180,15 +180,15 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
     try {
       // Map our InsertTypeScriptError to the actual database schema
       const dbError = {
-        error_code: error.code?.toString() || '0',
-        file_path: error.filePath || error.file || '',
-        line_number: error.line || 0,
-        column_number: error.column || 0, 
-        error_message: error.message || '',
-        error_context: error.lineContent || '',
-        category: error.category || 'OTHER',
-        severity: error.severity || 'MEDIUM',
-        status: error.status || 'PENDING',
+        error_code: (error as any).code?.toString() || '0',
+        file_path: (error as any).filePath || (error as any).file || '',
+        line_number: (error as any).line || 0,
+        column_number: (error as any).column || 0, 
+        error_message: (error as any).message || '',
+        error_context: (error as any).lineContent || '',
+        category: (error as any).category || 'OTHER',
+        severity: (error as any).severity || 'MEDIUM',
+        status: (error as any).status || 'PENDING',
         detected_at: new Date(),
         first_detected_at: new Date(),
         occurrence_count: 1,
@@ -222,15 +222,19 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
       // Map the update fields to the actual database schema
       const updateFields: any = {};
       
-      if (error.status) updateFields.status = error.status;
-      if (error.severity) updateFields.severity = error.severity;
-      if (error.category) updateFields.category = error.category;
-      if (error.fixId) updateFields.fix_id = error.fixId;
-      if (error.resolved_at || (error.status === 'fixed')) updateFields.resolved_at = new Date();
+      if ((error as any).status) updateFields.status = (error as any).status;
+      if ((error as any).severity) updateFields.severity = (error as any).severity;
+      if ((error as any).category) updateFields.category = (error as any).category;
+      if ((error as any).fixId) updateFields.fix_id = (error as any).fixId;
+      if ((error as any).resolved_at || ((error as any).status === 'fixed')) updateFields.resolved_at = new Date();
       
       if (Object.keys(updateFields).length === 0) {
         // Nothing to update
-        return await this.getTypeScriptErrorById(id);
+        const error = await this.getTypeScriptErrorById(id);
+        if (!error) {
+          throw new Error(`TypeScript error with ID ${id} not found`);
+        }
+        return error;
       }
       
       const [updatedError] = await db
@@ -259,13 +263,13 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
       
       if (filters) {
         if (filters.status) {
-          query = query.where(eq(typeScriptErrors.status, filters.status));
+          query = query.where(sql`${typeScriptErrors.status} = ${filters.status}`);
         }
         if (filters.severity) {
-          query = query.where(eq(typeScriptErrors.severity, filters.severity));
+          query = query.where(sql`${typeScriptErrors.severity} = ${filters.severity}`);
         }
         if (filters.category) {
-          query = query.where(eq(typeScriptErrors.category, filters.category));
+          query = query.where(sql`${typeScriptErrors.category} = ${filters.category}`);
         }
         if (filters.file_path) {
           query = query.where(sql`${typeScriptErrors.file_path} LIKE ${`%${filters.file_path}%`}`);
@@ -387,7 +391,8 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   // Error Analysis methods
   async createErrorAnalysis(analysis: InsertErrorAnalysis): Promise<ErrorAnalysis> {
     try {
-      const [newAnalysis] = await db.insert(errorAnalysis).values(analysis).returning();
+      // Create an array of the analysis object to satisfy the type requirements
+      const [newAnalysis] = await db.insert(errorAnalysis).values([analysis]).returning();
       return newAnalysis;
     } catch (error) {
       console.error('Error creating error analysis:', error);
@@ -423,7 +428,8 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   // Scan Result methods
   async createScanResult(result: InsertScanResult): Promise<ScanResult> {
     try {
-      const [newScanResult] = await db.insert(scanResults).values(result).returning();
+      // Create an array of the scan result object to satisfy the type requirements
+      const [newScanResult] = await db.insert(scanResults).values([result]).returning();
       return newScanResult;
     } catch (error) {
       console.error('Error creating scan result:', error);
@@ -537,7 +543,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
       return await db
         .select()
         .from(errorPatterns)
-        .where(eq(errorPatterns.category, category))
+        .where(sql`${errorPatterns.category} = ${category}`)
         .orderBy(errorPatterns.updated_at);
     } catch (error) {
       console.error('Error getting error patterns by category:', error);
@@ -550,7 +556,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
       return await db
         .select()
         .from(errorPatterns)
-        .where(eq(errorPatterns.auto_fixable, true))
+        .where(sql`${errorPatterns.auto_fixable} = ${true}`)
         .orderBy(errorPatterns.category);
     } catch (error) {
       console.error('Error getting auto-fixable patterns:', error);

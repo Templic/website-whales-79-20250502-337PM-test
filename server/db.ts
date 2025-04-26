@@ -1,7 +1,9 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
+import { sql } from 'drizzle-orm';
+import { text, timestamp, pgTable } from 'drizzle-orm/pg-core';
 import ws from "ws";
-import * as schema from "../shared/schema";
+import * as schema from "@shared/schema";
 
 // Configure Neon to use WebSockets for serverless environments
 neonConfig.webSocketConstructor = ws;
@@ -65,7 +67,7 @@ let isConnectionDown = false;
 let reconnectAttempts = 0;
 
 // Enhanced error handler for the pool
-pool.on('error', async (err) => {
+pool.on('error', async (err: any) => {
   console.error('Database pool error:', err);
   
   // Handle specific Postgres error codes
@@ -109,7 +111,7 @@ async function attemptReconnect() {
       client.release();
       isConnectionDown = false;
       reconnectAttempts = 0;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to reconnect:', err);
       await attemptReconnect();
     }
@@ -126,7 +128,7 @@ export const initializeDatabase = async () => {
       console.log('Successfully connected to PostgreSQL database');
       client.release();
       return true;
-    } catch (err) {
+    } catch (err: any) {
       retries++;
       console.error(`Failed to connect to PostgreSQL (attempt ${retries}/${MAX_RETRIES}):`, err);
       
@@ -154,7 +156,7 @@ export const checkDatabaseConnectivity = async (): Promise<boolean> => {
     } finally {
       client.release();
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Database connectivity check failed:', err);
     return false;
   }
@@ -204,7 +206,7 @@ export const getDatabaseStats = async (): Promise<{
     } finally {
       client.release();
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to get database stats:', err);
     return {
       totalConnections: 0,
@@ -217,8 +219,6 @@ export const getDatabaseStats = async (): Promise<{
 
 // Export pool to be able to end it when the server closes
 export const pgPool = pool;
-import { sql } from 'drizzle-orm';
-import { text, timestamp, pgTable } from 'drizzle-orm/pg-core';
 
 // This is a legacy table, using contactMessages from schema.ts instead
 /*export const contactFormEntries = pgTable('contact_form_entries', {

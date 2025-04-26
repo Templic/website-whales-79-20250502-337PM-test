@@ -420,7 +420,7 @@ export class HybridEncryptionSystem {
   /**
    * Decrypt data using hybrid encryption
    */
-  public static decrypt(encryptedData: string, encryptionDetails): string {
+  public static decrypt(encryptedData: string, encryptionDetails: any): string {
     try {
       console.log(`[QuantumCrypto] Hybrid decrypting data using ${encryptionDetails.algorithm}`);
       
@@ -663,7 +663,7 @@ export const quantumCrypto = {
   /**
    * Decrypt data using quantum-resistant encryption
    */
-  decrypt: (encryptionResult: EncryptionResult, privateKey: string): string: string => {
+  decrypt: (encryptionResult: EncryptionResult, privateKey: string): string => {
     return QuantumEncryption.decrypt(encryptionResult, privateKey);
   },
   

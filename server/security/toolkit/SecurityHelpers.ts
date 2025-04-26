@@ -129,7 +129,7 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
     const originalConstructor = constructor;
     
     // Create a new constructor function
-    const newConstructor: any = function(...args: any: any[]) {
+    const newConstructor: any = function(...args: any[]) {
       const instance = new originalConstructor(...args);
       
       // Wrap all methods with security middleware
@@ -147,7 +147,7 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
         if ((method as any).__secured) return;
         
         // Wrap method with security
-        (instance as an: anyy)[methodName] = async function(req: Request, res: Response, next: NextFunction) {
+        (instance as any)[methodName] = async function(req: Request, res: Response, next: NextFunction) {
           try {
             // Create security toolkit with base level
             const toolkit = new SecurityToolkit(baseLevel);
