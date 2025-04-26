@@ -1,105 +1,179 @@
-# TypeScript Intelligent Error Fixer
-
-A comprehensive standalone utility for analyzing, detecting patterns, and automatically fixing TypeScript errors in your codebase.
+# TypeScript Intelligent Fixer Documentation
 
 ## Overview
 
-The TypeScript Intelligent Error Fixer is designed to:
+The TypeScript Intelligent Fixer is a robust tool designed to automate the detection, analysis, and resolution of TypeScript errors in your codebase. Built with a three-phase approach, it offers comprehensive solutions from simple type errors to complex cascading issues.
 
-1. **Detect TypeScript errors** with detailed categorization and severity assessment
-2. **Identify common error patterns** across your codebase
-3. **Automatically fix** simple errors that follow known patterns
-4. **Suggest manual fixes** for more complex errors
-5. **Track error occurrence** and fix success rates
+## Three-Phase Approach
 
-This utility works independently of any IDE or build system, making it suitable for both manual use during development and automated use in CI/CD pipelines.
-
-## Key Features
-
-- **Advanced Error Analysis**: Categorizes errors by severity, type, and location
-- **Pattern Recognition**: Identifies common error patterns across your codebase
-- **Intelligent Automatic Fixing**: Applies fixes based on error patterns and context
-- **Fix Prioritization**: Suggests which errors to fix first for maximum impact
-- **Fix Verification**: Ensures fixes don't introduce new errors
-- **Extensible Architecture**: Easy to add new error patterns and fixes
+1. **Detection** - Scan your codebase to identify TypeScript errors
+2. **Intelligent Analysis** - Analyze error patterns, dependencies, and root causes
+3. **Prevention & Resolution** - Apply targeted fixes and prevent recurrence
 
 ## Installation
 
-No installation is required! The utility consists of two main files:
-
-1. `ts-intelligent-fixer.ts` - The main TypeScript code for the utility
-2. `analyze-ts-errors.sh` - A shell script wrapper for easy command-line usage
-
-To use the utility, simply:
-
 ```bash
-# Make the shell script executable (only needed once)
-chmod +x analyze-ts-errors.sh
+# Make the script executable
+chmod +x ts-intelligent-fixer.ts
 
-# Run an analysis
-./analyze-ts-errors.sh analyze
+# Run the tool
+./ts-intelligent-fixer.ts [command] [options]
 ```
 
-## Usage
+## Commands
 
-The utility provides several commands through the shell script:
+### Analyze
 
-### Analyzing Errors
+Scan your project for TypeScript errors without modifying any files:
 
+```bash
+./ts-intelligent-fixer.ts analyze [options]
+```
+
+Options:
+- `-p, --project <path>` - Path to tsconfig.json (default: './tsconfig.json')
+- `-r, --root <path>` - Project root directory (default: '.')
+- `-o, --output <path>` - Output file for analysis results (JSON format)
+- `-v, --verbose` - Enable verbose output
+- `-d, --deep` - Perform deep analysis with dependency tracking
+- `-a, --ai` - Use OpenAI to enhance analysis (requires OPENAI_API_KEY)
+- `-c, --categories <list>` - Comma-separated list of error categories to analyze
+- `-e, --exclude <list>` - Comma-separated list of files or directories to exclude
+- `--no-save` - Don't save analysis results to the database
+
+Example:
 ```bash
 # Basic analysis
-./analyze-ts-errors.sh analyze
+./ts-intelligent-fixer.ts analyze
 
-# Deep analysis with dependency tracking
-./analyze-ts-errors.sh analyze --deep
-
-# Analyze with AI assistance (requires OPENAI_API_KEY)
-./analyze-ts-errors.sh analyze --ai
+# Deep analysis with AI assistance, excluding node_modules
+./ts-intelligent-fixer.ts analyze -d -a -e node_modules
 ```
 
-### Finding Error Patterns
+### Fix
+
+Automatically fix TypeScript errors in your project:
 
 ```bash
-# Identify common error patterns
-./analyze-ts-errors.sh patterns
+./ts-intelligent-fixer.ts fix [options]
 ```
 
-### Viewing Error Statistics
+Options:
+- `-p, --project <path>` - Path to tsconfig.json (default: './tsconfig.json')
+- `-r, --root <path>` - Project root directory (default: '.')
+- `-b, --backup <dir>` - Directory for backups (default: './ts-error-fixes-backup')
+- `--no-backup` - Disable file backups
+- `-c, --categories <list>` - Comma-separated list of error categories to fix
+- `-m, --max-errors <number>` - Maximum number of errors to fix per file
+- `-d, --dry-run` - Show what would be fixed without making changes
+- `-v, --verbose` - Enable verbose output
+- `--no-interfaces` - Disable generating interface definitions
+- `--no-props` - Disable fixing missing properties
+- `--no-any` - Disable fixing implicit any types
+- `--deep-fix` - Enable fixing dependencies and cascading errors
+- `-a, --ai` - Use OpenAI to enhance fixes (requires OPENAI_API_KEY)
+- `--no-batch` - Disable batch fixing (fix one at a time)
+- `-e, --exclude <list>` - Comma-separated list of files or directories to exclude
+- `--no-save` - Don't save fix results to the database
 
+Example:
 ```bash
-# Generate statistics about errors
-./analyze-ts-errors.sh stats
+# Fix all errors with backups
+./ts-intelligent-fixer.ts fix
+
+# Dry run with verbose output, focusing on type_mismatch errors
+./ts-intelligent-fixer.ts fix -d -v -c type_mismatch
 ```
 
-### Fixing Errors
+### Patterns
+
+Find common error patterns in your TypeScript code:
 
 ```bash
-# Fix auto-fixable errors
-./analyze-ts-errors.sh fix
+./ts-intelligent-fixer.ts patterns [options]
+```
 
-# Fix all errors (not just auto-fixable ones)
-./analyze-ts-errors.sh fix --all
+Options:
+- `-p, --project <path>` - Path to tsconfig.json (default: './tsconfig.json')
+- `-r, --root <path>` - Project root directory (default: '.')
+- `-o, --output <path>` - Output file for pattern results (JSON format)
+- `-v, --verbose` - Enable verbose output
+- `-m, --min-occurrences <number>` - Minimum number of occurrences to consider a pattern (default: '3')
+- `--no-save` - Don't save patterns to the database
 
-# Fix only high severity errors
-./analyze-ts-errors.sh fix --severity=high
+Example:
+```bash
+# Find patterns that occur at least 5 times
+./ts-intelligent-fixer.ts patterns -m 5
+```
 
-# Fix without actually applying changes (dry run)
-./analyze-ts-errors.sh fix --dry-run
+### Verify
 
+Verify that TypeScript errors were fixed correctly:
+
+```bash
+./ts-intelligent-fixer.ts verify [options]
+```
+
+Options:
+- `-p, --project <path>` - Path to tsconfig.json (default: './tsconfig.json')
+- `-r, --root <path>` - Project root directory (default: '.')
+- `-v, --verbose` - Enable verbose output
+
+Example:
+```bash
+./ts-intelligent-fixer.ts verify -v
+```
+
+### Stats
+
+Show statistics about TypeScript errors and fixes:
+
+```bash
+./ts-intelligent-fixer.ts stats [options]
+```
+
+Options:
+- `-r, --root <path>` - Project root directory (default: '.')
+- `-p, --project <path>` - Path to tsconfig.json (default: './tsconfig.json')
+- `-d, --days <number>` - Number of days to include in stats (default: '30')
+- `-v, --verbose` - Enable verbose output
+
+Example:
+```bash
+# Show stats for the last 7 days
+./ts-intelligent-fixer.ts stats -d 7
+```
+
+### Fix-File
+
+Fix TypeScript errors in a specific file:
+
+```bash
+./ts-intelligent-fixer.ts fix-file <file> [options]
+```
+
+Arguments:
+- `<file>` - Path to the file to fix
+
+Options:
+- `-p, --project <path>` - Path to tsconfig.json (default: './tsconfig.json')
+- `-r, --root <path>` - Project root directory (default: '.')
+- `-b, --backup <dir>` - Directory for backups (default: './ts-error-fixes-backup')
+- `--no-backup` - Disable file backups
+- `-d, --dry-run` - Show what would be fixed without making changes
+- `-v, --verbose` - Enable verbose output
+- `-a, --ai` - Use OpenAI to enhance fixes (requires OPENAI_API_KEY)
+
+Example:
+```bash
 # Fix errors in a specific file
-./analyze-ts-errors.sh fix-file path/to/file.ts
-```
-
-### Verifying Fixes
-
-```bash
-# Verify that fixes didn't introduce new errors
-./analyze-ts-errors.sh verify
+./ts-intelligent-fixer.ts fix-file ./src/components/Button.tsx
 ```
 
 ## Error Categories
 
-The utility categorizes errors into the following types:
+The tool categorizes TypeScript errors into these types:
 
 - **type_mismatch**: Type compatibility issues
 - **missing_type**: Missing type declarations
@@ -111,135 +185,124 @@ The utility categorizes errors into the following types:
 - **syntax_error**: Syntax errors
 - **other**: Other TypeScript errors
 
-## Error Severity Levels
+## Error Severities
 
-Errors are assigned one of the following severity levels:
+Errors are assigned one of these severity levels:
 
 - **critical**: Errors that prevent compilation
 - **high**: Errors that will likely cause runtime issues
 - **medium**: Errors that might cause runtime issues
 - **low**: Minor issues and code quality concerns
 
-## Auto-Fixable Error Patterns
+## Using with OpenAI
 
-The utility can automatically fix several common error patterns:
+For advanced analysis and fixes, you can use the `-a, --ai` option, which integrates with OpenAI's models. This requires setting the `OPENAI_API_KEY` environment variable:
 
-1. **Missing Type Annotations**: Adding `any` type annotations to parameters or variables
-2. **Null/Undefined Handling**: Adding optional chaining or nullish coalescing operators
-3. **Missing Module Imports**: Adding import statements for referenced modules
-4. **Unused Variables**: Adding `// eslint-disable-next-line` comments or removing variables
-5. **Missing Semicolons**: Adding missing semicolons where required
-
-## Architecture
-
-The utility consists of several logical components:
-
-1. **Error Analyzer**: Scans the codebase for TypeScript errors, categorizes them, and identifies the most problematic files
-2. **Pattern Finder**: Identifies common error patterns in the codebase
-3. **Fix Generator**: Generates fixes for common error patterns
-4. **Fix Applier**: Applies fixes to the codebase
-5. **Fix Verifier**: Ensures fixes don't introduce new errors
-
-## Adding New Error Patterns
-
-To add a new error pattern, modify the `detectErrorPatterns` function in `ts-intelligent-fixer.ts`:
-
-```typescript
-// Pattern X: [Name of your pattern]
-const myPatternRegex = /Your regex pattern/;
-const myPatternErrors = errors.filter(
-  error => error.category === ErrorCategory.YourCategory && 
-  myPatternRegex.test(error.errorMessage)
-);
-
-if (myPatternErrors.length > 0) {
-  patterns.push({
-    name: 'My Pattern Name',
-    description: 'Description of your pattern',
-    regex: myPatternRegex.source,
-    category: ErrorCategory.YourCategory,
-    severity: ErrorSeverity.YourSeverity,
-    autoFixable: true, // or false
-    fixCount: 0,
-    successRate: 0
-  });
-}
+```bash
+export OPENAI_API_KEY=your-api-key
+./ts-intelligent-fixer.ts analyze -a
+./ts-intelligent-fixer.ts fix -a
 ```
 
-## Adding New Fix Generators
+## Batch vs. One-by-One Fixes
 
-To add a new fix generator, modify the `generateFixes` function in `ts-intelligent-fixer.ts`:
+By default, the tool uses batch fixing to improve performance. For more precise control, you can disable batch fixing:
 
-```typescript
-// Fix for your pattern
-if (
-  error.category === ErrorCategory.YourCategory &&
-  /Your regex pattern/.test(error.errorMessage)
-) {
-  // Your fix logic here
-  // ...
-  
-  return {
-    fixTitle: 'Your fix title',
-    fixDescription: 'Description of your fix',
-    fixType: 'code_change',
-    beforeCode: originalCode,
-    afterCode: fixedCode,
-    appliedCount: 0,
-    successCount: 0,
-    aiGenerated: false
-  };
-}
+```bash
+./ts-intelligent-fixer.ts fix --no-batch
 ```
 
-## Integration with CI/CD
+## Deep Analysis and Dependency Tracking
 
-The utility can be integrated into CI/CD pipelines to prevent TypeScript errors from being merged into the main branch:
+The deep analysis feature identifies dependencies between errors, helping focus on root causes:
 
-```yaml
-# Example GitHub Actions workflow
-name: TypeScript Error Check
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  check-ts-errors:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-      - name: Install dependencies
-        run: npm ci
-      - name: Check for TypeScript errors
-        run: ./analyze-ts-errors.sh analyze
-      - name: Fail if critical errors found
-        run: |
-          if [ $(grep -c "critical" ts-error-report.json) -gt 0 ]; then
-            echo "Critical TypeScript errors found!"
-            exit 1
-          fi
+```bash
+./ts-intelligent-fixer.ts analyze -d
 ```
 
-## Future Enhancements
+## Database Integration
 
-Planned future enhancements include:
+Analysis results, error patterns, and fix history are stored in a database for tracking and reporting. Use the `--no-save` option to disable this feature.
 
-1. **Machine Learning-based Fixes**: Using ML to learn from past fixes and suggest better fixes
-2. **IDE Integration**: Integrating with popular IDEs like VS Code and WebStorm
-3. **Error Trend Analysis**: Tracking error trends over time
-4. **Team Collaboration**: Allowing teams to share error patterns and fixes
-5. **Integration with Code Review Tools**: Suggesting fixes during code reviews
+## Best Practices
+
+1. **Always run analysis first** to understand the errors in your codebase
+2. **Use backups** when fixing errors to easily revert changes if needed
+3. **Start with a dry run** to see what would be fixed without modifying files
+4. **Focus on critical errors first** by using the `-c` option with error categories
+5. **Use deep analysis** to identify root causes of cascading errors
+6. **Verify fixes** after applying them to ensure no new errors were introduced
+7. **Monitor patterns** to identify recurring issues that may need architectural changes
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Tool not finding all errors**:
+   - Ensure your tsconfig.json is correctly configured
+   - Try running with `-v` for verbose output
+
+2. **Fixes not applying correctly**:
+   - Try using `--no-batch` to fix errors one by one
+   - Check for circular dependencies in your code
+
+3. **Database-related errors**:
+   - Ensure your database is properly configured
+   - Use `--no-save` to bypass database integration
+
+### Getting Help
+
+For more information, run:
+
+```bash
+./ts-intelligent-fixer.ts --help
+```
+
+Or for help with a specific command:
+
+```bash
+./ts-intelligent-fixer.ts analyze --help
+```
+
+## Examples
+
+### Complete Workflow
+
+```bash
+# 1. Analyze your project
+./ts-intelligent-fixer.ts analyze -v
+
+# 2. Find common error patterns
+./ts-intelligent-fixer.ts patterns
+
+# 3. Fix errors with backups and AI assistance
+./ts-intelligent-fixer.ts fix -b ./backups -a
+
+# 4. Verify the fixes
+./ts-intelligent-fixer.ts verify
+
+# 5. Check error statistics
+./ts-intelligent-fixer.ts stats
+```
+
+### Focusing on Specific Issues
+
+```bash
+# Find and fix only import errors
+./ts-intelligent-fixer.ts analyze -c import_error
+./ts-intelligent-fixer.ts fix -c import_error
+```
+
+### Excluding Files or Directories
+
+```bash
+# Analyze excluding test files and generated code
+./ts-intelligent-fixer.ts analyze -e "**/*.test.ts,**/*.generated.ts"
+```
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a pull request or open an issue to suggest improvements.
+Contributions to the TypeScript Intelligent Fixer are welcome! Please feel free to submit pull requests or open issues to improve the tool.
 
 ## License
 

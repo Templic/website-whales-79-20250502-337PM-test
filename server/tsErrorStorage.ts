@@ -34,7 +34,7 @@ export class TypescriptErrorStorage {
     severity?: string;
     status?: string;
     limit?: number;
-  } = {}): Promise<TypeScriptError[]> {
+  } = {}): Promise<TypescriptError[]> {
     try {
       let query = db.select().from(typescriptErrors);
       
@@ -95,7 +95,7 @@ export class TypescriptErrorStorage {
    * @param id Error ID
    * @returns TypeScript error or undefined
    */
-  async getTypescriptError(id: number): Promise<TypeScriptError | undefined> {
+  async getTypescriptError(id: number): Promise<TypescriptError | undefined> {
     try {
       const [error] = await db
         .select()
@@ -115,7 +115,7 @@ export class TypescriptErrorStorage {
    * @param error TypeScript error data
    * @returns Created TypeScript error
    */
-  async createTypescriptError(error: InsertTypeScriptError): Promise<TypeScriptError> {
+  async createTypescriptError(error: InsertTypescriptError): Promise<TypescriptError> {
     try {
       const [result] = await db
         .insert(typescriptErrors)
@@ -138,8 +138,8 @@ export class TypescriptErrorStorage {
    */
   async updateTypescriptError(
     id: number,
-    data: Partial<TypeScriptError>
-  ): Promise<TypeScriptError> {
+    data: Partial<TypescriptError>
+  ): Promise<TypescriptError> {
     try {
       const [updated] = await db
         .update(typescriptErrors)
@@ -165,7 +165,7 @@ export class TypescriptErrorStorage {
     codePatterns?: string[];
     messagePatterns?: string[];
     contextClues?: string[];
-  } = {}): Promise<TypeScriptError[]> {
+  } = {}): Promise<TypescriptError[]> {
     try {
       let dbQuery = db.select().from(typescriptErrors);
       const conditions = [];
