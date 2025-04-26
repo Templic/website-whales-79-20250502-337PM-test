@@ -1,35 +1,22 @@
 declare module 'connect-pg-simple' {
   import session from 'express-session';
-  export default function connectPgSimple(session: typeof import('express-session')): new (options) => session.Store;
+  export default function connectPgSimple(session: typeof import('express-session')): new (options: any) => session.Store;
 }
 
 import { 
-  type Subscriber, type InsertSubscriber, 
-  type Post, type InsertPost, 
-  type Category, type InsertCategory, 
-  type Comment, type InsertComment, 
-  type User, type InsertUser, 
-  type Track, type Album, 
-  type Newsletter, type InsertNewsletter, 
-  type ContentItem, type InsertContentItem,
-  type ContentHistory, type InsertContentHistory,
-  type ContentUsage, type InsertContentUsage,
-  type ContentWorkflowHistory, type InsertContentWorkflowHistory,
-  type Product,
+  // User types
+  type User, type InsertUser,
   // TypeScript error management types
-  type TypescriptError, type InsertTypescriptError,
+  type TypeScriptError, type InsertTypeScriptError,
   type ErrorPattern, type InsertErrorPattern,
   type ErrorFix, type InsertErrorFix,
   type ErrorFixHistory, type InsertErrorFixHistory,
   type ProjectAnalysis, type InsertProjectAnalysis,
-  type ProjectFile, type InsertProjectFile,
   // Tables
-  subscribers, posts, categories, comments, users, 
-  tracks, albums, newsletters, contentItems,
-  contentHistory, contentUsage, contentWorkflowHistory, products,
+  users,
   // TypeScript error management tables
   typescriptErrors, errorPatterns, errorFixes, errorFixHistory,
-  projectAnalyses, projectFiles
+  projectAnalyses
 } from "../shared/schema";
 import { sql, eq, and, desc, gt, count, max } from "drizzle-orm";
 import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";

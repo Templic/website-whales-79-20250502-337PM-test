@@ -1,783 +1,463 @@
 /**
  * Advanced TypeScript Error Analyzer
  * 
- * This module provides sophisticated pattern recognition and analysis for TypeScript errors,
- * allowing for more intelligent error categorization and fixing strategies.
+ * This module provides deep analysis capabilities for TypeScript errors,
+ * including dependency tracking to identify root causes and cascading errors.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { execSync } from 'child_process';
-import { 
-  ErrorCategory,
-  ErrorSeverity,
-  categorizeError, 
-  determineSeverity 
-} from './ts-error-analyzer';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as ts from 'typescript';
+import { analyzeProject } from './ts-error-analyzer';
+import { findErrorPatterns } from './ts-pattern-finder';
+import { analyzeErrorWithAI, isOpenAIConfigured } from './openai-integration';
+import { tsErrorStorage } from '../tsErrorStorage';
 
-/**
- * Represents a TypeScript error with detailed information
- */
-export interface TypeScriptError {
-  filePath: string;
-  line: number;
-  column: number;
-  code: string;
-  message: string;
-  category: ErrorCategory;
-  severity: ErrorSeverity;
-  relatedTypes: string[];
-  contextCode?: string;
-  fixStrategy?: FixStrategy;
-  fixSuggestion?: string;
+// Interface for deep scan options
+interface DeepScanOptions {
+  useAI?: boolean;
+  deepScan?: boolean;
+  traceSymbols?: boolean;
+  projectPath?: string;
+  excludePaths?: string[];
+  includePatterns?: string[];
+  concurrency?: number;
+}
+
+// Interface for deep scan results
+interface DeepScanResults {
+  basicResults: any;
+  advancedResults: {
+    rootCauseErrors: number;
+    cascadingErrors: number;
+    independentErrors: number;
+    errorDependencies: Array<{
+      sourceError: {
+        id: number;
+        filePath: string;
+        lineNumber: number;
+        errorCode: string;
+        errorMessage: string;
+      };
+      affectedErrors: Array<{
+        id: number;
+        filePath: string;
+        lineNumber: number;
+        errorCode: string;
+        errorMessage: string;
+      }>;
+      impact: number;
+    }>;
+    fixPriorities: Array<{
+      errorId: number;
+      filePath: string;
+      lineNumber: number;
+      priority: number;
+      reason: string;
+    }>;
+  };
+  patterns: any[];
 }
 
 /**
- * Represents a file and its TypeScript errors
+ * Run a deep scan of TypeScript errors with dependency tracking
+ * 
+ * @param options Deep scan options
+ * @returns Deep scan results
  */
-export interface FileWithErrors {
-  filePath: string;
-  errors: TypeScriptError[];
-  content: string;
-  importStatements: string[];
-  exportedTypes: string[];
-  dependsOn: Set<string>;
-}
-
-/**
- * Represents different strategies for fixing TypeScript errors
- */
-export type FixStrategy = 
-  | 'ADD_TYPE_ANNOTATION'
-  | 'CREATE_INTERFACE'
-  | 'EXTEND_INTERFACE'
-  | 'IMPORT_TYPE'
-  | 'ADD_TYPE_GUARD'
-  | 'ADD_OPTIONAL_CHAINING'
-  | 'TYPE_ASSERTION'
-  | 'REMOVE_UNUSED'
-  | 'FIX_SYNTAX'
-  | 'RENAME_SYMBOL'
-  | 'OTHER';
-
-/**
- * Represents an analysis of TypeScript errors in a project
- */
-export interface TypeScriptErrorAnalysis {
-  totalErrors: number;
-  errorsByCategory: Record<ErrorCategory, TypeScriptError[]>;
-  errorsByFile: Record<string, TypeScriptError[]>;
-  errorsBySeverity: Record<ErrorSeverity, TypeScriptError[]>;
-  filesWithErrors: FileWithErrors[];
-  dependencyGraph: Record<string, string[]>;
-  errors: TypeScriptError[];
-  rootCauses: TypeScriptError[];
-  summary: AnalysisSummary;
-}
-
-/**
- * Summary of the error analysis
- */
-export interface AnalysisSummary {
-  totalErrors: number;
-  criticalErrors: number;
-  highSeverityErrors: number;
-  mediumSeverityErrors: number;
-  lowSeverityErrors: number;
-  mostCommonCategory: ErrorCategory;
-  mostAffectedFile: string;
-  mostAffectedFileErrorCount: number;
-  rootCausesCount: number;
-  fixableErrorsCount: number;
-  estimatedFixTimeMinutes: number;
-}
-
-/**
- * Extract a snippet of code around an error location
- */
-export function extractContextCode(filePath: string, line: number, column: number): string {
+export async function runDeepScan(options: DeepScanOptions = {}): Promise<DeepScanResults> {
   try {
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const lines = fileContent.split('\n');
+    // Run basic analysis first
+    console.log('Running basic TypeScript error analysis...');
+    const basicResults = await analyzeProject();
     
-    // Get a few lines before and after the error line for context
-    const startLine = Math.max(0, line - 3);
-    const endLine = Math.min(lines.length - 1, line + 3);
-    
-    const contextLines = [];
-    for (let i = startLine; i <= endLine; i++) {
-      const lineContent = lines[i] || '';
-      const linePrefix = i + 1 === line ? '> ' : '  ';
-      const lineNumber = `${i + 1}`.padStart(4, ' ');
-      
-      if (i + 1 === line) {
-        // Highlight the error position with a caret
-        const highlightLine = ' '.repeat(column + 7) + '^';
-        contextLines.push(`${linePrefix}${lineNumber}: ${lineContent}`);
-        contextLines.push(highlightLine);
-      } else {
-        contextLines.push(`${linePrefix}${lineNumber}: ${lineContent}`);
-      }
+    if (basicResults.totalErrors === 0) {
+      console.log('No TypeScript errors found.');
+      return {
+        basicResults,
+        advancedResults: {
+          rootCauseErrors: 0,
+          cascadingErrors: 0,
+          independentErrors: 0,
+          errorDependencies: [],
+          fixPriorities: []
+        },
+        patterns: []
+      };
     }
     
-    return contextLines.join('\n');
+    console.log(`Found ${basicResults.totalErrors} TypeScript errors.`);
+    
+    // Run advanced analysis
+    console.log('Running advanced error analysis with dependency tracking...');
+    const advancedResults = await runAdvancedAnalysis(basicResults, options);
+    
+    // Find error patterns
+    console.log('Identifying error patterns...');
+    const patterns = await findErrorPatterns(basicResults);
+    
+    // Return combined results
+    return {
+      basicResults,
+      advancedResults,
+      patterns
+    };
   } catch (error) {
-    return `Could not extract context: ${error instanceof Error ? error.message : String(error)}`;
+    console.error('Error running deep scan:', error);
+    throw error;
   }
 }
 
 /**
- * Extract import statements from a file
+ * Run advanced analysis on TypeScript errors to identify dependencies
+ * 
+ * @param basicResults Results from basic analysis
+ * @param options Analysis options
+ * @returns Advanced analysis results
  */
-export function extractImports(fileContent: string): string[] {
-  const imports: string[] = [];
-  const importRegex = /import\s+(?:{[^}]*}|\*\s+as\s+\w+|\w+)\s+from\s+['"]([^'"]+)['"]/g;
-  
-  let match: RegExpExecArray | null;
-  while ((match = importRegex.exec(fileContent)) !== null) {
-    if (match[1]) {
-      imports.push(match[1]);
-    }
-  }
-  
-  return imports;
-}
-
-/**
- * Extract exported types from a file
- */
-export function extractExportedTypes(fileContent: string): string[] {
-  const exportedTypes: string[] = [];
-  
-  // Match export declarations like: export interface User {...}
-  const exportInterfaceRegex = /export\s+(?:interface|type|class|enum)\s+(\w+)/g;
-  
-  let match: RegExpExecArray | null;
-  while ((match = exportInterfaceRegex.exec(fileContent)) !== null) {
-    if (match[1]) {
-      exportedTypes.push(match[1]);
-    }
-  }
-  
-  // Match named exports like: export { User, Profile }
-  const namedExportRegex = /export\s+{([^}]+)}/g;
-  while ((match = namedExportRegex.exec(fileContent)) !== null) {
-    if (match[1]) {
-      const namedExports = match[1].split(',')
-        .map(e => e.trim().split(/\s+as\s+/)[0].trim())
-        .filter(Boolean);
-      exportedTypes.push(...namedExports);
-    }
-  }
-  
-  return exportedTypes;
-}
-
-/**
- * Build a dependency graph of TypeScript files
- */
-export function buildDependencyGraph(files: FileWithErrors[]): Record<string, string[]> {
-  const dependencyGraph: Record<string, string[]> = {};
-  
-  for (const file of files) {
-    if (!dependencyGraph[file.filePath]) {
-      dependencyGraph[file.filePath] = [];
+export async function runAdvancedAnalysis(
+  basicResults: any,
+  options: DeepScanOptions = {}
+): Promise<{
+  rootCauseErrors: number;
+  cascadingErrors: number;
+  independentErrors: number;
+  errorDependencies: Array<{
+    sourceError: {
+      id: number;
+      filePath: string;
+      lineNumber: number;
+      errorCode: string;
+      errorMessage: string;
+    };
+    affectedErrors: Array<{
+      id: number;
+      filePath: string;
+      lineNumber: number;
+      errorCode: string;
+      errorMessage: string;
+    }>;
+    impact: number;
+  }>;
+  fixPriorities: Array<{
+    errorId: number;
+    filePath: string;
+    lineNumber: number;
+    priority: number;
+    reason: string;
+  }>;
+}> {
+  try {
+    const errors = basicResults.errors || [];
+    
+    if (errors.length === 0) {
+      return {
+        rootCauseErrors: 0,
+        cascadingErrors: 0,
+        independentErrors: 0,
+        errorDependencies: [],
+        fixPriorities: []
+      };
     }
     
-    for (const importPath of file.importStatements) {
-      // Convert relative paths to absolute
-      let absolutePath = importPath;
-      if (importPath.startsWith('.')) {
-        const basePath = path.dirname(file.filePath);
-        absolutePath = path.resolve(basePath, importPath);
+    // Group errors by file
+    const errorsByFile: Record<string, any[]> = {};
+    
+    for (const error of errors) {
+      if (!errorsByFile[error.filePath]) {
+        errorsByFile[error.filePath] = [];
       }
       
-      // Add file extension if missing
-      if (!absolutePath.endsWith('.ts') && !absolutePath.endsWith('.tsx')) {
-        const withTs = `${absolutePath}.ts`;
-        const withTsx = `${absolutePath}.tsx`;
+      errorsByFile[error.filePath].push(error);
+    }
+    
+    // Build dependency graph
+    console.log('Building error dependency graph...');
+    const dependencies: Array<{
+      sourceError: any;
+      affectedErrors: any[];
+      impact: number;
+    }> = [];
+    
+    // Set of errors that are affected by other errors
+    const cascadingErrorIds = new Set<number>();
+    
+    // For each file with errors
+    for (const [filePath, fileErrors] of Object.entries(errorsByFile)) {
+      // Sort errors by line number
+      fileErrors.sort((a, b) => a.lineNumber - b.lineNumber);
+      
+      // For each error in the file
+      for (let i = 0; i < fileErrors.length; i++) {
+        const error = fileErrors[i];
         
-        if (fs.existsSync(withTs)) {
-          absolutePath = withTs;
-        } else if (fs.existsSync(withTsx)) {
-          absolutePath = withTsx;
+        // Skip if this is already identified as a cascading error
+        if (cascadingErrorIds.has(error.id)) {
+          continue;
+        }
+        
+        // Find potential dependent errors
+        const potentialDependents = findPotentialDependents(error, fileErrors, errorsByFile);
+        
+        // If this error affects others
+        if (potentialDependents.length > 0) {
+          // Add to dependencies
+          dependencies.push({
+            sourceError: {
+              id: error.id,
+              filePath: error.filePath,
+              lineNumber: error.lineNumber,
+              errorCode: error.errorCode,
+              errorMessage: error.errorMessage
+            },
+            affectedErrors: potentialDependents.map(e => ({
+              id: e.id,
+              filePath: e.filePath,
+              lineNumber: e.lineNumber,
+              errorCode: e.errorCode,
+              errorMessage: e.errorMessage
+            })),
+            impact: potentialDependents.length
+          });
+          
+          // Mark dependent errors as cascading
+          for (const dependent of potentialDependents) {
+            cascadingErrorIds.add(dependent.id);
+          }
         }
       }
-      
-      dependencyGraph[file.filePath].push(absolutePath);
-      file.dependsOn.add(absolutePath);
     }
-  }
-  
-  return dependencyGraph;
-}
-
-/**
- * Identify potential root causes of cascading errors
- */
-export function identifyRootCauses(analysis: Omit<TypeScriptErrorAnalysis, 'rootCauses' | 'summary'>): TypeScriptError[] {
-  const { filesWithErrors, dependencyGraph } = analysis;
-  const rootCauses: TypeScriptError[] = [];
-  
-  // Build a reverse dependency graph
-  const reverseDependencyGraph: Record<string, string[]> = {};
-  for (const file in dependencyGraph) {
-    const dependencies = dependencyGraph[file];
-    for (const dependency of dependencies) {
-      if (!reverseDependencyGraph[dependency]) {
-        reverseDependencyGraph[dependency] = [];
-      }
-      reverseDependencyGraph[dependency].push(file);
-    }
-  }
-  
-  // Sort files by dependency chain length
-  const sortedFiles = [...filesWithErrors].sort((a, b) => {
-    const aDeps = reverseDependencyGraph[a.filePath]?.length || 0;
-    const bDeps = reverseDependencyGraph[b.filePath]?.length || 0;
-    return bDeps - aDeps; // Files with more dependents come first
-  });
-  
-  // Identify errors that are likely root causes
-  for (const file of sortedFiles) {
-    // Look for high severity errors in files with many dependents
-    const criticalErrors = file.errors.filter(error => 
-      error.severity === 'critical' || error.severity === 'high'
+    
+    // Identify root cause errors and independent errors
+    const rootCauseErrorIds = new Set(
+      dependencies.map(dep => dep.sourceError.id)
     );
     
-    // Look for type definition or export errors, which cascade down the dependency chain
-    const typeErrors = file.errors.filter(error => 
-      error.category === 'INTERFACE_ERROR' || 
-      error.category === 'TYPE_MISMATCH' ||
-      error.category === 'MISSING_PROPERTY' ||
-      error.message.includes('exported')
+    const independentErrorIds = new Set(
+      errors
+        .filter(error => !cascadingErrorIds.has(error.id) && !rootCauseErrorIds.has(error.id))
+        .map(error => error.id)
     );
     
-    const potentialRootCauses = [...new Set([...criticalErrors, ...typeErrors])];
-    rootCauses.push(...potentialRootCauses);
-  }
-  
-  // If there are too many root causes, prioritize by severity and number of dependent files
-  if (rootCauses.length > 10) {
-    return rootCauses
-      .sort((a, b) => {
-        // Sort by severity first
-        const severityOrder = { critical: 3, high: 2, medium: 1, low: 0 };
-        const severityDiff = severityOrder[b.severity] - severityOrder[a.severity];
-        if (severityDiff !== 0) return severityDiff;
-        
-        // Then by number of dependents
-        const aDeps = reverseDependencyGraph[a.filePath]?.length || 0;
-        const bDeps = reverseDependencyGraph[b.filePath]?.length || 0;
-        return bDeps - aDeps;
-      })
-      .slice(0, 10);
-  }
-  
-  return rootCauses;
-}
-
-/**
- * Suggest a fix strategy based on the error type and context
- */
-export function suggestFixStrategy(error: Omit<TypeScriptError, 'fixStrategy' | 'fixSuggestion'>): { strategy: FixStrategy, suggestion: string } {
-  const { category, message, relatedTypes, contextCode } = error;
-  
-  // Determine the most appropriate fix strategy based on error category
-  switch (category) {
-    case 'TYPE_MISMATCH':
-      if (message.includes('null') || message.includes('undefined')) {
-        return {
-          strategy: 'ADD_OPTIONAL_CHAINING',
-          suggestion: 'Use optional chaining or nullish coalescing to handle potential null/undefined values.'
-        };
-      }
-      return {
-        strategy: 'TYPE_ASSERTION',
-        suggestion: `Add a type guard or type assertion to handle the type mismatch between ${relatedTypes.join(' and ')}.`
-      };
-      
-    case 'MISSING_PROPERTY':
-      return {
-        strategy: 'EXTEND_INTERFACE',
-        suggestion: `Extend the interface to include the missing property, or use optional chaining.`
-      };
-      
-    case 'IMPLICIT_ANY':
-      return {
-        strategy: 'ADD_TYPE_ANNOTATION',
-        suggestion: 'Add explicit type annotation to avoid implicit any type.'
-      };
-      
-    case 'MODULE_NOT_FOUND':
-      return {
-        strategy: 'IMPORT_TYPE',
-        suggestion: 'Ensure the module exists and is properly imported.'
-      };
-      
-    case 'SYNTAX_ERROR':
-      return {
-        strategy: 'FIX_SYNTAX',
-        suggestion: 'Fix the syntax error, possibly a missing closing bracket or semicolon.'
-      };
-      
-    case 'INTERFACE_ERROR':
-      return {
-        strategy: 'CREATE_INTERFACE',
-        suggestion: 'Define or update the interface to match the implementation.'
-      };
-      
-    case 'TYPE_ARGUMENT':
-      return {
-        strategy: 'ADD_TYPE_ANNOTATION',
-        suggestion: 'Add type argument to the generic type or function.'
-      };
-      
-    case 'CIRCULAR_REFERENCE':
-      return {
-        strategy: 'RENAME_SYMBOL',
-        suggestion: 'Break the circular reference by restructuring the type definitions.'
-      };
-      
-    case 'UNUSED_VARIABLE':
-      return {
-        strategy: 'REMOVE_UNUSED',
-        suggestion: 'Remove the unused variable or mark it with an underscore prefix (_variableName).'
-      };
-      
-    case 'NULL_UNDEFINED':
-      return {
-        strategy: 'ADD_TYPE_GUARD',
-        suggestion: 'Add a null check or use optional chaining to guard against null/undefined values.'
-      };
-      
-    default:
-      return {
-        strategy: 'OTHER',
-        suggestion: 'Review the error message and context to determine the appropriate fix.'
-      };
-  }
-}
-
-/**
- * Calculate summary statistics from analysis
- */
-export function calculateSummary(analysis: Omit<TypeScriptErrorAnalysis, 'summary'>): AnalysisSummary {
-  const { totalErrors, errorsByCategory, errorsBySeverity, errorsByFile, rootCauses } = analysis;
-  
-  // Find most common category
-  let mostCommonCategory: ErrorCategory = 'OTHER';
-  let maxCategoryCount = 0;
-  
-  for (const category in errorsByCategory) {
-    const count = errorsByCategory[category as ErrorCategory]?.length || 0;
-    if (count > maxCategoryCount) {
-      maxCategoryCount = count;
-      mostCommonCategory = category as ErrorCategory;
-    }
-  }
-  
-  // Find most affected file
-  let mostAffectedFile = '';
-  let mostAffectedFileErrorCount = 0;
-  
-  for (const file in errorsByFile) {
-    const count = errorsByFile[file]?.length || 0;
-    if (count > mostAffectedFileErrorCount) {
-      mostAffectedFileErrorCount = count;
-      mostAffectedFile = file;
-    }
-  }
-  
-  // Count fixable errors
-  const fixableErrorsCount = analysis.errors.filter(error => 
-    error.fixStrategy !== 'OTHER'
-  ).length;
-  
-  // Estimate fix time (rough estimate: 2 min for low, 5 min for medium, 10 min for high, 15 min for critical)
-  const timePerSeverity = {
-    low: 2,
-    medium: 5,
-    high: 10,
-    critical: 15
-  };
-  
-  let estimatedFixTimeMinutes = 0;
-  for (const severity in errorsBySeverity) {
-    const count = errorsBySeverity[severity as ErrorSeverity]?.length || 0;
-    estimatedFixTimeMinutes += count * timePerSeverity[severity as keyof typeof timePerSeverity];
-  }
-  
-  return {
-    totalErrors,
-    criticalErrors: errorsBySeverity.critical?.length || 0,
-    highSeverityErrors: errorsBySeverity.high?.length || 0,
-    mediumSeverityErrors: errorsBySeverity.medium?.length || 0,
-    lowSeverityErrors: errorsBySeverity.low?.length || 0,
-    mostCommonCategory,
-    mostAffectedFile,
-    mostAffectedFileErrorCount,
-    rootCausesCount: rootCauses.length,
-    fixableErrorsCount,
-    estimatedFixTimeMinutes
-  };
-}
-
-/**
- * Run a comprehensive analysis of TypeScript errors in a project
- */
-export async function analyzeTypeScriptProject(
-  projectPath: string, 
-  options: { 
-    tsConfigPath?: string, 
-    includePaths?: string[],
-    excludePaths?: string[],
-    maxErrors?: number
-  } = {}
-): Promise<TypeScriptErrorAnalysis> {
-  const {
-    tsConfigPath = 'tsconfig.json',
-    includePaths = [],
-    excludePaths = ['node_modules', 'dist', 'build'],
-    maxErrors = 1000
-  } = options;
-  
-  console.log('Running TypeScript compiler to detect errors...');
-  
-  // Run TypeScript compiler to get errors
-  let tscOutput = '';
-  try {
-    const tsConfigOption = tsConfigPath ? `--project ${tsConfigPath}` : '';
-    tscOutput = execSync(`npx tsc ${tsConfigOption} --noEmit`, { stdio: 'pipe' }).toString();
-  } catch (error: any) {
-    tscOutput = error.stdout?.toString() || error.stderr?.toString() || '';
-  }
-  
-  console.log('Parsing compiler output and collecting errors...');
-  
-  // Parse errors into structured format
-  const errors: TypeScriptError[] = [];
-  const lines = tscOutput.split('\n');
-  
-  for (const line of lines) {
-    const fileMatch = line.match(/^([^(]+)\((\d+),(\d+)\): error TS(\d+): (.+)$/);
-    if (fileMatch) {
-      const [_, filePath, lineNum, colNum, errorCode, message] = fileMatch;
-      
-      // Convert to absolute path if not already
-      const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(projectPath, filePath.trim());
-      
-      // Skip excluded paths
-      const isExcluded = excludePaths.some(excludePath => absolutePath.includes(excludePath));
-      if (isExcluded) continue;
-      
-      // Only include specific paths if provided
-      if (includePaths.length > 0) {
-        const isIncluded = includePaths.some(includePath => absolutePath.includes(includePath));
-        if (!isIncluded) continue;
-      }
-      
-      const category = categorizeError(message);
-      const severity = determineSeverity(category, message);
-      const relatedTypes = extractRelatedTypes(message);
-      const contextCode = extractContextCode(absolutePath, parseInt(lineNum), parseInt(colNum));
-      
-      errors.push({
-        filePath: absolutePath,
-        line: parseInt(lineNum),
-        column: parseInt(colNum),
-        code: `TS${errorCode}`,
-        message: message.trim(),
-        category,
-        severity,
-        relatedTypes,
-        contextCode
-      });
-      
-      // Limit the number of errors to process
-      if (errors.length >= maxErrors) {
-        console.log(`Reached maximum limit of ${maxErrors} errors. Stopping collection.`);
-        break;
-      }
-    }
-  }
-  
-  console.log(`Collected ${errors.length} TypeScript errors for analysis.`);
-  
-  // Group errors by various criteria
-  const errorsByCategory: Record<ErrorCategory, TypeScriptError[]> = {} as Record<ErrorCategory, TypeScriptError[]>;
-  const errorsBySeverity: Record<ErrorSeverity, TypeScriptError[]> = {} as Record<ErrorSeverity, TypeScriptError[]>;
-  const errorsByFile: Record<string, TypeScriptError[]> = {};
-  
-  // Initialize categories and severities
-  const allCategories: ErrorCategory[] = [
-    'TYPE_MISMATCH', 'MISSING_PROPERTY', 'IMPLICIT_ANY', 'UNUSED_VARIABLE',
-    'NULL_UNDEFINED', 'MODULE_NOT_FOUND', 'SYNTAX_ERROR', 'INTERFACE_ERROR',
-    'TYPE_ARGUMENT', 'CIRCULAR_REFERENCE', 'OTHER'
-  ];
-  
-  const allSeverities: ErrorSeverity[] = ['critical', 'high', 'medium', 'low'];
-  
-  allCategories.forEach(category => {
-    errorsByCategory[category] = [];
-  });
-  
-  allSeverities.forEach(severity => {
-    errorsBySeverity[severity] = [];
-  });
-  
-  // Group errors
-  for (const error of errors) {
-    // Group by category
-    errorsByCategory[error.category].push(error);
+    // Calculate fix priorities
+    console.log('Calculating fix priorities...');
+    const fixPriorities = calculateFixPriorities(errors, dependencies, rootCauseErrorIds, independentErrorIds);
     
-    // Group by severity
-    errorsBySeverity[error.severity].push(error);
+    // Use AI to enhance analysis if requested
+    if (options.useAI && isOpenAIConfigured()) {
+      console.log('Enhancing analysis with AI...');
+      await enhanceWithAI(dependencies, errors);
+    }
     
-    // Group by file
-    if (!errorsByFile[error.filePath]) {
-      errorsByFile[error.filePath] = [];
-    }
-    errorsByFile[error.filePath].push(error);
-  }
-  
-  console.log('Building file dependency graph and context information...');
-  
-  // Create file objects with content and dependencies
-  const filesWithErrors: FileWithErrors[] = [];
-  
-  for (const filePath in errorsByFile) {
-    if (fs.existsSync(filePath)) {
-      try {
-        const content = fs.readFileSync(filePath, 'utf-8');
-        const importStatements = extractImports(content);
-        const exportedTypes = extractExportedTypes(content);
-        
-        filesWithErrors.push({
-          filePath,
-          errors: errorsByFile[filePath],
-          content,
-          importStatements,
-          exportedTypes,
-          dependsOn: new Set<string>()
-        });
-      } catch (error) {
-        console.error(`Error reading file ${filePath}:`, error);
-      }
-    }
-  }
-  
-  console.log('Building dependency graph...');
-  
-  // Build dependency graph
-  const dependencyGraph = buildDependencyGraph(filesWithErrors);
-  
-  // Prepare the analysis object
-  const partialAnalysis = {
-    totalErrors: errors.length,
-    errorsByCategory,
-    errorsByFile,
-    errorsBySeverity,
-    filesWithErrors,
-    dependencyGraph,
-    errors,
-  };
-  
-  console.log('Identifying root causes...');
-  
-  // Identify root causes
-  const rootCauses = identifyRootCauses(partialAnalysis);
-  
-  console.log('Suggesting fix strategies...');
-  
-  // Suggest fix strategies for each error
-  const errorsWithFixStrategies = errors.map(error => {
-    const { strategy, suggestion } = suggestFixStrategy(error);
     return {
-      ...error,
-      fixStrategy: strategy,
-      fixSuggestion: suggestion
+      rootCauseErrors: rootCauseErrorIds.size,
+      cascadingErrors: cascadingErrorIds.size,
+      independentErrors: independentErrorIds.size,
+      errorDependencies: dependencies,
+      fixPriorities
     };
-  });
-  
-  // Calculate summary statistics
-  const analysisWithRootCauses = {
-    ...partialAnalysis,
-    errors: errorsWithFixStrategies,
-    rootCauses
-  };
-  
-  console.log('Calculating summary statistics...');
-  
-  const summary = calculateSummary(analysisWithRootCauses);
-  
-  console.log('TypeScript error analysis complete!');
-  
-  const finalAnalysis: TypeScriptErrorAnalysis = {
-    ...analysisWithRootCauses,
-    summary
-  };
-  
-  return finalAnalysis;
+  } catch (error) {
+    console.error('Error running advanced analysis:', error);
+    throw error;
+  }
 }
 
 /**
- * Generate a detailed report from the error analysis
+ * Find potential dependent errors for a given error
+ * 
+ * @param error Source error
+ * @param fileErrors Other errors in the same file
+ * @param errorsByFile Errors grouped by file
+ * @returns Array of potential dependent errors
  */
-export function generateErrorReport(analysis: TypeScriptErrorAnalysis): string {
-  const { summary, rootCauses, errorsByCategory, errorsBySeverity } = analysis;
+function findPotentialDependents(
+  error: any,
+  fileErrors: any[],
+  errorsByFile: Record<string, any[]>
+): any[] {
+  const dependents: any[] = [];
   
-  // Create a nicely formatted report
-  let report = `# TypeScript Error Analysis Report\n\n`;
-  
-  // Add summary section
-  report += `## Summary\n\n`;
-  report += `- **Total Errors**: ${summary.totalErrors}\n`;
-  report += `- **Critical Errors**: ${summary.criticalErrors}\n`;
-  report += `- **High Severity Errors**: ${summary.highSeverityErrors}\n`;
-  report += `- **Medium Severity Errors**: ${summary.mediumSeverityErrors}\n`;
-  report += `- **Low Severity Errors**: ${summary.lowSeverityErrors}\n`;
-  report += `- **Most Common Error Type**: ${summary.mostCommonCategory}\n`;
-  report += `- **Most Affected File**: ${summary.mostAffectedFile} (${summary.mostAffectedFileErrorCount} errors)\n`;
-  report += `- **Identified Root Causes**: ${summary.rootCausesCount}\n`;
-  report += `- **Automatically Fixable Errors**: ${summary.fixableErrorsCount} (${Math.round(summary.fixableErrorsCount / summary.totalErrors * 100)}%)\n`;
-  report += `- **Estimated Fix Time**: ${Math.round(summary.estimatedFixTimeMinutes / 60)} hours ${summary.estimatedFixTimeMinutes % 60} minutes\n\n`;
-  
-  // Add root causes section
-  report += `## Root Causes\n\n`;
-  report += `These errors are likely causing cascading issues throughout the codebase:\n\n`;
-  
-  rootCauses.forEach((error, index) => {
-    report += `### ${index + 1}. ${error.code}: ${error.message}\n\n`;
-    report += `- **File**: ${path.relative(process.cwd(), error.filePath)}\n`;
-    report += `- **Location**: Line ${error.line}, Column ${error.column}\n`;
-    report += `- **Severity**: ${error.severity}\n`;
-    report += `- **Category**: ${error.category}\n`;
-    report += `- **Fix Strategy**: ${error.fixStrategy}\n`;
-    report += `- **Suggestion**: ${error.fixSuggestion}\n\n`;
-    report += `\`\`\`typescript\n${error.contextCode}\n\`\`\`\n\n`;
-  });
-  
-  // Add errors by category
-  report += `## Errors by Category\n\n`;
-  
-  for (const category in errorsByCategory) {
-    const errors = errorsByCategory[category as ErrorCategory];
-    if (errors.length > 0) {
-      report += `### ${category} (${errors.length})\n\n`;
-      
-      // Just list the top 5 errors of this category
-      const topErrors = errors.slice(0, 5);
-      topErrors.forEach((error, index) => {
-        report += `${index + 1}. **${error.code}**: ${error.message} - ${path.relative(process.cwd(), error.filePath)}:${error.line}\n`;
-      });
-      
-      if (errors.length > 5) {
-        report += `... and ${errors.length - 5} more\n`;
+  // Check for potential dependents in the same file
+  for (const otherError of fileErrors) {
+    // Skip the error itself
+    if (otherError.id === error.id) {
+      continue;
+    }
+    
+    // If the error is on a later line in the same file
+    if (otherError.lineNumber > error.lineNumber) {
+      // For type errors, check if they are related
+      if (
+        error.category === 'type_mismatch' ||
+        error.category === 'missing_type' ||
+        error.category === 'null_reference'
+      ) {
+        // Add as a potential dependent
+        dependents.push(otherError);
       }
       
-      report += `\n`;
+      // For import errors, check if they affect other errors
+      if (error.category === 'import_error') {
+        // All subsequent errors in the file could be affected
+        dependents.push(otherError);
+      }
     }
   }
   
-  // Add errors by severity
-  report += `## Errors by Severity\n\n`;
-  
-  // Order by severity: critical, high, medium, low
-  const severityOrder: ErrorSeverity[] = ['critical', 'high', 'medium', 'low'];
-  
-  for (const severity of severityOrder) {
-    const errors = errorsBySeverity[severity];
-    if (errors && errors.length > 0) {
-      report += `### ${severity.charAt(0).toUpperCase() + severity.slice(1)} (${errors.length})\n\n`;
+  // For import errors, check for potential dependents in other files
+  if (error.category === 'import_error') {
+    // Extract the import path from the error message
+    const importMatch = error.errorMessage.match(/Cannot find module '(.+)'/);
+    
+    if (importMatch && importMatch[1]) {
+      const importPath = importMatch[1];
       
-      // Just list the top 5 errors of this severity
-      const topErrors = errors.slice(0, 5);
-      topErrors.forEach((error, index) => {
-        report += `${index + 1}. **${error.code}**: ${error.message} - ${path.relative(process.cwd(), error.filePath)}:${error.line}\n`;
-      });
-      
-      if (errors.length > 5) {
-        report += `... and ${errors.length - 5} more\n`;
+      // Check if there are errors in the imported file
+      for (const [otherFilePath, otherFileErrors] of Object.entries(errorsByFile)) {
+        // Skip the same file
+        if (otherFilePath === error.filePath) {
+          continue;
+        }
+        
+        // If the file path includes the import path
+        if (
+          otherFilePath.includes(importPath) ||
+          path.basename(otherFilePath, path.extname(otherFilePath)) === importPath
+        ) {
+          // All errors in the imported file could be affected
+          dependents.push(...otherFileErrors);
+        }
       }
-      
-      report += `\n`;
     }
   }
   
-  // Add execution information
-  report += `## Report Information\n\n`;
-  report += `- **Generated**: ${new Date().toISOString()}\n`;
-  report += `- **TypeScript Version**: ${execSync('npx tsc --version').toString().trim()}\n`;
-  
-  return report;
+  return dependents;
 }
 
 /**
- * Save the error analysis to a file
+ * Calculate fix priorities for errors
+ * 
+ * @param errors All errors
+ * @param dependencies Error dependencies
+ * @param rootCauseErrorIds Set of root cause error IDs
+ * @param independentErrorIds Set of independent error IDs
+ * @returns Array of fix priorities
  */
-export function saveAnalysisToFile(analysis: TypeScriptErrorAnalysis, outputPath: string): void {
-  const report = generateErrorReport(analysis);
-  fs.writeFileSync(outputPath, report);
-  console.log(`Error analysis report saved to ${outputPath}`);
+function calculateFixPriorities(
+  errors: any[],
+  dependencies: Array<{
+    sourceError: any;
+    affectedErrors: any[];
+    impact: number;
+  }>,
+  rootCauseErrorIds: Set<number>,
+  independentErrorIds: Set<number>
+): Array<{
+  errorId: number;
+  filePath: string;
+  lineNumber: number;
+  priority: number;
+  reason: string;
+}> {
+  const priorities: Array<{
+    errorId: number;
+    filePath: string;
+    lineNumber: number;
+    priority: number;
+    reason: string;
+  }> = [];
   
-  // Also save the raw analysis data for potential further processing
-  const jsonOutputPath = outputPath.replace(/\.\w+$/, '.json');
+  // Prioritize root cause errors by impact
+  dependencies
+    .sort((a, b) => b.impact - a.impact)
+    .forEach((dep, index) => {
+      priorities.push({
+        errorId: dep.sourceError.id,
+        filePath: dep.sourceError.filePath,
+        lineNumber: dep.sourceError.lineNumber,
+        priority: 100 - index,
+        reason: `Root cause error affecting ${dep.impact} other errors`
+      });
+    });
   
-  // Convert Sets to Arrays for JSON serialization
-  const jsonSafeAnalysis = JSON.stringify(analysis, (key, value) => {
-    if (value instanceof Set) {
-      return Array.from(value);
-    }
-    return value;
-  }, 2);
+  // Add independent errors with medium priority
+  errors
+    .filter(error => independentErrorIds.has(error.id))
+    .forEach((error, index) => {
+      priorities.push({
+        errorId: error.id,
+        filePath: error.filePath,
+        lineNumber: error.lineNumber,
+        priority: 50 - index * 0.1,
+        reason: 'Independent error'
+      });
+    });
   
-  fs.writeFileSync(jsonOutputPath, jsonSafeAnalysis);
-  console.log(`Raw analysis data saved to ${jsonOutputPath}`);
+  // Sort by priority (highest first)
+  return priorities.sort((a, b) => b.priority - a.priority);
 }
 
 /**
- * Main function to analyze a TypeScript project and generate a report
+ * Enhance analysis with AI
+ * 
+ * @param dependencies Error dependencies
+ * @param errors All errors
  */
-export async function analyzeAndReportTypeScriptErrors(
-  projectPath: string,
-  options: {
-    outputPath?: string,
-    tsConfigPath?: string,
-    includePaths?: string[],
-    excludePaths?: string[],
-    maxErrors?: number
-  } = {}
+async function enhanceWithAI(
+  dependencies: Array<{
+    sourceError: any;
+    affectedErrors: any[];
+    impact: number;
+  }>,
+  errors: any[]
 ): Promise<void> {
-  const {
-    outputPath = 'typescript-error-analysis.md',
-    tsConfigPath,
-    includePaths,
-    excludePaths,
-    maxErrors
-  } = options;
+  // Only analyze the top 5 root cause errors
+  const topRootCauses = dependencies
+    .sort((a, b) => b.impact - a.impact)
+    .slice(0, 5);
   
-  console.log('Starting TypeScript error analysis...');
-  
-  const analysis = await analyzeTypeScriptProject(projectPath, {
-    tsConfigPath,
-    includePaths,
-    excludePaths,
-    maxErrors
-  });
-  
-  console.log('Generating error report...');
-  
-  saveAnalysisToFile(analysis, outputPath);
-  
-  console.log('Analysis complete!');
-  console.log(`Found ${analysis.totalErrors} errors, ${analysis.summary.rootCausesCount} root causes identified.`);
-  console.log(`Report saved to ${outputPath}`);
+  for (const dep of topRootCauses) {
+    try {
+      // Find the full error information
+      const error = errors.find(e => e.id === dep.sourceError.id);
+      
+      if (!error) {
+        continue;
+      }
+      
+      // Get the file content
+      const filePath = error.filePath;
+      
+      if (!fs.existsSync(filePath)) {
+        continue;
+      }
+      
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      
+      // Analyze with AI
+      const analysis = await analyzeErrorWithAI(error, fileContent);
+      
+      // Store AI insights in the database
+      await tsErrorStorage.updateTypescriptError(error.id, {
+        metadata: {
+          ...error.metadata,
+          aiAnalysis: {
+            rootCause: analysis.rootCause,
+            suggestedFix: analysis.suggestedFix,
+            confidence: analysis.confidence,
+            relatedErrors: analysis.relatedErrors
+          }
+        }
+      });
+      
+      console.log(`AI analysis completed for error ${error.id}`);
+    } catch (error) {
+      console.error('Error enhancing with AI:', error);
+    }
+  }
 }
 
-// Export all utility functions for use in other modules
-export {
-  categorizeError,
-  determineSeverity,
-  extractRelatedTypes
-} from './ts-error-analyzer';
+export default {
+  runDeepScan,
+  runAdvancedAnalysis
+};

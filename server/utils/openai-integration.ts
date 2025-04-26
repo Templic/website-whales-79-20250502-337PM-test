@@ -1,490 +1,73 @@
 /**
- * @file openai-integration.ts
- * @description Enhanced OpenAI integration for TypeScript error analysis
+ * OpenAI Integration for TypeScript Error Management
  * 
- * This module provides utilities for analyzing and fixing TypeScript errors
- * using OpenAI's GPT models.
+ * This module provides AI-powered analysis and fixing of TypeScript errors
+ * using the OpenAI API.
  */
 
 import OpenAI from 'openai';
-import * as fs from 'fs';
-import * as path from 'path';
-import type { TypeScriptError, ErrorCategory, ErrorFixSuggestion } from '../types/core/error-types';
 
-// Initialize OpenAI client
-// Note: API key is expected to be in the environment variable OPENAI_API_KEY
+// Initialize OpenAI client 
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// The model to use for error analysis and fix generation
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const MODEL = 'gpt-4o';
+/**
+ * Check if OpenAI is configured
+ * 
+ * @returns Whether the OpenAI API key is set
+ */
+export function isOpenAIConfigured(): boolean {
+  return !!process.env.OPENAI_API_KEY;
+}
 
 /**
- * Interface for error analysis results
+ * Analyze an error using AI
+ * 
+ * @param error Error to analyze
+ * @param fileContent Content of the file with the error
+ * @returns AI analysis
  */
-export interface ErrorAnalysisResult {
+export async function analyzeErrorWithAI(
+  error: {
+    errorCode: string;
+    errorMessage: string;
+    filePath: string;
+    lineNumber: number;
+    columnNumber: number;
+    errorContext: string;
+    category?: string;
+    severity?: string;
+  },
+  fileContent: string
+): Promise<{
   rootCause: string;
-  explanation: string;
-  category: ErrorCategory;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  cascading: boolean;
-  suggestedApproach: string;
+  suggestedFix: string;
+  codeSnippet: string;
   confidence: number;
-}
-
-/**
- * Maximum number of tokens to generate in a response
- */
-const MAX_TOKENS = 500;
-
-/**
- * The maximum number of lines of context to include
- */
-const MAX_CONTEXT_LINES = 100;
-
-/**
- * Analyzes a TypeScript error using OpenAI
- * 
- * @param error TypeScript error to analyze
- * @returns Analysis result
- */
-export async function analyzeError(error: TypeScriptError): Promise<ErrorAnalysisResult> {
-  // Read the file content to get more context
-  let fileContent = '';
+  relatedErrors?: string[];
+}> {
   try {
-    if (fs.existsSync(error.filePath)) {
-      fileContent = fs.readFileSync(error.filePath, 'utf-8');
-      
-      // Limit the file content to avoid excessive tokens
-      const lines = fileContent.split('\n');
-      const contextStart = Math.max(0, error.lineNumber - MAX_CONTEXT_LINES / 2);
-      const contextEnd = Math.min(lines.length, error.lineNumber + MAX_CONTEXT_LINES / 2);
-      
-      fileContent = lines.slice(contextStart, contextEnd).join('\n');
-      
-      if (contextStart > 0) {
-        fileContent = `// ... (lines 1-${contextStart} omitted) ...\n` + fileContent;
-      }
-      
-      if (contextEnd < lines.length) {
-        fileContent = fileContent + `\n// ... (lines ${contextEnd + 1}-${lines.length} omitted) ...`;
-      }
+    if (!isOpenAIConfigured()) {
+      throw new Error('OpenAI API key is not configured');
     }
-  } catch (err) {
-    console.error(`Error reading file ${error.filePath}: ${err instanceof Error ? err.message : String(err)}`);
-    // Continue with analysis even if file reading fails
-  }
-  
-  // Get imports from the file to understand dependencies
-  const imports = extractImports(fileContent);
-  
-  // Prepare the prompt
-  const prompt = `
-You are an expert TypeScript developer and your task is to analyze a TypeScript error and provide detailed analysis. 
-Here is the error information:
+    
+    // Build the prompt for AI
+    const prompt = `
+You are a TypeScript expert tasked with analyzing and fixing TypeScript errors. 
+Please analyze the following TypeScript error:
 
-- Error code: ${error.errorCode}
-- File path: ${error.filePath}
-- Line number: ${error.lineNumber}
-- Column number: ${error.columnNumber}
-- Error message: ${error.errorMessage}
+File: ${error.filePath}
+Line: ${error.lineNumber}, Column: ${error.columnNumber}
+Error Code: ${error.errorCode}
+Error Message: ${error.errorMessage}
+Error Category: ${error.category || 'Unknown'}
+Error Severity: ${error.severity || 'Unknown'}
 
-Relevant code context:
+Context around the error:
 \`\`\`typescript
-${error.errorContext || 'No context available'}
-\`\`\`
-
-${imports.length > 0 ? `File imports:\n${imports.map(imp => `- ${imp}`).join('\n')}` : 'No imports found.'}
-
-Please analyze this error and provide:
-1. The root cause of the error
-2. A detailed explanation of why the error is occurring
-3. Categorize the error (choose one): type_mismatch, missing_type, undefined_variable, null_reference, interface_mismatch, import_error, syntax_error, generic_constraint, declaration_error, other
-4. Assign a severity level (choose one): low, medium, high, critical
-5. Determine if this error is likely to cause cascading errors elsewhere
-6. Suggest an approach to fix the error
-7. Provide a confidence level (0.0 to 1.0) in your analysis
-
-Format your response as JSON following this structure:
-{
-  "rootCause": "Brief description of the root cause",
-  "explanation": "Detailed explanation of the error",
-  "category": "one_of_the_categories_above",
-  "severity": "low_medium_high_critical",
-  "cascading": true_or_false,
-  "suggestedApproach": "How to fix the error",
-  "confidence": number_between_0_and_1
-}
-`;
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: MAX_TOKENS,
-      temperature: 0.2,
-      response_format: { type: 'json_object' }
-    });
-    
-    const analysisText = response.choices[0].message.content;
-    
-    if (!analysisText) {
-      throw new Error('Empty response from OpenAI');
-    }
-    
-    const analysis = JSON.parse(analysisText) as ErrorAnalysisResult;
-    
-    // Validate required fields
-    if (!analysis.rootCause || !analysis.explanation || !analysis.category || !analysis.severity || analysis.cascading === undefined || !analysis.suggestedApproach || analysis.confidence === undefined) {
-      throw new Error('Incomplete analysis from OpenAI');
-    }
-    
-    return analysis;
-  } catch (err) {
-    console.error(`OpenAI analysis error: ${err instanceof Error ? err.message : String(err)}`);
-    
-    // Provide a fallback analysis
-    return {
-      rootCause: 'Failed to analyze with OpenAI',
-      explanation: `Error analyzing with OpenAI: ${err instanceof Error ? err.message : String(err)}. Original error: ${error.errorMessage}`,
-      category: mapToCategory(error.errorCode, error.errorMessage),
-      severity: 'medium',
-      cascading: false,
-      suggestedApproach: 'Please fix the error based on the error message.',
-      confidence: 0.1
-    };
-  }
-}
-
-/**
- * Generates a fix for a TypeScript error using OpenAI
- * 
- * @param error TypeScript error to fix
- * @returns Fix suggestion
- */
-export async function generateErrorFix(error: TypeScriptError): Promise<ErrorFixSuggestion> {
-  // Read the file content to get more context
-  let fileContent = '';
-  let fileSummary = '';
-  try {
-    if (fs.existsSync(error.filePath)) {
-      const content = fs.readFileSync(error.filePath, 'utf-8');
-      
-      // Generate a summary of the file for context
-      fileSummary = generateFileSummary(content);
-      
-      // Extract relevant portion of the file
-      const lines = content.split('\n');
-      const contextStart = Math.max(0, error.lineNumber - MAX_CONTEXT_LINES / 2);
-      const contextEnd = Math.min(lines.length, error.lineNumber + MAX_CONTEXT_LINES / 2);
-      
-      fileContent = lines.slice(contextStart, contextEnd).join('\n');
-      
-      if (contextStart > 0) {
-        fileContent = `// ... (lines 1-${contextStart} omitted) ...\n` + fileContent;
-      }
-      
-      if (contextEnd < lines.length) {
-        fileContent = fileContent + `\n// ... (lines ${contextEnd + 1}-${lines.length} omitted) ...`;
-      }
-    }
-  } catch (err) {
-    console.error(`Error reading file ${error.filePath}: ${err instanceof Error ? err.message : String(err)}`);
-    // Continue with fix generation even if file reading fails
-  }
-  
-  // Extract imports to understand dependencies
-  const imports = extractImports(fileContent);
-  
-  // Get the line with the error
-  const errorLine = error.errorContext?.split('\n')[error.lineNumber - 1] || 'Line not available';
-  
-  // Find related type declarations
-  const relatedTypes = findRelatedTypes(error.errorMessage, fileContent);
-  
-  // Prepare the prompt
-  const prompt = `
-You are an expert TypeScript developer tasked with fixing a TypeScript error. 
-Your task is to generate a fix for the error that maintains the original code's intent.
-
-Here is the error information:
-- Error code: ${error.errorCode}
-- File path: ${error.filePath}
-- Line number: ${error.lineNumber}
-- Column number: ${error.columnNumber}
-- Error message: ${error.errorMessage}
-
-The line with the error:
-\`\`\`typescript
-${errorLine}
-\`\`\`
-
-Relevant code context:
-\`\`\`typescript
-${error.errorContext || 'No context available'}
-\`\`\`
-
-${imports.length > 0 ? `File imports:\n${imports.map(imp => `- ${imp}`).join('\n')}` : 'No imports found.'}
-
-${relatedTypes.length > 0 ? `Related type declarations:\n${relatedTypes.map(type => `- ${type}`).join('\n')}` : ''}
-
-File summary:
-${fileSummary}
-
-Please generate a fix for this error that:
-1. Maintains the original functionality and code intent
-2. Follows TypeScript best practices
-3. Is minimal and focused on the specific error
-4. Takes into account the imports and related types
-
-Format your response as JSON following this structure:
-{
-  "fixExplanation": "Detailed explanation of the fix and why it works",
-  "originalCode": "The exact code that needs to be replaced",
-  "fixCode": "The corrected code that replaces the original",
-  "fixScope": "line" | "token" | "custom",
-  "confidence": number_between_0_and_1
-}
-
-Notes:
-- For fixScope, use "line" if you're replacing the entire line, "token" if you're replacing just one token, or "custom" if it's more complex
-- For originalCode, include enough context to uniquely identify the code to replace
-- For fixCode, include the complete fixed version of the code
-- The confidence score should reflect how confident you are that the fix will resolve the error
-`;
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: MAX_TOKENS,
-      temperature: 0.2,
-      response_format: { type: 'json_object' }
-    });
-    
-    const fixText = response.choices[0].message.content;
-    
-    if (!fixText) {
-      throw new Error('Empty response from OpenAI');
-    }
-    
-    const fix = JSON.parse(fixText) as ErrorFixSuggestion;
-    
-    // Validate required fields
-    if (!fix.fixExplanation || !fix.originalCode || !fix.fixCode || !fix.fixScope || fix.confidence === undefined) {
-      throw new Error('Incomplete fix from OpenAI');
-    }
-    
-    return fix;
-  } catch (err) {
-    console.error(`OpenAI fix generation error: ${err instanceof Error ? err.message : String(err)}`);
-    
-    // Provide a fallback fix suggestion
-    return {
-      fixExplanation: `Failed to generate fix with OpenAI: ${err instanceof Error ? err.message : String(err)}. Please fix the error based on the error message: ${error.errorMessage}`,
-      originalCode: errorLine,
-      fixCode: `// TODO: Fix error: ${error.errorMessage}\n${errorLine}`,
-      fixScope: 'line',
-      confidence: 0.1
-    };
-  }
-}
-
-/**
- * Extracts imports from a TypeScript file
- * 
- * @param fileContent Content of the TypeScript file
- * @returns Array of import statements
- */
-function extractImports(fileContent: string): string[] {
-  const imports: string[] = [];
-  const lines = fileContent.split('\n');
-  
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    if (trimmedLine.startsWith('import ')) {
-      imports.push(trimmedLine);
-    }
-  }
-  
-  return imports;
-}
-
-/**
- * Finds related type declarations in the file
- * 
- * @param errorMessage Error message
- * @param fileContent Content of the TypeScript file
- * @returns Array of related type declarations
- */
-function findRelatedTypes(errorMessage: string, fileContent: string): string[] {
-  const relatedTypes: string[] = [];
-  
-  // Extract type names from error message
-  const typeMatches = errorMessage.match(/['"]([^'"]+)['"]/g) || [];
-  const typeNames = typeMatches.map(match => match.replace(/['"]/g, ''));
-  
-  if (typeNames.length === 0) {
-    return relatedTypes;
-  }
-  
-  // Look for type declarations in the file
-  const lines = fileContent.split('\n');
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    
-    if (
-      trimmedLine.startsWith('interface ') ||
-      trimmedLine.startsWith('type ') ||
-      trimmedLine.startsWith('class ') ||
-      trimmedLine.startsWith('enum ')
-    ) {
-      for (const typeName of typeNames) {
-        if (trimmedLine.includes(typeName)) {
-          relatedTypes.push(trimmedLine);
-          break;
-        }
-      }
-    }
-  }
-  
-  return relatedTypes;
-}
-
-/**
- * Generates a summary of a TypeScript file
- * 
- * @param fileContent Content of the TypeScript file
- * @returns Summary of the file
- */
-function generateFileSummary(fileContent: string): string {
-  // Extract imports
-  const imports = extractImports(fileContent);
-  
-  // Count type declarations
-  const typeCount = {
-    interface: 0,
-    type: 0,
-    class: 0,
-    enum: 0,
-    function: 0
-  };
-  
-  const lines = fileContent.split('\n');
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    
-    if (trimmedLine.startsWith('interface ')) {
-      typeCount.interface++;
-    } else if (trimmedLine.startsWith('type ')) {
-      typeCount.type++;
-    } else if (trimmedLine.startsWith('class ')) {
-      typeCount.class++;
-    } else if (trimmedLine.startsWith('enum ')) {
-      typeCount.enum++;
-    } else if (trimmedLine.startsWith('function ') || trimmedLine.match(/^[a-zA-Z0-9_]+\s*\([^)]*\)\s*:/)) {
-      typeCount.function++;
-    }
-  }
-  
-  // Generate summary
-  return `
-File contains:
-- ${imports.length} imports
-- ${typeCount.interface} interfaces
-- ${typeCount.type} type aliases
-- ${typeCount.class} classes
-- ${typeCount.enum} enums
-- ${typeCount.function} functions
-`;
-}
-
-/**
- * Maps an error code and message to a category
- * 
- * @param errorCode TypeScript error code
- * @param errorMessage Error message
- * @returns Error category
- */
-function mapToCategory(errorCode: string, errorMessage: string): ErrorCategory {
-  const code = parseInt(errorCode.replace('TS', ''));
-  
-  // Map error codes to categories
-  if (code >= 2300 && code < 2400) {
-    return 'syntax_error';
-  } else if ([2307, 2304, 2503].includes(code)) {
-    return 'missing_type';
-  } else if ([2322, 2345, 2739, 2740, 2741].includes(code)) {
-    return 'type_mismatch';
-  } else if ([2339, 2551, 2552, 2553, 2554].includes(code)) {
-    return 'undefined_variable';
-  } else if ([2531, 2532, 2533].includes(code)) {
-    return 'null_reference';
-  } else if ([2420, 2559, 2741].includes(code)) {
-    return 'interface_mismatch';
-  } else if ([2306, 2792, 2849].includes(code)) {
-    return 'import_error';
-  } else if ([2313, 2314, 2315, 2316].includes(code)) {
-    return 'generic_constraint';
-  } else if ([2403, 2456, 2742, 2451, 2452].includes(code)) {
-    return 'declaration_error';
-  }
-  
-  // Check error message for specific patterns
-  const message = errorMessage.toLowerCase();
-  
-  if (message.includes('does not exist on type')) {
-    return 'interface_mismatch';
-  } else if (message.includes('cannot find')) {
-    return 'missing_type';
-  } else if (message.includes('is not assignable to')) {
-    return 'type_mismatch';
-  } else if (message.includes('undefined')) {
-    return 'undefined_variable';
-  } else if (message.includes('null') || message.includes('undefined')) {
-    return 'null_reference';
-  } else if (message.includes('import')) {
-    return 'import_error';
-  } else if (message.includes('syntax')) {
-    return 'syntax_error';
-  } else if (message.includes('constraint')) {
-    return 'generic_constraint';
-  }
-  
-  return 'other';
-}
-
-/**
- * Enhances code context with type information using OpenAI
- * 
- * @param filePath Path to the TypeScript file
- * @param codeSnippet Code snippet to enhance
- * @returns Enhanced code with type information
- */
-export async function enhanceCodeContext(filePath: string, codeSnippet: string): Promise<string> {
-  // Read the file content
-  let fileContent = '';
-  try {
-    if (fs.existsSync(filePath)) {
-      fileContent = fs.readFileSync(filePath, 'utf-8');
-    }
-  } catch (err) {
-    console.error(`Error reading file ${filePath}: ${err instanceof Error ? err.message : String(err)}`);
-    return codeSnippet;
-  }
-  
-  // Prepare the prompt
-  const prompt = `
-You are an expert TypeScript developer tasked with enhancing code with type information. 
-Your task is to analyze the given code snippet and add TypeScript type information.
-
-File path: ${filePath}
-
-Original code snippet:
-\`\`\`typescript
-${codeSnippet}
+${error.errorContext}
 \`\`\`
 
 Full file content:
@@ -492,263 +75,256 @@ Full file content:
 ${fileContent}
 \`\`\`
 
-Please add TypeScript type information to the code snippet, including:
-1. Add explicit type annotations for variables, parameters, and return types
-2. Add interface or type definitions where appropriate
-3. Add JSDoc comments to explain complex types
+Analyze this error and provide the following information in JSON format:
+1. rootCause: A detailed explanation of what is causing this error
+2. suggestedFix: A precise description of how to fix this error
+3. codeSnippet: The corrected code that fixes the error
+4. confidence: Your confidence level in this fix (0.0 to 1.0)
+5. relatedErrors: Any other errors that might be related or caused by this one
 
-Focus on enhancing the code snippet, not the entire file.
-`;
+Focus on TypeScript-specific issues like type compatibility, interface implementations, 
+null/undefined handling, etc. Be very precise about the root cause.
 
-  try {
+JSON Response:`;
+
+    // Call OpenAI API
     const response = await openai.chat.completions.create({
-      model: MODEL,
+      model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: MAX_TOKENS * 3, // Allow longer responses for code enhancement
-      temperature: 0.1
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
+      max_tokens: 1500
     });
+
+    // Parse the response
+    const content = response.choices[0].message.content || '{}';
+    const result = JSON.parse(content);
     
-    const enhancedText = response.choices[0].message.content;
-    
-    if (!enhancedText) {
-      throw new Error('Empty response from OpenAI');
-    }
-    
-    // Extract code from the response
-    const codeMatch = enhancedText.match(/```(?:typescript|ts)\n([\s\S]*?)```/);
-    if (codeMatch && codeMatch[1]) {
-      return codeMatch[1].trim();
-    }
-    
-    return enhancedText;
-  } catch (err) {
-    console.error(`OpenAI code enhancement error: ${err instanceof Error ? err.message : String(err)}`);
-    return codeSnippet;
+    return {
+      rootCause: result.rootCause || 'Unable to determine root cause',
+      suggestedFix: result.suggestedFix || 'No fix suggested',
+      codeSnippet: result.codeSnippet || '',
+      confidence: typeof result.confidence === 'number' ? result.confidence : 0,
+      relatedErrors: Array.isArray(result.relatedErrors) ? result.relatedErrors : []
+    };
+  } catch (error) {
+    console.error('Error analyzing with AI:', error);
+    return {
+      rootCause: 'AI analysis failed',
+      suggestedFix: 'Could not generate a fix',
+      codeSnippet: '',
+      confidence: 0
+    };
   }
 }
 
 /**
- * Generates missing type definitions using OpenAI
+ * Analyze an error pattern using AI
  * 
- * @param typeName Name of the type to generate
- * @param usages Array of code snippets where the type is used
- * @returns Generated type definition
+ * @param pattern Error pattern to analyze
+ * @param examples Examples of errors in this pattern
+ * @returns AI analysis
  */
-export async function generateMissingType(typeName: string, usages: string[]): Promise<string> {
-  // Prepare the prompt
-  const prompt = `
-You are an expert TypeScript developer tasked with generating type definitions. 
-Your task is to generate a TypeScript type definition for a missing type based on its usages.
-
-Missing type name: ${typeName}
-
-Usages of the type:
-${usages.map(usage => '```typescript\n' + usage + '\n```').join('\n\n')}
-
-Please generate a comprehensive TypeScript type definition for ${typeName} that:
-1. Covers all properties and methods indicated by the usages
-2. Uses appropriate TypeScript features (interfaces, generics, etc.)
-3. Includes JSDoc comments to explain the type's purpose and properties
-4. Is consistent with TypeScript best practices
-
-Your response should only include the type definition, not explanations.
-`;
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: MAX_TOKENS * 2, // Allow longer responses for type generation
-      temperature: 0.2
-    });
-    
-    const typeDefinition = response.choices[0].message.content;
-    
-    if (!typeDefinition) {
-      throw new Error('Empty response from OpenAI');
-    }
-    
-    // Extract code from the response
-    const codeMatch = typeDefinition.match(/```(?:typescript|ts)\n([\s\S]*?)```/);
-    if (codeMatch && codeMatch[1]) {
-      return codeMatch[1].trim();
-    }
-    
-    return typeDefinition;
-  } catch (err) {
-    console.error(`OpenAI type generation error: ${err instanceof Error ? err.message : String(err)}`);
-    
-    // Provide a fallback type definition
-    return `/**
- * Auto-generated type definition for ${typeName}
- * TODO: Replace with a proper type definition
- */
-export type ${typeName} = any;
-`;
-  }
-}
-
-/**
- * Learns from fix history to improve error resolution
- * 
- * @param errorCode TypeScript error code
- * @param fixHistories Array of fix history entries
- * @returns Insights on what fixes work best for this error
- */
-export async function learnFromFixHistory(
-  errorCode: string, 
-  fixHistories: Array<{
-    originalCode: string;
-    fixedCode: string;
-    fixMethod: string;
-    fixResult: 'success' | 'failure';
+export async function analyzePatternWithAI(
+  pattern: {
+    name: string;
+    description: string;
+    category: string;
+    severity: string;
+    occurrences: number;
+  },
+  examples: Array<{
+    errorCode: string;
+    errorMessage: string;
+    errorContext?: string;
   }>
 ): Promise<{
-  patterns: string[];
-  bestApproaches: string[];
-  commonMistakes: string[];
+  patternRootCause: string;
+  patternFixStrategy: string;
+  isAutoFixable: boolean;
+  confidence: number;
 }> {
-  // Filter successful fixes
-  const successfulFixes = fixHistories.filter(h => h.fixResult === 'success');
-  
-  if (successfulFixes.length === 0) {
-    return {
-      patterns: [],
-      bestApproaches: [],
-      commonMistakes: []
-    };
-  }
-  
-  // Prepare the prompt
-  const prompt = `
-You are an expert TypeScript developer tasked with improving error resolution.
-Your task is to analyze the history of fixes for a specific TypeScript error code and identify patterns.
-
-Error code: ${errorCode}
-
-Fix history (${successfulFixes.length} successful fixes):
-${successfulFixes.map((fix, i) => `
-Fix ${i + 1}:
-- Original code:
-\`\`\`typescript
-${fix.originalCode}
-\`\`\`
-
-- Fixed code:
-\`\`\`typescript
-${fix.fixedCode}
-\`\`\`
-
-- Fix method: ${fix.fixMethod}
-`).join('\n')}
-
-Please analyze these fixes and provide:
-1. Common patterns in the original code that lead to this error
-2. The best approaches to fix this error based on the successful fixes
-3. Common mistakes or anti-patterns to avoid
-
-Format your response as JSON following this structure:
-{
-  "patterns": ["pattern1", "pattern2", ...],
-  "bestApproaches": ["approach1", "approach2", ...],
-  "commonMistakes": ["mistake1", "mistake2", ...]
-}
-`;
-
   try {
-    const response = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: MAX_TOKENS,
-      temperature: 0.2,
-      response_format: { type: 'json_object' }
-    });
-    
-    const analysisText = response.choices[0].message.content;
-    
-    if (!analysisText) {
-      throw new Error('Empty response from OpenAI');
+    if (!isOpenAIConfigured()) {
+      throw new Error('OpenAI API key is not configured');
     }
     
-    const analysis = JSON.parse(analysisText) as {
-      patterns: string[];
-      bestApproaches: string[];
-      commonMistakes: string[];
-    };
+    // Build the prompt for AI
+    const prompt = `
+You are a TypeScript expert tasked with analyzing patterns in TypeScript errors.
+Please analyze the following error pattern:
+
+Pattern Name: ${pattern.name}
+Description: ${pattern.description}
+Category: ${pattern.category}
+Severity: ${pattern.severity}
+Occurrences: ${pattern.occurrences}
+
+Examples:
+${examples.map((example, index) => `
+Example ${index + 1}:
+Error Code: ${example.errorCode}
+Error Message: ${example.errorMessage}
+${example.errorContext ? `Context:\n\`\`\`typescript\n${example.errorContext}\n\`\`\`` : ''}
+`).join('\n')}
+
+Analyze this error pattern and provide the following information in JSON format:
+1. patternRootCause: A detailed explanation of the common root cause behind this pattern
+2. patternFixStrategy: A generic strategy for fixing errors of this pattern
+3. isAutoFixable: Whether this pattern could be automatically fixed (boolean)
+4. confidence: Your confidence level in this analysis (0.0 to 1.0)
+
+Focus on identifying common themes across these errors and propose a general
+approach that would work for most or all instances of this pattern.
+
+JSON Response:`;
+
+    // Call OpenAI API
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
+      max_tokens: 1000
+    });
+
+    // Parse the response
+    const content = response.choices[0].message.content || '{}';
+    const result = JSON.parse(content);
     
-    return analysis;
-  } catch (err) {
-    console.error(`OpenAI learning error: ${err instanceof Error ? err.message : String(err)}`);
-    
-    // Provide fallback insights
     return {
-      patterns: ['Unknown patterns'],
-      bestApproaches: [`Fix errors with code ${errorCode} based on the error message`],
-      commonMistakes: ['Unknown mistakes']
+      patternRootCause: result.patternRootCause || 'Unable to determine pattern root cause',
+      patternFixStrategy: result.patternFixStrategy || 'No fix strategy suggested',
+      isAutoFixable: !!result.isAutoFixable,
+      confidence: typeof result.confidence === 'number' ? result.confidence : 0
+    };
+  } catch (error) {
+    console.error('Error analyzing pattern with AI:', error);
+    return {
+      patternRootCause: 'AI analysis failed',
+      patternFixStrategy: 'Could not generate a fix strategy',
+      isAutoFixable: false,
+      confidence: 0
     };
   }
 }
 
 /**
- * Generates documentation for a TypeScript type
+ * Generate a fix for an error using AI
  * 
- * @param typeName Name of the type to document
- * @param typeDefinition Type definition code
- * @returns Detailed documentation
+ * @param error Error to fix
+ * @param fileContent Content of the file with the error
+ * @param pattern Optional pattern information for this error
+ * @returns Generated fix
  */
-export async function generateTypeDocumentation(typeName: string, typeDefinition: string): Promise<string> {
-  // Prepare the prompt
-  const prompt = `
-You are an expert TypeScript developer tasked with documenting types.
-Your task is to generate comprehensive documentation for a TypeScript type.
-
-Type name: ${typeName}
-
-Type definition:
-\`\`\`typescript
-${typeDefinition}
-\`\`\`
-
-Please generate detailed documentation for this type that includes:
-1. A clear description of the type's purpose and usage
-2. Explanations of all properties and methods
-3. Examples of how to use the type
-4. Any constraints or considerations when using this type
-
-Format the documentation in Markdown.
-`;
-
+export async function generateAIFix(
+  error: {
+    errorCode: string;
+    errorMessage: string;
+    filePath: string;
+    lineNumber: number;
+    columnNumber: number;
+    errorContext: string;
+    category?: string;
+    severity?: string;
+  },
+  fileContent: string,
+  pattern?: {
+    name: string;
+    description: string;
+    fixStrategy?: string;
+  }
+): Promise<{
+  fixedCode: string;
+  changes: Array<{
+    startLine: number;
+    endLine: number;
+    originalCode: string;
+    newCode: string;
+  }>;
+  explanation: string;
+  confidence: number;
+}> {
   try {
-    const response = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: MAX_TOKENS * 2, // Allow longer responses for documentation
-      temperature: 0.3
-    });
-    
-    const documentation = response.choices[0].message.content;
-    
-    if (!documentation) {
-      throw new Error('Empty response from OpenAI');
+    if (!isOpenAIConfigured()) {
+      throw new Error('OpenAI API key is not configured');
     }
     
-    return documentation;
-  } catch (err) {
-    console.error(`OpenAI documentation error: ${err instanceof Error ? err.message : String(err)}`);
-    
-    // Provide fallback documentation
-    return `# ${typeName}
+    // Build the prompt for AI
+    const prompt = `
+You are a TypeScript expert tasked with fixing TypeScript errors in code.
+Please generate a fix for the following TypeScript error:
 
-## Description
-Auto-generated documentation for the \`${typeName}\` type.
+File: ${error.filePath}
+Line: ${error.lineNumber}, Column: ${error.columnNumber}
+Error Code: ${error.errorCode}
+Error Message: ${error.errorMessage}
+Error Category: ${error.category || 'Unknown'}
+Error Severity: ${error.severity || 'Unknown'}
+${pattern ? `
+This error matches pattern: ${pattern.name}
+Pattern description: ${pattern.description}
+${pattern.fixStrategy ? `Pattern fix strategy: ${pattern.fixStrategy}` : ''}
+` : ''}
 
-## Type Definition
+Context around the error:
 \`\`\`typescript
-${typeDefinition}
+${error.errorContext}
 \`\`\`
 
-## Usage
-TODO: Add usage examples for this type.
-`;
+Full file content:
+\`\`\`typescript
+${fileContent}
+\`\`\`
+
+Generate a precise fix for this error. Your changes should be minimal, focused only on fixing the error.
+Do not refactor unrelated code. Follow TypeScript best practices and maintain the existing coding style.
+
+Provide your response in JSON format with the following fields:
+1. fixedCode: The complete fixed code for the entire file
+2. changes: An array of changes made, each with:
+   - startLine: Line number where the change starts (1-indexed)
+   - endLine: Line number where the change ends (1-indexed)
+   - originalCode: The original code snippet that was changed
+   - newCode: The new code that replaces the original
+3. explanation: A clear explanation of the fix and why it resolves the error
+4. confidence: Your confidence level in this fix (0.0 to 1.0)
+
+JSON Response:`;
+
+    // Call OpenAI API
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
+      max_tokens: 2500
+    });
+
+    // Parse the response
+    const content = response.choices[0].message.content || '{}';
+    const result = JSON.parse(content);
+    
+    return {
+      fixedCode: result.fixedCode || fileContent,
+      changes: Array.isArray(result.changes) ? result.changes : [],
+      explanation: result.explanation || 'No explanation provided',
+      confidence: typeof result.confidence === 'number' ? result.confidence : 0
+    };
+  } catch (error) {
+    console.error('Error generating fix with AI:', error);
+    return {
+      fixedCode: fileContent,
+      changes: [],
+      explanation: 'AI fix generation failed',
+      confidence: 0
+    };
   }
 }
+
+export default {
+  isOpenAIConfigured,
+  analyzeErrorWithAI,
+  analyzePatternWithAI,
+  generateAIFix
+};

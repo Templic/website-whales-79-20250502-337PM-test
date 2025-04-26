@@ -1,825 +1,838 @@
 /**
- * @file tsErrorStorage.ts
- * @description Storage interface for TypeScript error management
+ * TypeScript Error Storage
  * 
- * This module provides a specialized storage interface for TypeScript errors,
- * separate from the main application storage to avoid conflicts.
+ * This module provides database access for storing and retrieving TypeScript errors.
  */
 
-import { db } from './db';
-import { eq, and, or, desc, asc, like, sql } from 'drizzle-orm';
+import { eq, and, or, like, sql, desc } from 'drizzle-orm';
 import { 
-  typescriptErrors, 
-  errorPatterns,
-  errorFixes,
-  errorFixHistory,
-  projectAnalyses
+  typescriptErrors, errorPatterns, errorFixes, errorFixHistory, projectAnalyses,
+  TypeScriptError, InsertTypeScriptError, ErrorPattern, InsertErrorPattern,
+  ErrorFix, InsertErrorFix, ErrorFixHistory, InsertErrorFixHistory,
+  ProjectAnalysis, InsertProjectAnalysis
 } from '../shared/schema';
-
-import type { 
-  TypeScriptError,
-  InsertTypeScriptError,
-  ErrorPattern,
-  InsertErrorPattern,
-  ErrorFix,
-  InsertErrorFix,
-  ErrorFixHistory,
-  InsertErrorFixHistory,
-  ProjectAnalysis,
-  InsertProjectAnalysis,
-  ErrorCategory,
-  ErrorSeverity,
-  ErrorStatus
-} from './types/core/error-types';
+import { db } from './db';
 
 /**
- * Get a TypeScript error by ID
- * @param id Error ID
- * @returns The TypeScript error or undefined if not found
+ * TypeScript Error Storage class
+ * 
+ * Provides methods for storing and retrieving TypeScript errors.
  */
-export async function getTypescriptError(id: number): Promise<TypeScriptError | undefined> {
-  const [error] = await db.select().from(typescriptErrors).where(eq(typescriptErrors.id, id));
-  return error as TypeScriptError | undefined;
-}
-
-/**
- * Get TypeScript errors by file path
- * @param filePath Path to the file
- * @returns Array of TypeScript errors in the file
- */
-export async function getTypescriptErrorsByFile(filePath: string): Promise<TypeScriptError[]> {
-  const errors = await db.select().from(typescriptErrors).where(eq(typescriptErrors.filePath, filePath));
-  return errors as TypeScriptError[];
-}
-
-/**
- * Get TypeScript errors by status
- * @param status Error status to filter by
- * @returns Array of TypeScript errors with the specified status
- */
-export async function getTypescriptErrorsByStatus(status: ErrorStatus): Promise<TypeScriptError[]> {
-  const errors = await db.select().from(typescriptErrors).where(eq(typescriptErrors.status, status));
-  return errors as TypeScriptError[];
-}
-
-/**
- * Get TypeScript errors by category
- * @param category Error category to filter by
- * @returns Array of TypeScript errors in the specified category
- */
-export async function getTypescriptErrorsByCategory(category: ErrorCategory): Promise<TypeScriptError[]> {
-  const errors = await db.select().from(typescriptErrors).where(eq(typescriptErrors.category, category));
-  return errors as TypeScriptError[];
-}
-
-/**
- * Get TypeScript errors by severity
- * @param severity Error severity to filter by
- * @returns Array of TypeScript errors with the specified severity
- */
-export async function getTypescriptErrorsBySeverity(severity: ErrorSeverity): Promise<TypeScriptError[]> {
-  const errors = await db.select().from(typescriptErrors).where(eq(typescriptErrors.severity, severity));
-  return errors as TypeScriptError[];
-}
-
-/**
- * Get TypeScript errors with flexible filtering options
- * @param filters Object containing filter options
- * @returns Array of TypeScript errors matching the filters
- */
-export async function getTypescriptErrors(filters: {
-  status?: ErrorStatus | ErrorStatus[];
-  category?: ErrorCategory | ErrorCategory[];
-  severity?: ErrorSeverity | ErrorSeverity[];
-  filePath?: string;
-  limit?: number;
-  offset?: number;
-  orderBy?: 'detectedAt' | 'resolvedAt' | 'severity';
-  order?: 'asc' | 'desc';
-}): Promise<TypeScriptError[]> {
-  let query = db.select().from(typescriptErrors);
-  
-  // Apply filters
-  const conditions = [];
-  
-  if (filters.status) {
-    if (Array.isArray(filters.status)) {
-      conditions.push(
-        or(...filters.status.map(status => eq(typescriptErrors.status, status)))
-      );
-    } else {
-      conditions.push(eq(typescriptErrors.status, filters.status));
+export class TypescriptErrorStorage {
+  /**
+   * Get all TypeScript errors matching the filter criteria
+   * 
+   * @param filter Filter criteria
+   * @returns Array of TypeScript errors
+   */
+  async getAllTypescriptErrors(filter: {
+    errorCode?: string;
+    filePath?: string;
+    lineNumber?: number;
+    columnNumber?: number;
+    category?: string;
+    severity?: string;
+    status?: string;
+    limit?: number;
+  } = {}): Promise<TypeScriptError[]> {
+    try {
+      let query = db.select().from(typescriptErrors);
+      
+      // Apply filters
+      const conditions = [];
+      
+      if (filter.errorCode) {
+        conditions.push(eq(typescriptErrors.errorCode, filter.errorCode));
+      }
+      
+      if (filter.filePath) {
+        conditions.push(eq(typescriptErrors.filePath, filter.filePath));
+      }
+      
+      if (filter.lineNumber) {
+        conditions.push(eq(typescriptErrors.lineNumber, filter.lineNumber));
+      }
+      
+      if (filter.columnNumber) {
+        conditions.push(eq(typescriptErrors.columnNumber, filter.columnNumber));
+      }
+      
+      if (filter.category) {
+        conditions.push(eq(typescriptErrors.category, filter.category));
+      }
+      
+      if (filter.severity) {
+        conditions.push(eq(typescriptErrors.severity, filter.severity));
+      }
+      
+      if (filter.status) {
+        conditions.push(eq(typescriptErrors.status, filter.status));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      // Apply limit
+      if (filter.limit) {
+        query = query.limit(filter.limit);
+      }
+      
+      // Sort by most recent detection
+      query = query.orderBy(desc(typescriptErrors.lastOccurrenceAt));
+      
+      const results = await query;
+      return results;
+    } catch (error) {
+      console.error('Error getting TypeScript errors:', error);
+      throw error;
     }
   }
   
-  if (filters.category) {
-    if (Array.isArray(filters.category)) {
-      conditions.push(
-        or(...filters.category.map(category => eq(typescriptErrors.category, category)))
-      );
-    } else {
-      conditions.push(eq(typescriptErrors.category, filters.category));
+  /**
+   * Get TypeScript error by ID
+   * 
+   * @param id Error ID
+   * @returns TypeScript error or undefined
+   */
+  async getTypescriptError(id: number): Promise<TypeScriptError | undefined> {
+    try {
+      const [error] = await db
+        .select()
+        .from(typescriptErrors)
+        .where(eq(typescriptErrors.id, id));
+      
+      return error;
+    } catch (error) {
+      console.error('Error getting TypeScript error:', error);
+      throw error;
     }
   }
   
-  if (filters.severity) {
-    if (Array.isArray(filters.severity)) {
-      conditions.push(
-        or(...filters.severity.map(severity => eq(typescriptErrors.severity, severity)))
-      );
-    } else {
-      conditions.push(eq(typescriptErrors.severity, filters.severity));
+  /**
+   * Create a new TypeScript error
+   * 
+   * @param error TypeScript error data
+   * @returns Created TypeScript error
+   */
+  async createTypescriptError(error: InsertTypeScriptError): Promise<TypeScriptError> {
+    try {
+      const [result] = await db
+        .insert(typescriptErrors)
+        .values(error)
+        .returning();
+      
+      return result;
+    } catch (error) {
+      console.error('Error creating TypeScript error:', error);
+      throw error;
     }
   }
   
-  if (filters.filePath) {
-    conditions.push(like(typescriptErrors.filePath, `%${filters.filePath}%`));
-  }
-  
-  if (conditions.length > 0) {
-    query = query.where(and(...conditions));
-  }
-  
-  // Apply ordering
-  if (filters.orderBy) {
-    const direction = filters.order === 'asc' ? asc : desc;
-    switch (filters.orderBy) {
-      case 'detectedAt':
-        query = query.orderBy(direction(typescriptErrors.detectedAt));
-        break;
-      case 'resolvedAt':
-        query = query.orderBy(direction(typescriptErrors.resolvedAt));
-        break;
-      case 'severity':
-        query = query.orderBy(direction(typescriptErrors.severity));
-        break;
-    }
-  } else {
-    // Default sort by detection date (newest first)
-    query = query.orderBy(desc(typescriptErrors.detectedAt));
-  }
-  
-  // Apply pagination
-  if (filters.limit) {
-    query = query.limit(filters.limit);
-    
-    if (filters.offset) {
-      query = query.offset(filters.offset);
+  /**
+   * Update a TypeScript error
+   * 
+   * @param id Error ID
+   * @param data Updated error data
+   * @returns Updated TypeScript error
+   */
+  async updateTypescriptError(
+    id: number,
+    data: Partial<TypeScriptError>
+  ): Promise<TypeScriptError> {
+    try {
+      const [updated] = await db
+        .update(typescriptErrors)
+        .set(data)
+        .where(eq(typescriptErrors.id, id))
+        .returning();
+      
+      return updated;
+    } catch (error) {
+      console.error('Error updating TypeScript error:', error);
+      throw error;
     }
   }
   
-  const errors = await query;
-  return errors as TypeScriptError[];
-}
-
-/**
- * Add a new TypeScript error
- * @param error The error to add
- * @returns The added error with its ID
- */
-export async function addTypescriptError(error: InsertTypeScriptError): Promise<TypeScriptError> {
-  const [added] = await db.insert(typescriptErrors).values({
-    ...error,
-    detectedAt: new Date()
-  }).returning();
-  
-  return added as TypeScriptError;
-}
-
-/**
- * Update a TypeScript error
- * @param id Error ID
- * @param updates Fields to update
- * @returns The updated error
- */
-export async function updateTypescriptError(
-  id: number, 
-  updates: Partial<Omit<TypeScriptError, 'id'>>
-): Promise<TypeScriptError | undefined> {
-  const [updated] = await db
-    .update(typescriptErrors)
-    .set(updates)
-    .where(eq(typescriptErrors.id, id))
-    .returning();
-  
-  return updated as TypeScriptError | undefined;
-}
-
-/**
- * Delete a TypeScript error
- * @param id Error ID
- * @returns Whether the deletion was successful
- */
-export async function deleteTypescriptError(id: number): Promise<boolean> {
-  const [deleted] = await db
-    .delete(typescriptErrors)
-    .where(eq(typescriptErrors.id, id))
-    .returning();
-  
-  return !!deleted;
-}
-
-/**
- * Search for TypeScript errors with complex filters
- * @param filters Search filters
- * @returns Array of TypeScript errors matching the filters
- */
-export async function searchTypescriptErrors(filters: {
-  query?: string;
-  filePath?: string;
-  category?: ErrorCategory;
-  severity?: ErrorSeverity;
-  status?: ErrorStatus;
-  from?: Date;
-  to?: Date;
-  sort?: 'severity' | 'date' | 'file';
-  sortDirection?: 'asc' | 'desc';
-  limit?: number;
-  offset?: number;
-}): Promise<{
-  errors: TypeScriptError[];
-  total: number;
-}> {
-  let query = db.select().from(typescriptErrors);
-  
-  // Apply filters
-  const conditions = [];
-  
-  if (filters.query) {
-    conditions.push(
-      or(
-        like(typescriptErrors.errorMessage, `%${filters.query}%`),
-        like(typescriptErrors.errorCode, `%${filters.query}%`),
-        like(typescriptErrors.filePath, `%${filters.query}%`)
-      )
-    );
-  }
-  
-  if (filters.filePath) {
-    conditions.push(like(typescriptErrors.filePath, `%${filters.filePath}%`));
-  }
-  
-  if (filters.category) {
-    conditions.push(eq(typescriptErrors.category, filters.category));
-  }
-  
-  if (filters.severity) {
-    conditions.push(eq(typescriptErrors.severity, filters.severity));
-  }
-  
-  if (filters.status) {
-    conditions.push(eq(typescriptErrors.status, filters.status));
-  }
-  
-  if (filters.from) {
-    conditions.push(sql`${typescriptErrors.detectedAt} >= ${filters.from}`);
-  }
-  
-  if (filters.to) {
-    conditions.push(sql`${typescriptErrors.detectedAt} <= ${filters.to}`);
-  }
-  
-  if (conditions.length > 0) {
-    query = query.where(and(...conditions));
-  }
-  
-  // Apply sorting
-  if (filters.sort) {
-    const direction = filters.sortDirection === 'asc' ? asc : desc;
-    switch (filters.sort) {
-      case 'severity':
-        query = query.orderBy(direction(typescriptErrors.severity));
-        break;
-      case 'date':
-        query = query.orderBy(direction(typescriptErrors.detectedAt));
-        break;
-      case 'file':
-        query = query.orderBy(direction(typescriptErrors.filePath));
-        break;
-    }
-  } else {
-    // Default sort by detection date (newest first)
-    query = query.orderBy(desc(typescriptErrors.detectedAt));
-  }
-  
-  // Get total count for pagination
-  const [countResult] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(typescriptErrors)
-    .where(and(...conditions));
-  
-  const total = countResult?.count || 0;
-  
-  // Apply pagination
-  if (filters.limit) {
-    query = query.limit(filters.limit);
-    
-    if (filters.offset) {
-      query = query.offset(filters.offset);
+  /**
+   * Search for TypeScript errors
+   * 
+   * @param query Search query
+   * @returns Array of TypeScript errors
+   */
+  async searchTypescriptErrors(query: {
+    searchText?: string;
+    codePatterns?: string[];
+    messagePatterns?: string[];
+    contextClues?: string[];
+  } = {}): Promise<TypeScriptError[]> {
+    try {
+      let dbQuery = db.select().from(typescriptErrors);
+      const conditions = [];
+      
+      // Search by text
+      if (query.searchText) {
+        conditions.push(
+          or(
+            like(typescriptErrors.errorMessage, `%${query.searchText}%`),
+            like(typescriptErrors.errorContext, `%${query.searchText}%`),
+            like(typescriptErrors.filePath, `%${query.searchText}%`)
+          )
+        );
+      }
+      
+      // Search by code patterns
+      if (query.codePatterns && query.codePatterns.length > 0) {
+        const codeConditions = query.codePatterns.map(pattern => 
+          like(typescriptErrors.errorCode, `%${pattern}%`)
+        );
+        
+        conditions.push(or(...codeConditions));
+      }
+      
+      // Search by message patterns
+      if (query.messagePatterns && query.messagePatterns.length > 0) {
+        const messageConditions = query.messagePatterns.map(pattern => 
+          like(typescriptErrors.errorMessage, `%${pattern}%`)
+        );
+        
+        conditions.push(or(...messageConditions));
+      }
+      
+      // Search by context clues
+      if (query.contextClues && query.contextClues.length > 0) {
+        const contextConditions = query.contextClues.map(clue => 
+          like(typescriptErrors.errorContext, `%${clue}%`)
+        );
+        
+        conditions.push(or(...contextConditions));
+      }
+      
+      // Apply conditions
+      if (conditions.length > 0) {
+        dbQuery = dbQuery.where(and(...conditions));
+      }
+      
+      // Sort by most recent
+      dbQuery = dbQuery.orderBy(desc(typescriptErrors.lastOccurrenceAt));
+      
+      // Limit to 100 results
+      dbQuery = dbQuery.limit(100);
+      
+      const results = await dbQuery;
+      return results;
+    } catch (error) {
+      console.error('Error searching TypeScript errors:', error);
+      throw error;
     }
   }
   
-  const errors = await query;
-  
-  return {
-    errors: errors as TypeScriptError[],
-    total
-  };
-}
-
-/**
- * Get TypeScript error statistics
- * @returns Statistics about TypeScript errors
- */
-export async function getTypescriptErrorStats(): Promise<{
-  total: number;
-  fixed: number;
-  bySeverity: Record<ErrorSeverity, number>;
-  byCategory: Record<ErrorCategory, number>;
-  byStatus: Record<ErrorStatus, number>;
-  topFiles: { filePath: string; count: number }[];
-}> {
-  // Get total count
-  const [totalResult] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(typescriptErrors);
-  
-  // Get fixed count
-  const [fixedResult] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(typescriptErrors)
-    .where(eq(typescriptErrors.status, 'fixed'));
-  
-  // Get counts by severity
-  const severityCounts = await db
-    .select({
-      severity: typescriptErrors.severity,
-      count: sql<number>`count(*)`
-    })
-    .from(typescriptErrors)
-    .groupBy(typescriptErrors.severity);
-  
-  // Get counts by category
-  const categoryCounts = await db
-    .select({
-      category: typescriptErrors.category,
-      count: sql<number>`count(*)`
-    })
-    .from(typescriptErrors)
-    .groupBy(typescriptErrors.category);
-  
-  // Get counts by status
-  const statusCounts = await db
-    .select({
-      status: typescriptErrors.status,
-      count: sql<number>`count(*)`
-    })
-    .from(typescriptErrors)
-    .groupBy(typescriptErrors.status);
-  
-  // Get top files with most errors
-  const topFiles = await db
-    .select({
-      filePath: typescriptErrors.filePath,
-      count: sql<number>`count(*)`
-    })
-    .from(typescriptErrors)
-    .groupBy(typescriptErrors.filePath)
-    .orderBy(desc(sql<number>`count(*)`))
-    .limit(10);
-  
-  // Format results
-  const bySeverity: Record<ErrorSeverity, number> = {
-    critical: 0,
-    high: 0,
-    medium: 0,
-    low: 0
-  };
-  
-  for (const { severity, count } of severityCounts) {
-    bySeverity[severity as ErrorSeverity] = count;
+  /**
+   * Get error patterns matching the filter criteria
+   * 
+   * @param filter Filter criteria
+   * @returns Array of error patterns
+   */
+  async getErrorPatterns(filter: {
+    name?: string;
+    category?: string;
+    severity?: string;
+    autoFixable?: boolean;
+    limit?: number;
+  } = {}): Promise<ErrorPattern[]> {
+    try {
+      let query = db.select().from(errorPatterns);
+      
+      // Apply filters
+      const conditions = [];
+      
+      if (filter.name) {
+        conditions.push(eq(errorPatterns.name, filter.name));
+      }
+      
+      if (filter.category) {
+        conditions.push(eq(errorPatterns.category, filter.category));
+      }
+      
+      if (filter.severity) {
+        conditions.push(eq(errorPatterns.severity, filter.severity));
+      }
+      
+      if (filter.autoFixable !== undefined) {
+        conditions.push(eq(errorPatterns.autoFixable, filter.autoFixable));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      // Apply limit
+      if (filter.limit) {
+        query = query.limit(filter.limit);
+      }
+      
+      const results = await query;
+      return results;
+    } catch (error) {
+      console.error('Error getting error patterns:', error);
+      throw error;
+    }
   }
   
-  const byCategory: Record<ErrorCategory, number> = {
-    type_mismatch: 0,
-    missing_type: 0,
-    undefined_variable: 0,
-    null_reference: 0,
-    interface_mismatch: 0,
-    import_error: 0,
-    syntax_error: 0,
-    generic_constraint: 0,
-    declaration_error: 0,
-    other: 0
-  };
-  
-  for (const { category, count } of categoryCounts) {
-    byCategory[category as ErrorCategory] = count;
+  /**
+   * Get error pattern by ID
+   * 
+   * @param id Pattern ID
+   * @returns Error pattern or undefined
+   */
+  async getErrorPattern(id: number): Promise<ErrorPattern | undefined> {
+    try {
+      const [pattern] = await db
+        .select()
+        .from(errorPatterns)
+        .where(eq(errorPatterns.id, id));
+      
+      return pattern;
+    } catch (error) {
+      console.error('Error getting error pattern:', error);
+      throw error;
+    }
   }
   
-  const byStatus: Record<ErrorStatus, number> = {
-    detected: 0,
-    analyzed: 0,
-    in_progress: 0,
-    fixed: 0,
-    ignored: 0,
-    recurring: 0
-  };
-  
-  for (const { status, count } of statusCounts) {
-    byStatus[status as ErrorStatus] = count;
+  /**
+   * Create a new error pattern
+   * 
+   * @param pattern Error pattern data
+   * @returns Created error pattern
+   */
+  async createErrorPattern(pattern: InsertErrorPattern): Promise<ErrorPattern> {
+    try {
+      const [result] = await db
+        .insert(errorPatterns)
+        .values(pattern)
+        .returning();
+      
+      return result;
+    } catch (error) {
+      console.error('Error creating error pattern:', error);
+      throw error;
+    }
   }
   
-  return {
-    total: totalResult?.count || 0,
-    fixed: fixedResult?.count || 0,
-    bySeverity,
-    byCategory,
-    byStatus,
-    topFiles: topFiles.map(({ filePath, count }) => ({ filePath, count }))
-  };
-}
-
-/**
- * Get a TypeScript error pattern by ID
- * @param id Pattern ID
- * @returns The error pattern or undefined if not found
- */
-export async function getErrorPattern(id: number): Promise<ErrorPattern | undefined> {
-  const [pattern] = await db.select().from(errorPatterns).where(eq(errorPatterns.id, id));
-  return pattern as ErrorPattern | undefined;
-}
-
-/**
- * Get TypeScript error patterns by category
- * @param category Error category to filter by
- * @returns Array of error patterns in the specified category
- */
-export async function getErrorPatternsByCategory(category: ErrorCategory): Promise<ErrorPattern[]> {
-  const patterns = await db.select().from(errorPatterns).where(eq(errorPatterns.category, category));
-  return patterns as ErrorPattern[];
-}
-
-/**
- * Add a new error pattern
- * @param pattern The pattern to add
- * @returns The added pattern with its ID
- */
-export async function addErrorPattern(pattern: InsertErrorPattern): Promise<ErrorPattern> {
-  const [added] = await db.insert(errorPatterns).values({
-    ...pattern,
-    createdAt: new Date()
-  }).returning();
-  
-  return added as ErrorPattern;
-}
-
-/**
- * Update an error pattern
- * @param id Pattern ID
- * @param updates Fields to update
- * @returns The updated pattern
- */
-export async function updateErrorPattern(
-  id: number, 
-  updates: Partial<Omit<ErrorPattern, 'id' | 'createdAt'>>
-): Promise<ErrorPattern | undefined> {
-  const [updated] = await db
-    .update(errorPatterns)
-    .set({
-      ...updates,
-      updatedAt: new Date()
-    })
-    .where(eq(errorPatterns.id, id))
-    .returning();
-  
-  return updated as ErrorPattern | undefined;
-}
-
-/**
- * Delete an error pattern
- * @param id Pattern ID
- * @returns Whether the deletion was successful
- */
-export async function deleteErrorPattern(id: number): Promise<boolean> {
-  const [deleted] = await db
-    .delete(errorPatterns)
-    .where(eq(errorPatterns.id, id))
-    .returning();
-  
-  return !!deleted;
-}
-
-/**
- * Get a TypeScript error fix by ID
- * @param id Fix ID
- * @returns The error fix or undefined if not found
- */
-export async function getErrorFix(id: number): Promise<ErrorFix | undefined> {
-  const [fix] = await db.select().from(errorFixes).where(eq(errorFixes.id, id));
-  return fix as ErrorFix | undefined;
-}
-
-/**
- * Get TypeScript error fixes by error ID
- * @param errorId Error ID
- * @returns Array of error fixes for the specified error
- */
-export async function getErrorFixesByError(errorId: number): Promise<ErrorFix[]> {
-  const fixes = await db.select().from(errorFixes).where(eq(errorFixes.errorId, errorId));
-  return fixes as ErrorFix[];
-}
-
-/**
- * Get TypeScript error fixes by pattern ID
- * @param patternId Pattern ID
- * @returns Array of error fixes for the specified pattern
- */
-export async function getErrorFixesByPattern(patternId: number): Promise<ErrorFix[]> {
-  const fixes = await db.select().from(errorFixes).where(eq(errorFixes.patternId, patternId));
-  return fixes as ErrorFix[];
-}
-
-/**
- * Add a new error fix
- * @param fix The fix to add
- * @returns The added fix with its ID
- */
-export async function addErrorFix(fix: InsertErrorFix): Promise<ErrorFix> {
-  const [added] = await db.insert(errorFixes).values({
-    ...fix,
-    createdAt: new Date()
-  }).returning();
-  
-  return added as ErrorFix;
-}
-
-/**
- * Update an error fix
- * @param id Fix ID
- * @param updates Fields to update
- * @returns The updated fix
- */
-export async function updateErrorFix(
-  id: number, 
-  updates: Partial<Omit<ErrorFix, 'id' | 'createdAt'>>
-): Promise<ErrorFix | undefined> {
-  const [updated] = await db
-    .update(errorFixes)
-    .set({
-      ...updates,
-      updatedAt: new Date()
-    })
-    .where(eq(errorFixes.id, id))
-    .returning();
-  
-  return updated as ErrorFix | undefined;
-}
-
-/**
- * Delete an error fix
- * @param id Fix ID
- * @returns Whether the deletion was successful
- */
-export async function deleteErrorFix(id: number): Promise<boolean> {
-  const [deleted] = await db
-    .delete(errorFixes)
-    .where(eq(errorFixes.id, id))
-    .returning();
-  
-  return !!deleted;
-}
-
-/**
- * Add a new error fix history entry
- * @param history The fix history to add
- * @returns The added fix history entry with its ID
- */
-export async function addErrorFixHistory(history: InsertErrorFixHistory): Promise<ErrorFixHistory> {
-  const [added] = await db.insert(errorFixHistory).values(history).returning();
-  return added as ErrorFixHistory;
-}
-
-/**
- * Get error fix history by error ID
- * @param errorId Error ID
- * @returns Array of fix history entries for the specified error
- */
-export async function getErrorFixHistoryByError(errorId: number): Promise<ErrorFixHistory[]> {
-  const history = await db
-    .select()
-    .from(errorFixHistory)
-    .where(eq(errorFixHistory.errorId, errorId))
-    .orderBy(desc(errorFixHistory.fixedAt));
-  
-  return history as ErrorFixHistory[];
-}
-
-/**
- * Get error fix history by error ID (alias for getErrorFixHistoryByError)
- * @param errorId Error ID
- * @returns Array of fix history entries for the specified error
- */
-export async function getErrorFixHistory(errorId: number): Promise<ErrorFixHistory[]> {
-  return getErrorFixHistoryByError(errorId);
-}
-
-/**
- * Get fix success rate for a pattern
- * @param patternId Pattern ID
- * @returns Success rate statistics
- */
-export async function getFixSuccessRateForPattern(patternId: number): Promise<{
-  total: number;
-  success: number;
-  partial: number;
-  failure: number;
-  successRate: number;
-}> {
-  // Get fixes for the pattern
-  const fixes = await getErrorFixesByPattern(patternId);
-  const fixIds = fixes.map(fix => fix.id);
-  
-  if (fixIds.length === 0) {
-    return {
-      total: 0,
-      success: 0,
-      partial: 0,
-      failure: 0,
-      successRate: 0
-    };
+  /**
+   * Update an error pattern
+   * 
+   * @param id Pattern ID
+   * @param data Updated pattern data
+   * @returns Updated error pattern
+   */
+  async updateErrorPattern(
+    id: number,
+    data: Partial<ErrorPattern>
+  ): Promise<ErrorPattern> {
+    try {
+      const [updated] = await db
+        .update(errorPatterns)
+        .set(data)
+        .where(eq(errorPatterns.id, id))
+        .returning();
+      
+      return updated;
+    } catch (error) {
+      console.error('Error updating error pattern:', error);
+      throw error;
+    }
   }
   
-  // Get fix history entries for these fixes
-  const history = await db
-    .select()
-    .from(errorFixHistory)
-    .where(sql`${errorFixHistory.fixId} IN (${fixIds.join(', ')})`);
+  /**
+   * Get error fixes matching the filter criteria
+   * 
+   * @param filter Filter criteria
+   * @returns Array of error fixes
+   */
+  async getErrorFixes(filter: {
+    patternId?: number;
+    fixTitle?: string;
+    fixType?: string;
+    limit?: number;
+  } = {}): Promise<ErrorFix[]> {
+    try {
+      let query = db.select().from(errorFixes);
+      
+      // Apply filters
+      const conditions = [];
+      
+      if (filter.patternId) {
+        conditions.push(eq(errorFixes.patternId, filter.patternId));
+      }
+      
+      if (filter.fixTitle) {
+        conditions.push(eq(errorFixes.fixTitle, filter.fixTitle));
+      }
+      
+      if (filter.fixType) {
+        conditions.push(eq(errorFixes.fixType, filter.fixType));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      // Apply limit
+      if (filter.limit) {
+        query = query.limit(filter.limit);
+      }
+      
+      const results = await query;
+      return results;
+    } catch (error) {
+      console.error('Error getting error fixes:', error);
+      throw error;
+    }
+  }
   
-  const total = history.length;
-  const success = history.filter(h => h.fixResult === 'success').length;
-  const partial = history.filter(h => h.fixResult === 'partial').length;
-  const failure = history.filter(h => h.fixResult === 'failure').length;
+  /**
+   * Get error fix by ID
+   * 
+   * @param id Fix ID
+   * @returns Error fix or undefined
+   */
+  async getErrorFix(id: number): Promise<ErrorFix | undefined> {
+    try {
+      const [fix] = await db
+        .select()
+        .from(errorFixes)
+        .where(eq(errorFixes.id, id));
+      
+      return fix;
+    } catch (error) {
+      console.error('Error getting error fix:', error);
+      throw error;
+    }
+  }
   
-  const successRate = total > 0 ? (success + partial * 0.5) / total : 0;
+  /**
+   * Create a new error fix
+   * 
+   * @param fix Error fix data
+   * @returns Created error fix
+   */
+  async createErrorFix(fix: InsertErrorFix): Promise<ErrorFix> {
+    try {
+      const [result] = await db
+        .insert(errorFixes)
+        .values(fix)
+        .returning();
+      
+      return result;
+    } catch (error) {
+      console.error('Error creating error fix:', error);
+      throw error;
+    }
+  }
   
-  return {
-    total,
-    success,
-    partial,
-    failure,
-    successRate
-  };
-}
-
-/**
- * Update fix success rates for all patterns
- */
-export async function updateFixSuccessRates(): Promise<void> {
-  // Get all patterns
-  const patterns = await db.select().from(errorPatterns);
+  /**
+   * Update an error fix
+   * 
+   * @param id Fix ID
+   * @param data Updated fix data
+   * @returns Updated error fix
+   */
+  async updateErrorFix(
+    id: number,
+    data: Partial<ErrorFix>
+  ): Promise<ErrorFix> {
+    try {
+      const [updated] = await db
+        .update(errorFixes)
+        .set(data)
+        .where(eq(errorFixes.id, id))
+        .returning();
+      
+      return updated;
+    } catch (error) {
+      console.error('Error updating error fix:', error);
+      throw error;
+    }
+  }
   
-  // Update success rate for each pattern
-  for (const pattern of patterns) {
-    const { successRate } = await getFixSuccessRateForPattern(pattern.id);
-    
-    // Update fixes for this pattern
-    await db
-      .update(errorFixes)
-      .set({ successRate })
-      .where(eq(errorFixes.patternId, pattern.id));
+  /**
+   * Get error fix history matching the filter criteria
+   * 
+   * @param filter Filter criteria
+   * @returns Array of error fix history
+   */
+  async getErrorFixHistory(filter: {
+    errorId?: number;
+    fixId?: number;
+    fixedBy?: string;
+    fixMethod?: string;
+    fixResult?: string;
+    limit?: number;
+  } = {}): Promise<ErrorFixHistory[]> {
+    try {
+      let query = db.select().from(errorFixHistory);
+      
+      // Apply filters
+      const conditions = [];
+      
+      if (filter.errorId) {
+        conditions.push(eq(errorFixHistory.errorId, filter.errorId));
+      }
+      
+      if (filter.fixId) {
+        conditions.push(eq(errorFixHistory.fixId, filter.fixId));
+      }
+      
+      if (filter.fixedBy) {
+        conditions.push(eq(errorFixHistory.fixedBy, filter.fixedBy));
+      }
+      
+      if (filter.fixMethod) {
+        conditions.push(eq(errorFixHistory.fixMethod, filter.fixMethod));
+      }
+      
+      if (filter.fixResult) {
+        conditions.push(eq(errorFixHistory.fixResult, filter.fixResult));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      // Apply limit
+      if (filter.limit) {
+        query = query.limit(filter.limit);
+      }
+      
+      // Sort by most recent
+      query = query.orderBy(desc(errorFixHistory.fixedAt));
+      
+      const results = await query;
+      return results;
+    } catch (error) {
+      console.error('Error getting error fix history:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Create a new error fix history
+   * 
+   * @param history Error fix history data
+   * @returns Created error fix history
+   */
+  async createErrorFixHistory(history: InsertErrorFixHistory): Promise<ErrorFixHistory> {
+    try {
+      const [result] = await db
+        .insert(errorFixHistory)
+        .values(history)
+        .returning();
+      
+      return result;
+    } catch (error) {
+      console.error('Error creating error fix history:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get project analyses matching the filter criteria
+   * 
+   * @param filter Filter criteria
+   * @returns Array of project analyses
+   */
+  async getProjectAnalyses(filter: {
+    projectId?: number;
+    status?: string;
+    executedBy?: string;
+    limit?: number;
+  } = {}): Promise<ProjectAnalysis[]> {
+    try {
+      let query = db.select().from(projectAnalyses);
+      
+      // Apply filters
+      const conditions = [];
+      
+      if (filter.projectId) {
+        conditions.push(eq(projectAnalyses.projectId, filter.projectId));
+      }
+      
+      if (filter.status) {
+        conditions.push(eq(projectAnalyses.status, filter.status));
+      }
+      
+      if (filter.executedBy) {
+        conditions.push(eq(projectAnalyses.executedBy, filter.executedBy));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      // Apply limit
+      if (filter.limit) {
+        query = query.limit(filter.limit);
+      }
+      
+      // Sort by most recent
+      query = query.orderBy(desc(projectAnalyses.startedAt));
+      
+      const results = await query;
+      return results;
+    } catch (error) {
+      console.error('Error getting project analyses:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Create a new project analysis
+   * 
+   * @param analysis Project analysis data
+   * @returns Created project analysis
+   */
+  async createProjectAnalysis(analysis: InsertProjectAnalysis): Promise<ProjectAnalysis> {
+    try {
+      const [result] = await db
+        .insert(projectAnalyses)
+        .values(analysis)
+        .returning();
+      
+      return result;
+    } catch (error) {
+      console.error('Error creating project analysis:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Update a project analysis
+   * 
+   * @param id Analysis ID
+   * @param data Updated analysis data
+   * @returns Updated project analysis
+   */
+  async updateProjectAnalysis(
+    id: number,
+    data: Partial<ProjectAnalysis>
+  ): Promise<ProjectAnalysis> {
+    try {
+      const [updated] = await db
+        .update(projectAnalyses)
+        .set(data)
+        .where(eq(projectAnalyses.id, id))
+        .returning();
+      
+      return updated;
+    } catch (error) {
+      console.error('Error updating project analysis:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get error statistics
+   * 
+   * @returns Error statistics
+   */
+  async getErrorStatistics(): Promise<{
+    totalErrors: number;
+    activeErrors: number;
+    fixedErrors: number;
+    errorsByCategory: Record<string, number>;
+    errorsBySeverity: Record<string, number>;
+    topErrorFiles: Array<{ filePath: string; errorCount: number }>;
+  }> {
+    try {
+      // Total errors
+      const [{ count: totalErrors }] = await db
+        .select({ count: sql`count(*)` })
+        .from(typescriptErrors);
+      
+      // Active errors
+      const [{ count: activeErrors }] = await db
+        .select({ count: sql`count(*)` })
+        .from(typescriptErrors)
+        .where(eq(typescriptErrors.status, 'detected'));
+      
+      // Fixed errors
+      const [{ count: fixedErrors }] = await db
+        .select({ count: sql`count(*)` })
+        .from(typescriptErrors)
+        .where(eq(typescriptErrors.status, 'fixed'));
+      
+      // Errors by category
+      const errorsByCategory = await db
+        .select({
+          category: typescriptErrors.category,
+          count: sql`count(*)`
+        })
+        .from(typescriptErrors)
+        .groupBy(typescriptErrors.category);
+      
+      // Errors by severity
+      const errorsBySeverity = await db
+        .select({
+          severity: typescriptErrors.severity,
+          count: sql`count(*)`
+        })
+        .from(typescriptErrors)
+        .groupBy(typescriptErrors.severity);
+      
+      // Top error files
+      const topErrorFiles = await db
+        .select({
+          filePath: typescriptErrors.filePath,
+          errorCount: sql`count(*)`
+        })
+        .from(typescriptErrors)
+        .groupBy(typescriptErrors.filePath)
+        .orderBy(sql`count(*)`, 'desc')
+        .limit(10);
+      
+      // Format results
+      const categoryMap: Record<string, number> = {};
+      const severityMap: Record<string, number> = {};
+      
+      for (const { category, count } of errorsByCategory) {
+        categoryMap[category] = Number(count);
+      }
+      
+      for (const { severity, count } of errorsBySeverity) {
+        severityMap[severity] = Number(count);
+      }
+      
+      return {
+        totalErrors: Number(totalErrors),
+        activeErrors: Number(activeErrors),
+        fixedErrors: Number(fixedErrors),
+        errorsByCategory: categoryMap,
+        errorsBySeverity: severityMap,
+        topErrorFiles: topErrorFiles.map(({ filePath, errorCount }) => ({
+          filePath,
+          errorCount: Number(errorCount)
+        }))
+      };
+    } catch (error) {
+      console.error('Error getting error statistics:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get pattern statistics
+   * 
+   * @returns Pattern statistics
+   */
+  async getPatternStatistics(): Promise<{
+    totalPatterns: number;
+    fixablePatterns: number;
+    patternsWithFixes: number;
+    patternsByCategory: Record<string, number>;
+  }> {
+    try {
+      // Total patterns
+      const [{ count: totalPatterns }] = await db
+        .select({ count: sql`count(*)` })
+        .from(errorPatterns);
+      
+      // Fixable patterns
+      const [{ count: fixablePatterns }] = await db
+        .select({ count: sql`count(*)` })
+        .from(errorPatterns)
+        .where(eq(errorPatterns.autoFixable, true));
+      
+      // Patterns with fixes
+      const patternsWithFixes = await db
+        .select({ patternId: errorFixes.patternId })
+        .from(errorFixes)
+        .groupBy(errorFixes.patternId);
+      
+      // Patterns by category
+      const patternsByCategory = await db
+        .select({
+          category: errorPatterns.category,
+          count: sql`count(*)`
+        })
+        .from(errorPatterns)
+        .groupBy(errorPatterns.category);
+      
+      // Format results
+      const categoryMap: Record<string, number> = {};
+      
+      for (const { category, count } of patternsByCategory) {
+        categoryMap[category] = Number(count);
+      }
+      
+      return {
+        totalPatterns: Number(totalPatterns),
+        fixablePatterns: Number(fixablePatterns),
+        patternsWithFixes: patternsWithFixes.length,
+        patternsByCategory: categoryMap
+      };
+    } catch (error) {
+      console.error('Error getting pattern statistics:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get fix statistics
+   * 
+   * @returns Fix statistics
+   */
+  async getFixStatistics(): Promise<{
+    totalFixes: number;
+    successfulFixes: number;
+    failedFixes: number;
+    fixesByMethod: Record<string, number>;
+  }> {
+    try {
+      // Total fixes
+      const [{ count: totalFixes }] = await db
+        .select({ count: sql`count(*)` })
+        .from(errorFixHistory);
+      
+      // Successful fixes
+      const [{ count: successfulFixes }] = await db
+        .select({ count: sql`count(*)` })
+        .from(errorFixHistory)
+        .where(eq(errorFixHistory.fixResult, 'success'));
+      
+      // Failed fixes
+      const [{ count: failedFixes }] = await db
+        .select({ count: sql`count(*)` })
+        .from(errorFixHistory)
+        .where(eq(errorFixHistory.fixResult, 'failure'));
+      
+      // Fixes by method
+      const fixesByMethod = await db
+        .select({
+          method: errorFixHistory.fixMethod,
+          count: sql`count(*)`
+        })
+        .from(errorFixHistory)
+        .groupBy(errorFixHistory.fixMethod);
+      
+      // Format results
+      const methodMap: Record<string, number> = {};
+      
+      for (const { method, count } of fixesByMethod) {
+        methodMap[method] = Number(count);
+      }
+      
+      return {
+        totalFixes: Number(totalFixes),
+        successfulFixes: Number(successfulFixes),
+        failedFixes: Number(failedFixes),
+        fixesByMethod: methodMap
+      };
+    } catch (error) {
+      console.error('Error getting fix statistics:', error);
+      throw error;
+    }
   }
 }
 
-/**
- * Add a new project analysis
- * @param analysis The project analysis to add
- * @returns The added project analysis with its ID
- */
-export async function addProjectAnalysis(analysis: InsertProjectAnalysis): Promise<ProjectAnalysis> {
-  const [added] = await db.insert(projectAnalyses).values({
-    ...analysis,
-    startedAt: new Date()
-  }).returning();
-  
-  return added as ProjectAnalysis;
-}
-
-/**
- * Update a project analysis
- * @param id Analysis ID
- * @param updates Fields to update
- * @returns The updated project analysis
- */
-export async function updateProjectAnalysis(
-  id: number, 
-  updates: Partial<Omit<ProjectAnalysis, 'id' | 'startedAt'>>
-): Promise<ProjectAnalysis | undefined> {
-  const [updated] = await db
-    .update(projectAnalyses)
-    .set(updates)
-    .where(eq(projectAnalyses.id, id))
-    .returning();
-  
-  return updated as ProjectAnalysis | undefined;
-}
-
-/**
- * Get the latest project analysis
- * @returns The latest project analysis or undefined if none exists
- */
-export async function getLatestProjectAnalysis(): Promise<ProjectAnalysis | undefined> {
-  const [analysis] = await db
-    .select()
-    .from(projectAnalyses)
-    .orderBy(desc(projectAnalyses.startedAt))
-    .limit(1);
-  
-  return analysis as ProjectAnalysis | undefined;
-}
-
-/**
- * Get error trends over time
- * @param timeRange Time range in days (default: 30)
- * @returns Error trends data
- */
-export async function getErrorTrends(timeRange: number = 30): Promise<{
-  dates: string[];
-  detected: number[];
-  fixed: number[];
-  active: number[];
-}> {
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - timeRange);
-  
-  // Calculate date range
-  const dateRange: string[] = [];
-  const currentDate = new Date(startDate);
-  
-  while (currentDate <= new Date()) {
-    dateRange.push(currentDate.toISOString().split('T')[0]);
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-  
-  // Get errors detected by day
-  const detectedByDay = await db
-    .select({
-      date: sql<string>`DATE(${typescriptErrors.detectedAt})`,
-      count: sql<number>`count(*)`
-    })
-    .from(typescriptErrors)
-    .where(sql`${typescriptErrors.detectedAt} >= ${startDate}`)
-    .groupBy(sql`DATE(${typescriptErrors.detectedAt})`)
-    .orderBy(asc(sql`DATE(${typescriptErrors.detectedAt})`));
-  
-  // Get errors fixed by day
-  const fixedByDay = await db
-    .select({
-      date: sql<string>`DATE(${typescriptErrors.resolvedAt})`,
-      count: sql<number>`count(*)`
-    })
-    .from(typescriptErrors)
-    .where(
-      and(
-        sql`${typescriptErrors.resolvedAt} IS NOT NULL`,
-        sql`${typescriptErrors.resolvedAt} >= ${startDate}`
-      )
-    )
-    .groupBy(sql`DATE(${typescriptErrors.resolvedAt})`)
-    .orderBy(asc(sql`DATE(${typescriptErrors.resolvedAt})`));
-  
-  // Format results
-  const detectedMap: Record<string, number> = {};
-  for (const { date, count } of detectedByDay) {
-    detectedMap[date] = count;
-  }
-  
-  const fixedMap: Record<string, number> = {};
-  for (const { date, count } of fixedByDay) {
-    fixedMap[date] = count;
-  }
-  
-  // Calculate active errors (cumulative detected - fixed)
-  let runningTotal = 0;
-  const detected: number[] = [];
-  const fixed: number[] = [];
-  const active: number[] = [];
-  
-  for (const date of dateRange) {
-    const detectedCount = detectedMap[date] || 0;
-    const fixedCount = fixedMap[date] || 0;
-    
-    runningTotal += detectedCount - fixedCount;
-    
-    detected.push(detectedCount);
-    fixed.push(fixedCount);
-    active.push(runningTotal);
-  }
-  
-  return {
-    dates: dateRange,
-    detected,
-    fixed,
-    active
-  };
-}
+export const tsErrorStorage = new TypescriptErrorStorage();
