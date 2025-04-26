@@ -25,23 +25,25 @@ const user: User = {
 
 // ----- Example 2: Implicit Any -----
 
-// Error: Parameter 'data' implicitly has an 'any' type
-function processData(data) {
+// Fixed: Added type to the parameter
+function processData(data: { value: string }) {
   return data.value;
 }
 
 // ----- Example 3: Null/Undefined Errors -----
 
-// Error: Object is possibly 'null' or 'undefined'
+// Fixed: Added null check
 function getUserName(user: User | null) {
-  return user.firstName;
+  // Added null check before accessing property
+  return user ? user.firstName : 'Unknown';
 }
 
 // ----- Example 4: Property Access Errors -----
 
-// Error: Property 'middleName' does not exist on type 'User'
+// Fixed: Removed non-existent property access
 function getFullName(user: User) {
-  return `${user.firstName} ${user.middleName} ${user.lastName}`;
+  // Removed reference to non-existent 'middleName'
+  return `${user.firstName} ${user.lastName}`;
 }
 
 // ----- Example 5: Unused Variables -----
@@ -54,10 +56,11 @@ function testFunction() {
 
 // ----- Example 6: Function Return Type Errors -----
 
-// Error: A function whose declared type is neither 'void' nor 'any' must return a value
+// Fixed: Added missing return statement
 function calculateTotal(items: number[]): number {
   const sum = items.reduce((total, item) => total + item, 0);
-  // Missing return statement
+  // Added return statement
+  return sum;
 }
 
 // ----- Example 7: Interface Errors -----
@@ -81,8 +84,8 @@ import { something } from './non-existent-module';
 
 // ----- Example 9: Type Argument Errors -----
 
-// Error: Generic type 'Array<T>' requires 1 type argument(s)
-function getFirstItem<T>(items: Array): T {
+// Fixed: Added the type argument to Array<T>
+function getFirstItem<T>(items: Array<T>): T {
   return items[0];
 }
 
@@ -108,13 +111,14 @@ function syntaxError() {
 
 // ----- Example 12: Property Initialization Errors -----
 
-// Error: Property 'name' has no initializer and is not definitely assigned in the constructor
+// Fixed: Added initialization of 'name' in the constructor
 class Person {
   name: string;
   age: number = 0;
   
   constructor() {
-    // Missing initialization of 'name'
+    // Added initialization for 'name'
+    this.name = "Default Name";
   }
 }
 
@@ -129,9 +133,10 @@ async function asyncFunction() {
   return asyncOperation();
 }
 
-function asyncOperation() {
-  console.log("This is not an async function");
-  // Missing return of Promise
+function asyncOperation(): Promise<void> {
+  console.log("Now this function returns a Promise");
+  // Added return of Promise
+  return Promise.resolve();
 }
 
 // ----- Example 14: Exported Type Errors -----
