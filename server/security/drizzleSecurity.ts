@@ -13,8 +13,8 @@ import { sqlMonitor } from './sqlMonitor';
  * Drizzle database interface
  */
 interface DrizzleDB {
-  execute: (query) => Promise<any>;
-  query: (query) => Promise<any>;
+  execute: (query: any) => Promise<any>;
+  query: (query: any) => Promise<any>;
   // Other Drizzle methods as needed
 }
 
@@ -60,7 +60,7 @@ export class SecureDrizzle {
   /**
    * Execute a Drizzle query safely
    */
-  async execute<T = any>(query): Promise<T> {
+  async execute<T = any>(query: any): Promise<T> {
     try {
       // Check for SQL injection risks in the query if validation is enabled
       if (this.options.enableValidation) {
@@ -76,7 +76,7 @@ export class SecureDrizzle {
       return await this.db.execute(query);
     } catch (error) {
       // Log the error
-      this.logError(error, query);
+      this.logError(error as Error, query);
       throw error;
     }
   }
@@ -84,7 +84,7 @@ export class SecureDrizzle {
   /**
    * Run a Drizzle query safely
    */
-  async query<T = any>(query): Promise<T> {
+  async query<T = any>(query: any): Promise<T> {
     try {
       // Check for SQL injection risks in the query if validation is enabled
       if (this.options.enableValidation) {
@@ -100,7 +100,7 @@ export class SecureDrizzle {
       return await this.db.query(query);
     } catch (error) {
       // Log the error
-      this.logError(error, query);
+      this.logError(error as Error, query);
       throw error;
     }
   }
@@ -108,7 +108,7 @@ export class SecureDrizzle {
   /**
    * Validate a Drizzle query for security issues
    */
-  private validateQuery(query): void {
+  private validateQuery(query: any): void {
     // If the query is a string (raw SQL), check it with SQL monitor
     if (typeof query === 'string') {
       const isSafe = sqlMonitor.checkQuery(query, [], new Error().stack?.split('\n')[2]);
@@ -153,7 +153,7 @@ export class SecureDrizzle {
   /**
    * Log a Drizzle query
    */
-  private logQuery(query): void {
+  private logQuery(query: any): void {
     let queryInfo: any = {};
     
     // Extract useful information from the query object
@@ -186,22 +186,23 @@ export class SecureDrizzle {
   /**
    * Log a Drizzle query error
    */
-  private logError(error: Error, query): void {
+  private logError(error: Error, query: any): void {
     console.error('[DRIZZLE-SECURITY] Query error:', error);
     
     // Log to blockchain
-    securityBlockchain.addSecurityEvent({
-      severity: SecurityEventSeverity.ERROR,
-      category: SecurityEventCategory.DATABASE_ERROR as any,
-      message: `Drizzle query error: ${error.message}`,
-      metadata: {
+    try {
+      securityBlockchain.addLog({
+        type: 'drizzle_error',
+        severity: SecurityEventSeverity.ERROR,
+        category: SecurityEventCategory.DATA,
+        message: `Drizzle query error: ${error.message}`,
         error: error.message,
-        query: typeof query === 'string' ? query : JSON.stringify(query)
-      },
-      timestamp: new Date()
-    }).catch(logError => {
+        query: typeof query === 'string' ? query : JSON.stringify(query),
+        timestamp: new Date().toISOString()
+      });
+    } catch (logError: any) {
       console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
-    });
+    }
   }
   
   /**
@@ -240,18 +241,19 @@ export function patchDrizzleModel(model) {
         return await originalFindFirst.apply(this, args);
       } catch (error) {
         // Log the error
-        securityBlockchain.addSecurityEvent({
-          severity: SecurityEventSeverity.ERROR,
-          category: SecurityEventCategory.DATABASE_ERROR as any,
-          message: `Drizzle findFirst error: ${error.message}`,
-          metadata: {
-            error: error.message,
-            args: JSON.stringify(args)
-          },
-          timestamp: new Date()
-        }).catch(logError => {
+        try {
+          securityBlockchain.addLog({
+            type: 'drizzle_find_error',
+            severity: SecurityEventSeverity.ERROR,
+            category: SecurityEventCategory.DATA,
+            message: `Drizzle findFirst error: ${error instanceof Error ? error.message : String(error)}`,
+            error: error instanceof Error ? error.message : String(error),
+            args: JSON.stringify(args),
+            timestamp: new Date().toISOString()
+          });
+        } catch (logError: any) {
           console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
-        });
+        }
         
         throw error;
       }
@@ -265,18 +267,19 @@ export function patchDrizzleModel(model) {
         return await originalFindMany.apply(this, args);
       } catch (error) {
         // Log the error
-        securityBlockchain.addSecurityEvent({
-          severity: SecurityEventSeverity.ERROR,
-          category: SecurityEventCategory.DATABASE_ERROR as any,
-          message: `Drizzle findMany error: ${error.message}`,
-          metadata: {
-            error: error.message,
-            args: JSON.stringify(args)
-          },
-          timestamp: new Date()
-        }).catch(logError => {
+        try {
+          securityBlockchain.addLog({
+            type: 'drizzle_find_many_error',
+            severity: SecurityEventSeverity.ERROR,
+            category: SecurityEventCategory.DATA,
+            message: `Drizzle findMany error: ${error instanceof Error ? error.message : String(error)}`,
+            error: error instanceof Error ? error.message : String(error),
+            args: JSON.stringify(args),
+            timestamp: new Date().toISOString()
+          });
+        } catch (logError: any) {
           console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
-        });
+        }
         
         throw error;
       }
@@ -296,18 +299,19 @@ export function patchDrizzleModel(model) {
         return await originalUpdate.apply(this, args);
       } catch (error) {
         // Log the error
-        securityBlockchain.addSecurityEvent({
-          severity: SecurityEventSeverity.ERROR,
-          category: SecurityEventCategory.DATABASE_ERROR as any,
-          message: `Drizzle update error: ${error.message}`,
-          metadata: {
-            error: error.message,
-            args: JSON.stringify(args)
-          },
-          timestamp: new Date()
-        }).catch(logError => {
+        try {
+          securityBlockchain.addLog({
+            type: 'drizzle_update_error',
+            severity: SecurityEventSeverity.ERROR,
+            category: SecurityEventCategory.DATA,
+            message: `Drizzle update error: ${error instanceof Error ? error.message : String(error)}`,
+            error: error instanceof Error ? error.message : String(error),
+            args: JSON.stringify(args),
+            timestamp: new Date().toISOString()
+          });
+        } catch (logError: any) {
           console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
-        });
+        }
         
         throw error;
       }
@@ -327,18 +331,19 @@ export function patchDrizzleModel(model) {
         return await originalDelete.apply(this, args);
       } catch (error) {
         // Log the error
-        securityBlockchain.addSecurityEvent({
-          severity: SecurityEventSeverity.ERROR,
-          category: SecurityEventCategory.DATABASE_ERROR as any,
-          message: `Drizzle delete error: ${error.message}`,
-          metadata: {
-            error: error.message,
-            args: JSON.stringify(args)
-          },
-          timestamp: new Date()
-        }).catch(logError => {
+        try {
+          securityBlockchain.addLog({
+            type: 'drizzle_delete_error',
+            severity: SecurityEventSeverity.ERROR,
+            category: SecurityEventCategory.DATA,
+            message: `Drizzle delete error: ${error instanceof Error ? error.message : String(error)}`,
+            error: error instanceof Error ? error.message : String(error),
+            args: JSON.stringify(args),
+            timestamp: new Date().toISOString()
+          });
+        } catch (logError: any) {
           console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
-        });
+        }
         
         throw error;
       }

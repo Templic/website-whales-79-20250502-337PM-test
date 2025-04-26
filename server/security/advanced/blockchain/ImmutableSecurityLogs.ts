@@ -197,7 +197,7 @@ export class ImmutableSecurityLogs {
   /**
    * Check if a log contains a keyword
    */
-  private logContainsKeyword(log, keyword: string): boolean {
+  private logContainsKeyword(log: Record<string, any>, keyword: string): boolean {
     const term = keyword.toLowerCase();
     
     // Check in message
@@ -216,7 +216,7 @@ export class ImmutableSecurityLogs {
   /**
    * Check if an object contains a keyword (recursive)
    */
-  private objectContainsKeyword(obj, keyword: string): boolean {
+  private objectContainsKeyword(obj: Record<string, any>, keyword: string): boolean {
     for (const key in obj) {
       const value = obj[key];
       
@@ -241,7 +241,7 @@ export class ImmutableSecurityLogs {
   /**
    * Create a new block
    */
-  private createBlock(data): SecurityBlock {
+  private createBlock(data: any[]): SecurityBlock {
     const previousBlock = this.getLastBlock();
     const index = previousBlock ? previousBlock.index + 1 : 0;
     const timestamp = new Date().toISOString();

@@ -277,7 +277,7 @@ export class SQLMonitor {
   /**
    * Wrap a database connection with SQL injection protection
    */
-  public wrapConnection(db) {
+  public wrapConnection(db: any) {
     const self = this;
     const originalQuery = db.query;
     
