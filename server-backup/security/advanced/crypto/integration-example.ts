@@ -77,13 +77,13 @@ async function distributeQuantumKey() {
     }
   } catch (error: any) {
     logger.error('Key distribution failed', {
-      error: (error as Error: any).message,
+      error: (error as Error).message,
       timestamp: Date.now()
     });
     
     return {
       success: false,
-      message: `Key distribution error: ${(error as Error: any).message}`
+      message: `Key distribution error: ${(error as Error).message}`
     };
   }
 }
@@ -160,13 +160,13 @@ async function signDocumentWithDualMethods(document: string) {
     };
   } catch (error: any) {
     logger.error('Document signing failed', {
-      error: (error as Error: any).message,
+      error: (error as Error).message,
       timestamp: Date.now()
     });
     
     return {
       success: false,
-      message: `Document signing error: ${(error as Error: any).message}`
+      message: `Document signing error: ${(error as Error).message}`
     };
   }
 }
@@ -241,13 +241,13 @@ async function verifyTransactionWithPrivacy(transactionAmount: number) {
     }
   } catch (error: any) {
     logger.error('Transaction processing failed', {
-      error: (error as Error: any).message,
+      error: (error as Error).message,
       timestamp: Date.now()
     });
     
     return {
       success: false,
-      message: `Transaction error: ${(error as Error: any).message}`
+      message: `Transaction error: ${(error as Error).message}`
     };
   }
 }

@@ -176,7 +176,7 @@ export function setupSecurityWebSockets(server: http.Server): WebSocketServer {
           category: SecurityEventCategory.SYSTEM,
           severity: SecurityEventSeverity.ERROR,
           message: 'Error processing WebSocket message',
-          data: { error: (error as Error: any).message, message }
+          data: { error: (error as Error).message, message }
         });
         
         ws.send(JSON.stringify({

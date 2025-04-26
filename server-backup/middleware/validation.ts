@@ -68,7 +68,7 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
       
       // Add validated data to request if enabled
       if (options.addValidatedData) {
-        (req as any: any).validatedData = result.data;
+        (req as any).validatedData = result.data;
       }
       
       return next();
@@ -128,7 +128,7 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
       }
       
       if (options.addValidatedData) {
-        (req as any: any).validatedQuery = result.data;
+        (req as any).validatedQuery = result.data;
       }
       
       return next();
@@ -188,7 +188,7 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
       }
       
       if (options.addValidatedData) {
-        (req as any: any).validatedParams = result.data;
+        (req as any).validatedParams = result.data;
       }
       
       return next();

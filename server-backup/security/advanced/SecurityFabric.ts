@@ -220,7 +220,7 @@ export class SecurityFabric {
           category: SecurityEventCategory.SYSTEM,
           severity: SecurityEventSeverity.ERROR,
           message: `Error initializing security component: ${name}`,
-          data: { error: (error as Error: any).message }
+          data: { error: (error as Error).message }
         });
         
         throw error;
@@ -249,7 +249,7 @@ export class SecurityFabric {
           category: SecurityEventCategory.SYSTEM,
           severity: SecurityEventSeverity.ERROR,
           message: `Error shutting down security component: ${name}`,
-          data: { error: (error as Error: any).message }
+          data: { error: (error as Error).message }
         });
         
         // Continue shutting down other components

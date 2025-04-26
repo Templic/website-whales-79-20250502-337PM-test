@@ -170,7 +170,7 @@ function isHtmlResponse(res: Response): boolean {
  */
 function isHttp2(req: Request): boolean {
   // Check if HTTP/2 is available (using Express or Node.js HTTP/2 APIs)
-  return !!(req.httpVersion === '2.0' || (req as any: any).socket?.alpnProtocol === 'h2');
+  return !!(req.httpVersion === '2.0' || (req as any).socket?.alpnProtocol === 'h2');
 }
 
 /**

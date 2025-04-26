@@ -123,7 +123,7 @@ export async function getSecurityEventsHistory(
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.WARNING,
       message: 'Failed to retrieve blockchain security events',
-      data: { error: (error as Error: any).message }
+      data: { error: (error as Error).message }
     });
   }
   
@@ -146,7 +146,7 @@ async function getBlockchainEvents(
     // In a real implementation, this would call the blockchain logger
     return [];
   } catch (error: any) {
-    throw new Error(`Failed to retrieve blockchain events: ${(error as Error: any).message}`);
+    throw new Error(`Failed to retrieve blockchain events: ${(error as Error).message}`);
   }
 }
 

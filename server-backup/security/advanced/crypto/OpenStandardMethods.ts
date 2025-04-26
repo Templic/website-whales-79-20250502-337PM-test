@@ -134,7 +134,7 @@ export class VerifiableSecretSharingModule {
       return result;
     } catch (error: any) {
       this.logger.error('Failed to create verifiable secret sharing', {
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         threshold,
         totalShares,
         timestamp: Date.now()
@@ -180,7 +180,7 @@ export class VerifiableSecretSharingModule {
       return isValid;
     } catch (error: any) {
       this.logger.error('Failed to verify share', {
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         index: share.index,
         timestamp: Date.now()
       });
@@ -242,7 +242,7 @@ export class VerifiableSecretSharingModule {
       return result;
     } catch (error: any) {
       this.logger.error('Failed to reconstruct secret', {
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         sharesProvided: shares.length,
         threshold,
         timestamp: Date.now()
@@ -386,7 +386,7 @@ export class ForwardSecureSignatureModule {
       return result;
     } catch (error: any) {
       this.logger.error('Failed to generate forward-secure key pair', {
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         periods,
         timestamp: Date.now()
       });
@@ -429,7 +429,7 @@ export class ForwardSecureSignatureModule {
       return result;
     } catch (error: any) {
       this.logger.error('Failed to create forward-secure signature', {
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         period,
         messageLength: message?.length || 0,
         timestamp: Date.now()
@@ -466,7 +466,7 @@ export class ForwardSecureSignatureModule {
       return isValid;
     } catch (error: any) {
       this.logger.error('Failed to verify forward-secure signature', {
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         period: signature.period,
         timestamp: Date.now()
       });
@@ -500,7 +500,7 @@ export class ForwardSecureSignatureModule {
       return updatedKeys;
     } catch (error: any) {
       this.logger.error('Failed to update forward-secure key', {
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         currentPeriod,
         timestamp: Date.now()
       });
@@ -566,7 +566,7 @@ export class ZeroKnowledgeProofModule {
       return result;
     } catch (error: any) {
       this.logger.error('Failed to create range proof', {
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         range: `[${min}, ${max}]`,
         timestamp: Date.now()
       });
@@ -599,7 +599,7 @@ export class ZeroKnowledgeProofModule {
       return isValid;
     } catch (error: any) {
       this.logger.error('Failed to verify range proof', {
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         range: `[${min}, ${max}]`,
         timestamp: Date.now()
       });
@@ -661,7 +661,7 @@ export class ZeroKnowledgeProofModule {
       return result;
     } catch (error: any) {
       this.logger.error('Failed to create sum proof', {
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         valuesCount: values?.length || 0,
         timestamp: Date.now()
       });
@@ -695,7 +695,7 @@ export class ZeroKnowledgeProofModule {
       return isValid;
     } catch (error: any) {
       this.logger.error('Failed to verify sum proof', {
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         valuesCount: sumProof.valueCommitments?.length || 0,
         timestamp: Date.now()
       });

@@ -80,8 +80,8 @@ async function registerWorkers() {
       logBackground(`Cleaned up ${result.rowCount} expired sessions`);
       return { success: true, cleanedCount: result.rowCount };
     } catch (error: any) {
-      logBackground(`Session cleanup failed: ${(error as Error: any).message}`, 'error');
-      return { success: false, error: (error as Error: any).message };
+      logBackground(`Session cleanup failed: ${(error as Error).message}`, 'error');
+      return { success: false, error: (error as Error).message };
     }
   });
   
@@ -137,8 +137,8 @@ async function registerWorkers() {
       logBackground('Database metrics collected successfully');
       return { success: true };
     } catch (error: any) {
-      logBackground(`Database metrics collection failed: ${(error as Error: any).message}`, 'error');
-      return { success: false, error: (error as Error: any).message };
+      logBackground(`Database metrics collection failed: ${(error as Error).message}`, 'error');
+      return { success: false, error: (error as Error).message };
     }
   });
   
@@ -166,8 +166,8 @@ async function registerWorkers() {
       logBackground(`Auto-vacuum completed for ${tables.length} tables`);
       return { success: true, results };
     } catch (error: any) {
-      logBackground(`Auto-vacuum failed: ${(error as Error: any).message}`, 'error');
-      return { success: false, error: (error as Error: any).message };
+      logBackground(`Auto-vacuum failed: ${(error as Error).message}`, 'error');
+      return { success: false, error: (error as Error).message };
     }
   });
 }
@@ -226,8 +226,8 @@ async function scheduleRecurringJobs() {
       
       return { success: true, tablesIdentified: result.rows.length };
     } catch (error: any) {
-      logBackground(`Large table identification failed: ${(error as Error: any).message}`, 'error');
-      return { success: false, error: (error as Error: any).message };
+      logBackground(`Large table identification failed: ${(error as Error).message}`, 'error');
+      return { success: false, error: (error as Error).message };
     }
   });
   

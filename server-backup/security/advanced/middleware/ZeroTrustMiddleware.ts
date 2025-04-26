@@ -68,7 +68,7 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       const securityContext = securityFabric.createSecurityContext(req: any, res: any);
       
       // Attach context to request for later use
-      (req as any: any).securityContext = securityContext;
+      (req as any).securityContext = securityContext;
       
       // Set resource information
       securityContext.setResource({

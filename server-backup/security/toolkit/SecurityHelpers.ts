@@ -138,13 +138,13 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
         if (methodName === 'constructor') return;
         
         // Get the method
-        const method = (instance as any: any)[methodName];
+        const method = (instance as any)[methodName];
         
         // Skip non-functions
         if (typeof method !== 'function') return;
         
         // Check if method already has security applied (from method decorator: any)
-        if ((method as any: any).__secured) return;
+        if ((method as any).__secured) return;
         
         // Wrap method with security
         (instance as an: anyy)[methodName] = async function(req: Request, res: Response, next: NextFunction) {
@@ -189,7 +189,7 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
         };
         
         // Mark method as secured
-        (instance as any: any)[methodName].__secured = true;
+        (instance as any)[methodName].__secured = true;
       });
       
       return instance;

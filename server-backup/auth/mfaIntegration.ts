@@ -119,7 +119,7 @@ export async function generateMFAChallenge(
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error generating MFA challenge',
-      data: { error: (error as Error: any).message, userId, method }
+      data: { error: (error as Error).message, userId, method }
     });
     
     return false;
@@ -233,7 +233,7 @@ export async function verifyMFAResponse(
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error verifying MFA response',
-      data: { error: (error as Error: any).message, userId, challengeType: challenge.type }
+      data: { error: (error as Error).message, userId, challengeType: challenge.type }
     });
     
     return false;
@@ -290,7 +290,7 @@ export async function completeMFASetup(
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error completing MFA setup',
-      data: { error: (error as Error: any).message, userId, type }
+      data: { error: (error as Error).message, userId, type }
     });
     
     return false;

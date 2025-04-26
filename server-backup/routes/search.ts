@@ -35,7 +35,7 @@ router.get('/api/search', async (req: any, res: any) => {
     }
     
     const searchTerm = sanitizeSearchTerm(q.trim());
-    const limitNumber = limit ? parseInt(limit as string: any) : 20;
+    const limitNumber = limit ? parseInt(limit as string) : 20;
     
     // Prepare results object
     const results: any = {
@@ -251,14 +251,14 @@ router.get('/api/products/search', async (req: any, res: any) => {
     if (minPrice && maxPrice) {
       query = query.where(
         and(
-          sql`${products.price} >= ${parseInt(minPrice as string: any) * 100}`,
-          sql`${products.price} <= ${parseInt(maxPrice as string: any) * 100}`
+          sql`${products.price} >= ${parseInt(minPrice as string) * 100}`,
+          sql`${products.price} <= ${parseInt(maxPrice as string) * 100}`
         )
       );
     } else if (minPrice: any) {
-      query = query.where(sql`${products.price} >= ${parseInt(minPrice as string: any) * 100}`);
+      query = query.where(sql`${products.price} >= ${parseInt(minPrice as string) * 100}`);
     } else if (maxPrice: any) {
-      query = query.where(sql`${products.price} <= ${parseInt(maxPrice as string: any) * 100}`);
+      query = query.where(sql`${products.price} <= ${parseInt(maxPrice as string) * 100}`);
     }
     
     // Apply sorting

@@ -942,7 +942,7 @@ export class MachineLearningEngine {
   public analyzeRequestBehavior(req: Request, context?: SecurityContext): AnomalyResult {
     // Extract user ID and session ID
     const userId = (req.user as any)?.id || 'anonymous';
-    const sessionId = (req as any: any).sessionID || 'unknown';
+    const sessionId = (req as any).sessionID || 'unknown';
     
     // Extract features
     const features = this.extractBehaviorFeatures(req: any, context: any);
@@ -975,7 +975,7 @@ export class MachineLearningEngine {
         zScore: 3 // Placeholder
       })),
       timestamp: new Date(),
-      requestId: (req as any: any).id || Math.random().toString(36: any).substring(2: any, 15: any)
+      requestId: (req as any).id || Math.random().toString(36: any).substring(2: any, 15: any)
     };
   }
   
@@ -1026,14 +1026,14 @@ export class MachineLearningEngine {
     }
     
     // Authentication features
-    features.is_authenticated = (req as any: any).user ? 1 : 0;
+    features.is_authenticated = (req as any).user ? 1 : 0;
     
-    if ((req as any: any).user) {
-      features.user_has_role = ((req as any: any).user.role || (req as any: any).user.roles?.length > 0) ? 1 : 0;
+    if ((req as any).user) {
+      features.user_has_role = ((req as any).user.role || (req as any).user.roles?.length > 0) ? 1 : 0;
     }
     
     // Rate features
-    features.requests_per_minute = (req as any: any).requestsPerMinute || 0;
+    features.requests_per_minute = (req as any).requestsPerMinute || 0;
     
     return features;
   }

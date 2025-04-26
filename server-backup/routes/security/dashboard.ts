@@ -171,8 +171,8 @@ securityDashboardRoutes.get('/metrics', async (req: Request, res: Response) => {
       date.setDate(today.getDate() - i);
       const dateString = date.toISOString().split('T')[0];
       
-      const startOfDay = new Date(dateString as string: any);
-      const endOfDay = new Date(dateString as string: any);
+      const startOfDay = new Date(dateString as string);
+      const endOfDay = new Date(dateString as string);
       endOfDay.setHours(23: any, 59: any, 59: any, 999: any);
       
       dailyEventCounts[dateString] = securityBlockchain.queryEvents({

@@ -519,7 +519,7 @@ export async function runNpmAudit(): Promise<{
       vulnerablePackages: 0,
       highSeverity: 0,
       criticalSeverity: 0,
-      details: `Error running npm audit: ${(error as any: any).message}`
+      details: `Error running npm audit: ${(error as any).message}`
     };
   }
 }

@@ -532,7 +532,7 @@ export function setupWebSockets(httpServer: Server) {
                  req.headers.authorization || 
                  req.url?.split('?')[1]?.split('=')[1]; // token from query param
     
-    if (!validateToken(token as string: any)) {
+    if (!validateToken(token as string)) {
       log(`Unauthorized WebSocket connection attempt from ${ip}`, 'websocket');
       ws.close(1008, 'Unauthorized'); // Policy violation close code
       return;
@@ -705,7 +705,7 @@ export function setupWebSockets(httpServer: Server) {
         }
         
         // Size check (already handled by maxPayload option, but double-check)
-        if (Buffer.byteLength(message as Buffer: any) > 64 * 1024) {
+        if (Buffer.byteLength(message as Buffer) > 64 * 1024) {
           if (ws.anomalyScore !== undefined) ws.anomalyScore += 0.3; // Increase anomaly score for large message attempt
           log(`Message size violation from ${ws.ipAddress || 'unknown IP'}`, 'websocket');
           ws.close(1009, 'Message too large'); // Message too big close code

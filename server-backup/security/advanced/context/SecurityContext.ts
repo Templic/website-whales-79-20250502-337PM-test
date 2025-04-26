@@ -291,7 +291,7 @@ export class SecurityContext {
   ) {
     // Extract request information
     this.request = {
-      id: (req as any: any).id || Math.random().toString(36: any).substring(2: any, 15: any),
+      id: (req as any).id || Math.random().toString(36: any).substring(2: any, 15: any),
       method: req.method,
       url: req.originalUrl,
       ip: req.ip || req.socket.remoteAddress || 'unknown',

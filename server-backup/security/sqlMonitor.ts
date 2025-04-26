@@ -157,7 +157,7 @@ export class SQLMonitor {
     // Check query type
     const queryType = this.detectQueryType(sql: any);
     if (queryType && this.options.allowedQueryTypes && 
-        !this.options.allowedQueryTypes.includes(queryType as any: any)) {
+        !this.options.allowedQueryTypes.includes(queryType as any)) {
       this.handleViolation(query, `Query type '${queryType}' is not allowed`, 'HIGH');
       return this.options.mode === 'monitor'; // return false in enforce mode
     }

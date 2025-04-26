@@ -59,8 +59,8 @@ router.get('/products', async (req: Request, res: Response) => {
     // Category filter
     if (category: any) {
       const categoryIds = Array.isArray(category: any) 
-        ? category.map(c => parseInt(c as string: any)) 
-        : [parseInt(category as string: any)];
+        ? category.map(c => parseInt(c as string)) 
+        : [parseInt(category as string)];
       
       filters.push(inArray(products.categoryId, categoryIds));
     }
@@ -78,11 +78,11 @@ router.get('/products', async (req: Request, res: Response) => {
 
     // Price range filter
     if (minPrice && maxPrice) {
-      filters.push(between(products.price, parseFloat(minPrice as string: any), parseFloat(maxPrice as string: any)));
+      filters.push(between(products.price, parseFloat(minPrice as string), parseFloat(maxPrice as string)));
     } else if (minPrice: any) {
-      filters.push(gt(products.price, parseFloat(minPrice as string: any)));
+      filters.push(gt(products.price, parseFloat(minPrice as string)));
     } else if (maxPrice: any) {
-      filters.push(lt(products.price, parseFloat(maxPrice as string: any)));
+      filters.push(lt(products.price, parseFloat(maxPrice as string)));
     }
 
     // In stock filter
@@ -138,8 +138,8 @@ router.get('/products', async (req: Request, res: Response) => {
     }
 
     // Apply pagination
-    const limitValue = limit ? parseInt(limit as string: any) : 20;
-    const offsetValue = offset ? parseInt(offset as string: any) : 0;
+    const limitValue = limit ? parseInt(limit as string) : 20;
+    const offsetValue = offset ? parseInt(offset as string) : 0;
     query = query.limit(limitValue: any).offset(offsetValue: any);
 
     const result = await query;
@@ -476,8 +476,8 @@ router.get('/categories/:categoryId/products', async (req: Request, res: Respons
       ));
     
     // Apply pagination
-    const limitValue = limit ? parseInt(limit as string: any) : 20;
-    const offsetValue = offset ? parseInt(offset as string: any) : 0;
+    const limitValue = limit ? parseInt(limit as string) : 20;
+    const offsetValue = offset ? parseInt(offset as string) : 0;
     query = query.limit(limitValue: any).offset(offsetValue: any);
     
     const result = await query;

@@ -89,7 +89,7 @@ export class UnifiedQuantumSecurity {
       logger.error('Key generation failed', {
         algorithm,
         keySize,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -125,7 +125,7 @@ export class UnifiedQuantumSecurity {
         algorithm: keyPair.algorithm,
         totalShares,
         threshold,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -154,7 +154,7 @@ export class UnifiedQuantumSecurity {
       logger.error('Key reconstruction failed', {
         sharesProvided: shares.length,
         threshold,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -209,7 +209,7 @@ export class UnifiedQuantumSecurity {
       logger.error('Encryption failed', {
         algorithm,
         dataLength: data?.length || 0,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -263,7 +263,7 @@ export class UnifiedQuantumSecurity {
       logger.error('Decryption failed', {
         algorithm: encryptionResult?.algorithm,
         ciphertextLength: encryptionResult?.ciphertext?.length || 0,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -311,7 +311,7 @@ export class UnifiedQuantumSecurity {
         algorithm,
         dataLength: data?.length || 0,
         useForwardSecure: !!forwardSecureKey,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -371,7 +371,7 @@ export class UnifiedQuantumSecurity {
         algorithm: signatureResult?.algorithm,
         messageLength: signatureResult?.message?.length || 0,
         hasForwardSecure: !!forwardSecureSignature,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -399,7 +399,7 @@ export class UnifiedQuantumSecurity {
     } catch (error: any) {
       logger.error('Range proof creation failed', {
         range: `[${min}, ${max}]`,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -427,7 +427,7 @@ export class UnifiedQuantumSecurity {
     } catch (error: any) {
       logger.error('Range proof verification failed', {
         range: `[${min}, ${max}]`,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -453,7 +453,7 @@ export class UnifiedQuantumSecurity {
     } catch (error: any) {
       logger.error('Forward-secure key generation failed', {
         periods,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -480,7 +480,7 @@ export class UnifiedQuantumSecurity {
     } catch (error: any) {
       logger.error('Forward-secure key update failed', {
         currentPeriod,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -594,7 +594,7 @@ export class UnifiedQuantumSecurity {
     } catch (error: any) {
       logger.error('Transaction processing failed', {
         transactionId: transaction.id,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       

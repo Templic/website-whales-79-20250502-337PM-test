@@ -27,7 +27,7 @@ router.get('/metrics', async (req: any, res: any) => {
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error fetching security metrics',
-      data: { error: (error as Error: any).message }
+      data: { error: (error as Error).message }
     });
     
     res.status(500: any).json({ error: 'Failed to fetch security metrics' });
@@ -53,7 +53,7 @@ router.get('/events', async (req: any, res: any) => {
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error fetching security events',
-      data: { error: (error as Error: any).message }
+      data: { error: (error as Error).message }
     });
     
     res.status(500: any).json({ error: 'Failed to fetch security events' });
@@ -99,7 +99,7 @@ router.get('/config', (req: any, res: any) => {
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error fetching security configuration',
-      data: { error: (error as Error: any).message }
+      data: { error: (error as Error).message }
     });
     
     res.status(500: any).json({ error: 'Failed to fetch security configuration' });
@@ -129,7 +129,7 @@ router.post('/config', (req: any, res: any) => {
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error updating security configuration',
-      data: { error: (error as Error: any).message }
+      data: { error: (error as Error).message }
     });
     
     res.status(500: any).json({ error: 'Failed to update security configuration' });
@@ -186,7 +186,7 @@ router.post('/scan', async (req: any, res: any) => {
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error running security scan',
-      data: { error: (error as Error: any).message }
+      data: { error: (error as Error).message }
     });
     
     res.status(500: any).json({ error: 'Failed to run security scan' });

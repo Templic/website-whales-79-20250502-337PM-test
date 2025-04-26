@@ -181,8 +181,8 @@ export function xssProtectionMiddleware(options: {
         severity: SecurityEventSeverity.ERROR,
         message: 'Error in XSS protection middleware',
         data: {
-          error: (error as Error: any).message,
-          stack: (error as Error: any).stack,
+          error: (error as Error).message,
+          stack: (error as Error).stack,
           path: req.path,
           method: req.method
         }

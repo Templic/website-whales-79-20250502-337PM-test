@@ -182,7 +182,7 @@ function verifyEnhancedCsrfToken(req: Request, token: string, providedNonce?: st
     // Handle case where token lengths don't match
     logSecurityEvent('CSRF_TOKEN_COMPARISON_ERROR', {
       sessionId,
-      error: (error as Error: any).message,
+      error: (error as Error).message,
       timestamp: new Date()
     }, SecurityLogLevel.WARN);
     return false;

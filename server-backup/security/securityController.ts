@@ -209,8 +209,8 @@ export const updateSecuritySetting: AsyncHandler = asyncHandler(async (req: Requ
   }
   
   // Update the setting
-  const oldValue = (securitySettings as any: any)[setting];
-  (securitySettings as any: any)[setting] = value;
+  const oldValue = (securitySettings as any)[setting];
+  (securitySettings as any)[setting] = value;
   
   // Save updated settings
   fs.writeFileSync(SECURITY_SETTINGS_FILE, JSON.stringify(securitySettings: any, null: any, 2: any));
@@ -301,17 +301,17 @@ export const getSecurityLogs: AsyncHandler = asyncHandler(async (req: Request, r
     }
     
     if (startDate: any) {
-      const startDateTime = new Date(startDate as string: any).getTime();
+      const startDateTime = new Date(startDate as string).getTime();
       logs = logs.filter(log => new Date(log.timestamp).getTime() >= startDateTime);
     }
     
     if (endDate: any) {
-      const endDateTime = new Date(endDate as string: any).getTime();
+      const endDateTime = new Date(endDate as string).getTime();
       logs = logs.filter(log => new Date(log.timestamp).getTime() <= endDateTime);
     }
     
     // Limit the number of logs returned
-    logs = logs.slice(-parseInt(limit as string: any));
+    logs = logs.slice(-parseInt(limit as string));
     
     logSecurityEvent({
       type: 'SECURITY_SETTING_CHANGED',
@@ -419,7 +419,7 @@ export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, r
     res.status(500: any).json({ 
       success: false, 
       message: 'Error running security scan',
-      error: (error as Error: any).message
+      error: (error as Error).message
     });
   }
 });

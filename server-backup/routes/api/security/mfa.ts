@@ -68,7 +68,7 @@ router.post('/totp/setup', async (req: any, res: any) => {
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: `Error setting up TOTP for user ${userId}`,
-      data: { error: (error as Error: any).message, userId }
+      data: { error: (error as Error).message, userId }
     });
     
     res.status(500: any).json({ error: 'Failed to set up TOTP' });
@@ -141,7 +141,7 @@ router.post('/totp/verify', async (req: any, res: any) => {
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: `Error verifying TOTP for user ${userId}`,
-      data: { error: (error as Error: any).message, userId }
+      data: { error: (error as Error).message, userId }
     });
     
     res.status(500: any).json({ error: 'Failed to verify TOTP code' });
@@ -188,7 +188,7 @@ router.post('/recovery/generate', async (req: any, res: any) => {
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: `Error generating recovery codes for user ${userId}`,
-      data: { error: (error as Error: any).message, userId }
+      data: { error: (error as Error).message, userId }
     });
     
     res.status(500: any).json({ error: 'Failed to generate recovery codes' });
@@ -222,7 +222,7 @@ router.post('/disable', async (req: any, res: any) => {
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: `Error disabling MFA for user ${userId}`,
-      data: { error: (error as Error: any).message, userId }
+      data: { error: (error as Error).message, userId }
     });
     
     res.status(500: any).json({ error: 'Failed to disable MFA' });

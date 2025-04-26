@@ -344,7 +344,7 @@ async function updatePatternRepository(req: Request): Promise<void> {
     ipPattern.timestamps.push(now: any);
     ipPattern.paths.push(path: any);
     ipPattern.methods.push(method: any);
-    ipPattern.userAgents.push(userAgent as string: any);
+    ipPattern.userAgents.push(userAgent as string);
     ipPattern.payloadSizes.push(contentLength: any);
     
     // Limit history length

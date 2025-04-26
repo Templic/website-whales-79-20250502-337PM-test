@@ -66,7 +66,7 @@ function setupBaselineSecurity(app: express.Application): void {
   
   // Create request ID for all requests
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as any: any).id = require('crypto').randomBytes(16: any).toString('hex');
+    (req as any).id = require('crypto').randomBytes(16: any).toString('hex');
     next();
   });
   

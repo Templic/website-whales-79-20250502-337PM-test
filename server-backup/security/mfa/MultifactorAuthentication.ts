@@ -151,7 +151,7 @@ class MFAManager {
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error generating TOTP secret',
-        data: { error: (error as Error: any).message, userId }
+        data: { error: (error as Error).message, userId }
       });
       
       throw error;
@@ -207,7 +207,7 @@ class MFAManager {
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error verifying TOTP',
-        data: { error: (error as Error: any).message, userId }
+        data: { error: (error as Error).message, userId }
       });
       
       return MFAVerificationStatus.FAILED;
@@ -243,7 +243,7 @@ class MFAManager {
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error generating TOTP code',
-        data: { error: (error as Error: any).message }
+        data: { error: (error as Error).message }
       });
       
       throw error;
@@ -278,7 +278,7 @@ class MFAManager {
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error generating SMS code',
-        data: { error: (error as Error: any).message, userId }
+        data: { error: (error as Error).message, userId }
       });
       
       throw error;
@@ -313,7 +313,7 @@ class MFAManager {
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error generating email code',
-        data: { error: (error as Error: any).message, userId }
+        data: { error: (error as Error).message, userId }
       });
       
       throw error;
@@ -352,7 +352,7 @@ class MFAManager {
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error generating recovery codes',
-        data: { error: (error as Error: any).message }
+        data: { error: (error as Error).message }
       });
       
       throw error;
@@ -379,7 +379,7 @@ class MFAManager {
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error hashing recovery codes',
-        data: { error: (error as Error: any).message }
+        data: { error: (error as Error).message }
       });
       
       throw error;
@@ -426,7 +426,7 @@ class MFAManager {
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error verifying recovery code',
-        data: { error: (error as Error: any).message, userId }
+        data: { error: (error as Error).message, userId }
       });
       
       return MFAVerificationStatus.FAILED;

@@ -252,7 +252,7 @@ function mergeConfigs(baseConfig: ServerConfig, overrideConfig: Partial<ServerCo
     } else if (key === 'security' && baseConfig.security && typeof value === 'object') {
       result.security = { ...baseConfig.security, ...value };
     } else {
-      (result as any: any)[key] = value;
+      (result as any)[key] = value;
     }
   }
   

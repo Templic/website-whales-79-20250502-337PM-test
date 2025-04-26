@@ -85,7 +85,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Add quantum context to request
-      (req as any: any).quantumContext = {
+      (req as any).quantumContext = {
         verified: false,
         encrypted: false,
         algorithm: opts.algorithm,
@@ -116,7 +116,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
             );
             
             if (verificationResult.valid) {
-              (req as any: any).quantumContext.verified = true;
+              (req as any).quantumContext.verified = true;
               
               if (opts.logToBlockchain) {
                 await securityBlockchain.addSecurityEvent({

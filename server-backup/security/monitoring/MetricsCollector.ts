@@ -210,7 +210,7 @@ async function collectSecurityMetrics(): Promise<void> {
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error collecting security metrics',
-      data: { error: (error as Error: any).message }
+      data: { error: (error as Error).message }
     });
   }
 }
