@@ -94,7 +94,7 @@ export function createApiHandler<
           const authError = handleAuthError(
             new Error('Authentication required'),
             'unauthorized',
-            { endpoint: request.path, method: request.method }
+            { endpoint: request.path ? request.path.toString() : '', method: request.method }
           );
           return sendErrorResponse(res, authError);
         }
@@ -107,7 +107,7 @@ export function createApiHandler<
               new Error('Insufficient role permissions'),
               'forbidden',
               { 
-                endpoint: request.path, 
+                endpoint: request.path ? request.path.toString() : '', 
                 method: request.method,
                 requiredRoles: options.auth.roles,
                 userRoles: request.user.roles
@@ -125,7 +125,7 @@ export function createApiHandler<
               new Error('Insufficient permissions'),
               'forbidden',
               { 
-                endpoint: request.path, 
+                endpoint: request.path ? request.path.toString() : '', 
                 method: request.method,
                 requiredPermissions: options.auth.permissions,
                 userPermissions: request.user.permissions
@@ -232,8 +232,8 @@ function mapExpressRequest<T extends BaseRequest>(req: any): T {
   } = req;
   
   return {
-    path,
-    method: method.toUpperCase(),
+    path: path ? path.toString() : '',
+    method: method ? method.toUpperCase() : 'GET',
     headers: headers || {},
     query: query || {},
     params: params || {},
