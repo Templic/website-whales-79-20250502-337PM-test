@@ -391,8 +391,16 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   // Error Analysis methods
   async createErrorAnalysis(analysis: InsertErrorAnalysis): Promise<ErrorAnalysis> {
     try {
-      // Create an array of the analysis object to satisfy the type requirements
-      const [newAnalysis] = await db.insert(errorAnalysis).values([analysis]).returning();
+      // Ensure we have the required fields for the analysis
+      const analysisData = {
+        error_id: analysis.error_id,
+        analysis_type: analysis.analysis_type || 'general',
+        analysis_data: analysis.analysis_data || {},
+        ...analysis
+      };
+      
+      // Insert the analysis with proper field values
+      const [newAnalysis] = await db.insert(errorAnalysis).values(analysisData).returning();
       return newAnalysis;
     } catch (error) {
       console.error('Error creating error analysis:', error);
@@ -428,8 +436,21 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   // Scan Result methods
   async createScanResult(result: InsertScanResult): Promise<ScanResult> {
     try {
-      // Create an array of the scan result object to satisfy the type requirements
-      const [newScanResult] = await db.insert(scanResults).values([result]).returning();
+      // Ensure we have the required fields for the scan result
+      const scanResultData = {
+        scan_type: result.scan_type || 'full',
+        total_errors: result.total_errors || 0,
+        critical_errors: result.critical_errors || 0,
+        high_errors: result.high_errors || 0,
+        medium_errors: result.medium_errors || 0,
+        low_errors: result.low_errors || 0,
+        duration_ms: result.duration_ms || 0,
+        scan_date: result.scan_date || new Date(),
+        ...result
+      };
+      
+      // Insert the scan result with proper field values
+      const [newScanResult] = await db.insert(scanResults).values(scanResultData).returning();
       return newScanResult;
     } catch (error) {
       console.error('Error creating scan result:', error);
