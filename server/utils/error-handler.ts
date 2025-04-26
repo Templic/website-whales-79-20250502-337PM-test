@@ -132,7 +132,7 @@ export function handleSecurityError(
       userId: context.userId,
       ipAddress: context.ipAddress || context.ip,
       userAgent: context.userAgent,
-      endpoint: context.endpoint || context.path
+      endpoint: (context.endpoint || context.path || '').toString()
     }
   } as SecurityError;
 }

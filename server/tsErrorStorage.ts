@@ -83,6 +83,96 @@ export async function getTypescriptErrorsBySeverity(severity: ErrorSeverity): Pr
 }
 
 /**
+ * Get TypeScript errors with flexible filtering options
+ * @param filters Object containing filter options
+ * @returns Array of TypeScript errors matching the filters
+ */
+export async function getTypescriptErrors(filters: {
+  status?: ErrorStatus | ErrorStatus[];
+  category?: ErrorCategory | ErrorCategory[];
+  severity?: ErrorSeverity | ErrorSeverity[];
+  filePath?: string;
+  limit?: number;
+  offset?: number;
+  orderBy?: 'detectedAt' | 'resolvedAt' | 'severity';
+  order?: 'asc' | 'desc';
+}): Promise<TypeScriptError[]> {
+  let query = db.select().from(typescriptErrors);
+  
+  // Apply filters
+  const conditions = [];
+  
+  if (filters.status) {
+    if (Array.isArray(filters.status)) {
+      conditions.push(
+        or(...filters.status.map(status => eq(typescriptErrors.status, status)))
+      );
+    } else {
+      conditions.push(eq(typescriptErrors.status, filters.status));
+    }
+  }
+  
+  if (filters.category) {
+    if (Array.isArray(filters.category)) {
+      conditions.push(
+        or(...filters.category.map(category => eq(typescriptErrors.category, category)))
+      );
+    } else {
+      conditions.push(eq(typescriptErrors.category, filters.category));
+    }
+  }
+  
+  if (filters.severity) {
+    if (Array.isArray(filters.severity)) {
+      conditions.push(
+        or(...filters.severity.map(severity => eq(typescriptErrors.severity, severity)))
+      );
+    } else {
+      conditions.push(eq(typescriptErrors.severity, filters.severity));
+    }
+  }
+  
+  if (filters.filePath) {
+    conditions.push(like(typescriptErrors.filePath, `%${filters.filePath}%`));
+  }
+  
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions));
+  }
+  
+  // Apply ordering
+  if (filters.orderBy) {
+    const direction = filters.order === 'asc' ? asc : desc;
+    switch (filters.orderBy) {
+      case 'detectedAt':
+        query = query.orderBy(direction(typescriptErrors.detectedAt));
+        break;
+      case 'resolvedAt':
+        query = query.orderBy(direction(typescriptErrors.resolvedAt));
+        break;
+      case 'severity':
+        query = query.orderBy(direction(typescriptErrors.severity));
+        break;
+    }
+  } else {
+    // Default sort by detection date (newest first)
+    query = query.orderBy(desc(typescriptErrors.detectedAt));
+  }
+  
+  // Apply pagination
+  if (filters.limit) {
+    query = query.limit(filters.limit);
+    
+    if (filters.offset) {
+      query = query.offset(filters.offset);
+    }
+  }
+  
+  const errors = await query;
+  return errors as TypeScriptError[];
+}
+
+/**
  * Add a new TypeScript error
  * @param error The error to add
  * @returns The added error with its ID
@@ -523,6 +613,15 @@ export async function getErrorFixHistoryByError(errorId: number): Promise<ErrorF
     .orderBy(desc(errorFixHistory.fixedAt));
   
   return history as ErrorFixHistory[];
+}
+
+/**
+ * Get error fix history by error ID (alias for getErrorFixHistoryByError)
+ * @param errorId Error ID
+ * @returns Array of fix history entries for the specified error
+ */
+export async function getErrorFixHistory(errorId: number): Promise<ErrorFixHistory[]> {
+  return getErrorFixHistoryByError(errorId);
 }
 
 /**

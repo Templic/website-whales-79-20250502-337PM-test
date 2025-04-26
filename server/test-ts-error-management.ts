@@ -25,11 +25,12 @@ async function testTsErrorManagement() {
     console.log('=== TypeScript Error Management System Test ===');
     
     // 1. Detection - Scan a test directory for TypeScript errors
-    const testDir = path.join(process.cwd(), 'server');
+    // Use project root directory (one level up from server directory)
+    const testDir = path.resolve(process.cwd(), '..');
     console.log(`\n1. Scanning ${testDir} for TypeScript errors...`);
     
-    const scanResults = await tsErrorFinder.findTypeScriptErrors(testDir, {
-      recursive: true,
+    const scanResults = await tsErrorFinder.findTypeScriptErrors({
+      projectRoot: testDir,
       includeNodeModules: false,
       severity: 'high'
     });
@@ -195,7 +196,11 @@ async function testTsErrorManagement() {
 }
 
 // Run the test if this script is executed directly
-if (require.main === module) {
+// Using ESM module detection pattern
+import { fileURLToPath } from 'url';
+
+const isMainModule = fileURLToPath(import.meta.url) === process.argv[1];
+if (isMainModule) {
   testTsErrorManagement().catch(error => {
     console.error('Unhandled error in test:', error);
     process.exit(1);
