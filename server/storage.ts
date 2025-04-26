@@ -818,114 +818,119 @@ export class PostgresStorage implements IStorage {
   }
 
   async initializeSampleData() {
+    console.log("Initializing sample data with batch approach...");
+    
+    // Reusable function to initialize a table with sample data
+    const initializeTable = async (tableName: string, tableRef: any, sampleData: any[]) => {
+      try {
+        // Check if table exists by attempting a query
+        const existingData = await db.select().from(tableRef);
+        
+        // Only insert if table is empty
+        if (existingData.length === 0) {
+          console.log(`Initializing ${tableName}...`);
+          await db.insert(tableRef).values(sampleData);
+          console.log(`${tableName} initialized successfully`);
+          return true;
+        } else {
+          console.log(`${tableName} already contains data, skipping initialization`);
+          return false;
+        }
+      } catch (error) {
+        console.error(`Error initializing ${tableName}:`, error);
+        // Return false to indicate initialization failed
+        return false;
+      }
+    };
+    
     try {
-      // Initialize subscribers if the table exists
-      try {
-        const existingSubscribers = await db.select().from(subscribers);
-        if (existingSubscribers.length === 0) {
-          await db.insert(subscribers).values([
-          {
-            name: "Emily Johnson",
-            email: "emily.j@example.com",
-            active: true,
-            createdAt: new Date("2024-01-15")
-          },
-          {
-            name: "Michael Chen",
-            email: "m.chen@example.com",
-            active: true,
-            createdAt: new Date("2024-01-16")
-          },
-          {
-            name: "Sarah Williams",
-            email: "sarah.w@example.com",
-            active: true,
-            createdAt: new Date("2024-01-17")
-          }
-        ]);
-      }
-
-      } catch (error) {
-        console.error("Error initializing subscribers:", error);
-      }
-
-      // Initialize sample newsletters
-      try {
-        const existingNewsletters = await db.select().from(newsletters);
-        if (existingNewsletters.length === 0) {
-          await db.insert(newsletters).values([
-          {
-            title: "Cosmic Waves - Spring Edition",
-            content: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; background-color: #f9f9f9;">
-                <h1 style="color: #4A90E2; text-align: center;">Cosmic Waves - Spring Edition</h1>
-                <div style="text-align: center; margin-bottom: 20px;">
-                  <img src="https://via.placeholder.com/600x300" alt="Cosmic ocean scene" style="max-width: 100%; height: auto; border-radius: 8px;">
-                </div>
-                <h2 style="color: #4A90E2;">New Releases</h2>
-                <p>Our latest track "Cosmic Symphony" is now available on all major streaming platforms! This collaboration with the talented Luna Echo explores the depths of space and ocean in a unique cosmic-marine fusion.</p>
-                <h2 style="color: #4A90E2;">Upcoming Events</h2>
-                <ul>
-                  <li>May 15: Cosmic Ocean Live - Miami Beach</li>
-                  <li>June 2: Whale Song Meditation - Online Stream</li>
-                  <li>July 10: Ocean Conservation Benefit Concert - San Francisco</li>
-                </ul>
-                <h2 style="color: #4A90E2;">Behind the Waves</h2>
-                <p>This month, we're taking you behind the scenes of our latest music video shoot at the bioluminescent bay in Puerto Rico. The magical glowing waters inspired our upcoming EP "Luminous Depths" coming this summer.</p>
-                <div style="text-align: center; margin-top: 30px; padding: 15px; background-color: #e9f5ff; border-radius: 8px;">
-                  <p style="margin-bottom: 5px;"><strong>Subscriber Exclusive:</strong> Use code COSMIC25 for 25% off all merchandise this month!</p>
-                  <a href="#" style="display: inline-block; margin-top: 10px; padding: 10px 20px; background-color: #4A90E2; color: white; text-decoration: none; border-radius: 4px;">Visit Store</a>
-                </div>
-                <div style="text-align: center; margin-top: 30px; font-style: italic; color: #666;">
-                  <p>"Let the cosmic waves carry your spirit through the universe"</p>
-                  <p style="margin-top: 15px;">- Dale 🐋</p>
-                </div>
+      // 1. Initialize subscribers
+      await initializeTable('subscribers', subscribers, [
+        {
+          name: "Emily Johnson",
+          email: "emily.j@example.com",
+          status: "active",
+          createdAt: new Date("2024-01-15")
+        },
+        {
+          name: "Michael Chen",
+          email: "m.chen@example.com",
+          status: "active", 
+          createdAt: new Date("2024-01-16")
+        },
+        {
+          name: "Sarah Williams",
+          email: "sarah.w@example.com",
+          status: "active",
+          createdAt: new Date("2024-01-17")
+        }
+      ]);
+    
+      // 2. Initialize newsletters
+      await initializeTable('newsletters', newsletters, [
+        {
+          title: "Cosmic Waves - Spring Edition",
+          content: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; background-color: #f9f9f9;">
+              <h1 style="color: #4A90E2; text-align: center;">Cosmic Waves - Spring Edition</h1>
+              <div style="text-align: center; margin-bottom: 20px;">
+                <img src="https://via.placeholder.com/600x300" alt="Cosmic ocean scene" style="max-width: 100%; height: auto; border-radius: 8px;">
               </div>
-            `,
-            status: "draft",
-            createdAt: new Date("2025-03-15"),
-            updatedAt: new Date("2025-03-15")
-          },
-          {
-            title: "Winter Solstice Special Newsletter",
-            content: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; background-color: #f9f9f9;">
-                <h1 style="color: #4A90E2; text-align: center;">Winter Solstice Special</h1>
-                <div style="text-align: center; margin-bottom: 20px;">
-                  <img src="https://via.placeholder.com/600x300" alt="Winter solstice scene" style="max-width: 100%; height: auto; border-radius: 8px;">
-                </div>
-                <h2 style="color: #4A90E2;">Solstice Release</h2>
-                <p>Our special solstice meditation track "Deep Blue Winter" is now available as a free download for all subscribers. This 20-minute ambient journey is designed to align with the winter solstice energies.</p>
-                <h2 style="color: #4A90E2;">Holiday Event</h2>
-                <p>Join us for a special online gathering on December 21st at 8pm EST for a live musical journey through the cosmic winter. Registered subscribers will receive a private link.</p>
-                <div style="text-align: center; margin-top: 30px; padding: 15px; background-color: #e9f5ff; border-radius: 8px;">
-                  <p style="margin-bottom: 5px;"><strong>Winter Gift:</strong> The first 50 subscribers to respond will receive a limited edition winter solstice art print!</p>
-                  <a href="#" style="display: inline-block; margin-top: 10px; padding: 10px 20px; background-color: #4A90E2; color: white; text-decoration: none; border-radius: 4px;">Claim Gift</a>
-                </div>
-                <div style="text-align: center; margin-top: 30px; font-style: italic; color: #666;">
-                  <p>"As the world turns inward, so does the cosmic soul"</p>
-                  <p style="margin-top: 15px;">- Dale 🐋</p>
-                </div>
+              <h2 style="color: #4A90E2;">New Releases</h2>
+              <p>Our latest track "Cosmic Symphony" is now available on all major streaming platforms! This collaboration with the talented Luna Echo explores the depths of space and ocean in a unique cosmic-marine fusion.</p>
+              <h2 style="color: #4A90E2;">Upcoming Events</h2>
+              <ul>
+                <li>May 15: Cosmic Ocean Live - Miami Beach</li>
+                <li>June 2: Whale Song Meditation - Online Stream</li>
+                <li>July 10: Ocean Conservation Benefit Concert - San Francisco</li>
+              </ul>
+              <h2 style="color: #4A90E2;">Behind the Waves</h2>
+              <p>This month, we're taking you behind the scenes of our latest music video shoot at the bioluminescent bay in Puerto Rico. The magical glowing waters inspired our upcoming EP "Luminous Depths" coming this summer.</p>
+              <div style="text-align: center; margin-top: 30px; padding: 15px; background-color: #e9f5ff; border-radius: 8px;">
+                <p style="margin-bottom: 5px;"><strong>Subscriber Exclusive:</strong> Use code COSMIC25 for 25% off all merchandise this month!</p>
+                <a href="#" style="display: inline-block; margin-top: 10px; padding: 10px 20px; background-color: #4A90E2; color: white; text-decoration: none; border-radius: 4px;">Visit Store</a>
               </div>
-            `,
-            status: "sent",
-            sentAt: new Date("2024-12-15"),
-            createdAt: new Date("2024-12-10"),
-            updatedAt: new Date("2024-12-15")
-          }
-        ]);
-      }
-
-      } catch (error) {
-        console.error("Error initializing newsletters:", error);
-      }
+              <div style="text-align: center; margin-top: 30px; font-style: italic; color: #666;">
+                <p>"Let the cosmic waves carry your spirit through the universe"</p>
+                <p style="margin-top: 15px;">- Dale 🐋</p>
+              </div>
+            </div>
+          `,
+          status: "draft",
+          createdAt: new Date("2025-03-15"),
+          updatedAt: new Date("2025-03-15")
+        },
+        {
+          title: "Winter Solstice Special Newsletter",
+          content: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; background-color: #f9f9f9;">
+              <h1 style="color: #4A90E2; text-align: center;">Winter Solstice Special</h1>
+              <div style="text-align: center; margin-bottom: 20px;">
+                <img src="https://via.placeholder.com/600x300" alt="Winter solstice scene" style="max-width: 100%; height: auto; border-radius: 8px;">
+              </div>
+              <h2 style="color: #4A90E2;">Solstice Release</h2>
+              <p>Our special solstice meditation track "Deep Blue Winter" is now available as a free download for all subscribers. This 20-minute ambient journey is designed to align with the winter solstice energies.</p>
+              <h2 style="color: #4A90E2;">Holiday Event</h2>
+              <p>Join us for a special online gathering on December 21st at 8pm EST for a live musical journey through the cosmic winter. Registered subscribers will receive a private link.</p>
+              <div style="text-align: center; margin-top: 30px; padding: 15px; background-color: #e9f5ff; border-radius: 8px;">
+                <p style="margin-bottom: 5px;"><strong>Winter Gift:</strong> The first 50 subscribers to respond will receive a limited edition winter solstice art print!</p>
+                <a href="#" style="display: inline-block; margin-top: 10px; padding: 10px 20px; background-color: #4A90E2; color: white; text-decoration: none; border-radius: 4px;">Claim Gift</a>
+              </div>
+              <div style="text-align: center; margin-top: 30px; font-style: italic; color: #666;">
+                <p>"As the world turns inward, so does the cosmic soul"</p>
+                <p style="margin-top: 15px;">- Dale 🐋</p>
+              </div>
+            </div>
+          `,
+          status: "sent",
+          sentAt: new Date("2024-12-15"),
+          createdAt: new Date("2024-12-10"),
+          updatedAt: new Date("2024-12-15")
+        }
+      ]);
       
-      // Initialize blog categories
-      try {
-        const existingCategories = await db.select().from(categories);
-        if (existingCategories.length === 0) {
-          console.log("Initializing blog categories...");
-          await db.insert(categories).values([
+      // 3. Initialize categories
+      await initializeTable('categories', categories, [
           {
             name: "Music",
             slug: "music",
@@ -947,102 +952,73 @@ export class PostgresStorage implements IStorage {
             description: "Upcoming events, concerts, and appearances"
           }
         ]);
-      }
-
-      // Initialize blog posts
-      const existingPosts = await db.select().from(posts);
-      if (existingPosts.length === 0) {
-        console.log("Initializing blog posts...");
-
-        // The categories should be available now
-        const blogCategories = await db.select().from(categories);
-        const categoryMap = blogCategories.reduce((map, category) => {
-          map[category.slug] = category.id;
-          return map;
-        }, {} as Record<string, number>);
-
-        // Insert blog posts
-        await db.insert(posts).values([
-          {
-            title: "The Cosmic Symphony: Where Music Meets the Universe",
-            content: `<p>In the vast expanse of the cosmos, there exists a harmony that transcends our understanding. As a musician who draws inspiration from both the depths of the ocean and the mysteries of space, I've always been fascinated by the cosmic symphony that surrounds us.</p>
-
-            <p>Recent discoveries in astrophysics have revealed that celestial bodies emit frequencies that can be translated into sound. These "cosmic melodies" have inspired my latest album, where I attempt to weave together the sounds of distant stars with the songs of the ocean's gentle giants.</p>
-
-            <p>When we listen closely to the universe, we find that rhythm is not just a human invention—it's a fundamental property of existence itself. From the pulsing of neutron stars to the oscillations of gas in distant nebulae, the cosmos is constantly creating its own music.</p>
-
-            <p>My journey to capture these sounds has taken me to remote observatories and deep-sea expeditions. The resulting compositions blend astronomical data sonification with whale songs recorded in the Pacific, creating a bridge between cosmic and oceanic realms.</p>
-
-            <p>Join me on this journey as we explore the universal language of vibration and harmony. My upcoming live performance at the Cosmic Ocean Concert will feature these new works, accompanied by stunning visualizations of the astronomical phenomena that inspired them.</p>`,
-            excerpt: "Exploring the intersection of cosmic sounds and oceanic rhythms in my latest musical project.",
-            featuredImage: "https://images.unsplash.com/photo-1515462277126-2dd0c162007a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-            published: true,
-            approved: true,
-            authorId: 1, // admin user
-            createdAt: new Date("2025-03-10"),
-            updatedAt: new Date("2025-03-10")
-          },
-          {
-            title: "Ocean Conservation Efforts: Making Waves for Change",
-            content: `<p>The oceans are the lifeblood of our planet, covering more than 70% of Earth's surface and providing a home to countless species. Yet, our marine ecosystems face unprecedented threats from pollution, overfishing, and climate change.</p>
-
-            <p>As someone who has found inspiration in the ocean's depths, I feel a profound responsibility to protect these precious waters. That's why I'm excited to announce our partnership with the Global Ocean Trust, a nonprofit organization dedicated to marine conservation.</p>
-
-            <p>Through this collaboration, a portion of all proceeds from my upcoming "Blue Planet" tour will go directly toward conservation efforts, including coral reef restoration and marine wildlife protection programs.</p>
-
-            <p>We're also launching a series of educational workshops at each tour location, where attendees can learn about local marine ecosystems and how to contribute to their preservation. These interactive sessions will feature marine biologists and conservation experts who will share their knowledge and passion for ocean protection.</p>
-
-            <p>Music has the power to move hearts and minds. By combining my artistic platform with concrete action, I hope to inspire a wave of change that extends far beyond the concert hall.</p>
-
-            <p>Join us in this vital mission. Together, we can ensure that the ocean's symphony continues to play for generations to come.</p>`,
-            excerpt: "Announcing new partnerships and initiatives to protect our ocean ecosystems.",
-            featuredImage: "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-            published: true,
-            approved: true,
-            authorId: 2, // superadmin user
-            createdAt: new Date("2025-02-15"),
-            updatedAt: new Date("2025-02-15")
-          },
-          {
-            title: "Behind the Music: The Making of 'Cosmic Depths'",
-            content: `<p>Creating an album is always a journey of discovery, but "Cosmic Depths" took me further than I ever imagined—from the ocean floor to the outer reaches of the universe.</p>
-
-            <p>The production process began almost a year ago, when I embarked on a deep-sea expedition with a team of marine biologists. Equipped with specialized hydrophones, we captured the haunting songs of humpback whales and the mysterious clicks and whistles of other marine creatures.</p>
-
-            <p>These recordings formed the foundation of the album, but I wanted to take the concept further. Working with astrophysicists from the National Observatory, we translated data from radio telescopes into audible frequencies, creating "portraits" of distant galaxies, pulsars, and even the cosmic microwave background radiation—echoes of the Big Bang itself.</p>
-
-            <p>In the studio, I combined these elements with traditional instruments and electronic production, creating a sound palette that moves seamlessly between oceanic and cosmic environments. Each track on the album represents a different stage in this journey from the deepest seas to the farthest stars.</p>
-
-            <p>The mixing process presented unique challenges, as we worked to preserve the authentic character of our unusual sound sources while creating music that resonates on a human level. The result is something I'm incredibly proud of—a collection that invites listeners to experience the wonder of realms beyond our everyday perception.</p>
-
-            <p>"Cosmic Depths" will be released next month, accompanied by an immersive visual experience that will be available both online and at select planetariums worldwide.</p>`,
-            excerpt: "A behind-the-scenes look at the unique production process for my latest album.",
-            featuredImage: "https://images.unsplash.com/photo-1520690214124-2405c5217036?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-            published: true,
-            approved: true,
-            authorId: 1, // admin user
-            createdAt: new Date("2025-01-20"),
-            updatedAt: new Date("2025-01-20")
-          }
-        ]);
-
-        // Get the inserted posts to link them with categories
-        const insertedPosts = await db.select().from(posts);
-
-        // Link posts to categories using the ORM instead of raw SQL
-        if (insertedPosts.length > 0) {
-          try {
-            // Define post_categories junction table using Drizzle ORM
+      
+      // 4. Initialize blog posts
+      const blogPostSamples = [
+        {
+          title: "The Cosmic Symphony: Where Music Meets the Universe",
+          content: `<p>In the vast expanse of the cosmos, there exists a harmony that transcends our understanding. As a musician who draws inspiration from both the depths of the ocean and the mysteries of space, I've always been fascinated by the cosmic symphony that surrounds us.</p>
+          <p>Recent discoveries in astrophysics have revealed that celestial bodies emit frequencies that can be translated into sound. These "cosmic melodies" have inspired my latest album, where I attempt to weave together the sounds of distant stars with the songs of the ocean's gentle giants.</p>`,
+          excerpt: "Exploring the intersection of cosmic sounds and oceanic rhythms in my latest musical project.",
+          featuredImage: "https://images.unsplash.com/photo-1515462277126-2dd0c162007a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+          published: true,
+          approved: true,
+          authorId: 1,
+          createdAt: new Date("2025-03-10"),
+          updatedAt: new Date("2025-03-10")
+        },
+        {
+          title: "Ocean Conservation Efforts: Making Waves for Change",
+          content: `<p>The oceans are the lifeblood of our planet, covering more than 70% of Earth's surface and providing a home to countless species. Yet, our marine ecosystems face unprecedented threats from pollution, overfishing, and climate change.</p>
+          <p>As someone who has found inspiration in the ocean's depths, I feel a profound responsibility to protect these precious waters. That's why I'm excited to announce our partnership with the Global Ocean Trust, a nonprofit organization dedicated to marine conservation.</p>`,
+          excerpt: "Announcing new partnerships and initiatives to protect our ocean ecosystems.",
+          featuredImage: "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+          published: true,
+          approved: true,
+          authorId: 2,
+          createdAt: new Date("2025-02-15"),
+          updatedAt: new Date("2025-02-15")
+        },
+        {
+          title: "Behind the Music: The Making of 'Cosmic Depths'",
+          content: `<p>Creating an album is always a journey of discovery, but "Cosmic Depths" took me further than I ever imagined—from the ocean floor to the outer reaches of the universe.</p>
+          <p>The production process began almost a year ago, when I embarked on a deep-sea expedition with a team of marine biologists. Equipped with specialized hydrophones, we captured the haunting songs of humpback whales and the mysterious clicks and whistles of other marine creatures.</p>`,
+          excerpt: "A behind-the-scenes look at the unique production process for my latest album.",
+          featuredImage: "https://images.unsplash.com/photo-1520690214124-2405c5217036?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+          published: true,
+          approved: true,
+          authorId: 1,
+          createdAt: new Date("2025-01-20"),
+          updatedAt: new Date("2025-01-20")
+        }
+      ];
+      
+      const blogPostsInitialized = await initializeTable('posts', posts, blogPostSamples);
+      
+      // 5. Setup post-category relationships if posts were initialized
+      if (blogPostsInitialized) {
+        try {
+          // Get the inserted posts and categories
+          const insertedPosts = await db.select().from(posts);
+          const blogCategories = await db.select().from(categories);
+          
+          if (insertedPosts.length > 0 && blogCategories.length > 0) {
+            // Build category map for easier lookup
+            const categoryMap = blogCategories.reduce((map, category) => {
+              map[category.slug] = category.id;
+              return map;
+            }, {} as Record<string, number>);
+            
+            // Define post_categories junction table
             const postCategoriesTable = pgTable('post_categories', {
               id: serial('id').primaryKey(),
               post_id: integer('post_id').notNull(),
               category_id: integer('category_id').notNull()
             });
             
-            // Create arrays of post-category relationships
             const postCategoryRelations = [];
             
-            // First post categories: Music, Cosmic Exploration
+            // Assign categories to posts
             if (insertedPosts[0] && categoryMap['music'] && categoryMap['cosmic-exploration']) {
               postCategoryRelations.push(
                 { post_id: insertedPosts[0].id, category_id: categoryMap['music'] },
@@ -1050,7 +1026,6 @@ export class PostgresStorage implements IStorage {
               );
             }
             
-            // Second post categories: Ocean Conservation, Events
             if (insertedPosts[1] && categoryMap['ocean-conservation'] && categoryMap['events']) {
               postCategoryRelations.push(
                 { post_id: insertedPosts[1].id, category_id: categoryMap['ocean-conservation'] },
@@ -1058,24 +1033,24 @@ export class PostgresStorage implements IStorage {
               );
             }
             
-            // Third post categories: Music
             if (insertedPosts[2] && categoryMap['music']) {
               postCategoryRelations.push(
                 { post_id: insertedPosts[2].id, category_id: categoryMap['music'] }
               );
             }
             
-            // Batch insert all relations
+            // Batch insert all relations if we have any
             if (postCategoryRelations.length > 0) {
               await db.insert(postCategoriesTable).values(postCategoryRelations);
+              console.log('Post-category relationships initialized successfully');
             }
-          } catch (error) {
-            console.error('Error creating post-category relationships:', error);
           }
+        } catch (error) {
+          console.error('Error creating post-category relationships:', error);
         }
       }
-
-      // Define collaboration proposals table using Drizzle ORM
+      
+      // 6. Initialize collaboration proposals
       const collaborationProposalsTable = pgTable('collaboration_proposals', {
         id: serial('id').primaryKey(),
         artist_name: text('artist_name').notNull(),
@@ -1086,39 +1061,31 @@ export class PostgresStorage implements IStorage {
         created_at: timestamp('created_at').defaultNow()
       });
       
-      // Use Drizzle's ORM methods instead of raw SQL
-      try {
-        const existingProposals = await db.select().from(collaborationProposalsTable);
-        if (existingProposals.length === 0) {
-          await db.insert(collaborationProposalsTable).values([
-            {
-              artist_name: 'Luna Echo',
-              email: 'luna@example.com',
-              proposal_type: 'Music Collaboration',
-              description: 'Interested in creating a cosmic ambient track together',
-              status: 'pending'
-            },
-            {
-              artist_name: 'DJ Starlight',
-              email: 'djstar@example.com',
-              proposal_type: 'Live Performance',
-              description: 'Would love to collaborate for an ocean-themed event',
-              status: 'pending'
-            },
-            {
-              artist_name: 'The Wave Riders',
-              email: 'wave@example.com',
-              proposal_type: 'Album Feature',
-              description: 'Proposing a joint EP focused on marine conservation',
-              status: 'pending'
-            }
-          ]);
+      await initializeTable('collaboration_proposals', collaborationProposalsTable, [
+        {
+          artist_name: 'Luna Echo',
+          email: 'luna@example.com',
+          proposal_type: 'Music Collaboration',
+          description: 'Interested in creating a cosmic ambient track together',
+          status: 'pending'
+        },
+        {
+          artist_name: 'DJ Starlight',
+          email: 'djstar@example.com',
+          proposal_type: 'Live Performance',
+          description: 'Would love to collaborate for an ocean-themed event',
+          status: 'pending'
+        },
+        {
+          artist_name: 'The Wave Riders',
+          email: 'wave@example.com',
+          proposal_type: 'Album Feature',
+          description: 'Proposing a joint EP focused on marine conservation',
+          status: 'pending'
         }
-      } catch (error) {
-        console.error('Error initializing collaboration proposals:', error);
-      }
+      ]);
 
-      // Define patrons table using Drizzle ORM
+      // 7. Initialize patrons
       const patronsTable = pgTable('patrons', {
         id: serial('id').primaryKey(),
         name: text('name').notNull(),
@@ -1128,21 +1095,13 @@ export class PostgresStorage implements IStorage {
         active: integer('active').default(1)
       });
       
-      // Use Drizzle's ORM methods instead of raw SQL
-      try {
-        const existingPatrons = await db.select().from(patronsTable);
-        if (existingPatrons.length === 0) {
-          await db.insert(patronsTable).values([
-            { name: 'Alex Thompson', email: 'alex@example.com', tier: 'Whale Guardian' },
-            { name: 'Maria Garcia', email: 'maria@example.com', tier: 'Ocean Protector' },
-            { name: 'James Wilson', email: 'james@example.com', tier: 'Wave Rider' }
-          ]);
-        }
-      } catch (error) {
-        console.error('Error initializing patrons:', error);
-      }
-
-      // Define tour dates table using Drizzle ORM
+      await initializeTable('patrons', patronsTable, [
+        { name: 'Alex Thompson', email: 'alex@example.com', tier: 'Whale Guardian' },
+        { name: 'Maria Garcia', email: 'maria@example.com', tier: 'Ocean Protector' },
+        { name: 'James Wilson', email: 'james@example.com', tier: 'Wave Rider' }
+      ]);
+      
+      // 8. Initialize tour dates
       const tourDatesTable = pgTable('tour_dates', {
         id: serial('id').primaryKey(),
         venue: text('venue').notNull(),
@@ -1152,11 +1111,7 @@ export class PostgresStorage implements IStorage {
         status: text('status').default('upcoming')
       });
       
-      // Use Drizzle's ORM methods instead of raw SQL
-      try {
-        const existingTours = await db.select().from(tourDatesTable);
-        if (existingTours.length === 0) {
-          await db.insert(tourDatesTable).values([
+      await initializeTable('tour_dates', tourDatesTable, [
             {
               venue: 'Ocean Sound Arena',
               city: 'Miami',
@@ -1186,14 +1141,12 @@ export class PostgresStorage implements IStorage {
               status: 'upcoming'
             }
           ]);
-        }
-      } catch (error) {
-        console.error('Error initializing tour dates:', error);
-      }
-
-      // Check if sample tracks exist and maintain "Feels So Good" at the top
+      
+      // 9. Initialize music tracks
       const existingTracks = await db.select().from(tracks);
       if (existingTracks.length === 0) {
+        console.log("Initializing sample music tracks...");
+        
         // Add sample tracks
         await db.insert(tracks).values([
           {
