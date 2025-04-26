@@ -63,7 +63,7 @@ export const posts = pgTable("posts", {
   approved: boolean("approved").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at"),
-  authorId: varchar("author_id").notNull().references(() => users.id)
+  authorId: integer("author_id").notNull().references(() => users.id)
 });
 
 // Categories table
@@ -228,7 +228,7 @@ export const mediaFiles = pgTable("media_files", {
     height?: number;
     duration?: number;
   }>(),
-  uploadedBy: varchar("uploaded_by").notNull().references(() => users.id),
+  uploadedBy: integer("uploaded_by").notNull().references(() => users.id),
   uploadedAt: timestamp("uploaded_at").notNull().defaultNow()
 });
 
@@ -320,7 +320,7 @@ export const orderStatusEnum = pgEnum("order_status", [
 // Orders table
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id),
+  userId: integer("user_id").references(() => users.id),
   status: orderStatusEnum("status").notNull().default("pending"),
   total: numeric("total", { precision: 10, scale: 2 }).notNull(),
   subtotal: numeric("subtotal", { precision: 10, scale: 2 }).notNull(),
@@ -373,7 +373,7 @@ export const orderItems = pgTable("order_items", {
 // Cart table
 export const carts = pgTable("carts", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id),
+  userId: integer("user_id").references(() => users.id),
   sessionId: text("session_id").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
@@ -511,7 +511,7 @@ export const contentItems = pgTable("content_items", {
   imageUrl: text("image_url"),
   // Workflow fields
   status: text("status", { enum: ["draft", "review", "changes_requested", "approved", "published", "archived"] }).notNull().default("draft"),
-  reviewerId: varchar("reviewer_id").references(() => users.id),
+  reviewerId: integer("reviewer_id").references(() => users.id),
   reviewStatus: text("review_status", { enum: ["pending", "in_progress", "completed"] }),
   reviewStartedAt: timestamp("review_started_at"),
   reviewCompletedAt: timestamp("review_completed_at"),
@@ -522,8 +522,8 @@ export const contentItems = pgTable("content_items", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at"),
   version: integer("version").notNull().default(1),
-  createdBy: varchar("created_by").references(() => users.id),
-  lastModifiedBy: varchar("last_modified_by").references(() => users.id)
+  createdBy: integer("created_by").references(() => users.id),
+  lastModifiedBy: integer("last_modified_by").references(() => users.id)
 });
 
 // Content analytics tracking
@@ -557,7 +557,7 @@ export const contentVersions = pgTable("content_versions", {
   section: text("section").notNull(),
   imageUrl: text("image_url"),
   modifiedAt: timestamp("modified_at").notNull().defaultNow(),
-  modifiedBy: varchar("modified_by").references(() => users.id),
+  modifiedBy: integer("modified_by").references(() => users.id),
   changeDescription: text("change_description")
 });
 
@@ -574,7 +574,7 @@ export const contentWorkflowHistory = pgTable("content_workflow_history", {
   toStatus: text("to_status", { 
     enum: ["draft", "review", "changes_requested", "approved", "published", "archived"] 
   }).notNull(),
-  actorId: varchar("actor_id").references(() => users.id),
+  actorId: integer("actor_id").references(() => users.id),
   actionAt: timestamp("action_at").notNull().defaultNow(),
   comments: text("comments"),
   version: integer("version").notNull()
@@ -600,7 +600,7 @@ export const workflowNotifications = pgTable("workflow_notifications", {
   type: text("type", { enum: ["approval", "changes", "publish", "info"] }).notNull(),
   contentId: integer("content_id").references(() => contentItems.id),
   contentTitle: text("content_title"),
-  userId: varchar("user_id").references(() => users.id),
+  userId: integer("user_id").references(() => users.id),
   isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow()
 });
@@ -731,7 +731,7 @@ export const errorPatterns = pgTable("error_patterns", {
   autoFixable: boolean("auto_fixable").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at"),
-  createdBy: varchar("created_by").references(() => users.id),
+  createdBy: integer("created_by").references(() => users.id),
 });
 
 // Error fixes table
@@ -746,7 +746,7 @@ export const errorFixes = pgTable("error_fixes", {
   successRate: numeric("success_rate", { precision: 5, scale: 2 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at"),
-  createdBy: varchar("created_by").references(() => users.id),
+  createdBy: integer("created_by").references(() => users.id),
 });
 
 // Error fix history table
@@ -757,7 +757,7 @@ export const errorFixHistory = pgTable("error_fix_history", {
   originalCode: text("original_code").notNull(),
   fixedCode: text("fixed_code").notNull(),
   fixedAt: timestamp("fixed_at").notNull().defaultNow(),
-  fixedBy: varchar("fixed_by").references(() => users.id),
+  fixedBy: integer("fixed_by").references(() => users.id),
   fixDuration: integer("fix_duration"), // in milliseconds
   fixMethod: text("fix_method", { enum: ["automatic", "assisted", "manual"] }).notNull(),
   fixResult: text("fix_result", { enum: ["success", "partial", "failure"] }).notNull(),
@@ -776,7 +776,7 @@ export const projectAnalyses = pgTable("project_analyses", {
   analysisData: jsonb("analysis_data"),
   status: text("status", { enum: ["in_progress", "completed", "failed"] }).notNull().default("in_progress"),
   duration: integer("duration"), // in milliseconds
-  executedBy: varchar("executed_by").references(() => users.id),
+  executedBy: integer("executed_by").references(() => users.id),
 });
 
 // Project files
