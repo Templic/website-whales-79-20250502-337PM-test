@@ -32,14 +32,14 @@ interface APISecurityVerification {
   type: APISecurityCheckType;
   passed: boolean;
   message?: string;
-  details?: any;
+  details?: unknown;
 }
 
 /**
  * Middleware that performs comprehensive API authentication checks
  * Verifies token validity, expiration, and issuer
  */
-export function verifyApiAuthentication(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
+export function verifyApiAuthentication(req: Request, res: Response, next: NextFunction): void | Response<unknown, Record<string, unknown>> {
   const authHeader = req.headers.authorization;
   const apiKey = req.headers['x-api-key'] as string;
   
@@ -296,8 +296,8 @@ export function verifyApiAuthorization(requiredRoles: string[] = []) {
  * Middleware that conducts API request validation
  * Ensures that the request contains the expected data
  */
-export function validateApiRequest(schema) {
-  return (req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> => {
+export function validateApiRequest(schema: unknown) {
+  return (req: Request, res: Response, next: NextFunction): void | Response<unknown, Record<string, unknown>> => {
     try {
       // Validation using provided schema
       // This can be integrated with Zod, Joi, or any validation library
@@ -372,7 +372,7 @@ function logApiSecurityEvent(req: Request, eventType: string, verifications: API
 /**
  * Filter sensitive information from request headers for logging
  */
-function filterSensitiveHeaders(headers) {
+function filterSensitiveHeaders(headers: Record<string, unknown>): Record<string, unknown> {
   const filtered = { ...headers };
   
   // Remove sensitive headers

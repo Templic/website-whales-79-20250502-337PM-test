@@ -58,7 +58,7 @@ export function generateCsrfToken(req: Request, res: Response): string {
  * Validates that the CSRF token in the X-CSRF-Token header matches the one stored in the session
  * This middleware should be used on all state-changing routes (POST, PUT, DELETE, etc.)
  */
-export function csrfProtection(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
+export function csrfProtection(req: Request, res: Response, next: NextFunction): void | Response<unknown, Record<string, unknown>> {
   // Skip CSRF check for GET, HEAD, OPTIONS
   const safeMethod = /^(GET|HEAD|OPTIONS)$/i.test(req.method);
   if (safeMethod) {
@@ -160,7 +160,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
 /**
  * Middleware to provide a route for the frontend to get a CSRF token
  */
-export function csrfTokenRoute(req: Request, res: Response): void | Response<any, Record<string, any>> {
+export function csrfTokenRoute(req: Request, res: Response): void | Response<unknown, Record<string, unknown>> {
   const token = generateCsrfToken(req, res);
   res.json({ csrfToken: token });
 }

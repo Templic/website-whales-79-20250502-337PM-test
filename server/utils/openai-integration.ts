@@ -186,7 +186,7 @@ export async function analyzeErrorWithOpenAI(
  * @param maxFiles Maximum number of related files to include
  * @returns A string with relevant context from related files
  */
-async function buildProjectContext(error: TypeScript.Error, maxFiles: number): Promise<string> {
+async function buildProjectContext(error: TypeScriptError, maxFiles: number): Promise<string> {
   // Placeholder for project context building
   // In a real implementation, this would:
   // 1. Find imported files related to the error

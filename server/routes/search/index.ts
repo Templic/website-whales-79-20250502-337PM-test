@@ -147,7 +147,7 @@ router.get('/', async (req: Request, res: Response) => {
 /**
  * Search for music tracks
  */
-async function searchMusic(query: string, limit: number, params: Record<string, unknown> = {}): Promise<any[]> {
+async function searchMusic(query: string, limit: number, params: Record<string, unknown> = {}): Promise<unknown[]> {
   try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
@@ -203,7 +203,7 @@ async function searchMusic(query: string, limit: number, params: Record<string, 
 /**
  * Search for products
  */
-async function searchProducts(query: string, limit: number, params: Record<string, unknown> = {}): Promise<any[]> {
+async function searchProducts(query: string, limit: number, params: Record<string, unknown> = {}): Promise<unknown[]> {
   try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
@@ -269,7 +269,7 @@ async function searchProducts(query: string, limit: number, params: Record<strin
 /**
  * Search for blog posts
  */
-async function searchPosts(query: string, limit: number, params: Record<string, unknown> = {}): Promise<any[]> {
+async function searchPosts(query: string, limit: number, params: Record<string, unknown> = {}): Promise<unknown[]> {
   try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
@@ -336,7 +336,7 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
 /**
  * Search for users
  */
-async function searchUsers(query: string, limit: number, params: Record<string, unknown> = {}): Promise<any[]> {
+async function searchUsers(query: string, limit: number, params: Record<string, unknown> = {}): Promise<unknown[]> {
   try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
@@ -382,7 +382,7 @@ async function searchUsers(query: string, limit: number, params: Record<string, 
 /**
  * Search for newsletters
  */
-async function searchNewsletters(query: string, limit: number, params: Record<string, unknown> = {}): Promise<any[]> {
+async function searchNewsletters(query: string, limit: number, params: Record<string, unknown> = {}): Promise<unknown[]> {
   try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);
@@ -494,7 +494,7 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
 /**
  * Search for community suggestions
  */
-async function searchCommunitySuggestions(query: string, limit: number, params: Record<string, unknown> = {}): Promise<any[]> {
+async function searchCommunitySuggestions(query: string, limit: number, params: Record<string, unknown> = {}): Promise<unknown[]> {
   try {
     // Normalize search query
     const searchTerms = query.toLowerCase().split(/\s+/);

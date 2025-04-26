@@ -20,7 +20,7 @@ export interface JwtPayload {
   exp: number; // Expiry time
   jti?: string; // JWT ID (for token revocation)
   role?: string; // User role
-  [key: string]: any; // Allow additional claims
+  [key: string]: unknown; // Allow additional claims
 }
 
 // Extend Express Request interface to include JWT payload
@@ -36,7 +36,7 @@ declare global {
  * Middleware to authenticate requests with JWT
  * This can be used as an alternative to session-based authentication for API routes
  */
-export function authenticateJwt(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
+export function authenticateJwt(req: Request, res: Response, next: NextFunction): void | Response<unknown, Record<string, unknown>> {
   try {
     const authHeader = req.headers.authorization;
     const token = extractTokenFromHeader(authHeader);
@@ -92,7 +92,7 @@ export function authenticateJwt(req: Request, res: Response, next: NextFunction)
  * Must be used after authenticateJwt middleware
  */
 export function authorizeJwtRole(roles: string[]) {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void | Response<any, Record<string, any>>> => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void | Response<unknown, Record<string, unknown>>> => {
     try {
       if (!req.jwtPayload) {
         return res.status(401).json({
@@ -152,7 +152,7 @@ export function authorizeJwtRole(roles: string[]) {
  * Middleware to detect and respond to JWT algorithm confusion attacks
  * This middleware checks if 'none' algorithm is being attempted
  */
-export function preventAlgorithmConfusionAttack(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
+export function preventAlgorithmConfusionAttack(req: Request, res: Response, next: NextFunction): void | Response<unknown, Record<string, unknown>> {
   const authHeader = req.headers.authorization;
   
   if (authHeader && authHeader.startsWith('Bearer ')) {
