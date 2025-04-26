@@ -109,7 +109,7 @@ export function createSortParams(field: string, direction: 'asc' | 'desc'): Sort
  * @example
  * const filters = createFilters({ category: 'electronics', inStock: true });
  */
-export function createFilters(filters: Record<string, any>): FilterParams {
+export function createFilters(filters: Record<string, unknown>): FilterParams {
   return filters;
 }
 

@@ -65,7 +65,7 @@ export class ImmutableSecurityLogs {
   /**
    * Add a log entry to the blockchain
    */
-  public addLog(data: Record<string, any>): void {
+  public addLog(data: Record<string, unknown>): void {
     this.pendingLogs.push({
       ...data,
       timestamp: data.timestamp || new Date().toISOString()
@@ -197,7 +197,7 @@ export class ImmutableSecurityLogs {
   /**
    * Check if a log contains a keyword
    */
-  private logContainsKeyword(log: Record<string, any>, keyword: string): boolean {
+  private logContainsKeyword(log: Record<string, unknown>, keyword: string): boolean {
     const term = keyword.toLowerCase();
     
     // Check in message
@@ -216,7 +216,7 @@ export class ImmutableSecurityLogs {
   /**
    * Check if an object contains a keyword (recursive)
    */
-  private objectContainsKeyword(obj: Record<string, any>, keyword: string): boolean {
+  private objectContainsKeyword(obj: Record<string, unknown>, keyword: string): boolean {
     for (const key in obj) {
       const value = obj[key];
       

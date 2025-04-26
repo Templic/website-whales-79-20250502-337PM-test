@@ -50,7 +50,7 @@ export interface QueryOptions {
   useMaster?: boolean;
   skipCache?: boolean;
   returnStream?: boolean;
-  metaData?: Record<string, any>;
+  metaData?: Record<string, unknown>;
 }
 
 /**

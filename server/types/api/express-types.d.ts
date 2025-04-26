@@ -20,7 +20,7 @@ declare namespace Express {
       userId?: string;
       createdAt: number;
       expiresAt: number;
-      data: Record<string, any>;
+      data: Record<string, unknown>;
       regenerate: (callback: (err?: Error) => void) => void;
       destroy: (callback: (err?: Error) => void) => void;
       reload: (callback: (err?: Error) => void) => void;
@@ -34,9 +34,9 @@ declare namespace Express {
   // Extend Express Response interface with typed methods
   interface Response {
     // Type safe response methods
-    success: <T>(data?: T, statusCode?: number, meta?: Record<string, any>) => Response;
+    success: <T>(data?: T, statusCode?: number, meta?: Record<string, unknown>) => Response;
     error: (message: string, statusCode?: number, errorCode?: string | number, details?: any) => Response;
-    created: <T>(data?: T, meta?: Record<string, any>) => Response;
+    created: <T>(data?: T, meta?: Record<string, unknown>) => Response;
     notFound: (message?: string, errorCode?: string | number) => Response;
     badRequest: (message?: string, errorCode?: string | number, details?: any) => Response;
     unauthorized: (message?: string, errorCode?: string | number) => Response;
@@ -44,7 +44,7 @@ declare namespace Express {
     tooManyRequests: (message?: string, resetTime?: number) => Response;
     serverError: (message?: string, errorCode?: string | number, details?: any) => Response;
     noContent: () => Response;
-    accepted: <T>(data?: T, meta?: Record<string, any>) => Response;
+    accepted: <T>(data?: T, meta?: Record<string, unknown>) => Response;
     
     // Cache control
     withCache: (maxAgeSeconds: number, options?: {

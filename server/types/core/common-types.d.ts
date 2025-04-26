@@ -56,8 +56,8 @@ export type FilterOperator =
  */
 export interface ApiRequest<T = any> {
   body?: T;
-  query?: Record<string, any>;
-  params?: Record<string, any>;
+  query?: Record<string, unknown>;
+  params?: Record<string, unknown>;
   headers?: Record<string, string>;
   user?: any;
 }
@@ -95,7 +95,7 @@ export interface Result<T = any> {
   success: boolean;
   data?: T;
   error?: Error;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 /**
@@ -132,7 +132,7 @@ export interface VersionedEntity extends BaseEntity {
     version: number;
     updatedAt: number | Date;
     updatedBy?: string;
-    changes: Record<string, any>;
+    changes: Record<string, unknown>;
   }>;
 }
 
@@ -176,7 +176,7 @@ export interface FeatureFlag {
     startDate?: number | Date;
     endDate?: number | Date;
     environments?: string[];
-    custom?: Record<string, any>;
+    custom?: Record<string, unknown>;
   };
 }
 
@@ -191,7 +191,7 @@ export interface HealthStatus {
     message?: string;
     timestamp: number;
     duration?: number;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
   }>;
   version?: string;
   timestamp: number;
@@ -238,7 +238,7 @@ export interface FileMetadata {
   tags?: string[];
   uploadedBy?: string;
   uploadedAt: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -248,7 +248,7 @@ export interface ServiceResponse<T = any> {
   success: boolean;
   data?: T;
   error?: Error;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 /**
@@ -264,7 +264,7 @@ export interface UserPreferences {
   emailNotifications?: boolean;
   pushNotifications?: boolean;
   smsNotifications?: boolean;
-  customPreferences?: Record<string, any>;
+  customPreferences?: Record<string, unknown>;
 }
 
 /**

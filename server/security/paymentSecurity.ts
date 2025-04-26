@@ -264,7 +264,7 @@ class PaymentSecurityService {
    */
   public logSecurityEvent(
     eventType: string,
-    details: Record<string, any>,
+    details: Record<string, unknown>,
     severity: 'info' | 'warning' | 'critical' = 'info'
   ): void {
     // Sanitize any potentially sensitive data

@@ -24,7 +24,7 @@ export interface ValidatorOptions {
   abortEarly?: boolean;
   stripUnknown?: boolean;
   messages?: Record<string, string>;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 /**
@@ -384,7 +384,7 @@ export function validateObject<T extends Record<string, any>>(
   }
 
   const errors: Record<string, string> = {};
-  const validatedObject: Record<string, any> = {};
+  const validatedObject: Record<string, unknown> = {};
   let isValid = true;
 
   // Check if required keys are present

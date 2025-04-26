@@ -178,7 +178,7 @@ export interface TableFilterEvent {
   columnId: string;
   value: any;
   operator?: string;
-  filters: Record<string, any>;
+  filters: Record<string, unknown>;
 }
 
 /**

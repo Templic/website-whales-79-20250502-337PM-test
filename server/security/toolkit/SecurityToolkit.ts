@@ -33,7 +33,7 @@ export interface SecurityProfile {
   blockHighRiskRequests: boolean;
   anomalyThreshold: number;
   rateLimit: 'default' | 'strict' | 'public' | 'none';
-  customSettings?: Record<string, any>;
+  customSettings?: Record<string, unknown>;
 }
 
 /**
@@ -174,7 +174,7 @@ export class SecurityToolkit {
     category: SecurityEventCategory,
     severity: SecurityEventSeverity,
     message: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     return securityBlockchain.addSecurityEvent({
       category,

@@ -109,7 +109,7 @@ function isTLSConnection(req: IncomingMessage): boolean {
  * @param depth - Current recursion depth (to prevent stack overflow)
  * @returns Sanitized data
  */
-function sanitizeMessage(data, depth: number = 0): any {
+function sanitizeMessage(data, depth: number = 0): unknown {
   // Prevent excessive recursion
   if (depth > 10) {
     return null; // Prevent stack overflow attacks

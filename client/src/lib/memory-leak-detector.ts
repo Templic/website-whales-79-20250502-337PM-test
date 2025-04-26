@@ -24,10 +24,9 @@ export function useMemoryLeakDetection(componentName: string): void {
  * @param options Additional tracking options
  * @returns Memory usage statistics and utilities
  */
-export function useMemoryTracker(
-  componentName: string,
+export function useMemoryTracker(componentName: string,
   options: any = {}
-): any {
+): unknown {
   // Return a minimal object with the expected properties
   return {
     initial: 0,

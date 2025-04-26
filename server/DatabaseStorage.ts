@@ -102,7 +102,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
         id: uuidv4(),
       }).returning();
       return newUser;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating user:", error);
       if (error.code === '23505') { // PostgreSQL unique constraint violation
         if (error.constraint?.includes('email')) {
@@ -690,30 +690,30 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   // We're only focusing on TypeScript Error Management for now
   
   // Subscriber methods
-  async createSubscriber(subscriber: any): Promise<any> {
+  async createSubscriber(subscriber: any): Promise<unknown> {
     throw new Error("Method not implemented");
   }
   async getAllSubscribers(): Promise<any[]> {
     throw new Error("Method not implemented");
   }
-  async findSubscriberByEmail(email: string): Promise<any> {
+  async findSubscriberByEmail(email: string): Promise<unknown> {
     throw new Error("Method not implemented");
   }
 
   // Newsletter methods
-  async createNewsletter(newsletter: any): Promise<any> {
+  async createNewsletter(newsletter: any): Promise<unknown> {
     throw new Error("Method not implemented");
   }
   async getAllNewsletters(): Promise<any[]> {
     throw new Error("Method not implemented");
   }
-  async getNewsletterById(id: number): Promise<any> {
+  async getNewsletterById(id: number): Promise<unknown> {
     throw new Error("Method not implemented");
   }
-  async updateNewsletter(id: number, newsletter: any): Promise<any> {
+  async updateNewsletter(id: number, newsletter: any): Promise<unknown> {
     throw new Error("Method not implemented");
   }
-  async sendNewsletter(id: number): Promise<any> {
+  async sendNewsletter(id: number): Promise<unknown> {
     throw new Error("Method not implemented");
   }
 
@@ -823,7 +823,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   async getAlbums(): Promise<any[]> {
     throw new Error("Method not implemented");
   }
-  async uploadMusic(params: any): Promise<any> {
+  async uploadMusic(params: any): Promise<unknown> {
     throw new Error("Method not implemented");
   }
   async deleteMusic(trackId: number, userId: number, userRole: any): Promise<void> {
@@ -835,7 +835,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   async cleanupExpiredSessions(): Promise<void> {
     throw new Error("Method not implemented");
   }
-  async getSessionAnalytics(userId: number): Promise<any> {
+  async getSessionAnalytics(userId: number): Promise<unknown> {
     throw new Error("Method not implemented");
   }
   async updateSessionActivity(sessionId: string, data: any): Promise<void> {
@@ -850,31 +850,31 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   async unbanUser(userId: number): Promise<User> {
     throw new Error("Method not implemented");
   }
-  async getSystemSettings(): Promise<any> {
+  async getSystemSettings(): Promise<unknown> {
     throw new Error("Method not implemented");
   }
   async updateSystemSettings(settings: any): Promise<void> {
     throw new Error("Method not implemented");
   }
-  async getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any> {
+  async getAdminAnalytics(fromDate?: string, toDate?: string): Promise<unknown> {
     throw new Error("Method not implemented");
   }
-  async getUserActivity(userId: number): Promise<any> {
+  async getUserActivity(userId: number): Promise<unknown> {
     throw new Error("Method not implemented");
   }
   async getAllContentItems(): Promise<any[]> {
     throw new Error("Method not implemented");
   }
-  async getContentItemById(id: number): Promise<any> {
+  async getContentItemById(id: number): Promise<unknown> {
     throw new Error("Method not implemented");
   }
-  async getContentItemByKey(key: string): Promise<any> {
+  async getContentItemByKey(key: string): Promise<unknown> {
     throw new Error("Method not implemented");
   }
-  async createContentItem(contentItem: any): Promise<any> {
+  async createContentItem(contentItem: any): Promise<unknown> {
     throw new Error("Method not implemented");
   }
-  async updateContentItem(contentItem: any): Promise<any> {
+  async updateContentItem(contentItem: any): Promise<unknown> {
     throw new Error("Method not implemented");
   }
   async deleteContentItem(id: number): Promise<void> {
@@ -883,13 +883,13 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   async getContentHistory(contentId: number): Promise<any[]> {
     throw new Error("Method not implemented");
   }
-  async createContentVersion(contentId: number, version: any, userId: number, changeDescription?: string): Promise<any> {
+  async createContentVersion(contentId: number, version: any, userId: number, changeDescription?: string): Promise<unknown> {
     throw new Error("Method not implemented");
   }
-  async restoreContentVersion(historyId: number): Promise<any> {
+  async restoreContentVersion(historyId: number): Promise<unknown> {
     throw new Error("Method not implemented");
   }
-  async recordContentUsage(contentId: number, location: string, path: string): Promise<any> {
+  async recordContentUsage(contentId: number, location: string, path: string): Promise<unknown> {
     throw new Error("Method not implemented");
   }
   async incrementContentViews(contentId: number): Promise<void> {
@@ -901,10 +901,10 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
   async getContentWorkflowHistory(contentId: number): Promise<any[]> {
     throw new Error("Method not implemented");
   }
-  async updateContentStatus(contentId: number, status: string, userId: number, options?: any): Promise<any> {
+  async updateContentStatus(contentId: number, status: string, userId: number, options?: any): Promise<unknown> {
     throw new Error("Method not implemented");
   }
-  async createCategory(category: any): Promise<any> {
+  async createCategory(category: any): Promise<unknown> {
     throw new Error("Method not implemented");
   }
   async getCategories(): Promise<any[]> {
@@ -1235,7 +1235,7 @@ export class DatabaseStorage implements IStorage, ITypeScriptErrorStorage {
       console.log('Would set user password hash in auth table or appropriate storage');
       
       console.log('Initial users created successfully.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating initial users:', error);
     }
   }

@@ -357,7 +357,7 @@ async function processResponseBody(
   clientPublicKey: string,
   sensitiveFields: string[],
   algorithm: QuantumResistantAlgorithm
-): Promise<any> {
+): Promise<unknown> {
   // If body is not an object, return it as is
   if (typeof body !== 'object' || body === null) {
     return body;

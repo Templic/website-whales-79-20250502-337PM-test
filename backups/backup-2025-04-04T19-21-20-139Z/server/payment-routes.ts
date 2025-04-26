@@ -63,7 +63,7 @@ router.post('/create-intent', async (req: Request, res: Response) => {
       success: true,
       clientSecret: paymentIntent.client_secret,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating payment intent:', error);
     return res.status(500).json({
       success: false,
@@ -107,7 +107,7 @@ router.post('/confirm', async (req: Request, res: Response) => {
         paymentId: paymentMethodId,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error confirming payment:', error);
     return res.status(500).json({
       success: false,

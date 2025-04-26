@@ -62,7 +62,7 @@ export const trackTiming = (
 };
 
 // Set user properties
-export const setUserProperties = (properties: Record<string, any>) => {
+export const setUserProperties = (properties: Record<string, unknown>) => {
   if (!GA_MEASUREMENT_ID) return;
 
   ReactGA.gtag('set', 'user_properties', properties);

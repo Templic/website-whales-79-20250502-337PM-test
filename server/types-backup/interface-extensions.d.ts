@@ -8,7 +8,7 @@ interface ImmutableSecurityLogs {
 
 // Fix for missing properties on database-related interfaces
 interface DatabaseSecurityManager {
-  assessSecurityConfiguration(): Promise<any>;
+  assessSecurityConfiguration(): Promise<unknown>;
 }
 
 // Fix for other common interfaces with missing properties

@@ -74,17 +74,17 @@ export interface IStorage {
 
   // Session management methods
   cleanupExpiredSessions(): Promise<void>;
-  getSessionAnalytics(userId: number): Promise<any>;
+  getSessionAnalytics(userId: number): Promise<unknown>;
   updateSessionActivity(sessionId: string, data: any): Promise<void>;
 
   // Advanced admin methods
   updateUserRole(userId: number, role: 'user' | 'admin' | 'super_admin'): Promise<User>;
   banUser(userId: number): Promise<void>;
   unbanUser(userId: number): Promise<void>;
-  getSystemSettings(): Promise<any>;
+  getSystemSettings(): Promise<unknown>;
   updateSystemSettings(settings: any): Promise<void>;
-  getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any>;
-  getUserActivity(userId: number): Promise<any>;
+  getAdminAnalytics(fromDate?: string, toDate?: string): Promise<unknown>;
+  getUserActivity(userId: number): Promise<unknown>;
 }
 
 export class PostgresStorage implements IStorage {
@@ -119,7 +119,7 @@ export class PostgresStorage implements IStorage {
     try {
       const [newUser] = await db.insert(users).values(user).returning();
       return newUser;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating user:", error);
       if (error.code === '23505') { // PostgreSQL unique constraint violation
         if (error.constraint?.includes('email')) {
@@ -705,7 +705,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Session analytics methods
-  async getSessionAnalytics(userId: number): Promise<any> {
+  async getSessionAnalytics(userId: number): Promise<unknown> {
     try {
       const result = await db.execute(sql`
         SELECT s.*
@@ -776,7 +776,7 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getSystemSettings(): Promise<any> {
+  async getSystemSettings(): Promise<unknown> {
     try {
       const result = await db.execute(sql`
         SELECT *
@@ -808,7 +808,7 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any> {
+  async getAdminAnalytics(fromDate?: string, toDate?: string): Promise<unknown> {
     try {
       console.log(`Storage: Filtering analytics from ${fromDate || 'beginning'} to ${toDate || 'now'}`);
 
@@ -954,7 +954,7 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getUserActivity(userId: number): Promise<any> {
+  async getUserActivity(userId: number): Promise<unknown> {
     try {
       const result = await db.execute(sql`
         SELECT 

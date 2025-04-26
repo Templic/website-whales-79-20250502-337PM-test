@@ -195,7 +195,7 @@ export interface VulnerabilityFinding {
   /**
    * Additional metadata
    */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**

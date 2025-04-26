@@ -16,7 +16,7 @@ export interface SecurityEvent {
   type: 'info' | 'success' | 'warning' | 'error';
   category: string;
   message: string;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
 }
 
 // In-memory store of recent security events

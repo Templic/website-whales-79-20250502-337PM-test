@@ -32,7 +32,7 @@ export interface UserModel extends EntityModel, AuditableEntity, SoftDeletableEn
   lastLoginAt?: Date;
   roles: string[];
   permissions?: string[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   // Relationships
   profile?: ProfileModel;
   settings?: UserSettingsModel;
@@ -73,7 +73,7 @@ export interface UserSettingsModel extends EntityModel {
   smsNotifications: boolean;
   marketingEmails: boolean;
   twoFactorEnabled: boolean;
-  customSettings?: Record<string, any>;
+  customSettings?: Record<string, unknown>;
   // Relationships
   user?: UserModel;
 }
@@ -89,7 +89,7 @@ export interface SessionModel extends EntityModel {
   userAgent?: string;
   lastActiveAt: Date;
   isRevoked: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   // Relationships
   user?: UserModel;
 }
@@ -114,7 +114,7 @@ export interface PermissionModel extends EntityModel {
   description?: string;
   resource: string;
   action: string;
-  conditions?: Record<string, any>;
+  conditions?: Record<string, unknown>;
   // Relationships
   roles?: RoleModel[];
 }
@@ -127,10 +127,10 @@ export interface AuditLogModel extends EntityModel {
   action: string;
   resource: string;
   resourceId?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   // Relationships
   user?: UserModel;
 }
@@ -147,7 +147,7 @@ export interface FileModel extends EntityModel, AuditableEntity, SoftDeletableEn
   url?: string;
   bucket?: string;
   isPublic: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   // Relationships
   uploader?: UserModel;
 }
@@ -161,7 +161,7 @@ export interface TagModel extends EntityModel {
   description?: string;
   color?: string;
   // Relationships
-  resources?: Record<string, any>[];
+  resources?: Record<string, unknown>[];
 }
 
 /**
@@ -176,7 +176,7 @@ export interface CategoryModel extends EntityModel, AuditableEntity, SoftDeletab
   // Relationships
   parent?: CategoryModel;
   children?: CategoryModel[];
-  resources?: Record<string, any>[];
+  resources?: Record<string, unknown>[];
 }
 
 /**
@@ -189,7 +189,7 @@ export interface NotificationModel extends EntityModel {
   message: string;
   isRead: boolean;
   readAt?: Date;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   // Relationships
   user?: UserModel;
 }
@@ -221,7 +221,7 @@ export interface ContentModel extends EntityModel, AuditableEntity, SoftDeletabl
   status: 'draft' | 'published' | 'archived';
   publishedAt?: Date;
   featuredImageId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   // Relationships
   author?: UserModel;
   featuredImage?: FileModel;
@@ -240,7 +240,7 @@ export interface MessageModel extends EntityModel {
   content: string;
   isRead: boolean;
   readAt?: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   // Relationships
   sender?: UserModel;
   receiver?: UserModel;
@@ -253,7 +253,7 @@ export interface MessageModel extends EntityModel {
 export interface ConversationModel extends EntityModel {
   title?: string;
   lastMessageAt: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   // Relationships
   participants?: UserModel[];
   messages?: MessageModel[];
@@ -273,7 +273,7 @@ export interface FeatureFlagModel extends EntityModel, AuditableEntity {
     startDate?: Date;
     endDate?: Date;
     environments?: string[];
-    conditions?: Record<string, any>;
+    conditions?: Record<string, unknown>;
   };
   // Relationships
   createdBy?: UserModel;
@@ -287,7 +287,7 @@ export interface ActivityModel extends EntityModel {
   action: string;
   resourceType?: string;
   resourceId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   // Relationships
   user?: UserModel;
 }
@@ -301,7 +301,7 @@ export interface WebhookModel extends EntityModel, AuditableEntity {
   isActive: boolean;
   secret?: string;
   headers?: Record<string, string>;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   // Relationships
   createdBy?: UserModel;
 }
@@ -316,7 +316,7 @@ export interface ApiKeyModel extends EntityModel, AuditableEntity {
   lastUsedAt?: Date;
   isRevoked: boolean;
   scopes?: string[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   // Relationships
   createdBy?: UserModel;
 }
@@ -326,9 +326,9 @@ export interface ApiKeyModel extends EntityModel, AuditableEntity {
  */
 export interface EventModel extends EntityModel {
   type: string;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   userId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   // Relationships
   user?: UserModel;
 }

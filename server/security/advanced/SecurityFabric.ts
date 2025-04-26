@@ -45,7 +45,7 @@ export interface SecurityEvent {
   category: SecurityEventCategory;
   severity: SecurityEventSeverity;
   message: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   timestamp?: string;
 }
 
@@ -260,7 +260,7 @@ export class SecurityFabric {
   /**
    * Get security status information
    */
-  public getSecurityStatus(): Record<string, any> {
+  public getSecurityStatus(): Record<string, unknown> {
     const registeredComponents = Array.from(this.components.entries()).map(
       ([name, component]) => ({
         name,

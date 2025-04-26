@@ -209,7 +209,7 @@ async function getUsers_Secure(columns: string[]) {
  */
 
 // VULNERABLE: Building dynamic WHERE conditions
-async function searchUsers_Vulnerable(conditions: Record<string, any>) {
+async function searchUsers_Vulnerable(conditions: Record<string, unknown>) {
   // VULNERABLE: Building WHERE clauses with string interpolation
   const whereClauses = Object.entries(conditions)
     .map(([key, value]) => `${key} = '${value}'`)
@@ -220,7 +220,7 @@ async function searchUsers_Vulnerable(conditions: Record<string, any>) {
 }
 
 // SECURE: Using the select helper method
-async function searchUsers_Secure(conditions: Record<string, any>) {
+async function searchUsers_Secure(conditions: Record<string, unknown>) {
   // SECURE: Using the select helper method with conditions object
   return await db.select('users', ['*'], conditions);
 }

@@ -34,7 +34,7 @@ try {
 /**
  * Environment-aware error logger that sanitizes sensitive information
  */
-function logError(error: unknown, context: Record<string, any> = {}): void {
+function logError(error: unknown, context: Record<string, unknown> = {}): void {
   // Sanitize context to avoid logging sensitive information
   const sanitizedContext = { ...context };
   
@@ -111,7 +111,7 @@ export function handleError(
 export function handleSecurityError(
   error: unknown, 
   severity: SecurityError['severity'] = 'medium',
-  context: Record<string, any> = {}
+  context: Record<string, unknown> = {}
 ): SecurityError {
   const baseError = handleError(error);
   
@@ -239,7 +239,7 @@ export function handleApiError(
 export function handleAuthError(
   error: unknown,
   authErrorType: AuthError['authErrorType'] = 'unauthorized',
-  context: Record<string, any> = {}
+  context: Record<string, unknown> = {}
 ): AuthError {
   const securityError = handleSecurityError(error, 'high', context);
   
@@ -273,7 +273,7 @@ export function createErrorResponse(
   statusCode = 500,
   errorCode?: string | number,
   data?: any
-): Record<string, any> {
+): Record<string, unknown> {
   return {
     success: false,
     error: {

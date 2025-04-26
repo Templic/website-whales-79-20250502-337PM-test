@@ -352,7 +352,7 @@ export class DatabaseSecurityManager {
   public logDatabaseActivity(
     activity: string,
     userId: string | number | undefined,
-    details: Record<string, any>
+    details: Record<string, unknown>
   ): void {
     // Log to security fabric
     securityFabric.emitEvent({

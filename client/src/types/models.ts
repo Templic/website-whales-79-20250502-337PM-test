@@ -152,7 +152,7 @@ export interface OrderItem {
   total: number;
   image?: string;
   downloads?: DigitalContent[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -338,7 +338,7 @@ export interface Subscriber extends Identifiable, Timestamped {
   tags?: string[];
   source?: string;
   lastNewsletterSent?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**

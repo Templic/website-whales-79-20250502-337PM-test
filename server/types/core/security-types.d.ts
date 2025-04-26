@@ -21,8 +21,8 @@ export interface SecurityLogEntry {
   resourceId?: string | number;
   action: string;
   outcome: 'success' | 'failure' | 'warning';
-  details?: Record<string, any>;
-  metadata?: Record<string, any>;
+  details?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -59,7 +59,7 @@ export interface AuthenticatedUser {
   lastLogin?: number;
   isTwoFactorEnabled?: boolean;
   sessionExpiry: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -71,7 +71,7 @@ export interface Permission {
   description: string;
   resource: string;
   action: 'create' | 'read' | 'update' | 'delete' | 'manage' | 'execute';
-  constraints?: Record<string, any>;
+  constraints?: Record<string, unknown>;
 }
 
 /**
@@ -172,7 +172,7 @@ export interface AuthToken {
   expiresAt: number;
   userId: string;
   scopes?: string[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -199,7 +199,7 @@ export interface SecurityChallenge {
   expiresAt: number;
   attempts: number;
   maxAttempts: number;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }
 
 /**
@@ -217,7 +217,7 @@ export interface SecurityAlert {
   actionLink?: string;
   read: boolean;
   resolved: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -265,7 +265,7 @@ export interface AuthAttempt {
   success: boolean;
   failureReason?: string;
   method: 'password' | 'oauth' | 'mfa' | 'sso';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**

@@ -234,7 +234,7 @@ interface PerformanceMeasurement {
   startTime: number;
   endTime?: number;
   duration?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface PerformanceMetrics {
@@ -269,7 +269,7 @@ const performanceMetrics: PerformanceMetrics = {
 export function measureExecutionTime<T>(
   name: string,
   fn: () => T,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): T {
   const start = performance.now();
   const result = fn();
@@ -328,7 +328,7 @@ export function measureExecutionTime<T>(
  * @param metadata Additional metadata for the marker
  * @returns Object with mark and measure methods
  */
-export function createPerformanceMarker(name: string, metadata?: Record<string, any>) {
+export function createPerformanceMarker(name: string, metadata?: Record<string, unknown>) {
   let startTime = 0;
   let markerActive = false;
   
@@ -344,7 +344,7 @@ export function createPerformanceMarker(name: string, metadata?: Record<string, 
       
       return startTime;
     },
-    measure: (additionalMetadata?: Record<string, any>) => {
+    measure: (additionalMetadata?: Record<string, unknown>) => {
       if (!markerActive) {
         console.warn(`[Performance] Cannot measure ${name}: marker not started`);
         return 0;

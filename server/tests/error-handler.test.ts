@@ -221,7 +221,7 @@ async function testWithErrorHandling() {
     });
     
     console.error('Error scenario test failed: Expected error was not thrown');
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.log('Error scenario test:', {
       isBaseError: 'code' in error,
       message: error.message === 'Operation failed'
@@ -244,7 +244,7 @@ async function testWithErrorHandling() {
     );
     
     console.error('Custom handler test failed: Expected error was not thrown');
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.log('Custom handler test:', {
       isBaseError: 'code' in error,
       message: error.message === 'Custom handled error',

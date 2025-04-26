@@ -26,7 +26,7 @@ interface ScanResult {
   scanner: string;
   status: 'success' | 'warning' | 'error';
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   timestamp: number;
 }
 

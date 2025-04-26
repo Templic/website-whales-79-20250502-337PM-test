@@ -342,7 +342,7 @@ export function validateAndSanitizeObject<T>(obj: T, options: {
   
   // If it's an object and we should recurse
   if (typeof obj === 'object' && !Array.isArray(obj) && recurseObjects) {
-    const result: Record<string, any> = {};
+    const result: Record<string, unknown> = {};
     
     for (const [key, value] of Object.entries(obj)) {
       result[key] = validateAndSanitizeObject(value, options);

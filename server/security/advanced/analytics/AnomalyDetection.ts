@@ -775,7 +775,7 @@ export class AnomalyDetection {
   /**
    * Get current status of the anomaly detection system
    */
-  public getStatus(): Record<string, any> {
+  public getStatus(): Record<string, unknown> {
     return {
       initialized: this.initialized,
       mode: this.options.mode,

@@ -164,7 +164,7 @@ export interface AnomalyDetectionResult {
   /**
    * Detailed anomaly information
    */
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   
   /**
    * Whether the anomaly was blocked
@@ -235,7 +235,7 @@ export async function detectAnomaly(req: Request): Promise<AnomalyDetectionResul
     // Determine the reason based on the highest score
     let reason = '';
     let anomalyType = '';
-    const details: Record<string, any> = {};
+    const details: Record<string, unknown> = {};
     
     if (statisticalResult.score >= 0.7 && statisticalResult.score >= behavioralResult.score && 
         statisticalResult.score >= contentResult.score && statisticalResult.score >= rateResult.score) {
@@ -508,7 +508,7 @@ async function performStatisticalAnalysis(req: Request): Promise<AnomalyDetectio
   }
   
   // Add in some details
-  const details: Record<string, any> = {
+  const details: Record<string, unknown> = {
     pathFrequency,
     methodFrequency,
     knownRoute: !!routeInfo,
@@ -563,7 +563,7 @@ async function performBehavioralAnalysis(req: Request): Promise<AnomalyDetection
   }
   
   let anomalyScore = 0;
-  const details: Record<string, any> = {};
+  const details: Record<string, unknown> = {};
   
   // Calculate time between requests to identify unusual timing patterns
   if (ipPattern.timestamps.length >= 2) {
@@ -656,7 +656,7 @@ async function performContentAnalysis(req: Request): Promise<AnomalyDetectionRes
   };
   
   let anomalyScore = 0;
-  const details: Record<string, any> = {};
+  const details: Record<string, unknown> = {};
   
   // Check request body for attack signatures
   if (req.body && typeof req.body === 'object') {
@@ -774,7 +774,7 @@ async function performRateAnalysis(req: Request): Promise<AnomalyDetectionResult
   }
   
   let anomalyScore = 0;
-  const details: Record<string, any> = {};
+  const details: Record<string, unknown> = {};
   
   // Calculate requests per minute for this IP
   const oneMinuteAgo = now - 60000;

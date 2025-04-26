@@ -126,7 +126,7 @@ export namespace AdminTypes {
     subtitle?: string;
     height?: number | string;
     width?: number | string;
-    options?: Record<string, any>;
+    options?: Record<string, unknown>;
     loading?: boolean;
     error?: Error | null;
     className?: string;
@@ -234,8 +234,8 @@ export namespace AdminTypes {
    */
   export interface AdminFormProps {
     fields: FormField[];
-    onSubmit: (values: Record<string, any>) => void;
-    initialValues?: Record<string, any>;
+    onSubmit: (values: Record<string, unknown>) => void;
+    initialValues?: Record<string, unknown>;
     submitText?: string;
     cancelText?: string;
     onCancel?: () => void;

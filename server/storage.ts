@@ -109,17 +109,17 @@ export interface IStorage {
 
   // Session management methods
   cleanupExpiredSessions(): Promise<void>;
-  getSessionAnalytics(userId: number): Promise<any>;
+  getSessionAnalytics(userId: number): Promise<unknown>;
   updateSessionActivity(sessionId: string, data): Promise<void>;
 
   // Advanced admin methods
   updateUserRole(userId: number, role: 'user' | 'admin' | 'super_admin'): Promise<User>;
   banUser(userId: number): Promise<User>;
   unbanUser(userId: number): Promise<User>;
-  getSystemSettings(): Promise<any>;
+  getSystemSettings(): Promise<unknown>;
   updateSystemSettings(settings): Promise<void>;
-  getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any>;
-  getUserActivity(userId: number): Promise<any>;
+  getAdminAnalytics(fromDate?: string, toDate?: string): Promise<unknown>;
+  getUserActivity(userId: number): Promise<unknown>;
 
   // Content management methods
   getAllContentItems(): Promise<ContentItem[]>;
@@ -1241,7 +1241,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Session analytics methods
-  async getSessionAnalytics(userId: number): Promise<any> {
+  async getSessionAnalytics(userId: number): Promise<unknown> {
     try {
       // Query for the session table - this is safer as it uses parameterized queries
       // First define the session table to match the table structure
@@ -1353,7 +1353,7 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getSystemSettings(): Promise<any> {
+  async getSystemSettings(): Promise<unknown> {
     try {
       // Define the system_settings table schema for type safety
       const systemSettingsTable = pgTable('system_settings', {
@@ -1397,7 +1397,7 @@ export class PostgresStorage implements IStorage {
       
       // Clean and validate settings object to prevent injection
       const validKeys = ['enableRegistration', 'requireEmailVerification', 'autoApproveContent'];
-      const cleanedSettings: Record<string, any> = {};
+      const cleanedSettings: Record<string, unknown> = {};
       
       // Only allow known keys to be updated
       Object.keys(settings).forEach(key => {
@@ -1430,7 +1430,7 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any> {
+  async getAdminAnalytics(fromDate?: string, toDate?: string): Promise<unknown> {
     try {
       console.log(`Storage: Filtering analytics from ${fromDate || 'beginning'} to ${toDate || 'now'}`);
 
@@ -1613,7 +1613,7 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getUserActivity(userId: number): Promise<any> {
+  async getUserActivity(userId: number): Promise<unknown> {
     try {
       // Use the ORM's built-in functions to create a properly parameterized query
       // This is safer than using raw SQL with template literals
@@ -1987,7 +1987,7 @@ export class PostgresStorage implements IStorage {
         }
         
         // Build update data
-        const updateData: Record<string, any> = { 
+        const updateData: Record<string, unknown> = { 
           status, 
           updatedAt: new Date(),
           lastModifiedBy: userId

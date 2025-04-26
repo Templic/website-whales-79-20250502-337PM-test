@@ -62,9 +62,9 @@ export interface JsonApiResponse<T> {
   included?: {
     id: string;
     type: string;
-    attributes: Record<string, any>;
+    attributes: Record<string, unknown>;
   }[];
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
   links?: {
     self?: string;
     first?: string;

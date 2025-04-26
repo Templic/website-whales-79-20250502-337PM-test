@@ -20,5 +20,5 @@ export interface EditorSaveData {
   html?: string;
   imageUrl?: string;
   imageFile?: File;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }

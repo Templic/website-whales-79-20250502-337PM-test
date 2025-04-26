@@ -148,7 +148,7 @@ export interface ModelConfig {
   /**
    * Model hyperparameters
    */
-  hyperparameters: Record<string, any>;
+  hyperparameters: Record<string, unknown>;
   
   /**
    * Learning rate (for applicable models)
@@ -218,7 +218,7 @@ interface TrainingSample {
   /**
    * Sample metadata
    */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**

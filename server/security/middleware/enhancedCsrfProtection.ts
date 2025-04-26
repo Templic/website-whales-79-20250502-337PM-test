@@ -202,7 +202,7 @@ export function enhancedCsrfProtection(options: {
   cookieName?: string;
   headerName?: string;
   formFieldName?: string;
-  cookieOptions?: Record<string, any>;
+  cookieOptions?: Record<string, unknown>;
 } = {}) {
   // Apply custom options
   const customExemptRoutes = options.exemptRoutes || [];

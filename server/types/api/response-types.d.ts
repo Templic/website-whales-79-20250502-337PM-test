@@ -25,7 +25,7 @@ export interface BaseResponse {
 export interface SuccessResponse<T = any> extends BaseResponse {
   success: true;
   data: T;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 /**
@@ -238,7 +238,7 @@ export function createSuccessResponse<T = any>(
   data: T, 
   options?: {
     statusCode?: number;
-    meta?: Record<string, any>;
+    meta?: Record<string, unknown>;
     requestId?: string;
     correlationId?: string;
   }

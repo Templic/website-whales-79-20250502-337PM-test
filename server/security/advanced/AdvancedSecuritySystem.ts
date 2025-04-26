@@ -143,7 +143,7 @@ export async function shutdownAdvancedSecurity(): Promise<void> {
 /**
  * Gets the current status of the advanced security system
  */
-export function getSecurityStatus(): Record<string, any> {
+export function getSecurityStatus(): Record<string, unknown> {
   return {
     securityPosture: securityFabric.getSecurityPosture(),
     threatLevel: securityFabric.getThreatLevel(),

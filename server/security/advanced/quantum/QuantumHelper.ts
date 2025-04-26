@@ -302,7 +302,7 @@ export async function secureHash(
  * @returns Promise resolving to the secure token
  */
 export async function createSecureToken(
-  payload: Record<string, any>,
+  payload: Record<string, unknown>,
   privateKey: string,
   options: {
     expiresIn?: number; // milliseconds
@@ -392,7 +392,7 @@ export async function verifySecureToken(
     encoding?: qrc.QRCOptions['encoding'];
   } = {}
 ): Promise<{
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   valid: boolean;
   expired?: boolean;
   reason?: string;

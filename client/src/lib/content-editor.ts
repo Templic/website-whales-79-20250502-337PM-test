@@ -42,7 +42,7 @@ export async function updateContent(params: ContentUpdateParams): Promise<boolea
 /**
  * Update text content
  */
-async function updateTextContent(contentId: string | number, text: string): Promise<any> {
+async function updateTextContent(contentId: string | number, text: string): Promise<unknown> {
   try {
     const response = await axios.post('/api/content/text', {
       contentId,
@@ -63,7 +63,7 @@ async function updateTextContent(contentId: string | number, text: string): Prom
 /**
  * Update image content
  */
-async function updateImageContent(contentId: string | number, image: File): Promise<any> {
+async function updateImageContent(contentId: string | number, image: File): Promise<unknown> {
   try {
     // Create a FormData instance to send the file
     const formData = new FormData();

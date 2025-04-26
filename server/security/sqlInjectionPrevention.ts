@@ -45,7 +45,7 @@ export class SQLInjectionPrevention {
   public async select(
     table: string,
     columns: string[] = ['*'],
-    whereConditions: Record<string, any> = {},
+    whereConditions: Record<string, unknown> = {},
     orderBy?: string,
     limit?: number,
     offset?: number,
@@ -134,10 +134,10 @@ export class SQLInjectionPrevention {
    */
   public async insert(
     table: string,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     returningColumns: string[] = ['*'],
     caller?: string
-  ): Promise<any> {
+  ): Promise<unknown> {
     if (!data || Object.keys(data).length === 0) {
       throw new Error('No data provided for insert operation');
     }
@@ -184,11 +184,11 @@ export class SQLInjectionPrevention {
    */
   public async update(
     table: string,
-    data: Record<string, any>,
-    whereConditions: Record<string, any> = {},
+    data: Record<string, unknown>,
+    whereConditions: Record<string, unknown> = {},
     returningColumns: string[] = ['*'],
     caller?: string
-  ): Promise<any> {
+  ): Promise<unknown> {
     if (!data || Object.keys(data).length === 0) {
       throw new Error('No data provided for update operation');
     }
@@ -273,10 +273,10 @@ export class SQLInjectionPrevention {
    */
   public async delete(
     table: string,
-    whereConditions: Record<string, any> = {},
+    whereConditions: Record<string, unknown> = {},
     returningColumns: string[] = ['*'],
     caller?: string
-  ): Promise<any> {
+  ): Promise<unknown> {
     // Sanitize table name
     const sanitizedTable = databaseSecurity.sanitizeIdentifier(table);
     

@@ -21,7 +21,7 @@ interface SecurityCheckResult {
   reason?: string;
   
   // Additional metadata about the security check
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**

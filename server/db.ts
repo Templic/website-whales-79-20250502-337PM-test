@@ -111,7 +111,7 @@ async function attemptReconnect() {
       client.release();
       isConnectionDown = false;
       reconnectAttempts = 0;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to reconnect:', err);
       await attemptReconnect();
     }
@@ -128,7 +128,7 @@ export const initializeDatabase = async () => {
       console.log('Successfully connected to PostgreSQL database');
       client.release();
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       retries++;
       console.error(`Failed to connect to PostgreSQL (attempt ${retries}/${MAX_RETRIES}):`, err);
       
@@ -156,7 +156,7 @@ export const checkDatabaseConnectivity = async (): Promise<boolean> => {
     } finally {
       client.release();
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Database connectivity check failed:', err);
     return false;
   }
@@ -206,7 +206,7 @@ export const getDatabaseStats = async (): Promise<{
     } finally {
       client.release();
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Failed to get database stats:', err);
     return {
       totalConnections: 0,

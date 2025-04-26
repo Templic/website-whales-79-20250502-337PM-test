@@ -98,7 +98,7 @@ export interface SecurityEventData {
   method?: string;
   details?: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Security log constants

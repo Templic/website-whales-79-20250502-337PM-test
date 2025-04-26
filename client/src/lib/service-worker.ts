@@ -405,7 +405,7 @@ export async function clearCache(cacheName: string): Promise<void> {
  * Gets caches information from the Service Worker
  * @returns {Promise<any>} Promise that resolves with cache information
  */
-export async function getCachesInfo(): Promise<any> {
+export async function getCachesInfo(): Promise<unknown> {
   if (!navigator.serviceWorker.controller) {
     throw new Error('No active Service Worker');
   }

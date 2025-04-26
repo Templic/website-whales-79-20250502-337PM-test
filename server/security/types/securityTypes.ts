@@ -104,7 +104,7 @@ export interface SecurityEvent {
   timestamp: Date;
   level: SecurityLogLevel;
   source: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 /**

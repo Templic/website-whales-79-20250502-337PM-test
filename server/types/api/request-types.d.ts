@@ -269,7 +269,7 @@ export function validateRequest<T>(
       isValid: true,
       validatedData
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       isValid: false,
       errors: error.errors || { _error: error.message || 'Validation failed' }

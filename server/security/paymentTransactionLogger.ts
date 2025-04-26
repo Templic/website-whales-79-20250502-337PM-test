@@ -39,7 +39,7 @@ interface TransactionLogEntry {
   currency?: string;
   message?: string;
   ip_address?: string;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 /**
@@ -104,7 +104,7 @@ class PaymentTransactionLogger {
     }
     
     // Handle objects
-    const sanitized: Record<string, any> = {};
+    const sanitized: Record<string, unknown> = {};
     
     for (const [key, value] of Object.entries(data)) {
       // Skip sensitive fields

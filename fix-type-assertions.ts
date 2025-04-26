@@ -2,7 +2,7 @@
  * TypeScript Type Assertion Fixer
  * 
  * This script fixes incorrect type assertions in TypeScript files.
- * It specifically targets the pattern: (value as Type: any) and replaces it with (value as Type)
+ * It specifically targets the pattern: (value as Type) and replaces it with (value as Type)
  * 
  * Usage: ts-node fix-type-assertions.ts [directory]
  */

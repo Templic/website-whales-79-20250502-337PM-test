@@ -410,7 +410,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
  * @param options Middleware options
  * @returns Processed response body
  */
-function processResponse(body, options: QuantumMiddlewareOptions): any {
+function processResponse(body, options: QuantumMiddlewareOptions): unknown {
   if (!body || typeof body !== 'object') {
     return body;
   }
