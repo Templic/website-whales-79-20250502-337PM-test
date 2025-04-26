@@ -344,15 +344,8 @@ export const subscribers = pgTable('subscribers', {
   id: serial('id').primaryKey(),
   email: text('email').notNull().unique(),
   name: text('name'),
-  status: text('status').default('active').notNull(), // active, unsubscribed, bounced, complained
-  confirmedAt: timestamp('confirmed_at'),
-  unsubscribedAt: timestamp('unsubscribed_at'),
-  source: text('source'), // form, import, api
-  interests: jsonb('interests'),
-  tags: jsonb('tags'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  metadata: jsonb('metadata')
+  active: boolean('active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
 export const newsletters = pgTable('newsletters', {

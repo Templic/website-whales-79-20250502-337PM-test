@@ -7,7 +7,7 @@
 import { eq, and, or, like, sql, desc } from 'drizzle-orm';
 import { 
   typescriptErrors, errorPatterns, errorFixes, errorFixHistory, projectAnalyses,
-  TypeScriptError, InsertTypeScriptError, ErrorPattern, InsertErrorPattern,
+  TypescriptError, InsertTypescriptError, ErrorPattern, InsertErrorPattern,
   ErrorFix, InsertErrorFix, ErrorFixHistory, InsertErrorFixHistory,
   ProjectAnalysis, InsertProjectAnalysis
 } from '../shared/schema';

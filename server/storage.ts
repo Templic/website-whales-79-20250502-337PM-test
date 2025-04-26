@@ -7,7 +7,7 @@ import {
   // User types
   type User, type InsertUser,
   // TypeScript error management types
-  type TypeScriptError, type InsertTypeScriptError,
+  type TypescriptError, type InsertTypescriptError,
   type ErrorPattern, type InsertErrorPattern,
   type ErrorFix, type InsertErrorFix,
   type ErrorFixHistory, type InsertErrorFixHistory,
