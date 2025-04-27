@@ -595,7 +595,7 @@
       };
       
       try {
-        const response = await fetch('/api/security/homomorphic/keys/generate', {
+        const response = await fetch('/api/security/demo/homomorphic/keys/generate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -623,7 +623,7 @@
     // List key pairs
     document.getElementById('listKeysBtn').addEventListener('click', async () => {
       try {
-        const response = await fetch('/api/security/homomorphic/keys');
+        const response = await fetch('/api/security/demo/homomorphic/keys');
         const data = await response.json();
         
         if (data.success) {
@@ -668,7 +668,7 @@
       }
       
       try {
-        const response = await fetch(`/api/security/homomorphic/encrypt/${keyId}`, {
+        const response = await fetch(`/api/security/demo/homomorphic/encrypt/${keyId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -717,7 +717,7 @@
           const ciphertext1 = state.encryptedData.find(data => data.ciphertext.data === ciphertext1Id).ciphertext;
           const ciphertext2 = state.encryptedData.find(data => data.ciphertext.data === ciphertext2Id).ciphertext;
           
-          response = await fetch(`/api/security/homomorphic/${operationMode}`, {
+          response = await fetch(`/api/security/demo/homomorphic/${operationMode}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -741,7 +741,7 @@
             state.encryptedData.find(data => data.ciphertext.data === id).ciphertext
           );
           
-          response = await fetch('/api/security/homomorphic/compute', {
+          response = await fetch('/api/security/demo/homomorphic/compute', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -824,7 +824,7 @@
       }
       
       try {
-        const response = await fetch('/api/security/homomorphic/decrypt', {
+        const response = await fetch('/api/security/demo/homomorphic/decrypt', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

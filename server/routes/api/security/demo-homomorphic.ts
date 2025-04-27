@@ -15,7 +15,7 @@ export const demoHomomorphicRoutes = Router();
 // Log all demo route access for security auditing
 demoHomomorphicRoutes.use('/', (req: Request, res: Response, next: NextFunction) => {
   logSecurityEvent({
-    category: SecurityEventCategory.ACCESS_CONTROL,
+    category: SecurityEventCategory.API_SECURITY,
     severity: SecurityEventSeverity.INFO,
     message: 'Demo homomorphic encryption route accessed',
     data: {

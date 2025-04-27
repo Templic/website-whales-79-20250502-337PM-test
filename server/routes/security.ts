@@ -47,6 +47,11 @@ securityApiRouter.use('/homomorphic', homomorphicRoutes);
 // Register security API routes
 router.use('/api/security', securityApiRouter);
 
+// Demo routes for testing homomorphic encryption (no authentication required)
+const publicApiRouter = createPublicApiRouter();
+publicApiRouter.use('/homomorphic', demoHomomorphicRoutes);
+router.use('/api/security/demo', publicApiRouter);
+
 // MFA verification routes
 const authRouter = express.Router();
 
