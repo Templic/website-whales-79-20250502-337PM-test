@@ -21,6 +21,7 @@ import ServiceWorkerManager from "@/components/common/ServiceWorkerManager";
 import StylesProvider from "@/components/common/StylesProvider";
 import FontLoader from "@/components/common/FontLoader";
 import { ThemeController } from "@/components/ui/ThemeController";
+import { OrientationProvider } from "./contexts/OrientationContext";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -291,6 +292,8 @@ function App() {
         <CartProvider>
           <AccessibilityProvider>
             <ChatProvider>
+                {/* Add OrientationProvider for responsive orientation handling */}
+                <OrientationProvider>
                 {/* Add StylesProvider to optimize CSS-in-JS rendering */}
                 <StylesProvider
                   extractCritical={true}
@@ -335,6 +338,7 @@ function App() {
                   />
                 </ErrorBoundary>
                 </StylesProvider>
+                </OrientationProvider>
               </ChatProvider>
             </AccessibilityProvider>
           </CartProvider>

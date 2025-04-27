@@ -210,7 +210,6 @@ router.post('/decrypt', async (req: Request, res: Response) => {
       type: SecurityEventTypes.HOMOMORPHIC_ENCRYPTION_OPERATION,
       details: {
         message: 'Data decrypted with quantum-resistant algorithm',
-      metadata: {
         algorithm,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
@@ -258,7 +257,6 @@ router.post('/sign', async (req: Request, res: Response) => {
       type: SecurityEventTypes.QUANTUM_RESISTANT_SIGNATURE_GENERATED,
       details: {
         message: 'Data signed with quantum-resistant algorithm',
-      metadata: {
         algorithm,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
@@ -307,7 +305,6 @@ router.post('/verify', async (req: Request, res: Response) => {
       type: SecurityEventTypes.QUANTUM_RESISTANT_SIGNATURE_VERIFIED,
       details: {
         message: `Signature verification ${result.valid ? 'succeeded' : 'failed'}`,
-      metadata: {
         algorithm,
         valid: result.valid,
         reason: result.reason,

@@ -3,8 +3,8 @@
  * @description Security-specific logging with event emission
  */
 
-import { SecurityFabric, SecurityEventCategory, SecurityEventSeverity } from './SecurityFabric';
-import { SecurityEventTypes } from './blockchain/SecurityEventTypes';
+import { SecurityFabric } from './SecurityFabric';
+import { SecurityEventTypes, SecurityEventCategory, SecurityEventSeverity } from './blockchain/SecurityEventTypes';
 import { Logger } from '../../utils/Logger';
 
 /**

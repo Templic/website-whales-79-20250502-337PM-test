@@ -4,6 +4,54 @@
  */
 
 /**
+ * Security event severity levels
+ */
+export enum SecurityEventSeverity {
+  CRITICAL = 'critical',
+  ERROR = 'error',
+  WARN = 'warn',
+  WARNING = 'warning',
+  INFO = 'info',
+  DEBUG = 'debug',
+  HIGH = 'high',
+  MEDIUM = 'medium',
+  LOW = 'low'
+}
+
+/**
+ * Security event categories
+ */
+export enum SecurityEventCategory {
+  GENERAL = 'general',
+  AUTHENTICATION = 'authentication',
+  AUTHORIZATION = 'authorization',
+  DATA_ACCESS = 'data_access',
+  API_SECURITY = 'api_security',
+  WEB_SECURITY = 'web_security',
+  CRYPTOGRAPHY = 'cryptography',
+  DATABASE_SECURITY = 'database_security',
+  FILE_SECURITY = 'file_security',
+  SYSTEM = 'system',
+  NETWORK = 'network',
+  APPLICATION = 'application',
+  CONTAINER = 'container',
+  CLOUD = 'cloud',
+  SECURITY_SCAN = 'security_scan',
+  API = 'api',
+  ATTACK = 'attack',
+  ANOMALY = 'anomaly',
+  THREAT_INTEL = 'threat_intel',
+  FILE = 'file',
+  PROTECTION = 'protection',
+  CORRELATION = 'correlation',
+  AUDIT = 'audit',
+  ADMIN = 'admin',
+  ERROR = 'error',
+  QUANTUM = 'quantum',
+  BLOCKCHAIN = 'blockchain'
+}
+
+/**
  * Comprehensive enumeration of all security event types in the system
  */
 export enum SecurityEventTypes {
@@ -15,6 +63,10 @@ export enum SecurityEventTypes {
   SECURITY_CONFIG_CHANGE = 'security_config_change',
   SECURITY_MODULE_LOAD = 'security_module_load',
   SECURITY_MODULE_UNLOAD = 'security_module_unload',
+  SYSTEM_STARTUP = 'system_startup',
+  SYSTEM_ERROR = 'system_error',
+  SYSTEM_WARNING = 'system_warning',
+  AUTH_SUCCESS = 'auth_success',
   
   // -------------------------------------------------------------------
   // Authentication Events

@@ -5,9 +5,12 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { SecurityEvent } from './blockchain/SecurityEvent';
-import { SecurityEventTypes } from './blockchain/SecurityEventTypes';
+import { SecurityEventTypes, SecurityEventCategory, SecurityEventSeverity } from './blockchain/SecurityEventTypes';
 import { immutableSecurityLogs } from './blockchain/ImmutableSecurityLogs';
 import { Logger } from '../../utils/Logger';
+
+// Re-export these enums for backward compatibility
+export { SecurityEventCategory, SecurityEventSeverity };
 
 /**
  * The SecurityFabric integrates all security mechanisms into a unified entity.

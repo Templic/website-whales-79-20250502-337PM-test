@@ -6,7 +6,7 @@
  */
 
 import { logSecurityEvent } from '../advanced/SecurityLogger';
-import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/SecurityFabric';
+import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/blockchain/SecurityEventTypes';
 import { ImmutableSecurityLogs } from '../advanced/blockchain/ImmutableSecurityLogs';
 
 // Security metrics interface

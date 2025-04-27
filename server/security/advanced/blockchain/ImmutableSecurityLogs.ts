@@ -5,6 +5,37 @@
 
 import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
+import { SecurityEventSeverity, SecurityEventCategory } from './SecurityEventTypes';
+
+/**
+ * Interface for security event
+ */
+export interface SecurityEvent {
+    /**
+     * Event severity level
+     */
+    severity: SecurityEventSeverity;
+    
+    /**
+     * Event category
+     */
+    category: SecurityEventCategory;
+    
+    /**
+     * Event title
+     */
+    title: string;
+    
+    /**
+     * Event description
+     */
+    description: string;
+    
+    /**
+     * Additional metadata
+     */
+    metadata?: any;
+}
 
 /**
  * Interface for log entry
@@ -375,6 +406,33 @@ class ImmutableSecurityLogsImpl {
     }
 
     /**
+     * Add a security event to the immutable store
+     */
+    public addSecurityEvent(event: SecurityEvent): Promise<string> {
+        if (!this.initialized) {
+            this.initialize();
+        }
+
+        // Create log entry from security event
+        const logEntry: Omit<LogEntry, 'id' | 'timestamp'> = {
+            type: `${event.category}_${event.severity}`,
+            details: {
+                severity: event.severity,
+                category: event.category,
+                title: event.title,
+                description: event.description,
+                metadata: event.metadata
+            }
+        };
+
+        // Add to blockchain
+        const logId = this.addLog(logEntry);
+
+        // Return log ID as a promise
+        return Promise.resolve(logId);
+    }
+
+    /**
      * Clean up resources
      */
     public cleanup(): void {
@@ -395,3 +453,5 @@ class ImmutableSecurityLogsImpl {
 
 // Export singleton instance
 export const immutableSecurityLogs = new ImmutableSecurityLogsImpl();
+// Export class for type references
+export { ImmutableSecurityLogsImpl as ImmutableSecurityLogs };

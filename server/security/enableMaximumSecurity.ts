@@ -5,7 +5,9 @@
  * features regardless of performance impact.
  */
 
-import { securityFabric, SecurityEventCategory, SecurityEventSeverity, logSecurityEvent } from './advanced/SecurityFabric';
+import { SecurityFabric } from './advanced/SecurityFabric';
+import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
+import { logSecurityEvent } from './advanced/SecurityLogger';
 import { startMetricsCollection } from './monitoring/MetricsCollector';
 import { initializeEventsCollector } from './monitoring/EventsCollector';
 
@@ -99,26 +101,25 @@ export function enableMaximumSecurity(): void {
     // Initialize events collector
     initializeEventsCollector();
     
-    // Initialize all security components (if any)
-    const components = securityFabric.getAllComponents();
-    if (components.length > 0) {
-      securityFabric.initializeAll()
-        .then(() => {
-          logSecurityEvent({
-            category: SecurityEventCategory.SYSTEM,
-            severity: SecurityEventSeverity.INFO,
-            message: 'All security components initialized in maximum security mode',
-            data: { componentsCount: components.length }
-          });
-        })
-        .catch((error) => {
-          logSecurityEvent({
-            category: SecurityEventCategory.SYSTEM,
-            severity: SecurityEventSeverity.ERROR,
-            message: 'Error initializing security components in maximum security mode',
-            data: { error: (error as Error).message }
-          });
-        });
+    // Initialize security fabric
+    try {
+      // Simply initialize the security fabric
+      SecurityFabric.initialize();
+      
+      // Log successful initialization
+      logSecurityEvent({
+        category: SecurityEventCategory.SYSTEM,
+        severity: SecurityEventSeverity.INFO,
+        message: 'Security fabric initialized in maximum security mode',
+        data: {}
+      });
+    } catch (initError) {
+      logSecurityEvent({
+        category: SecurityEventCategory.SYSTEM,
+        severity: SecurityEventSeverity.ERROR,
+        message: 'Error initializing security fabric in maximum security mode',
+        data: { error: (initError as Error).message }
+      });
     }
     
     // Log the maximum security mode activation
