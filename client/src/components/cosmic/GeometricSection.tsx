@@ -113,14 +113,14 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
     hexagon: 'polygon(15% 0%, 85% 0%, 100% 50%, 85% 100%, 15% 100%, 0% 50%)',
     octagon: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)',
     pentagon: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-    diamond: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+    diamond: 'polygon(40% 0%, 100% 50%, 60% 100%, 0% 50%)', // Widened diamond
     wave: 'polygon(0% 0%, 100% 0%, 100% 75%, 75% 100%, 50% 75%, 25% 100%, 0% 75%)',
     // New more symmetric shapes
     'symmetric-hexagon': 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
     'rectangular': 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
     'shield': 'polygon(0% 0%, 100% 0%, 100% 70%, 50% 100%, 0% 70%)',
     'pentagram': 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-    'rounded-diamond': 'polygon(50% 5%, 95% 50%, 50% 95%, 5% 50%)',
+    'rounded-diamond': 'polygon(40% 5%, 95% 50%, 60% 95%, 5% 50%)', // Widened rounded diamond
     'parallelogram': 'polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%)',
     'pointed-pentagon': 'polygon(50% 0%, 100% 30%, 85% 100%, 15% 100%, 0% 30%)',
   };
@@ -199,7 +199,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
           <>
             {/* Diamond-shaped "mat" that provides a border/outline */}
             <div className="absolute inset-0 z-0" style={{ 
-              clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+              clipPath: 'polygon(40% 0%, 100% 50%, 60% 100%, 0% 50%)', // Widened diamond
               border: `2px solid ${variantColors[variant].border}`,
               boxShadow: `0 0 15px ${variantColors[variant].glow}`,
               background: `linear-gradient(135deg, ${variantColors[variant].border} 0%, transparent 70%)`,

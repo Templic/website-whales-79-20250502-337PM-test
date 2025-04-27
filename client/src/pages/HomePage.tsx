@@ -20,7 +20,7 @@ export default function HomePage() {
   return (
     <>
       <SpotlightEffect />
-      <div className="container mx-auto px-2 py-6 max-w-[1400px]">
+      <div className="container mx-auto px-0 py-4 max-w-[1600px]">
 
 
         {/* Hero Section */}
