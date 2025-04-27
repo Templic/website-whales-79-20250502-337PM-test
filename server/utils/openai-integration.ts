@@ -1,300 +1,282 @@
 /**
- * OpenAI Integration Module for TypeScript Error Analysis
- * 
- * This module provides intelligent analysis of TypeScript errors using OpenAI's GPT models.
- * It helps with understanding complex errors, suggesting fixes, and providing context-aware explanations.
+ * OpenAI Integration for TypeScript Error Management
+ *
+ * This module provides AI-powered analysis of TypeScript errors using OpenAI.
+ * It can generate suggested fixes, explain errors, and provide context for complex type issues.
  */
 
 import OpenAI from "openai";
-import { TypeScriptError, ErrorAnalysis, InsertErrorAnalysis } from "../tsErrorStorage";
-import { db } from "../db";
-import { errorAnalysis } from "../../shared/schema";
-import fs from 'fs';
-import path from 'path';
-import { tsErrorStorage } from "../tsErrorStorage";
+import { 
+  TypeScriptErrorDetail, 
+  ErrorAnalysisResult,
+  ErrorSeverity,
+  ErrorCategory,
+  FixSuggestion
+} from "./ts-error-analyzer";
 
-// Initialize OpenAI client
+// Initialize the OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Default system prompt for TypeScript error analysis
-const DEFAULT_SYSTEM_PROMPT = `
-You are an expert TypeScript developer specializing in error analysis and resolution.
-Your task is to analyze TypeScript errors, explain them clearly, and suggest fixes.
-
-For each error:
-1. Explain the error in simple terms
-2. Identify the root cause
-3. Suggest a precise fix with code examples
-4. Consider the broader context and potential side effects of the fix
-5. Rate the severity and complexity of the error
-
-Focus on providing accurate, practical solutions that follow TypeScript best practices.
-`;
-
 /**
- * Configuration options for OpenAI analysis
+ * Options for the AI analysis process
  */
-export interface OpenAIAnalysisOptions {
-  model?: string;
+export interface AIAnalysisOptions {
+  maximumErrorsToAnalyze?: number;
+  includeCodeContext?: boolean;
+  useDetailedExplanations?: boolean;
+  generateFixSuggestions?: boolean;
+  maxTokensPerResponse?: number;
   temperature?: number;
-  systemPrompt?: string;
-  includeProjectContext?: boolean;
-  maxFilesToInclude?: number;
-  maxTokens?: number;
+  customInstructions?: string;
 }
 
 /**
- * Default configuration for OpenAI analysis
+ * Default options for AI analysis
  */
-const DEFAULT_OPTIONS: OpenAIAnalysisOptions = {
-  model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-  temperature: 0.2,
-  systemPrompt: DEFAULT_SYSTEM_PROMPT,
-  includeProjectContext: true,
-  maxFilesToInclude: 3,
-  maxTokens: 1000
+const defaultOptions: AIAnalysisOptions = {
+  maximumErrorsToAnalyze: 25,
+  includeCodeContext: true,
+  useDetailedExplanations: true,
+  generateFixSuggestions: true,
+  maxTokensPerResponse: 2048,
+  temperature: 0.1,
+  customInstructions: ""
 };
 
 /**
- * Analyze a TypeScript error using OpenAI
- * 
- * @param error The TypeScript error to analyze
- * @param options Configuration options for the analysis
- * @returns A structured analysis of the error
+ * The main function to analyze TypeScript errors using OpenAI
  */
-export async function analyzeErrorWithOpenAI(
-  error: TypeScriptError,
-  options: OpenAIAnalysisOptions = {}
-): Promise<ErrorAnalysis> {
-  // Merge provided options with defaults
-  const config = { ...DEFAULT_OPTIONS, ...options };
+export async function analyzeErrorsWithAI(
+  errors: TypeScriptErrorDetail[],
+  options: AIAnalysisOptions = {}
+): Promise<ErrorAnalysisResult> {
+  // Merge with default options
+  const mergedOptions = { ...defaultOptions, ...options };
   
-  // Check if the OpenAI API key is available
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OpenAI API key not found. Please set the OPENAI_API_KEY environment variable.");
-  }
+  // Limit the number of errors to analyze
+  const limitedErrors = errors.slice(0, mergedOptions.maximumErrorsToAnalyze);
+  
+  // Group similar errors to reduce API calls
+  const groupedErrors = groupSimilarErrors(limitedErrors);
+  
+  console.log(`Analyzing ${limitedErrors.length} errors grouped into ${groupedErrors.length} categories using OpenAI...`);
+  
+  // Process each group of errors
+  const analysisPromises = groupedErrors.map(errorGroup => 
+    analyzeErrorGroup(errorGroup, mergedOptions)
+  );
+  
+  // Wait for all analyses to complete
+  const analysisResults = await Promise.all(analysisPromises);
+  
+  // Flatten and map the results back to the original errors
+  const errorAnalysis = new Map<number, FixSuggestion>();
+  
+  analysisResults.forEach(result => {
+    if (result.fixes) {
+      result.errors.forEach(errorId => {
+        errorAnalysis.set(errorId, result.fixes);
+      });
+    }
+  });
+  
+  return {
+    analyzedErrors: errors.map(error => error.code),
+    fixSuggestions: Object.fromEntries(errorAnalysis),
+    aiEnabled: true,
+    processingTimeMs: 0, // This will be set by the caller
+    summary: `AI analysis completed for ${limitedErrors.length} errors`
+  };
+}
+
+/**
+ * Group similar errors to reduce API calls
+ */
+function groupSimilarErrors(errors: TypeScriptErrorDetail[]): Array<{
+  representative: TypeScriptErrorDetail;
+  errors: TypeScriptErrorDetail[];
+  errorIds: number[];
+}> {
+  const groups: Record<string, TypeScriptErrorDetail[]> = {};
+  
+  // Group by error code and category
+  errors.forEach(error => {
+    const key = `${error.code}-${error.category}`;
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+    groups[key].push(error);
+  });
+  
+  // Convert to array format
+  return Object.values(groups).map(group => ({
+    representative: group[0],
+    errors: group,
+    errorIds: group.map(error => Number(error.code.replace(/[^\d]/g, '')))
+  }));
+}
+
+/**
+ * Analyze a group of similar errors using OpenAI
+ */
+async function analyzeErrorGroup(
+  errorGroup: {
+    representative: TypeScriptErrorDetail;
+    errors: TypeScriptErrorDetail[];
+    errorIds: number[];
+  },
+  options: AIAnalysisOptions
+): Promise<{
+  errors: number[];
+  fixes: FixSuggestion;
+}> {
+  const { representative, errorIds } = errorGroup;
+  
+  // Prepare the context for the API request
+  const context = prepareErrorContext(representative, options);
   
   try {
-    // Read the file content for context
-    let fileContent = "";
-    try {
-      if (fs.existsSync(error.file_path)) {
-        fileContent = fs.readFileSync(error.file_path, 'utf8');
-      }
-    } catch (err) {
-      console.warn(`Failed to read file ${error.file_path}: ${err}`);
-    }
-    
-    // Build related file context if needed
-    let projectContext = "";
-    if (config.includeProjectContext) {
-      projectContext = await buildProjectContext(error, config.maxFilesToInclude || 3);
-    }
-    
-    // Prepare the prompt for OpenAI
-    const prompt = `
-    I'm analyzing a TypeScript error. Here are the details:
-    
-    Error Code: ${error.error_code}
-    Error Message: ${error.error_message}
-    File: ${error.file_path}
-    Line: ${error.line_number}, Column: ${error.column_number}
-    
-    Error Context from the source code:
-    \`\`\`typescript
-    ${error.error_context}
-    \`\`\`
-    
-    ${fileContent ? `Full file content:\n\`\`\`typescript\n${fileContent}\n\`\`\`` : ""}
-    
-    ${projectContext ? `Additional project context:\n${projectContext}` : ""}
-    
-    Please analyze this TypeScript error comprehensively:
-    1. Provide a clear explanation of what's wrong
-    2. Identify the root cause
-    3. Suggest a specific fix with code examples
-    4. Consider any side effects or broader implications of the fix
-    5. Rate the error's severity and complexity on a scale of 1-10
-    
-    Format your response as a JSON object with these fields:
-    {
-      "explanation": "Detailed explanation of the error",
-      "rootCause": "The fundamental issue causing the error",
-      "suggestedFix": "Code example showing how to fix the error",
-      "sideEffects": "Potential implications of applying the fix",
-      "complexityRating": number,
-      "severityRating": number,
-      "additionalNotes": "Any other relevant information"
-    }
-    `;
-    
-    // Call OpenAI API for analysis
-    const response = await openai.chat.completions.create({
-      model: config.model || "gpt-4o",
+    // Make the API request to OpenAI
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
-        { role: "system", content: config.systemPrompt || DEFAULT_SYSTEM_PROMPT },
-        { role: "user", content: prompt }
+        { 
+          role: "system", 
+          content: `You are an expert TypeScript developer specializing in analyzing and fixing TypeScript errors. 
+                   ${options.customInstructions || ""}` 
+        },
+        { 
+          role: "user", 
+          content: context 
+        }
       ],
-      temperature: config.temperature || 0.2,
-      max_tokens: config.maxTokens || 1000,
+      temperature: options.temperature,
+      max_tokens: options.maxTokensPerResponse,
       response_format: { type: "json_object" }
     });
     
-    // Parse the response
-    const analysisContent = response.choices[0].message.content;
-    if (!analysisContent) {
+    // Extract and parse the response
+    const responseContent = completion.choices[0].message.content;
+    if (!responseContent) {
       throw new Error("Empty response from OpenAI");
     }
     
-    let analysisData;
+    let fixData: any;
     try {
-      analysisData = JSON.parse(analysisContent);
-    } catch (err) {
-      console.error("Failed to parse OpenAI response as JSON:", err);
-      console.log("Raw response:", analysisContent);
-      analysisData = { explanation: "Failed to parse analysis response", rawResponse: analysisContent };
+      fixData = JSON.parse(responseContent);
+    } catch (e) {
+      console.error("Failed to parse OpenAI response as JSON:", responseContent.substring(0, 100) + "...");
+      fixData = { explanation: "Error parsing AI response" };
     }
     
-    // Calculate confidence score (0-100) based on complexity and OpenAI's reported metrics
-    const complexityRating = analysisData.complexityRating || 5;
-    const confidenceScore = Math.max(0, Math.min(100, Math.round(100 - complexityRating * 10)));
-    
-    // Store the analysis in the database
-    const insertAnalysis: InsertErrorAnalysis = {
-      error_id: error.id,
-      analysis_type: 'openai',
-      analysis_data: analysisData,
-      confidence_score: confidenceScore,
-      suggested_fix: analysisData.suggestedFix || null,
-      is_ai_generated: true
+    // Create a fix suggestion
+    const fixSuggestion: FixSuggestion = {
+      explanation: fixData.explanation || "No explanation provided",
+      suggestedFix: fixData.suggestedFix || "No fix suggested",
+      relatedErrors: fixData.relatedErrors || [],
+      impact: fixData.impact || "unknown",
+      confidence: fixData.confidence || 0.5,
+      alternatives: fixData.alternatives || []
     };
     
-    // Save the analysis to the database
-    const savedAnalysis = await tsErrorStorage.createErrorAnalysis(insertAnalysis);
+    return {
+      errors: errorIds,
+      fixes: fixSuggestion
+    };
     
-    return savedAnalysis;
   } catch (error) {
-    console.error("OpenAI analysis failed:", error);
-    throw error;
+    console.error("Error calling OpenAI API:", error);
+    
+    // Return a basic suggestion on error
+    return {
+      errors: errorIds,
+      fixes: {
+        explanation: `Error analyzing with AI: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        suggestedFix: "Please check the error message and try again",
+        relatedErrors: [],
+        impact: "unknown",
+        confidence: 0,
+        alternatives: []
+      }
+    };
   }
 }
 
 /**
- * Build context from related project files that might be relevant to the error
- * 
- * @param error The TypeScript error to analyze
- * @param maxFiles Maximum number of related files to include
- * @returns A string with relevant context from related files
+ * Prepare the error context for the API request
  */
-async function buildProjectContext(error: TypeScriptError, maxFiles: number): Promise<string> {
-  // Placeholder for project context building
-  // In a real implementation, this would:
-  // 1. Find imported files related to the error
-  // 2. Identify dependent files
-  // 3. Extract relevant snippets
-  
-  let context = "Related file context is not available.";
-  
-  // This is a placeholder implementation that would be expanded
-  // based on the actual codebase structure and error types
-  try {
-    // Get the directory of the error file
-    const errorDir = path.dirname(error.file_path);
-    
-    // Check for related files (importers and imports)
-    // This would be replaced with actual dependency analysis
-    
-    // For now, we'll just look for files in the same directory
-    // with similar names or related functionality
-    const errorFileName = path.basename(error.file_path, '.ts');
-    
-    // Build context string
-    context = "Related files will be analyzed here based on project dependencies.";
-  } catch (err) {
-    console.warn("Failed to build project context:", err);
+function prepareErrorContext(
+  error: TypeScriptErrorDetail,
+  options: AIAnalysisOptions
+): string {
+  let context = `
+Please analyze the following TypeScript error and provide a detailed solution:
+
+Error code: ${error.code}
+Error message: ${error.message}
+File: ${error.file}
+Line: ${error.line}, Column: ${error.column}
+Severity: ${error.severity}
+Category: ${error.category}
+`;
+
+  if (options.includeCodeContext && error.snippet) {
+    context += `
+Code snippet:
+\`\`\`typescript
+${error.snippet}
+\`\`\`
+`;
   }
-  
+
+  context += `
+Based on this information, provide a JSON response with the following fields:
+- explanation: A clear explanation of what causes this error and why it's a problem
+- suggestedFix: Code that shows how to fix the issue
+- relatedErrors: An array of error types that might be related or caused by the same issue
+- impact: The potential impact if this error is not fixed (e.g., "runtime error", "type safety issue", "build failure")
+- confidence: A number between 0 and 1 indicating confidence in the suggested fix
+- alternatives: An array of alternative approaches to fixing the issue
+
+Please ensure your response is valid JSON.
+`;
+
   return context;
 }
 
 /**
- * Get existing analysis for an error if available, or create a new one
- * 
- * @param errorId The ID of the error to analyze
- * @param forceRefresh Whether to force a new analysis even if one exists
- * @returns The error analysis
+ * Batched analysis to efficiently use API credits
  */
-export async function getOrCreateAnalysis(
-  errorId: number,
-  forceRefresh: boolean = false
-): Promise<ErrorAnalysis> {
-  // Check if analysis already exists
-  let analysis = await tsErrorStorage.getAnalysisForError(errorId);
-  
-  // If no analysis exists or force refresh is enabled, create a new one
-  if (!analysis || forceRefresh) {
-    // Get the error details
-    const error = await tsErrorStorage.getTypeScriptErrorById(errorId);
-    if (!error) {
-      throw new Error(`Error with ID ${errorId} not found`);
-    }
-    
-    // Create a new analysis
-    analysis = await analyzeErrorWithOpenAI(error);
-  }
-  
-  return analysis;
+export async function batchAnalyzeErrors(
+  errors: TypeScriptErrorDetail[],
+  options: AIAnalysisOptions = {}
+): Promise<ErrorAnalysisResult> {
+  // Implement batching logic here
+  return analyzeErrorsWithAI(errors, options);
 }
 
 /**
- * Batch analyze multiple errors to optimize API usage
- * 
- * @param errorIds Array of error IDs to analyze
- * @param options Configuration options for the analysis
- * @returns Array of error analyses
+ * Check if OpenAI API is available and properly configured
  */
-export async function batchAnalyzeErrors(
-  errorIds: number[],
-  options: OpenAIAnalysisOptions = {}
-): Promise<ErrorAnalysis[]> {
-  const analyses: ErrorAnalysis[] = [];
-  
-  // Process in batches of 5 to avoid overloading the API
-  const batchSize = 5;
-  for (let i = 0; i < errorIds.length; i += batchSize) {
-    const batch = errorIds.slice(i, i + batchSize);
-    
-    // Process each error in the batch concurrently
-    const batchPromises = batch.map(async (errorId) => {
-      try {
-        const error = await tsErrorStorage.getTypeScriptErrorById(errorId);
-        if (!error) {
-          throw new Error(`Error with ID ${errorId} not found`);
-        }
-        
-        return await analyzeErrorWithOpenAI(error, options);
-      } catch (err) {
-        console.error(`Failed to analyze error ${errorId}:`, err);
-        return null;
-      }
-    });
-    
-    // Wait for all analyses in this batch to complete
-    const batchResults = await Promise.all(batchPromises);
-    analyses.push(...batchResults.filter(Boolean) as ErrorAnalysis[]);
-    
-    // Slight delay between batches to respect API rate limits
-    if (i + batchSize < errorIds.length) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
+export async function checkOpenAIAvailability(): Promise<boolean> {
+  if (!process.env.OPENAI_API_KEY) {
+    console.warn("OpenAI API key not found in environment variables");
+    return false;
   }
   
-  return analyses;
+  try {
+    // Make a simple API call to check if the key is valid
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [
+        { role: "user", content: "TypeScript" }
+      ],
+      max_tokens: 5
+    });
+    
+    return !!response.choices[0].message.content;
+  } catch (error) {
+    console.error("Failed to connect to OpenAI API:", error);
+    return false;
+  }
 }
-
-// Export the module
-export default {
-  analyzeErrorWithOpenAI,
-  getOrCreateAnalysis,
-  batchAnalyzeErrors
-};

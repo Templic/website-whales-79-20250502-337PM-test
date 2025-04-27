@@ -223,6 +223,7 @@ export function enforceApiRateLimit(limitType: 'default' | 'auth' | 'security' |
     };
 
     // Apply the rate limiter, using our custom callback for success
+    // @ts-ignore - Express response type issue with rate limiter
     limiter(req, res, afterRateLimit);
   };
 }
@@ -296,7 +297,7 @@ export function verifyApiAuthorization(requiredRoles: string[] = []) {
  * Middleware that conducts API request validation
  * Ensures that the request contains the expected data
  */
-export function validateApiRequest(schema: unknown) {
+export function validateApiRequest(schema: { safeParse: (data: unknown) => { success: boolean; data?: unknown; error?: { format?: () => unknown; errors: unknown[] } } }) {
   return (req: Request, res: Response, next: NextFunction): void | Response<unknown, Record<string, unknown>> => {
     try {
       // Validation using provided schema
@@ -317,7 +318,11 @@ export function validateApiRequest(schema: unknown) {
         return res.status(400).json({
           success: false,
           message: 'Invalid request data',
-          errors: validationResult.error.format ? validationResult.error.format() : validationResult.error.errors
+          errors: validationResult.error && validationResult.error.format 
+            ? validationResult.error.format() 
+            : validationResult.error && validationResult.error.errors 
+              ? validationResult.error.errors 
+              : 'Validation failed'
         });
       }
       

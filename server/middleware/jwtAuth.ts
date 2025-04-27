@@ -77,7 +77,7 @@ export function authenticateJwt(req: Request, res: Response, next: NextFunction)
     };
     
     next();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('JWT authentication error:', error);
     
     return res.status(401).json({
@@ -137,7 +137,7 @@ export function authorizeJwtRole(roles: string[]) {
       }
       
       next();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('JWT role authorization error:', error);
       
       return res.status(500).json({
@@ -187,11 +187,11 @@ export function preventAlgorithmConfusionAttack(req: Request, res: Response, nex
               message: 'Invalid token algorithm'
             });
           }
-        } catch (e) {
+        } catch (e: unknown) {
           // If we can't parse the header, just continue
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // If there's an error, just continue to the next middleware
     }
   }
