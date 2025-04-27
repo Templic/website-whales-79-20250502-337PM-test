@@ -12,21 +12,21 @@
 
 /* Theme Variables */
 :root {
-  /* Cosmic Light theme (default) - Deep Space Nebula Palette */
-  --background: #0a192f;
-  --foreground: #e2f0ff;
-  --card: #172a46;
-  --card-foreground: #e2f0ff;
+  /* Cosmic Light theme - Soothing off-white palette */
+  --background: #f5f3f0;
+  --foreground: #2d2d2d;
+  --card: #ffffff;
+  --card-foreground: #2d2d2d;
   --primary: #7c3aed;
   --primary-foreground: #f0f8ff;
-  --secondary: #2a4a7f;
-  --secondary-foreground: #e2f0ff;
+  --secondary: #e9e6df;
+  --secondary-foreground: #2d2d2d;
   --accent: #00c2cb;
   --accent-foreground: #f0f8ff;
-  --muted: #1c2e52;
-  --muted-foreground: #a6c8ff;
-  --border: #233c67;
-  --input: #1c2e52;
+  --muted: #e9e6df;
+  --muted-foreground: #6e6e6e;
+  --border: #e0dcdc;
+  --input: #ffffff;
   --ring: #7c3aed;
   --cosmic-primary: #7c3aed;
   --cosmic-accent: #00c2cb;
@@ -241,27 +241,74 @@ svg[aria-hidden="true"] {
     --font-nebula: sans-serif;
   }
 
-  /* Theme specific CSS variables */
+  /* Theme specific CSS variables in HSL format */
+  :root {
+    /* Light theme HSL variables for Tailwind */
+    --background: 37 20% 95%;
+    --foreground: 0 0% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 18%;
+    --popover: 37 20% 95%;
+    --popover-foreground: 0 0% 18%;
+    --primary: 263 83% 58%;
+    --primary-foreground: 210 100% 98%;
+    --secondary: 37 23% 89%;
+    --secondary-foreground: 0 0% 18%;
+    --muted: 37 23% 89%;
+    --muted-foreground: 0 0% 43%;
+    --accent: 185 100% 40%;
+    --accent-foreground: 210 100% 98%;
+    --destructive: 0 100% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 40 8% 85%;
+    --input: 0 0% 100%;
+    --ring: 263 83% 58%;
+  }
+  
+  /* Dark theme HSL variables for Tailwind */
+  .dark {
+    --background: 222 47% 5%;
+    --foreground: 210 20% 91%;
+    --card: 220 47% 14%;
+    --card-foreground: 210 20% 91%;
+    --popover: 220 47% 14%;
+    --popover-foreground: 210 20% 91%;
+    --primary: 263 85% 66%;
+    --primary-foreground: 210 100% 98%;
+    --secondary: 218 45% 18%;
+    --secondary-foreground: 210 20% 91%;
+    --muted: 220 45% 15%;
+    --muted-foreground: 215 25% 67%;
+    --accent: 185 100% 40%;
+    --accent-foreground: 210 100% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 218 45% 21%;
+    --input: 220 45% 15%;
+    --ring: 263 85% 66%;
+  }
+  
+  /* Blackout theme HSL variables for Tailwind */
   .blackout {
     --background: 0 0% 0%;
-    --foreground: 0 0% 85%;
-    --card: 0 0% 2%;
-    --card-foreground: 0 0% 85%;
-    --popover: 0 0% 2%;
-    --popover-foreground: 0 0% 85%;
-    --primary: 270 100% 60%;
+    --foreground: 280 100% 98%;
+    --card: 260 87% 5%;
+    --card-foreground: 0 0% 100%;
+    --popover: 260 87% 5%;
+    --popover-foreground: 280 100% 98%;
+    --primary: 290 100% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 180 100% 40%;
+    --secondary: 260 65% 9%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 8%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 270 100% 60%;
+    --muted: 260 65% 5%;
+    --muted-foreground: 276 100% 86%;
+    --accent: 290 100% 53%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 100% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 12%;
-    --input: 0 0% 12%;
-    --ring: 270 100% 60%;
+    --border: 270 56% 25%;
+    --input: 260 65% 5%;
+    --ring: 290 100% 60%;
   }
 
   body {

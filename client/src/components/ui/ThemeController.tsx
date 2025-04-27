@@ -34,7 +34,7 @@ export function ThemeController() {
     setMounted(true);
     
     try {
-      // Get the saved theme from localStorage or default to dark
+      // Always default to dark theme now 
       const savedTheme = localStorage.getItem("theme") || "dark";
       
       // Define available themes and validate
@@ -181,27 +181,7 @@ export function ThemeController() {
         </span>
       </div>
       
-      {/* Theme indicator dots (mobile and tablet) */}
-      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 md:hidden">
-        <div className={`
-          w-2 h-2 rounded-full transition-all duration-300 
-          ${theme === 'light' 
-            ? 'bg-[#00c2cb] w-3 h-3 shadow-[0_0_5px_#00c2cb]' 
-            : 'bg-card/50'}
-        `}></div>
-        <div className={`
-          w-2 h-2 rounded-full transition-all duration-300 
-          ${theme === 'dark' 
-            ? 'bg-[#8b5cf6] w-3 h-3 shadow-[0_0_5px_#8b5cf6]' 
-            : 'bg-card/50'}
-        `}></div>
-        <div className={`
-          w-2 h-2 rounded-full transition-all duration-300 
-          ${theme === 'blackout' 
-            ? 'bg-[#d100ff] w-3 h-3 shadow-[0_0_10px_#d100ff]' 
-            : 'bg-card/50'}
-        `}></div>
-      </div>
+      {/* Removed theme indicator dots as requested */}
     </div>
   );
 }

@@ -211,7 +211,7 @@ function AppRouter() {
           <ProtectedRoute path="/admin/media/video" component={VideoPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/media/audio" component={AudioPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/edit-button" component={EditButtonPage} requiredRole="admin" />
-          <ProtectedRoute path="/admin/typescript-errors" component={TypeScriptErrorDashboard} requiredRole="admin" />
+          <ProtectedRoute path="/admin/typescript-errors" component={TypeScriptErrorDashboard} requiredRole="super_admin" />
 
           {/* Resource Pages */}
           <Route path="/resources" component={ResourcesPage} />
