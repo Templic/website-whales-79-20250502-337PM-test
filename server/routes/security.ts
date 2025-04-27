@@ -13,6 +13,7 @@ import mfaRoutes from './api/security/mfa';
 import dashboardRoutes from './api/security/dashboard';
 import realtimeRoutes, { setupSecurityWebSockets } from './api/security/realtime';
 import { zeroKnowledgeRoutes } from './api/security/zero-knowledge';
+import { homomorphicRoutes } from './api/security/homomorphic';
 import { requireMFAVerification, initializeMFAVerification, verifyMFAResponse, generateMFAChallenge } from '../auth/mfaIntegration';
 import { logSecurityEvent } from '../security/advanced/SecurityLogger';
 import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
@@ -38,6 +39,9 @@ securityApiRouter.use('/mfa', mfaRoutes);
 
 // Zero-Knowledge Security Proofs API routes
 securityApiRouter.use('/zero-knowledge', zeroKnowledgeRoutes);
+
+// Homomorphic Encryption API routes
+securityApiRouter.use('/homomorphic', homomorphicRoutes);
 
 // Register security API routes
 router.use('/api/security', securityApiRouter);
