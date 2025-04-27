@@ -6,7 +6,7 @@
  */
 
 import crypto from 'crypto';
-import { securityFabric } from '../SecurityFabric';
+import { securityFabric, SecurityEventCategory, SecurityEventSeverity } from '../SecurityFabric';
 
 // Interface for Zero-Knowledge Proof parameters
 export interface ZKProofParams {
@@ -89,8 +89,8 @@ export class ZeroKnowledgeProofsManager {
    */
   private registerWithSecurityFabric(): void {
     securityFabric.emitEvent({
-      category: 'security_control' as SecurityEventCategory,
-      severity: 'info' as SecurityEventSeverity,
+      category: SecurityEventCategory.GENERAL,
+      severity: SecurityEventSeverity.INFO,
       message: 'Zero-Knowledge Proofs Manager initialized',
       data: {
         component: 'ZeroKnowledgeProofsManager',
@@ -108,8 +108,8 @@ export class ZeroKnowledgeProofsManager {
   public generateProof(params: ZKProofParams): ZKProof {
     // Log the proof generation
     securityFabric.emitEvent({
-      category: 'security_control' as SecurityEventCategory,
-      severity: 'info' as SecurityEventSeverity,
+      category: SecurityEventCategory.CRYPTO,
+      severity: SecurityEventSeverity.INFO,
       message: `Generating zero-knowledge proof for property: ${params.property}`,
       data: {
         property: params.property,
@@ -155,7 +155,7 @@ export class ZeroKnowledgeProofsManager {
     if (!proof) {
       // Log the failed verification
       securityFabric.emitEvent({
-        category: SecurityEventCategory.SECURITY_CONTROL,
+        category: SecurityEventCategory.CRYPTO,
         severity: SecurityEventSeverity.WARNING,
         message: `Failed to verify zero-knowledge proof: Proof not found`,
         data: {
@@ -175,7 +175,7 @@ export class ZeroKnowledgeProofsManager {
     
     // Log the verification attempt
     securityFabric.emitEvent({
-      category: SecurityEventCategory.SECURITY_CONTROL,
+      category: SecurityEventCategory.CRYPTO,
       severity: SecurityEventSeverity.INFO,
       message: `Verifying zero-knowledge proof for property: ${proof.property}`,
       data: {
@@ -200,7 +200,7 @@ export class ZeroKnowledgeProofsManager {
     
     // Log the verification result
     securityFabric.emitEvent({
-      category: SecurityEventCategory.SECURITY_CONTROL,
+      category: SecurityEventCategory.CRYPTO,
       severity: isValid ? SecurityEventSeverity.INFO : SecurityEventSeverity.WARNING,
       message: `Zero-knowledge proof verification ${isValid ? 'successful' : 'failed'} for property: ${proof.property}`,
       data: {
