@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zero-Knowledge Security Proofs Demo</title>
+  <link rel="icon" href="/static/icons/security.svg">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      color: #333;
+    }
+    h1 {
+      color: #1a73e8;
+      text-align: center;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .card h2 {
+      margin-top: 0;
+      color: #1a73e8;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"], select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0d5bdd;
+    }
+    .preset-btn {
+      font-size: 12px;
+      padding: 6px 10px;
+      background-color: #e8f0fe;
+      color: #1a73e8;
+      border: 1px solid #1a73e8;
+    }
+    .preset-btn:hover {
+      background-color: #d2e3fc;
+    }
+    .result {
+      margin-top: 15px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      white-space: pre-wrap;
+    }
+    .copy-id-btn {
+      background-color: transparent;
+      color: #1a73e8;
+      border: 1px solid #1a73e8;
+      padding: 5px 10px;
+      margin-left: 10px;
+      font-size: 12px;
+    }
+    .auto-copy {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #555;
+    }
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+    .status-success {
+      background-color: #34a853;
+    }
+    .status-error {
+      background-color: #ea4335;
+    }
+    .status-neutral {
+      background-color: #fbbc04;
+    }
+  </style>
+</head>
+<body>
+  <h1>Zero-Knowledge Security Proofs Demo</h1>
+  
+  <div class="container">
+    <div class="card">
+      <h2>Generate a Zero-Knowledge Proof</h2>
+      <div class="form-group">
+        <label for="property">Security Property:</label>
+        <select id="property">
+          <option value="password_strength">Password Strength</option>
+          <option value="authorization_approval">Authorization Approval</option>
+          <option value="secure_configuration">Secure Configuration</option>
+          <option value="data_integrity">Data Integrity</option>
+          <option value="access_control">Access Control</option>
+          <option value="identity">Identity</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="secretData">Secret Data:</label>
+        <textarea id="secretData" rows="3" placeholder="Enter the secret data">SecurePassword123!</textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="publicParams">Public Parameters (JSON):</label>
+        <textarea id="publicParams" rows="3" placeholder='{"param1": "value1", "param2": "value2"}'>{"minLength": 12, "requiresSpecialChars": true, "requiresNumbers": true}</textarea>
+      </div>
+      
+      <div class="form-group">
+        <label>Example Presets:</label>
+        <div style="display: flex; gap: 10px; margin-top: 5px;">
+          <button type="button" class="preset-btn" data-property="password_strength" 
+            data-secret="StrongP@ssw0rd!" 
+            data-public='{"minLength": 12, "requiresSpecialChars": true, "requiresNumbers": true}'>
+            Password Strength
+          </button>
+          <button type="button" class="preset-btn" data-property="data_integrity" 
+            data-secret="sensitive_database_hash_e8f9a2d1c0b3" 
+            data-public='{"dataType": "database", "hashAlgorithm": "SHA-256"}'>
+            Data Integrity
+          </button>
+          <button type="button" class="preset-btn" data-property="access_control" 
+            data-secret="admin_permission_token_xyz" 
+            data-public='{"resource": "financial_reports", "requiredRole": "admin"}'>
+            Access Control
+          </button>
+        </div>
+      </div>
+      
+      <button id="generateBtn">Generate Proof</button>
+      
+      <div id="generateResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="card">
+      <h2>Verify a Zero-Knowledge Proof</h2>
+      <div class="form-group">
+        <label for="proofId">Proof ID:</label>
+        <input type="text" id="proofId" placeholder="Enter the proof ID">
+      </div>
+      
+      <div class="form-group">
+        <label for="verificationData">Verification Data (JSON):</label>
+        <textarea id="verificationData" rows="3" placeholder='{"key1": "value1", "key2": "value2"}'></textarea>
+      </div>
+      
+      <button id="verifyBtn">Verify Proof</button>
+      
+      <div id="verifyResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="card">
+      <h2>Get Proofs for a Property</h2>
+      <div class="form-group">
+        <label for="proofProperty">Property:</label>
+        <select id="proofProperty">
+          <option value="password_strength">Password Strength</option>
+          <option value="authorization_approval">Authorization Approval</option>
+          <option value="secure_configuration">Secure Configuration</option>
+          <option value="data_integrity">Data Integrity</option>
+          <option value="access_control">Access Control</option>
+          <option value="identity">Identity</option>
+        </select>
+      </div>
+      
+      <button id="getProofsBtn">Get Proofs</button>
+      
+      <div id="getProofsResult" class="result" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    // Setup presets
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const property = btn.getAttribute('data-property');
+        const secretData = btn.getAttribute('data-secret');
+        const publicParams = btn.getAttribute('data-public');
+
+        // Update the form with the preset values
+        document.getElementById('property').value = property;
+        document.getElementById('secretData').value = secretData;
+        document.getElementById('publicParams').value = publicParams;
+      });
+    });
+    
+    // Generate a proof
+    document.getElementById('generateBtn').addEventListener('click', async () => {
+      const property = document.getElementById('property').value;
+      const secretData = document.getElementById('secretData').value;
+      let publicParams = {};
+      
+      try {
+        publicParams = JSON.parse(document.getElementById('publicParams').value);
+      } catch (e) {
+        showResult('generateResult', 'Error: Invalid JSON for public parameters');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/security/zero-knowledge/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            property,
+            secretData,
+            publicParams
+          })
+        });
+        
+        const data = await response.json();
+        showResult('generateResult', JSON.stringify(data, null, 2));
+      } catch (error) {
+        showResult('generateResult', `Error: ${error.message}`);
+      }
+    });
+    
+    // Verify a proof
+    document.getElementById('verifyBtn').addEventListener('click', async () => {
+      const proofId = document.getElementById('proofId').value;
+      if (!proofId) {
+        showResult('verifyResult', 'Error: Proof ID is required');
+        return;
+      }
+      
+      let verificationData = {};
+      try {
+        verificationData = JSON.parse(document.getElementById('verificationData').value);
+      } catch (e) {
+        showResult('verifyResult', 'Error: Invalid JSON for verification data');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/security/zero-knowledge/verify/${proofId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(verificationData)
+        });
+        
+        const data = await response.json();
+        showResult('verifyResult', JSON.stringify(data, null, 2));
+      } catch (error) {
+        showResult('verifyResult', `Error: ${error.message}`);
+      }
+    });
+    
+    // Get proofs for a property
+    document.getElementById('getProofsBtn').addEventListener('click', async () => {
+      const property = document.getElementById('proofProperty').value;
+      
+      try {
+        const response = await fetch(`/api/security/zero-knowledge/proofs/${property}`);
+        const data = await response.json();
+        showResult('getProofsResult', JSON.stringify(data, null, 2));
+      } catch (error) {
+        showResult('getProofsResult', `Error: ${error.message}`);
+      }
+    });
+    
+    function showResult(elementId, content) {
+      const element = document.getElementById(elementId);
+      element.textContent = content;
+      element.style.display = 'block';
+      
+      // Auto-copy proof ID to verification form if generating a proof
+      if (elementId === 'generateResult') {
+        try {
+          const data = JSON.parse(content);
+          if (data.success && data.data && data.data.proofId) {
+            const proofId = data.data.proofId;
+            document.getElementById('proofId').value = proofId;
+            
+            // Add feedback text
+            const autoCopyDiv = document.createElement('div');
+            autoCopyDiv.className = 'auto-copy';
+            autoCopyDiv.innerHTML = `<span class="status-indicator status-success"></span> Proof ID automatically copied to verification form.`;
+            
+            // Remove any existing auto-copy message
+            const existingAutoDiv = element.nextElementSibling;
+            if (existingAutoDiv && existingAutoDiv.className === 'auto-copy') {
+              existingAutoDiv.remove();
+            }
+            
+            element.after(autoCopyDiv);
+            
+            // Also add default verification data
+            document.getElementById('verificationData').value = JSON.stringify({
+              "expectedConditions": data.data.property === "password_strength" 
+                ? {"minLength": 12, "requiresSpecialChars": true} 
+                : {"validSignature": true}
+            }, null, 2);
+          }
+        } catch (e) {
+          console.error('Failed to parse result or extract proof ID:', e);
+        }
+      }
+    }
+  </script>
+</body>
+</html>

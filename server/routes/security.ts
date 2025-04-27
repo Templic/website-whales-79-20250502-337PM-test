@@ -12,6 +12,7 @@ import { createSecureApiRouter, createPublicApiRouter } from './secureApiRouter'
 import mfaRoutes from './api/security/mfa';
 import dashboardRoutes from './api/security/dashboard';
 import realtimeRoutes, { setupSecurityWebSockets } from './api/security/realtime';
+import { zeroKnowledgeRoutes } from './api/security/zero-knowledge';
 import { requireMFAVerification, initializeMFAVerification, verifyMFAResponse, generateMFAChallenge } from '../auth/mfaIntegration';
 import { logSecurityEvent } from '../security/advanced/SecurityLogger';
 import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
@@ -34,6 +35,9 @@ securityApiRouter.use('/realtime', realtimeRoutes);
 
 // MFA API routes
 securityApiRouter.use('/mfa', mfaRoutes);
+
+// Zero-Knowledge Security Proofs API routes
+securityApiRouter.use('/zero-knowledge', zeroKnowledgeRoutes);
 
 // Register security API routes
 router.use('/api/security', securityApiRouter);
