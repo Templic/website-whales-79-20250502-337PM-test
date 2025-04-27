@@ -1,103 +1,101 @@
 /**
- * Comprehensive Event Handler Types
+ * Comprehensive React Event Handler Type Definitions
  * 
- * This file provides a collection of common event handler types
- * for use in React components, helping to ensure proper type safety
- * without repetitive type definitions throughout the codebase.
+ * This file provides strongly-typed React event handlers to ensure
+ * type safety and consistency for UI interactions.
  */
 
 import React from 'react';
 
-// Form Event Handlers
-export type FormSubmitHandler = (event: React.FormEvent<HTMLFormElement>) => void;
-export type FormChangeHandler = (event: React.ChangeEvent<HTMLFormElement>) => void;
+// MOUSE EVENTS
+export type MouseHandler = (event: React.MouseEvent<HTMLElement>) => void;
+export type ButtonMouseHandler = (event: React.MouseEvent<HTMLButtonElement>) => void;
+export type DivMouseHandler = (event: React.MouseEvent<HTMLDivElement>) => void;
+export type LinkMouseHandler = (event: React.MouseEvent<HTMLAnchorElement>) => void;
+export type InputMouseHandler = (event: React.MouseEvent<HTMLInputElement>) => void;
+export type LabelMouseHandler = (event: React.MouseEvent<HTMLLabelElement>) => void;
+export type ImageMouseHandler = (event: React.MouseEvent<HTMLImageElement>) => void;
 
-// Input Event Handlers
+// KEYBOARD EVENTS
+export type KeyboardHandler = (event: React.KeyboardEvent<HTMLElement>) => void;
+export type InputKeyboardHandler = (event: React.KeyboardEvent<HTMLInputElement>) => void;
+export type TextAreaKeyboardHandler = (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+export type DivKeyboardHandler = (event: React.KeyboardEvent<HTMLDivElement>) => void;
+
+// FOCUS EVENTS
+export type FocusHandler = (event: React.FocusEvent<HTMLElement>) => void;
+export type InputFocusHandler = (event: React.FocusEvent<HTMLInputElement>) => void;
+export type TextAreaFocusHandler = (event: React.FocusEvent<HTMLTextAreaElement>) => void;
+export type SelectFocusHandler = (event: React.FocusEvent<HTMLSelectElement>) => void;
+
+// FORM EVENTS
+export type FormHandler = (event: React.FormEvent<HTMLFormElement>) => void;
+export type FormSubmitHandler = (event: React.FormEvent<HTMLFormElement>) => void;
 export type InputChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => void;
 export type TextAreaChangeHandler = (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
 export type SelectChangeHandler = (event: React.ChangeEvent<HTMLSelectElement>) => void;
 
-// Combined Input Handlers
-export type AnyInputChangeHandler = 
-  | InputChangeHandler
-  | TextAreaChangeHandler
-  | SelectChangeHandler;
-
-// Focus Event Handlers
-export type FocusHandler = (event: React.FocusEvent<HTMLElement>) => void;
-export type InputFocusHandler = (event: React.FocusEvent<HTMLInputElement>) => void;
-export type TextAreaFocusHandler = (event: React.FocusEvent<HTMLTextAreaElement>) => void;
-
-// Blur Event Handlers
-export type BlurHandler = (event: React.FocusEvent<HTMLElement>) => void;
-export type InputBlurHandler = (event: React.FocusEvent<HTMLInputElement>) => void;
-export type TextAreaBlurHandler = (event: React.FocusEvent<HTMLTextAreaElement>) => void;
-
-// Mouse Event Handlers
-export type MouseHandler = (event: React.MouseEvent<HTMLElement>) => void;
-export type ButtonClickHandler = (event: React.MouseEvent<HTMLButtonElement>) => void;
-export type DivClickHandler = (event: React.MouseEvent<HTMLDivElement>) => void;
-export type LinkClickHandler = (event: React.MouseEvent<HTMLAnchorElement>) => void;
-
-// Keyboard Event Handlers
-export type KeyboardHandler = (event: React.KeyboardEvent<HTMLElement>) => void;
-export type InputKeyboardHandler = (event: React.KeyboardEvent<HTMLInputElement>) => void;
-export type TextAreaKeyboardHandler = (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-
-// Drag Event Handlers
+// DRAG AND DROP EVENTS
 export type DragHandler = (event: React.DragEvent<HTMLElement>) => void;
-export type DropHandler = (event: React.DragEvent<HTMLElement>) => void;
+export type DivDragHandler = (event: React.DragEvent<HTMLDivElement>) => void;
+export type ImageDragHandler = (event: React.DragEvent<HTMLImageElement>) => void;
+export type LiDragHandler = (event: React.DragEvent<HTMLLIElement>) => void;
 
-// Touch Event Handlers
-export type TouchHandler = (event: React.TouchEvent<HTMLElement>) => void;
-
-// Clipboard Event Handlers
+// CLIPBOARD EVENTS
 export type ClipboardHandler = (event: React.ClipboardEvent<HTMLElement>) => void;
+export type InputClipboardHandler = (event: React.ClipboardEvent<HTMLInputElement>) => void;
+export type TextAreaClipboardHandler = (event: React.ClipboardEvent<HTMLTextAreaElement>) => void;
 
-// Specialized Handlers
-export type FileChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => void;
+// TOUCH EVENTS
+export type TouchHandler = (event: React.TouchEvent<HTMLElement>) => void;
+export type DivTouchHandler = (event: React.TouchEvent<HTMLDivElement>) => void;
+export type ButtonTouchHandler = (event: React.TouchEvent<HTMLButtonElement>) => void;
 
-// Generic Handlers with Data
-export type GenericChangeHandler<T> = (value: T) => void;
-export type GenericEventHandler<E extends React.SyntheticEvent = React.SyntheticEvent> = (event: E) => void;
-export type AsyncEventHandler<E extends React.SyntheticEvent = React.SyntheticEvent> = (event: E) => Promise<void>;
+// WHEEL EVENTS
+export type WheelHandler = (event: React.WheelEvent<HTMLElement>) => void;
+export type DivWheelHandler = (event: React.WheelEvent<HTMLDivElement>) => void;
 
-// Combined Event Types
-export type AnyClickHandler = 
-  | ButtonClickHandler
-  | DivClickHandler
-  | LinkClickHandler
-  | MouseHandler;
+// ANIMATION EVENTS
+export type AnimationHandler = (event: React.AnimationEvent<HTMLElement>) => void;
+export type DivAnimationHandler = (event: React.AnimationEvent<HTMLDivElement>) => void;
 
-export type AnyFocusHandler = 
-  | FocusHandler
-  | InputFocusHandler
-  | TextAreaFocusHandler;
+// TRANSITION EVENTS
+export type TransitionHandler = (event: React.TransitionEvent<HTMLElement>) => void;
+export type DivTransitionHandler = (event: React.TransitionEvent<HTMLDivElement>) => void;
 
-export type AnyBlurHandler = 
-  | BlurHandler
-  | InputBlurHandler
-  | TextAreaBlurHandler;
+// POINTER EVENTS
+export type PointerHandler = (event: React.PointerEvent<HTMLElement>) => void;
+export type DivPointerHandler = (event: React.PointerEvent<HTMLDivElement>) => void;
+export type ButtonPointerHandler = (event: React.PointerEvent<HTMLButtonElement>) => void;
 
-export type AnyKeyboardHandler = 
-  | KeyboardHandler
-  | InputKeyboardHandler
-  | TextAreaKeyboardHandler;
+// COMPOSITION EVENTS
+export type CompositionHandler = (event: React.CompositionEvent<HTMLElement>) => void;
+export type InputCompositionHandler = (event: React.CompositionEvent<HTMLInputElement>) => void;
+export type TextAreaCompositionHandler = (event: React.CompositionEvent<HTMLTextAreaElement>) => void;
 
-// Common Handler Combinations
-export interface FormFieldHandlers {
-  onChange?: AnyInputChangeHandler;
-  onFocus?: AnyFocusHandler;
-  onBlur?: AnyBlurHandler;
-  onKeyDown?: AnyKeyboardHandler;
+// COMBINED HANDLER TYPES FOR COMMON COMPONENTS
+export interface ButtonHandlers {
+  onClick?: ButtonMouseHandler;
+  onDoubleClick?: ButtonMouseHandler;
+  onMouseDown?: ButtonMouseHandler;
+  onMouseUp?: ButtonMouseHandler;
+  onMouseEnter?: ButtonMouseHandler;
+  onMouseLeave?: ButtonMouseHandler;
+  onKeyDown?: KeyboardHandler;
+  onKeyUp?: KeyboardHandler;
+  onFocus?: FocusHandler;
+  onBlur?: FocusHandler;
+  onPointerDown?: ButtonPointerHandler;
+  onPointerUp?: ButtonPointerHandler;
 }
 
-export interface ButtonHandlers {
-  onClick?: ButtonClickHandler;
-  onMouseEnter?: MouseHandler;
-  onMouseLeave?: MouseHandler;
+export interface FormFieldHandlers {
+  onChange?: InputChangeHandler | TextAreaChangeHandler | SelectChangeHandler;
+  onBlur?: FocusHandler;
   onFocus?: FocusHandler;
-  onBlur?: BlurHandler;
+  onKeyDown?: KeyboardHandler;
+  onKeyUp?: KeyboardHandler;
+  onKeyPress?: KeyboardHandler;
 }
 
 export interface DragAndDropHandlers {
@@ -106,19 +104,100 @@ export interface DragAndDropHandlers {
   onDragOver?: DragHandler;
   onDragEnter?: DragHandler;
   onDragLeave?: DragHandler;
-  onDrop?: DropHandler;
+  onDrop?: DragHandler;
 }
 
-// Utils
-export const preventDefaultHandler = (event: React.SyntheticEvent): void => {
-  event.preventDefault();
-};
+// SPECIFIC CLICK HANDLER TYPES
+export type ButtonClickHandler = (
+  event: React.MouseEvent<HTMLButtonElement> | React.KeyboardEvent<HTMLButtonElement>
+) => void;
 
-export const stopPropagationHandler = (event: React.SyntheticEvent): void => {
-  event.stopPropagation();
-};
+export type LinkClickHandler = (
+  event: React.MouseEvent<HTMLAnchorElement>
+) => void;
 
-export const preventDefaultAndStopPropagation = (event: React.SyntheticEvent): void => {
-  event.preventDefault();
-  event.stopPropagation();
-};
+// UTILITY TYPES
+export type EventHandler<E extends React.SyntheticEvent> = (event: E) => void;
+
+export type AnyFunction = (...args: any[]) => any;
+
+export type GenericEventHandler = EventHandler<React.SyntheticEvent>;
+
+// EVENT UTILITY FUNCTIONS
+/**
+ * Creates a keyboard event handler that only triggers on specific keys
+ */
+export function onKeys(keys: string[], handler: KeyboardHandler): KeyboardHandler {
+  return (event) => {
+    if (keys.includes(event.key)) {
+      handler(event);
+    }
+  };
+}
+
+/**
+ * Prevents default event behavior and calls the handler
+ */
+export function preventDefault<E extends React.SyntheticEvent>(
+  handler: EventHandler<E>
+): EventHandler<E> {
+  return (event) => {
+    event.preventDefault();
+    handler(event);
+  };
+}
+
+/**
+ * Stops event propagation and calls the handler
+ */
+export function stopPropagation<E extends React.SyntheticEvent>(
+  handler: EventHandler<E>
+): EventHandler<E> {
+  return (event) => {
+    event.stopPropagation();
+    handler(event);
+  };
+}
+
+/**
+ * Debounces an event handler
+ */
+export function debounce<E extends React.SyntheticEvent>(
+  handler: EventHandler<E>,
+  delay: number
+): EventHandler<E> {
+  let timeoutId: NodeJS.Timeout;
+  return (event) => {
+    // Create a persistent reference to the event to prevent React's pooling
+    const persistedEvent = event;
+    persistedEvent.persist();
+    
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      handler(persistedEvent);
+    }, delay);
+  };
+}
+
+/**
+ * Throttles an event handler
+ */
+export function throttle<E extends React.SyntheticEvent>(
+  handler: EventHandler<E>,
+  limit: number
+): EventHandler<E> {
+  let inThrottle = false;
+  return (event) => {
+    // Create a persistent reference to the event to prevent React's pooling
+    const persistedEvent = event;
+    persistedEvent.persist();
+    
+    if (!inThrottle) {
+      handler(persistedEvent);
+      inThrottle = true;
+      setTimeout(() => {
+        inThrottle = false;
+      }, limit);
+    }
+  };
+}

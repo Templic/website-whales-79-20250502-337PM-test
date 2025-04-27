@@ -1,6 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import { databaseSecurity } from '../security/databaseSecurity';
 
+// Define types for user information in the Request
+declare global {
+  namespace Express {
+    interface User {
+      id: string | number;
+      [key: string]: unknown;
+    }
+  }
+}
+
 /**
  * Middleware to validate SQL queries for potential security risks before execution
  */
