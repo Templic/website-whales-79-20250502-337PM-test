@@ -20,7 +20,7 @@ export default function HomePage() {
   return (
     <>
       <SpotlightEffect />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-2 py-6 max-w-[1400px]">
 
 
         {/* Hero Section */}
@@ -30,7 +30,7 @@ export default function HomePage() {
             shape="hexagon"
             alignment="center"
             backgroundStyle="glass"
-            className="hero-content relative z-10 max-w-[800px]"
+            className="hero-content relative z-10 max-w-[1200px]"
           >
             <h1 className="cosmic-heading-responsive-lg mb-6 text-shadow shadow-[#fe0064] animate-cosmic font-almendra leading-tight px-4 whitespace-normal text-[#e15554]">
               <DynamicContent 
@@ -78,7 +78,7 @@ export default function HomePage() {
             }
             alignment="center"
             backgroundStyle="gradient"
-            className="mb-16 px-8 py-12 mx-auto max-w-[90%] overflow-hidden"
+            className="mb-16 px-4 py-8 mx-auto max-w-[95%] overflow-hidden"
           >
             <div className="max-w-[90%] md:max-w-[80%] mx-auto cosmic-padding-responsive relative z-10">
               <div className="cosmic-text-responsive font-cormorant whitespace-normal text-[#00ebd6]">

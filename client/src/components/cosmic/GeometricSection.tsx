@@ -366,7 +366,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
     switch(shape) {
       case 'diamond':
       case 'rounded-diamond':
-        return { paddingLeft: '15%', paddingRight: '15%', paddingTop: '8%', paddingBottom: '8%' };
+        return { paddingLeft: '8%', paddingRight: '8%', paddingTop: '5%', paddingBottom: '5%' };
       case 'hexagon':
       case 'symmetric-hexagon':
         return { paddingLeft: '12%', paddingRight: '12%', paddingTop: '5%', paddingBottom: '5%' };
