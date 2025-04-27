@@ -18,6 +18,7 @@ import { logSecurityEvent } from '../security/security';
 import { verifyAccessToken, extractTokenFromHeader } from '../security/jwt';
 import { JwtPayload } from './jwtAuth';
 import { createRateLimit, authRateLimit, sensitiveOpRateLimit, publicApiRateLimit, protectedApiRateLimit } from './rateLimit';
+import { ValidationSchema } from '../types/express';
 
 // API Security Verification Types
 export enum APISecurityCheckType {
@@ -297,7 +298,7 @@ export function verifyApiAuthorization(requiredRoles: string[] = []) {
  * Middleware that conducts API request validation
  * Ensures that the request contains the expected data
  */
-export function validateApiRequest(schema: { safeParse: (data: unknown) => { success: boolean; data?: unknown; error?: { format?: () => unknown; errors: unknown[] } } }) {
+export function validateApiRequest(schema: ValidationSchema) {
   return (req: Request, res: Response, next: NextFunction): void | Response<unknown, Record<string, unknown>> => {
     try {
       // Validation using provided schema
@@ -318,10 +319,10 @@ export function validateApiRequest(schema: { safeParse: (data: unknown) => { suc
         return res.status(400).json({
           success: false,
           message: 'Invalid request data',
-          errors: validationResult.error && validationResult.error.format 
-            ? validationResult.error.format() 
-            : validationResult.error && validationResult.error.errors 
-              ? validationResult.error.errors 
+          errors: validationResult.error && 'format' in validationResult.error && typeof validationResult.error.format === 'function'
+            ? validationResult.error.format()
+            : validationResult.error && 'errors' in validationResult.error
+              ? validationResult.error.errors
               : 'Validation failed'
         });
       }
@@ -331,6 +332,9 @@ export function validateApiRequest(schema: { safeParse: (data: unknown) => { suc
       
       // If validation was successful, replace req.body with the parsed data
       req.body = validationResult.data;
+      
+      // Store validated data in safeBody for access by other middlewares
+      req.safeBody = validationResult.data as Record<string, unknown>;
       
       next();
     } catch (error) {

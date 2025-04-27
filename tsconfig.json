@@ -12,21 +12,29 @@
     "rootDir": "./",
     "declaration": true,
     "resolveJsonModule": true,
-    "paths": {
-      "@shared/*": [
-        "./shared/*"
-      ]
-    }
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "isolatedModules": true,
+    "noEmit": true
   },
   "include": [
     "*.ts",
+    "*.tsx",
     "server/**/*.ts",
+    "server/**/*.tsx",
     "shared/**/*.ts",
-    "client/**/*.ts"
+    "shared/**/*.tsx",
+    "client/**/*.ts",
+    "client/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "**/node_modules/*"
   ],
   "extends": "./tsconfig.paths.json"
 }

@@ -6,13 +6,12 @@
  */
 
 import OpenAI from "openai";
-import { 
+import type { 
   TypeScriptErrorDetail, 
   ErrorAnalysisResult,
-  ErrorSeverity,
-  ErrorCategory,
   FixSuggestion
 } from "./ts-error-analyzer";
+import { ErrorSeverity, ErrorCategory } from "./ts-error-analyzer";
 
 // Initialize the OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });

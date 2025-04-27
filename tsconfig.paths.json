@@ -4,11 +4,15 @@
     "paths": {
       "@/*": ["./src/*"],
       "@server/*": ["./server/*"],
-      "@client/*": ["./client/*"],
+      "@client/*": ["./client/src/*"],
       "@shared/*": ["./shared/*"],
-      "@components/*": ["./components/*"],
-      "@utils/*": ["./utils/*"],
-      "@lib/*": ["./lib/*"]
+      "@components/*": ["./src/components/*", "./client/src/components/*", "./components/*"],
+      "@utils/*": ["./server/utils/*", "./client/src/utils/*", "./utils/*"],
+      "@lib/*": ["./server/lib/*", "./client/src/lib/*", "./lib/*"],
+      "@middleware/*": ["./server/middleware/*"],
+      "@routes/*": ["./server/routes/*"],
+      "@types/*": ["./shared/types/*", "./server/types/*"],
+      "@hooks/*": ["./client/src/hooks/*"]
     }
   }
 }
