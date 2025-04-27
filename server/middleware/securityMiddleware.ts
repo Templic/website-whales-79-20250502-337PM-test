@@ -8,7 +8,8 @@
 import { Express, Router, Request, Response, NextFunction } from 'express';
 import xssProtectionMiddleware from './xssProtection';
 import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
+import { SecurityEventTypes } from '../security/advanced/blockchain/SecurityEventTypes';
+import { SecurityFabric } from '../security/advanced/SecurityFabric';
 import { AnyZodObject, z } from 'zod';
 
 /**
@@ -18,17 +19,13 @@ export function applySecurityMiddleware(app: Express) {
   console.log('[SECURITY] Applying comprehensive security middleware');
   
   // Log initialization
-  securityBlockchain.addSecurityEvent({
-    category: SecurityEventCategory.SECURITY_INITIALIZATION as unknown,
-    severity: SecurityEventSeverity.INFO,
-    message: 'Security middleware initialization started',
-    timestamp: Date.now(),
-    metadata: {
+  securityBlockchain.addLog({
+    type: SecurityEventTypes.SECURITY_INITIALIZATION,
+    details: {
+      message: 'Security middleware initialization started',
       component: 'securityMiddleware',
       timestamp: new Date().toISOString()
     }
-  }).catch(err => {
-    console.error('[SECURITY ERROR] Failed to log security middleware initialization:', err);
   });
   
   try {

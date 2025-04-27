@@ -6,7 +6,8 @@
  * potential attacks at runtime.
  */
 
-import { securityFabric } from '../SecurityFabric';
+import { SecurityFabric } from '../SecurityFabric';
+import { SecurityEventTypes } from '../blockchain/SecurityEventTypes';
 
 /**
  * Types of SQL injection patterns to detect
@@ -471,7 +472,12 @@ export function createDatabaseProtectionMiddleware() {
       
       // Log with security fabric if available
       try {
-        securityFabric.emit('security:sqlInjection:blocked', eventData);
+        SecurityFabric.logEvent({
+          type: SecurityEventTypes.SQL_INJECTION_ATTEMPT,
+          severity: 'high',
+          message: 'SQL injection attempt detected and blocked',
+          attributes: eventData
+        });
       } catch (error) {
         // Fall back to console logging
         console.error('[Database] SQL injection attempt:', eventData);

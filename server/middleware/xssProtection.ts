@@ -8,7 +8,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { JSDOM } from 'jsdom';
 import DOMPurify from 'dompurify';
-import { securityFabric, SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
+import { SecurityFabric } from '../security/advanced/SecurityFabric';
+import { SecurityEventTypes } from '../security/advanced/blockchain/SecurityEventTypes';
 import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
 
 // Initialize DOMPurify with JSDOM
@@ -176,11 +177,12 @@ export function xssProtectionMiddleware(options: {
       console.error('[XSS-PROTECTION] Error in XSS protection middleware:', error);
       
       // Log to security fabric
-      securityFabric.emitEvent({
-        category: SecurityEventCategory.XSS,
-        severity: SecurityEventSeverity.ERROR,
+      SecurityFabric.getInstance().emitSecurityEvent({
+        type: SecurityEventTypes.SECURITY_VULNERABILITY_DETECTED,
+        source: 'xss_protection',
+        severity: 'high',
         message: 'Error in XSS protection middleware',
-        data: {
+        attributes: {
           error: (error as Error).message,
           stack: (error as Error).stack,
           path: req.path,
@@ -226,22 +228,21 @@ function logXssAttempt(data): void {
   console.warn('[XSS-PROTECTION] Potential XSS attempt detected:', data);
   
   // Log to security fabric
-  securityFabric.emitEvent({
-    category: SecurityEventCategory.XSS,
-    severity: SecurityEventSeverity.HIGH,
+  SecurityFabric.getInstance().emitSecurityEvent({
+    type: SecurityEventTypes.SECURITY_VULNERABILITY_DETECTED,
+    source: 'xss_protection',
+    severity: 'high',
     message: `Potential XSS attempt detected: ${data.type}`,
-    data
+    attributes: data
   });
   
   // Log to blockchain for forensics
   try {
-    securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.XSS,
-      severity: SecurityEventSeverity.HIGH,
-      message: `XSS attempt detected: ${data.type}`,
-      timestamp: Date.now(),
-      metadata: {
-        ...data,
+    securityBlockchain.addLog({
+      type: 'xss_attempt',
+      details: {
+        attemptType: data.type,
+        data,
         timestamp: new Date().toISOString()
       }
     });

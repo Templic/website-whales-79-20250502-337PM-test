@@ -14,7 +14,7 @@
 
 import crypto from 'crypto';
 import { immutableSecurityLogs as securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from '../blockchain/SecurityEventTypes';
+import { SecurityEventTypes } from '../blockchain/SecurityEventTypes';
 
 // Type definitions
 export interface EncryptionResult {

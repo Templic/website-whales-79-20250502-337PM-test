@@ -1,381 +1,397 @@
 /**
- * Immutable Security Logs Module
- * 
- * This module provides blockchain-based immutable logging for security events.
- * It ensures that security logs cannot be tampered with after they are recorded.
+ * @file ImmutableSecurityLogs.ts
+ * @description Implements a blockchain-inspired immutable storage for security logs
  */
 
-import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
-import { securityFabric, SecurityEventCategory, SecurityEventSeverity } from '../SecurityFabric';
+import { createHash } from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
-// Blockchain block interface
-export interface SecurityBlock {
-  index: number;
-  timestamp: string;
-  data: unknown;
-  previousHash: string;
-  hash: string;
-  nonce: number;
+/**
+ * Interface for log entry
+ */
+export interface LogEntry {
+    /**
+     * Unique identifier for the log entry
+     */
+    id: string;
+
+    /**
+     * Timestamp when the log was created
+     */
+    timestamp: number;
+
+    /**
+     * Type of log entry
+     */
+    type: string;
+
+    /**
+     * Additional details or context for the log entry
+     */
+    details?: any;
 }
 
-// Immutable Security Logs class
-export class ImmutableSecurityLogs {
-  private static instance: ImmutableSecurityLogs;
-  private chain: SecurityBlock[];
-  private blockchainFile: string;
-  private difficulty: number;
-  private pendingLogs: unknown[];
-  private autoSaveInterval: NodeJS.Timeout | null;
-  private maxPendingLogs: number;
-  
-  private constructor() {
-    this.chain = [];
-    this.blockchainFile = './logs/security-blockchain.json';
-    this.difficulty = 2; // Mining difficulty (number of leading zeros in hash)
-    this.pendingLogs = [];
-    this.autoSaveInterval = null;
-    this.maxPendingLogs = 10;
-    
-    // Create directory for blockchain file if it doesn't exist
-    const dir = path.dirname(this.blockchainFile);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    
-    // Load existing blockchain or create genesis block
-    this.loadChain();
-    
-    // Start auto-save interval
-    this.startAutoSave();
-  }
-  
-  /**
-   * Get the singleton instance
-   */
-  public static getInstance(): ImmutableSecurityLogs {
-    if (!ImmutableSecurityLogs.instance) {
-      ImmutableSecurityLogs.instance = new ImmutableSecurityLogs();
-    }
-    
-    return ImmutableSecurityLogs.instance;
-  }
-  
-  /**
-   * Add a log entry to the blockchain
-   */
-  public addLog(data: Record<string, unknown>): void {
-    this.pendingLogs.push({
-      ...data,
-      timestamp: data.timestamp || new Date().toISOString()
-    });
-    
-    // Create a new block if we've reached the maximum pending logs
-    if (this.pendingLogs.length >= this.maxPendingLogs) {
-      this.mineBlock();
-    }
-  }
-  
-  /**
-   * Mine a new block with pending logs
-   */
-  public mineBlock(): SecurityBlock | null {
-    if (this.pendingLogs.length === 0) {
-      return null;
-    }
-    
-    const newBlock = this.createBlock(this.pendingLogs);
-    this.chain.push(newBlock);
-    this.pendingLogs = [];
-    
-    // Save the blockchain to file
-    this.saveChain();
-    
-    return newBlock;
-  }
-  
-  /**
-   * Verify the integrity of the blockchain
-   */
-  public verifyChain(): boolean {
-    for (let i = 1; i < this.chain.length; i++) {
-      const currentBlock = this.chain[i];
-      const previousBlock = this.chain[i - 1];
-      
-      // Check if the hash is valid
-      if (currentBlock.hash !== this.calculateHash(currentBlock)) {
-        return false;
-      }
-      
-      // Check if the previous hash link is valid
-      if (currentBlock.previousHash !== previousBlock.hash) {
-        return false;
-      }
-    }
-    
-    return true;
-  }
-  
-  /**
-   * Get the blockchain
-   */
-  public getChain(): SecurityBlock[] {
-    return [...this.chain];
-  }
-  
-  /**
-   * Get the last block
-   */
-  public getLastBlock(): SecurityBlock | null {
-    return this.chain.length > 0 ? this.chain[this.chain.length - 1] : null;
-  }
-  
-  /**
-   * Search for logs in the blockchain
-   */
-  public searchLogs(query: {
-    fromDate?: string;
-    toDate?: string;
-    category?: SecurityEventCategory | SecurityEventCategory[];
-    severity?: SecurityEventSeverity | SecurityEventSeverity[];
-    keyword?: string;
-  }): unknown[] {
-    const results: unknown[] = [];
-    
-    // Process query parameters
-    const fromDate = query.fromDate ? new Date(query.fromDate).getTime() : 0;
-    const toDate = query.toDate ? new Date(query.toDate).getTime() : Date.now();
-    const categories = query.category
-      ? Array.isArray(query.category) ? query.category : [query.category]
-      : null;
-    const severities = query.severity
-      ? Array.isArray(query.severity) ? query.severity : [query.severity]
-      : null;
-    
-    // Search all blocks
-    for (const block of this.chain) {
-      // Search data in the block (can be an array of logs or a single log)
-      const dataArray = Array.isArray(block.data) ? block.data : [block.data];
-      
-      for (const log of dataArray) {
-        const logDate = new Date(log.timestamp).getTime();
-        
-        // Skip if log is outside date range
-        if (logDate < fromDate || logDate > toDate) {
-          continue;
+/**
+ * Interface for block in the blockchain
+ */
+interface Block {
+    /**
+     * Index of the block in the chain
+     */
+    index: number;
+
+    /**
+     * Timestamp when the block was created
+     */
+    timestamp: number;
+
+    /**
+     * List of log entries in this block
+     */
+    data: LogEntry[];
+
+    /**
+     * Hash of the previous block
+     */
+    previousHash: string;
+
+    /**
+     * Hash of this block
+     */
+    hash: string;
+
+    /**
+     * Used for proof of work and additional security
+     */
+    nonce: number;
+}
+
+/**
+ * Immutable Security Logs
+ * 
+ * Implements a simplified blockchain to store security logs in an immutable manner.
+ * This provides tamper-evident logging for security events.
+ */
+class ImmutableSecurityLogsImpl {
+    private blockchain: Block[] = [];
+    private pendingLogs: LogEntry[] = [];
+    private maxLogsPerBlock: number = 10;
+    private blockCreationIntervalMs: number = 60000; // 1 minute
+    private blockCreationInterval: NodeJS.Timeout | null = null;
+    private initialized: boolean = false;
+
+    /**
+     * Initialize the blockchain
+     */
+    public initialize(): void {
+        if (this.initialized) {
+            return;
         }
-        
-        // Skip if category doesn't match
-        if (categories && !categories.includes(log.category)) {
-          continue;
+
+        // Create the genesis block if the blockchain is empty
+        if (this.blockchain.length === 0) {
+            this.createGenesisBlock();
         }
-        
-        // Skip if severity doesn't match
-        if (severities && !severities.includes(log.severity)) {
-          continue;
-        }
-        
-        // Skip if keyword doesn't match
-        if (query.keyword && !this.logContainsKeyword(log, query.keyword)) {
-          continue;
-        }
-        
-        // Add log to results
-        results.push({
-          ...log,
-          blockIndex: block.index,
-          blockHash: block.hash,
-          blockTimestamp: block.timestamp
+
+        // Start block creation interval
+        this.blockCreationInterval = setInterval(() => {
+            this.createBlockFromPendingLogs();
+        }, this.blockCreationIntervalMs);
+
+        this.initialized = true;
+        console.log('[IMMUTABLE-LOGS] Immutable security logs initialized');
+    }
+
+    /**
+     * Create the genesis block
+     */
+    private createGenesisBlock(): void {
+        const genesisBlock: Block = {
+            index: 0,
+            timestamp: Date.now(),
+            data: [
+                {
+                    id: uuidv4(),
+                    timestamp: Date.now(),
+                    type: 'GENESIS',
+                    details: { message: 'Genesis Block' }
+                }
+            ],
+            previousHash: '0',
+            hash: '0',
+            nonce: 0
+        };
+
+        // Calculate the hash for the genesis block
+        genesisBlock.hash = this.calculateHash(genesisBlock);
+
+        // Add to blockchain
+        this.blockchain.push(genesisBlock);
+        console.log('[IMMUTABLE-LOGS] Genesis block created');
+    }
+
+    /**
+     * Calculate hash for a block
+     */
+    private calculateHash(block: Omit<Block, 'hash'>): string {
+        // Create a string representation of the block
+        const blockString = JSON.stringify({
+            index: block.index,
+            timestamp: block.timestamp,
+            data: block.data,
+            previousHash: block.previousHash,
+            nonce: block.nonce
         });
-      }
+
+        // Calculate SHA-256 hash
+        return createHash('sha256').update(blockString).digest('hex');
     }
-    
-    return results;
-  }
-  
-  /**
-   * Check if a log contains a keyword
-   */
-  private logContainsKeyword(log: Record<string, unknown>, keyword: string): boolean {
-    const term = keyword.toLowerCase();
-    
-    // Check in message
-    if (log.message && log.message.toLowerCase().includes(term)) {
-      return true;
-    }
-    
-    // Check in data (recursively)
-    if (log.data && typeof log.data === 'object') {
-      return this.objectContainsKeyword(log.data, term);
-    }
-    
-    return false;
-  }
-  
-  /**
-   * Check if an object contains a keyword (recursive)
-   */
-  private objectContainsKeyword(obj: Record<string, unknown>, keyword: string): boolean {
-    for (const key in obj) {
-      const value = obj[key];
-      
-      // Check key
-      if (key.toLowerCase().includes(keyword)) {
-        return true;
-      }
-      
-      // Check value based on type
-      if (typeof value === 'string' && value.toLowerCase().includes(keyword)) {
-        return true;
-      } else if (typeof value === 'object' && value !== null) {
-        if (this.objectContainsKeyword(value, keyword)) {
-          return true;
+
+    /**
+     * Create a new block from pending logs
+     */
+    private createBlockFromPendingLogs(): void {
+        // Skip if no pending logs
+        if (this.pendingLogs.length === 0) {
+            return;
         }
-      }
+
+        // Get the latest block
+        const previousBlock = this.getLatestBlock();
+
+        // Create new block
+        const newBlock: Omit<Block, 'hash'> = {
+            index: previousBlock.index + 1,
+            timestamp: Date.now(),
+            data: [...this.pendingLogs], // Take all pending logs
+            previousHash: previousBlock.hash,
+            nonce: 0
+        };
+
+        // Mine the block (simplified proof-of-work)
+        const minedBlock = this.mineBlock(newBlock);
+
+        // Add to blockchain
+        this.blockchain.push(minedBlock);
+
+        // Clear pending logs
+        this.pendingLogs = [];
+
+        console.log(`[IMMUTABLE-LOGS] New block created: #${minedBlock.index} with ${minedBlock.data.length} logs`);
     }
-    
-    return false;
-  }
-  
-  /**
-   * Create a new block
-   */
-  private createBlock(data: unknown[]): SecurityBlock {
-    const previousBlock = this.getLastBlock();
-    const index = previousBlock ? previousBlock.index + 1 : 0;
-    const timestamp = new Date().toISOString();
-    const previousHash = previousBlock ? previousBlock.hash : '0';
-    
-    // Create the block
-    const block: SecurityBlock = {
-      index,
-      timestamp,
-      data,
-      previousHash,
-      hash: '',
-      nonce: 0
-    };
-    
-    // Mine the block (find a valid hash)
-    this.mineBlockHash(block);
-    
-    return block;
-  }
-  
-  /**
-   * Mine a block hash (find a hash with leading zeros)
-   */
-  private mineBlockHash(block: SecurityBlock): void {
-    const target = Array(this.difficulty + 1).join('0');
-    
-    while (true) {
-      block.hash = this.calculateHash(block);
-      
-      if (block.hash.substring(0, this.difficulty) === target) {
-        break;
-      }
-      
-      block.nonce++;
+
+    /**
+     * Mine a block (simplified proof-of-work)
+     */
+    private mineBlock(block: Omit<Block, 'hash'>): Block {
+        const difficulty = 2;
+        const target = '0'.repeat(difficulty);
+
+        let hash = '';
+        let nonce = 0;
+
+        // Mine until hash starts with target (simplified proof-of-work)
+        do {
+            nonce++;
+            const blockWithNonce = { ...block, nonce };
+            hash = this.calculateHash(blockWithNonce);
+        } while (hash.slice(0, difficulty) !== target);
+
+        // Return the mined block
+        return {
+            ...block,
+            nonce,
+            hash
+        };
     }
-  }
-  
-  /**
-   * Calculate the hash of a block
-   */
-  private calculateHash(block: SecurityBlock): string {
-    const { index, timestamp, data, previousHash, nonce } = block;
-    const blockString = JSON.stringify({ index, timestamp, data, previousHash, nonce });
-    
-    return crypto.createHash('sha256').update(blockString).digest('hex');
-  }
-  
-  /**
-   * Load the blockchain from file
-   */
-  private loadChain(): void {
-    try {
-      if (fs.existsSync(this.blockchainFile)) {
-        const data = fs.readFileSync(this.blockchainFile, 'utf8');
-        this.chain = JSON.parse(data);
+
+    /**
+     * Get the latest block in the chain
+     */
+    private getLatestBlock(): Block {
+        return this.blockchain[this.blockchain.length - 1];
+    }
+
+    /**
+     * Add a log entry to the immutable store
+     */
+    public addLog(log: Omit<LogEntry, 'id' | 'timestamp'>): string {
+        if (!this.initialized) {
+            this.initialize();
+        }
+
+        // Create full log entry
+        const fullLog: LogEntry = {
+            id: uuidv4(),
+            timestamp: Date.now(),
+            ...log
+        };
+
+        // Add to pending logs
+        this.pendingLogs.push(fullLog);
+
+        // If we've reached max logs per block, create a new block immediately
+        if (this.pendingLogs.length >= this.maxLogsPerBlock) {
+            this.createBlockFromPendingLogs();
+        }
+
+        return fullLog.id;
+    }
+
+    /**
+     * Search for logs matching criteria
+     */
+    public searchLogs(options: {
+        types?: string[];
+        startTime?: number;
+        endTime?: number;
+        limit?: number;
+        offset?: number;
+    }): LogEntry[] {
+        if (!this.initialized) {
+            this.initialize();
+        }
+
+        const { types, startTime, endTime, limit = 100, offset = 0 } = options;
+
+        // Get all logs from all blocks
+        let allLogs: LogEntry[] = [];
         
-        // Verify the loaded chain
-        if (!this.verifyChain()) {
-          console.error('[ImmutableSecurityLogs] Loaded blockchain is invalid!');
-          this.createGenesisBlock();
+        // Add logs from blockchain
+        for (const block of this.blockchain) {
+            allLogs = allLogs.concat(block.data);
         }
-      } else {
-        this.createGenesisBlock();
-      }
-    } catch (error) {
-      console.error('[ImmutableSecurityLogs] Error loading blockchain:', error);
-      this.createGenesisBlock();
+        
+        // Add pending logs
+        allLogs = allLogs.concat(this.pendingLogs);
+        
+        // Filter logs by criteria
+        let filteredLogs = allLogs.filter(log => {
+            let matches = true;
+            
+            if (types && types.length > 0 && !types.includes(log.type)) {
+                matches = false;
+            }
+            
+            if (startTime && log.timestamp < startTime) {
+                matches = false;
+            }
+            
+            if (endTime && log.timestamp > endTime) {
+                matches = false;
+            }
+            
+            return matches;
+        });
+        
+        // Sort by timestamp (newest first)
+        filteredLogs = filteredLogs.sort((a, b) => b.timestamp - a.timestamp);
+        
+        // Apply pagination
+        return filteredLogs.slice(offset, offset + limit);
     }
-  }
-  
-  /**
-   * Save the blockchain to file
-   */
-  private saveChain(): void {
-    try {
-      fs.writeFileSync(
-        this.blockchainFile,
-        JSON.stringify(this.chain, null, 2),
-        'utf8'
-      );
-    } catch (error) {
-      console.error('[ImmutableSecurityLogs] Error saving blockchain:', error);
+
+    /**
+     * Get a specific log by ID
+     */
+    public getLog(id: string): LogEntry | null {
+        if (!this.initialized) {
+            this.initialize();
+        }
+
+        // Check pending logs
+        const pendingLog = this.pendingLogs.find(log => log.id === id);
+        if (pendingLog) {
+            return pendingLog;
+        }
+
+        // Check logs in the blockchain
+        for (const block of this.blockchain) {
+            const blockLog = block.data.find(log => log.id === id);
+            if (blockLog) {
+                return blockLog;
+            }
+        }
+
+        return null;
     }
-  }
-  
-  /**
-   * Create the genesis block
-   */
-  private createGenesisBlock(): void {
-    const genesisBlock: SecurityBlock = {
-      index: 0,
-      timestamp: new Date().toISOString(),
-      data: { message: 'Genesis Block' },
-      previousHash: '0',
-      hash: '',
-      nonce: 0
-    };
-    
-    this.mineBlockHash(genesisBlock);
-    this.chain = [genesisBlock];
-    this.saveChain();
-  }
-  
-  /**
-   * Start auto-save interval
-   */
-  private startAutoSave(): void {
-    if (this.autoSaveInterval) {
-      clearInterval(this.autoSaveInterval);
+
+    /**
+     * Verify the integrity of the blockchain
+     */
+    public verifyIntegrity(): { valid: boolean; invalidBlocks: number[] } {
+        if (!this.initialized) {
+            this.initialize();
+        }
+
+        const invalidBlocks: number[] = [];
+
+        // Loop through all blocks (except genesis) and verify hashes
+        for (let i = 1; i < this.blockchain.length; i++) {
+            const currentBlock = this.blockchain[i];
+            const previousBlock = this.blockchain[i - 1];
+
+            // Verify hash
+            const calculatedHash = this.calculateHash({
+                index: currentBlock.index,
+                timestamp: currentBlock.timestamp,
+                data: currentBlock.data,
+                previousHash: currentBlock.previousHash,
+                nonce: currentBlock.nonce
+            });
+
+            // Verify previous hash reference
+            if (currentBlock.previousHash !== previousBlock.hash ||
+                currentBlock.hash !== calculatedHash) {
+                invalidBlocks.push(i);
+            }
+        }
+
+        return {
+            valid: invalidBlocks.length === 0,
+            invalidBlocks
+        };
     }
-    
-    this.autoSaveInterval = setInterval(() => {
-      if (this.pendingLogs.length > 0) {
-        this.mineBlock();
-      }
-    }, 60000); // Auto-save every minute
-  }
-  
-  /**
-   * Stop auto-save interval
-   */
-  public stopAutoSave(): void {
-    if (this.autoSaveInterval) {
-      clearInterval(this.autoSaveInterval);
-      this.autoSaveInterval = null;
+
+    /**
+     * Get statistics about the blockchain
+     */
+    public getStats(): any {
+        if (!this.initialized) {
+            this.initialize();
+        }
+
+        let totalLogs = 0;
+        for (const block of this.blockchain) {
+            totalLogs += block.data.length;
+        }
+
+        return {
+            blockchainLength: this.blockchain.length,
+            totalLogs,
+            pendingLogs: this.pendingLogs.length,
+            lastBlockTimestamp: this.getLatestBlock().timestamp
+        };
     }
-    
-    // Mine any pending logs
-    if (this.pendingLogs.length > 0) {
-      this.mineBlock();
+
+    /**
+     * Clean up resources
+     */
+    public cleanup(): void {
+        if (this.blockCreationInterval) {
+            clearInterval(this.blockCreationInterval);
+            this.blockCreationInterval = null;
+        }
+
+        // Force create a final block if there are pending logs
+        if (this.pendingLogs.length > 0) {
+            this.createBlockFromPendingLogs();
+        }
+
+        this.initialized = false;
+        console.log('[IMMUTABLE-LOGS] Immutable security logs cleaned up');
     }
-  }
 }
 
-// Export the singleton instance
-export const immutableSecurityLogs = ImmutableSecurityLogs.getInstance();
+// Export singleton instance
+export const immutableSecurityLogs = new ImmutableSecurityLogsImpl();

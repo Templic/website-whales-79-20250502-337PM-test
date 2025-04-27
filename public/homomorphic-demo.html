@@ -1,1015 +1,743 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Homomorphic Encryption Demo</title>
-  <link rel="icon" href="/static/icons/security.svg">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      margin: 0;
-      padding: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-      color: #333;
-    }
-    h1 {
-      color: #1a73e8;
-      text-align: center;
-    }
-    h2 {
-      color: #1a73e8;
-      margin-top: 30px;
-    }
-    .container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    @media (max-width: 768px) {
-      .container {
-        grid-template-columns: 1fr;
-      }
-    }
-    .card {
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      background-color: #fff;
-      margin-bottom: 20px;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    input[type="text"], 
-    input[type="number"], 
-    select, 
-    textarea {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #1a73e8;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-      margin-top: 10px;
-    }
-    button:hover {
-      background-color: #0d5bdd;
-    }
-    .result {
-      margin-top: 15px;
-      padding: 15px;
-      background-color: #f5f5f5;
-      border-radius: 4px;
-      white-space: pre-wrap;
-      font-family: monospace;
-      font-size: 14px;
-      overflow: auto;
-      max-height: 300px;
-    }
-    .visualization {
-      margin-top: 15px;
-      padding: 15px;
-      border: 1px dashed #ddd;
-      border-radius: 4px;
-      background-color: #f9f9f9;
-    }
-    .code-snippet {
-      margin-top: 5px;
-      padding: 10px;
-      background-color: #f5f5f5;
-      border-radius: 4px;
-      font-family: monospace;
-      white-space: pre-wrap;
-      font-size: 14px;
-      margin-bottom: 15px;
-    }
-    .success {
-      color: #34a853;
-      font-weight: bold;
-    }
-    .error {
-      color: #ea4335;
-      font-weight: bold;
-    }
-    .status-indicator {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 5px;
-    }
-    .status-success {
-      background-color: #34a853;
-    }
-    .status-error {
-      background-color: #ea4335;
-    }
-    .status-warning {
-      background-color: #fbbc04;
-    }
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid #ddd;
-      margin-bottom: 20px;
-    }
-    .tab {
-      padding: 10px 15px;
-      cursor: pointer;
-      border: 1px solid transparent;
-      border-bottom: none;
-      margin-right: 5px;
-      border-top-left-radius: 4px;
-      border-top-right-radius: 4px;
-    }
-    .tab:hover {
-      background-color: #f5f5f5;
-    }
-    .tab.active {
-      border-color: #ddd;
-      background-color: #fff;
-      margin-bottom: -1px;
-      padding-bottom: 11px;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
-    .header-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    .header-buttons {
-      display: flex;
-      gap: 10px;
-    }
-    .header-button {
-      padding: 8px 15px;
-      font-size: 14px;
-      background-color: #f5f5f5;
-      color: #333;
-      border: 1px solid #ddd;
-    }
-    .header-button:hover {
-      background-color: #e5e5e5;
-    }
-    .header-button.primary {
-      background-color: #e8f0fe;
-      color: #1a73e8;
-      border-color: #1a73e8;
-    }
-    .header-button.primary:hover {
-      background-color: #d2e3fc;
-    }
-    .metrics {
-      margin-top: 15px;
-      padding: 15px;
-      background-color: #eff7ff;
-      border-radius: 4px;
-      border-left: 4px solid #1a73e8;
-    }
-    .metrics-title {
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .metrics-item {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 5px;
-    }
-    .metrics-label {
-      color: #666;
-    }
-    .metrics-value {
-      font-weight: bold;
-    }
-    .workflow {
-      margin-top: 30px;
-      padding: 20px;
-      background-color: #f9f9f9;
-      border-radius: 8px;
-      border: 1px dashed #ddd;
-    }
-    .workflow-title {
-      font-weight: bold;
-      margin-bottom: 15px;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-    }
-    .workflow-step {
-      margin-bottom: 15px;
-      padding-left: 20px;
-      position: relative;
-    }
-    .workflow-step:before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 5px;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background-color: #1a73e8;
-    }
-    .workflow-step.active:before {
-      background-color: #34a853;
-    }
-    .workflow-step.disabled:before {
-      background-color: #ddd;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homomorphic Encryption Demo</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+            background-color: #f7f9fc;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            flex: 1;
+            min-width: 300px;
+        }
+        .card h3 {
+            margin-top: 0;
+            color: #3498db;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border: 1px solid #eee;
+        }
+        .result-container {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f0f7ff;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .full-width {
+            flex: 1 0 100%;
+        }
+        .badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .badge {
+            background-color: #e1f5fe;
+            color: #0288d1;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.8em;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .info {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        #activeKeys {
+            margin-bottom: 20px;
+        }
+        #operations {
+            margin-top: 30px;
+        }
+        .key-item {
+            background: #f5f5f5;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #3498db;
+        }
+        .tab-container {
+            margin-top: 20px;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .illustration {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .illustration img {
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
-  <h1>Homomorphic Encryption Demo</h1>
-  
-  <div class="header-controls">
-    <div>
-      <p>This demo shows how to perform computations on encrypted data without decryption.</p>
-    </div>
-    <div class="header-buttons">
-      <button id="resetDemoBtn" class="header-button">Reset Demo</button>
-      <button id="showWorkflowBtn" class="header-button primary">Show Complete Workflow</button>
-    </div>
-  </div>
-  
-  <div class="tabs">
-    <div class="tab active" data-tab="key-management">1. Key Management</div>
-    <div class="tab" data-tab="encryption">2. Data Encryption</div>
-    <div class="tab" data-tab="computation">3. Homomorphic Computation</div>
-    <div class="tab" data-tab="decryption">4. Decryption</div>
-  </div>
-  
-  <div class="container">
-    <div class="tab-content active" data-tab="key-management">
-      <div class="card">
-        <h2>Generate Homomorphic Encryption Key</h2>
-        <div class="form-group">
-          <label for="operationType">Operation Type:</label>
-          <select id="operationType">
-            <option value="addition">Addition (Partial Homomorphic)</option>
-            <option value="multiplication">Multiplication (Partial Homomorphic)</option>
-            <option value="arbitrary">Arbitrary Operations (Fully Homomorphic)</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label for="securityLevel">Security Level:</label>
-          <select id="securityLevel">
-            <option value="standard">Standard (128-bit)</option>
-            <option value="medium">Medium (192-bit)</option>
-            <option value="high">High (256-bit)</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label for="enableBootstrapping">
-            <input type="checkbox" id="enableBootstrapping" checked>
-            Enable Bootstrapping (Refreshes noise budget for deep computations)
-          </label>
-        </div>
-        
-        <div class="form-group">
-          <label for="optimizeNoise">
-            <input type="checkbox" id="optimizeNoise">
-            Optimize Noise (Slightly reduces security for better performance)
-          </label>
-        </div>
-        
-        <div class="form-group">
-          <label for="maxComputationDepth">Maximum Computation Depth:</label>
-          <input type="number" id="maxComputationDepth" min="1" max="10" value="5">
-        </div>
-        
-        <button id="generateKeyBtn">Generate Key Pair</button>
-        
-        <div id="generateKeyResult" class="result" style="display: none;"></div>
-      </div>
-
-      <div class="card">
-        <h2>Generated Keys</h2>
-        <div id="keyPairs"></div>
-        <button id="listKeysBtn">List Key Pairs</button>
-        <div id="listKeysResult" class="result" style="display: none;"></div>
-      </div>
-    </div>
+    <h1>Homomorphic Encryption Demo</h1>
     
-    <div class="tab-content" data-tab="encryption">
-      <div class="card">
-        <h2>Encrypt Data</h2>
-        <div class="form-group">
-          <label for="encryptKeyId">Key ID:</label>
-          <select id="encryptKeyId"></select>
-        </div>
-        
-        <div class="form-group">
-          <label for="dataType">Data Type:</label>
-          <select id="dataType">
-            <option value="number">Number</option>
-            <option value="array">Array of Numbers</option>
-            <option value="object">Object with Number Values</option>
-          </select>
-        </div>
-        
-        <div id="numberInputGroup" class="form-group">
-          <label for="numberInput">Number:</label>
-          <input type="number" id="numberInput" value="42">
-        </div>
-        
-        <div id="arrayInputGroup" class="form-group" style="display: none;">
-          <label for="arrayInput">Array (comma-separated numbers):</label>
-          <input type="text" id="arrayInput" value="10, 20, 30, 40, 50">
-        </div>
-        
-        <div id="objectInputGroup" class="form-group" style="display: none;">
-          <label for="objectInput">Object (JSON format):</label>
-          <textarea id="objectInput" rows="3">{"x": 10, "y": 20, "z": 30}</textarea>
-        </div>
-        
-        <button id="encryptBtn">Encrypt Data</button>
-        
-        <div id="encryptResult" class="result" style="display: none;"></div>
-      </div>
-      
-      <div class="card">
-        <h2>Encrypted Data</h2>
-        <div id="encryptedDataList"></div>
-      </div>
-    </div>
-    
-    <div class="tab-content" data-tab="computation">
-      <div class="card">
-        <h2>Perform Homomorphic Computation</h2>
-        <div class="form-group">
-          <label for="operationMode">Operation:</label>
-          <select id="operationMode">
-            <option value="add">Addition</option>
-            <option value="multiply">Multiplication</option>
-            <option value="arbitrary">Arbitrary Operation</option>
-          </select>
-        </div>
-        
-        <div id="binaryOperationGroup">
-          <div class="form-group">
-            <label for="ciphertext1">First Ciphertext:</label>
-            <select id="ciphertext1"></select>
-          </div>
-          
-          <div class="form-group">
-            <label for="ciphertext2">Second Ciphertext:</label>
-            <select id="ciphertext2"></select>
-          </div>
-        </div>
-        
-        <div id="arbitraryOperationGroup" style="display: none;">
-          <div class="form-group">
-            <label for="ciphertextList">Ciphertexts:</label>
-            <select id="ciphertextList" multiple size="4"></select>
-            <div class="code-snippet">
-              Hold Ctrl or Cmd to select multiple ciphertexts
+    <div class="cards-container">
+        <div class="card">
+            <h3>About Homomorphic Encryption</h3>
+            <p>Homomorphic encryption allows computation on encrypted data without decrypting it. This demonstration shows how encrypted values can be processed while preserving privacy.</p>
+            <div class="badges">
+                <div class="badge">Privacy Preserving</div>
+                <div class="badge">Secure Computation</div>
+                <div class="badge">Data Protection</div>
             </div>
-          </div>
-          
-          <div class="form-group">
-            <label for="operation">Operation Description:</label>
-            <input type="text" id="operation" value="average">
-            <div class="code-snippet">
-              Examples: "average", "sum", "max", "min", "weighted-sum"
+        </div>
+        
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('keysTab')">Key Management</div>
+                <div class="tab" onclick="switchTab('encryptionTab')">Encryption</div>
+                <div class="tab" onclick="switchTab('computationTab')">Computation</div>
+                <div class="tab" onclick="switchTab('decryptionTab')">Decryption</div>
             </div>
-          </div>
-        </div>
-        
-        <button id="computeBtn">Perform Computation</button>
-        
-        <div id="computeResult" class="result" style="display: none;"></div>
-        
-        <div id="metrics" class="metrics" style="display: none;">
-          <div class="metrics-title">Performance Metrics</div>
-          <div class="metrics-item">
-            <span class="metrics-label">Execution Time:</span>
-            <span id="executionTime" class="metrics-value">0 ms</span>
-          </div>
-          <div class="metrics-item">
-            <span class="metrics-label">Noise Consumed:</span>
-            <span id="noiseConsumed" class="metrics-value">0 units</span>
-          </div>
-          <div class="metrics-item">
-            <span class="metrics-label">Remaining Capacity:</span>
-            <span id="remainingCapacity" class="metrics-value">100%</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="card">
-        <h2>Computation Results</h2>
-        <div id="computationResults"></div>
-      </div>
-    </div>
-    
-    <div class="tab-content" data-tab="decryption">
-      <div class="card">
-        <h2>Decrypt Result</h2>
-        <div class="form-group">
-          <label for="decryptCiphertext">Ciphertext to Decrypt:</label>
-          <select id="decryptCiphertext"></select>
-        </div>
-        
-        <button id="decryptBtn">Decrypt Data</button>
-        
-        <div id="decryptResult" class="result" style="display: none;"></div>
-      </div>
-      
-      <div class="card">
-        <h2>Decrypted Results</h2>
-        <div id="decryptedResults"></div>
-      </div>
-    </div>
-  </div>
-  
-  <div id="workflow" class="workflow" style="display: none;">
-    <div class="workflow-title">
-      <span class="status-indicator status-success"></span>
-      Complete Homomorphic Encryption Workflow
-    </div>
-    
-    <div class="workflow-step">
-      <strong>1. Generate Homomorphic Key Pair</strong>
-      <p>Create a key pair capable of performing operations on encrypted data. The operation type determines what computations can be performed.</p>
-    </div>
-    
-    <div class="workflow-step">
-      <strong>2. Encrypt Sensitive Data</strong>
-      <p>Encrypt the data using the public key. This transforms the plaintext into ciphertext that can still be computed on.</p>
-    </div>
-    
-    <div class="workflow-step">
-      <strong>3. Perform Computations on Encrypted Data</strong>
-      <p>Perform operations like addition or multiplication directly on encrypted data without decryption.</p>
-    </div>
-    
-    <div class="workflow-step">
-      <strong>4. Decrypt the Result</strong>
-      <p>Use the secret key to decrypt the result of the computations, revealing the final answer.</p>
-    </div>
-    
-    <div class="code-snippet">
-      Note: In real applications, these operations would typically be split across different parties.
-      For example, a data owner encrypts data, a service provider performs computations on encrypted data,
-      and the data owner decrypts the result. This preserves data privacy while allowing useful computations.
-    </div>
-  </div>
-
-  <script>
-    // State management
-    const state = {
-      keyPairs: [],
-      encryptedData: [],
-      computationResults: [],
-      decryptedResults: []
-    };
-    
-    // Tab switching
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        // Hide all tab contents
-        document.querySelectorAll('.tab-content').forEach(content => {
-          content.classList.remove('active');
-        });
-        
-        // Remove active class from all tabs
-        document.querySelectorAll('.tab').forEach(t => {
-          t.classList.remove('active');
-        });
-        
-        // Show the selected tab content
-        const tabId = tab.getAttribute('data-tab');
-        document.querySelector(`.tab-content[data-tab="${tabId}"]`).classList.add('active');
-        
-        // Set the selected tab as active
-        tab.classList.add('active');
-      });
-    });
-    
-    // Show/hide workflow
-    document.getElementById('showWorkflowBtn').addEventListener('click', () => {
-      const workflow = document.getElementById('workflow');
-      if (workflow.style.display === 'none') {
-        workflow.style.display = 'block';
-        document.getElementById('showWorkflowBtn').textContent = 'Hide Workflow';
-      } else {
-        workflow.style.display = 'none';
-        document.getElementById('showWorkflowBtn').textContent = 'Show Complete Workflow';
-      }
-    });
-    
-    // Reset demo
-    document.getElementById('resetDemoBtn').addEventListener('click', () => {
-      if (confirm('This will reset all demo data. Continue?')) {
-        state.keyPairs = [];
-        state.encryptedData = [];
-        state.computationResults = [];
-        state.decryptedResults = [];
-        updateUI();
-        
-        // Clear all results
-        document.querySelectorAll('.result').forEach(result => {
-          result.style.display = 'none';
-          result.textContent = '';
-        });
-        
-        // Hide metrics
-        document.getElementById('metrics').style.display = 'none';
-        
-        // Go back to first tab
-        document.querySelectorAll('.tab')[0].click();
-        
-        // Show success message
-        alert('Demo reset successfully!');
-      }
-    });
-    
-    // Toggle data type input fields
-    document.getElementById('dataType').addEventListener('change', () => {
-      const dataType = document.getElementById('dataType').value;
-      
-      document.getElementById('numberInputGroup').style.display = 'none';
-      document.getElementById('arrayInputGroup').style.display = 'none';
-      document.getElementById('objectInputGroup').style.display = 'none';
-      
-      if (dataType === 'number') {
-        document.getElementById('numberInputGroup').style.display = 'block';
-      } else if (dataType === 'array') {
-        document.getElementById('arrayInputGroup').style.display = 'block';
-      } else if (dataType === 'object') {
-        document.getElementById('objectInputGroup').style.display = 'block';
-      }
-    });
-    
-    // Toggle operation mode input fields
-    document.getElementById('operationMode').addEventListener('change', () => {
-      const operationMode = document.getElementById('operationMode').value;
-      
-      if (operationMode === 'arbitrary') {
-        document.getElementById('binaryOperationGroup').style.display = 'none';
-        document.getElementById('arbitraryOperationGroup').style.display = 'block';
-      } else {
-        document.getElementById('binaryOperationGroup').style.display = 'block';
-        document.getElementById('arbitraryOperationGroup').style.display = 'none';
-      }
-    });
-    
-    // Generate key pair
-    document.getElementById('generateKeyBtn').addEventListener('click', async () => {
-      const operationType = document.getElementById('operationType').value;
-      const securityLevel = document.getElementById('securityLevel').value;
-      const enableBootstrapping = document.getElementById('enableBootstrapping').checked;
-      const optimizeNoise = document.getElementById('optimizeNoise').checked;
-      const maxComputationDepth = parseInt(document.getElementById('maxComputationDepth').value, 10);
-      
-      const config = {
-        operationType,
-        securityLevel,
-        enableBootstrapping,
-        optimizeNoise,
-        maxComputationDepth
-      };
-      
-      try {
-        const response = await fetch('/api/security/demo/homomorphic/keys/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(config)
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-          // Add the key pair to the state
-          state.keyPairs.push(data.data);
-          
-          // Update the UI
-          updateUI();
-        }
-        
-        // Show the result
-        showResult('generateKeyResult', JSON.stringify(data, null, 2));
-      } catch (error) {
-        showResult('generateKeyResult', `Error: ${error.message}`);
-      }
-    });
-    
-    // List key pairs
-    document.getElementById('listKeysBtn').addEventListener('click', async () => {
-      try {
-        const response = await fetch('/api/security/demo/homomorphic/keys');
-        const data = await response.json();
-        
-        if (data.success) {
-          // Update the state
-          state.keyPairs = data.data;
-          
-          // Update the UI
-          updateUI();
-        }
-        
-        // Show the result
-        showResult('listKeysResult', JSON.stringify(data, null, 2));
-      } catch (error) {
-        showResult('listKeysResult', `Error: ${error.message}`);
-      }
-    });
-    
-    // Encrypt data
-    document.getElementById('encryptBtn').addEventListener('click', async () => {
-      const keyId = document.getElementById('encryptKeyId').value;
-      const dataType = document.getElementById('dataType').value;
-      
-      if (!keyId) {
-        alert('Please select a key pair first. If none are available, generate one in the Key Management tab.');
-        return;
-      }
-      
-      let data;
-      
-      if (dataType === 'number') {
-        data = parseFloat(document.getElementById('numberInput').value);
-      } else if (dataType === 'array') {
-        const arrayInput = document.getElementById('arrayInput').value;
-        data = arrayInput.split(',').map(num => parseFloat(num.trim()));
-      } else if (dataType === 'object') {
-        try {
-          data = JSON.parse(document.getElementById('objectInput').value);
-        } catch (e) {
-          alert('Invalid JSON object. Please check your input.');
-          return;
-        }
-      }
-      
-      try {
-        const response = await fetch(`/api/security/demo/homomorphic/encrypt/${keyId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ data })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          // Add the encrypted data to the state with original value
-          state.encryptedData.push({
-            ciphertext: result.data,
-            originalValue: data,
-            description: getDataDescription(data, dataType)
-          });
-          
-          // Update the UI
-          updateUI();
-        }
-        
-        // Show the result
-        showResult('encryptResult', JSON.stringify(result, null, 2));
-      } catch (error) {
-        showResult('encryptResult', `Error: ${error.message}`);
-      }
-    });
-    
-    // Perform computation
-    document.getElementById('computeBtn').addEventListener('click', async () => {
-      const operationMode = document.getElementById('operationMode').value;
-      
-      try {
-        let response;
-        
-        if (operationMode === 'add' || operationMode === 'multiply') {
-          // Binary operation
-          const ciphertext1Id = document.getElementById('ciphertext1').value;
-          const ciphertext2Id = document.getElementById('ciphertext2').value;
-          
-          if (!ciphertext1Id || !ciphertext2Id) {
-            alert('Please select two ciphertexts. If none are available, encrypt some data in the Encryption tab.');
-            return;
-          }
-          
-          const ciphertext1 = state.encryptedData.find(data => data.ciphertext.data === ciphertext1Id).ciphertext;
-          const ciphertext2 = state.encryptedData.find(data => data.ciphertext.data === ciphertext2Id).ciphertext;
-          
-          response = await fetch(`/api/security/demo/homomorphic/${operationMode}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              ciphertext1,
-              ciphertext2
-            })
-          });
-        } else {
-          // Arbitrary operation
-          const selectedCiphertextIds = Array.from(document.getElementById('ciphertextList').selectedOptions).map(option => option.value);
-          const operation = document.getElementById('operation').value;
-          
-          if (selectedCiphertextIds.length === 0) {
-            alert('Please select at least one ciphertext. If none are available, encrypt some data in the Encryption tab.');
-            return;
-          }
-          
-          const ciphertexts = selectedCiphertextIds.map(id => 
-            state.encryptedData.find(data => data.ciphertext.data === id).ciphertext
-          );
-          
-          response = await fetch('/api/security/demo/homomorphic/compute', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              ciphertexts,
-              operation
-            })
-          });
-        }
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          // Add the computation result to the state
-          const operation = operationMode === 'add' ? 'Addition' : 
-                            operationMode === 'multiply' ? 'Multiplication' : 
-                            `Arbitrary (${document.getElementById('operation').value})`;
-          
-          state.computationResults.push({
-            ciphertext: result.data.ciphertext,
-            operation,
-            metrics: result.data.metrics
-          });
-          
-          // Update the UI
-          updateUI();
-          
-          // Update metrics display
-          if (result.data.metrics) {
-            document.getElementById('executionTime').textContent = `${result.data.metrics.executionTimeMs} ms`;
             
-            if (result.data.metrics.noiseConsumed !== undefined) {
-              document.getElementById('noiseConsumed').textContent = `${result.data.metrics.noiseConsumed} units`;
+            <div id="keysTab" class="tab-content active">
+                <div class="card">
+                    <h3>Generate Encryption Keys</h3>
+                    <div class="controls">
+                        <select id="securityLevel">
+                            <option value="normal">Normal Security</option>
+                            <option value="high">High Security</option>
+                        </select>
+                        <select id="operationType">
+                            <option value="additive">Additive Operations</option>
+                            <option value="multiplicative">Multiplicative Operations</option>
+                            <option value="both">Both Operations</option>
+                        </select>
+                    </div>
+                    <button onclick="generateKeys()">Generate New Key Pair</button>
+                    <div id="keyGenerationResult" class="result-container" style="display: none;"></div>
+                    
+                    <h3>Active Keys</h3>
+                    <div id="activeKeys">
+                        <p>No keys available. Generate a key pair to begin.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="encryptionTab" class="tab-content">
+                <div class="card">
+                    <h3>Encrypt Data</h3>
+                    <select id="encryptKeySelect">
+                        <option value="">Select a key...</option>
+                    </select>
+                    <div>
+                        <label for="dataToEncrypt">Data to Encrypt:</label>
+                        <input type="number" id="dataToEncrypt" placeholder="Enter a number...">
+                    </div>
+                    <button onclick="encryptData()">Encrypt</button>
+                    <div id="encryptionResult" class="result-container" style="display: none;"></div>
+                    
+                    <h3>Encrypted Values</h3>
+                    <div id="encryptedValues">
+                        <p>No encrypted values yet.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="computationTab" class="tab-content">
+                <div class="card">
+                    <h3>Perform Homomorphic Operations</h3>
+                    <div>
+                        <label>Operation Type:</label>
+                        <select id="operationSelect">
+                            <option value="add">Addition</option>
+                            <option value="multiply">Multiplication</option>
+                            <option value="compute">Custom Computation</option>
+                        </select>
+                    </div>
+                    
+                    <div id="standardOperations">
+                        <div>
+                            <label for="ciphertext1">First Encrypted Value:</label>
+                            <select id="ciphertext1">
+                                <option value="">Select a value...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="ciphertext2">Second Encrypted Value:</label>
+                            <select id="ciphertext2">
+                                <option value="">Select a value...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="customOperation" style="display: none;">
+                        <div>
+                            <label for="computeFormula">Custom Operation (JavaScript):</label>
+                            <textarea id="computeFormula" rows="3" placeholder="Example: (a, b) => a + b * 2"></textarea>
+                        </div>
+                        <div>
+                            <label>Select Encrypted Values:</label>
+                            <div id="computeValues"></div>
+                            <button onclick="addComputeValue()">+ Add Value</button>
+                        </div>
+                    </div>
+                    
+                    <button onclick="performOperation()">Perform Operation</button>
+                    <div id="computationResult" class="result-container" style="display: none;"></div>
+                </div>
+            </div>
+            
+            <div id="decryptionTab" class="tab-content">
+                <div class="card">
+                    <h3>Decrypt Result</h3>
+                    <div>
+                        <label for="decryptCiphertext">Encrypted Value to Decrypt:</label>
+                        <select id="decryptCiphertext">
+                            <option value="">Select a value...</option>
+                        </select>
+                    </div>
+                    <button onclick="decryptData()">Decrypt</button>
+                    <div id="decryptionResult" class="result-container" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card full-width">
+            <h3>How It Works</h3>
+            <p>Homomorphic encryption enables operations on encrypted data, yielding encrypted results that, when decrypted, match the result of performing the same operations on the original plaintext. This property enables secure delegated computation in zero-trust environments.</p>
+            
+            <div class="illustration">
+                <svg width="600" height="200" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Plaintext Data -->
+                    <rect x="20" y="80" width="80" height="40" rx="5" fill="#e3f2fd" stroke="#1976d2" />
+                    <text x="60" y="105" text-anchor="middle" fill="#1976d2">Data</text>
+                    
+                    <!-- Encryption Arrow -->
+                    <line x1="100" y1="100" x2="140" y2="100" stroke="#666" stroke-width="2" />
+                    <polygon points="140,100 130,95 130,105" fill="#666" />
+                    <text x="120" y="90" text-anchor="middle" fill="#666" font-size="12">Encrypt</text>
+                    
+                    <!-- Encrypted Data -->
+                    <rect x="140" y="80" width="100" height="40" rx="5" fill="#e8f5e9" stroke="#2e7d32" />
+                    <text x="190" y="105" text-anchor="middle" fill="#2e7d32">Encrypted</text>
+                    
+                    <!-- Computation Arrow -->
+                    <line x1="240" y1="100" x2="290" y2="100" stroke="#666" stroke-width="2" />
+                    <polygon points="290,100 280,95 280,105" fill="#666" />
+                    <text x="265" y="90" text-anchor="middle" fill="#666" font-size="12">Compute</text>
+                    
+                    <!-- Computed Encrypted Result -->
+                    <rect x="290" y="80" width="110" height="40" rx="5" fill="#e8f5e9" stroke="#2e7d32" />
+                    <text x="345" y="105" text-anchor="middle" fill="#2e7d32">Computed</text>
+                    
+                    <!-- Decryption Arrow -->
+                    <line x1="400" y1="100" x2="450" y2="100" stroke="#666" stroke-width="2" />
+                    <polygon points="450,100 440,95 440,105" fill="#666" />
+                    <text x="425" y="90" text-anchor="middle" fill="#666" font-size="12">Decrypt</text>
+                    
+                    <!-- Decrypted Result -->
+                    <rect x="450" y="80" width="100" height="40" rx="5" fill="#e3f2fd" stroke="#1976d2" />
+                    <text x="500" y="105" text-anchor="middle" fill="#1976d2">Result</text>
+                    
+                    <!-- Top Data Path -->
+                    <line x1="60" y1="80" x2="60" y2="40" stroke="#666" stroke-width="1" stroke-dasharray="4" />
+                    <line x1="60" y1="40" x2="500" y2="40" stroke="#666" stroke-width="1" stroke-dasharray="4" />
+                    <line x1="500" y1="40" x2="500" y2="80" stroke="#666" stroke-width="1" stroke-dasharray="4" />
+                    <text x="280" y="30" text-anchor="middle" fill="#666" font-size="12">Same mathematical relationship</text>
+                </svg>
+            </div>
+            
+            <p>Use cases include:</p>
+            <ul>
+                <li><strong>Privacy-Preserving Analytics:</strong> Analyze sensitive data without exposure</li>
+                <li><strong>Secure Multi-Party Computation:</strong> Multiple parties compute results without sharing raw data</li>
+                <li><strong>Confidential Query Processing:</strong> Execute queries on encrypted databases</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Global variables to store the state
+        const state = {
+            keys: [],
+            encryptedValues: []
+        };
+        
+        // Initialize the demo
+        window.onload = function() {
+            fetchKeys();
+            setupEventListeners();
+        };
+        
+        function setupEventListeners() {
+            document.getElementById('operationSelect').addEventListener('change', function() {
+                const operation = this.value;
+                if (operation === 'compute') {
+                    document.getElementById('standardOperations').style.display = 'none';
+                    document.getElementById('customOperation').style.display = 'block';
+                } else {
+                    document.getElementById('standardOperations').style.display = 'block';
+                    document.getElementById('customOperation').style.display = 'none';
+                }
+            });
+        }
+        
+        function switchTab(tabId) {
+            // Hide all tabs and content
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Show selected tab and content
+            document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        // Key management functions
+        async function generateKeys() {
+            const securityLevel = document.getElementById('securityLevel').value;
+            const operationType = document.getElementById('operationType').value;
+            
+            try {
+                const response = await fetch('/keys/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        securityLevel: securityLevel,
+                        operationType: operationType
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResult('keyGenerationResult', 'success', 'Key pair generated successfully');
+                    fetchKeys();
+                } else {
+                    displayResult('keyGenerationResult', 'error', `Error: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                displayResult('keyGenerationResult', 'error', `Error: ${error.message}`);
+            }
+        }
+        
+        async function fetchKeys() {
+            try {
+                const response = await fetch('/keys');
+                const data = await response.json();
+                
+                if (data.success) {
+                    state.keys = data.keys || [];
+                    updateKeyDisplay();
+                    updateKeySelectors();
+                } else {
+                    console.error('Error fetching keys:', data.error);
+                }
+            } catch (error) {
+                console.error('Error fetching keys:', error);
+            }
+        }
+        
+        function updateKeyDisplay() {
+            const keysContainer = document.getElementById('activeKeys');
+            
+            if (state.keys.length === 0) {
+                keysContainer.innerHTML = '<p>No keys available. Generate a key pair to begin.</p>';
+                return;
             }
             
-            if (result.data.metrics.remainingCapacity !== undefined) {
-              document.getElementById('remainingCapacity').textContent = `${Math.round(result.data.metrics.remainingCapacity * 100)}%`;
+            let html = '';
+            state.keys.forEach((key, index) => {
+                html += `
+                    <div class="key-item">
+                        <div><strong>Key ID:</strong> ${key.id}</div>
+                        <div><strong>Security Level:</strong> ${key.config.securityLevel}</div>
+                        <div><strong>Operation Type:</strong> ${key.config.operationType}</div>
+                        <button onclick="deleteKey('${key.id}')">Delete</button>
+                    </div>
+                `;
+            });
+            
+            keysContainer.innerHTML = html;
+        }
+        
+        function updateKeySelectors() {
+            const encryptKeySelect = document.getElementById('encryptKeySelect');
+            const decryptCiphertext = document.getElementById('decryptCiphertext');
+            const ciphertext1 = document.getElementById('ciphertext1');
+            const ciphertext2 = document.getElementById('ciphertext2');
+            const computeValues = document.getElementById('computeValues');
+            
+            // Update key selector for encryption
+            let keyOptions = '<option value="">Select a key...</option>';
+            state.keys.forEach(key => {
+                keyOptions += `<option value="${key.id}">${key.id} (${key.config.operationType})</option>`;
+            });
+            encryptKeySelect.innerHTML = keyOptions;
+            
+            // Update encrypted value selectors
+            let valueOptions = '<option value="">Select a value...</option>';
+            state.encryptedValues.forEach((value, index) => {
+                valueOptions += `<option value="${index}">Value ${index + 1} (${value.keyId})</option>`;
+            });
+            
+            ciphertext1.innerHTML = valueOptions;
+            ciphertext2.innerHTML = valueOptions;
+            decryptCiphertext.innerHTML = valueOptions;
+            
+            // Update compute values section
+            if (computeValues.children.length === 0) {
+                addComputeValue();
+            }
+        }
+        
+        async function deleteKey(keyId) {
+            try {
+                const response = await fetch(`/keys/${keyId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Remove any encrypted values associated with this key
+                    state.encryptedValues = state.encryptedValues.filter(val => val.keyId !== keyId);
+                    fetchKeys();
+                } else {
+                    console.error('Error deleting key:', data.error);
+                }
+            } catch (error) {
+                console.error('Error deleting key:', error);
+            }
+        }
+        
+        // Encryption functions
+        async function encryptData() {
+            const keyId = document.getElementById('encryptKeySelect').value;
+            const dataToEncrypt = document.getElementById('dataToEncrypt').value;
+            
+            if (!keyId) {
+                displayResult('encryptionResult', 'error', 'Please select a key');
+                return;
             }
             
-            document.getElementById('metrics').style.display = 'block';
-          }
+            if (!dataToEncrypt) {
+                displayResult('encryptionResult', 'error', 'Please enter data to encrypt');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/encrypt/${keyId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        value: parseFloat(dataToEncrypt)
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    state.encryptedValues.push(data.ciphertext);
+                    displayResult('encryptionResult', 'success', 'Data encrypted successfully');
+                    updateEncryptedValuesDisplay();
+                    updateKeySelectors();
+                } else {
+                    displayResult('encryptionResult', 'error', `Error: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                displayResult('encryptionResult', 'error', `Error: ${error.message}`);
+            }
         }
         
-        // Show the result
-        showResult('computeResult', JSON.stringify(result, null, 2));
-      } catch (error) {
-        showResult('computeResult', `Error: ${error.message}`);
-      }
-    });
-    
-    // Decrypt data
-    document.getElementById('decryptBtn').addEventListener('click', async () => {
-      const ciphertextId = document.getElementById('decryptCiphertext').value;
-      
-      if (!ciphertextId) {
-        alert('Please select a ciphertext to decrypt. If none are available, encrypt some data or perform a computation first.');
-        return;
-      }
-      
-      // Find the ciphertext in either encrypted data or computation results
-      let ciphertext;
-      let source;
-      
-      const encryptedData = state.encryptedData.find(data => data.ciphertext.data === ciphertextId);
-      if (encryptedData) {
-        ciphertext = encryptedData.ciphertext;
-        source = 'encrypted data';
-      } else {
-        const computationResult = state.computationResults.find(result => result.ciphertext.data === ciphertextId);
-        if (computationResult) {
-          ciphertext = computationResult.ciphertext;
-          source = 'computation result';
-        }
-      }
-      
-      if (!ciphertext) {
-        alert('Could not find the selected ciphertext.');
-        return;
-      }
-      
-      try {
-        const response = await fetch('/api/security/demo/homomorphic/decrypt', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(ciphertext)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          // Add the decrypted result to the state
-          state.decryptedResults.push({
-            decryptedValue: result.data,
-            sourceId: ciphertextId,
-            source
-          });
-          
-          // Update the UI
-          updateUI();
+        function updateEncryptedValuesDisplay() {
+            const container = document.getElementById('encryptedValues');
+            
+            if (state.encryptedValues.length === 0) {
+                container.innerHTML = '<p>No encrypted values yet.</p>';
+                return;
+            }
+            
+            let html = '';
+            state.encryptedValues.forEach((value, index) => {
+                html += `
+                    <div class="key-item">
+                        <div><strong>Value ID:</strong> ${index + 1}</div>
+                        <div><strong>Key ID:</strong> ${value.keyId}</div>
+                        <div><strong>Encrypted:</strong> <span class="badge info">Encrypted Data</span></div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
         }
         
-        // Show the result
-        showResult('decryptResult', JSON.stringify(result, null, 2));
-      } catch (error) {
-        showResult('decryptResult', `Error: ${error.message}`);
-      }
-    });
-    
-    // Helper function to show a result
-    function showResult(elementId, content) {
-      const element = document.getElementById(elementId);
-      element.textContent = content;
-      element.style.display = 'block';
-    }
-    
-    // Helper function to get a human-readable description of data
-    function getDataDescription(data, dataType) {
-      if (dataType === 'number') {
-        return `Number: ${data}`;
-      } else if (dataType === 'array') {
-        return `Array with ${data.length} elements`;
-      } else if (dataType === 'object') {
-        const keys = Object.keys(data);
-        return `Object with keys: ${keys.join(', ')}`;
-      }
-      return 'Unknown data type';
-    }
-    
-    // Helper function to update the UI based on state
-    function updateUI() {
-      // Update key dropdowns
-      const keyDropdowns = [document.getElementById('encryptKeyId')];
-      
-      keyDropdowns.forEach(dropdown => {
-        dropdown.innerHTML = '';
-        
-        if (state.keyPairs.length === 0) {
-          const option = document.createElement('option');
-          option.value = '';
-          option.textContent = 'No keys available';
-          dropdown.appendChild(option);
-        } else {
-          state.keyPairs.forEach(keyPair => {
-            const option = document.createElement('option');
-            option.value = keyPair.keyId;
-            option.textContent = `${keyPair.keyId.substring(0, 8)}... (${keyPair.config.operationType})`;
-            dropdown.appendChild(option);
-          });
+        // Computation functions
+        function addComputeValue() {
+            const container = document.getElementById('computeValues');
+            const valueIndex = container.children.length;
+            
+            const valueSelector = document.createElement('div');
+            valueSelector.style.marginBottom = '10px';
+            
+            let options = '<option value="">Select a value...</option>';
+            state.encryptedValues.forEach((value, index) => {
+                options += `<option value="${index}">Value ${index + 1} (${value.keyId})</option>`;
+            });
+            
+            valueSelector.innerHTML = `
+                <label for="computeValue${valueIndex}">Value ${valueIndex + 1}:</label>
+                <select id="computeValue${valueIndex}" class="compute-value-select">
+                    ${options}
+                </select>
+            `;
+            
+            container.appendChild(valueSelector);
         }
-      });
-      
-      // Update key pairs list
-      const keyPairsList = document.getElementById('keyPairs');
-      keyPairsList.innerHTML = '';
-      
-      if (state.keyPairs.length === 0) {
-        keyPairsList.innerHTML = '<p>No key pairs generated yet.</p>';
-      } else {
-        state.keyPairs.forEach(keyPair => {
-          const keyCard = document.createElement('div');
-          keyCard.className = 'code-snippet';
-          keyCard.innerHTML = `<strong>Key ID:</strong> ${keyPair.keyId}<br>
-                              <strong>Type:</strong> ${keyPair.config.operationType}<br>
-                              <strong>Security:</strong> ${keyPair.config.securityLevel}<br>
-                              <strong>Created:</strong> ${new Date(keyPair.createdAt).toLocaleString()}`;
-          keyPairsList.appendChild(keyCard);
-        });
-      }
-      
-      // Update ciphertext dropdowns
-      const ciphertextDropdowns = [
-        document.getElementById('ciphertext1'),
-        document.getElementById('ciphertext2'),
-        document.getElementById('ciphertextList'),
-        document.getElementById('decryptCiphertext')
-      ];
-      
-      ciphertextDropdowns.forEach(dropdown => {
-        dropdown.innerHTML = '';
         
-        const allCiphertexts = [
-          ...state.encryptedData.map(data => ({
-            id: data.ciphertext.data,
-            label: `${data.description} (Encrypted)`
-          })),
-          ...state.computationResults.map(result => ({
-            id: result.ciphertext.data,
-            label: `${result.operation} Result`
-          }))
-        ];
-        
-        if (allCiphertexts.length === 0) {
-          const option = document.createElement('option');
-          option.value = '';
-          option.textContent = 'No ciphertexts available';
-          dropdown.appendChild(option);
-        } else {
-          allCiphertexts.forEach(ct => {
-            const option = document.createElement('option');
-            option.value = ct.id;
-            option.textContent = `${ct.id.substring(0, 8)}... (${ct.label})`;
-            dropdown.appendChild(option);
-          });
+        async function performOperation() {
+            const operationType = document.getElementById('operationSelect').value;
+            
+            try {
+                let response;
+                
+                if (operationType === 'add') {
+                    const val1Index = document.getElementById('ciphertext1').value;
+                    const val2Index = document.getElementById('ciphertext2').value;
+                    
+                    if (!val1Index || !val2Index) {
+                        displayResult('computationResult', 'error', 'Please select two encrypted values');
+                        return;
+                    }
+                    
+                    response = await fetch('/add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            ciphertext1: state.encryptedValues[val1Index],
+                            ciphertext2: state.encryptedValues[val2Index]
+                        })
+                    });
+                    
+                } else if (operationType === 'multiply') {
+                    const val1Index = document.getElementById('ciphertext1').value;
+                    const val2Index = document.getElementById('ciphertext2').value;
+                    
+                    if (!val1Index || !val2Index) {
+                        displayResult('computationResult', 'error', 'Please select two encrypted values');
+                        return;
+                    }
+                    
+                    response = await fetch('/multiply', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            ciphertext1: state.encryptedValues[val1Index],
+                            ciphertext2: state.encryptedValues[val2Index]
+                        })
+                    });
+                    
+                } else if (operationType === 'compute') {
+                    const formula = document.getElementById('computeFormula').value;
+                    
+                    if (!formula) {
+                        displayResult('computationResult', 'error', 'Please enter a computation formula');
+                        return;
+                    }
+                    
+                    const valueSelectors = document.querySelectorAll('.compute-value-select');
+                    const selectedValues = [];
+                    
+                    for (const selector of valueSelectors) {
+                        if (selector.value) {
+                            selectedValues.push(state.encryptedValues[selector.value]);
+                        }
+                    }
+                    
+                    if (selectedValues.length < 1) {
+                        displayResult('computationResult', 'error', 'Please select at least one encrypted value');
+                        return;
+                    }
+                    
+                    response = await fetch('/compute', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            values: selectedValues,
+                            operation: formula
+                        })
+                    });
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    state.encryptedValues.push(data.result);
+                    displayResult('computationResult', 'success', 'Operation performed successfully. New encrypted result added.');
+                    updateEncryptedValuesDisplay();
+                    updateKeySelectors();
+                } else {
+                    displayResult('computationResult', 'error', `Error: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                displayResult('computationResult', 'error', `Error: ${error.message}`);
+            }
         }
-      });
-      
-      // Update encrypted data list
-      const encryptedDataList = document.getElementById('encryptedDataList');
-      encryptedDataList.innerHTML = '';
-      
-      if (state.encryptedData.length === 0) {
-        encryptedDataList.innerHTML = '<p>No encrypted data yet.</p>';
-      } else {
-        state.encryptedData.forEach(data => {
-          const dataCard = document.createElement('div');
-          dataCard.className = 'code-snippet';
-          dataCard.innerHTML = `<strong>Description:</strong> ${data.description}<br>
-                               <strong>Ciphertext ID:</strong> ${data.ciphertext.data.substring(0, 15)}...<br>
-                               <strong>Original Type:</strong> ${data.ciphertext.originalType}`;
-          encryptedDataList.appendChild(dataCard);
-        });
-      }
-      
-      // Update computation results
-      const computationResults = document.getElementById('computationResults');
-      computationResults.innerHTML = '';
-      
-      if (state.computationResults.length === 0) {
-        computationResults.innerHTML = '<p>No computation results yet.</p>';
-      } else {
-        state.computationResults.forEach(result => {
-          const resultCard = document.createElement('div');
-          resultCard.className = 'code-snippet';
-          resultCard.innerHTML = `<strong>Operation:</strong> ${result.operation}<br>
-                                 <strong>Ciphertext ID:</strong> ${result.ciphertext.data.substring(0, 15)}...<br>
-                                 <strong>Original Type:</strong> ${result.ciphertext.originalType}`;
-                                 
-          if (result.metrics) {
-            resultCard.innerHTML += `<br><strong>Execution Time:</strong> ${result.metrics.executionTimeMs} ms`;
-          }
-          
-          computationResults.appendChild(resultCard);
-        });
-      }
-      
-      // Update decrypted results
-      const decryptedResults = document.getElementById('decryptedResults');
-      decryptedResults.innerHTML = '';
-      
-      if (state.decryptedResults.length === 0) {
-        decryptedResults.innerHTML = '<p>No decrypted results yet.</p>';
-      } else {
-        state.decryptedResults.forEach(result => {
-          const resultCard = document.createElement('div');
-          resultCard.className = 'code-snippet';
-          resultCard.innerHTML = `<strong>Source:</strong> ${result.source}<br>
-                                 <strong>Decrypted Value:</strong> ${JSON.stringify(result.decryptedValue)}<br>
-                                 <strong>Ciphertext ID:</strong> ${result.sourceId.substring(0, 15)}...`;
-          decryptedResults.appendChild(resultCard);
-        });
-      }
-    }
-    
-    // Initialize UI
-    updateUI();
-  </script>
+        
+        // Decryption functions
+        async function decryptData() {
+            const ciphertextIndex = document.getElementById('decryptCiphertext').value;
+            
+            if (!ciphertextIndex) {
+                displayResult('decryptionResult', 'error', 'Please select an encrypted value');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/decrypt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(state.encryptedValues[ciphertextIndex])
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResult(
+                        'decryptionResult', 
+                        'success', 
+                        `Decrypted value: ${data.plaintext}
+                        <div class="badges">
+                            <div class="badge">Original Type: ${data.originalType || 'number'}</div>
+                        </div>`
+                    );
+                } else {
+                    displayResult('decryptionResult', 'error', `Error: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                displayResult('decryptionResult', 'error', `Error: ${error.message}`);
+            }
+        }
+        
+        // Utility functions
+        function displayResult(elementId, type, message) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status-badge ${type}">${type.toUpperCase()}</div> ${message}`;
+            element.style.display = 'block';
+            
+            // Auto-hide after a delay
+            setTimeout(() => {
+                //element.style.display = 'none';
+            }, 5000);
+        }
+    </script>
 </body>
 </html>

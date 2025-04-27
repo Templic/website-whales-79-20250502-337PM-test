@@ -8,7 +8,7 @@
 
 import express, { Request, Response } from 'express';
 import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
+import { SecurityEventTypes } from '../security/advanced/blockchain/SecurityEventTypes';
 import * as qrc from '../security/advanced/quantum/QuantumResistantCrypto';
 
 // Create a router
@@ -20,15 +20,14 @@ const router = express.Router();
 router.get('/status', async (req: Request, res: Response) => {
   try {
     // Log access to blockchain
-    await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.API,
-      severity: SecurityEventSeverity.INFO,
-      message: 'Security status accessed',
-      timestamp: Date.now(),
-      metadata: {
+    await securityBlockchain.addLog({
+      type: SecurityEventTypes.API_REQUEST,
+      details: {
+        message: 'Security status accessed',
+        timestamp: Date.now(),
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        timestamp: new Date().toISOString()
+        timestamp_iso: new Date().toISOString()
       }
     });
     
@@ -111,12 +110,10 @@ router.post('/generate-keys', async (req: Request, res: Response) => {
     });
     
     // Log key generation to blockchain
-    await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY,
-      severity: SecurityEventSeverity.INFO,
-      message: 'Quantum-resistant key pair generated',
-      timestamp: Date.now(),
-      metadata: {
+    await securityBlockchain.addLog({
+      type: SecurityEventTypes.QUANTUM_RESISTANT_KEY_GENERATED,
+      details: {
+        message: 'Quantum-resistant key pair generated',
         algorithm,
         strength,
         user: req.user?.id || 'anonymous',
@@ -161,12 +158,10 @@ router.post('/encrypt', async (req: Request, res: Response) => {
     });
     
     // Log encryption to blockchain
-    await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY,
-      severity: SecurityEventSeverity.INFO,
-      message: 'Data encrypted with quantum-resistant algorithm',
-      timestamp: Date.now(),
-      metadata: {
+    await securityBlockchain.addLog({
+      type: SecurityEventTypes.HOMOMORPHIC_ENCRYPTION_OPERATION,
+      details: {
+        message: 'Data encrypted with quantum-resistant algorithm',
         algorithm,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
@@ -211,11 +206,10 @@ router.post('/decrypt', async (req: Request, res: Response) => {
     });
     
     // Log decryption to blockchain
-    await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY,
-      severity: SecurityEventSeverity.INFO,
-      message: 'Data decrypted with quantum-resistant algorithm',
-      timestamp: Date.now(),
+    await securityBlockchain.addLog({
+      type: SecurityEventTypes.HOMOMORPHIC_ENCRYPTION_OPERATION,
+      details: {
+        message: 'Data decrypted with quantum-resistant algorithm',
       metadata: {
         algorithm,
         user: req.user?.id || 'anonymous',
@@ -260,11 +254,10 @@ router.post('/sign', async (req: Request, res: Response) => {
     });
     
     // Log signing to blockchain
-    await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY,
-      severity: SecurityEventSeverity.INFO,
-      message: 'Data signed with quantum-resistant algorithm',
-      timestamp: Date.now(),
+    await securityBlockchain.addLog({
+      type: SecurityEventTypes.QUANTUM_RESISTANT_SIGNATURE_GENERATED,
+      details: {
+        message: 'Data signed with quantum-resistant algorithm',
       metadata: {
         algorithm,
         user: req.user?.id || 'anonymous',
@@ -310,11 +303,10 @@ router.post('/verify', async (req: Request, res: Response) => {
     });
     
     // Log verification to blockchain
-    await securityBlockchain.addSecurityEvent({
-      category: SecurityEventCategory.CRYPTOGRAPHY,
-      severity: SecurityEventSeverity.INFO,
-      message: `Signature verification ${result.valid ? 'succeeded' : 'failed'}`,
-      timestamp: Date.now(),
+    await securityBlockchain.addLog({
+      type: SecurityEventTypes.QUANTUM_RESISTANT_SIGNATURE_VERIFIED,
+      details: {
+        message: `Signature verification ${result.valid ? 'succeeded' : 'failed'}`,
       metadata: {
         algorithm,
         valid: result.valid,

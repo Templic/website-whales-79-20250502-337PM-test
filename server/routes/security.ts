@@ -15,11 +15,13 @@ import realtimeRoutes, { setupSecurityWebSockets } from './api/security/realtime
 import { zeroKnowledgeRoutes } from './api/security/zero-knowledge';
 import { homomorphicRoutes } from './api/security/homomorphic';
 import { demoHomomorphicRoutes } from './api/security/demo-homomorphic';
+import telemetryRoutes from './api/security/telemetry';
 import { requireMFAVerification, initializeMFAVerification, verifyMFAResponse, generateMFAChallenge } from '../auth/mfaIntegration';
 import { logSecurityEvent } from '../security/advanced/SecurityLogger';
 import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
 import { startMetricsCollection } from '../security/monitoring/MetricsCollector';
 import { initializeEventsCollector } from '../security/monitoring/EventsCollector';
+import { SecurityTelemetryCorrelator } from '../security/advanced/telemetry/SecurityTelemetryCorrelator';
 import http from 'http';
 
 // Create router
@@ -34,6 +36,7 @@ const securityApiRouter = createSecureApiRouter({
 // Security dashboard API routes
 securityApiRouter.use('/dashboard', dashboardRoutes);
 securityApiRouter.use('/realtime', realtimeRoutes);
+securityApiRouter.use('/telemetry', telemetryRoutes);
 
 // MFA API routes
 securityApiRouter.use('/mfa', mfaRoutes);
@@ -141,6 +144,15 @@ export function initializeSecurity(app: express.Express, server: http.Server): v
   
   // Initialize events collector
   initializeEventsCollector();
+  
+  // Initialize security telemetry correlation
+  SecurityTelemetryCorrelator.getInstance({
+    enabled: true,
+    retentionPeriod: 7200000,     // 2 hours
+    analysisInterval: 60000,      // 1 minute
+    correlationThreshold: 0.7,    // 70% confidence
+    maximumEventsPerAnalysis: 1000
+  });
   
   // Setup WebSocket server for real-time security updates
   setupSecurityWebSockets(server);

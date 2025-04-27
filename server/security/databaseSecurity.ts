@@ -6,7 +6,8 @@
  */
 
 import crypto from 'crypto';
-import { securityFabric, SecurityEventCategory, SecurityEventSeverity } from './advanced/SecurityFabric';
+import { SecurityFabric, SecurityEventCategory, SecurityEventSeverity } from './advanced/SecurityFabric';
+import { SecurityEventTypes } from './advanced/blockchain/SecurityEventTypes';
 import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
 
 // Default patterns to detect SQL injection attempts
@@ -176,20 +177,19 @@ class SQLInjectionPrevention {
    * Log a query check
    */
   private logQueryCheck(query: string, result: 'passed' | 'blocked' | 'whitelisted', matchedPattern: string | null): void {
-    const event = {
-      category: SecurityEventCategory.SQL_INJECTION,
-      severity: result === 'blocked' ? SecurityEventSeverity.HIGH : SecurityEventSeverity.INFO,
+    // Send to security fabric
+    SecurityFabric.getInstance().emitSecurityEvent({
+      type: result === 'blocked' ? SecurityEventTypes.SECURITY_VULNERABILITY_DETECTED : SecurityEventTypes.DATA_ACCESS,
+      source: 'database_security',
+      severity: result === 'blocked' ? 'high' : 'low',
       message: `SQL query ${result}: ${this.truncateQuery(query, 50)}`,
-      data: {
+      attributes: {
         query: this.maskSensitiveData(query),
         result,
         matchedPattern,
         timestamp: new Date().toISOString()
       }
-    };
-    
-    // Send to security fabric
-    securityFabric.emitEvent(event);
+    });
     
     // Add to blockchain if enabled
     if (AUDIT_LOG_CONFIG.logBlockchainEnabled && result === 'blocked') {
@@ -210,11 +210,12 @@ class SQLInjectionPrevention {
    * Log a query sanitization
    */
   private logQuerySanitization(original: string, sanitized: string): void {
-    securityFabric.emitEvent({
-      category: SecurityEventCategory.SQL_INJECTION,
-      severity: SecurityEventSeverity.WARNING,
+    SecurityFabric.getInstance().emitSecurityEvent({
+      type: SecurityEventTypes.DATA_MODIFIED,
+      source: 'database_security',
+      severity: 'medium',
       message: `SQL query sanitized: ${this.truncateQuery(original, 50)}`,
-      data: {
+      attributes: {
         original: this.maskSensitiveData(original),
         sanitized: this.maskSensitiveData(sanitized),
         timestamp: new Date().toISOString()
@@ -355,12 +356,13 @@ export class DatabaseSecurityManager {
     details: Record<string, unknown>
   ): void {
     // Log to security fabric
-    securityFabric.emitEvent({
-      category: SecurityEventCategory.SQL_INJECTION,
-      severity: SecurityEventSeverity.INFO,
+    SecurityFabric.getInstance().emitSecurityEvent({
+      type: SecurityEventTypes.DATA_ACCESS,
+      source: 'database_security',
+      severity: 'low',
       message: `Database activity: ${activity}`,
-      data: {
-        userId,
+      userId: userId?.toString(),
+      attributes: {
         ...details,
         timestamp: new Date().toISOString()
       }

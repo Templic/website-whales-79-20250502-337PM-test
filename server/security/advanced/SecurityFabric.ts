@@ -1,288 +1,201 @@
 /**
- * Security Fabric Module
- * 
- * This module provides the core security fabric architecture that allows
- * security components to register and communicate with each other.
+ * @file SecurityFabric.ts
+ * @description Core security foundation that integrates multiple security components
  */
 
-import { EventEmitter } from 'events';
-
-// Security event categories
-export enum SecurityEventCategory {
-  AUTHENTICATION = 'authentication',
-  AUTHORIZATION = 'authorization',
-  SYSTEM = 'system',
-  DATA = 'data',
-  NETWORK = 'network',
-  CRYPTO = 'crypto',
-  QUANTUM = 'quantum',
-  BLOCKCHAIN = 'blockchain',
-  MFA = 'mfa',
-  INPUT_VALIDATION = 'input_validation',
-  CSRF = 'csrf',
-  XSS = 'xss',
-  SQL_INJECTION = 'sql_injection',
-  API_SECURITY = 'api_security',
-  DOS = 'dos',
-  ANOMALY_DETECTION = 'anomaly_detection',
-  GENERAL = 'general'
-}
-
-// Security event severity levels
-export enum SecurityEventSeverity {
-  DEBUG = 'debug',
-  INFO = 'info',
-  WARNING = 'warning',
-  ERROR = 'error',
-  CRITICAL = 'critical',
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high'
-}
-
-// Security event interface
-export interface SecurityEvent {
-  category: SecurityEventCategory;
-  severity: SecurityEventSeverity;
-  message: string;
-  data?: Record<string, unknown>;
-  timestamp?: string;
-}
-
-// Security component interface
-export interface SecurityComponent {
-  name: string;
-  type: string;
-  version: string;
-  initialize(): Promise<void>;
-  shutdown(): Promise<void>;
-}
+import { v4 as uuidv4 } from 'uuid';
+import { SecurityEvent } from './blockchain/SecurityEvent';
+import { SecurityEventTypes } from './blockchain/SecurityEventTypes';
+import { immutableSecurityLogs } from './blockchain/ImmutableSecurityLogs';
+import { Logger } from '../../utils/Logger';
 
 /**
- * Security Fabric class
- * 
- * This is the central hub for all security components to register and communicate.
+ * The SecurityFabric integrates all security mechanisms into a unified entity.
+ * It provides centralized management of security events, logging, monitoring, 
+ * and responses across the system.
  */
-export class SecurityFabric {
-  private static instance: SecurityFabric;
-  private components: Map<string, SecurityComponent>;
-  private eventEmitter: EventEmitter;
-  
-  private constructor() {
-    this.components = new Map();
-    this.eventEmitter = new EventEmitter();
-    
-    // Set max listeners to avoid Node.js warning
-    this.eventEmitter.setMaxListeners(100);
-  }
+class SecurityFabricImpl {
+  private initialized: boolean = false;
+  private systemId: string = '';
+  private startTime: number = 0;
   
   /**
-   * Get the singleton instance of SecurityFabric
+   * Initialize the security fabric
    */
-  public static getInstance(): SecurityFabric {
-    if (!SecurityFabric.instance) {
-      SecurityFabric.instance = new SecurityFabric();
+  public initialize(): void {
+    if (this.initialized) {
+      return;
     }
     
-    return SecurityFabric.instance;
-  }
-  
-  /**
-   * Register a security component
-   */
-  public registerComponent(component: SecurityComponent): void {
-    if (this.components.has(component.name)) {
-      throw new Error(`Security component '${component.name}' is already registered`);
-    }
+    this.systemId = uuidv4();
+    this.startTime = Date.now();
     
-    this.components.set(component.name, component);
+    // Initialize the immutable security logs
+    immutableSecurityLogs.initialize();
     
-    // Log registration
-    this.emitEvent({
-      category: SecurityEventCategory.SYSTEM,
-      severity: SecurityEventSeverity.INFO,
-      message: `Security component registered: ${component.name}`,
-      data: { 
-        name: component.name, 
-        type: component.type, 
-        version: component.version 
+    // Log initialization
+    this.logEvent({
+      type: SecurityEventTypes.SECURITY_INITIALIZATION,
+      message: 'Security fabric initialization',
+      source: 'SecurityFabric',
+      attributes: {
+        systemId: this.systemId,
+        timestamp: new Date().toISOString()
       }
     });
+    
+    console.log(`[SECURITY-FABRIC] Security fabric initialized with ID ${this.systemId}`);
+    this.initialized = true;
   }
   
   /**
-   * Unregister a security component
+   * Log a security event
+   * 
+   * @param event Security event to log
+   * @returns Promise resolving to the event ID
    */
-  public unregisterComponent(componentName: string): void {
-    if (!this.components.has(componentName)) {
-      throw new Error(`Security component '${componentName}' is not registered`);
+  public logEvent(event: SecurityEvent): string {
+    if (!this.initialized) {
+      this.initialize();
     }
     
-    this.components.delete(componentName);
+    // Ensure required properties
+    const eventWithDefaults: SecurityEvent = {
+      ...event,
+      id: event.id || uuidv4(),
+      timestamp: event.timestamp || Date.now()
+    };
     
-    // Log unregistration
-    this.emitEvent({
-      category: SecurityEventCategory.SYSTEM,
-      severity: SecurityEventSeverity.INFO,
-      message: `Security component unregistered: ${componentName}`
+    // Log to immutable storage
+    const logId = immutableSecurityLogs.addLog({
+      type: eventWithDefaults.type.toString(),
+      details: {
+        event: eventWithDefaults
+      }
     });
+    
+    // Also log to system logs for real-time monitoring
+    const severity = eventWithDefaults.severity || 'low';
+    const logLevel = severity === 'critical' || severity === 'high' ? 'error' 
+                   : severity === 'medium' ? 'warn' : 'info';
+    
+    Logger[logLevel](`[SECURITY-EVENT] ${eventWithDefaults.message || eventWithDefaults.type}`, {
+      eventId: eventWithDefaults.id,
+      type: eventWithDefaults.type,
+      source: eventWithDefaults.source,
+      severity
+    });
+    
+    return logId;
   }
   
   /**
-   * Get a registered security component
+   * Retrieve security events with filtering and paging
    */
-  public getComponent(componentName: string): SecurityComponent | undefined {
-    return this.components.get(componentName);
-  }
-  
-  /**
-   * Get all registered security components
-   */
-  public getAllComponents(): SecurityComponent[] {
-    return Array.from(this.components.values());
-  }
-  
-  /**
-   * Subscribe to security events
-   */
-  public subscribeToEvents(
-    callback: (event: SecurityEvent) => void,
-    filter?: {
-      category?: SecurityEventCategory | SecurityEventCategory[];
-      severity?: SecurityEventSeverity | SecurityEventSeverity[];
+  public getEvents(options: {
+    type?: SecurityEventTypes;
+    source?: string;
+    severity?: string;
+    startTime?: number;
+    endTime?: number;
+    limit?: number;
+    offset?: number;
+  }): any[] {
+    if (!this.initialized) {
+      this.initialize();
     }
-  ): () => void {
-    const handler = (event: SecurityEvent) => {
-      // Apply category filter
-      if (filter?.category) {
-        const categories = Array.isArray(filter.category) 
-          ? filter.category 
-          : [filter.category];
-        
-        if (!categories.includes(event.category)) {
-          return;
-        }
-      }
-      
-      // Apply severity filter
-      if (filter?.severity) {
-        const severities = Array.isArray(filter.severity)
-          ? filter.severity
-          : [filter.severity];
-        
-        if (!severities.includes(event.severity)) {
-          return;
-        }
-      }
-      
-      // Call the callback
-      callback(event);
+    
+    // Form the search options for immutable logs
+    const searchOptions: any = {
+      types: options.type ? [options.type.toString()] : undefined,
+      startTime: options.startTime,
+      endTime: options.endTime,
+      limit: options.limit,
+      offset: options.offset
     };
     
-    // Register event handler
-    this.eventEmitter.on('security-event', handler);
+    // Search for logs matching criteria
+    const logs = immutableSecurityLogs.searchLogs(searchOptions);
     
-    // Return unsubscribe function
-    return () => {
-      this.eventEmitter.off('security-event', handler);
+    // Extract and further filter events
+    return logs
+      .map(log => log.details?.event as SecurityEvent)
+      .filter(event => {
+        // Apply additional filters that couldn't be applied in the search
+        if (options.source && event.source !== options.source) {
+          return false;
+        }
+        if (options.severity && event.severity !== options.severity) {
+          return false;
+        }
+        return true;
+      });
+  }
+  
+  /**
+   * Get statistics about security events
+   */
+  public getStats(): any {
+    if (!this.initialized) {
+      this.initialize();
+    }
+    
+    // Get blockchain stats
+    const blockchainStats = immutableSecurityLogs.getStats();
+    
+    // Add our own stats
+    return {
+      ...blockchainStats,
+      uptime: Date.now() - this.startTime,
+      systemId: this.systemId
     };
   }
   
   /**
-   * Emit a security event
+   * Verify the integrity of the security logs
    */
-  public emitEvent(event: SecurityEvent): void {
-    // Add timestamp if not provided
-    if (!event.timestamp) {
-      event.timestamp = new Date().toISOString();
+  public verifyIntegrity(): { valid: boolean; issues?: any[] } {
+    if (!this.initialized) {
+      this.initialize();
     }
     
-    // Emit the event
-    this.eventEmitter.emit('security-event', event);
-  }
-  
-  /**
-   * Initialize all registered components
-   */
-  public async initializeAll(): Promise<void> {
-    // Initialize components sequentially to avoid race conditions
-    for (const [name, component] of this.components.entries()) {
-      try {
-        await component.initialize();
-        
-        this.emitEvent({
-          category: SecurityEventCategory.SYSTEM,
-          severity: SecurityEventSeverity.INFO,
-          message: `Security component initialized: ${name}`
-        });
-      } catch (error) {
-        this.emitEvent({
-          category: SecurityEventCategory.SYSTEM,
-          severity: SecurityEventSeverity.ERROR,
-          message: `Error initializing security component: ${name}`,
-          data: { error: (error as Error).message }
-        });
-        
-        throw error;
-      }
-    }
-  }
-  
-  /**
-   * Shutdown all registered components
-   */
-  public async shutdownAll(): Promise<void> {
-    // Shutdown components in reverse order
-    const componentEntries = Array.from(this.components.entries()).reverse();
-    
-    for (const [name, component] of componentEntries) {
-      try {
-        await component.shutdown();
-        
-        this.emitEvent({
-          category: SecurityEventCategory.SYSTEM,
-          severity: SecurityEventSeverity.INFO,
-          message: `Security component shutdown: ${name}`
-        });
-      } catch (error) {
-        this.emitEvent({
-          category: SecurityEventCategory.SYSTEM,
-          severity: SecurityEventSeverity.ERROR,
-          message: `Error shutting down security component: ${name}`,
-          data: { error: (error as Error).message }
-        });
-        
-        // Continue shutting down other components
-      }
-    }
-  }
-  
-  /**
-   * Get security status information
-   */
-  public getSecurityStatus(): Record<string, unknown> {
-    const registeredComponents = Array.from(this.components.entries()).map(
-      ([name, component]) => ({
-        name,
-        type: component.type,
-        version: component.version
-      })
-    );
+    // Check blockchain integrity
+    const integrityResult = immutableSecurityLogs.verifyIntegrity();
     
     return {
-      componentsCount: this.components.size,
-      components: registeredComponents,
-      timestamp: new Date().toISOString()
+      valid: integrityResult.valid,
+      issues: integrityResult.invalidBlocks.length > 0 ? 
+        integrityResult.invalidBlocks.map(index => ({ blockIndex: index })) : undefined
     };
+  }
+  
+  /**
+   * Shutdown the security fabric
+   */
+  public shutdown(): void {
+    if (!this.initialized) {
+      return;
+    }
+    
+    // Log shutdown event
+    this.logEvent({
+      type: SecurityEventTypes.SECURITY_SHUTDOWN,
+      message: 'Security fabric shutdown',
+      source: 'SecurityFabric',
+      attributes: {
+        systemId: this.systemId,
+        uptime: Date.now() - this.startTime,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    // Clean up resources
+    immutableSecurityLogs.cleanup();
+    
+    this.initialized = false;
+    console.log('[SECURITY-FABRIC] Security fabric shutdown completed');
   }
 }
 
 // Export singleton instance
-export const securityFabric = SecurityFabric.getInstance();
-
-/**
- * Utility function to log a security event
- */
-export function logSecurityEvent(event: SecurityEvent): void {
-  securityFabric.emitEvent(event);
-}
+export const SecurityFabric = new SecurityFabricImpl();

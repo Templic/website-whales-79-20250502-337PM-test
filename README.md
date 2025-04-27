@@ -303,7 +303,37 @@ These documents provide a framework for effectively using the Replit Agent to en
 
 ## Security Features
 
-The application implements comprehensive security measures to protect users and data:
+The application implements comprehensive security measures including:
+
+### Advanced Cryptographic Capabilities
+
+#### Homomorphic Encryption
+
+The system includes a homomorphic encryption implementation that allows computation on encrypted data without decryption. This feature enhances privacy and security by enabling:
+
+- **Secure Data Analytics**: Perform calculations on sensitive data while keeping it encrypted
+- **Privacy-Preserving Processing**: Process user information without exposing actual values
+- **Encrypted Computation**: Support for both additive and multiplicative operations on encrypted values
+
+To test homomorphic encryption capabilities:
+1. Run the standalone demo server: `./start-demo-server.sh`
+2. Access the interactive demo interface at: `http://localhost:5001/homomorphic-demo.html`
+
+For more details, see [Homomorphic Encryption Demo README](homomorphic-encryption-demo-README.md).
+
+#### Zero-Knowledge Proofs
+
+The application implements zero-knowledge security proofs that allow one party to prove to another that a statement is true without revealing any additional information. Key capabilities include:
+
+- **Identity Verification**: Prove user identity without revealing sensitive credentials
+- **Ownership Validation**: Verify ownership of digital assets without exposing private keys
+- **Secure Authorization**: Authenticate users without transmitting passwords
+
+These features are integrated into the security fabric of the application, with demo routes available for testing.
+
+### Traditional Security Measures
+
+The application includes comprehensive security measures to protect users and data:
 
 ### Security Documentation
 
