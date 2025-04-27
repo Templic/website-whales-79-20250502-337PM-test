@@ -14,6 +14,7 @@ import dashboardRoutes from './api/security/dashboard';
 import realtimeRoutes, { setupSecurityWebSockets } from './api/security/realtime';
 import { zeroKnowledgeRoutes } from './api/security/zero-knowledge';
 import { homomorphicRoutes } from './api/security/homomorphic';
+import { demoHomomorphicRoutes } from './api/security/demo-homomorphic';
 import { requireMFAVerification, initializeMFAVerification, verifyMFAResponse, generateMFAChallenge } from '../auth/mfaIntegration';
 import { logSecurityEvent } from '../security/advanced/SecurityLogger';
 import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
