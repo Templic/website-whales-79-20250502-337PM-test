@@ -6,7 +6,7 @@
  */
 
 import OpenAI from "openai";
-import { TypeScriptErrorDetail } from "./ts-error-finder";
+import { TypeScriptErrorDetail } from "../types/ts-error-types";
 import fs from "fs";
 import path from "path";
 
@@ -107,7 +107,7 @@ export async function analyzeError(
     });
 
     // Parse the response
-    const content = response.choices[0].message.content;
+    const content = response.choices[0].message.content || "";
     const result = JSON.parse(content);
     
     return {
@@ -170,7 +170,7 @@ export async function generateErrorEducation(
       ]
     });
 
-    return response.choices[0].message.content;
+    return response.choices[0].message.content || "No content available";
   } catch (err) {
     console.error("Error generating educational content:", err);
     return "Failed to generate educational content due to API error.";
@@ -231,7 +231,10 @@ export async function analyzeErrorGroup(
       response_format: { type: "json_object" }
     });
 
-    return JSON.parse(response.choices[0].message.content);
+    // Use a non-null assertion with a default value for safety
+    const messageContent = response.choices[0]?.message?.content;
+    const content = typeof messageContent === 'string' ? messageContent : "{}";
+    return JSON.parse(content);
   } catch (err) {
     console.error("Error analyzing error group:", err);
     return {
