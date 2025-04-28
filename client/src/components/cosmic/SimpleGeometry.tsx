@@ -344,12 +344,20 @@ export function SimpleInvertedTriangle({
           
         {/* Button container - positioned at bottom of visible area (narrow part) */}
         <div className="w-[40%] mb-1">
-          {/* Button at bottom of inverted triangle (visually smallest part) */}
+          {/* Button at bottom of inverted triangle (visually smallest part) - shaped like inverted triangle */}
           {button && (
-            <div className="flex justify-center items-center scale-90">
+            <div className="flex justify-center items-center w-full">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
-                  className: cn(fontSize.button, 'py-0.5 px-3', (button.props as any).className || ''),
+                  className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
+                  style: {
+                    clipPath: "polygon(0% 0%, 100% 0%, 50% 100%)",
+                    padding: "0.3rem 0.8rem 0.15rem",
+                    background: (button.props as any).className?.includes('bg-') 
+                      ? undefined 
+                      : "rgba(0, 100, 255, 0.6)",
+                    border: "none"
+                  }
                 }) : button
               }
             </div>
@@ -460,12 +468,20 @@ export function SimpleHexagon({
           })}
         </div>
         
-        {/* Button - adaptive sizing for button */}
+        {/* Button - hexagon shaped to match container */}
         {button && (
           <div className="mt-0.5 mb-0.5 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
-                className: cn(fontSize.button, 'py-0.5 px-3 scale-90', (button.props as any).className || ''),
+                className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
+                style: {
+                  clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
+                  padding: "0.2rem 0.8rem",
+                  background: (button.props as any).className?.includes('bg-') 
+                    ? undefined 
+                    : "rgba(0, 100, 255, 0.6)",
+                  border: "none"
+                }
               }) : button
             }
           </div>
@@ -575,12 +591,20 @@ export function SimpleOctagon({
           })}
         </div>
         
-        {/* Button - adaptive sizing for button */}
+        {/* Button - octagon shaped to match container */}
         {button && (
           <div className="mt-0.5 mb-0.5 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
-                className: cn(fontSize.button, 'py-0.5 px-3 scale-90', (button.props as any).className || ''),
+                className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
+                style: {
+                  clipPath: "polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)",
+                  padding: "0.2rem 0.8rem",
+                  background: (button.props as any).className?.includes('bg-') 
+                    ? undefined 
+                    : "rgba(0, 100, 255, 0.6)",
+                  border: "none"
+                }
               }) : button
             }
           </div>
@@ -751,12 +775,22 @@ export function SimpleStarburst({
             })}
           </div>
           
-          {/* Button - adaptive sizing for star */}
+          {/* Button - star shaped to match container */}
           {button && (
             <div className="mt-0 flex justify-center items-center">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
-                  className: cn(scales.buttonClass, 'py-0 px-2', (button.props as any).className || ''),
+                  className: cn(scales.buttonClass, 'text-center', (button.props as any).className || ''),
+                  style: {
+                    clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
+                    padding: "0.2rem 0.6rem",
+                    background: (button.props as any).className?.includes('bg-') 
+                      ? undefined 
+                      : "rgba(0, 100, 255, 0.6)",
+                    border: "none",
+                    minWidth: "2.5rem",
+                    minHeight: "1.8rem" 
+                  }
                 }) : button
               }
             </div>
@@ -892,12 +926,25 @@ export function SimpleCircle({
           })}
         </div>
         
-        {/* Button - adaptive sizing for circle */}
+        {/* Button - circle shaped to match container */}
         {button && (
           <div className="mt-0.5 mb-0.5 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
-                className: cn(fontSize.button, 'py-0.5 px-3', (button.props as any).className || ''),
+                className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
+                style: {
+                  borderRadius: "9999px",
+                  padding: "0.2rem 0.8rem",
+                  background: (button.props as any).className?.includes('bg-') 
+                    ? undefined 
+                    : "rgba(0, 100, 255, 0.6)",
+                  border: "none",
+                  minWidth: "2rem",
+                  aspectRatio: "1/1",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }
               }) : button
             }
           </div>
