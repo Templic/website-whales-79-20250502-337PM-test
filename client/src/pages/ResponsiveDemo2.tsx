@@ -143,15 +143,24 @@ const ResponsiveDemo2 = () => {
           Adaptive Scaling Comparison
         </h2>
         
-        <div className="flex flex-wrap justify-center gap-8 mt-8">
+        <div className="mx-auto max-w-6xl px-4">
+          <p className="text-white text-center mb-8">
+            These examples demonstrate how shapes respond to different container widths with adaptive scaling on vs. off.
+            Resize your browser window to see the text and content adapt when adaptive scaling is enabled.
+          </p>
+        </div>
+        
+        {/* SMALL CONTAINERS - 120px */}
+        <h3 className="text-white text-center text-xl font-medium mb-6">Small Containers (120px)</h3>
+        <div className="flex flex-wrap justify-center gap-8 mt-4">
           {/* Adaptive enabled */}
-          <div className="w-[150px] flex flex-col items-center">
+          <div className="w-[120px] flex flex-col items-center">
             <div className="mb-4 text-center">
               <span className="bg-green-500 text-white px-2 py-1 rounded text-sm font-bold">Adaptive On</span>
             </div>
             <SimpleTriangle className="w-full">
-              <h3>Auto-Scale</h3>
-              <p>Text adjusts to maintain readability in the triangle.</p>
+              <h3>Triangle</h3>
+              <p>Text size shrinks to fit small container width.</p>
               <button className="bg-green-500 text-white rounded">
                 Click
               </button>
@@ -159,13 +168,13 @@ const ResponsiveDemo2 = () => {
           </div>
           
           {/* Adaptive disabled */}
-          <div className="w-[150px] flex flex-col items-center">
+          <div className="w-[120px] flex flex-col items-center">
             <div className="mb-4 text-center">
               <span className="bg-red-500 text-white px-2 py-1 rounded text-sm font-bold">Adaptive Off</span>
             </div>
             <SimpleTriangle className="w-full" adaptiveScaling={false}>
-              <h3>Fixed Size</h3>
-              <p>Text remains the same size regardless of container dimensions.</p>
+              <h3>Triangle</h3>
+              <p>Text stays at default size even in small container.</p>
               <button className="bg-red-500 text-white rounded">
                 Click
               </button>
@@ -173,16 +182,17 @@ const ResponsiveDemo2 = () => {
           </div>
         </div>
         
-        {/* Additional shapes with adaptive on/off */}
-        <div className="flex flex-wrap justify-center gap-8 mt-12">
+        {/* MEDIUM CONTAINERS - 200px */}
+        <h3 className="text-white text-center text-xl font-medium mt-12 mb-6">Medium Containers (200px)</h3>
+        <div className="flex flex-wrap justify-center gap-12 mt-4">
           {/* Circle with adaptive on */}
-          <div className="w-[150px] flex flex-col items-center">
+          <div className="w-[200px] flex flex-col items-center">
             <div className="mb-4 text-center">
               <span className="bg-teal-500 text-white px-2 py-1 rounded text-sm font-bold">Adaptive On</span>
             </div>
             <SimpleCircle className="w-full">
-              <h3>Auto-Scale</h3>
-              <p>Content adapts to circle dimensions.</p>
+              <h3>Circle</h3>
+              <p>Text in medium container adjusts to medium size.</p>
               <button className="bg-teal-500 text-white rounded">
                 Click
               </button>
@@ -190,17 +200,51 @@ const ResponsiveDemo2 = () => {
           </div>
           
           {/* Circle with adaptive off */}
-          <div className="w-[150px] flex flex-col items-center">
+          <div className="w-[200px] flex flex-col items-center">
             <div className="mb-4 text-center">
               <span className="bg-rose-500 text-white px-2 py-1 rounded text-sm font-bold">Adaptive Off</span>
             </div>
             <SimpleCircle className="w-full" adaptiveScaling={false}>
-              <h3>Fixed Size</h3>
-              <p>Content size remains static regardless of container.</p>
+              <h3>Circle</h3>
+              <p>Text remains at default size in medium container.</p>
               <button className="bg-rose-500 text-white rounded">
                 Click
               </button>
             </SimpleCircle>
+          </div>
+        </div>
+        
+        {/* LARGE CONTAINERS - 300px */}
+        <h3 className="text-white text-center text-xl font-medium mt-12 mb-6">Large Containers (300px)</h3>
+        <div className="flex flex-wrap justify-center gap-16 mt-4 mb-16">
+          {/* Octagon with adaptive on */}
+          <div className="w-[300px] flex flex-col items-center">
+            <div className="mb-4 text-center">
+              <span className="bg-blue-500 text-white px-2 py-1 rounded text-sm font-bold">Adaptive On</span>
+            </div>
+            <SimpleOctagon className="w-full">
+              <h3>Octagon</h3>
+              <p>Text in large container grows proportionally to fill the available space comfortably. 
+                 Notice how heading and content text are larger compared to smaller containers.</p>
+              <button className="bg-blue-500 text-white rounded">
+                Click
+              </button>
+            </SimpleOctagon>
+          </div>
+          
+          {/* Octagon with adaptive off */}
+          <div className="w-[300px] flex flex-col items-center">
+            <div className="mb-4 text-center">
+              <span className="bg-purple-500 text-white px-2 py-1 rounded text-sm font-bold">Adaptive Off</span>
+            </div>
+            <SimpleOctagon className="w-full" adaptiveScaling={false}>
+              <h3>Octagon</h3>
+              <p>Text remains at the same default size despite having plenty of space in this large container.
+                 This creates unbalanced visual proportions with too much empty space.</p>
+              <button className="bg-purple-500 text-white rounded">
+                Click
+              </button>
+            </SimpleOctagon>
           </div>
         </div>
       </div>
