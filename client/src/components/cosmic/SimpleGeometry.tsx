@@ -201,7 +201,7 @@ export function SimpleTriangle({
           <ShapeDivider width="30%" opacity={30} margin="0.2rem 0 0.2rem 0" />
           
           {/* Main content with even narrower max-width for triangle */}
-          <div className="w-[80%] max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0 pb-4">
+          <div className="w-[80%] max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0 pb-2">
             {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
             {content.map((item, index) => {
               if (React.isValidElement(item) && item.type === 'p') {
@@ -214,9 +214,9 @@ export function SimpleTriangle({
             })}
           </div>
           
-          {/* Button - positioned with space after content for better visual separation */}
+          {/* Button - positioned closer to content with full visibility */}
           {button && (
-            <div className="mt-4 mb-3 flex justify-center items-center w-full">
+            <div className="mt-0 mb-3 flex justify-center items-center w-full">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
@@ -336,7 +336,7 @@ export function SimpleInvertedTriangle({
         <ShapeDivider width="60%" opacity={30} margin="0" />
         
         {/* Main content with minimal spacing */}
-        <div className="w-[70%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0 pb-4">
+        <div className="w-[70%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0 pb-2">
           {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
@@ -349,8 +349,8 @@ export function SimpleInvertedTriangle({
           })}
         </div>
           
-        {/* Button container - positioned with better spacing from content */}
-        <div className="w-[50%] mb-3 mt-2">
+        {/* Button container - positioned closer to content with better visibility */}
+        <div className="w-[50%] mb-3">
           {/* Button with improved text visibility */}
           {button && (
             <div className="flex justify-center items-center w-full">
