@@ -6,6 +6,36 @@
  * device types and orientations.
  */
 
+/* Global CSS variables for shape contours and responsive styling */
+:root {
+  /* Shape-specific content width variables */
+  --hexagon-content-width: 82%;
+  --triangle-content-width: 70%;
+  --inverted-triangle-content-width: 70%;
+  --starburst-content-width: 60%;
+  --circle-content-width: 75%;
+  
+  /* Mobile portrait shape-specific content width variables */
+  --mobile-portrait-hexagon-content-width: 80%;
+  --mobile-portrait-triangle-content-width: 65%;
+  --mobile-portrait-inverted-triangle-content-width: 65%;
+  --mobile-portrait-starburst-content-width: 55%;
+  --mobile-portrait-circle-content-width: 75%;
+  
+  /* Contour recognition variables */
+  --hexagon-mask-start: 5%;
+  --hexagon-mask-end: 95%;
+  --triangle-mask-start: 8%;
+  --triangle-mask-end: 95%;
+  --inverted-triangle-mask-start: 5%;
+  --inverted-triangle-mask-end: 92%;
+  --starburst-mask-radius: 60%;
+  --circle-mask-radius: 70%;
+  
+  /* Word spacing for mobile portrait */
+  --mobile-portrait-word-spacing: -0.05em;
+}
+
 /* Base styling for all geometric shape containers */
 .geometric-shape-container {
   --mobile-font-size: 0.9rem;
@@ -71,26 +101,75 @@
     width: 100%; /* Ensure text uses available space */
   }
   
-  /* Specific shape adjustments for mobile portrait */
-  .mobile-portrait [data-shape="hexagon"] .shape-content-center,
-  .mobile-portrait [data-shape="circle"] .shape-content-center {
-    width: 95% !important;
-    max-width: 95% !important;
+  /* Specific shape adjustments for mobile portrait - improved contour recognition */
+  .mobile-portrait [data-shape="hexagon"] .shape-content-center {
+    width: 80% !important;
+    max-width: 80% !important;
     word-break: normal;
     hyphens: auto;
     padding: 0.5rem !important; /* Reduce padding to use more space for text */
+    /* Enhanced masking for contour recognition */
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 5%, #000 95%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 5%, #000 95%, transparent 100%);
   }
   
-  .mobile-portrait [data-shape="triangle"] .shape-content-center,
-  .mobile-portrait [data-shape="inverted-triangle"] .shape-content-center {
-    width: 90% !important;
-    max-width: 90% !important;
+  .mobile-portrait [data-shape="circle"] .shape-content-center {
+    width: 75% !important;
+    max-width: 75% !important;
+    word-break: normal;
+    hyphens: auto;
     padding: 0.5rem !important;
+    /* Circular masking for better content flow */
+    mask-image: radial-gradient(circle, #000 65%, transparent 100%);
+    -webkit-mask-image: radial-gradient(circle, #000 65%, transparent 100%);
+  }
+  
+  .mobile-portrait [data-shape="triangle"] .shape-content-center {
+    width: 65% !important;
+    max-width: 65% !important;
+    padding: 0.5rem !important;
+    top: 15%;
+    position: relative;
+    /* Enhanced masking for triangle-specific contour recognition */
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  }
+  
+  .mobile-portrait [data-shape="inverted-triangle"] .shape-content-center {
+    width: 65% !important;
+    max-width: 65% !important;
+    padding: 0.5rem !important;
+    bottom: 8%;
+    position: relative;
+    /* Enhanced masking for inverted triangle contour recognition */
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  }
+  
+  .mobile-portrait [data-shape="starburst"] .shape-content-center {
+    width: 55% !important;
+    max-width: 55% !important;
+    padding: 0.5rem !important;
+    /* Star-specific masking for better contour recognition */
+    mask-image: radial-gradient(ellipse 65% 65% at center, #000 60%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 65% 65% at center, #000 60%, transparent 100%);
   }
   
   /* Set minimum width for text containers in mobile portrait */
   .mobile-portrait .geometric-shape-container .shape-content-center {
-    min-width: 200px; /* Ensure text has enough space to flow properly */
+    min-width: 160px; /* Ensure text has enough space to flow properly */
+  }
+  
+  /* Visual indicator for content boundaries in mobile portrait */
+  .mobile-portrait .geometric-shape-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.05;
+    pointer-events: none;
+    /* Subtle gradient to visually indicate shape edges */
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 10%, transparent 80%);
   }
   
   /* Adjust button sizing for mobile */
@@ -160,19 +239,77 @@
   padding-left: max(var(--content-padding), 0.75rem);
   padding-right: max(var(--content-padding), 0.75rem);
   hyphens: auto;
+  /* Better hexagon contour recognition */
+  width: 82%;
+  max-width: 82%;
+  position: relative;
+  /* Add visual guide for better text flow */
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 5%, #000 95%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 5%, #000 95%, transparent 100%);
 }
 
 [data-shape="triangle"] .shape-content-center {
   padding-bottom: max(var(--content-padding), 1rem);
+  /* Improved triangle contour */
+  width: 70% !important;
+  max-width: 70% !important;
+  /* Center content better */
+  position: relative;
+  top: 15%;
+  /* Triangle shape-specific masking for text */
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 8%, #000 95%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 8%, #000 95%, transparent 100%);
 }
 
 [data-shape="inverted-triangle"] .shape-content-center {
   padding-top: max(var(--content-padding), 1rem);
+  /* Improved inverted triangle contour */
+  width: 70% !important;
+  max-width: 70% !important;
+  /* Position content to match shape */
+  position: relative;
+  bottom: 8%;
+  /* Inverted triangle masking */
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 5%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 5%, #000 92%, transparent 100%);
 }
 
+/* Additional shape contour improvements */
 [data-shape="starburst"] .shape-content-center {
-  padding: max(var(--content-padding), 0.5rem);
+  /* Starburst needs tighter content area */
+  width: 60% !important;
+  max-width: 60% !important;
+  /* Create star-like content flow */
+  mask-image: radial-gradient(ellipse 70% 70% at center, #000 60%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at center, #000 60%, transparent 100%);
 }
+
+[data-shape="circle"] .shape-content-center {
+  /* Create circular content area with smoother edges */
+  width: 75% !important;
+  max-width: 75% !important;
+  /* Circular masking */
+  mask-image: radial-gradient(circle, #000 70%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle, #000 70%, transparent 100%);
+}
+
+/* Creates better shape recognition for text space */
+.geometric-shape-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.07;
+  /* Visual guide for text boundaries */
+  background-image: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.1) 70%
+  );
+}
+
+/* Padding adjustment for starburst is already included in the shape-specific section above */
 
 /* Orientation-specific adjustments */
 .mobile-landscape .geometric-shape-container h1,

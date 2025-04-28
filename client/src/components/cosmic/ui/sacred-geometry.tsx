@@ -33,6 +33,7 @@ export function HexagonContainer({
       className={cn(
         "relative flex items-center justify-center p-6 text-white",
         responsiveClassName,
+        "shape-contour-active",
         className
       )}
       style={{
@@ -92,6 +93,7 @@ export function TriangleContainer({
       className={cn(
         "relative text-white",
         responsiveClassName,
+        "shape-contour-active",
         className
       )}
       style={{
@@ -155,6 +157,7 @@ export function InvertedTriangleContainer({
       className={cn(
         "relative text-white",
         responsiveClassName,
+        "shape-contour-active",
         className
       )}
       style={{
@@ -218,6 +221,7 @@ export function OctagonContainer({
       className={cn(
         "relative flex items-center justify-center p-8 text-white",
         responsiveClassName,
+        "shape-contour-active",
         className
       )}
       style={{
@@ -277,6 +281,7 @@ export function StarburstContainer({
       className={cn(
         "relative text-white",
         responsiveClassName,
+        "shape-contour-active",
         className
       )}
       style={{

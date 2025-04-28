@@ -8,6 +8,7 @@
 import React from 'react';
 import { OrientationContainer } from '../ui/OrientationLayout';
 import { useOrientationContext } from '../../contexts/OrientationContext';
+import { GeometricShapeOutline } from './ui/GeometricShapeOutline';
 
 interface GeometricShapeResponsiveProps {
   shape: 'hexagon' | 'triangle' | 'pentagon' | 'diamond' | 'circle';
@@ -83,7 +84,7 @@ export function GeometricShapeResponsive({
   return (
     <OrientationContainer className={`sacred-geometry-container ${className}`}>
       <div 
-        className={`shape-wrapper ${shapeClass} ${sizeClass} ${effectClasses} geometric-shape-container`}
+        className={`shape-wrapper ${shapeClass} ${sizeClass} ${effectClasses} geometric-shape-container shape-contour-active`}
         style={orientationStyles}
         data-shape={shape}
         data-orientation-optimized="true"
