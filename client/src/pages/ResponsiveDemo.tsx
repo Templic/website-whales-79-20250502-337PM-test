@@ -17,6 +17,13 @@ import {
   SimpleCircle
 } from '../components/cosmic/SimpleGeometry';
 
+// Import additional geometric shapes
+import {
+  SimpleRhombus,
+  SimplePentagon,
+  SimpleHeptagon
+} from '../components/cosmic/AdditionalGeometry';
+
 const ResponsiveDemo = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black py-12 px-4">
@@ -96,6 +103,46 @@ const ResponsiveDemo = () => {
                 Connect
               </button>
             </SimpleCircle>
+          </div>
+        </div>
+        
+        {/* NEW SHAPES SECTION */}
+        <h2 className="text-white text-center text-2xl font-bold mt-16 mb-10">
+          New Responsive Shapes
+        </h2>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-16">
+          {/* Rhombus */}
+          <div className="w-full">
+            <SimpleRhombus className="w-full max-w-[250px] mx-auto">
+              <h3>Rhombus</h3>
+              <p>A diamond-shaped container that adapts its content to maintain proper boundaries at all sizes.</p>
+              <button className="bg-amber-500 hover:bg-amber-700 text-white rounded">
+                Discover
+              </button>
+            </SimpleRhombus>
+          </div>
+          
+          {/* Pentagon */}
+          <div className="w-full">
+            <SimplePentagon className="w-full max-w-[250px] mx-auto">
+              <h3>Pentagon</h3>
+              <p>Five-sided geometric shape with responsive content that adjusts to the container dimensions.</p>
+              <button className="bg-fuchsia-500 hover:bg-fuchsia-700 text-white rounded">
+                Reveal
+              </button>
+            </SimplePentagon>
+          </div>
+          
+          {/* Heptagon */}
+          <div className="w-full">
+            <SimpleHeptagon className="w-full max-w-[250px] mx-auto">
+              <h3>Heptagon</h3>
+              <p>Seven-sided shape with adaptive scaling for optimal content presentation regardless of screen size.</p>
+              <button className="bg-emerald-500 hover:bg-emerald-700 text-white rounded">
+                Explore
+              </button>
+            </SimpleHeptagon>
           </div>
         </div>
         
@@ -246,6 +293,52 @@ const ResponsiveDemo = () => {
                 Click
               </button>
             </SimpleOctagon>
+          </div>
+        </div>
+
+        {/* NEW SHAPES SCALING COMPARISON */}
+        <h3 className="text-white text-center text-xl font-medium mt-16 mb-6">New Shapes Scaling Comparison</h3>
+        <div className="flex flex-wrap justify-center gap-6 mt-4 mb-16">
+          {/* Small Rhombus */}
+          <div className="w-[120px] flex flex-col items-center">
+            <div className="mb-4 text-center">
+              <span className="bg-orange-500 text-white px-2 py-1 rounded text-sm font-bold">Small</span>
+            </div>
+            <SimpleRhombus className="w-full">
+              <h3>Rhombus</h3>
+              <p>Text scales down in this small diamond shape.</p>
+              <button className="bg-orange-500 text-white rounded">
+                Click
+              </button>
+            </SimpleRhombus>
+          </div>
+          
+          {/* Medium Rhombus */}
+          <div className="w-[200px] flex flex-col items-center">
+            <div className="mb-4 text-center">
+              <span className="bg-orange-500 text-white px-2 py-1 rounded text-sm font-bold">Medium</span>
+            </div>
+            <SimpleRhombus className="w-full">
+              <h3>Rhombus</h3>
+              <p>Content in this medium-sized diamond automatically adjusts for better readability.</p>
+              <button className="bg-orange-500 text-white rounded">
+                Click
+              </button>
+            </SimpleRhombus>
+          </div>
+          
+          {/* Large Rhombus */}
+          <div className="w-[300px] flex flex-col items-center">
+            <div className="mb-4 text-center">
+              <span className="bg-orange-500 text-white px-2 py-1 rounded text-sm font-bold">Large</span>
+            </div>
+            <SimpleRhombus className="w-full">
+              <h3>Rhombus</h3>
+              <p>In a larger diamond, text and content have more room to breathe, with font sizes scaling up proportionally to maintain visual balance across all sizes.</p>
+              <button className="bg-orange-500 text-white rounded">
+                Click
+              </button>
+            </SimpleRhombus>
           </div>
         </div>
       </div>
