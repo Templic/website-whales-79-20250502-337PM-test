@@ -197,8 +197,8 @@ export function SimpleTriangle({
             )}
           </div>
           
-          {/* Divider - no margin for tighter spacing */}
-          <ShapeDivider width="40%" opacity={30} margin="-0.1rem 0 0 0" />
+          {/* Divider - small margin to separate from title */}
+          <ShapeDivider width="30%" opacity={30} margin="0.2rem 0 0.2rem 0" />
           
           {/* Main content in center - zero margin for compact display */}
           <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
@@ -222,11 +222,17 @@ export function SimpleTriangle({
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
                     clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
-                    padding: "0.15rem 0.8rem 0.3rem",
+                    padding: "0.15rem 0.7rem 0.4rem",
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
-                      : "rgba(0, 100, 255, 0.6)",
-                    border: "none"
+                      : "rgba(0, 100, 255, 0.8)",
+                    border: "1px solid rgba(255, 255, 255, 0.5)",
+                    width: "auto",
+                    minWidth: "3rem",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)"
                   }
                 }) : button
               }
@@ -352,11 +358,17 @@ export function SimpleInvertedTriangle({
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
                     clipPath: "polygon(0% 0%, 100% 0%, 50% 100%)",
-                    padding: "0.3rem 0.8rem 0.15rem",
+                    padding: "0.3rem 0.6rem 0.25rem",
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
-                      : "rgba(0, 100, 255, 0.6)",
-                    border: "none"
+                      : "rgba(0, 100, 255, 0.8)",
+                    border: "1px solid rgba(255, 255, 255, 0.5)",
+                    width: "auto",
+                    minWidth: "3rem",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)"
                   }
                 }) : button
               }
@@ -479,8 +491,13 @@ export function SimpleHexagon({
                   padding: "0.2rem 0.8rem",
                   background: (button.props as any).className?.includes('bg-') 
                     ? undefined 
-                    : "rgba(0, 100, 255, 0.6)",
-                  border: "none"
+                    : "rgba(0, 100, 255, 0.8)",
+                  border: "1px solid rgba(255, 255, 255, 0.5)",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  minWidth: "3rem",
+                  boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)"
                 }
               }) : button
             }
@@ -653,49 +670,49 @@ export function SimpleStarburst({
     if (containerRef.current) {
       const width = containerRef.current.offsetWidth;
       
-      // Smaller scales for smaller sizes to ensure content fits in star points
+      // Adjusted scales to improve visibility for starburst
       if (width < 150) {
         return {
-          containerWidth: '50%', // Even smaller container for tiny stars
-          containerHeight: '50%',
-          headingClass: 'text-[9px]',
-          contentClass: 'text-[8px]',
-          buttonClass: 'text-[8px] scale-75'
+          containerWidth: '80%', // Larger container for better visibility
+          containerHeight: '80%',
+          headingClass: 'text-[10px] font-bold',
+          contentClass: 'text-[9px]',
+          buttonClass: 'text-[9px] font-bold'
         };
       } else if (width < 250) {
         return {
-          containerWidth: '55%',
-          containerHeight: '55%',
-          headingClass: 'text-[10px]',
-          contentClass: 'text-[9px]',
-          buttonClass: 'text-[9px] scale-80'
+          containerWidth: '80%',
+          containerHeight: '80%',
+          headingClass: 'text-[11px] font-bold',
+          contentClass: 'text-[10px]',
+          buttonClass: 'text-[10px] font-bold'
         };
       } else if (width < 350) {
         return {
-          containerWidth: '60%',
-          containerHeight: '60%',
-          headingClass: 'text-xs',
-          contentClass: 'text-[10px]',
-          buttonClass: 'text-[10px] scale-90'
+          containerWidth: '80%',
+          containerHeight: '80%',
+          headingClass: 'text-xs font-bold',
+          contentClass: 'text-[11px]',
+          buttonClass: 'text-[11px] font-bold'
         };
       } else {
         return {
-          containerWidth: '65%',
-          containerHeight: '65%',
-          headingClass: 'text-sm',
+          containerWidth: '80%',
+          containerHeight: '80%',
+          headingClass: 'text-sm font-bold',
           contentClass: 'text-xs',
-          buttonClass: 'text-xs'
+          buttonClass: 'text-xs font-bold'
         };
       }
     }
     
-    // Default scales
+    // Default scales - improved visibility
     return {
-      containerWidth: '60%',
-      containerHeight: '60%',
-      headingClass: 'text-xs',
-      contentClass: 'text-[10px]',
-      buttonClass: 'text-[10px] scale-90'
+      containerWidth: '80%',
+      containerHeight: '80%',
+      headingClass: 'text-xs font-bold',
+      contentClass: 'text-[11px]',
+      buttonClass: 'text-[11px] font-bold'
     };
   };
   
@@ -783,13 +800,17 @@ export function SimpleStarburst({
                   className: cn(scales.buttonClass, 'text-center', (button.props as any).className || ''),
                   style: {
                     clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
-                    padding: "0.2rem 0.6rem",
+                    padding: "0.25rem 0.6rem",
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
-                      : "rgba(0, 100, 255, 0.6)",
-                    border: "none",
-                    minWidth: "2.5rem",
-                    minHeight: "1.8rem" 
+                      : "rgba(0, 100, 255, 0.8)",
+                    border: "1px solid rgba(255, 255, 255, 0.5)",
+                    minWidth: "3rem",
+                    minHeight: "2rem",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)"
                   }
                 }) : button
               }
