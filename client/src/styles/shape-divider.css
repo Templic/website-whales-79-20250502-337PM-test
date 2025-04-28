@@ -1,0 +1,130 @@
+/**
+ * shape-divider.css
+ * 
+ * Styling for the ShapeDivider component, providing responsive
+ * and shape-specific styling for soft divider lines between
+ * title and content in geometric shape containers.
+ */
+
+.shape-divider {
+  /* Base styling for all dividers */
+  width: 50%;
+  height: 1px;
+  opacity: 0.2;
+  background-color: white;
+  margin: 0.5rem auto;
+  
+  /* Subtle gradient effect for softer appearance */
+  background-image: linear-gradient(
+    to right,
+    transparent 0%,
+    currentColor 20%,
+    currentColor 80%,
+    transparent 100%
+  );
+}
+
+/* Shape-specific styling */
+.shape-divider-triangle {
+  width: 40%;
+  margin-top: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.shape-divider-inverted-triangle {
+  width: 60%;
+  margin-top: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.shape-divider-starburst {
+  width: 25%;
+  margin: 0.35rem auto;
+  opacity: 0.3;
+  background-image: radial-gradient(
+    ellipse 90% 1px at center,
+    currentColor 0%,
+    transparent 100%
+  );
+}
+
+.shape-divider-hexagon {
+  width: 50%;
+  opacity: 0.25;
+}
+
+.shape-divider-circle {
+  width: 40%;
+  opacity: 0.25;
+  background-image: radial-gradient(
+    ellipse 50% 1px at center,
+    currentColor 30%,
+    transparent 100%
+  );
+}
+
+.shape-divider-octagon {
+  width: 60%;
+  opacity: 0.25;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  /* Mobile styles */
+  .shape-divider {
+    /* Smaller dividers on mobile */
+    margin: 0.3rem auto;
+    height: 1px;
+  }
+  
+  /* Mobile portrait specific adjustments */
+  .mobile-portrait .shape-divider {
+    width: 30% !important; /* Override any specific shape width */
+    margin: 0.2rem auto !important;
+  }
+  
+  /* Mobile landscape needs even smaller dividers due to height constraints */
+  .mobile-landscape .shape-divider {
+    width: 40% !important;
+    margin: 0.15rem auto !important;
+    opacity: 0.3 !important;
+  }
+  
+  /* Shape-specific mobile adjustments */
+  .mobile-portrait .shape-divider-triangle {
+    width: 35% !important;
+  }
+  
+  .mobile-portrait .shape-divider-inverted-triangle {
+    width: 45% !important;
+  }
+  
+  .mobile-portrait .shape-divider-starburst {
+    width: 20% !important;
+    height: 1px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Tablet styles */
+  .shape-divider {
+    margin: 0.4rem auto;
+  }
+  
+  /* Tablet portrait */
+  .tablet-portrait .shape-divider {
+    width: 45%;
+  }
+  
+  /* Tablet landscape */
+  .tablet-landscape .shape-divider {
+    width: 50%;
+  }
+}
+
+/* Enhanced visual appearance in dark mode */
+@media (prefers-color-scheme: dark) {
+  .shape-divider {
+    opacity: 0.3; /* Slightly more visible on dark backgrounds */
+  }
+}

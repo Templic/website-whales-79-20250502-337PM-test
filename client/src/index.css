@@ -9,6 +9,9 @@
 @import './styles/cosmic-theme.css';
 @import './styles/mobile-styles.css';
 @import './styles/cosmic-containers.css';
+@import './styles/geometric-text-container.css';
+@import './styles/shape-contour-helpers.css';
+@import './styles/shape-divider.css';
 
 /* Theme Variables */
 :root {

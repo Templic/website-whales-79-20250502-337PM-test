@@ -1,4 +1,5 @@
 import React from "react"
+import { ShapeDivider } from "./ShapeDivider";
 
 // Utility function to conditionally join class names
 const cn = (...classes: (string | undefined)[]) => {
@@ -71,7 +72,19 @@ export function HexagonContainer({
       <div 
         className={`z-10 max-w-[var(--max-content-width,90%)] overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`}
       >
-        {children}
+        {React.Children.map(children, (child, index) => {
+          // Add divider after heading elements
+          if (React.isValidElement(child) && typeof child.type === 'string' && 
+              (child.type === 'h1' || child.type === 'h2' || child.type === 'h3')) {
+            return (
+              <>
+                {child}
+                <ShapeDivider shapeType="hexagon" width="50%" margin="0.5rem 0" opacity={25} />
+              </>
+            );
+          }
+          return child;
+        })}
       </div>
     </div>
   )
@@ -117,7 +130,7 @@ export function TriangleContainer({
   if (otherContent.length === 0) {
     otherContent.push(
       <p key="sample-text" className="triangle-content text-sm">
-        This triangle represents growth and ascension. This responsive container adjusts content to fit within its boundaries.
+        This triangle represents growth and ascension. This responsive container adjusts content to fit.
       </p>
     );
   }
@@ -202,10 +215,10 @@ export function TriangleContainer({
         </div>
         
         {/* Soft divider line between content and title */}
-        <div className="w-[var(--max-content-width,50%)] h-px bg-white bg-opacity-20 my-2"></div>
+        <ShapeDivider shapeType="triangle" width="40%" margin="0.5rem 0" opacity={25} />
         
         {/* Title at bottom */}
-        <div className="w-[var(--max-content-width,70%)] flex flex-col items-center justify-center mb-5 mt-1 triangle-title-container">
+        <div className="w-[var(--max-content-width,70%)] flex flex-col items-center justify-center mb-4 mt-0 triangle-title-container">
           {headings}
         </div>
       </div>
@@ -253,7 +266,7 @@ export function InvertedTriangleContainer({
   if (otherContent.length === 0) {
     otherContent.push(
       <p key="sample-text" className="inverted-triangle-content text-sm">
-        The inverted triangle symbolizes water and the feminine form. This adaptive container ensures text fits precisely.
+        The inverted triangle symbolizes water and feminine energy. Adaptive container for precise content.
       </p>
     );
   }
@@ -327,7 +340,7 @@ export function InvertedTriangleContainer({
         </div>
         
         {/* Soft divider line between title and content */}
-        <div className="w-[var(--max-content-width,60%)] h-px bg-white bg-opacity-20 my-1"></div>
+        <ShapeDivider shapeType="inverted-triangle" width="60%" margin="0.5rem 0" opacity={25} />
         
         {/* Content in middle with shape contour awareness */}
         <div 
@@ -409,7 +422,19 @@ export function OctagonContainer({
       <div 
         className={`z-10 max-w-[var(--max-content-width,92%)] px-2 py-2 overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`}
       >
-        {children}
+        {React.Children.map(children, (child, index) => {
+          // Add divider after heading elements
+          if (React.isValidElement(child) && typeof child.type === 'string' && 
+              (child.type === 'h1' || child.type === 'h2' || child.type === 'h3')) {
+            return (
+              <>
+                {child}
+                <ShapeDivider shapeType="octagon" width="60%" margin="0.5rem 0" opacity={25} />
+              </>
+            );
+          }
+          return child;
+        })}
       </div>
     </div>
   )
@@ -419,7 +444,7 @@ export function StarburstContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-  maxContentWidth = "40%",
+  maxContentWidth = "35%",
   textAlign = "center",
   responsive = true
 }: EnhancedGeometryContainerProps) {
@@ -455,7 +480,7 @@ export function StarburstContainer({
   if (otherContent.length === 0) {
     otherContent.push(
       <p key="sample-text" className="starburst-triangular-content text-xs">
-        Symbolizes cosmic expansion and radiant energy. Creates focused content areas.
+        Symbolizes expansion and radiant energy. Fits content precisely.
       </p>
     );
   }
@@ -476,8 +501,8 @@ export function StarburstContainer({
     return content;
   });
   
-  // Calculate line height shift (approximately 0.75 times line height - less than triangles)
-  const lineHeightShift = "0.75rem"; 
+  // Calculate line height shift (approximately 0.5 times line height - less than triangles)
+  const lineHeightShift = "0.5rem"; 
   
   return (
     <div
@@ -561,27 +586,27 @@ export function StarburstContainer({
       </div>
       {/* Content organized in flow: text, title, button */}
       <div 
-        className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-2"
+        className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-1"
         style={{ transform: `translateY(-${lineHeightShift})` }} // Shift everything up slightly
       >
         {/* Text content at top */}
         <div 
-          className={`w-full max-w-[var(--max-content-width,40%)] px-1 flex flex-col items-center text-xs overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container mt-7 mb-0`}
+          className={`w-full max-w-[var(--max-content-width,35%)] px-1 flex flex-col items-center text-xs overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container mt-6 mb-0`}
           data-shape-content="starburst"
         >
           {styledOtherContent}
         </div>
         
         {/* Soft divider line between text and title */}
-        <div className="w-[var(--max-content-width,30%)] h-px bg-white bg-opacity-20 my-1"></div>
+        <ShapeDivider shapeType="starburst" width="25%" margin="0.35rem 0" opacity={30} />
         
         {/* Title in middle-bottom */}
-        <div className="w-[var(--max-content-width,45%)] flex flex-col items-center justify-center mt-0 mb-2 starburst-title-container">
+        <div className="w-[var(--max-content-width,40%)] flex flex-col items-center justify-center mt-0 mb-1 starburst-title-container">
           {headings}
         </div>
         
         {/* Button at bottom */}
-        <div className="w-[var(--max-content-width,40%)] flex flex-col items-center justify-center mb-8 starburst-button-container">
+        <div className="w-[var(--max-content-width,35%)] flex flex-col items-center justify-center mb-6 starburst-button-container">
           {buttons}
         </div>
       </div>
@@ -677,7 +702,19 @@ export function CircleContainer({
       <div 
         className={`z-10 max-w-[var(--max-content-width,85%)] overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`}
       >
-        {children}
+        {React.Children.map(children, (child, index) => {
+          // Add divider after heading elements
+          if (React.isValidElement(child) && typeof child.type === 'string' && 
+              (child.type === 'h1' || child.type === 'h2' || child.type === 'h3')) {
+            return (
+              <>
+                {child}
+                <ShapeDivider shapeType="circle" width="40%" margin="0.5rem 0" opacity={25} />
+              </>
+            );
+          }
+          return child;
+        })}
       </div>
     </div>
   )
