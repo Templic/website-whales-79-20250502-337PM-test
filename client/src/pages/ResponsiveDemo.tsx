@@ -105,7 +105,7 @@ export default function ResponsiveDemo() {
                 contouring the text with<br />
                 the shape edges
               </p>
-              <button className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-1 px-6 rounded my-1 text-xl">
+              <button className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-1 px-4 rounded text-lg">
                 button
               </button>
             </StarburstContainer>

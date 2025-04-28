@@ -51,8 +51,9 @@
 /* Custom styling for starburst container to match screenshot */
 [data-shape="starburst"] {
   background-color: rgba(128, 128, 128, 0.75) !important;
-  max-width: 350px !important;
+  max-width: 320px !important;
   margin: 0 auto !important;
+  transform: scale(1.15) !important;
 }
 
 /* Text styling to match screenshot */
@@ -61,17 +62,29 @@
   font-size: 1.25rem !important;
   font-weight: normal;
   line-height: 1.2;
-  margin-top: 1rem !important;
+  margin-top: 0.5rem !important;
   margin-bottom: 0 !important;
+}
+
+/* Content positioning to match screenshot */
+[data-shape="starburst"] .starburst-text-container {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  line-height: 1.1 !important;
 }
 
 /* Button styling to match screenshot */
 [data-shape="starburst"] button {
   background-color: #d53f8c !important;
   border-radius: 4px !important;
-  padding: 0.25rem 1.5rem !important;
-  font-size: 1.25rem !important;
-  margin-bottom: 2.5rem !important;
+  padding: 0.25rem 1rem !important;
+  font-size: 1.1rem !important;
+  margin-bottom: 0 !important;
+  position: relative !important;
+  bottom: -5px !important;
+  max-height: 34px !important;
+  overflow: visible !important;
+  width: 92% !important;
 }
 
 .shape-divider-hexagon {

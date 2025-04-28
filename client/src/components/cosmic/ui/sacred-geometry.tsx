@@ -444,7 +444,7 @@ export function StarburstContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-  maxContentWidth = "80%",
+  maxContentWidth = "90%",
   textAlign = "center",
   responsive = true
 }: EnhancedGeometryContainerProps) {
@@ -479,7 +479,7 @@ export function StarburstContainer({
   // Default title if none provided to match screenshot
   if (headings.length === 0) {
     headings.push(
-      <h3 key="sample-title" className="text-center mt-4 mb-0 font-serif text-xl font-normal">
+      <h3 key="sample-title" className="text-center mt-2 mb-0 font-serif text-xl font-normal">
         The<br />Long<br />Title
       </h3>
     );
@@ -518,7 +518,7 @@ export function StarburstContainer({
     buttons.push(
       <button 
         key="sample-button" 
-        className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-1 px-6 rounded my-1 text-xl"
+        className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-1 px-4 rounded text-lg"
       >
         button
       </button>
@@ -538,34 +538,34 @@ export function StarburstContainer({
         backgroundColor: "rgba(120, 120, 120, 0.75)",
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
-        minHeight: "300px",
-        maxWidth: "350px",
+        minHeight: "280px",
+        maxWidth: "320px",
+        width: "100%",
         margin: "0 auto",
+        transform: "scale(1.15)",
         "--max-content-width": maxContentWidth
       } as React.CSSProperties}
       data-shape="starburst"
     >
-      {/* Pentagon and triangular spikes visualization - removed to match screenshot exactly */}
-      
-      {/* Content organized in exact order from screenshot: title, text, button */}
+      {/* Content organized in exact order from screenshot: title, text, button with compact spacing */}
       <div 
-        className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-0"
+        className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-0 space-y-1"
       >
-        {/* Title at top */}
+        {/* Title at top - reduced margins */}
         <div className="w-[var(--max-content-width,40%)] flex flex-col items-center justify-center mt-2 mb-0 starburst-title-container">
           {headings}
         </div>
         
-        {/* Text content in middle with shape contour awareness */}
+        {/* Text content in middle with shape contour awareness - reduced margins */}
         <div 
-          className={`w-full max-w-[var(--max-content-width,70%)] px-1 flex flex-col items-center overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container mt-1 mb-0`}
+          className={`w-full max-w-[var(--max-content-width,70%)] px-1 flex flex-col items-center overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container mt-0 mb-0`}
           data-shape-content="starburst"
         >
           {styledOtherContent}
         </div>
         
-        {/* Button at bottom */}
-        <div className="w-[var(--max-content-width,35%)] flex flex-col items-center justify-center mt-0 mb-10 starburst-button-container">
+        {/* Button at bottom - smaller button with partial clipping to match screenshot */}
+        <div className="w-[var(--max-content-width,35%)] flex flex-col items-center justify-center mt-0 mb-8 starburst-button-container overflow-visible">
           {buttons}
         </div>
       </div>
