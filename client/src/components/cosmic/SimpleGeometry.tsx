@@ -850,13 +850,12 @@ export function SimpleStarburst({
       
       {/* Content Container - Completely separate from the star background */}
       <div className="absolute inset-0 z-10 flex flex-col justify-between items-center">
-        {/* Center circle for all content except button */}
+        {/* Content in the center without any background shape */}
         <div className="flex-grow flex items-center justify-center w-full">
           <div 
-            className="rounded-full bg-black bg-opacity-30 flex flex-col justify-center items-center"
+            className="flex flex-col justify-center items-center"
             style={{ 
-              width: '60%', 
-              height: '60%',
+              width: '60%',
               margin: '10% 0 0 0' // Push down a bit to avoid top star point
             }}
           >
