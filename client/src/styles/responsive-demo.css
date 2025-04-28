@@ -1,0 +1,298 @@
+/**
+ * responsive-demo.css
+ * 
+ * Styles for the responsive design demo page that showcases
+ * orientation-specific layouts and components.
+ */
+
+/* General page styling */
+.responsive-demo-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.demo-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.orientation-info {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.orientation-info p {
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  background-color: var(--info-bg, rgba(0, 0, 0, 0.05));
+  border-radius: 4px;
+}
+
+.demo-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.demo-section {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background-color: var(--section-bg, #f9f9f9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.demo-section h2 {
+  margin-top: 0;
+  color: var(--heading-color, #333);
+  border-bottom: 2px solid var(--accent-color, #4a90e2);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.demo-footer {
+  margin-top: 3rem;
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+/* Card styling */
+.card {
+  padding: 1rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+/* Demo container layouts */
+.shape-demo-container {
+  display: grid;
+  gap: 2rem;
+  place-items: center;
+}
+
+.landscape-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.portrait-grid {
+  grid-template-columns: 1fr;
+}
+
+/* Device-specific notes */
+.device-note {
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+}
+
+.mobile-note {
+  background-color: var(--mobile-color, rgba(74, 144, 226, 0.1));
+  border-left: 4px solid var(--mobile-accent, #4a90e2);
+}
+
+.tablet-note {
+  background-color: var(--tablet-color, rgba(80, 200, 120, 0.1));
+  border-left: 4px solid var(--tablet-accent, #50c878);
+}
+
+.desktop-note {
+  background-color: var(--desktop-color, rgba(155, 89, 182, 0.1));
+  border-left: 4px solid var(--desktop-accent, #9b59b6);
+}
+
+/* Orientation-specific notes */
+.orientation-note {
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+  background-color: var(--orientation-color, rgba(241, 196, 15, 0.1));
+  border-left: 4px solid var(--orientation-accent, #f1c40f);
+}
+
+/* Feature grid for the geometric section */
+.feature-grid {
+  margin-top: 2rem;
+}
+
+.feature-card {
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+.feature-card h3 {
+  margin-top: 0;
+  color: var(--feature-heading, #333);
+}
+
+/* Landscape specific styling */
+.landscape-side-by-side {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Device info display */
+.device-info {
+  background-color: var(--info-bg, rgba(0, 0, 0, 0.05));
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 1rem;
+}
+
+.device-info p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Portrait specific spacing */
+.portrait-stack > * + * {
+  margin-top: 1rem;
+}
+
+/* Specific component styling */
+.landscape-specific-content,
+.portrait-specific-content {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+}
+
+.landscape-specific-content {
+  background-color: var(--landscape-bg, rgba(52, 152, 219, 0.1));
+}
+
+.portrait-specific-content {
+  background-color: var(--portrait-bg, rgba(231, 76, 60, 0.1));
+}
+
+/* Common content styling */
+.common-content {
+  padding: 1rem;
+  background-color: var(--common-bg, rgba(46, 204, 113, 0.1));
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Responsive adjustments for different device types and orientations */
+
+/* Mobile portrait mode */
+@media screen and (max-width: 767px) and (orientation: portrait) {
+  .responsive-demo-page {
+    padding: 0.5rem;
+  }
+  
+  .demo-header h1 {
+    font-size: 1.75rem;
+  }
+  
+  .demo-section {
+    padding: 1rem;
+  }
+  
+  .shape-demo-container {
+    gap: 1.5rem;
+  }
+  
+  .feature-card {
+    padding: 0.75rem;
+  }
+  
+  .orientation-info {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+}
+
+/* Mobile landscape mode */
+@media screen and (max-height: 767px) and (orientation: landscape) {
+  .responsive-demo-page {
+    padding: 0.5rem;
+  }
+  
+  .demo-header {
+    margin-bottom: 1rem;
+  }
+  
+  .demo-header h1 {
+    font-size: 1.5rem;
+    margin: 0.5rem 0;
+  }
+  
+  .demo-section {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .demo-section h2 {
+    font-size: 1.25rem;
+  }
+  
+  .shape-demo-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .demo-content {
+    gap: 1rem;
+  }
+  
+  .feature-grid {
+    margin-top: 1rem;
+  }
+}
+
+/* Tablet portrait mode */
+@media screen and (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .shape-demo-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Tablet landscape mode */
+@media screen and (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .shape-demo-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Demo geometric section backgrounds */
+.demo-geometric-section {
+  position: relative;
+  background-color: rgba(52, 152, 219, 0.05);
+  overflow: hidden;
+}
+
+.demo-geometric-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.demo-geometric-section > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure the orientation layout transitions smoothly */
+.orientation-layout {
+  transition: all 0.3s ease;
+}

@@ -7,6 +7,7 @@ import "./components/cosmic/cosmic-animations.css";
 import "./components/shop/shop-animations.css";
 import "./styles/orientation.css";
 import "./styles/mobile-styles.css";
+import "./styles/responsive-demo.css";
 import { OrientationProvider } from "./contexts/OrientationContext";
 import { ThemeProvider } from "./components/ui/ThemeProvider";
 
