@@ -222,23 +222,24 @@ export function SimpleTriangle({
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
                     clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
-                    padding: "0.25rem 1rem 0.35rem", // More horizontal padding to widen the button
+                    padding: "0.25rem 1.5rem 0.35rem", // Further increased horizontal padding
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
                       : "rgba(0, 100, 255, 0.8)",
                     border: "1px solid rgba(255, 255, 255, 0.5)",
                     width: "auto",
-                    minWidth: "4.5rem", // Increased minimum width to fit text
-                    minHeight: "2.1rem", // Slightly increased height
+                    minWidth: "5.5rem", // Further increased minimum width to fit text
+                    minHeight: "2.1rem", // Maintain height
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center", 
                     boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
                     textAlign: "center",
                     lineHeight: "1",
-                    fontSize: "0.85rem", // Maintain smaller font
-                    transform: "translateY(-0.15rem)", // Move text up slightly to account for triangle center-of-mass
-                    margin: "0 auto" // Center horizontally
+                    fontSize: "0.8rem", // Slightly smaller font for better fit
+                    transform: "translateY(-0.15rem) scale(0.95)", // Scale down slightly for better fit
+                    margin: "0 auto", // Center horizontally
+                    letterSpacing: "-0.01rem" // Tighten letter spacing slightly
                   }
                 }) : button
               }
@@ -364,23 +365,24 @@ export function SimpleInvertedTriangle({
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
                     clipPath: "polygon(0% 0%, 100% 0%, 50% 100%)",
-                    padding: "0.25rem 1rem 0.35rem", // More horizontal padding to widen button
+                    padding: "0.25rem 1.5rem 0.35rem", // Further increased horizontal padding
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
                       : "rgba(0, 100, 255, 0.8)",
                     border: "1px solid rgba(255, 255, 255, 0.5)",
                     width: "auto",
-                    minWidth: "4.5rem", // Increased minimum width to fit text
-                    minHeight: "2.1rem", // Slightly increased height
+                    minWidth: "5.5rem", // Further increased minimum width to fit text
+                    minHeight: "2.1rem", // Maintain height
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
                     boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
                     textAlign: "center",
                     lineHeight: "1",
-                    fontSize: "0.85rem", // Maintain smaller font
-                    transform: "translateY(0.15rem)", // Move text down slightly in inverted triangle
-                    margin: "0 auto" // Center horizontally
+                    fontSize: "0.8rem", // Slightly smaller font for better fit
+                    transform: "translateY(0.15rem) scale(0.95)", // Scale down slightly for better fit
+                    margin: "0 auto", // Center horizontally
+                    letterSpacing: "-0.01rem" // Tighten letter spacing slightly
                   }
                 }) : button
               }
