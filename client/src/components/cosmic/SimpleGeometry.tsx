@@ -177,10 +177,10 @@ export function SimpleTriangle({
       </div>
       
       {/* Content Container with calculated spacing based on triangle geometry */}
-      {/* Move all content downward, away from apex */}
-      <div className="absolute inset-x-0 bottom-0 top-[20%] flex flex-col justify-center items-center">
+      {/* Move all content closer to center, away from corners */}
+      <div className="absolute inset-x-0 bottom-0 top-[10%] flex flex-col justify-center items-center">
         {/* Reduced content area to ensure text stays within triangle shape */}
-        <div className="w-[60%] h-[70%] flex flex-col justify-center items-center mt-8">
+        <div className="w-[60%] h-[75%] flex flex-col justify-center items-center">
         
           {/* Heading at top - in a triangle, place heading in wider part (bottom) */}
           <div className="w-full text-center mb-0">
@@ -221,19 +221,22 @@ export function SimpleTriangle({
                 React.cloneElement(button as React.ReactElement, {
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
-                    // Using a regular button without clip-path for text
+                    clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
+                    padding: "0.3rem 0.7rem 0.3rem", // Equal padding for better text visibility
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
                       : "rgba(0, 100, 255, 0.8)",
                     border: "1px solid rgba(255, 255, 255, 0.5)",
-                    borderRadius: "4px",
                     width: "auto",
-                    minWidth: "3rem", 
-                    padding: "0.25rem 0.5rem",
+                    minWidth: "3rem",
+                    minHeight: "2rem", // Slightly reduced height
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center", 
                     boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
-                    textAlign: "center",
-                    lineHeight: "1.2",
-                    fontSize: "0.85rem"
+                    textAlign: "center", // Ensure text is centered
+                    lineHeight: "1", // Improve vertical alignment
+                    fontSize: "0.85rem" // Slightly smaller font for better fit
                   }
                 }) : button
               }
@@ -318,7 +321,7 @@ export function SimpleInvertedTriangle({
       {/* The container takes an inverted triangle shape into account - wider at top, narrower at bottom */}
       <div className="absolute inset-x-0 top-0 bottom-[15%] flex flex-col justify-between items-center">
         {/* Heading at top of inverted triangle (visually widest part) */}
-        <div className="w-[85%] mt-4">
+        <div className="w-[85%] mt-1">
           {heading && (
             <div className="text-center">
               {React.isValidElement(heading) && 
@@ -358,19 +361,22 @@ export function SimpleInvertedTriangle({
                 React.cloneElement(button as React.ReactElement, {
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
-                    // Using a regular button without clip-path for text in inverted triangle
+                    clipPath: "polygon(0% 0%, 100% 0%, 50% 100%)",
+                    padding: "0.3rem 0.7rem 0.3rem", // Equal padding for better text visibility
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
-                      : "rgba(0, 255, 100, 0.8)", // Green tint for inverted triangle
+                      : "rgba(0, 100, 255, 0.8)",
                     border: "1px solid rgba(255, 255, 255, 0.5)",
-                    borderRadius: "4px",
                     width: "auto",
-                    minWidth: "3rem", 
-                    padding: "0.25rem 0.5rem",
-                    boxShadow: "0 0 8px rgba(0, 255, 100, 0.5)",
+                    minWidth: "3rem",
+                    minHeight: "2rem",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
                     textAlign: "center",
-                    lineHeight: "1.2",
-                    fontSize: "0.85rem"
+                    lineHeight: "1",
+                    fontSize: "0.85rem" // Slightly smaller font for better fit
                   }
                 }) : button
               }
