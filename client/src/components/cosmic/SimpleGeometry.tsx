@@ -222,7 +222,7 @@ export function SimpleTriangle({
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
                     clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
-                    padding: "0.3rem 0.7rem 0.3rem", // Equal padding for better centering
+                    padding: "0.5rem 0.7rem 0.15rem", // More padding on top, less on bottom for triangle
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
                       : "rgba(0, 100, 255, 0.8)",
@@ -232,10 +232,11 @@ export function SimpleTriangle({
                     minHeight: "2.2rem", // Ensure button has proper height
                     display: "flex",
                     justifyContent: "center",
-                    alignItems: "center",
+                    alignItems: "center", 
                     boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
                     textAlign: "center", // Ensure text is centered
-                    lineHeight: "1" // Improve vertical alignment
+                    lineHeight: "1", // Improve vertical alignment
+                    transform: "translateY(-0.1rem)" // Shift text up slightly to center in triangle
                   }
                 }) : button
               }
@@ -361,7 +362,7 @@ export function SimpleInvertedTriangle({
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
                     clipPath: "polygon(0% 0%, 100% 0%, 50% 100%)",
-                    padding: "0.3rem 0.7rem 0.2rem",
+                    padding: "0.1rem 0.7rem 0.4rem", // More padding on bottom, less on top for inverted triangle
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
                       : "rgba(0, 100, 255, 0.8)",
@@ -374,7 +375,8 @@ export function SimpleInvertedTriangle({
                     alignItems: "center",
                     boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
                     textAlign: "center",
-                    lineHeight: "1"
+                    lineHeight: "1",
+                    transform: "translateY(0.1rem)" // Shift text down slightly to center in inverted triangle
                   }
                 }) : button
               }
