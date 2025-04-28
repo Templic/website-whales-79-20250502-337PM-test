@@ -839,7 +839,7 @@ export function SimpleStarburst({
               fill="none"
             />
             <path
-              d="M50 20 L53 38 L70 38 L55 48 L60 70 L50 58 L40 70 L45 48 L30 38 L47 38 Z"
+              d="M50 25 L52 40 L65 40 L53 48 L57 65 L50 56 L43 65 L47 48 L35 40 L48 40 Z"
               stroke="white"
               strokeWidth="0.5"
               fill="none"
