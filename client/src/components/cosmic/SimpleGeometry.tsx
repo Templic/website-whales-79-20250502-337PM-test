@@ -178,9 +178,9 @@ export function SimpleTriangle({
       
       {/* Content Container with calculated spacing based on triangle geometry */}
       {/* Move all content closer to center, away from corners */}
-      <div className="absolute inset-x-0 bottom-0 top-[15%] flex flex-col justify-center items-center">
-        {/* Use a smaller central content area */}
-        <div className="w-[80%] h-[75%] flex flex-col justify-center items-center">
+      <div className="absolute inset-x-0 bottom-0 top-[10%] flex flex-col justify-center items-center">
+        {/* Use a smaller central content area - reduced width to keep content from edges */}
+        <div className="w-[70%] h-[75%] flex flex-col justify-center items-center">
         
           {/* Heading at top - in a triangle, place heading in wider part (bottom) */}
           <div className="w-full text-center mb-0">
@@ -200,8 +200,8 @@ export function SimpleTriangle({
           {/* Divider - small margin to separate from title */}
           <ShapeDivider width="30%" opacity={30} margin="0.2rem 0 0.2rem 0" />
           
-          {/* Main content in center - zero margin for compact display */}
-          <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
+          {/* Main content in center - compact width to keep text away from triangle edges */}
+          <div className="w-[90%] max-w-[90%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
             {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
             {content.map((item, index) => {
               if (React.isValidElement(item) && item.type === 'p') {
@@ -214,7 +214,7 @@ export function SimpleTriangle({
             })}
           </div>
           
-          {/* Button - triangle-shaped to match container */}
+          {/* Button - triangle-shaped to match container with improved centering */}
           {button && (
             <div className="mt-0 flex justify-center items-center w-full">
               {React.isValidElement(button) && button.type === 'button' ? 
@@ -222,17 +222,20 @@ export function SimpleTriangle({
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
                     clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
-                    padding: "0.15rem 0.7rem 0.4rem",
+                    padding: "0.3rem 0.7rem 0.3rem", // Equal padding for better centering
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
                       : "rgba(0, 100, 255, 0.8)",
                     border: "1px solid rgba(255, 255, 255, 0.5)",
                     width: "auto",
                     minWidth: "3rem",
+                    minHeight: "2.2rem", // Ensure button has proper height
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
-                    boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)"
+                    boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
+                    textAlign: "center", // Ensure text is centered
+                    lineHeight: "1" // Improve vertical alignment
                   }
                 }) : button
               }
@@ -358,17 +361,20 @@ export function SimpleInvertedTriangle({
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
                     clipPath: "polygon(0% 0%, 100% 0%, 50% 100%)",
-                    padding: "0.3rem 0.6rem 0.25rem",
+                    padding: "0.3rem 0.7rem 0.2rem",
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
                       : "rgba(0, 100, 255, 0.8)",
                     border: "1px solid rgba(255, 255, 255, 0.5)",
                     width: "auto",
                     minWidth: "3rem",
+                    minHeight: "2.2rem",
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
-                    boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)"
+                    boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
+                    textAlign: "center",
+                    lineHeight: "1"
                   }
                 }) : button
               }
@@ -758,38 +764,38 @@ export function SimpleStarburst({
         </svg>
       </div>
       
-      {/* Content Container - extreme limitations on content size to stay within the star shape */}
+      {/* Content Container - using a circular container for better visibility within star shape */}
       <div className="absolute inset-0 flex flex-col justify-center items-center">
-        {/* Use a dynamically sized inner container for the star shape */}
+        {/* Use a smaller circular container to improve visibility in star shape */}
         <div 
-          className="flex flex-col justify-center items-center overflow-hidden"
+          className="flex flex-col justify-center items-center overflow-hidden rounded-full bg-black bg-opacity-30"
           style={{ 
-            width: scales.containerWidth, 
-            height: scales.containerHeight 
+            width: '60%', 
+            height: '60%'
           }}
         >
-          {/* Title at top - adaptive sizing for star */}
+          {/* Title with improved visibility */}
           {heading && (
-            <div className="text-center mb-0">
+            <div className="text-center mb-1 w-full">
               {React.isValidElement(heading) && 
                typeof heading.type === 'string' && 
                ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
                 React.cloneElement(heading as React.ReactElement, {
-                  className: cn(scales.headingClass, 'font-medium leading-none', (heading.props as any).className || ''),
+                  className: cn('text-sm font-bold', (heading.props as any).className || ''),
                 }) : heading
               }
             </div>
           )}
           
-          {/* No margin divider for tighter spacing */}
-          <ShapeDivider width="50%" opacity={30} margin="0" />
+          {/* Divider with slight margin */}
+          <ShapeDivider width="50%" opacity={30} margin="0.1rem 0" />
           
-          {/* Content - extremely compact with adaptive sizing */}
-          <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center py-0 my-0">
+          {/* Content with better visibility */}
+          <div className="w-[85%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center py-1 my-0">
             {content.map((item, index) => {
               if (React.isValidElement(item) && item.type === 'p') {
                 return React.cloneElement(item as React.ReactElement, {
-                  className: cn(scales.contentClass, 'my-0 leading-tight', (item.props as any).className || ''),
+                  className: cn('text-xs my-0 leading-tight', (item.props as any).className || ''),
                   key: `starburst-content-${index}`
                 });
               }
@@ -797,19 +803,19 @@ export function SimpleStarburst({
             })}
           </div>
           
-          {/* Button - star shaped to match container */}
+          {/* Button with circular shape for better visibility */}
           {button && (
-            <div className="mt-0 flex justify-center items-center">
+            <div className="mt-1 mb-1 flex justify-center items-center">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
-                  className: cn(scales.buttonClass, 'text-center', (button.props as any).className || ''),
+                  className: cn('text-xs font-bold text-center', (button.props as any).className || ''),
                   style: {
-                    clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
-                    padding: "0.25rem 0.6rem",
+                    padding: "0.4rem 0.8rem",
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
                       : "rgba(0, 100, 255, 0.8)",
                     border: "1px solid rgba(255, 255, 255, 0.5)",
+                    borderRadius: "9999px", // Circular button for better visibility
                     minWidth: "3rem",
                     minHeight: "2rem",
                     display: "flex",
