@@ -186,7 +186,7 @@ export default function CollaborationPage() {
                     <div className="relative">
                       <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-red-600 transform transition-transform group-hover:scale-110">
                         <img 
-                          src="https://yt3.googleusercontent.com/ytc/APkrFKb6t_0_wMiYVSqHTQnA1SBGQssBEOh0EpZRv3qIJw=s176-c-k-c0x00ffffff-no-rj" 
+                          src="https://yt3.googleusercontent.com/ytc/AIf8zZTBz4AYG0i7CiHoxKdK2G41FuYC-HFpjE5msXnm=s176-c-k-c0x00ffffff-no-rj" 
                           alt="Diamond Orca - YouTube Channel" 
                           className="w-full h-full object-cover"
                         />
@@ -219,7 +219,7 @@ export default function CollaborationPage() {
                     <div className="relative">
                       <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-purple-600 transform transition-transform group-hover:scale-110">
                         <img 
-                          src="https://scontent-iad3-1.cdninstagram.com/v/t51.2885-19/387386455_870744077799171_6377784437707782636_n.jpg?stp=dst-jpg_s150x150&_nc_ht=scontent-iad3-1.cdninstagram.com&_nc_cat=102&_nc_ohc=5wqwLGGviZIAX9YeqiT&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfCpj0Uzk2TIwlpyYEY5tQVt80GeCDsibmcZkVqTEuMHBA&oe=66A2C6D9&_nc_sid=8b3546" 
+                          src="https://scontent-iad3-1.xx.fbcdn.net/v/t39.30808-6/409282675_122143061348231080_4143595780038151102_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=5f2048&_nc_ohc=a3-O8g5S7uIAX8eGAL8&_nc_ht=scontent-iad3-1.xx&oh=00_AfAF-9Aq7PL2i6c-dJ1UDT1ULq-3Fwv0YfvGKBHIE2pOgA&oe=66809B33" 
                           alt="Dale The Whale - Instagram Profile" 
                           className="w-full h-full object-cover"
                         />
@@ -252,7 +252,7 @@ export default function CollaborationPage() {
                     <div className="relative">
                       <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-green-500 transform transition-transform group-hover:scale-110">
                         <img 
-                          src="https://i.scdn.co/image/ab67656300005f1f74d5a9fd76d9a21ea0d09b5a" 
+                          src="https://i.scdn.co/image/ab6765630000ba8a0b29340bbe3a400d2fa2002a" 
                           alt="THE IRIDESCENT DOVE - Podcast Cover" 
                           className="w-full h-full object-cover"
                         />
