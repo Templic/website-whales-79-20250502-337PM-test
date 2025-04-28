@@ -1,5 +1,9 @@
 import React from "react"
-import { cn } from "@/lib/utils"
+
+// Utility function to conditionally join class names
+const cn = (...classes: (string | undefined)[]) => {
+  return classes.filter(Boolean).join(' ');
+}
 
 interface GeometryContainerProps {
   children: React.ReactNode
@@ -7,15 +11,28 @@ interface GeometryContainerProps {
   glowColor?: string
 }
 
+interface EnhancedGeometryContainerProps extends GeometryContainerProps {
+  maxContentWidth?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  responsive?: boolean;
+}
+
 export function HexagonContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-}: GeometryContainerProps) {
+  maxContentWidth = "90%",
+  textAlign = "center",
+  responsive = true
+}: EnhancedGeometryContainerProps) {
+  // Add responsive class if enabled
+  const responsiveClassName = responsive ? "geometric-shape-container" : "";
+  
   return (
     <div
       className={cn(
         "relative flex items-center justify-center p-6 text-white",
+        responsiveClassName,
         className
       )}
       style={{
@@ -24,7 +41,9 @@ export function HexagonContainer({
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
         minHeight: "250px",
-      }}
+        "--max-content-width": maxContentWidth
+      } as React.CSSProperties}
+      data-shape="hexagon"
     >
       <div className="absolute inset-0 opacity-10">
         <svg
@@ -48,7 +67,11 @@ export function HexagonContainer({
           />
         </svg>
       </div>
-      <div className="z-10 max-w-[85%] overflow-y-auto hide-scrollbar text-center">{children}</div>
+      <div 
+        className={`z-10 max-w-[var(--max-content-width,90%)] overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`}
+      >
+        {children}
+      </div>
     </div>
   )
 }
@@ -57,11 +80,18 @@ export function TriangleContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-}: GeometryContainerProps) {
+  maxContentWidth = "90%",
+  textAlign = "center",
+  responsive = true
+}: EnhancedGeometryContainerProps) {
+  // Add responsive class if enabled
+  const responsiveClassName = responsive ? "geometric-shape-container" : "";
+  
   return (
     <div
       className={cn(
         "relative text-white",
+        responsiveClassName,
         className
       )}
       style={{
@@ -70,7 +100,9 @@ export function TriangleContainer({
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
         minHeight: "250px",
-      }}
+        "--max-content-width": maxContentWidth
+      } as React.CSSProperties}
+      data-shape="triangle"
     >
       <div className="absolute inset-0 opacity-10">
         <svg
@@ -94,9 +126,12 @@ export function TriangleContainer({
           />
         </svg>
       </div>
-      {/* Text positioning for triangles */}
+      {/* Text positioning for triangles with improved responsive content */}
       <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
-        <div className="w-[70%] h-[60%] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-center relative" style={{ transform: 'translateY(25%)' }}>
+        <div 
+          className={`w-[var(--max-content-width,85%)] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`} 
+          style={{ transform: 'translateY(20%)' }}
+        >
           {children}
         </div>
       </div>
@@ -108,11 +143,18 @@ export function InvertedTriangleContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-}: GeometryContainerProps) {
+  maxContentWidth = "90%",
+  textAlign = "center",
+  responsive = true
+}: EnhancedGeometryContainerProps) {
+  // Add responsive class if enabled
+  const responsiveClassName = responsive ? "geometric-shape-container" : "";
+  
   return (
     <div
       className={cn(
         "relative text-white",
+        responsiveClassName,
         className
       )}
       style={{
@@ -121,7 +163,9 @@ export function InvertedTriangleContainer({
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
         minHeight: "250px",
-      }}
+        "--max-content-width": maxContentWidth
+      } as React.CSSProperties}
+      data-shape="inverted-triangle"
     >
       <div className="absolute inset-0 opacity-10">
         <svg
@@ -145,9 +189,12 @@ export function InvertedTriangleContainer({
           />
         </svg>
       </div>
-      {/* Text positioning for inverted triangles */}
+      {/* Text positioning for inverted triangles with improved responsive spacing */}
       <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
-        <div className="w-[70%] h-[60%] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-center relative" style={{ transform: 'translateY(-25%)' }}>
+        <div 
+          className={`w-[var(--max-content-width,85%)] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`} 
+          style={{ transform: 'translateY(-15%)' }}
+        >
           {children}
         </div>
       </div>
@@ -159,11 +206,18 @@ export function OctagonContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-}: GeometryContainerProps) {
+  maxContentWidth = "92%",
+  textAlign = "center",
+  responsive = true
+}: EnhancedGeometryContainerProps) {
+  // Add responsive class if enabled
+  const responsiveClassName = responsive ? "geometric-shape-container" : "";
+  
   return (
     <div
       className={cn(
         "relative flex items-center justify-center p-8 text-white",
+        responsiveClassName,
         className
       )}
       style={{
@@ -172,7 +226,9 @@ export function OctagonContainer({
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
         minHeight: "250px",
-      }}
+        "--max-content-width": maxContentWidth
+      } as React.CSSProperties}
+      data-shape="octagon"
     >
       <div className="absolute inset-0 opacity-10">
         <svg
@@ -196,8 +252,11 @@ export function OctagonContainer({
           />
         </svg>
       </div>
-      {/* Increased max width to 90% and added responsive padding adjustments */}
-      <div className="z-10 max-w-[90%] sm:max-w-[85%] md:max-w-[90%] px-1 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 overflow-y-auto hide-scrollbar">{children}</div>
+      <div 
+        className={`z-10 max-w-[var(--max-content-width,92%)] px-2 py-2 overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`}
+      >
+        {children}
+      </div>
     </div>
   )
 }
@@ -206,11 +265,18 @@ export function StarburstContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-}: GeometryContainerProps) {
+  maxContentWidth = "75%",
+  textAlign = "center",
+  responsive = true
+}: EnhancedGeometryContainerProps) {
+  // Add responsive class if enabled
+  const responsiveClassName = responsive ? "geometric-shape-container" : "";
+  
   return (
     <div
       className={cn(
         "relative text-white",
+        responsiveClassName,
         className
       )}
       style={{
@@ -219,7 +285,9 @@ export function StarburstContainer({
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
         minHeight: "250px",
-      }}
+        "--max-content-width": maxContentWidth
+      } as React.CSSProperties}
+      data-shape="starburst"
     >
       <div className="absolute inset-0 opacity-10">
         <svg
@@ -244,9 +312,11 @@ export function StarburstContainer({
           />
         </svg>
       </div>
-      {/* Center text in starburst */}
+      {/* Center text in starburst with improved responsive content */}
       <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
-        <div className="max-w-[60%] overflow-y-auto hide-scrollbar text-center">
+        <div 
+          className={`w-[var(--max-content-width,75%)] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`}
+        >
           {children}
         </div>
       </div>
@@ -254,7 +324,7 @@ export function StarburstContainer({
   )
 }
 
-interface CircleContainerProps extends GeometryContainerProps {
+interface CircleContainerProps extends EnhancedGeometryContainerProps {
   rotateSpeed?: number
 }
 
@@ -263,11 +333,18 @@ export function CircleContainer({
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
   rotateSpeed = 60,
+  maxContentWidth = "85%",
+  textAlign = "center",
+  responsive = true
 }: CircleContainerProps) {
+  // Add responsive class if enabled
+  const responsiveClassName = responsive ? "geometric-shape-container" : "";
+  
   return (
     <div
       className={cn(
         "relative flex items-center justify-center p-6 text-white rounded-full",
+        responsiveClassName,
         className
       )}
       style={{
@@ -275,7 +352,9 @@ export function CircleContainer({
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
         minHeight: "250px",
-      }}
+        "--max-content-width": maxContentWidth
+      } as React.CSSProperties}
+      data-shape="circle"
     >
       <div className="absolute inset-0 opacity-10">
         <svg
@@ -329,7 +408,11 @@ export function CircleContainer({
           />
         </svg>
       </div>
-      <div className="z-10 max-w-[65%] overflow-y-auto hide-scrollbar text-center">{children}</div>
+      <div 
+        className={`z-10 max-w-[var(--max-content-width,85%)] overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`}
+      >
+        {children}
+      </div>
     </div>
   )
 }

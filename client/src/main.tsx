@@ -8,6 +8,7 @@ import "./components/shop/shop-animations.css";
 import "./styles/orientation.css";
 import "./styles/mobile-styles.css";
 import "./styles/responsive-demo.css";
+import "./styles/geometric-text-container.css";
 import { OrientationProvider } from "./contexts/OrientationContext";
 import { ThemeProvider } from "./components/ui/ThemeProvider";
 

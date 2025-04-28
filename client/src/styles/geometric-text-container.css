@@ -1,0 +1,197 @@
+/**
+ * geometric-text-container.css
+ * 
+ * Provides responsive styling for text within geometric shape containers
+ * to ensure proper text flow and content positioning across different
+ * device types and orientations.
+ */
+
+/* Base styling for all geometric shape containers */
+.geometric-shape-container {
+  --mobile-font-size: 0.9rem;
+  --tablet-font-size: 1rem;
+  --desktop-font-size: 1.1rem;
+  --mobile-line-height: 1.3;
+  --tablet-line-height: 1.4;
+  --desktop-line-height: 1.5;
+  --mobile-padding: 0.75rem;
+  --tablet-padding: 1rem;
+  --desktop-padding: 1.25rem;
+  
+  /* Word breaking and hyphenation for better text flow */
+  --word-break: normal;
+  --hyphens: manual;
+  
+  /* Fix text that displays as single words per line in mobile portrait */
+  --mobile-portrait-word-spacing: -0.05em;
+  --mobile-landscape-word-spacing: normal;
+  --tablet-portrait-word-spacing: normal;
+  --tablet-landscape-word-spacing: normal;
+}
+
+/* Content centered within shape containers */
+.shape-content-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--mobile-padding);
+  word-break: var(--word-break);
+  hyphens: var(--hyphens);
+  word-spacing: normal;
+}
+
+/* Responsive text sizing based on device and orientation */
+@media (max-width: 767px) {
+  /* Mobile styles */
+  .geometric-shape-container {
+    --content-padding: var(--mobile-padding);
+  }
+  
+  .geometric-shape-container p, 
+  .geometric-shape-container div,
+  .geometric-shape-container span {
+    font-size: var(--mobile-font-size);
+    line-height: var(--mobile-line-height);
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Mobile portrait - increase container size and adjust text for better flow */
+  .mobile-portrait .geometric-shape-container {
+    min-height: 230px; /* Slightly smaller to reduce empty space */
+  }
+  
+  /* Fix one-word-per-line issue in mobile portrait mode */
+  .mobile-portrait .geometric-shape-container p,
+  .mobile-portrait .geometric-shape-container div,
+  .mobile-portrait .geometric-shape-container span {
+    word-spacing: var(--mobile-portrait-word-spacing);
+    text-wrap: balance; /* Modern browsers support this */
+    max-width: 100% !important; /* Prevent text from being too constrained */
+    width: 100%; /* Ensure text uses available space */
+  }
+  
+  /* Specific shape adjustments for mobile portrait */
+  .mobile-portrait [data-shape="hexagon"] .shape-content-center,
+  .mobile-portrait [data-shape="circle"] .shape-content-center {
+    width: 95% !important;
+    max-width: 95% !important;
+    word-break: normal;
+    hyphens: auto;
+    padding: 0.5rem !important; /* Reduce padding to use more space for text */
+  }
+  
+  .mobile-portrait [data-shape="triangle"] .shape-content-center,
+  .mobile-portrait [data-shape="inverted-triangle"] .shape-content-center {
+    width: 90% !important;
+    max-width: 90% !important;
+    padding: 0.5rem !important;
+  }
+  
+  /* Set minimum width for text containers in mobile portrait */
+  .mobile-portrait .geometric-shape-container .shape-content-center {
+    min-width: 200px; /* Ensure text has enough space to flow properly */
+  }
+  
+  /* Adjust button sizing for mobile */
+  .geometric-shape-container button,
+  .geometric-shape-container .button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    margin: 0.3rem 0;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Tablet styles */
+  .geometric-shape-container {
+    --content-padding: var(--tablet-padding);
+  }
+  
+  .geometric-shape-container p, 
+  .geometric-shape-container div,
+  .geometric-shape-container span {
+    font-size: var(--tablet-font-size);
+    line-height: var(--tablet-line-height);
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Tablet portrait - optimize text flow */
+  .tablet-portrait .geometric-shape-container .shape-content-center {
+    width: 90%;
+    max-width: 90%;
+    hyphens: auto;
+  }
+  
+  /* Adjust button sizing for tablet */
+  .geometric-shape-container button,
+  .geometric-shape-container .button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    margin: 0.4rem 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Desktop styles */
+  .geometric-shape-container {
+    --content-padding: var(--desktop-padding);
+  }
+  
+  .geometric-shape-container p, 
+  .geometric-shape-container div,
+  .geometric-shape-container span {
+    font-size: var(--desktop-font-size);
+    line-height: var(--desktop-line-height);
+    margin-bottom: 1rem;
+  }
+  
+  /* Adjust button sizing for desktop */
+  .geometric-shape-container button,
+  .geometric-shape-container .button {
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    margin: 0.5rem 0;
+  }
+}
+
+/* Shape-specific adjustments */
+[data-shape="hexagon"] .shape-content-center {
+  padding-left: max(var(--content-padding), 0.75rem);
+  padding-right: max(var(--content-padding), 0.75rem);
+  hyphens: auto;
+}
+
+[data-shape="triangle"] .shape-content-center {
+  padding-bottom: max(var(--content-padding), 1rem);
+}
+
+[data-shape="inverted-triangle"] .shape-content-center {
+  padding-top: max(var(--content-padding), 1rem);
+}
+
+[data-shape="starburst"] .shape-content-center {
+  padding: max(var(--content-padding), 0.5rem);
+}
+
+/* Orientation-specific adjustments */
+.mobile-landscape .geometric-shape-container h1,
+.mobile-landscape .geometric-shape-container h2,
+.mobile-landscape .geometric-shape-container h3 {
+  font-size: 90%;
+  margin-bottom: 0.3rem;
+}
+
+.mobile-landscape .geometric-shape-container p {
+  margin-bottom: 0.3rem;
+}
+
+/* Optimize button display */
+.geometric-shape-container button,
+.geometric-shape-container .button {
+  white-space: normal;
+  text-align: center;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 0.5rem;
+}

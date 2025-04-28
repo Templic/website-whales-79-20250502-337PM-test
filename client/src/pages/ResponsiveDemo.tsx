@@ -1,171 +1,139 @@
 /**
  * ResponsiveDemo.tsx
  * 
- * Demo page to showcase orientation-responsive components for
- * different device types and orientations.
+ * A page that demonstrates the improved responsive geometric shape containers
+ * across different device types and orientations.
  */
 
 import React from 'react';
-import { useOrientationContext } from '../contexts/OrientationContext';
-import { OrientationLayout, OrientationContainer } from '../components/ui/OrientationLayout';
-import { GeometricShapeResponsive, GeometricSectionResponsive } from '../components/cosmic/GeometricShapeResponsive';
-import { OrientationView } from '../contexts/OrientationContext';
+import { OrientationContainer } from '../components/ui/OrientationLayout';
+import { useOrientation } from '../hooks/use-orientation';
+import { 
+  HexagonContainer, 
+  TriangleContainer, 
+  InvertedTriangleContainer,
+  OctagonContainer,
+  StarburstContainer,
+  CircleContainer
+} from '../components/cosmic/ui/sacred-geometry';
 
-export function ResponsiveDemo() {
-  const { isLandscape, isPortrait, isMobile, isTablet, deviceType, orientation } = useOrientationContext();
-  
+export default function ResponsiveDemo() {
+  const { orientation, deviceType } = useOrientation();
+
   return (
     <div className="responsive-demo-page">
-      <header className="demo-header">
-        <h1>Responsive Design Demo</h1>
-        <div className="orientation-info">
-          <p>Current device: <strong>{deviceType}</strong></p>
-          <p>Current orientation: <strong>{orientation}</strong></p>
+      <OrientationContainer>
+        <header className="text-center my-6">
+          <h1 className="text-3xl font-bold mb-2">Responsive Geometric Shapes</h1>
+          <p className="text-lg">
+            Current device: <strong>{deviceType}</strong>, 
+            Orientation: <strong>{orientation}</strong>
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-4">
+          {/* Hexagon Shape Demo */}
+          <div className="shape-demo">
+            <h2 className="text-xl font-semibold mb-3">Hexagon Container</h2>
+            <HexagonContainer>
+              <h3 className="text-lg font-medium mb-2">Sacred Geometry</h3>
+              <p>
+                This hexagon contains text that will adapt to different screen sizes and orientations.
+                Notice how the text flows properly and buttons are sized correctly.
+              </p>
+              <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-2">
+                Learn More
+              </button>
+            </HexagonContainer>
+          </div>
+
+          {/* Triangle Shape Demo */}
+          <div className="shape-demo">
+            <h2 className="text-xl font-semibold mb-3">Triangle Container</h2>
+            <TriangleContainer>
+              <h3 className="text-lg font-medium mb-2">Upward Energy</h3>
+              <p>
+                Triangles represent growth, harmony, and ascension. This responsive container
+                adjusts content position to utilize space efficiently.
+              </p>
+              <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-2">
+                Explore
+              </button>
+            </TriangleContainer>
+          </div>
+
+          {/* Inverted Triangle Shape Demo */}
+          <div className="shape-demo">
+            <h2 className="text-xl font-semibold mb-3">Inverted Triangle</h2>
+            <InvertedTriangleContainer>
+              <h3 className="text-lg font-medium mb-2">Manifesting Form</h3>
+              <p>
+                The inverted triangle symbolizes water and the feminine principle.
+                Text adapts to preserve meaning in different layouts.
+              </p>
+              <button className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded mt-2">
+                Discover
+              </button>
+            </InvertedTriangleContainer>
+          </div>
+
+          {/* Octagon Shape Demo */}
+          <div className="shape-demo">
+            <h2 className="text-xl font-semibold mb-3">Octagon Container</h2>
+            <OctagonContainer>
+              <h3 className="text-lg font-medium mb-2">Balanced Structure</h3>
+              <p>
+                The octagon represents transition, regeneration and rebirth. 
+                Notice how text fills the space efficiently, reducing empty areas.
+              </p>
+              <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded mt-2">
+                Energize
+              </button>
+            </OctagonContainer>
+          </div>
+
+          {/* Starburst Shape Demo */}
+          <div className="shape-demo">
+            <h2 className="text-xl font-semibold mb-3">Starburst Container</h2>
+            <StarburstContainer>
+              <h3 className="text-lg font-medium mb-2">Radiant Expansion</h3>
+              <p>
+                The starburst symbolizes divine inspiration and cosmic energy.
+                Text remains centered and readable across devices.
+              </p>
+              <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mt-2">
+                Illuminate
+              </button>
+            </StarburstContainer>
+          </div>
+
+          {/* Circle Shape Demo */}
+          <div className="shape-demo">
+            <h2 className="text-xl font-semibold mb-3">Circle Container</h2>
+            <CircleContainer>
+              <h3 className="text-lg font-medium mb-2">Eternal Wholeness</h3>
+              <p>
+                The circle represents unity, wholeness and infinity.
+                Content stays properly sized regardless of screen orientation.
+              </p>
+              <button className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded mt-2">
+                Connect
+              </button>
+            </CircleContainer>
+          </div>
         </div>
-      </header>
-      
-      <main className="demo-content">
-        {/* Orientation layout showcase */}
-        <section className="demo-section">
-          <h2>OrientationLayout Demo</h2>
-          <p>This component provides different content for landscape and portrait modes</p>
-          
-          <OrientationLayout
-            landscapeContent={
-              <div className="landscape-specific-content">
-                <h3>Landscape Content</h3>
-                <p>This content only appears in landscape orientation.</p>
-                <p>Notice how the layout is optimized for the wider, shorter screen space.</p>
-                <div className="landscape-only flex landscape-side-by-side">
-                  <div className="card">Feature 1</div>
-                  <div className="card">Feature 2</div>
-                  <div className="card">Feature 3</div>
-                </div>
-              </div>
-            }
-            portraitContent={
-              <div className="portrait-specific-content">
-                <h3>Portrait Content</h3>
-                <p>This content only appears in portrait orientation.</p>
-                <p>The layout is optimized for the narrower, taller screen space.</p>
-                <div className="portrait-stack">
-                  <div className="card">Feature 1</div>
-                  <div className="card">Feature 2</div>
-                  <div className="card">Feature 3</div>
-                </div>
-              </div>
-            }
-          >
-            <div className="common-content">
-              <h3>Common Content</h3>
-              <p>This content appears in both orientations, but styling adapts appropriately.</p>
-            </div>
-          </OrientationLayout>
-        </section>
-        
-        {/* Geometric shapes showcase */}
-        <section className="demo-section">
-          <h2>Geometric Shape Responsiveness</h2>
-          <p>Sacred geometry containers adapt to different device orientations</p>
-          
-          <div className={`shape-demo-container ${orientation === 'landscape' ? 'landscape-grid' : 'portrait-grid'}`}>
-            <GeometricShapeResponsive shape="hexagon" glowEffect>
-              <h3>Hexagon</h3>
-              <p>This hexagon adapts its size based on your device and orientation.</p>
-            </GeometricShapeResponsive>
-            
-            <GeometricShapeResponsive shape="triangle" color="#4a90e2">
-              <h3>Triangle</h3>
-              <p>The triangle shape adjusts for optimal viewing.</p>
-            </GeometricShapeResponsive>
-            
-            <GeometricShapeResponsive shape="pentagon" pulseEffect>
-              <h3>Pentagon</h3>
-              <p>Notice how effects are preserved across orientations.</p>
-            </GeometricShapeResponsive>
-            
-            <GeometricShapeResponsive shape="diamond" color="#50c878">
-              <h3>Diamond</h3>
-              <p>Color properties adapt to the current theme.</p>
-            </GeometricShapeResponsive>
-          </div>
-        </section>
-        
-        {/* Device-specific content */}
-        <section className="demo-section">
-          <h2>Device-Specific Components</h2>
-          <p>Components that appear only on specific device types</p>
-          
-          <div className="device-specific-demo">
-            <OrientationView mobile>
-              <div className="device-note mobile-note">
-                <h3>Mobile Optimization</h3>
-                <p>This content only appears on mobile devices. Font sizes and touch targets are optimized for small screens.</p>
-              </div>
-            </OrientationView>
-            
-            <OrientationView tablet>
-              <div className="device-note tablet-note">
-                <h3>Tablet Optimization</h3>
-                <p>This content only appears on tablet devices. The layout takes advantage of the medium-sized screen.</p>
-              </div>
-            </OrientationView>
-            
-            <OrientationView desktop>
-              <div className="device-note desktop-note">
-                <h3>Desktop Experience</h3>
-                <p>This content only appears on desktop devices. The layout is optimized for large screens and mouse/keyboard interaction.</p>
-              </div>
-            </OrientationView>
-            
-            <OrientationView mobile landscape>
-              <div className="orientation-note mobile-landscape-note">
-                <h3>Mobile Landscape Note</h3>
-                <p>This appears only on mobile devices in landscape orientation. It's designed for the limited vertical space.</p>
-              </div>
-            </OrientationView>
-            
-            <OrientationView tablet portrait>
-              <div className="orientation-note tablet-portrait-note">
-                <h3>Tablet Portrait Note</h3>
-                <p>This appears only on tablet devices in portrait orientation, optimizing for that specific layout.</p>
-              </div>
-            </OrientationView>
-          </div>
-        </section>
-        
-        {/* Full geometric section demo */}
-        <GeometricSectionResponsive backgroundShape="circle" className="demo-geometric-section">
-          <h2>Full Geometric Section</h2>
-          <p>This entire section uses geometric styling with responsive adaptations</p>
-          
-          <div className={`feature-grid ${isLandscape ? 'landscape-side-by-side' : 'portrait-stack'}`}>
-            <div className="feature-card">
-              <h3>Dynamic Layouts</h3>
-              <p>Layout automatically adjusts based on device orientation</p>
-            </div>
-            
-            <div className="feature-card">
-              <h3>Sacred Geometry</h3>
-              <p>Geometric containers scale appropriately for different screens</p>
-            </div>
-            
-            <div className="feature-card">
-              <h3>Touch Optimized</h3>
-              <p>Mobile interfaces have larger touch targets for better usability</p>
-            </div>
-          </div>
-        </GeometricSectionResponsive>
-      </main>
-      
-      <footer className="demo-footer">
-        <p>Try rotating your device to see how the layout adapts!</p>
-        <div className="device-info">
-          <p>Current state: {deviceType} in {orientation} mode</p>
+
+        <div className="p-6 my-6 bg-gray-800 rounded-lg max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold mb-4">Implementation Details</h2>
+          <ul className="list-disc pl-6 space-y-3">
+            <li>All geometric containers use CSS custom properties for responsive sizing</li>
+            <li>Text flow is optimized with proper line height and spacing</li>
+            <li>Mobile portrait view increases content width to avoid one-word-per-line issues</li>
+            <li>Buttons are sized appropriately for each device type and orientation</li>
+            <li>Custom CSS rules target specific data-shape attributes for fine-tuned adjustments</li>
+          </ul>
         </div>
-      </footer>
+      </OrientationContainer>
     </div>
   );
 }
-
-export default ResponsiveDemo;

@@ -85,11 +85,13 @@ export function OrientationLayout({
 interface OrientationContainerProps {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export function OrientationContainer({
   children,
-  className = ''
+  className = '',
+  style = {}
 }: OrientationContainerProps) {
   const { orientation, deviceType } = useOrientation();
   
@@ -98,6 +100,7 @@ export function OrientationContainer({
       className={`orientation-container ${deviceType}-${orientation} ${className}`}
       data-orientation={orientation}
       data-device={deviceType}
+      style={style}
     >
       {children}
     </div>

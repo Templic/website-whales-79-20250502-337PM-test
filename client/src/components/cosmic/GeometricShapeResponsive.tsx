@@ -63,15 +63,34 @@ export function GeometricShapeResponsive({
   // Apply color style if provided
   const colorStyle = color ? { '--shape-color': color } as React.CSSProperties : {};
   
+  // Determine device-specific content width
+  const getContentMaxWidth = () => {
+    if (isMobile) {
+      return isLandscape ? '88%' : '95%';
+    }
+    if (isTablet) {
+      return isLandscape ? '90%' : '92%';
+    }
+    return '90%';
+  };
+
+  // Set orientation-specific styles
+  const orientationStyles: React.CSSProperties = {
+    '--content-max-width': getContentMaxWidth(),
+    ...colorStyle
+  } as React.CSSProperties;
+
   return (
     <OrientationContainer className={`sacred-geometry-container ${className}`}>
       <div 
-        className={`shape-wrapper ${shapeClass} ${sizeClass} ${effectClasses}`}
-        style={colorStyle}
+        className={`shape-wrapper ${shapeClass} ${sizeClass} ${effectClasses} geometric-shape-container`}
+        style={orientationStyles}
         data-shape={shape}
         data-orientation-optimized="true"
+        data-device-type={isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop'}
+        data-orientation={isLandscape ? 'landscape' : 'portrait'}
       >
-        <div className="sacred-geometry-content">
+        <div className="sacred-geometry-content shape-content-center">
           {children}
         </div>
       </div>
@@ -109,11 +128,40 @@ export function GeometricSectionResponsive({
   // Add background shape if specified
   const backgroundShapeClass = backgroundShape ? `bg-shape-${backgroundShape}` : '';
   
+  // Determine content width based on device and orientation
+  const getContentStyle = (): React.CSSProperties => {
+    // Set appropriate padding and max-width for different device/orientation combinations
+    const paddings = {
+      mobile: {
+        portrait: '15px',
+        landscape: '10px'
+      },
+      tablet: {
+        portrait: '20px',
+        landscape: '15px'
+      },
+      desktop: {
+        portrait: '25px',
+        landscape: '20px'
+      }
+    };
+    
+    const deviceType = isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop';
+    const orientation = isLandscape ? 'landscape' : 'portrait';
+    
+    return {
+      '--section-padding': paddings[deviceType][orientation],
+      '--content-width': isMobile ? (isLandscape ? '90%' : '95%') : 
+                          isTablet ? (isLandscape ? '85%' : '90%') : '80%'
+    } as React.CSSProperties;
+  };
+
   return (
     <OrientationContainer 
       className={`geometric-section ${deviceClass} ${orientationClass} ${combinedDeviceOrientation} ${backgroundShapeClass} ${alignmentClass} ${className}`}
+      style={getContentStyle()}
     >
-      <div className="geometric-container">
+      <div className="geometric-container shape-text-container">
         {children}
       </div>
     </OrientationContainer>

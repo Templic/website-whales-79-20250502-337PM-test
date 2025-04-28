@@ -87,6 +87,39 @@
   grid-template-columns: 1fr;
 }
 
+/* Demo page specific styles for the shape containers */
+.shape-demo {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 2rem;
+}
+
+.shape-demo h2 {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Improve text display in mobile portrait view */
+@media (max-width: 767px) and (orientation: portrait) {
+  .shape-demo {
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Increase text container width to prevent one-word-per-line issues */
+  .shape-demo [data-shape] .shape-content-center {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 200px !important;
+  }
+  
+  /* Text flow improvements for paragraphs */
+  .shape-demo p {
+    word-break: normal;
+    hyphens: auto;
+    word-spacing: -0.05em; /* Slightly reduce word spacing */
+  }
+}
+
 /* Device-specific notes */
 .device-note {
   padding: 1rem;
