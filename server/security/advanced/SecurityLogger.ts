@@ -54,8 +54,8 @@ export function logSecurityEvent(event: SecurityLogEvent): void {
     
     Logger[logMethod](`[Security:${category}] ${message}`, data);
     
-    // Emit the event through the security fabric
-    SecurityFabric.getInstance().emitSecurityEvent({
+    // Emit the event through the security fabric (directly using the singleton instance)
+    SecurityFabric.logEvent({
         type: eventType,
         source: 'security_logger',
         severity: severity === SecurityEventSeverity.DEBUG ? 'low' :

@@ -36,19 +36,30 @@ class SecurityFabricImpl {
     // Initialize the immutable security logs
     immutableSecurityLogs.initialize();
     
-    // Log initialization
-    this.logEvent({
-      type: SecurityEventTypes.SECURITY_INITIALIZATION,
-      message: 'Security fabric initialization',
-      source: 'SecurityFabric',
-      attributes: {
-        systemId: this.systemId,
-        timestamp: new Date().toISOString()
+    // Set initialized to true before logging to prevent recursion
+    this.initialized = true;
+    
+    // Log initialization directly without recursion risk
+    const eventId = uuidv4();
+    // Log directly to immutableSecurityLogs to avoid recursive calls
+    immutableSecurityLogs.addLog({
+      type: SecurityEventTypes.SECURITY_INITIALIZATION.toString(),
+      details: {
+        event: {
+          id: eventId,
+          type: SecurityEventTypes.SECURITY_INITIALIZATION,
+          message: 'Security fabric initialization',
+          source: 'SecurityFabric',
+          timestamp: Date.now(),
+          attributes: {
+            systemId: this.systemId,
+            timestamp: new Date().toISOString()
+          }
+        }
       }
     });
     
     console.log(`[SECURITY-FABRIC] Security fabric initialized with ID ${this.systemId}`);
-    this.initialized = true;
   }
   
   /**
@@ -58,8 +69,16 @@ class SecurityFabricImpl {
    * @returns Promise resolving to the event ID
    */
   public logEvent(event: SecurityEvent): string {
+    // If not initialized, try to initialize but with safeguards
     if (!this.initialized) {
-      this.initialize();
+      try {
+        // Set to true temporarily to avoid recursion
+        this.initialized = true;
+        // Call initialize - if it fails, we'll still be marked as initialized
+        this.initialize();
+      } catch (error) {
+        console.error("Failed to initialize SecurityFabric during logEvent:", error);
+      }
     }
     
     // Ensure required properties
@@ -104,8 +123,14 @@ class SecurityFabricImpl {
     limit?: number;
     offset?: number;
   }): any[] {
+    // Auto-initialize with safeguards
     if (!this.initialized) {
-      this.initialize();
+      try {
+        this.initialized = true; // Prevent recursion
+        this.initialize();
+      } catch (error) {
+        console.error("Failed to initialize SecurityFabric during getEvents:", error);
+      }
     }
     
     // Form the search options for immutable logs
@@ -139,8 +164,14 @@ class SecurityFabricImpl {
    * Get statistics about security events
    */
   public getStats(): any {
+    // Auto-initialize with safeguards
     if (!this.initialized) {
-      this.initialize();
+      try {
+        this.initialized = true; // Prevent recursion
+        this.initialize();
+      } catch (error) {
+        console.error("Failed to initialize SecurityFabric during getStats:", error);
+      }
     }
     
     // Get blockchain stats
@@ -158,8 +189,14 @@ class SecurityFabricImpl {
    * Verify the integrity of the security logs
    */
   public verifyIntegrity(): { valid: boolean; issues?: any[] } {
+    // Auto-initialize with safeguards
     if (!this.initialized) {
-      this.initialize();
+      try {
+        this.initialized = true; // Prevent recursion
+        this.initialize();
+      } catch (error) {
+        console.error("Failed to initialize SecurityFabric during verifyIntegrity:", error);
+      }
     }
     
     // Check blockchain integrity

@@ -103,22 +103,20 @@ export function enableMaximumSecurity(): void {
     
     // Initialize security fabric
     try {
-      // Simply initialize the security fabric
       SecurityFabric.initialize();
       
-      // Log successful initialization
       logSecurityEvent({
         category: SecurityEventCategory.SYSTEM,
         severity: SecurityEventSeverity.INFO,
         message: 'Security fabric initialized in maximum security mode',
         data: {}
       });
-    } catch (initError) {
+    } catch (fabricError) {
       logSecurityEvent({
         category: SecurityEventCategory.SYSTEM,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error initializing security fabric in maximum security mode',
-        data: { error: (initError as Error).message }
+        data: { error: (fabricError as Error).message }
       });
     }
     
