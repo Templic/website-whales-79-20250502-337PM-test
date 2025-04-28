@@ -1,13 +1,5 @@
 import React from "react"
 import { ShapeDivider } from "./ShapeDivider";
-import { 
-  SimpleTriangle, 
-  SimpleInvertedTriangle, 
-  SimpleHexagon, 
-  SimpleOctagon,
-  SimpleStarburst,
-  SimpleCircle
-} from "../SimpleGeometry";
 
 // Utility function to conditionally join class names
 const cn = (...classes: (string | undefined)[]) => {
@@ -710,27 +702,4 @@ const styles = `
 
 export function SacredGeometryCss() {
   return <style>{styles}</style>
-}
-
-// Re-export the improved, responsive geometric components 
-// This allows existing code to use the new components without changing import paths
-
-// Export with alternate names (for gradual migration)
-export {
-  SimpleTriangle as TriangleImproved,
-  SimpleInvertedTriangle as InvertedTriangleImproved,
-  SimpleHexagon as HexagonImproved,
-  SimpleOctagon as OctagonImproved,
-  SimpleStarburst as StarburstImproved,
-  SimpleCircle as CircleImproved
-}
-
-// Direct exports of the new components (main recommended approach)
-export {
-  SimpleTriangle,
-  SimpleInvertedTriangle,
-  SimpleHexagon,
-  SimpleOctagon,
-  SimpleStarburst,
-  SimpleCircle
 }
