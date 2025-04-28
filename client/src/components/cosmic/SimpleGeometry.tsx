@@ -424,26 +424,26 @@ export function SimpleHexagon({
       <div className="absolute inset-[8%] flex flex-col justify-center items-center">
         {/* Title - adaptive sizing */}
         {heading && (
-          <div className="text-center mb-2">
+          <div className="text-center mb-0.5">
             {React.isValidElement(heading) && 
              typeof heading.type === 'string' && 
              ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
               React.cloneElement(heading as React.ReactElement, {
-                className: cn(fontSize.heading, 'font-medium mb-1', (heading.props as any).className || ''),
+                className: cn(fontSize.heading, 'font-medium mb-0', (heading.props as any).className || ''),
               }) : heading
             }
           </div>
         )}
         
         {/* Divider */}
-        <ShapeDivider width="50%" opacity={30} margin="0.25rem 0" />
+        <ShapeDivider width="50%" opacity={30} margin="0.1rem 0" />
         
         {/* Content - kept away from edges with adaptive sizing */}
-        <div className="w-full max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center pt-1 pb-2">
+        <div className="w-full max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center pt-0.5 pb-0.5">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn(fontSize.content, 'my-1 leading-snug', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'my-0.5 leading-tight', (item.props as any).className || ''),
                 key: `hexagon-content-${index}`
               });
             }
@@ -453,10 +453,10 @@ export function SimpleHexagon({
         
         {/* Button - adaptive sizing for button */}
         {button && (
-          <div className="mt-1 mb-1 flex justify-center items-center">
+          <div className="mt-0.5 mb-0.5 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
-                className: cn(fontSize.button, 'py-1 px-3 scale-90', (button.props as any).className || ''),
+                className: cn(fontSize.button, 'py-0.5 px-3 scale-90', (button.props as any).className || ''),
               }) : button
             }
           </div>
@@ -539,26 +539,26 @@ export function SimpleOctagon({
       <div className="absolute inset-[10%] flex flex-col justify-center items-center">
         {/* Title - adaptive sizing */}
         {heading && (
-          <div className="text-center mb-2">
+          <div className="text-center mb-0.5">
             {React.isValidElement(heading) && 
              typeof heading.type === 'string' && 
              ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
               React.cloneElement(heading as React.ReactElement, {
-                className: cn(fontSize.heading, 'font-medium mb-1', (heading.props as any).className || ''),
+                className: cn(fontSize.heading, 'font-medium mb-0', (heading.props as any).className || ''),
               }) : heading
             }
           </div>
         )}
         
         {/* Divider */}
-        <ShapeDivider width="60%" opacity={30} margin="0.25rem 0" />
+        <ShapeDivider width="60%" opacity={30} margin="0.1rem 0" />
         
         {/* Content - kept away from edges with adaptive sizing */}
-        <div className="w-full max-w-[85%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center py-1">
+        <div className="w-full max-w-[85%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center pt-0.5 pb-0.5">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn(fontSize.content, 'my-1 leading-snug', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'my-0.5 leading-tight', (item.props as any).className || ''),
                 key: `octagon-content-${index}`
               });
             }
@@ -568,10 +568,10 @@ export function SimpleOctagon({
         
         {/* Button - adaptive sizing for button */}
         {button && (
-          <div className="mt-1 mb-1 flex justify-center items-center">
+          <div className="mt-0.5 mb-0.5 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
-                className: cn(fontSize.button, 'py-1 px-3 scale-90', (button.props as any).className || ''),
+                className: cn(fontSize.button, 'py-0.5 px-3 scale-90', (button.props as any).className || ''),
               }) : button
             }
           </div>
@@ -715,7 +715,7 @@ export function SimpleStarburst({
         >
           {/* Title at top - adaptive sizing for star */}
           {heading && (
-            <div className="text-center mb-1">
+            <div className="text-center mb-0">
               {React.isValidElement(heading) && 
                typeof heading.type === 'string' && 
                ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
@@ -727,14 +727,14 @@ export function SimpleStarburst({
           )}
           
           {/* Divider - very small for star */}
-          <ShapeDivider width="50%" opacity={30} margin="0.1rem 0" />
+          <ShapeDivider width="50%" opacity={30} margin="0 0" />
           
           {/* Content - extremely compact with adaptive sizing */}
           <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center">
             {content.map((item, index) => {
               if (React.isValidElement(item) && item.type === 'p') {
                 return React.cloneElement(item as React.ReactElement, {
-                  className: cn(scales.contentClass, 'my-0.5 leading-tight', (item.props as any).className || ''),
+                  className: cn(scales.contentClass, 'my-0 leading-tight', (item.props as any).className || ''),
                   key: `starburst-content-${index}`
                 });
               }
@@ -744,10 +744,10 @@ export function SimpleStarburst({
           
           {/* Button - adaptive sizing for star */}
           {button && (
-            <div className="mt-1 flex justify-center items-center">
+            <div className="mt-0 flex justify-center items-center">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
-                  className: cn(scales.buttonClass, 'py-0.5 px-2', (button.props as any).className || ''),
+                  className: cn(scales.buttonClass, 'py-0 px-2', (button.props as any).className || ''),
                 }) : button
               }
             </div>
@@ -856,26 +856,26 @@ export function SimpleCircle({
       <div className={cn("absolute flex flex-col justify-center items-center", insetClass)}>
         {/* Title - adaptive sizing for circle */}
         {heading && (
-          <div className="text-center mb-1">
+          <div className="text-center mb-0.5">
             {React.isValidElement(heading) && 
              typeof heading.type === 'string' && 
              ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
               React.cloneElement(heading as React.ReactElement, {
-                className: cn(fontSize.heading, 'font-medium', (heading.props as any).className || ''),
+                className: cn(fontSize.heading, 'font-medium mb-0', (heading.props as any).className || ''),
               }) : heading
             }
           </div>
         )}
         
         {/* Divider - shorter for circle */}
-        <ShapeDivider width="40%" opacity={30} margin="0.25rem 0" />
+        <ShapeDivider width="40%" opacity={30} margin="0.1rem 0" />
         
         {/* Content - adaptive sizing for circle */}
-        <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center">
+        <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center pt-0.5 pb-0.5">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn(fontSize.content, 'my-1 leading-snug', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'my-0.5 leading-tight', (item.props as any).className || ''),
                 key: `circle-content-${index}`
               });
             }
@@ -885,10 +885,10 @@ export function SimpleCircle({
         
         {/* Button - adaptive sizing for circle */}
         {button && (
-          <div className="mt-1 mb-1 flex justify-center items-center">
+          <div className="mt-0.5 mb-0.5 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
-                className: cn(fontSize.button, 'py-1 px-3', (button.props as any).className || ''),
+                className: cn(fontSize.button, 'py-0.5 px-3', (button.props as any).className || ''),
               }) : button
             }
           </div>

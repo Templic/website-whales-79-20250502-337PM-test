@@ -30,12 +30,12 @@ const ResponsiveDemo2 = () => {
         </p>
         
         {/* Grid layout for the shapes */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Triangle */}
           <div className="w-full">
-            <SimpleTriangle className="w-full max-w-[300px] mx-auto">
+            <SimpleTriangle className="w-full max-w-[250px] mx-auto">
               <h3>Triangle</h3>
-              <p>This is a triangle shape with content that scales based on the container size. The text and buttons always fit properly within the shape boundaries.</p>
+              <p>This shape scales content based on container size. Text and buttons fit properly within boundaries.</p>
               <button className="bg-blue-500 hover:bg-blue-700 text-white rounded">
                 Action
               </button>
@@ -44,9 +44,9 @@ const ResponsiveDemo2 = () => {
           
           {/* Inverted Triangle */}
           <div className="w-full">
-            <SimpleInvertedTriangle className="w-full max-w-[300px] mx-auto">
+            <SimpleInvertedTriangle className="w-full max-w-[250px] mx-auto">
               <h3>Inverted Triangle</h3>
-              <p>This is an inverted triangle shape with adaptively scaling content. No matter the screen size, everything stays within the boundaries.</p>
+              <p>Adaptively scaling content ensures elements stay within shape boundaries at all screen sizes.</p>
               <button className="bg-green-500 hover:bg-green-700 text-white rounded">
                 Learn More
               </button>
@@ -55,9 +55,9 @@ const ResponsiveDemo2 = () => {
           
           {/* Hexagon */}
           <div className="w-full">
-            <SimpleHexagon className="w-full max-w-[300px] mx-auto">
+            <SimpleHexagon className="w-full max-w-[250px] mx-auto">
               <h3>Hexagon</h3>
-              <p>This hexagon shape contains content that adapts to the container size. Text sizes and spacing adjust automatically.</p>
+              <p>Content adapts to container size. Text sizes and spacing adjust automatically.</p>
               <button className="bg-purple-500 hover:bg-purple-700 text-white rounded">
                 Details
               </button>
@@ -66,9 +66,9 @@ const ResponsiveDemo2 = () => {
           
           {/* Octagon */}
           <div className="w-full">
-            <SimpleOctagon className="w-full max-w-[300px] mx-auto">
+            <SimpleOctagon className="w-full max-w-[250px] mx-auto">
               <h3>Octagon</h3>
-              <p>The octagon shape demonstrates responsive content scaling. Even with complex shapes, text and buttons remain properly contained.</p>
+              <p>Complex shapes maintain proper text containment with adaptive sizing.</p>
               <button className="bg-yellow-500 hover:bg-yellow-700 text-white rounded">
                 Explore
               </button>
@@ -77,9 +77,9 @@ const ResponsiveDemo2 = () => {
           
           {/* Starburst */}
           <div className="w-full">
-            <SimpleStarburst className="w-full max-w-[300px] mx-auto">
+            <SimpleStarburst className="w-full max-w-[250px] mx-auto">
               <h3>Starburst</h3>
-              <p>This star shape presents the biggest challenge, but our adaptive scaling ensures content fits perfectly even in this complex shape.</p>
+              <p>Adaptive scaling ensures content fits in this complex star shape.</p>
               <button className="bg-red-500 hover:bg-red-700 text-white rounded">
                 Activate
               </button>
@@ -88,9 +88,9 @@ const ResponsiveDemo2 = () => {
           
           {/* Circle */}
           <div className="w-full">
-            <SimpleCircle className="w-full max-w-[300px] mx-auto">
+            <SimpleCircle className="w-full max-w-[250px] mx-auto">
               <h3>Circle</h3>
-              <p>The circle shape demonstrates perfect content containment with responsive sizing that adapts to the container size.</p>
+              <p>Perfect content containment with responsive sizing that adapts to size.</p>
               <button className="bg-teal-500 hover:bg-teal-700 text-white rounded">
                 Connect
               </button>
