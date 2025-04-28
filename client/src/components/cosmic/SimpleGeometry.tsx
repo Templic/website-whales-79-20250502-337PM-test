@@ -177,49 +177,58 @@ export function SimpleTriangle({
       </div>
       
       {/* Content Container with calculated spacing based on triangle geometry */}
-      {/* The container takes a triangle shape into account - wider at bottom, narrower at top */}
-      <div className="absolute inset-x-0 bottom-0 top-[15%] flex flex-col justify-between items-center">
-        {/* Button container - positioned at top 20% of visible area (narrow part) */}
-        <div className="w-[40%] mb-1">
-          {/* Button at top of triangle (visually smallest part) */}
+      {/* Move all content closer to center, away from corners */}
+      <div className="absolute inset-x-0 bottom-0 top-[15%] flex flex-col justify-center items-center">
+        {/* Use a smaller central content area */}
+        <div className="w-[80%] h-[75%] flex flex-col justify-center items-center">
+        
+          {/* Heading at top - in a triangle, place heading in wider part (bottom) */}
+          <div className="w-full text-center mb-0">
+            {heading && (
+              <div className="text-center">
+                {React.isValidElement(heading) && 
+                 typeof heading.type === 'string' && 
+                 ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
+                  React.cloneElement(heading as React.ReactElement, {
+                    className: cn(fontSize.heading, 'font-medium', (heading.props as any).className || ''),
+                  }) : heading
+                }
+              </div>
+            )}
+          </div>
+          
+          {/* Divider - minimal margin */}
+          <ShapeDivider width="40%" opacity={30} margin="0 0" />
+          
+          {/* Main content in center - compact */}
+          <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center mt-0 mb-0">
+            {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
+            {content.map((item, index) => {
+              if (React.isValidElement(item) && item.type === 'p') {
+                return React.cloneElement(item as React.ReactElement, {
+                  className: cn(fontSize.content, 'my-0 leading-tight', (item.props as any).className || ''),
+                  key: `triangle-content-${index}`
+                });
+              }
+              return item;
+            })}
+          </div>
+          
+          {/* Button - triangle-shaped to match container */}
           {button && (
-            <div className="flex justify-center items-center scale-90">
+            <div className="mt-0 flex justify-center items-center w-full">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
-                  className: cn(fontSize.button, 'py-0.5 px-3', (button.props as any).className || ''),
+                  className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
+                  style: {
+                    clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
+                    padding: "0.15rem 0.8rem 0.3rem",
+                    background: (button.props as any).className?.includes('bg-') 
+                      ? undefined 
+                      : "rgba(0, 100, 255, 0.6)",
+                    border: "none"
+                  }
                 }) : button
-              }
-            </div>
-          )}
-        </div>
-          
-        {/* Main content in middle of triangle - width increases as we move down */}
-        <div className="w-[65%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center mb-1">
-          {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
-          {content.map((item, index) => {
-            if (React.isValidElement(item) && item.type === 'p') {
-              return React.cloneElement(item as React.ReactElement, {
-                className: cn(fontSize.content, 'my-0.5 leading-tight', (item.props as any).className || ''),
-                key: `triangle-content-${index}`
-              });
-            }
-            return item;
-          })}
-        </div>
-        
-        {/* Divider - placed near bottom */}
-        <ShapeDivider width="50%" opacity={30} margin="0 0 0.25rem 0" />
-        
-        {/* Heading at bottom of triangle (visually widest part) */}
-        <div className="w-[80%] mb-3">
-          {heading && (
-            <div className="text-center">
-              {React.isValidElement(heading) && 
-               typeof heading.type === 'string' && 
-               ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
-                React.cloneElement(heading as React.ReactElement, {
-                  className: cn(fontSize.heading, 'font-medium', (heading.props as any).className || ''),
-                }) : heading
               }
             </div>
           )}
