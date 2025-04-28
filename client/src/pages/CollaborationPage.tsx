@@ -186,7 +186,7 @@ export default function CollaborationPage() {
                     <div className="relative">
                       <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-red-600 transform transition-transform group-hover:scale-110">
                         <img 
-                          src="https://yt3.googleusercontent.com/ytc/AIf8zZTBz4AYG0i7CiHoxKdK2G41FuYC-HFpjE5msXnm=s176-c-k-c0x00ffffff-no-rj" 
+                          src="/images/diamondorca777-profile.svg" 
                           alt="Diamond Orca - YouTube Channel" 
                           className="w-full h-full object-cover"
                         />
@@ -219,7 +219,7 @@ export default function CollaborationPage() {
                     <div className="relative">
                       <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-purple-600 transform transition-transform group-hover:scale-110">
                         <img 
-                          src="https://scontent-iad3-1.xx.fbcdn.net/v/t39.30808-6/409282675_122143061348231080_4143595780038151102_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=5f2048&_nc_ohc=a3-O8g5S7uIAX8eGAL8&_nc_ht=scontent-iad3-1.xx&oh=00_AfAF-9Aq7PL2i6c-dJ1UDT1ULq-3Fwv0YfvGKBHIE2pOgA&oe=66809B33" 
+                          src="/images/dalethewhalemusic-profile.svg" 
                           alt="Dale The Whale - Instagram Profile" 
                           className="w-full h-full object-cover"
                         />
@@ -252,7 +252,7 @@ export default function CollaborationPage() {
                     <div className="relative">
                       <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-green-500 transform transition-transform group-hover:scale-110">
                         <img 
-                          src="https://i.scdn.co/image/ab6765630000ba8a0b29340bbe3a400d2fa2002a" 
+                          src="/images/iridescentdove-profile.svg" 
                           alt="THE IRIDESCENT DOVE - Podcast Cover" 
                           className="w-full h-full object-cover"
                         />
