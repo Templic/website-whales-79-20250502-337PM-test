@@ -186,8 +186,8 @@ export default function CollaborationPage() {
                     <div className="relative">
                       <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-red-600 transform transition-transform group-hover:scale-110">
                         <img 
-                          src="/images/diamondorca777-profile.svg" 
-                          alt="Diamond Orca - YouTube Channel" 
+                          src="/images/youtube-logo.svg" 
+                          alt="YouTube Logo" 
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -219,8 +219,8 @@ export default function CollaborationPage() {
                     <div className="relative">
                       <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-purple-600 transform transition-transform group-hover:scale-110">
                         <img 
-                          src="/images/dalethewhalemusic-profile.svg" 
-                          alt="Dale The Whale - Instagram Profile" 
+                          src="/images/instagram-logo.svg" 
+                          alt="Instagram Logo" 
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -252,8 +252,8 @@ export default function CollaborationPage() {
                     <div className="relative">
                       <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-green-500 transform transition-transform group-hover:scale-110">
                         <img 
-                          src="/images/iridescentdove-profile.svg" 
-                          alt="THE IRIDESCENT DOVE - Podcast Cover" 
+                          src="/images/spotify-logo.svg" 
+                          alt="Spotify Logo" 
                           className="w-full h-full object-cover"
                         />
                       </div>
