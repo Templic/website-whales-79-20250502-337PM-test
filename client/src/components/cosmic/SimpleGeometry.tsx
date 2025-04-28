@@ -6,19 +6,82 @@
  * techniques to ensure text and other elements stay within shape boundaries.
  */
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // Base props interface for all geometric shapes
 interface GeometricShapeProps {
   children: React.ReactNode;
   className?: string;
   glowColor?: string;
+  adaptiveScaling?: boolean; // Enable responsive scaling
 }
 
 // Utility function for conditional class names
 const cn = (...classes: (string | undefined)[]) => {
   return classes.filter(Boolean).join(' ');
 };
+
+/**
+ * Custom hook for responsive text sizing based on container dimensions
+ * This ensures content fits within shape boundaries regardless of screen size
+ */
+function useResponsiveShape(adaptiveScaling = true) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [fontSize, setFontSize] = useState<{ heading: string; content: string; button: string }>({
+    heading: 'text-base',
+    content: 'text-xs',
+    button: 'text-xs'
+  });
+  
+  useEffect(() => {
+    if (!adaptiveScaling) return;
+    
+    function updateFontSizes() {
+      if (!containerRef.current) return;
+      
+      const containerWidth = containerRef.current.offsetWidth;
+      
+      // Adaptive font sizing based on container width
+      if (containerWidth < 150) {
+        setFontSize({
+          heading: 'text-xs',
+          content: 'text-[10px]',
+          button: 'text-[9px]'
+        });
+      } else if (containerWidth < 250) {
+        setFontSize({
+          heading: 'text-sm',
+          content: 'text-xs',
+          button: 'text-xs'
+        });
+      } else if (containerWidth < 350) {
+        setFontSize({
+          heading: 'text-base',
+          content: 'text-xs',
+          button: 'text-xs'
+        });
+      } else {
+        setFontSize({
+          heading: 'text-lg',
+          content: 'text-sm',
+          button: 'text-xs'
+        });
+      }
+    }
+    
+    // Initial sizing
+    updateFontSizes();
+    
+    // Add resize listener
+    window.addEventListener('resize', updateFontSizes);
+    
+    return () => {
+      window.removeEventListener('resize', updateFontSizes);
+    };
+  }, [adaptiveScaling]);
+  
+  return { containerRef, fontSize };
+}
 
 /**
  * Simple Divider component for use inside shapes
@@ -48,7 +111,15 @@ const ShapeDivider: React.FC<{
  * SimpleTriangle Component
  * A triangle shape that properly contains content
  */
-export function SimpleTriangle({ children, className, glowColor = "rgba(0, 230, 230, 0.5)" }: GeometricShapeProps) {
+export function SimpleTriangle({ 
+  children, 
+  className, 
+  glowColor = "rgba(0, 230, 230, 0.5)",
+  adaptiveScaling = true 
+}: GeometricShapeProps) {
+  // Use the responsive hook to get font sizes based on container width
+  const { containerRef, fontSize } = useResponsiveShape(adaptiveScaling);
+  
   // Process children to organize content
   const childArray = React.Children.toArray(children);
   
@@ -72,6 +143,7 @@ export function SimpleTriangle({ children, className, glowColor = "rgba(0, 230, 
 
   return (
     <div 
+      ref={containerRef}
       className={cn("relative aspect-[1/1.1] text-white overflow-hidden", className)}
       style={{
         clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
@@ -114,7 +186,7 @@ export function SimpleTriangle({ children, className, glowColor = "rgba(0, 230, 
             <div className="flex justify-center items-center scale-90">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
-                  className: cn('text-xs py-1 px-3', (button.props as any).className || ''),
+                  className: cn(fontSize.button, 'py-1 px-3', (button.props as any).className || ''),
                 }) : button
               }
             </div>
@@ -123,11 +195,11 @@ export function SimpleTriangle({ children, className, glowColor = "rgba(0, 230, 
           
         {/* Main content in middle of triangle - width increases as we move down */}
         <div className="w-[65%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center mb-2">
-          {/* Map to ensure proper styling of paragraphs - smaller text to fit the shape */}
+          {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn('text-xs my-1 leading-snug', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'my-1 leading-snug', (item.props as any).className || ''),
                 key: `triangle-content-${index}`
               });
             }
@@ -146,7 +218,7 @@ export function SimpleTriangle({ children, className, glowColor = "rgba(0, 230, 
                typeof heading.type === 'string' && 
                ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
                 React.cloneElement(heading as React.ReactElement, {
-                  className: cn('text-base font-medium', (heading.props as any).className || ''),
+                  className: cn(fontSize.heading, 'font-medium', (heading.props as any).className || ''),
                 }) : heading
               }
             </div>
@@ -161,7 +233,15 @@ export function SimpleTriangle({ children, className, glowColor = "rgba(0, 230, 
  * SimpleInvertedTriangle Component
  * An inverted triangle that properly contains content
  */
-export function SimpleInvertedTriangle({ children, className, glowColor = "rgba(0, 230, 230, 0.5)" }: GeometricShapeProps) {
+export function SimpleInvertedTriangle({ 
+  children, 
+  className, 
+  glowColor = "rgba(0, 230, 230, 0.5)",
+  adaptiveScaling = true
+}: GeometricShapeProps) {
+  // Use the responsive hook to get font sizes based on container width
+  const { containerRef, fontSize } = useResponsiveShape(adaptiveScaling);
+  
   // Process children to organize content
   const childArray = React.Children.toArray(children);
   
@@ -185,6 +265,7 @@ export function SimpleInvertedTriangle({ children, className, glowColor = "rgba(
 
   return (
     <div 
+      ref={containerRef}
       className={cn("relative aspect-[1/1.1] text-white overflow-hidden", className)}
       style={{
         clipPath: "polygon(0% 0%, 100% 0%, 50% 100%)",
@@ -228,7 +309,7 @@ export function SimpleInvertedTriangle({ children, className, glowColor = "rgba(
                typeof heading.type === 'string' && 
                ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
                 React.cloneElement(heading as React.ReactElement, {
-                  className: cn('text-base font-medium', (heading.props as any).className || ''),
+                  className: cn(fontSize.heading, 'font-medium', (heading.props as any).className || ''),
                 }) : heading
               }
             </div>
@@ -240,11 +321,11 @@ export function SimpleInvertedTriangle({ children, className, glowColor = "rgba(
         
         {/* Main content in middle of inverted triangle - width decreases as we move down */}
         <div className="w-[70%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center mt-1">
-          {/* Map to ensure proper styling of paragraphs - smaller text to fit the shape */}
+          {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn('text-xs my-1 leading-snug', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'my-1 leading-snug', (item.props as any).className || ''),
                 key: `inverted-triangle-content-${index}`
               });
             }
@@ -259,7 +340,7 @@ export function SimpleInvertedTriangle({ children, className, glowColor = "rgba(
             <div className="flex justify-center items-center scale-90">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
-                  className: cn('text-xs py-1 px-3', (button.props as any).className || ''),
+                  className: cn(fontSize.button, 'py-1 px-3', (button.props as any).className || ''),
                 }) : button
               }
             </div>
@@ -274,7 +355,15 @@ export function SimpleInvertedTriangle({ children, className, glowColor = "rgba(
  * SimpleHexagon Component
  * A hexagon shape that properly contains content
  */
-export function SimpleHexagon({ children, className, glowColor = "rgba(0, 230, 230, 0.5)" }: GeometricShapeProps) {
+export function SimpleHexagon({ 
+  children, 
+  className, 
+  glowColor = "rgba(0, 230, 230, 0.5)",
+  adaptiveScaling = true
+}: GeometricShapeProps) {
+  // Use the responsive hook to get font sizes based on container width
+  const { containerRef, fontSize } = useResponsiveShape(adaptiveScaling);
+
   // Process children to organize content
   const childArray = React.Children.toArray(children);
   
@@ -298,6 +387,7 @@ export function SimpleHexagon({ children, className, glowColor = "rgba(0, 230, 2
 
   return (
     <div 
+      ref={containerRef}
       className={cn("relative aspect-square text-white overflow-hidden", className)}
       style={{
         clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
@@ -332,14 +422,14 @@ export function SimpleHexagon({ children, className, glowColor = "rgba(0, 230, 2
       
       {/* Content Container - ensure content stays within hexagon boundaries */}
       <div className="absolute inset-[8%] flex flex-col justify-center items-center">
-        {/* Title - reduced size to fit */}
+        {/* Title - adaptive sizing */}
         {heading && (
           <div className="text-center mb-2">
             {React.isValidElement(heading) && 
              typeof heading.type === 'string' && 
              ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
               React.cloneElement(heading as React.ReactElement, {
-                className: cn('text-base font-medium mb-1', (heading.props as any).className || ''),
+                className: cn(fontSize.heading, 'font-medium mb-1', (heading.props as any).className || ''),
               }) : heading
             }
           </div>
@@ -348,12 +438,12 @@ export function SimpleHexagon({ children, className, glowColor = "rgba(0, 230, 2
         {/* Divider */}
         <ShapeDivider width="50%" opacity={30} margin="0.25rem 0" />
         
-        {/* Content - kept away from edges */}
+        {/* Content - kept away from edges with adaptive sizing */}
         <div className="w-full max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center pt-1 pb-2">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn('text-xs my-1 leading-snug', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'my-1 leading-snug', (item.props as any).className || ''),
                 key: `hexagon-content-${index}`
               });
             }
@@ -361,12 +451,12 @@ export function SimpleHexagon({ children, className, glowColor = "rgba(0, 230, 2
           })}
         </div>
         
-        {/* Button - smaller button that fits within shape */}
+        {/* Button - adaptive sizing for button */}
         {button && (
           <div className="mt-1 mb-1 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
-                className: cn('text-xs py-1 px-3 scale-90', (button.props as any).className || ''),
+                className: cn(fontSize.button, 'py-1 px-3 scale-90', (button.props as any).className || ''),
               }) : button
             }
           </div>
@@ -380,7 +470,15 @@ export function SimpleHexagon({ children, className, glowColor = "rgba(0, 230, 2
  * SimpleOctagon Component
  * An octagon shape that properly contains content
  */
-export function SimpleOctagon({ children, className, glowColor = "rgba(0, 230, 230, 0.5)" }: GeometricShapeProps) {
+export function SimpleOctagon({ 
+  children, 
+  className, 
+  glowColor = "rgba(0, 230, 230, 0.5)",
+  adaptiveScaling = true
+}: GeometricShapeProps) {
+  // Use the responsive hook to get font sizes based on container width
+  const { containerRef, fontSize } = useResponsiveShape(adaptiveScaling);
+  
   // Process children to organize content
   const childArray = React.Children.toArray(children);
   
@@ -404,6 +502,7 @@ export function SimpleOctagon({ children, className, glowColor = "rgba(0, 230, 2
 
   return (
     <div 
+      ref={containerRef}
       className={cn("relative aspect-square text-white overflow-hidden", className)}
       style={{
         clipPath: "polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)",
@@ -438,14 +537,14 @@ export function SimpleOctagon({ children, className, glowColor = "rgba(0, 230, 2
       
       {/* Content Container - ensure content stays within octagon boundaries */}
       <div className="absolute inset-[10%] flex flex-col justify-center items-center">
-        {/* Title - reduced size to fit */}
+        {/* Title - adaptive sizing */}
         {heading && (
           <div className="text-center mb-2">
             {React.isValidElement(heading) && 
              typeof heading.type === 'string' && 
              ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
               React.cloneElement(heading as React.ReactElement, {
-                className: cn('text-base font-medium mb-1', (heading.props as any).className || ''),
+                className: cn(fontSize.heading, 'font-medium mb-1', (heading.props as any).className || ''),
               }) : heading
             }
           </div>
@@ -454,12 +553,12 @@ export function SimpleOctagon({ children, className, glowColor = "rgba(0, 230, 2
         {/* Divider */}
         <ShapeDivider width="60%" opacity={30} margin="0.25rem 0" />
         
-        {/* Content - kept away from edges */}
+        {/* Content - kept away from edges with adaptive sizing */}
         <div className="w-full max-w-[85%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center py-1">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn('text-xs my-1 leading-snug', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'my-1 leading-snug', (item.props as any).className || ''),
                 key: `octagon-content-${index}`
               });
             }
@@ -467,12 +566,12 @@ export function SimpleOctagon({ children, className, glowColor = "rgba(0, 230, 2
           })}
         </div>
         
-        {/* Button - smaller button that fits within shape */}
+        {/* Button - adaptive sizing for button */}
         {button && (
           <div className="mt-1 mb-1 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
-                className: cn('text-xs py-1 px-3 scale-90', (button.props as any).className || ''),
+                className: cn(fontSize.button, 'py-1 px-3 scale-90', (button.props as any).className || ''),
               }) : button
             }
           </div>
@@ -486,7 +585,15 @@ export function SimpleOctagon({ children, className, glowColor = "rgba(0, 230, 2
  * SimpleStarburst Component
  * A starburst shape that properly contains content
  */
-export function SimpleStarburst({ children, className, glowColor = "rgba(0, 230, 230, 0.5)" }: GeometricShapeProps) {
+export function SimpleStarburst({ 
+  children, 
+  className, 
+  glowColor = "rgba(0, 230, 230, 0.5)",
+  adaptiveScaling = true 
+}: GeometricShapeProps) {
+  // Use the responsive hook to get font sizes based on container width
+  const { containerRef, fontSize } = useResponsiveShape(adaptiveScaling);
+  
   // Process children to organize content
   const childArray = React.Children.toArray(children);
   
@@ -508,8 +615,62 @@ export function SimpleStarburst({ children, className, glowColor = "rgba(0, 230,
     child !== heading && child !== button
   );
   
+  // Scale factors - starburst needs more aggressive scaling due to its intricate shape
+  const getStarburstScaleFactors = () => {
+    if (containerRef.current) {
+      const width = containerRef.current.offsetWidth;
+      
+      // Smaller scales for smaller sizes to ensure content fits in star points
+      if (width < 150) {
+        return {
+          containerWidth: '50%', // Even smaller container for tiny stars
+          containerHeight: '50%',
+          headingClass: 'text-[9px]',
+          contentClass: 'text-[8px]',
+          buttonClass: 'text-[8px] scale-75'
+        };
+      } else if (width < 250) {
+        return {
+          containerWidth: '55%',
+          containerHeight: '55%',
+          headingClass: 'text-[10px]',
+          contentClass: 'text-[9px]',
+          buttonClass: 'text-[9px] scale-80'
+        };
+      } else if (width < 350) {
+        return {
+          containerWidth: '60%',
+          containerHeight: '60%',
+          headingClass: 'text-xs',
+          contentClass: 'text-[10px]',
+          buttonClass: 'text-[10px] scale-90'
+        };
+      } else {
+        return {
+          containerWidth: '65%',
+          containerHeight: '65%',
+          headingClass: 'text-sm',
+          contentClass: 'text-xs',
+          buttonClass: 'text-xs'
+        };
+      }
+    }
+    
+    // Default scales
+    return {
+      containerWidth: '60%',
+      containerHeight: '60%',
+      headingClass: 'text-xs',
+      contentClass: 'text-[10px]',
+      buttonClass: 'text-[10px] scale-90'
+    };
+  };
+  
+  const scales = getStarburstScaleFactors();
+  
   return (
     <div 
+      ref={containerRef}
       className={cn("relative aspect-square text-white overflow-hidden", className)}
       style={{
         clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
@@ -544,16 +705,22 @@ export function SimpleStarburst({ children, className, glowColor = "rgba(0, 230,
       
       {/* Content Container - extreme limitations on content size to stay within the star shape */}
       <div className="absolute inset-0 flex flex-col justify-center items-center">
-        {/* Use a much smaller inner container for the star shape */}
-        <div className="w-[60%] h-[60%] flex flex-col justify-center items-center overflow-hidden">
-          {/* Title at top - very small to fit in star */}
+        {/* Use a dynamically sized inner container for the star shape */}
+        <div 
+          className="flex flex-col justify-center items-center overflow-hidden"
+          style={{ 
+            width: scales.containerWidth, 
+            height: scales.containerHeight 
+          }}
+        >
+          {/* Title at top - adaptive sizing for star */}
           {heading && (
             <div className="text-center mb-1">
               {React.isValidElement(heading) && 
                typeof heading.type === 'string' && 
                ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
                 React.cloneElement(heading as React.ReactElement, {
-                  className: cn('text-xs font-medium', (heading.props as any).className || ''),
+                  className: cn(scales.headingClass, 'font-medium', (heading.props as any).className || ''),
                 }) : heading
               }
             </div>
@@ -562,12 +729,12 @@ export function SimpleStarburst({ children, className, glowColor = "rgba(0, 230,
           {/* Divider - very small for star */}
           <ShapeDivider width="50%" opacity={30} margin="0.1rem 0" />
           
-          {/* Content - extremely compact */}
+          {/* Content - extremely compact with adaptive sizing */}
           <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center">
             {content.map((item, index) => {
               if (React.isValidElement(item) && item.type === 'p') {
                 return React.cloneElement(item as React.ReactElement, {
-                  className: cn('text-[10px] my-0.5 leading-tight', (item.props as any).className || ''),
+                  className: cn(scales.contentClass, 'my-0.5 leading-tight', (item.props as any).className || ''),
                   key: `starburst-content-${index}`
                 });
               }
@@ -575,12 +742,12 @@ export function SimpleStarburst({ children, className, glowColor = "rgba(0, 230,
             })}
           </div>
           
-          {/* Button - tiny size for star */}
+          {/* Button - adaptive sizing for star */}
           {button && (
-            <div className="mt-1 flex justify-center items-center scale-75">
+            <div className="mt-1 flex justify-center items-center">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
-                  className: cn('text-[10px] py-0.5 px-2', (button.props as any).className || ''),
+                  className: cn(scales.buttonClass, 'py-0.5 px-2', (button.props as any).className || ''),
                 }) : button
               }
             </div>
@@ -595,7 +762,15 @@ export function SimpleStarburst({ children, className, glowColor = "rgba(0, 230,
  * SimpleCircle Component
  * A circle shape that properly contains content
  */
-export function SimpleCircle({ children, className, glowColor = "rgba(0, 230, 230, 0.5)" }: GeometricShapeProps) {
+export function SimpleCircle({ 
+  children, 
+  className, 
+  glowColor = "rgba(0, 230, 230, 0.5)",
+  adaptiveScaling = true 
+}: GeometricShapeProps) {
+  // Use the responsive hook to get font sizes based on container width
+  const { containerRef, fontSize } = useResponsiveShape(adaptiveScaling);
+  
   // Process children to organize content
   const childArray = React.Children.toArray(children);
   
@@ -616,9 +791,32 @@ export function SimpleCircle({ children, className, glowColor = "rgba(0, 230, 23
   const content = childArray.filter(child => 
     child !== heading && child !== button
   );
+  
+  // Get appropriate padding for circle based on container size
+  const getCircleInset = () => {
+    if (containerRef.current) {
+      const width = containerRef.current.offsetWidth;
+      
+      // Smaller circles need relatively more padding to keep content within the visible area
+      if (width < 150) {
+        return "inset-[20%]"; // More padding for tiny circles
+      } else if (width < 250) {
+        return "inset-[18%]";
+      } else if (width < 350) {
+        return "inset-[15%]";
+      } else {
+        return "inset-[13%]"; // Less padding needed for larger circles
+      }
+    }
+    
+    return "inset-[15%]"; // Default
+  };
+  
+  const insetClass = getCircleInset();
 
   return (
     <div 
+      ref={containerRef}
       className={cn("relative aspect-square rounded-full text-white overflow-hidden", className)}
       style={{
         backgroundColor: "rgba(0, 0, 0, 0.4)",
@@ -655,15 +853,15 @@ export function SimpleCircle({ children, className, glowColor = "rgba(0, 230, 23
       </div>
       
       {/* Content Container - circle content needs to be kept far from edges */}
-      <div className="absolute inset-[15%] flex flex-col justify-center items-center">
-        {/* Title - proper sizing for circle */}
+      <div className={cn("absolute flex flex-col justify-center items-center", insetClass)}>
+        {/* Title - adaptive sizing for circle */}
         {heading && (
           <div className="text-center mb-1">
             {React.isValidElement(heading) && 
              typeof heading.type === 'string' && 
              ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
               React.cloneElement(heading as React.ReactElement, {
-                className: cn('text-sm font-medium', (heading.props as any).className || ''),
+                className: cn(fontSize.heading, 'font-medium', (heading.props as any).className || ''),
               }) : heading
             }
           </div>
@@ -672,12 +870,12 @@ export function SimpleCircle({ children, className, glowColor = "rgba(0, 230, 23
         {/* Divider - shorter for circle */}
         <ShapeDivider width="40%" opacity={30} margin="0.25rem 0" />
         
-        {/* Content - more compact for circle */}
+        {/* Content - adaptive sizing for circle */}
         <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn('text-xs my-1 leading-snug', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'my-1 leading-snug', (item.props as any).className || ''),
                 key: `circle-content-${index}`
               });
             }
@@ -685,12 +883,12 @@ export function SimpleCircle({ children, className, glowColor = "rgba(0, 230, 23
           })}
         </div>
         
-        {/* Button - sized to fit in circle */}
+        {/* Button - adaptive sizing for circle */}
         {button && (
           <div className="mt-1 mb-1 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
-                className: cn('text-xs py-1 px-3 scale-90', (button.props as any).className || ''),
+                className: cn(fontSize.button, 'py-1 px-3', (button.props as any).className || ''),
               }) : button
             }
           </div>
