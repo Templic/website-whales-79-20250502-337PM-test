@@ -684,161 +684,122 @@ export function SimpleStarburst({
     child !== heading && child !== button
   );
   
-  // Scale factors - starburst needs more aggressive scaling due to its intricate shape
-  const getStarburstScaleFactors = () => {
-    if (containerRef.current) {
-      const width = containerRef.current.offsetWidth;
-      
-      // Adjusted scales to improve visibility for starburst
-      if (width < 150) {
-        return {
-          containerWidth: '80%', // Larger container for better visibility
-          containerHeight: '80%',
-          headingClass: 'text-[10px] font-bold',
-          contentClass: 'text-[9px]',
-          buttonClass: 'text-[9px] font-bold'
-        };
-      } else if (width < 250) {
-        return {
-          containerWidth: '80%',
-          containerHeight: '80%',
-          headingClass: 'text-[11px] font-bold',
-          contentClass: 'text-[10px]',
-          buttonClass: 'text-[10px] font-bold'
-        };
-      } else if (width < 350) {
-        return {
-          containerWidth: '80%',
-          containerHeight: '80%',
-          headingClass: 'text-xs font-bold',
-          contentClass: 'text-[11px]',
-          buttonClass: 'text-[11px] font-bold'
-        };
-      } else {
-        return {
-          containerWidth: '80%',
-          containerHeight: '80%',
-          headingClass: 'text-sm font-bold',
-          contentClass: 'text-xs',
-          buttonClass: 'text-xs font-bold'
-        };
-      }
-    }
-    
-    // Default scales - improved visibility
-    return {
-      containerWidth: '80%',
-      containerHeight: '80%',
-      headingClass: 'text-xs font-bold',
-      contentClass: 'text-[11px]',
-      buttonClass: 'text-[11px] font-bold'
-    };
-  };
-  
-  const scales = getStarburstScaleFactors();
-  
   return (
     <div 
       ref={containerRef}
-      className={cn("relative aspect-square text-white overflow-hidden", className)}
-      style={{
-        clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
-        backgroundColor: "rgba(0, 0, 0, 0.4)",
-        boxShadow: `0 0 15px ${glowColor}`,
-        border: "1px solid rgba(255, 255, 255, 0.1)"
-      }}
+      className={cn("relative aspect-square text-white", className)}
     >
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          className="opacity-20"
-        >
-          <path
-            d="M50 10 L55 38 L80 38 L60 53 L68 80 L50 63 L32 80 L40 53 L20 38 L45 38 Z"
-            stroke="white"
-            strokeWidth="0.5"
-            fill="none"
-          />
-          <path
-            d="M50 20 L53 38 L70 38 L55 48 L60 70 L50 58 L40 70 L45 48 L30 38 L47 38 Z"
-            stroke="white"
-            strokeWidth="0.5"
-            fill="none"
-          />
-        </svg>
+      {/* Star Background Layer - This is just a visual backdrop */}
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          boxShadow: `0 0 15px ${glowColor}`,
+          border: "1px solid rgba(255, 255, 255, 0.1)"
+        }}
+      >
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            className="opacity-20"
+          >
+            <path
+              d="M50 10 L55 38 L80 38 L60 53 L68 80 L50 63 L32 80 L40 53 L20 38 L45 38 Z"
+              stroke="white"
+              strokeWidth="0.5"
+              fill="none"
+            />
+            <path
+              d="M50 20 L53 38 L70 38 L55 48 L60 70 L50 58 L40 70 L45 48 L30 38 L47 38 Z"
+              stroke="white"
+              strokeWidth="0.5"
+              fill="none"
+            />
+          </svg>
+        </div>
       </div>
       
-      {/* Content Container - using a circular container for better visibility within star shape */}
-      <div className="absolute inset-0 flex flex-col justify-center items-center">
-        {/* Use a smaller circular container to improve visibility in star shape */}
-        <div 
-          className="flex flex-col justify-center items-center overflow-hidden rounded-full bg-black bg-opacity-30"
-          style={{ 
-            width: '65%', 
-            height: '65%'
-          }}
-        >
-          {/* Title with improved visibility */}
-          {heading && (
-            <div className="text-center mb-1 w-full">
-              {React.isValidElement(heading) && 
-               typeof heading.type === 'string' && 
-               ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
-                React.cloneElement(heading as React.ReactElement, {
-                  className: cn('text-sm font-bold', (heading.props as any).className || ''),
-                }) : heading
-              }
+      {/* Content Container - Completely separate from the star background */}
+      <div className="absolute inset-0 z-10 flex flex-col justify-between items-center">
+        {/* Center circle for all content except button */}
+        <div className="flex-grow flex items-center justify-center w-full">
+          <div 
+            className="rounded-full bg-black bg-opacity-30 flex flex-col justify-center items-center"
+            style={{ 
+              width: '60%', 
+              height: '60%',
+              margin: '10% 0 0 0' // Push down a bit to avoid top star point
+            }}
+          >
+            {/* Title */}
+            {heading && (
+              <div className="text-center mb-1 w-full">
+                {React.isValidElement(heading) && 
+                 typeof heading.type === 'string' && 
+                 ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
+                  React.cloneElement(heading as React.ReactElement, {
+                    className: cn('text-sm font-bold', (heading.props as any).className || ''),
+                  }) : heading
+                }
+              </div>
+            )}
+            
+            {/* Divider */}
+            <ShapeDivider width="40%" opacity={30} margin="0" />
+            
+            {/* Content */}
+            <div className="w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center py-1">
+              {content.map((item, index) => {
+                if (React.isValidElement(item) && item.type === 'p') {
+                  return React.cloneElement(item as React.ReactElement, {
+                    className: cn('text-xs my-0 leading-tight', (item.props as any).className || ''),
+                    key: `starburst-content-${index}`
+                  });
+                }
+                return item;
+              })}
             </div>
-          )}
-          
-          {/* Divider with slight margin */}
-          <ShapeDivider width="50%" opacity={30} margin="0.1rem 0" />
-          
-          {/* Content with better visibility */}
-          <div className="w-[85%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center py-1 my-0">
-            {content.map((item, index) => {
-              if (React.isValidElement(item) && item.type === 'p') {
-                return React.cloneElement(item as React.ReactElement, {
-                  className: cn('text-xs my-0 leading-tight', (item.props as any).className || ''),
-                  key: `starburst-content-${index}`
-                });
-              }
-              return item;
-            })}
           </div>
-          
-          {/* Button with circular shape for better visibility */}
-          {button && (
-            <div className="mt-1 mb-1 flex justify-center items-center">
-              {React.isValidElement(button) && button.type === 'button' ? 
-                React.cloneElement(button as React.ReactElement, {
-                  className: cn('text-xs font-bold text-center', (button.props as any).className || ''),
-                  style: {
-                    padding: "0.4rem 1.2rem",
-                    background: (button.props as any).className?.includes('bg-') 
-                      ? undefined 
-                      : "rgba(0, 100, 255, 0.8)",
-                    border: "1px solid rgba(255, 255, 255, 0.5)",
-                    borderRadius: "9999px", // Circular button for better visibility
-                    minWidth: "5rem", // Wider to ensure text fits
-                    minHeight: "2rem",
-                    width: "90%", // More width to prevent clipping
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
-                    fontSize: "0.75rem", // Smaller text for better fit
-                    letterSpacing: "-0.01rem" // Tighten letter spacing
-                  }
-                }) : button
-              }
-            </div>
-          )}
         </div>
+        
+        {/* Button placed in a safe area outside the star points */}
+        {button && (
+          <div 
+            className="z-20 pb-[25%]" // Push up to avoid bottom star points
+          >
+            {React.isValidElement(button) && button.type === 'button' ? 
+              React.cloneElement(button as React.ReactElement, {
+                className: cn('text-center', (button.props as any).className || ''),
+                style: {
+                  padding: "0.35rem 1.5rem",
+                  background: (button.props as any).className?.includes('bg-') 
+                    ? undefined 
+                    : "rgba(225, 50, 50, 0.8)", // More visible red color
+                  border: "1px solid rgba(255, 255, 255, 0.7)",
+                  borderRadius: "9999px",
+                  minWidth: "6rem",
+                  minHeight: "1.8rem",
+                  width: "auto",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  boxShadow: "0 0 10px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 0, 0, 0.4)",
+                  fontSize: "0.75rem",
+                  fontWeight: "bold",
+                  letterSpacing: "0",
+                  whiteSpace: "nowrap",
+                  backdropFilter: "blur(2px)",
+                  textShadow: "0 1px 2px rgba(0, 0, 0, 0.8)"
+                }
+              }) : button
+            }
+          </div>
+        )}
       </div>
     </div>
   );
