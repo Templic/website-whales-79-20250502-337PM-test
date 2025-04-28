@@ -179,8 +179,8 @@ export function SimpleTriangle({
       {/* Content Container with calculated spacing based on triangle geometry */}
       {/* Move all content closer to center, away from corners */}
       <div className="absolute inset-x-0 bottom-0 top-[10%] flex flex-col justify-center items-center">
-        {/* Use a smaller central content area - reduced width to keep content from edges */}
-        <div className="w-[70%] h-[75%] flex flex-col justify-center items-center">
+        {/* Reduced content area to ensure text stays within triangle shape */}
+        <div className="w-[60%] h-[75%] flex flex-col justify-center items-center">
         
           {/* Heading at top - in a triangle, place heading in wider part (bottom) */}
           <div className="w-full text-center mb-0">
@@ -200,8 +200,8 @@ export function SimpleTriangle({
           {/* Divider - small margin to separate from title */}
           <ShapeDivider width="30%" opacity={30} margin="0.2rem 0 0.2rem 0" />
           
-          {/* Main content in center - compact width to keep text away from triangle edges */}
-          <div className="w-[90%] max-w-[90%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
+          {/* Main content with even narrower max-width for triangle */}
+          <div className="w-[80%] max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
             {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
             {content.map((item, index) => {
               if (React.isValidElement(item) && item.type === 'p') {
