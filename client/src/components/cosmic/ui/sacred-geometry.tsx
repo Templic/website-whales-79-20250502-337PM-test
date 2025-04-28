@@ -81,7 +81,7 @@ export function TriangleContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-  maxContentWidth = "85%",
+  maxContentWidth = "70%",
   textAlign = "center",
   responsive = true
 }: EnhancedGeometryContainerProps) {
@@ -116,10 +116,8 @@ export function TriangleContainer({
   // Sample text if no other content is provided
   if (otherContent.length === 0) {
     otherContent.push(
-      <p key="sample-text" className="triangle-content">
-        This is sample text that demonstrates how content fits within the triangular shape,
-        conforming to the contours while maintaining readability. The text should follow
-        the triangular boundaries for a harmonious design.
+      <p key="sample-text" className="triangle-content text-sm">
+        This triangle represents growth and ascension. This responsive container adjusts content to fit within its boundaries.
       </p>
     );
   }
@@ -180,21 +178,22 @@ export function TriangleContainer({
         </svg>
       </div>
       {/* Text positioning for triangles with inverted order: title at bottom, button at top */}
-      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-6">
+      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-4">
         {/* Button at top */}
-        <div className="w-[var(--max-content-width,75%)] flex flex-col items-center justify-center mt-4 mb-auto triangle-button-container">
+        <div className="w-[var(--max-content-width,60%)] flex flex-col items-center justify-center mt-6 mb-0 triangle-button-container">
           {buttons}
         </div>
         
         {/* Content in middle, with shape contour awareness */}
         <div 
-          className={`w-full max-w-[var(--max-content-width,75%)] px-4 flex flex-col items-center overflow-y-auto hide-scrollbar text-${textAlign} triangle-content-container`}
+          className={`w-full max-w-[var(--max-content-width,65%)] px-3 flex flex-col items-center text-sm overflow-y-auto hide-scrollbar text-${textAlign} triangle-content-container`}
           data-shape-content="triangle"
+          style={{ marginTop: "0", marginBottom: "0" }}
         >
           {otherContent.map((content, index) => {
             if (React.isValidElement(content) && content.type === 'p') {
               return React.cloneElement(content as React.ReactElement<any>, {
-                className: cn('triangle-content', (content.props as any).className || ''),
+                className: cn('triangle-content text-sm', (content.props as any).className || ''),
                 key: `triangle-content-${index}`
               });
             }
@@ -203,7 +202,7 @@ export function TriangleContainer({
         </div>
         
         {/* Title at bottom */}
-        <div className="w-[var(--max-content-width,85%)] flex flex-col items-center justify-center mb-4 mt-auto triangle-title-container">
+        <div className="w-[var(--max-content-width,70%)] flex flex-col items-center justify-center mb-5 mt-auto triangle-title-container">
           {headings}
         </div>
       </div>
@@ -215,7 +214,7 @@ export function InvertedTriangleContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-  maxContentWidth = "85%",
+  maxContentWidth = "75%",
   textAlign = "center",
   responsive = true
 }: EnhancedGeometryContainerProps) {
@@ -250,10 +249,8 @@ export function InvertedTriangleContainer({
   // Sample text if no other content is provided
   if (otherContent.length === 0) {
     otherContent.push(
-      <p key="sample-text" className="inverted-triangle-content">
-        This is sample text that shows how content fits within the inverted triangular shape,
-        conforming to the wide top and narrow bottom contours. The text should follow
-        the triangular boundaries while maintaining proper spacing and readability.
+      <p key="sample-text" className="inverted-triangle-content text-sm">
+        The inverted triangle symbolizes water and the feminine form. This adaptive container ensures text fits precisely.
       </p>
     );
   }
@@ -314,21 +311,22 @@ export function InvertedTriangleContainer({
         </svg>
       </div>
       {/* Text positioning for inverted triangles: title at top, button at bottom */}
-      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-6">
+      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-4">
         {/* Title at top */}
-        <div className="w-[var(--max-content-width,85%)] flex flex-col items-center justify-center mt-2 mb-auto inverted-triangle-title-container">
+        <div className="w-[var(--max-content-width,80%)] flex flex-col items-center justify-center mt-3 mb-1 inverted-triangle-title-container">
           {headings}
         </div>
         
         {/* Content in middle with shape contour awareness */}
         <div 
-          className={`w-full max-w-[var(--max-content-width,75%)] px-4 flex flex-col items-center overflow-y-auto hide-scrollbar text-${textAlign} inverted-triangle-content-container`}
+          className={`w-full max-w-[var(--max-content-width,75%)] px-3 flex flex-col items-center text-sm overflow-y-auto hide-scrollbar text-${textAlign} inverted-triangle-content-container`}
           data-shape-content="inverted-triangle"
+          style={{ marginTop: "0", marginBottom: "auto" }}
         >
           {otherContent.map((content, index) => {
             if (React.isValidElement(content) && content.type === 'p') {
               return React.cloneElement(content as React.ReactElement<any>, {
-                className: cn('inverted-triangle-content', (content.props as any).className || ''),
+                className: cn('inverted-triangle-content text-sm', (content.props as any).className || ''),
                 key: `inverted-triangle-content-${index}`
               });
             }
@@ -336,8 +334,8 @@ export function InvertedTriangleContainer({
           })}
         </div>
         
-        {/* Button at bottom */}
-        <div className="w-[var(--max-content-width,65%)] flex flex-col items-center justify-center mb-4 mt-auto inverted-triangle-button-container">
+        {/* Button at bottom - smaller width near the point of the triangle */}
+        <div className="w-[var(--max-content-width,45%)] flex flex-col items-center justify-center mb-6 mt-auto inverted-triangle-button-container">
           {buttons}
         </div>
       </div>
@@ -409,7 +407,7 @@ export function StarburstContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-  maxContentWidth = "55%",
+  maxContentWidth = "45%",
   textAlign = "center",
   responsive = true
 }: EnhancedGeometryContainerProps) {
@@ -444,10 +442,8 @@ export function StarburstContainer({
   // Sample text if no other content is provided
   if (otherContent.length === 0) {
     otherContent.push(
-      <p key="sample-text" className="starburst-triangular-content">
-        This is sample text that demonstrates how content fits within the starburst shape,
-        conforming to the pentagonal center. This text will appear at the top of the component,
-        followed by the title and then the button at the bottom.
+      <p key="sample-text" className="starburst-triangular-content text-sm">
+        Symbolizes expansion and energy. This container creates readable areas across sections.
       </p>
     );
   }
@@ -455,12 +451,12 @@ export function StarburstContainer({
   // Process paragraph content to apply triangular content styling
   const styledOtherContent = otherContent.map((content, index) => {
     if (typeof content === 'string' || typeof content === 'number') {
-      return <p key={`starburst-content-${index}`} className="starburst-triangular-content">{content}</p>;
+      return <p key={`starburst-content-${index}`} className="starburst-triangular-content text-sm">{content}</p>;
     }
     
     if (React.isValidElement(content) && content.type === 'p') {
       return React.cloneElement(content as React.ReactElement<any>, {
-        className: cn('starburst-triangular-content', (content.props as any).className || ''),
+        className: cn('starburst-triangular-content text-sm', (content.props as any).className || ''),
         key: `starburst-content-${index}`
       });
     }
@@ -549,22 +545,22 @@ export function StarburstContainer({
         </svg>
       </div>
       {/* Content organized in flow: text, title, button */}
-      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-6">
+      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-2">
         {/* Text content at top */}
         <div 
-          className={`w-full max-w-[var(--max-content-width,55%)] flex flex-col items-center overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container mt-4 mb-auto`}
+          className={`w-full max-w-[var(--max-content-width,45%)] px-2 flex flex-col items-center text-xs overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container mt-8 mb-0`}
           data-shape-content="starburst"
         >
           {styledOtherContent}
         </div>
         
         {/* Title in middle-bottom */}
-        <div className="w-[var(--max-content-width,60%)] flex flex-col items-center justify-center mt-auto mb-2 starburst-title-container">
+        <div className="w-[var(--max-content-width,50%)] flex flex-col items-center justify-center mt-2 mb-2 starburst-title-container">
           {headings}
         </div>
         
         {/* Button at bottom */}
-        <div className="w-[var(--max-content-width,50%)] flex flex-col items-center justify-center mb-4 starburst-button-container">
+        <div className="w-[var(--max-content-width,45%)] flex flex-col items-center justify-center mb-5 starburst-button-container">
           {buttons}
         </div>
       </div>
