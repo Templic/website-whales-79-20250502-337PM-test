@@ -538,4 +538,3 @@ function CosmicFooterOriginal() {
     </footer>
   )
 }
-
