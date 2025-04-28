@@ -48,6 +48,32 @@
   );
 }
 
+/* Custom styling for starburst container to match screenshot */
+[data-shape="starburst"] {
+  background-color: rgba(128, 128, 128, 0.75) !important;
+  max-width: 350px !important;
+  margin: 0 auto !important;
+}
+
+/* Text styling to match screenshot */
+[data-shape="starburst"] .starburst-title-container h3 {
+  font-family: serif;
+  font-size: 1.25rem !important;
+  font-weight: normal;
+  line-height: 1.2;
+  margin-top: 1rem !important;
+  margin-bottom: 0 !important;
+}
+
+/* Button styling to match screenshot */
+[data-shape="starburst"] button {
+  background-color: #d53f8c !important;
+  border-radius: 4px !important;
+  padding: 0.25rem 1.5rem !important;
+  font-size: 1.25rem !important;
+  margin-bottom: 2.5rem !important;
+}
+
 .shape-divider-hexagon {
   width: 50%;
   opacity: 0.25;

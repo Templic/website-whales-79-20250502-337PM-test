@@ -444,7 +444,7 @@ export function StarburstContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-  maxContentWidth = "55%",
+  maxContentWidth = "80%",
   textAlign = "center",
   responsive = true
 }: EnhancedGeometryContainerProps) {
@@ -479,7 +479,7 @@ export function StarburstContainer({
   // Default title if none provided to match screenshot
   if (headings.length === 0) {
     headings.push(
-      <h3 key="sample-title" className="text-center my-1 font-serif">
+      <h3 key="sample-title" className="text-center mt-4 mb-0 font-serif text-xl font-normal">
         The<br />Long<br />Title
       </h3>
     );
@@ -518,7 +518,7 @@ export function StarburstContainer({
     buttons.push(
       <button 
         key="sample-button" 
-        className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-1 px-4 rounded-md my-1 text-lg"
+        className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-1 px-6 rounded my-1 text-xl"
       >
         button
       </button>
@@ -535,59 +535,37 @@ export function StarburstContainer({
       )}
       style={{
         clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
-        backgroundColor: "rgba(128, 128, 128, 0.6)",
+        backgroundColor: "rgba(120, 120, 120, 0.75)",
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
         minHeight: "300px",
+        maxWidth: "350px",
+        margin: "0 auto",
         "--max-content-width": maxContentWidth
       } as React.CSSProperties}
       data-shape="starburst"
     >
-      {/* Pentagon and triangular spikes visualization */}
-      <div className="absolute inset-0 opacity-10">
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          className="opacity-50"
-        >
-          {/* Outer starburst shape */}
-          <path
-            d="M50 0 L61 35 L98 35 L68 57 L79 91 L50 70 L21 91 L32 57 L2 35 L39 35 Z"
-            stroke="white"
-            strokeWidth="0.5"
-            fill="none"
-          />
-          {/* Inner pentagon shape */}
-          <path
-            d="M50 20 L57 42 L82 42 L62 57 L69 77 L50 63 L31 77 L38 57 L18 42 L43 42 Z"
-            stroke="white"
-            strokeWidth="0.5"
-            fill="none"
-          />
-        </svg>
-      </div>
+      {/* Pentagon and triangular spikes visualization - removed to match screenshot exactly */}
       
       {/* Content organized in exact order from screenshot: title, text, button */}
       <div 
-        className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-2"
+        className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-0"
       >
         {/* Title at top */}
-        <div className="w-[var(--max-content-width,40%)] flex flex-col items-center justify-center mt-3 mb-0 starburst-title-container">
+        <div className="w-[var(--max-content-width,40%)] flex flex-col items-center justify-center mt-2 mb-0 starburst-title-container">
           {headings}
         </div>
         
         {/* Text content in middle with shape contour awareness */}
         <div 
-          className={`w-full max-w-[var(--max-content-width,60%)] px-1 flex flex-col items-center overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container my-1`}
+          className={`w-full max-w-[var(--max-content-width,70%)] px-1 flex flex-col items-center overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container mt-1 mb-0`}
           data-shape-content="starburst"
         >
           {styledOtherContent}
         </div>
         
         {/* Button at bottom */}
-        <div className="w-[var(--max-content-width,35%)] flex flex-col items-center justify-center mt-1 mb-6 starburst-button-container">
+        <div className="w-[var(--max-content-width,35%)] flex flex-col items-center justify-center mt-0 mb-10 starburst-button-container">
           {buttons}
         </div>
       </div>

@@ -96,7 +96,7 @@ export default function ResponsiveDemo() {
           <div className="shape-demo">
             <h2 className="text-xl font-semibold mb-3">Starburst Container</h2>
             <StarburstContainer>
-              <h3 className="text-center my-1 font-serif">
+              <h3 className="text-center mt-4 mb-0 font-serif text-xl font-normal">
                 The<br />Long<br />Title
               </h3>
               <p className="text-center text-xs">
@@ -105,7 +105,7 @@ export default function ResponsiveDemo() {
                 contouring the text with<br />
                 the shape edges
               </p>
-              <button className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-1 px-4 rounded-md my-1 text-lg">
+              <button className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-1 px-6 rounded my-1 text-xl">
                 button
               </button>
             </StarburstContainer>
