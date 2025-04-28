@@ -334,7 +334,7 @@ export function SimpleInvertedTriangle({
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn(fontSize.content, 'my-0.5 leading-tight', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'm-0 leading-tight', (item.props as any).className || ''),
                 key: `inverted-triangle-content-${index}`
               });
             }
@@ -460,7 +460,7 @@ export function SimpleHexagon({
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn(fontSize.content, 'my-0.5 leading-tight', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'm-0 leading-tight', (item.props as any).className || ''),
                 key: `hexagon-content-${index}`
               });
             }
@@ -470,7 +470,7 @@ export function SimpleHexagon({
         
         {/* Button - hexagon shaped to match container */}
         {button && (
-          <div className="mt-0.5 mb-0.5 flex justify-center items-center">
+          <div className="mt-0 mb-0 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
                 className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
@@ -583,7 +583,7 @@ export function SimpleOctagon({
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn(fontSize.content, 'my-0.5 leading-tight', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'm-0 leading-tight', (item.props as any).className || ''),
                 key: `octagon-content-${index}`
               });
             }
@@ -593,7 +593,7 @@ export function SimpleOctagon({
         
         {/* Button - octagon shaped to match container */}
         {button && (
-          <div className="mt-0.5 mb-0.5 flex justify-center items-center">
+          <div className="mt-0 mb-0 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
                 className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
@@ -918,7 +918,7 @@ export function SimpleCircle({
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn(fontSize.content, 'my-0.5 leading-tight', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'm-0 leading-tight', (item.props as any).className || ''),
                 key: `circle-content-${index}`
               });
             }
@@ -928,7 +928,7 @@ export function SimpleCircle({
         
         {/* Button - circle shaped to match container */}
         {button && (
-          <div className="mt-0.5 mb-0.5 flex justify-center items-center">
+          <div className="mt-0 mb-0 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
                 className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
