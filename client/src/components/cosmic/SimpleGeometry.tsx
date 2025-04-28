@@ -104,25 +104,30 @@ export function SimpleTriangle({ children, className, glowColor = "rgba(0, 230, 
         </svg>
       </div>
       
-      {/* Content Container - Arranges content in bottom-to-top order for triangles */}
-      <div className="absolute inset-0 flex flex-col justify-between items-center p-4">
-        {/* Content positioned to stay within shape bounds */}
-        <div className="w-full max-w-[75%] mt-6">
+      {/* Content Container with calculated spacing based on triangle geometry */}
+      {/* The container takes a triangle shape into account - wider at bottom, narrower at top */}
+      <div className="absolute inset-x-0 bottom-0 top-[15%] flex flex-col justify-between items-center">
+        {/* Button container - positioned at top 20% of visible area (narrow part) */}
+        <div className="w-[40%] mb-3">
           {/* Button at top of triangle (visually smallest part) */}
           {button && (
-            <div className="flex justify-center items-center">
-              {button}
+            <div className="flex justify-center items-center scale-90">
+              {React.isValidElement(button) && button.type === 'button' ? 
+                React.cloneElement(button as React.ReactElement, {
+                  className: cn('text-xs py-1 px-3', (button.props as any).className || ''),
+                }) : button
+              }
             </div>
           )}
         </div>
           
-        {/* Main content in middle of triangle */}
-        <div className="w-full max-w-[85%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center py-2">
-          {/* Map to ensure proper styling of paragraphs */}
+        {/* Main content in middle of triangle - width increases as we move down */}
+        <div className="w-[65%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center mb-2">
+          {/* Map to ensure proper styling of paragraphs - smaller text to fit the shape */}
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn('text-sm my-1', (item.props as any).className || ''),
+                className: cn('text-xs my-1 leading-snug', (item.props as any).className || ''),
                 key: `triangle-content-${index}`
               });
             }
@@ -130,14 +135,20 @@ export function SimpleTriangle({ children, className, glowColor = "rgba(0, 230, 
           })}
         </div>
         
-        {/* Divider */}
-        <ShapeDivider width="40%" opacity={30} margin="0.5rem 0" />
+        {/* Divider - placed near bottom */}
+        <ShapeDivider width="50%" opacity={30} margin="0 0 0.5rem 0" />
         
         {/* Heading at bottom of triangle (visually widest part) */}
-        <div className="w-full max-w-[95%] mb-4">
+        <div className="w-[80%] mb-6">
           {heading && (
             <div className="text-center">
-              {heading}
+              {React.isValidElement(heading) && 
+               typeof heading.type === 'string' && 
+               ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
+                React.cloneElement(heading as React.ReactElement, {
+                  className: cn('text-base font-medium', (heading.props as any).className || ''),
+                }) : heading
+              }
             </div>
           )}
         </div>
@@ -206,39 +217,51 @@ export function SimpleInvertedTriangle({ children, className, glowColor = "rgba(
         </svg>
       </div>
       
-      {/* Content Container - Arranges content in top-to-bottom order for inverted triangles */}
-      <div className="absolute inset-0 flex flex-col justify-between items-center p-4">
+      {/* Content Container with calculated spacing based on inverted triangle geometry */}
+      {/* The container takes an inverted triangle shape into account - wider at top, narrower at bottom */}
+      <div className="absolute inset-x-0 top-0 bottom-[15%] flex flex-col justify-between items-center">
         {/* Heading at top of inverted triangle (visually widest part) */}
-        <div className="w-full max-w-[95%] mt-2">
+        <div className="w-[85%] mt-3">
           {heading && (
             <div className="text-center">
-              {heading}
+              {React.isValidElement(heading) && 
+               typeof heading.type === 'string' && 
+               ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
+                React.cloneElement(heading as React.ReactElement, {
+                  className: cn('text-base font-medium', (heading.props as any).className || ''),
+                }) : heading
+              }
             </div>
           )}
         </div>
         
-        {/* Divider */}
+        {/* Divider - placed near top */}
         <ShapeDivider width="60%" opacity={30} margin="0.5rem 0" />
         
-        {/* Main content in middle of inverted triangle */}
-        <div className="w-full max-w-[85%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center py-2">
-          {/* Map to ensure proper styling of paragraphs */}
+        {/* Main content in middle of inverted triangle - width decreases as we move down */}
+        <div className="w-[70%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center mt-1">
+          {/* Map to ensure proper styling of paragraphs - smaller text to fit the shape */}
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn('text-sm my-1', (item.props as any).className || ''),
+                className: cn('text-xs my-1 leading-snug', (item.props as any).className || ''),
                 key: `inverted-triangle-content-${index}`
               });
             }
             return item;
           })}
         </div>
-        
-        {/* Button at bottom of inverted triangle (visually smallest part) */}
-        <div className="w-full max-w-[50%] mb-6">
+          
+        {/* Button container - positioned at bottom of visible area (narrow part) */}
+        <div className="w-[40%] mb-3">
+          {/* Button at bottom of inverted triangle (visually smallest part) */}
           {button && (
-            <div className="flex justify-center items-center">
-              {button}
+            <div className="flex justify-center items-center scale-90">
+              {React.isValidElement(button) && button.type === 'button' ? 
+                React.cloneElement(button as React.ReactElement, {
+                  className: cn('text-xs py-1 px-3', (button.props as any).className || ''),
+                }) : button
+              }
             </div>
           )}
         </div>
@@ -255,15 +278,23 @@ export function SimpleHexagon({ children, className, glowColor = "rgba(0, 230, 2
   // Process children to organize content
   const childArray = React.Children.toArray(children);
   
-  // Extract headings
+  // Extract headings, content and buttons
   const heading = childArray.find(child => 
     React.isValidElement(child) && 
     typeof child.type === 'string' && 
     ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(child.type)
   );
   
+  const button = childArray.find(child => 
+    React.isValidElement(child) && 
+    ((typeof child.type === 'string' && child.type === 'button') || 
+     (React.isValidElement(child) && child.props?.className?.includes('button')))
+  );
+  
   // All other content
-  const content = childArray.filter(child => child !== heading);
+  const content = childArray.filter(child => 
+    child !== heading && child !== button
+  );
 
   return (
     <div 
@@ -299,30 +330,47 @@ export function SimpleHexagon({ children, className, glowColor = "rgba(0, 230, 2
         </svg>
       </div>
       
-      {/* Content Container */}
-      <div className="absolute inset-0 flex flex-col justify-center items-center p-5">
-        {/* Title */}
+      {/* Content Container - ensure content stays within hexagon boundaries */}
+      <div className="absolute inset-[8%] flex flex-col justify-center items-center">
+        {/* Title - reduced size to fit */}
         {heading && (
           <div className="text-center mb-2">
-            {heading}
+            {React.isValidElement(heading) && 
+             typeof heading.type === 'string' && 
+             ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
+              React.cloneElement(heading as React.ReactElement, {
+                className: cn('text-base font-medium mb-1', (heading.props as any).className || ''),
+              }) : heading
+            }
           </div>
         )}
         
         {/* Divider */}
-        <ShapeDivider width="50%" opacity={30} margin="0.5rem 0" />
+        <ShapeDivider width="50%" opacity={30} margin="0.25rem 0" />
         
-        {/* Content */}
-        <div className="w-full max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center">
+        {/* Content - kept away from edges */}
+        <div className="w-full max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center pt-1 pb-2">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn('text-sm my-1', (item.props as any).className || ''),
+                className: cn('text-xs my-1 leading-snug', (item.props as any).className || ''),
                 key: `hexagon-content-${index}`
               });
             }
             return item;
           })}
         </div>
+        
+        {/* Button - smaller button that fits within shape */}
+        {button && (
+          <div className="mt-1 mb-1 flex justify-center items-center">
+            {React.isValidElement(button) && button.type === 'button' ? 
+              React.cloneElement(button as React.ReactElement, {
+                className: cn('text-xs py-1 px-3 scale-90', (button.props as any).className || ''),
+              }) : button
+            }
+          </div>
+        )}
       </div>
     </div>
   );
@@ -336,15 +384,23 @@ export function SimpleOctagon({ children, className, glowColor = "rgba(0, 230, 2
   // Process children to organize content
   const childArray = React.Children.toArray(children);
   
-  // Extract headings
+  // Extract headings, content and buttons
   const heading = childArray.find(child => 
     React.isValidElement(child) && 
     typeof child.type === 'string' && 
     ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(child.type)
   );
   
+  const button = childArray.find(child => 
+    React.isValidElement(child) && 
+    ((typeof child.type === 'string' && child.type === 'button') || 
+     (React.isValidElement(child) && child.props?.className?.includes('button')))
+  );
+  
   // All other content
-  const content = childArray.filter(child => child !== heading);
+  const content = childArray.filter(child => 
+    child !== heading && child !== button
+  );
 
   return (
     <div 
@@ -380,30 +436,47 @@ export function SimpleOctagon({ children, className, glowColor = "rgba(0, 230, 2
         </svg>
       </div>
       
-      {/* Content Container */}
-      <div className="absolute inset-0 flex flex-col justify-center items-center p-6">
-        {/* Title */}
+      {/* Content Container - ensure content stays within octagon boundaries */}
+      <div className="absolute inset-[10%] flex flex-col justify-center items-center">
+        {/* Title - reduced size to fit */}
         {heading && (
           <div className="text-center mb-2">
-            {heading}
+            {React.isValidElement(heading) && 
+             typeof heading.type === 'string' && 
+             ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
+              React.cloneElement(heading as React.ReactElement, {
+                className: cn('text-base font-medium mb-1', (heading.props as any).className || ''),
+              }) : heading
+            }
           </div>
         )}
         
         {/* Divider */}
-        <ShapeDivider width="60%" opacity={30} margin="0.5rem 0" />
+        <ShapeDivider width="60%" opacity={30} margin="0.25rem 0" />
         
-        {/* Content */}
-        <div className="w-full max-w-[85%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center">
+        {/* Content - kept away from edges */}
+        <div className="w-full max-w-[85%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center py-1">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn('text-sm my-1', (item.props as any).className || ''),
+                className: cn('text-xs my-1 leading-snug', (item.props as any).className || ''),
                 key: `octagon-content-${index}`
               });
             }
             return item;
           })}
         </div>
+        
+        {/* Button - smaller button that fits within shape */}
+        {button && (
+          <div className="mt-1 mb-1 flex justify-center items-center">
+            {React.isValidElement(button) && button.type === 'button' ? 
+              React.cloneElement(button as React.ReactElement, {
+                className: cn('text-xs py-1 px-3 scale-90', (button.props as any).className || ''),
+              }) : button
+            }
+          </div>
+        )}
       </div>
     </div>
   );
@@ -414,6 +487,27 @@ export function SimpleOctagon({ children, className, glowColor = "rgba(0, 230, 2
  * A starburst shape that properly contains content
  */
 export function SimpleStarburst({ children, className, glowColor = "rgba(0, 230, 230, 0.5)" }: GeometricShapeProps) {
+  // Process children to organize content
+  const childArray = React.Children.toArray(children);
+  
+  // Extract headings, content and buttons
+  const heading = childArray.find(child => 
+    React.isValidElement(child) && 
+    typeof child.type === 'string' && 
+    ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(child.type)
+  );
+  
+  const button = childArray.find(child => 
+    React.isValidElement(child) && 
+    ((typeof child.type === 'string' && child.type === 'button') || 
+     (React.isValidElement(child) && child.props?.className?.includes('button')))
+  );
+  
+  // All other content
+  const content = childArray.filter(child => 
+    child !== heading && child !== button
+  );
+  
   return (
     <div 
       className={cn("relative aspect-square text-white overflow-hidden", className)}
@@ -448,34 +542,49 @@ export function SimpleStarburst({ children, className, glowColor = "rgba(0, 230,
         </svg>
       </div>
       
-      {/* Content Container */}
-      <div className="absolute inset-0 flex flex-col justify-center items-center p-2">
-        {/* Scale down content to fit well inside the starburst shape */}
-        <div className="w-full max-w-[70%] h-[70%] flex flex-col justify-center items-center overflow-y-auto text-center">
-          {React.Children.map(children, (child, index) => {
-            if (React.isValidElement(child)) {
-              // Special styles for different element types
-              if (typeof child.type === 'string') {
-                if (child.type === 'p') {
-                  return React.cloneElement(child as React.ReactElement, {
-                    className: cn('text-xs my-1', (child.props as any).className || ''),
-                    key: `starburst-content-${index}`
-                  });
-                } else if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(child.type)) {
-                  return React.cloneElement(child as React.ReactElement, {
-                    className: cn('text-sm mb-1', (child.props as any).className || ''),
-                    key: `starburst-heading-${index}`
-                  });
-                } else if (child.type === 'button' || (child.props && child.props.className?.includes('button'))) {
-                  return React.cloneElement(child as React.ReactElement, {
-                    className: cn('text-xs px-3 py-1', (child.props as any).className || ''),
-                    key: `starburst-button-${index}`
-                  });
-                }
+      {/* Content Container - extreme limitations on content size to stay within the star shape */}
+      <div className="absolute inset-0 flex flex-col justify-center items-center">
+        {/* Use a much smaller inner container for the star shape */}
+        <div className="w-[60%] h-[60%] flex flex-col justify-center items-center overflow-hidden">
+          {/* Title at top - very small to fit in star */}
+          {heading && (
+            <div className="text-center mb-1">
+              {React.isValidElement(heading) && 
+               typeof heading.type === 'string' && 
+               ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
+                React.cloneElement(heading as React.ReactElement, {
+                  className: cn('text-xs font-medium', (heading.props as any).className || ''),
+                }) : heading
               }
-            }
-            return child;
-          })}
+            </div>
+          )}
+          
+          {/* Divider - very small for star */}
+          <ShapeDivider width="50%" opacity={30} margin="0.1rem 0" />
+          
+          {/* Content - extremely compact */}
+          <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center">
+            {content.map((item, index) => {
+              if (React.isValidElement(item) && item.type === 'p') {
+                return React.cloneElement(item as React.ReactElement, {
+                  className: cn('text-[10px] my-0.5 leading-tight', (item.props as any).className || ''),
+                  key: `starburst-content-${index}`
+                });
+              }
+              return item;
+            })}
+          </div>
+          
+          {/* Button - tiny size for star */}
+          {button && (
+            <div className="mt-1 flex justify-center items-center scale-75">
+              {React.isValidElement(button) && button.type === 'button' ? 
+                React.cloneElement(button as React.ReactElement, {
+                  className: cn('text-[10px] py-0.5 px-2', (button.props as any).className || ''),
+                }) : button
+              }
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -490,15 +599,23 @@ export function SimpleCircle({ children, className, glowColor = "rgba(0, 230, 23
   // Process children to organize content
   const childArray = React.Children.toArray(children);
   
-  // Extract headings
+  // Extract headings, content and buttons
   const heading = childArray.find(child => 
     React.isValidElement(child) && 
     typeof child.type === 'string' && 
     ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(child.type)
   );
   
+  const button = childArray.find(child => 
+    React.isValidElement(child) && 
+    ((typeof child.type === 'string' && child.type === 'button') || 
+     (React.isValidElement(child) && child.props?.className?.includes('button')))
+  );
+  
   // All other content
-  const content = childArray.filter(child => child !== heading);
+  const content = childArray.filter(child => 
+    child !== heading && child !== button
+  );
 
   return (
     <div 
@@ -537,30 +654,47 @@ export function SimpleCircle({ children, className, glowColor = "rgba(0, 230, 23
         </svg>
       </div>
       
-      {/* Content Container */}
-      <div className="absolute inset-0 flex flex-col justify-center items-center p-5">
-        {/* Title */}
+      {/* Content Container - circle content needs to be kept far from edges */}
+      <div className="absolute inset-[15%] flex flex-col justify-center items-center">
+        {/* Title - proper sizing for circle */}
         {heading && (
-          <div className="text-center mb-2">
-            {heading}
+          <div className="text-center mb-1">
+            {React.isValidElement(heading) && 
+             typeof heading.type === 'string' && 
+             ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
+              React.cloneElement(heading as React.ReactElement, {
+                className: cn('text-sm font-medium', (heading.props as any).className || ''),
+              }) : heading
+            }
           </div>
         )}
         
         {/* Divider - shorter for circle */}
-        <ShapeDivider width="40%" opacity={30} margin="0.5rem 0" />
+        <ShapeDivider width="40%" opacity={30} margin="0.25rem 0" />
         
-        {/* Content */}
-        <div className="w-full max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center">
+        {/* Content - more compact for circle */}
+        <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn('text-sm my-1', (item.props as any).className || ''),
+                className: cn('text-xs my-1 leading-snug', (item.props as any).className || ''),
                 key: `circle-content-${index}`
               });
             }
             return item;
           })}
         </div>
+        
+        {/* Button - sized to fit in circle */}
+        {button && (
+          <div className="mt-1 mb-1 flex justify-center items-center">
+            {React.isValidElement(button) && button.type === 'button' ? 
+              React.cloneElement(button as React.ReactElement, {
+                className: cn('text-xs py-1 px-3 scale-90', (button.props as any).className || ''),
+              }) : button
+            }
+          </div>
+        )}
       </div>
     </div>
   );
