@@ -350,6 +350,7 @@ export function CircleContainer({
       className={cn(
         "relative flex items-center justify-center p-6 text-white rounded-full",
         responsiveClassName,
+        "shape-contour-active",
         className
       )}
       style={{

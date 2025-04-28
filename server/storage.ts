@@ -29,7 +29,9 @@ import {
   // TypeScript error management tables
   typeScriptErrors, errorPatterns, errorFixes, errorAnalysis, scanResults,
   // Product tables for e-commerce
-  products, productCategories, newsletters, subscribers
+  products, productCategories, newsletters, subscribers,
+  // Content management tables
+  contentItems, contentHistory, contentUsage, contentWorkflowHistory
 } from "../shared/schema";
 import { sql, eq, and, desc, gt, count, max } from "drizzle-orm";
 import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";
@@ -121,26 +123,26 @@ export interface IStorage {
   getAdminAnalytics(fromDate?: string, toDate?: string): Promise<unknown>;
   getUserActivity(userId: number): Promise<unknown>;
 
-  // Content management methods
-  getAllContentItems(): Promise<ContentItem[]>;
-  getContentItemById(id: number): Promise<ContentItem | null>;
-  getContentItemByKey(key: string): Promise<ContentItem | null>;
-  createContentItem(contentItem: unknown): Promise<ContentItem>;
-  updateContentItem(contentItem: {id: number} & Record<string, unknown>): Promise<ContentItem>;
+  // Content management methods - temporarily disabled to fix server errors
+  getAllContentItems(): Promise<any[]>;
+  getContentItemById(id: number): Promise<any | null>;
+  getContentItemByKey(key: string): Promise<any | null>;
+  createContentItem(contentItem: unknown): Promise<any>;
+  updateContentItem(contentItem: {id: number} & Record<string, unknown>): Promise<any>;
   deleteContentItem(id: number): Promise<void>;
 
-  // Content versioning methods
-  getContentHistory(contentId: number): Promise<ContentHistory[]>;
-  createContentVersion(contentId: number, version: number, userId: number, changeDescription?: string): Promise<ContentHistory>;
-  restoreContentVersion(historyId: number): Promise<ContentItem>;
+  // Content versioning methods - temporarily disabled to fix server errors
+  getContentHistory(contentId: number): Promise<any[]>;
+  createContentVersion(contentId: number, version: number, userId: number, changeDescription?: string): Promise<any>;
+  restoreContentVersion(historyId: number): Promise<any>;
 
-  // Content usage tracking methods
-  recordContentUsage(contentId: number, location: string, path: string): Promise<ContentUsage>;
+  // Content usage tracking methods - temporarily disabled to fix server errors
+  recordContentUsage(contentId: number, location: string, path: string): Promise<any>;
   incrementContentViews(contentId: number): Promise<void>;
   getContentUsageReport(contentId?: number): Promise<any[]>;
   
-  // New content workflow methods
-  getContentWorkflowHistory(contentId: number): Promise<ContentWorkflowHistory[]>;
+  // New content workflow methods - temporarily disabled to fix server errors
+  getContentWorkflowHistory(contentId: number): Promise<any[]>;
   updateContentStatus(
     contentId: number, 
     status: string, 
@@ -150,7 +152,7 @@ export interface IStorage {
       scheduledPublishAt?: Date;
       expirationDate?: Date;
     }
-  ): Promise<ContentItem>;
+  ): Promise<any>;
 
   // TypeScript Error Management methods
   // Error tracking methods
