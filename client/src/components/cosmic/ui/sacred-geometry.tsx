@@ -556,6 +556,9 @@ export function StarburstContainer({
           {headings}
         </div>
         
+        {/* Soft divider line - short version */}
+        <ShapeDivider shapeType="starburst" width="15%" margin="0.25rem 0" opacity={25} />
+        
         {/* Text content in middle with shape contour awareness - reduced margins */}
         <div 
           className={`w-full max-w-[var(--max-content-width,70%)] px-1 flex flex-col items-center overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container mt-0 mb-0`}
