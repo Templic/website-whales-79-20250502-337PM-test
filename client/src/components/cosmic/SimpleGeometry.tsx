@@ -180,13 +180,13 @@ export function SimpleTriangle({
       {/* The container takes a triangle shape into account - wider at bottom, narrower at top */}
       <div className="absolute inset-x-0 bottom-0 top-[15%] flex flex-col justify-between items-center">
         {/* Button container - positioned at top 20% of visible area (narrow part) */}
-        <div className="w-[40%] mb-3">
+        <div className="w-[40%] mb-1">
           {/* Button at top of triangle (visually smallest part) */}
           {button && (
             <div className="flex justify-center items-center scale-90">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
-                  className: cn(fontSize.button, 'py-1 px-3', (button.props as any).className || ''),
+                  className: cn(fontSize.button, 'py-0.5 px-3', (button.props as any).className || ''),
                 }) : button
               }
             </div>
@@ -194,12 +194,12 @@ export function SimpleTriangle({
         </div>
           
         {/* Main content in middle of triangle - width increases as we move down */}
-        <div className="w-[65%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center mb-2">
+        <div className="w-[65%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center mb-1">
           {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn(fontSize.content, 'my-1 leading-snug', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'my-0.5 leading-tight', (item.props as any).className || ''),
                 key: `triangle-content-${index}`
               });
             }
@@ -208,10 +208,10 @@ export function SimpleTriangle({
         </div>
         
         {/* Divider - placed near bottom */}
-        <ShapeDivider width="50%" opacity={30} margin="0 0 0.5rem 0" />
+        <ShapeDivider width="50%" opacity={30} margin="0 0 0.25rem 0" />
         
         {/* Heading at bottom of triangle (visually widest part) */}
-        <div className="w-[80%] mb-6">
+        <div className="w-[80%] mb-3">
           {heading && (
             <div className="text-center">
               {React.isValidElement(heading) && 
@@ -302,7 +302,7 @@ export function SimpleInvertedTriangle({
       {/* The container takes an inverted triangle shape into account - wider at top, narrower at bottom */}
       <div className="absolute inset-x-0 top-0 bottom-[15%] flex flex-col justify-between items-center">
         {/* Heading at top of inverted triangle (visually widest part) */}
-        <div className="w-[85%] mt-3">
+        <div className="w-[85%] mt-1.5">
           {heading && (
             <div className="text-center">
               {React.isValidElement(heading) && 
@@ -317,15 +317,15 @@ export function SimpleInvertedTriangle({
         </div>
         
         {/* Divider - placed near top */}
-        <ShapeDivider width="60%" opacity={30} margin="0.5rem 0" />
+        <ShapeDivider width="60%" opacity={30} margin="0.1rem 0" />
         
         {/* Main content in middle of inverted triangle - width decreases as we move down */}
-        <div className="w-[70%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center mt-1">
+        <div className="w-[70%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center mt-0.5">
           {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
-                className: cn(fontSize.content, 'my-1 leading-snug', (item.props as any).className || ''),
+                className: cn(fontSize.content, 'my-0.5 leading-tight', (item.props as any).className || ''),
                 key: `inverted-triangle-content-${index}`
               });
             }
@@ -334,13 +334,13 @@ export function SimpleInvertedTriangle({
         </div>
           
         {/* Button container - positioned at bottom of visible area (narrow part) */}
-        <div className="w-[40%] mb-3">
+        <div className="w-[40%] mb-1">
           {/* Button at bottom of inverted triangle (visually smallest part) */}
           {button && (
             <div className="flex justify-center items-center scale-90">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
-                  className: cn(fontSize.button, 'py-1 px-3', (button.props as any).className || ''),
+                  className: cn(fontSize.button, 'py-0.5 px-3', (button.props as any).className || ''),
                 }) : button
               }
             </div>
