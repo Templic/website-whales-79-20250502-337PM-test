@@ -201,7 +201,7 @@ export function SimpleTriangle({
           <ShapeDivider width="30%" opacity={30} margin="0.2rem 0 0.2rem 0" />
           
           {/* Main content with even narrower max-width for triangle */}
-          <div className="w-[80%] max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
+          <div className="w-[80%] max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0 pb-2">
             {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
             {content.map((item, index) => {
               if (React.isValidElement(item) && item.type === 'p') {
@@ -214,29 +214,29 @@ export function SimpleTriangle({
             })}
           </div>
           
-          {/* Button - triangle-shaped to match container with improved centering */}
+          {/* Button - positioned closer to content with full visibility */}
           {button && (
-            <div className="mt-0 flex justify-center items-center w-full">
+            <div className="mt-0 mb-3 flex justify-center items-center w-full">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
                     clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
-                    padding: "0.5rem 0.7rem 0.15rem", // More padding on top, less on bottom for triangle
+                    padding: "0.3rem 0.7rem 0.3rem", // Equal padding for better text visibility
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
                       : "rgba(0, 100, 255, 0.8)",
                     border: "1px solid rgba(255, 255, 255, 0.5)",
                     width: "auto",
                     minWidth: "3rem",
-                    minHeight: "2.2rem", // Ensure button has proper height
+                    minHeight: "2rem", // Slightly reduced height
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center", 
                     boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
                     textAlign: "center", // Ensure text is centered
                     lineHeight: "1", // Improve vertical alignment
-                    transform: "translateY(-0.1rem)" // Shift text up slightly to center in triangle
+                    fontSize: "0.85rem" // Slightly smaller font for better fit
                   }
                 }) : button
               }
@@ -339,7 +339,7 @@ export function SimpleInvertedTriangle({
         <ShapeDivider width="60%" opacity={30} margin="0" />
         
         {/* Main content with minimal spacing */}
-        <div className="w-[70%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
+        <div className="w-[70%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0 pb-2">
           {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
@@ -352,9 +352,9 @@ export function SimpleInvertedTriangle({
           })}
         </div>
           
-        {/* Button container - positioned at bottom of visible area (narrow part) */}
-        <div className="w-[40%] mb-1">
-          {/* Button at bottom of inverted triangle (visually smallest part) - shaped like inverted triangle */}
+        {/* Button container - positioned closer to content with better visibility */}
+        <div className="w-[50%] mb-3">
+          {/* Button with improved text visibility */}
           {button && (
             <div className="flex justify-center items-center w-full">
               {React.isValidElement(button) && button.type === 'button' ? 
@@ -362,21 +362,21 @@ export function SimpleInvertedTriangle({
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
                     clipPath: "polygon(0% 0%, 100% 0%, 50% 100%)",
-                    padding: "0.1rem 0.7rem 0.4rem", // More padding on bottom, less on top for inverted triangle
+                    padding: "0.3rem 0.7rem 0.3rem", // Equal padding for better text visibility
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
                       : "rgba(0, 100, 255, 0.8)",
                     border: "1px solid rgba(255, 255, 255, 0.5)",
                     width: "auto",
                     minWidth: "3rem",
-                    minHeight: "2.2rem",
+                    minHeight: "2rem",
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
                     boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
                     textAlign: "center",
                     lineHeight: "1",
-                    transform: "translateY(0.1rem)" // Shift text down slightly to center in inverted triangle
+                    fontSize: "0.85rem" // Slightly smaller font for better fit
                   }
                 }) : button
               }
