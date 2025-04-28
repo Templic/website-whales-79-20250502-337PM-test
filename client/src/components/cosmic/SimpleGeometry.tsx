@@ -190,18 +190,18 @@ export function SimpleTriangle({
                  typeof heading.type === 'string' && 
                  ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
                   React.cloneElement(heading as React.ReactElement, {
-                    className: cn(fontSize.heading, 'font-medium', (heading.props as any).className || ''),
+                    className: cn(fontSize.heading, 'font-medium leading-none', (heading.props as any).className || ''),
                   }) : heading
                 }
               </div>
             )}
           </div>
           
-          {/* Divider - minimal margin */}
-          <ShapeDivider width="40%" opacity={30} margin="0 0" />
+          {/* Divider - no margin for tighter spacing */}
+          <ShapeDivider width="40%" opacity={30} margin="-0.1rem 0 0 0" />
           
-          {/* Main content in center - compact */}
-          <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center mt-0 mb-0">
+          {/* Main content in center - zero margin for compact display */}
+          <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
             {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
             {content.map((item, index) => {
               if (React.isValidElement(item) && item.type === 'p') {
@@ -311,25 +311,25 @@ export function SimpleInvertedTriangle({
       {/* The container takes an inverted triangle shape into account - wider at top, narrower at bottom */}
       <div className="absolute inset-x-0 top-0 bottom-[15%] flex flex-col justify-between items-center">
         {/* Heading at top of inverted triangle (visually widest part) */}
-        <div className="w-[85%] mt-1.5">
+        <div className="w-[85%] mt-1">
           {heading && (
             <div className="text-center">
               {React.isValidElement(heading) && 
                typeof heading.type === 'string' && 
                ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
                 React.cloneElement(heading as React.ReactElement, {
-                  className: cn(fontSize.heading, 'font-medium', (heading.props as any).className || ''),
+                  className: cn(fontSize.heading, 'font-medium leading-none m-0', (heading.props as any).className || ''),
                 }) : heading
               }
             </div>
           )}
         </div>
         
-        {/* Divider - placed near top */}
-        <ShapeDivider width="60%" opacity={30} margin="0.1rem 0" />
+        {/* Divider - minimal spacing */}
+        <ShapeDivider width="60%" opacity={30} margin="0" />
         
-        {/* Main content in middle of inverted triangle - width decreases as we move down */}
-        <div className="w-[70%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center mt-0.5">
+        {/* Main content with minimal spacing */}
+        <div className="w-[70%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
           {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
@@ -441,22 +441,22 @@ export function SimpleHexagon({
       <div className="absolute inset-[8%] flex flex-col justify-center items-center">
         {/* Title - adaptive sizing */}
         {heading && (
-          <div className="text-center mb-0.5">
+          <div className="text-center mb-0">
             {React.isValidElement(heading) && 
              typeof heading.type === 'string' && 
              ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
               React.cloneElement(heading as React.ReactElement, {
-                className: cn(fontSize.heading, 'font-medium mb-0', (heading.props as any).className || ''),
+                className: cn(fontSize.heading, 'font-medium leading-none m-0', (heading.props as any).className || ''),
               }) : heading
             }
           </div>
         )}
         
         {/* Divider */}
-        <ShapeDivider width="50%" opacity={30} margin="0.1rem 0" />
+        <ShapeDivider width="50%" opacity={30} margin="0" />
         
         {/* Content - kept away from edges with adaptive sizing */}
-        <div className="w-full max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center pt-0.5 pb-0.5">
+        <div className="w-full max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
@@ -564,22 +564,22 @@ export function SimpleOctagon({
       <div className="absolute inset-[10%] flex flex-col justify-center items-center">
         {/* Title - adaptive sizing */}
         {heading && (
-          <div className="text-center mb-0.5">
+          <div className="text-center mb-0">
             {React.isValidElement(heading) && 
              typeof heading.type === 'string' && 
              ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
               React.cloneElement(heading as React.ReactElement, {
-                className: cn(fontSize.heading, 'font-medium mb-0', (heading.props as any).className || ''),
+                className: cn(fontSize.heading, 'font-medium leading-none m-0', (heading.props as any).className || ''),
               }) : heading
             }
           </div>
         )}
         
         {/* Divider */}
-        <ShapeDivider width="60%" opacity={30} margin="0.1rem 0" />
+        <ShapeDivider width="60%" opacity={30} margin="0" />
         
         {/* Content - kept away from edges with adaptive sizing */}
-        <div className="w-full max-w-[85%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center pt-0.5 pb-0.5">
+        <div className="w-full max-w-[85%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
@@ -753,17 +753,17 @@ export function SimpleStarburst({
                typeof heading.type === 'string' && 
                ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
                 React.cloneElement(heading as React.ReactElement, {
-                  className: cn(scales.headingClass, 'font-medium', (heading.props as any).className || ''),
+                  className: cn(scales.headingClass, 'font-medium leading-none', (heading.props as any).className || ''),
                 }) : heading
               }
             </div>
           )}
           
-          {/* Divider - very small for star */}
-          <ShapeDivider width="50%" opacity={30} margin="0 0" />
+          {/* No margin divider for tighter spacing */}
+          <ShapeDivider width="50%" opacity={30} margin="0" />
           
           {/* Content - extremely compact with adaptive sizing */}
-          <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center">
+          <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center py-0 my-0">
             {content.map((item, index) => {
               if (React.isValidElement(item) && item.type === 'p') {
                 return React.cloneElement(item as React.ReactElement, {
@@ -899,22 +899,22 @@ export function SimpleCircle({
       <div className={cn("absolute flex flex-col justify-center items-center", insetClass)}>
         {/* Title - adaptive sizing for circle */}
         {heading && (
-          <div className="text-center mb-0.5">
+          <div className="text-center mb-0">
             {React.isValidElement(heading) && 
              typeof heading.type === 'string' && 
              ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
               React.cloneElement(heading as React.ReactElement, {
-                className: cn(fontSize.heading, 'font-medium mb-0', (heading.props as any).className || ''),
+                className: cn(fontSize.heading, 'font-medium leading-none m-0', (heading.props as any).className || ''),
               }) : heading
             }
           </div>
         )}
         
         {/* Divider - shorter for circle */}
-        <ShapeDivider width="40%" opacity={30} margin="0.1rem 0" />
+        <ShapeDivider width="40%" opacity={30} margin="0" />
         
         {/* Content - adaptive sizing for circle */}
-        <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center pt-0.5 pb-0.5">
+        <div className="w-full flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return React.cloneElement(item as React.ReactElement, {
