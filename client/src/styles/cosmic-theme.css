@@ -497,5 +497,11 @@
 .replit-ai-button {
   position: fixed;
   right: 20px;
+  bottom: 20px;
+}
+
+.cart-button {
+  position: fixed;
+  right: 20px;
   bottom: 80px;
 }
