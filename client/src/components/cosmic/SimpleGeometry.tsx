@@ -872,8 +872,8 @@ export function SimpleStarburst({
               </div>
             )}
             
-            {/* Divider */}
-            <ShapeDivider width="40%" opacity={30} margin="0" />
+            {/* Divider - shorter for star */}
+            <ShapeDivider width="20%" opacity={30} margin="0" />
             
             {/* Content */}
             <div className="w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center py-1">
