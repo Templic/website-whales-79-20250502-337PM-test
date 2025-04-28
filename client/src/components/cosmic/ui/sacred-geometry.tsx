@@ -269,17 +269,45 @@ export function StarburstContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-  maxContentWidth = "75%",
+  maxContentWidth = "55%",
   textAlign = "center",
   responsive = true
 }: EnhancedGeometryContainerProps) {
   // Add responsive class if enabled
   const responsiveClassName = responsive ? "geometric-shape-container" : "";
   
+  // Process children to apply triangular content styling
+  const processedChildren = React.Children.map(children, (child) => {
+    // If child is a string or number, wrap it
+    if (typeof child === 'string' || typeof child === 'number') {
+      return <p className="starburst-triangular-content">{child}</p>;
+    }
+    
+    // If child is a React element
+    if (React.isValidElement(child)) {
+      // For paragraphs, add the triangular content class
+      if (child.type === 'p') {
+        return React.cloneElement(child, {
+          className: cn('starburst-triangular-content', child.props.className)
+        });
+      }
+      
+      // For headings, keep them in the center without triangular styling
+      if (typeof child.type === 'string' && 
+          (child.type === 'h1' || child.type === 'h2' || 
+           child.type === 'h3' || child.type === 'h4')) {
+        return child;
+      }
+    }
+    
+    // Return unmodified for other elements
+    return child;
+  });
+  
   return (
     <div
       className={cn(
-        "relative text-white",
+        "relative flex items-center justify-center text-white",
         responsiveClassName,
         "shape-contour-active",
         className
@@ -294,6 +322,7 @@ export function StarburstContainer({
       } as React.CSSProperties}
       data-shape="starburst"
     >
+      {/* Pentagon and triangular spikes visualization */}
       <div className="absolute inset-0 opacity-10">
         <svg
           width="100%"
@@ -303,27 +332,63 @@ export function StarburstContainer({
           className="opacity-20"
           style={{ animation: "rotate 180s linear infinite" }}
         >
+          {/* Outer starburst shape */}
           <path
             d="M50 0 L61 35 L98 35 L68 57 L79 91 L50 70 L21 91 L32 57 L2 35 L39 35 Z"
             stroke="white"
             strokeWidth="0.5"
             fill="none"
           />
+          {/* Inner pentagon shape */}
           <path
             d="M50 20 L57 42 L82 42 L62 57 L69 77 L50 63 L31 77 L38 57 L18 42 L43 42 Z"
             stroke="white"
             strokeWidth="0.5"
             fill="none"
           />
+          {/* Additional guide for the five triangular sections */}
+          <path
+            d="M50 0 L50 20"
+            stroke="white"
+            strokeWidth="0.2"
+            strokeDasharray="2,2"
+            fill="none"
+          />
+          <path
+            d="M98 35 L82 42"
+            stroke="white"
+            strokeWidth="0.2"
+            strokeDasharray="2,2"
+            fill="none"
+          />
+          <path
+            d="M79 91 L69 77"
+            stroke="white"
+            strokeWidth="0.2"
+            strokeDasharray="2,2"
+            fill="none"
+          />
+          <path
+            d="M21 91 L31 77"
+            stroke="white"
+            strokeWidth="0.2"
+            strokeDasharray="2,2"
+            fill="none"
+          />
+          <path
+            d="M2 35 L18 42"
+            stroke="white"
+            strokeWidth="0.2"
+            strokeDasharray="2,2"
+            fill="none"
+          />
         </svg>
       </div>
-      {/* Center text in starburst with improved responsive content */}
-      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
-        <div 
-          className={`w-[var(--max-content-width,75%)] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`}
-        >
-          {children}
-        </div>
+      {/* Center content perfectly within the pentagon center */}
+      <div 
+        className={`z-10 relative flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-${textAlign} starburst-content-center`}
+      >
+        {processedChildren}
       </div>
     </div>
   )

@@ -3,7 +3,99 @@
  * 
  * Styles for the responsive design demo page that showcases
  * orientation-specific layouts and components.
+ * 
+ * Includes dark mode support for better visibility of shape containers
+ * and enhanced contour recognition.
  */
+
+/* CSS Variables for theming */
+:root {
+  /* Light mode variables */
+  --border-color: #e0e0e0;
+  --info-bg: rgba(0, 0, 0, 0.05);
+  --section-bg: #f9f9f9;
+  --heading-color: #333;
+  --accent-color: #4a90e2;
+  --text-color: #333;
+  --mobile-color: rgba(74, 144, 226, 0.1);
+  --mobile-accent: #4a90e2;
+  --tablet-color: rgba(80, 200, 120, 0.1);
+  --tablet-accent: #50c878;
+  --desktop-color: rgba(155, 89, 182, 0.1);
+  --desktop-accent: #9b59b6;
+  --orientation-color: rgba(241, 196, 15, 0.1);
+  --orientation-accent: #f1c40f;
+  --feature-heading: #333;
+  --card-bg: white;
+  --card-shadow: rgba(0, 0, 0, 0.1);
+  --landscape-bg: rgba(52, 152, 219, 0.1);
+  --portrait-bg: rgba(231, 76, 60, 0.1);
+  --common-bg: rgba(46, 204, 113, 0.1);
+  --geometric-section-bg: rgba(52, 152, 219, 0.05);
+  --geometric-gradient: rgba(255, 255, 255, 0.8);
+}
+
+/* Dark mode variables */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --border-color: #444;
+    --info-bg: rgba(255, 255, 255, 0.1);
+    --section-bg: #222;
+    --heading-color: #eee;
+    --accent-color: #5a9ee2;
+    --text-color: #ddd;
+    --mobile-color: rgba(74, 144, 226, 0.2);
+    --mobile-accent: #5a9ee2;
+    --tablet-color: rgba(80, 200, 120, 0.2);
+    --tablet-accent: #60d888;
+    --desktop-color: rgba(155, 89, 182, 0.2);
+    --desktop-accent: #ab69c6;
+    --orientation-color: rgba(241, 196, 15, 0.2);
+    --orientation-accent: #f1d42f;
+    --feature-heading: #eee;
+    --card-bg: #333;
+    --card-shadow: rgba(0, 0, 0, 0.3);
+    --landscape-bg: rgba(52, 152, 219, 0.2);
+    --portrait-bg: rgba(231, 76, 60, 0.2);
+    --common-bg: rgba(46, 204, 113, 0.2);
+    --geometric-section-bg: rgba(52, 152, 219, 0.15);
+    --geometric-gradient: rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Dark mode specific shape container enhancements */
+  .responsive-demo-page [data-shape] {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 0 20px rgba(0, 230, 230, 0.3) !important;
+  }
+  
+  /* Improved contrast for text in dark mode */
+  .responsive-demo-page [data-shape] {
+    color: white !important;
+  }
+  
+  /* Make shape outlines more visible in dark mode */
+  .responsive-demo-page .shape-contour-active::before {
+    opacity: 0.2 !important;
+  }
+  
+  /* Better visibility for shape boundaries in dark mode */
+  .responsive-demo-page [data-shape="starburst"].shape-contour-active::before {
+    background: radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.7) 25%,
+      rgba(255, 255, 255, 0.4) 40%,
+      transparent 70%
+    ) !important;
+    opacity: 0.3 !important;
+  }
+  
+  /* Enhanced visualization of the starburst pentagon in dark mode */
+  .responsive-demo-page [data-shape="starburst"].shape-contour-active::after {
+    border: 1px dashed rgba(255, 255, 255, 0.3) !important;
+    opacity: 0.15 !important;
+  }
+}
 
 /* General page styling */
 .responsive-demo-page {
@@ -66,9 +158,9 @@
 /* Card styling */
 .card {
   padding: 1rem;
-  background-color: white;
+  background-color: var(--card-bg, white);
   border-radius: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--card-shadow, rgba(0, 0, 0, 0.1));
   margin-bottom: 1rem;
 }
 
@@ -157,10 +249,10 @@
 }
 
 .feature-card {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: var(--card-bg, rgba(255, 255, 255, 0.9));
   padding: 1rem;
   border-radius: 0.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--card-shadow, rgba(0, 0, 0, 0.1));
   margin-bottom: 1rem;
 }
 

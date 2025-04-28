@@ -85,15 +85,33 @@
 /* Starburst contour highlight */
 [data-shape="starburst"].shape-contour-active::before {
   background: radial-gradient(
-    circle,
+    circle at center,
     rgba(255, 255, 255, 0.9) 0%,
-    rgba(255, 255, 255, 0.4) 40%,
+    rgba(255, 255, 255, 0.6) 25%,
+    rgba(255, 255, 255, 0.3) 40%,
     transparent 70%
   );
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 0 L61 35 L98 35 L68 57 L79 91 L50 70 L21 91 L32 57 L2 35 L39 35 Z' fill='%23000'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 0 L61 35 L98 35 L68 57 L79 91 L50 70 L21 91 L32 57 L2 35 L39 35 Z' fill='%23000'/%3E%3C/svg%3E");
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
+  opacity: 0.12; /* Increased visibility for better shape recognition */
+}
+
+/* Enhanced starburst with pentagon and triangle sections */
+[data-shape="starburst"].shape-contour-active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: none;
+  /* Inner pentagon visualization */
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 20 L57 42 L82 42 L62 57 L69 77 L50 63 L31 77 L38 57 L18 42 L43 42 Z' fill='%23000'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 20 L57 42 L82 42 L62 57 L69 77 L50 63 L31 77 L38 57 L18 42 L43 42 Z' fill='%23000'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  opacity: 0.08;
+  pointer-events: none;
 }
 
 /* Octagon contour highlight */
@@ -126,6 +144,21 @@
       transparent 60%
     );
   }
+  
+  /* Improve mobile pentagon visualization */
+  .mobile-portrait [data-shape="starburst"].shape-contour-active::after {
+    opacity: 0.15;
+    border: 1px dashed rgba(255, 255, 255, 0.25);
+  }
+  
+  /* Mobile landscape mode adjustments */
+  .mobile-landscape [data-shape="starburst"].shape-contour-active::before {
+    opacity: 0.15;
+  }
+  
+  .mobile-landscape [data-shape="starburst"].shape-contour-active::after {
+    opacity: 0.12;
+  }
 }
 
 /* Content positioning for shape-appropriate text flow */
@@ -143,6 +176,9 @@
 /* Starburst text positioning */
 [data-shape="starburst"] .shape-content-center {
   transform: scale(0.9);
+  width: 70%;
+  max-width: 70%;
+  margin: 0 auto;
 }
 
 /* Mobile-specific content positioning */
@@ -156,8 +192,16 @@
   
   /* Adjust starburst content for mobile portrait */
   .mobile-portrait [data-shape="starburst"] .shape-content-center {
-    width: 50% !important;
-    max-width: 50% !important;
-    transform: scale(0.85);
+    width: 75% !important;
+    max-width: 75% !important;
+    transform: scale(0.8);
+  }
+}
+
+/* Tablet-specific content positioning */
+@media (min-width: 768px) and (max-width: 1024px) {
+  [data-shape="starburst"] .shape-content-center {
+    width: 65% !important;
+    max-width: 65% !important;
   }
 }

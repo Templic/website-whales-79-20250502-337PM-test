@@ -332,3 +332,78 @@
   max-width: 100%;
   margin-top: 0.5rem;
 }
+
+/* Specific starburst content centering for better pentagon and triangle sections */
+.starburst-content-center {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  word-break: normal;
+  word-spacing: -0.02em;
+  text-wrap: balance;
+  transform: scale(0.9);
+  /* Improved text width constraints for better fitting */
+  width: 85%;
+  max-width: 85%;
+  margin: 0 auto;
+}
+
+/* Starburst title and paragraph spacing */
+.starburst-content-center h1,
+.starburst-content-center h2,
+.starburst-content-center h3,
+.starburst-content-center h4 {
+  margin-bottom: 0.3rem;
+  font-size: 95%;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.starburst-content-center p {
+  margin-bottom: 0.5rem;
+  font-size: 92%;
+  line-height: 1.3;
+  text-align: center;
+}
+
+/* Starburst triangular section styling */
+.starburst-triangular-content {
+  font-size: 90%;
+  line-height: 1.2;
+  text-align: center;
+  /* Help text fit better in the triangular sections */
+  max-width: 65%;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* Adjust content for different screen sizes */
+@media (max-width: 767px) {
+  .starburst-content-center {
+    transform: scale(0.85);
+    width: 90%;
+    max-width: 90%;
+  }
+  
+  .starburst-triangular-content {
+    max-width: 75%;
+    font-size: 88%;
+  }
+}
+
+/* Mobile portrait starburst adjustments */
+@media (max-width: 767px) and (orientation: portrait) {
+  .mobile-portrait .starburst-content-center {
+    width: 75% !important;
+    max-width: 75% !important;
+    transform: scale(0.8);
+  }
+  
+  .mobile-portrait .starburst-triangular-content {
+    max-width: 80% !important;
+    font-size: 85% !important;
+    line-height: 1.1 !important;
+  }
+}
