@@ -221,27 +221,19 @@ export function SimpleTriangle({
                 React.cloneElement(button as React.ReactElement, {
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
-                    clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
-                    // Triangle pointing up - "Action" text needs to move DOWN
-                    paddingTop: "0rem",
-                    paddingBottom: "1rem", 
-                    paddingLeft: "0.7rem",
-                    paddingRight: "0.7rem",
+                    // Using a regular button without clip-path for text
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
                       : "rgba(0, 100, 255, 0.8)",
                     border: "1px solid rgba(255, 255, 255, 0.5)",
+                    borderRadius: "4px",
                     width: "auto",
-                    minWidth: "3rem",
-                    minHeight: "2.2rem",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "flex-start", // Align to top to compensate
+                    minWidth: "3rem", 
+                    padding: "0.25rem 0.5rem",
                     boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
                     textAlign: "center",
-                    lineHeight: "1",
-                    fontSize: "0.85rem",
-                    transform: "translateY(0.4rem)" // Major shift down
+                    lineHeight: "1.2",
+                    fontSize: "0.85rem"
                   }
                 }) : button
               }
@@ -366,27 +358,19 @@ export function SimpleInvertedTriangle({
                 React.cloneElement(button as React.ReactElement, {
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
-                    clipPath: "polygon(0% 0%, 100% 0%, 50% 100%)",
-                    // Inverted triangle - "Learn More" text needs to move UP
-                    paddingTop: "1rem",
-                    paddingBottom: "0rem",
-                    paddingLeft: "0.7rem",
-                    paddingRight: "0.7rem",
+                    // Using a regular button without clip-path for text in inverted triangle
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
-                      : "rgba(0, 100, 255, 0.8)",
+                      : "rgba(0, 255, 100, 0.8)", // Green tint for inverted triangle
                     border: "1px solid rgba(255, 255, 255, 0.5)",
+                    borderRadius: "4px",
                     width: "auto",
-                    minWidth: "3rem",
-                    minHeight: "2.5rem",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "flex-end", // Align to bottom to compensate
-                    boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
+                    minWidth: "3rem", 
+                    padding: "0.25rem 0.5rem",
+                    boxShadow: "0 0 8px rgba(0, 255, 100, 0.5)",
                     textAlign: "center",
-                    lineHeight: "1",
-                    fontSize: "0.85rem",
-                    transform: "translateY(-0.4rem)" // Major shift up
+                    lineHeight: "1.2",
+                    fontSize: "0.85rem"
                   }
                 }) : button
               }
