@@ -619,8 +619,13 @@ export function SimpleOctagon({
                   padding: "0.2rem 0.8rem",
                   background: (button.props as any).className?.includes('bg-') 
                     ? undefined 
-                    : "rgba(0, 100, 255, 0.6)",
-                  border: "none"
+                    : "rgba(0, 100, 255, 0.8)",
+                  border: "1px solid rgba(255, 255, 255, 0.5)",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  minWidth: "3rem",
+                  boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)"
                 }
               }) : button
             }
@@ -958,13 +963,14 @@ export function SimpleCircle({
                   padding: "0.2rem 0.8rem",
                   background: (button.props as any).className?.includes('bg-') 
                     ? undefined 
-                    : "rgba(0, 100, 255, 0.6)",
-                  border: "none",
-                  minWidth: "2rem",
+                    : "rgba(0, 100, 255, 0.8)",
+                  border: "1px solid rgba(255, 255, 255, 0.5)",
+                  minWidth: "2.5rem",
                   aspectRatio: "1/1",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center"
+                  justifyContent: "center",
+                  boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)"
                 }
               }) : button
             }
