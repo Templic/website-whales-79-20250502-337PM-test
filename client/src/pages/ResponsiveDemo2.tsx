@@ -138,17 +138,20 @@ const ResponsiveDemo2 = () => {
           </div>
         </div>
         
-        {/* Disabled Adaptive Scaling */}
+        {/* Adaptive Scaling Comparison */}
         <h2 className="text-white text-center text-2xl font-bold mt-16 mb-10">
-          With Adaptive Scaling Disabled
+          Adaptive Scaling Comparison
         </h2>
         
-        <div className="flex flex-wrap justify-center gap-8">
+        <div className="flex flex-wrap justify-center gap-8 mt-8">
           {/* Adaptive enabled */}
-          <div className="w-[150px]">
+          <div className="w-[150px] flex flex-col items-center">
+            <div className="mb-4 text-center">
+              <span className="bg-green-500 text-white px-2 py-1 rounded text-sm font-bold">Adaptive On</span>
+            </div>
             <SimpleTriangle className="w-full">
-              <h3>Adaptive On</h3>
-              <p>Text scales to fit this smaller triangle.</p>
+              <h3>Auto-Scale</h3>
+              <p>Text adjusts to maintain readability in the triangle.</p>
               <button className="bg-green-500 text-white rounded">
                 Click
               </button>
@@ -156,14 +159,48 @@ const ResponsiveDemo2 = () => {
           </div>
           
           {/* Adaptive disabled */}
-          <div className="w-[150px]">
+          <div className="w-[150px] flex flex-col items-center">
+            <div className="mb-4 text-center">
+              <span className="bg-red-500 text-white px-2 py-1 rounded text-sm font-bold">Adaptive Off</span>
+            </div>
             <SimpleTriangle className="w-full" adaptiveScaling={false}>
-              <h3>Adaptive Off</h3>
-              <p>Text stays at a fixed size regardless of container width.</p>
+              <h3>Fixed Size</h3>
+              <p>Text remains the same size regardless of container dimensions.</p>
               <button className="bg-red-500 text-white rounded">
                 Click
               </button>
             </SimpleTriangle>
+          </div>
+        </div>
+        
+        {/* Additional shapes with adaptive on/off */}
+        <div className="flex flex-wrap justify-center gap-8 mt-12">
+          {/* Circle with adaptive on */}
+          <div className="w-[150px] flex flex-col items-center">
+            <div className="mb-4 text-center">
+              <span className="bg-teal-500 text-white px-2 py-1 rounded text-sm font-bold">Adaptive On</span>
+            </div>
+            <SimpleCircle className="w-full">
+              <h3>Auto-Scale</h3>
+              <p>Content adapts to circle dimensions.</p>
+              <button className="bg-teal-500 text-white rounded">
+                Click
+              </button>
+            </SimpleCircle>
+          </div>
+          
+          {/* Circle with adaptive off */}
+          <div className="w-[150px] flex flex-col items-center">
+            <div className="mb-4 text-center">
+              <span className="bg-rose-500 text-white px-2 py-1 rounded text-sm font-bold">Adaptive Off</span>
+            </div>
+            <SimpleCircle className="w-full" adaptiveScaling={false}>
+              <h3>Fixed Size</h3>
+              <p>Content size remains static regardless of container.</p>
+              <button className="bg-rose-500 text-white rounded">
+                Click
+              </button>
+            </SimpleCircle>
           </div>
         </div>
       </div>
