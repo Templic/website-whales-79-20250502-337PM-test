@@ -403,15 +403,77 @@ export function SimpleInvertedTriangle({
         {/* Divider - minimal spacing */}
         <ShapeDivider width="50%" opacity={30} margin="0.5rem 0" /> {/* Reduced width and added vertical margin */}
         
-        {/* Main content with increased buffer from edges */}
-        <div className="w-[60%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0 pb-4">
-          {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
+        {/* Main content with inverted-triangle-shaped text layout */}
+        <div className="w-[70%] flex-grow flex flex-col justify-center items-center overflow-y-auto m-0 p-0 pb-4">
+          {/* Map to create inverted-triangle-shaped paragraph text */}
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
-              return React.cloneElement(item as React.ReactElement, {
-                className: cn(fontSize.content, 'm-0 leading-tight', (item.props as any).className || ''),
-                key: `inverted-triangle-content-${index}`
-              });
+              // Get the actual text content
+              const textContent = (item.props as any).children || '';
+              
+              // Split the text into words
+              const words = typeof textContent === 'string' ? textContent.split(' ') : [];
+              
+              // Only apply special formatting if we have enough words
+              if (words.length >= 6) {
+                // Calculate a triangular distribution that gets narrower at the bottom
+                const totalWords = words.length;
+                const numLines = Math.min(6, Math.ceil(totalWords / 2));
+                
+                // Calculate words per line to create an inverted triangular shape
+                // First line has most words, last line has fewest
+                const linesDistribution = [];
+                let remainingWords = totalWords;
+                
+                // Simple algorithm for inverted triangle shape with width reducing as we go down
+                for (let i = 0; i < numLines && remainingWords > 0; i++) {
+                  // Progressive decrease in words per line
+                  // Earlier lines have more words, later lines have fewer
+                  const ratio = 1 - (i / numLines);
+                  let wordsForLine = Math.max(1, Math.ceil(ratio * totalWords / (numLines / 1.5)));
+                  
+                  // Make sure we don't allocate more words than we have left
+                  wordsForLine = Math.min(wordsForLine, remainingWords);
+                  linesDistribution.push(wordsForLine);
+                  remainingWords -= wordsForLine;
+                }
+                
+                // Create the lines of text based on our distribution
+                let wordIndex = 0;
+                const lines = linesDistribution.map(wordCount => {
+                  const line = words.slice(wordIndex, wordIndex + wordCount).join(' ');
+                  wordIndex += wordCount;
+                  return line;
+                });
+                
+                // Return inverted triangular text with progressively narrower lines
+                return (
+                  <div key={`inverted-triangle-content-${index}`} className="m-0 text-center">
+                    {lines.map((line, lineIndex) => (
+                      <div 
+                        key={`line-${lineIndex}`} 
+                        className={cn(
+                          fontSize.content, 
+                          'leading-tight mx-auto',
+                          lineIndex < lines.length - 1 ? 'mb-0' : 'mb-1'
+                        )}
+                        style={{
+                          width: `${Math.min(100, 90 - (lineIndex * 60 / numLines))}%`, // Width decreases with each line
+                          textAlign: 'center'
+                        }}
+                      >
+                        {line}
+                      </div>
+                    ))}
+                  </div>
+                );
+              } else {
+                // For short paragraphs, use the default styling
+                return React.cloneElement(item as React.ReactElement, {
+                  className: cn(fontSize.content, 'm-0 leading-tight text-center', (item.props as any).className || ''),
+                  key: `inverted-triangle-content-${index}`
+                });
+              }
             }
             return item;
           })}
