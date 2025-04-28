@@ -271,8 +271,8 @@ export function InvertedTriangleContainer({
     );
   }
   
-  // Calculate line height shift (approximately 1.0 times line height - reduced from 1.5)
-  const lineHeightShift = "1.0rem"; // Reduced from 1.5rem to fix spacing
+  // Calculate line height shift (approximately 1.5 times line height)
+  const lineHeightShift = "1.5rem"; // ~1.5 times a standard line height
   
   return (
     <div
@@ -331,22 +331,22 @@ export function InvertedTriangleContainer({
       </div>
       {/* Text positioning for inverted triangles: title at top, button at bottom */}
       <div 
-        className="absolute top-0 left-0 w-full h-full flex flex-col items-center z-10 py-4"
-        style={{ transform: `translateY(-${lineHeightShift})` }} // Reduced shift
+        className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-4"
+        style={{ transform: `translateY(-${lineHeightShift})` }} // Shift everything up by 1.5 line heights
       >
-        {/* Title at top with reduced bottom margin */}
-        <div className="w-[var(--max-content-width,80%)] flex flex-col items-center justify-center mt-1 mb-0 inverted-triangle-title-container">
+        {/* Title at top */}
+        <div className="w-[var(--max-content-width,80%)] flex flex-col items-center justify-center mt-1 mb-1 inverted-triangle-title-container">
           {headings}
         </div>
         
-        {/* Soft divider line between title and content with reduced margins */}
-        <ShapeDivider shapeType="inverted-triangle" width="60%" margin="0.25rem 0" opacity={25} />
+        {/* Soft divider line between title and content */}
+        <ShapeDivider shapeType="inverted-triangle" width="60%" margin="0.5rem 0" opacity={25} />
         
         {/* Content in middle with shape contour awareness */}
         <div 
           className={`w-full max-w-[var(--max-content-width,75%)] px-3 flex flex-col items-center text-sm overflow-y-auto hide-scrollbar text-${textAlign} inverted-triangle-content-container`}
           data-shape-content="inverted-triangle"
-          style={{ marginTop: "0", marginBottom: "0" }}
+          style={{ marginTop: "0", marginBottom: "auto" }}
         >
           {otherContent.map((content, index) => {
             if (React.isValidElement(content) && content.type === 'p') {
@@ -359,8 +359,8 @@ export function InvertedTriangleContainer({
           })}
         </div>
         
-        {/* Button at bottom - increased top margin to ensure spacing from content */}
-        <div className="w-[var(--max-content-width,45%)] flex flex-col items-center justify-center mt-4 mb-5 inverted-triangle-button-container">
+        {/* Button at bottom - smaller width near the point of the triangle */}
+        <div className="w-[var(--max-content-width,45%)] flex flex-col items-center justify-center mb-5 mt-auto inverted-triangle-button-container">
           {buttons}
         </div>
       </div>
@@ -444,14 +444,14 @@ export function StarburstContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-  maxContentWidth = "65%",
+  maxContentWidth = "35%",
   textAlign = "center",
   responsive = true
 }: EnhancedGeometryContainerProps) {
   // Add responsive class if enabled
   const responsiveClassName = responsive ? "geometric-shape-container" : "";
   
-  // Process children to properly position in order: title→line→paragraph→button
+  // Process children to properly position in order: text, title, button
   const processedChildren = React.Children.toArray(children);
   
   // Separate headings, buttons, and other content
@@ -480,7 +480,7 @@ export function StarburstContainer({
   if (otherContent.length === 0) {
     otherContent.push(
       <p key="sample-text" className="starburst-triangular-content text-xs">
-        the extra long paragraph conforming to shape contours the continuation of the paragraph contouring the text with the shape edges
+        Symbolizes expansion and radiant energy. Fits content precisely.
       </p>
     );
   }
@@ -501,33 +501,8 @@ export function StarburstContainer({
     return content;
   });
   
-  // Format any title to have one word over the second if it's not already
-  const formattedHeadings = headings.map((heading, index) => {
-    if (React.isValidElement(heading) && typeof heading.type === 'string' && 
-        (heading.type === 'h1' || heading.type === 'h2' || heading.type === 'h3' || heading.type === 'h4')) {
-      
-      let content = heading.props.children;
-      if (typeof content === 'string' && content.includes(' ') && !content.includes('\n')) {
-        const words = content.split(' ');
-        if (words.length >= 2) {
-          const firstWord = words[0];
-          const restWords = words.slice(1).join(' ');
-          content = (
-            <>
-              {firstWord}<br />{restWords}
-            </>
-          );
-        }
-      }
-      
-      return React.cloneElement(heading as React.ReactElement<any>, {
-        className: cn('starburst-title whitespace-normal text-center', (heading.props as any).className || ''),
-        key: `starburst-heading-${index}`,
-        children: content
-      });
-    }
-    return heading;
-  });
+  // Calculate line height shift (approximately 0.5 times line height - less than triangles)
+  const lineHeightShift = "0.5rem"; 
   
   return (
     <div
@@ -542,8 +517,7 @@ export function StarburstContainer({
         backgroundColor: "rgba(0, 0, 0, 0.4)",
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
-        minHeight: "300px", // Increased height
-        minWidth: "300px",  // Ensure width matches height
+        minHeight: "250px",
         "--max-content-width": maxContentWidth
       } as React.CSSProperties}
       data-shape="starburst"
@@ -610,28 +584,29 @@ export function StarburstContainer({
           />
         </svg>
       </div>
-      {/* Content flow: title→line→paragraph→button with minimal spacing */}
+      {/* Content organized in flow: text, title, button */}
       <div 
-        className="absolute top-0 left-0 w-full h-full flex flex-col items-center z-10 py-2"
+        className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-1"
+        style={{ transform: `translateY(-${lineHeightShift})` }} // Shift everything up slightly
       >
-        {/* Title at top */}
-        <div className="w-[var(--max-content-width,65%)] flex flex-col items-center justify-center mt-10 mb-0.5 starburst-title-container">
-          {formattedHeadings}
-        </div>
-        
-        {/* Soft divider line between title and paragraph */}
-        <ShapeDivider shapeType="starburst" width="40%" margin="0.25rem 0" opacity={30} />
-        
-        {/* Content in middle with shape contour awareness */}
+        {/* Text content at top */}
         <div 
-          className={`w-full max-w-[var(--max-content-width,65%)] px-2 flex flex-col items-center text-xs overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container mt-0.5 mb-0.5`}
+          className={`w-full max-w-[var(--max-content-width,35%)] px-1 flex flex-col items-center text-xs overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container mt-6 mb-0`}
           data-shape-content="starburst"
         >
           {styledOtherContent}
         </div>
         
+        {/* Soft divider line between text and title */}
+        <ShapeDivider shapeType="starburst" width="25%" margin="0.35rem 0" opacity={30} />
+        
+        {/* Title in middle-bottom */}
+        <div className="w-[var(--max-content-width,40%)] flex flex-col items-center justify-center mt-0 mb-1 starburst-title-container">
+          {headings}
+        </div>
+        
         {/* Button at bottom */}
-        <div className="w-[var(--max-content-width,45%)] flex flex-col items-center justify-center mt-0.5 mb-10 starburst-button-container">
+        <div className="w-[var(--max-content-width,35%)] flex flex-col items-center justify-center mb-6 starburst-button-container">
           {buttons}
         </div>
       </div>
