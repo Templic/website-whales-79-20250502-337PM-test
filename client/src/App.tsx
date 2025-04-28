@@ -120,6 +120,7 @@ import DynamicContentDemo from "@/pages/demo/DynamicContentDemo";
 import PerformanceDemoPage from "@/pages/PerformanceDemoPage";
 import ResponsiveDemo from "./pages/ResponsiveDemo";
 import ResponsiveDemo2 from "./pages/ResponsiveDemo2";
+import ImprovedGeometryDemo from "./pages/sacred-geometry/ImprovedGeometryDemo";
 
 // MainHeader is now included in MainLayout, no longer needed here
 
@@ -220,6 +221,7 @@ function AppRouter() {
           <Route path="/resources" component={ResourcesPage} />
           <Route path="/resources/frequency-guide" component={FrequencyGuidePage} />
           <Route path="/resources/sacred-geometry" component={SacredGeometryPage} />
+          <Route path="/resources/sacred-geometry/demo" component={ImprovedGeometryDemo} />
           <Route path="/resources/sound-healing" component={SoundHealingPage} />
           <Route path="/resources/meditation" component={MeditationTechniquesPage} />
           
@@ -247,6 +249,7 @@ function AppRouter() {
           <Route path="/performance" component={PerformanceDemoPage} />
           <Route path="/responsive-demo" component={ResponsiveDemo} />
           <Route path="/responsive-demo2" component={ResponsiveDemo2} />
+          <Route path="/sacred-geometry/demo" component={ImprovedGeometryDemo} />
           <Route path="/test/binaural-beat-performance" component={
             () => import('./pages/tests/binaural-beat-performance-test').then(module => {
               const Page = module.default;

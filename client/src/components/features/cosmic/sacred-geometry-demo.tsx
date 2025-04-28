@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { useState } from "react"
 // Import the sacred geometry components
 import {
+  // Traditional containers
   HexagonContainer,
   OctagonContainer,
   PentagonContainer,
@@ -33,7 +34,15 @@ import {
   CircleContainer,
   StarburstContainer,
   AdaptiveTextContainer,
-  SacredGeometryCss
+  SacredGeometryCss,
+  
+  // Improved responsive containers
+  SimpleHexagon,
+  SimpleOctagon,
+  SimpleTriangle,
+  SimpleInvertedTriangle,
+  SimpleCircle,
+  SimpleStarburst
 } from "@/components/ui/cosmic/sacred-geometry"
 
 export function SacredGeometryDemo() {
@@ -245,6 +254,7 @@ function SacredGeometryDemoSecondOriginal() {
         </Button>
       </div>
 
+      {/* First row: Original containers */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         <div className="h-64">
           <HexagonContainer className="w-full h-full" maxLines={3}>
@@ -266,39 +276,87 @@ function SacredGeometryDemoSecondOriginal() {
             <p className="text-sm">{textContent[currentText]}</p>
           </InvertedTriangleContainer>
         </div>
+      </div>
+      
+      {/* Divider with title */}
+      <div className="relative py-4">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
+        </div>
+        <div className="relative flex justify-center">
+          <span className="px-3 text-lg font-medium bg-black text-white">
+            Improved Responsive Containers
+          </span>
+        </div>
+      </div>
+      
+      {/* Second row: New improved responsive containers */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+        <div className="h-64">
+          <SimpleHexagon 
+            className="w-full h-full" 
+            glowColor="rgba(20, 184, 166, 0.5)"
+            responsive={true}
+          >
+            <h3 className="text-lg font-bold mb-2">Improved Hexagon</h3>
+            <p className="text-sm">{textContent[currentText]}</p>
+          </SimpleHexagon>
+        </div>
 
         <div className="h-64">
-          <CircleContainer
+          <SimpleTriangle 
+            className="w-full h-full" 
+            glowColor="rgba(6, 182, 212, 0.5)"
+            responsive={true}
+          >
+            <h3 className="text-lg font-bold mb-2">Improved Triangle</h3>
+            <p className="text-sm">{textContent[currentText]}</p>
+          </SimpleTriangle>
+        </div>
+
+        <div className="h-64">
+          <SimpleInvertedTriangle 
+            className="w-full h-full" 
+            glowColor="rgba(14, 165, 233, 0.5)"
+            responsive={true}
+          >
+            <h3 className="text-lg font-bold mb-2">Improved Inverted Triangle</h3>
+            <p className="text-sm">{textContent[currentText]}</p>
+          </SimpleInvertedTriangle>
+        </div>
+
+        <div className="h-64">
+          <SimpleCircle
             className="w-full h-full"
             glowColor="rgba(20, 184, 166, 0.5)"
             rotateSpeed={120}
-            maxLines={3}
+            responsive={true}
           >
-            <h3 className="text-lg font-bold mb-2">Circle</h3>
+            <h3 className="text-lg font-bold mb-2">Improved Circle</h3>
             <p className="text-sm">{textContent[currentText]}</p>
-          </CircleContainer>
+          </SimpleCircle>
         </div>
 
         <div className="h-64">
-          <OctagonContainer
+          <SimpleOctagon
             className="w-full h-full"
             glowColor="rgba(8, 145, 178, 0.5)"
-            maxLines={3}
+            responsive={true}
           >
-            <h3 className="text-lg font-bold mb-2">Octagon</h3>
+            <h3 className="text-lg font-bold mb-2">Improved Octagon</h3>
             <p className="text-sm">{textContent[currentText]}</p>
-          </OctagonContainer>
+          </SimpleOctagon>
         </div>
 
         <div className="h-64">
-          <StarburstContainer
+          <SimpleStarburst
             className="w-full h-full"
             glowColor="rgba(147, 51, 234, 0.5)"
-            maxLines={3}
+            responsive={true}
           >
-            <h3 className="text-lg font-bold mb-2">Starburst</h3>
+            <h3 className="text-lg font-bold mb-2">Improved Starburst</h3>
             <p className="text-sm">{textContent[currentText]}</p>
-          </StarburstContainer>
+          </SimpleStarburst>
         </div>
       </div>
     </div>
