@@ -48,7 +48,7 @@ const ResponsiveDemo2 = () => {
               <h3>Inverted Triangle</h3>
               <p>Adaptively scaling content ensures elements stay within shape boundaries at all screen sizes.</p>
               <button className="bg-green-500 hover:bg-green-700 text-white rounded">
-                Learn More
+                Learn
               </button>
             </SimpleInvertedTriangle>
           </div>
@@ -78,7 +78,7 @@ const ResponsiveDemo2 = () => {
           {/* Starburst */}
           <div className="w-full">
             <SimpleStarburst className="w-full max-w-[250px] mx-auto">
-              <h3>Starburst</h3>
+              <h3>Star</h3>
               <p>Adaptive scaling ensures content fits in this complex star shape.</p>
               <button className="bg-red-500 hover:bg-red-700 text-white rounded">
                 Activate

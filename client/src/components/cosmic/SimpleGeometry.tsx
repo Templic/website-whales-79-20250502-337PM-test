@@ -758,13 +758,13 @@ export function SimpleStarburst({
           className="opacity-20"
         >
           <path
-            d="M50 10 L55 40 L85 40 L60 55 L70 85 L50 65 L30 85 L40 55 L15 40 L45 40 Z"
+            d="M50 10 L55 38 L80 38 L60 53 L68 80 L50 63 L32 80 L40 53 L20 38 L45 38 Z"
             stroke="white"
             strokeWidth="0.5"
             fill="none"
           />
           <path
-            d="M50 20 L53 40 L73 40 L55 50 L63 75 L50 60 L37 75 L45 50 L27 40 L47 40 Z"
+            d="M50 20 L53 38 L70 38 L55 48 L60 70 L50 58 L40 70 L45 48 L30 38 L47 38 Z"
             stroke="white"
             strokeWidth="0.5"
             fill="none"
@@ -778,8 +778,8 @@ export function SimpleStarburst({
         <div 
           className="flex flex-col justify-center items-center overflow-hidden rounded-full bg-black bg-opacity-30"
           style={{ 
-            width: '60%', 
-            height: '60%'
+            width: '65%', 
+            height: '65%'
           }}
         >
           {/* Title with improved visibility */}
@@ -818,18 +818,21 @@ export function SimpleStarburst({
                 React.cloneElement(button as React.ReactElement, {
                   className: cn('text-xs font-bold text-center', (button.props as any).className || ''),
                   style: {
-                    padding: "0.4rem 0.8rem",
+                    padding: "0.4rem 1.2rem",
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
                       : "rgba(0, 100, 255, 0.8)",
                     border: "1px solid rgba(255, 255, 255, 0.5)",
                     borderRadius: "9999px", // Circular button for better visibility
-                    minWidth: "3rem",
+                    minWidth: "5rem", // Wider to ensure text fits
                     minHeight: "2rem",
+                    width: "90%", // More width to prevent clipping
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
-                    boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)"
+                    boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
+                    fontSize: "0.75rem", // Smaller text for better fit
+                    letterSpacing: "-0.01rem" // Tighten letter spacing
                   }
                 }) : button
               }
