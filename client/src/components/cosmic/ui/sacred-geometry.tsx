@@ -201,8 +201,11 @@ export function TriangleContainer({
           })}
         </div>
         
+        {/* Soft divider line between content and title */}
+        <div className="w-[var(--max-content-width,50%)] h-px bg-white bg-opacity-20 my-2"></div>
+        
         {/* Title at bottom */}
-        <div className="w-[var(--max-content-width,70%)] flex flex-col items-center justify-center mb-5 mt-auto triangle-title-container">
+        <div className="w-[var(--max-content-width,70%)] flex flex-col items-center justify-center mb-5 mt-1 triangle-title-container">
           {headings}
         </div>
       </div>
@@ -254,6 +257,9 @@ export function InvertedTriangleContainer({
       </p>
     );
   }
+  
+  // Calculate line height shift (approximately 1.5 times line height)
+  const lineHeightShift = "1.5rem"; // ~1.5 times a standard line height
   
   return (
     <div
@@ -311,11 +317,17 @@ export function InvertedTriangleContainer({
         </svg>
       </div>
       {/* Text positioning for inverted triangles: title at top, button at bottom */}
-      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-4">
+      <div 
+        className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-4"
+        style={{ transform: `translateY(-${lineHeightShift})` }} // Shift everything up by 1.5 line heights
+      >
         {/* Title at top */}
-        <div className="w-[var(--max-content-width,80%)] flex flex-col items-center justify-center mt-3 mb-1 inverted-triangle-title-container">
+        <div className="w-[var(--max-content-width,80%)] flex flex-col items-center justify-center mt-1 mb-1 inverted-triangle-title-container">
           {headings}
         </div>
+        
+        {/* Soft divider line between title and content */}
+        <div className="w-[var(--max-content-width,60%)] h-px bg-white bg-opacity-20 my-1"></div>
         
         {/* Content in middle with shape contour awareness */}
         <div 
@@ -335,7 +347,7 @@ export function InvertedTriangleContainer({
         </div>
         
         {/* Button at bottom - smaller width near the point of the triangle */}
-        <div className="w-[var(--max-content-width,45%)] flex flex-col items-center justify-center mb-6 mt-auto inverted-triangle-button-container">
+        <div className="w-[var(--max-content-width,45%)] flex flex-col items-center justify-center mb-5 mt-auto inverted-triangle-button-container">
           {buttons}
         </div>
       </div>
@@ -407,7 +419,7 @@ export function StarburstContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-  maxContentWidth = "45%",
+  maxContentWidth = "40%",
   textAlign = "center",
   responsive = true
 }: EnhancedGeometryContainerProps) {
@@ -442,8 +454,8 @@ export function StarburstContainer({
   // Sample text if no other content is provided
   if (otherContent.length === 0) {
     otherContent.push(
-      <p key="sample-text" className="starburst-triangular-content text-sm">
-        Symbolizes expansion and energy. This container creates readable areas across sections.
+      <p key="sample-text" className="starburst-triangular-content text-xs">
+        Symbolizes cosmic expansion and radiant energy. Creates focused content areas.
       </p>
     );
   }
@@ -451,18 +463,21 @@ export function StarburstContainer({
   // Process paragraph content to apply triangular content styling
   const styledOtherContent = otherContent.map((content, index) => {
     if (typeof content === 'string' || typeof content === 'number') {
-      return <p key={`starburst-content-${index}`} className="starburst-triangular-content text-sm">{content}</p>;
+      return <p key={`starburst-content-${index}`} className="starburst-triangular-content text-xs">{content}</p>;
     }
     
     if (React.isValidElement(content) && content.type === 'p') {
       return React.cloneElement(content as React.ReactElement<any>, {
-        className: cn('starburst-triangular-content text-sm', (content.props as any).className || ''),
+        className: cn('starburst-triangular-content text-xs', (content.props as any).className || ''),
         key: `starburst-content-${index}`
       });
     }
     
     return content;
   });
+  
+  // Calculate line height shift (approximately 0.75 times line height - less than triangles)
+  const lineHeightShift = "0.75rem"; 
   
   return (
     <div
@@ -545,22 +560,28 @@ export function StarburstContainer({
         </svg>
       </div>
       {/* Content organized in flow: text, title, button */}
-      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-2">
+      <div 
+        className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-2"
+        style={{ transform: `translateY(-${lineHeightShift})` }} // Shift everything up slightly
+      >
         {/* Text content at top */}
         <div 
-          className={`w-full max-w-[var(--max-content-width,45%)] px-2 flex flex-col items-center text-xs overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container mt-8 mb-0`}
+          className={`w-full max-w-[var(--max-content-width,40%)] px-1 flex flex-col items-center text-xs overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container mt-7 mb-0`}
           data-shape-content="starburst"
         >
           {styledOtherContent}
         </div>
         
+        {/* Soft divider line between text and title */}
+        <div className="w-[var(--max-content-width,30%)] h-px bg-white bg-opacity-20 my-1"></div>
+        
         {/* Title in middle-bottom */}
-        <div className="w-[var(--max-content-width,50%)] flex flex-col items-center justify-center mt-2 mb-2 starburst-title-container">
+        <div className="w-[var(--max-content-width,45%)] flex flex-col items-center justify-center mt-0 mb-2 starburst-title-container">
           {headings}
         </div>
         
         {/* Button at bottom */}
-        <div className="w-[var(--max-content-width,45%)] flex flex-col items-center justify-center mb-5 starburst-button-container">
+        <div className="w-[var(--max-content-width,40%)] flex flex-col items-center justify-center mb-8 starburst-button-container">
           {buttons}
         </div>
       </div>
