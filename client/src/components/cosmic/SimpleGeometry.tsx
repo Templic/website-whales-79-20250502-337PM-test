@@ -252,7 +252,7 @@ export function SimpleTriangle({
                           className={cn(
                             fontSize.content, 
                             'leading-tight mx-auto',
-                            {'mb-0': lineIndex < lines.length - 1, 'mb-1': lineIndex === lines.length - 1}
+                            lineIndex < lines.length - 1 ? 'mb-0' : 'mb-1'
                           )}
                           style={{
                             width: `${Math.min(100, 40 + (lineIndex * 60 / numLines))}%`, // Width increases with each line
@@ -386,7 +386,7 @@ export function SimpleInvertedTriangle({
       {/* The container takes an inverted triangle shape into account - wider at top, narrower at bottom */}
       <div className="absolute inset-x-0 top-0 bottom-[15%] flex flex-col justify-between items-center">
         {/* Heading at top of inverted triangle (visually widest part) */}
-        <div className="w-[85%] mt-1">
+        <div className="w-[75%] mt-3"> {/* Reduced width and increased top margin for better spacing */}
           {heading && (
             <div className="text-center">
               {React.isValidElement(heading) && 
@@ -401,10 +401,10 @@ export function SimpleInvertedTriangle({
         </div>
         
         {/* Divider - minimal spacing */}
-        <ShapeDivider width="60%" opacity={30} margin="0" />
+        <ShapeDivider width="50%" opacity={30} margin="0.5rem 0" /> {/* Reduced width and added vertical margin */}
         
-        {/* Main content with minimal spacing */}
-        <div className="w-[70%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0 pb-2">
+        {/* Main content with increased buffer from edges */}
+        <div className="w-[60%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0 pb-4">
           {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
