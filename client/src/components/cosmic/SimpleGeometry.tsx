@@ -177,10 +177,10 @@ export function SimpleTriangle({
       </div>
       
       {/* Content Container with calculated spacing based on triangle geometry */}
-      {/* Move all content closer to center, away from corners */}
-      <div className="absolute inset-x-0 bottom-0 top-[10%] flex flex-col justify-center items-center">
+      {/* Move all content downward, away from apex */}
+      <div className="absolute inset-x-0 bottom-0 top-[20%] flex flex-col justify-center items-center">
         {/* Reduced content area to ensure text stays within triangle shape */}
-        <div className="w-[60%] h-[75%] flex flex-col justify-center items-center">
+        <div className="w-[60%] h-[70%] flex flex-col justify-center items-center mt-8">
         
           {/* Heading at top - in a triangle, place heading in wider part (bottom) */}
           <div className="w-full text-center mb-0">
@@ -318,7 +318,7 @@ export function SimpleInvertedTriangle({
       {/* The container takes an inverted triangle shape into account - wider at top, narrower at bottom */}
       <div className="absolute inset-x-0 top-0 bottom-[15%] flex flex-col justify-between items-center">
         {/* Heading at top of inverted triangle (visually widest part) */}
-        <div className="w-[85%] mt-1">
+        <div className="w-[85%] mt-4">
           {heading && (
             <div className="text-center">
               {React.isValidElement(heading) && 
