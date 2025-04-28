@@ -393,6 +393,50 @@
   }
 }
 
+/* Triangle container specific styles */
+[data-shape="triangle"] .shape-content-center {
+  margin-top: 0;
+  transform: translateY(0);
+}
+
+/* Style headings at the bottom of regular triangles */
+[data-shape="triangle"] h1,
+[data-shape="triangle"] h2,
+[data-shape="triangle"] h3,
+[data-shape="triangle"] h4 {
+  margin-top: auto;
+  margin-bottom: 0.5rem;
+}
+
+/* Ensure buttons at top of regular triangles are visible */
+[data-shape="triangle"] button,
+[data-shape="triangle"] .button {
+  margin-top: 0.75rem;
+  margin-bottom: auto;
+}
+
+/* Inverted triangle container specific styles */
+[data-shape="inverted-triangle"] .shape-content-center {
+  margin-top: 0;
+  transform: translateY(0);
+}
+
+/* Style headings at the top of inverted triangles */
+[data-shape="inverted-triangle"] h1,
+[data-shape="inverted-triangle"] h2,
+[data-shape="inverted-triangle"] h3,
+[data-shape="inverted-triangle"] h4 {
+  margin-bottom: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+/* Ensure buttons at bottom of inverted triangles are visible */
+[data-shape="inverted-triangle"] button,
+[data-shape="inverted-triangle"] .button {
+  margin-top: auto;
+  margin-bottom: 0.75rem;
+}
+
 /* Mobile portrait starburst adjustments */
 @media (max-width: 767px) and (orientation: portrait) {
   .mobile-portrait .starburst-content-center {
@@ -405,5 +449,20 @@
     max-width: 80% !important;
     font-size: 85% !important;
     line-height: 1.1 !important;
+  }
+
+  /* Adjust triangle content for mobile */
+  .mobile-portrait [data-shape="triangle"] button,
+  .mobile-portrait [data-shape="triangle"] .button {
+    margin-top: 0.5rem;
+    font-size: 90%;
+    padding: 0.3rem 0.6rem;
+  }
+
+  .mobile-portrait [data-shape="inverted-triangle"] button,
+  .mobile-portrait [data-shape="inverted-triangle"] .button {
+    margin-bottom: 0.5rem;
+    font-size: 90%;
+    padding: 0.3rem 0.6rem;
   }
 }

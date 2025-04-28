@@ -88,6 +88,31 @@ export function TriangleContainer({
   // Add responsive class if enabled
   const responsiveClassName = responsive ? "geometric-shape-container" : "";
   
+  // Process children to properly position title at bottom and button at top
+  const processedChildren = React.Children.toArray(children);
+  
+  // Separate headings, buttons, and other content
+  const headings: React.ReactNode[] = [];
+  const buttons: React.ReactNode[] = [];
+  const otherContent: React.ReactNode[] = [];
+  
+  processedChildren.forEach(child => {
+    if (React.isValidElement(child)) {
+      if (typeof child.type === 'string' && 
+          (child.type === 'h1' || child.type === 'h2' || 
+           child.type === 'h3' || child.type === 'h4')) {
+        headings.push(child);
+      } else if (typeof child.type === 'string' && child.type === 'button' ||
+                (child.props && (child.props.className || '').includes('button'))) {
+        buttons.push(child);
+      } else {
+        otherContent.push(child);
+      }
+    } else {
+      otherContent.push(child);
+    }
+  });
+  
   return (
     <div
       className={cn(
@@ -128,13 +153,23 @@ export function TriangleContainer({
           />
         </svg>
       </div>
-      {/* Text positioning for triangles with improved responsive content */}
-      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
+      {/* Text positioning for triangles with inverted order: title at bottom, button at top */}
+      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-6">
+        {/* Button at top */}
+        <div className="w-[var(--max-content-width,85%)] flex flex-col items-center justify-center mt-6 mb-auto">
+          {buttons}
+        </div>
+        
+        {/* Content in middle */}
         <div 
-          className={`w-[var(--max-content-width,85%)] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`} 
-          style={{ transform: 'translateY(20%)' }}
+          className={`w-[var(--max-content-width,85%)] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`}
         >
-          {children}
+          {otherContent}
+        </div>
+        
+        {/* Title at bottom */}
+        <div className="w-[var(--max-content-width,85%)] flex flex-col items-center justify-center mb-6 mt-auto">
+          {headings}
         </div>
       </div>
     </div>
@@ -151,6 +186,31 @@ export function InvertedTriangleContainer({
 }: EnhancedGeometryContainerProps) {
   // Add responsive class if enabled
   const responsiveClassName = responsive ? "geometric-shape-container" : "";
+  
+  // Process children to properly position title at top and button at bottom
+  const processedChildren = React.Children.toArray(children);
+  
+  // Separate headings, buttons, and other content
+  const headings: React.ReactNode[] = [];
+  const buttons: React.ReactNode[] = [];
+  const otherContent: React.ReactNode[] = [];
+  
+  processedChildren.forEach(child => {
+    if (React.isValidElement(child)) {
+      if (typeof child.type === 'string' && 
+          (child.type === 'h1' || child.type === 'h2' || 
+           child.type === 'h3' || child.type === 'h4')) {
+        headings.push(child);
+      } else if (typeof child.type === 'string' && child.type === 'button' ||
+                (child.props && (child.props.className || '').includes('button'))) {
+        buttons.push(child);
+      } else {
+        otherContent.push(child);
+      }
+    } else {
+      otherContent.push(child);
+    }
+  });
   
   return (
     <div
@@ -192,13 +252,23 @@ export function InvertedTriangleContainer({
           />
         </svg>
       </div>
-      {/* Text positioning for inverted triangles with improved responsive spacing */}
-      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
+      {/* Text positioning for inverted triangles: title at top, button at bottom */}
+      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-6">
+        {/* Title at top */}
+        <div className="w-[var(--max-content-width,85%)] flex flex-col items-center justify-center mt-2 mb-auto">
+          {headings}
+        </div>
+        
+        {/* Content in middle */}
         <div 
-          className={`w-[var(--max-content-width,85%)] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`} 
-          style={{ transform: 'translateY(-15%)' }}
+          className={`w-[var(--max-content-width,85%)] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-${textAlign} shape-content-center`}
         >
-          {children}
+          {otherContent}
+        </div>
+        
+        {/* Button at bottom */}
+        <div className="w-[var(--max-content-width,75%)] flex flex-col items-center justify-center mb-4 mt-auto">
+          {buttons}
         </div>
       </div>
     </div>
@@ -287,8 +357,9 @@ export function StarburstContainer({
     if (React.isValidElement(child)) {
       // For paragraphs, add the triangular content class
       if (child.type === 'p') {
-        return React.cloneElement(child, {
-          className: cn('starburst-triangular-content', child.props.className)
+        // Use type assertion to fix the TypeScript error
+        return React.cloneElement(child as React.ReactElement<any>, {
+          className: cn('starburst-triangular-content', (child.props as any).className || '')
         });
       }
       

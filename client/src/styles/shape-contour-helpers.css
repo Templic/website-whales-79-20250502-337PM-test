@@ -163,14 +163,10 @@
 
 /* Content positioning for shape-appropriate text flow */
 
-/* Triangle text positioning */
-[data-shape="triangle"] .shape-content-center {
-  margin-top: 15%;
-}
-
-/* Inverted triangle text positioning */
+/* Remove default margin adjustments for triangle shapes as we use flexbox now */
+[data-shape="triangle"] .shape-content-center,
 [data-shape="inverted-triangle"] .shape-content-center {
-  margin-top: -5%;
+  margin-top: 0;
 }
 
 /* Starburst text positioning */
