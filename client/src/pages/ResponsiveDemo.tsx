@@ -96,13 +96,17 @@ export default function ResponsiveDemo() {
           <div className="shape-demo">
             <h2 className="text-xl font-semibold mb-3">Starburst Container</h2>
             <StarburstContainer>
-              <h3 className="text-lg font-medium mb-2">Radiant Expansion</h3>
-              <p>
-                The starburst symbolizes divine inspiration and cosmic energy.
-                Text remains centered and readable across devices.
+              <h3 className="text-center my-1 font-serif">
+                The<br />Long<br />Title
+              </h3>
+              <p className="text-center text-xs">
+                the extra long paragraph conforming to shape contours<br />
+                the continuation of the paragraph<br />
+                contouring the text with<br />
+                the shape edges
               </p>
-              <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mt-2">
-                Illuminate
+              <button className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-1 px-4 rounded-md my-1 text-lg">
+                button
               </button>
             </StarburstContainer>
           </div>

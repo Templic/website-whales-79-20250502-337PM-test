@@ -444,14 +444,14 @@ export function StarburstContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
-  maxContentWidth = "35%",
+  maxContentWidth = "55%",
   textAlign = "center",
   responsive = true
 }: EnhancedGeometryContainerProps) {
   // Add responsive class if enabled
   const responsiveClassName = responsive ? "geometric-shape-container" : "";
   
-  // Process children to properly position in order: text, title, button
+  // Process children to properly position in order: title, text, button
   const processedChildren = React.Children.toArray(children);
   
   // Separate headings, buttons, and other content
@@ -476,11 +476,23 @@ export function StarburstContainer({
     }
   });
   
+  // Default title if none provided to match screenshot
+  if (headings.length === 0) {
+    headings.push(
+      <h3 key="sample-title" className="text-center my-1 font-serif">
+        The<br />Long<br />Title
+      </h3>
+    );
+  }
+  
   // Sample text if no other content is provided
   if (otherContent.length === 0) {
     otherContent.push(
-      <p key="sample-text" className="starburst-triangular-content text-xs">
-        Symbolizes expansion and radiant energy. Fits content precisely.
+      <p key="sample-text" className="starburst-triangular-content text-xs text-center">
+        the extra long paragraph conforming to shape contours<br />
+        the continuation of the paragraph<br />
+        contouring the text with<br />
+        the shape edges
       </p>
     );
   }
@@ -488,12 +500,12 @@ export function StarburstContainer({
   // Process paragraph content to apply triangular content styling
   const styledOtherContent = otherContent.map((content, index) => {
     if (typeof content === 'string' || typeof content === 'number') {
-      return <p key={`starburst-content-${index}`} className="starburst-triangular-content text-xs">{content}</p>;
+      return <p key={`starburst-content-${index}`} className="starburst-triangular-content text-xs text-center">{content}</p>;
     }
     
     if (React.isValidElement(content) && content.type === 'p') {
       return React.cloneElement(content as React.ReactElement<any>, {
-        className: cn('starburst-triangular-content text-xs', (content.props as any).className || ''),
+        className: cn('starburst-triangular-content text-xs text-center', (content.props as any).className || ''),
         key: `starburst-content-${index}`
       });
     }
@@ -501,8 +513,17 @@ export function StarburstContainer({
     return content;
   });
   
-  // Calculate line height shift (approximately 0.5 times line height - less than triangles)
-  const lineHeightShift = "0.5rem"; 
+  // Default button if none provided to match screenshot
+  if (buttons.length === 0) {
+    buttons.push(
+      <button 
+        key="sample-button" 
+        className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-1 px-4 rounded-md my-1 text-lg"
+      >
+        button
+      </button>
+    );
+  }
   
   return (
     <div
@@ -514,10 +535,10 @@ export function StarburstContainer({
       )}
       style={{
         clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
-        backgroundColor: "rgba(0, 0, 0, 0.4)",
+        backgroundColor: "rgba(128, 128, 128, 0.6)",
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
-        minHeight: "250px",
+        minHeight: "300px",
         "--max-content-width": maxContentWidth
       } as React.CSSProperties}
       data-shape="starburst"
@@ -529,8 +550,7 @@ export function StarburstContainer({
           height="100%"
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
-          className="opacity-20"
-          style={{ animation: "rotate 180s linear infinite" }}
+          className="opacity-50"
         >
           {/* Outer starburst shape */}
           <path
@@ -546,67 +566,28 @@ export function StarburstContainer({
             strokeWidth="0.5"
             fill="none"
           />
-          {/* Additional guide for the five triangular sections */}
-          <path
-            d="M50 0 L50 20"
-            stroke="white"
-            strokeWidth="0.2"
-            strokeDasharray="2,2"
-            fill="none"
-          />
-          <path
-            d="M98 35 L82 42"
-            stroke="white"
-            strokeWidth="0.2"
-            strokeDasharray="2,2"
-            fill="none"
-          />
-          <path
-            d="M79 91 L69 77"
-            stroke="white"
-            strokeWidth="0.2"
-            strokeDasharray="2,2"
-            fill="none"
-          />
-          <path
-            d="M21 91 L31 77"
-            stroke="white"
-            strokeWidth="0.2"
-            strokeDasharray="2,2"
-            fill="none"
-          />
-          <path
-            d="M2 35 L18 42"
-            stroke="white"
-            strokeWidth="0.2"
-            strokeDasharray="2,2"
-            fill="none"
-          />
         </svg>
       </div>
-      {/* Content organized in flow: text, title, button */}
+      
+      {/* Content organized in exact order from screenshot: title, text, button */}
       <div 
-        className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-1"
-        style={{ transform: `translateY(-${lineHeightShift})` }} // Shift everything up slightly
+        className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between z-10 py-2"
       >
-        {/* Text content at top */}
+        {/* Title at top */}
+        <div className="w-[var(--max-content-width,40%)] flex flex-col items-center justify-center mt-3 mb-0 starburst-title-container">
+          {headings}
+        </div>
+        
+        {/* Text content in middle with shape contour awareness */}
         <div 
-          className={`w-full max-w-[var(--max-content-width,35%)] px-1 flex flex-col items-center text-xs overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container mt-6 mb-0`}
+          className={`w-full max-w-[var(--max-content-width,60%)] px-1 flex flex-col items-center overflow-y-auto hide-scrollbar text-${textAlign} starburst-text-container my-1`}
           data-shape-content="starburst"
         >
           {styledOtherContent}
         </div>
         
-        {/* Soft divider line between text and title */}
-        <ShapeDivider shapeType="starburst" width="25%" margin="0.35rem 0" opacity={30} />
-        
-        {/* Title in middle-bottom */}
-        <div className="w-[var(--max-content-width,40%)] flex flex-col items-center justify-center mt-0 mb-1 starburst-title-container">
-          {headings}
-        </div>
-        
         {/* Button at bottom */}
-        <div className="w-[var(--max-content-width,35%)] flex flex-col items-center justify-center mb-6 starburst-button-container">
+        <div className="w-[var(--max-content-width,35%)] flex flex-col items-center justify-center mt-1 mb-6 starburst-button-container">
           {buttons}
         </div>
       </div>
