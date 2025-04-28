@@ -200,15 +200,77 @@ export function SimpleTriangle({
           {/* Divider - small margin to separate from title */}
           <ShapeDivider width="30%" opacity={30} margin="0.2rem 0 0.2rem 0" />
           
-          {/* Main content with even narrower max-width for triangle */}
-          <div className="w-[80%] max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0 pb-2">
-            {/* Map to ensure proper styling of paragraphs with adaptive sizing */}
+          {/* Main content with triangle-shaped text layout */}
+          <div className="w-[90%] flex-grow flex flex-col justify-center items-center overflow-y-auto m-0 p-0 pb-2">
+            {/* Map to create triangle-shaped paragraph text */}
             {content.map((item, index) => {
               if (React.isValidElement(item) && item.type === 'p') {
-                return React.cloneElement(item as React.ReactElement, {
-                  className: cn(fontSize.content, 'my-0 leading-tight', (item.props as any).className || ''),
-                  key: `triangle-content-${index}`
-                });
+                // Get the actual text content
+                const textContent = (item.props as any).children || '';
+                
+                // Split the text into words
+                const words = typeof textContent === 'string' ? textContent.split(' ') : [];
+                
+                // Only apply special formatting if we have enough words
+                if (words.length >= 6) {
+                  // Calculate a triangular distribution that gets wider at the bottom
+                  const totalWords = words.length;
+                  const numLines = Math.min(6, Math.ceil(totalWords / 2));
+                  
+                  // Calculate words per line to create a triangular shape
+                  // First line has fewest words, last line has most
+                  const linesDistribution = [];
+                  let remainingWords = totalWords;
+                  
+                  // Simple algorithm for triangle shape with width expanding as we go down
+                  for (let i = 0; i < numLines && remainingWords > 0; i++) {
+                    // Progressive increase in words per line
+                    // Earlier lines have fewer words, later lines have more
+                    const ratio = (i + 1) / numLines;
+                    let wordsForLine = Math.max(1, Math.ceil(ratio * totalWords / (numLines / 1.5)));
+                    
+                    // Make sure we don't allocate more words than we have left
+                    wordsForLine = Math.min(wordsForLine, remainingWords);
+                    linesDistribution.push(wordsForLine);
+                    remainingWords -= wordsForLine;
+                  }
+                  
+                  // Create the lines of text based on our distribution
+                  let wordIndex = 0;
+                  const lines = linesDistribution.map(wordCount => {
+                    const line = words.slice(wordIndex, wordIndex + wordCount).join(' ');
+                    wordIndex += wordCount;
+                    return line;
+                  });
+                  
+                  // Return triangular text with progressively wider lines
+                  return (
+                    <div key={`triangle-content-${index}`} className="m-0 text-center">
+                      {lines.map((line, lineIndex) => (
+                        <div 
+                          key={`line-${lineIndex}`} 
+                          className={cn(
+                            fontSize.content, 
+                            'leading-tight mx-auto',
+                            {'mb-0': lineIndex < lines.length - 1, 'mb-1': lineIndex === lines.length - 1}
+                          )}
+                          style={{
+                            width: `${Math.min(100, 40 + (lineIndex * 60 / numLines))}%`, // Width increases with each line
+                            textAlign: 'center'
+                          }}
+                        >
+                          {line}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                } else {
+                  // For short paragraphs, use the default styling
+                  return React.cloneElement(item as React.ReactElement, {
+                    className: cn(fontSize.content, 'my-0 leading-tight text-center', (item.props as any).className || ''),
+                    key: `triangle-content-${index}`
+                  });
+                }
               }
               return item;
             })}
