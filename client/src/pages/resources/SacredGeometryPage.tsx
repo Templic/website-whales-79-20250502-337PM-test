@@ -1,19 +1,41 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import StarBackground from "@/components/cosmic/StarBackground";
+import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
+import SacredGeometry from "@/components/cosmic/SacredGeometry";
 import { Hexagon, Boxes, Building, Sparkles, Shapes } from "lucide-react";
 
 export default function SacredGeometryPage() {
+  const pageTopRef = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
     document.title = "Sacred Geometry - Dale Loves Whales";
+    // Scroll to top of page when component mounts
+    pageTopRef.current?.scrollIntoView({ behavior: 'auto' });
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-[#050f28] text-[#e8e6e3]">
+    <div className="relative min-h-screen bg-[#050f28] text-[#e8e6e3]" ref={pageTopRef}>
       {/* Cosmic Background */}
-      <div className="absolute inset-0 z-0">
-        <StarBackground starCount={80} colorScheme="purple" opacity={0.4} />
+      <CosmicBackground opacity={0.5} color="purple" nebulaEffect={true} />
+      
+      {/* Sacred geometry elements in page margins */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Left margin sacred geometry - one at top, one at bottom */}
+        <div className="absolute top-40 left-5 opacity-10 hidden md:block">
+          <SacredGeometry type="flower-of-life" size={120} animate={true} />
+        </div>
+        <div className="absolute bottom-40 left-5 opacity-10 hidden md:block">
+          <SacredGeometry type="pentagon-star" size={120} animate={true} />
+        </div>
+        
+        {/* Right margin sacred geometry - one at top, one at bottom */}
+        <div className="absolute top-40 right-5 opacity-10 hidden md:block">
+          <SacredGeometry type="metatron-cube" size={120} animate={true} />
+        </div>
+        <div className="absolute bottom-40 right-5 opacity-10 hidden md:block">
+          <SacredGeometry type="hexagon" size={120} animate={true} />
+        </div>
       </div>
       
       <div className="relative z-10 max-w-4xl mx-auto py-16 px-4">

@@ -3,20 +3,73 @@
  * 
  * Comprehensive privacy policy page compliant with international privacy regulations
  * including GDPR, CCPA, CalOPPA, VCDPA, COPPA, PIPEDA, and PoPIA.
+ * Enhanced with cosmic sacred geometry theme.
  */
 
-import React from 'react';
+import { useEffect, useRef } from 'react';
+import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
+import SacredGeometry from "@/components/cosmic/SacredGeometry";
+import { Shield, Lock } from "lucide-react";
 
-const PrivacyPolicy: React.FC = () => {
+const PrivacyPolicy = () => {
     // Get current date for the "Last Updated" timestamp
     const lastUpdated = new Date().toISOString().split('T')[0];
+    const pageTopRef = useRef<HTMLDivElement>(null);
+    
+    useEffect(() => {
+        document.title = "Privacy Policy - Dale Loves Whales";
+        // Scroll to top of page when component mounts
+        pageTopRef.current?.scrollIntoView({ behavior: 'auto' });
+    }, []);
     
     return (
-        <div className="privacy-policy-container container mx-auto px-4 py-8 max-w-4xl">
-            <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
-            <p className="text-sm text-gray-600 mb-6">Last Updated: {lastUpdated}</p>
+        <div className="min-h-screen bg-[#0a192f] text-[#e8e6e3] relative" ref={pageTopRef}>
+            {/* Cosmic Background */}
+            <CosmicBackground opacity={0.5} color="purple" nebulaEffect={true} />
             
-            <section className="mt-8">
+            {/* Sacred geometry elements in page margins */}
+            <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+                {/* Left margin sacred geometry - one at top, one at bottom */}
+                <div className="absolute top-40 left-5 opacity-10 hidden md:block">
+                    <SacredGeometry type="merkaba" size={120} animate={true} />
+                </div>
+                <div className="absolute bottom-40 left-5 opacity-10 hidden md:block">
+                    <SacredGeometry type="platonic-solid" size={120} animate={true} />
+                </div>
+                
+                {/* Right margin sacred geometry - one at top, one at bottom */}
+                <div className="absolute top-40 right-5 opacity-10 hidden md:block">
+                    <SacredGeometry type="metatron-cube" size={120} animate={true} />
+                </div>
+                <div className="absolute bottom-40 right-5 opacity-10 hidden md:block">
+                    <SacredGeometry type="torus" size={120} animate={true} />
+                </div>
+            </div>
+            
+            <div className="relative z-10 max-w-4xl mx-auto py-16 px-4">
+                {/* Header with cosmic styling */}
+                <div className="relative mb-12">
+                    <div className="absolute -top-10 -left-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl"></div>
+                    <div className="absolute -top-14 -right-14 w-60 h-60 bg-violet-500/10 rounded-full blur-3xl"></div>
+                    
+                    <div className="text-center cosmic-slide-up">
+                        <div className="inline-flex justify-center items-center mb-6 p-4 rounded-full bg-gradient-to-br from-purple-900/40 to-violet-900/40 border border-purple-500/20">
+                            <Shield className="h-10 w-10 text-purple-400" />
+                        </div>
+                        <h1 className="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-violet-300">
+                            Privacy Policy
+                        </h1>
+                        <div className="h-1 w-24 bg-gradient-to-r from-purple-500 to-violet-500 mx-auto mb-6"></div>
+                        <div className="flex items-center justify-center text-sm text-purple-300/90 mb-6">
+                            <Lock className="h-4 w-4 mr-2" /> 
+                            Last Updated: {lastUpdated}
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-purple-900/20 to-violet-900/20 border border-purple-500/20 rounded-xl p-8 backdrop-blur-sm">
+                
+                <section className="mt-0">
                 <h2 className="text-2xl font-semibold mb-3">1. Introduction</h2>
                 <p className="mb-4">
                     Cosmic Community Connect ("we," "our," or "us") is committed to protecting your privacy and ensuring you have a positive experience on our website and when using our services. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or use our services.
@@ -259,6 +312,8 @@ const PrivacyPolicy: React.FC = () => {
                     If you have a complaint about our privacy practices, we will do our best to address your concerns. If you feel your complaint has not been adequately resolved, you may have the right to lodge a complaint with your local data protection authority.
                 </p>
             </section>
+                </div>
+            </div>
         </div>
     );
 };

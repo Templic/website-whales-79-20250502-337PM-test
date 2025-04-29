@@ -1,19 +1,44 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Music, Waves, Zap, Heart, VolumeX, Sparkles } from "lucide-react";
-import StarBackground from "@/components/cosmic/StarBackground";
+import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
+import SacredGeometry from "@/components/cosmic/SacredGeometry";
 
 export default function SoundHealingPage() {
+  const pageTopRef = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
     document.title = "Sound Healing - Dale Loves Whales";
+    // Scroll to top of page when component mounts
+    pageTopRef.current?.scrollIntoView({ behavior: 'auto' });
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-950 via-indigo-950 to-violet-950 text-white relative overflow-hidden">
-      <StarBackground />
+    <div className="min-h-screen bg-gradient-to-b from-blue-950 via-indigo-950 to-violet-950 text-white relative overflow-hidden" ref={pageTopRef}>
+      {/* Cosmic Background */}
+      <CosmicBackground opacity={0.5} color="blue" nebulaEffect={true} />
+      
+      {/* Sacred geometry elements in page margins */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Left margin sacred geometry - one at top, one at bottom */}
+        <div className="absolute top-40 left-5 opacity-10 hidden md:block">
+          <SacredGeometry type="vesica-piscis" size={120} animate={true} />
+        </div>
+        <div className="absolute bottom-40 left-5 opacity-10 hidden md:block">
+          <SacredGeometry type="sri-yantra" size={120} animate={true} />
+        </div>
+        
+        {/* Right margin sacred geometry - one at top, one at bottom */}
+        <div className="absolute top-40 right-5 opacity-10 hidden md:block">
+          <SacredGeometry type="hexagon" size={120} animate={true} />
+        </div>
+        <div className="absolute bottom-40 right-5 opacity-10 hidden md:block">
+          <SacredGeometry type="metatron-cube" size={120} animate={true} />
+        </div>
+      </div>
       <div className="max-w-5xl mx-auto py-16 px-4 relative z-10">
         {/* Header */}
         <div className="relative">
