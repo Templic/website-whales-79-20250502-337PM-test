@@ -8,8 +8,10 @@ const insertContentItemSchema = z.object({
   title: z.string(),
   content: z.string(),
   type: z.string().default('text'),
-  page: z.string().optional(),
+  page: z.string(),
+  section: z.string(), // Required field in the database schema
   status: z.string().default('draft'),
+  imageUrl: z.string().optional(),
   metadata: z.record(z.any()).optional(),
   publishDate: z.date().optional(),
   expiryDate: z.date().optional()
