@@ -1774,7 +1774,33 @@ export class PostgresStorage implements IStorage {
 
   async getContentItemById(id: number): Promise<ContentItem | null> {
     try {
-      const [contentItem] = await db.select().from(contentItems).where(eq(contentItems.id, id));
+      // Using the same selective approach as getContentItemByKey
+      const [contentItem] = await db.select({
+        id: contentItems.id,
+        key: contentItems.key,
+        type: contentItems.type,
+        title: contentItems.title,
+        content: contentItems.content,
+        page: contentItems.page,
+        section: contentItems.section,
+        imageUrl: contentItems.imageUrl,
+        status: contentItems.status,
+        version: contentItems.version,
+        reviewerId: contentItems.reviewerId,
+        reviewStatus: contentItems.reviewStatus,
+        reviewStartedAt: contentItems.reviewStartedAt,
+        reviewCompletedAt: contentItems.reviewCompletedAt,
+        reviewNotes: contentItems.reviewNotes,
+        scheduledPublishAt: contentItems.scheduledPublishAt,
+        expirationDate: contentItems.expirationDate,
+        lastModifiedBy: contentItems.lastModifiedBy,
+        createdAt: contentItems.createdAt,
+        updatedAt: contentItems.updatedAt,
+        metadata: contentItems.metadata
+      })
+      .from(contentItems)
+      .where(eq(contentItems.id, id));
+      
       return contentItem || null;
     } catch (error) {
       console.error(`Error fetching content item by ID ${id}:`, error);
@@ -1784,7 +1810,36 @@ export class PostgresStorage implements IStorage {
 
   async getContentItemByKey(key: string): Promise<ContentItem | null> {
     try {
-      const [contentItem] = await db.select().from(contentItems).where(eq(contentItems.key, key));
+      // Using a more selective approach to only select columns that exist in the database
+      // This prevents errors from columns that might be defined in schema but not yet migrated
+      const [contentItem] = await db.select({
+        id: contentItems.id,
+        key: contentItems.key,
+        type: contentItems.type,
+        title: contentItems.title,
+        content: contentItems.content,
+        page: contentItems.page,
+        section: contentItems.section,
+        imageUrl: contentItems.imageUrl,
+        status: contentItems.status,
+        version: contentItems.version,
+        reviewerId: contentItems.reviewerId,
+        reviewStatus: contentItems.reviewStatus,
+        reviewStartedAt: contentItems.reviewStartedAt,
+        reviewCompletedAt: contentItems.reviewCompletedAt,
+        reviewNotes: contentItems.reviewNotes,
+        scheduledPublishAt: contentItems.scheduledPublishAt,
+        expirationDate: contentItems.expirationDate,
+        lastModifiedBy: contentItems.lastModifiedBy,
+        createdAt: contentItems.createdAt,
+        updatedAt: contentItems.updatedAt,
+        metadata: contentItems.metadata
+        // Intentionally excluding fields that might not exist in the table yet:
+        // createdBy, tags, localeCode, isActive
+      })
+      .from(contentItems)
+      .where(eq(contentItems.key, key));
+      
       return contentItem || null;
     } catch (error) {
       console.error(`Error fetching content item by key "${key}":`, error);
@@ -2056,10 +2111,19 @@ export class PostgresStorage implements IStorage {
   // Content workflow methods
   async getContentWorkflowHistory(contentId: number): Promise<ContentWorkflowHistory[]> {
     try {
-      const history = await db.select()
+      const history = await db.select({
+        id: contentWorkflowHistory.id,
+        contentId: contentWorkflowHistory.contentId,
+        previousStatus: contentWorkflowHistory.previousStatus,
+        newStatus: contentWorkflowHistory.newStatus,
+        changedBy: contentWorkflowHistory.changedBy,
+        changedAt: contentWorkflowHistory.changedAt,
+        comments: contentWorkflowHistory.comments,
+        metadata: contentWorkflowHistory.metadata
+      })
         .from(contentWorkflowHistory)
         .where(eq(contentWorkflowHistory.contentId, contentId))
-        .orderBy(desc(contentWorkflowHistory.actionAt));
+        .orderBy(desc(contentWorkflowHistory.changedAt)); // Using changedAt instead of actionAt
       
       return history;
     } catch (error) {
@@ -2131,13 +2195,13 @@ export class PostgresStorage implements IStorage {
           .where(eq(contentItems.id, contentId))
           .returning();
         
-        // Record the workflow history
+        // Record the workflow history using the new field names
         await tx.insert(contentWorkflowHistory).values({
           contentId,
-          fromStatus: currentContent.status,
-          toStatus: updateData.status,
-          actorId: userId,
-          actionAt: new Date(),
+          previousStatus: currentContent.status,
+          newStatus: updateData.status as any, // Cast to any to avoid type issues during migration
+          changedBy: userId,
+          changedAt: new Date(),
           comments: options?.reviewNotes
         });
         
