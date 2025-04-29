@@ -249,6 +249,7 @@ function AppRouter() {
           <Route path="/type-system-demo" component={TypeSystemDemo} />
           <Route path="/dynamic-content-demo" component={DynamicContentDemo} />
           <Route path="/content-ai-demo" component={ContentAIDemo} />
+          <Route path="/content-recommendations-demo" component={ContentRecommendationsDemo} />
           <Route path="/performance" component={PerformanceDemoPage} />
           <Route path="/responsive-demo" component={ResponsiveDemo} />
           <Route path="/responsive-demo2" component={ResponsiveDemo2} />
