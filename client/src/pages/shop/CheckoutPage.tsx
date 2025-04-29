@@ -14,6 +14,8 @@ import { CartItem, ShippingInfo } from '@/types/cart';
 import { formatCurrency } from '@/lib/format';
 import { useToast } from '@/hooks/use-toast';
 import { createPaymentIntent, processOrder } from '@/lib/paymentService';
+import { CosmicBackground } from '@/components/features/cosmic/CosmicBackground';
+import SacredGeometry from '@/components/ui/sacred-geometry';
 // UI Components
 import {
   Form,
@@ -87,6 +89,8 @@ export default function CheckoutPage() {
   useEffect(() => {
     setIsClientLoaded(true);
     document.title = 'Checkout - Dale Loves Whales';
+    // Scroll to top of page when component mounts
+    window.scrollTo(0, 0);
   }, []);
   
   // Fetch cart items
