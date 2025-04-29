@@ -105,10 +105,10 @@ function createSafeUser(user: User | null | undefined) {
   if (!user) {
     return null;
   }
-  
+
   // Log input and output for debugging
   console.log("Creating safe user from:", user.username);
-  
+
   // Return only the safe fields
   const safeUser = {
     id: user.id,
@@ -124,7 +124,7 @@ function createSafeUser(user: User | null | undefined) {
     createdAt: user.createdAt,
     updatedAt: user.updatedAt
   };
-  
+
   console.log("Sanitized login response for:", safeUser.username);
   return safeUser;
 }
@@ -186,11 +186,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/auth', 
     '/api/auth/*'  // Wildcard to exempt all auth routes
   ];
-  
+
   // Completely disable CSRF protection for now
   // We'll re-enable it when the Replit Auth integration is working correctly
   console.log("⚠️ CSRF Protection completely disabled for development");
-  
+
   // Simple health check endpoint
   app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -202,24 +202,24 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       // Use the imported functions directly
       // These were already imported at the top: import { db } from "./db";
       const client = await db.$client.connect();
-      
+
       try {
         // Check database connectivity
         await client.query('SELECT 1');
-        
+
         // Get pool stats
         const poolStats = {
           totalConnections: db.$client.totalCount || 0,
           idleConnections: db.$client.idleCount || 0,
           waitingConnections: db.$client.waitingCount || 0
         };
-        
+
         // Determine health status
         let healthStatus = 'healthy';
         if (poolStats.waitingConnections > 10) {
           healthStatus = 'degraded';
         }
-        
+
         res.json({
           status: 'ok',
           timestamp: new Date().toISOString(),
@@ -262,30 +262,30 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   // Use authRoutes for all /api/auth routes
   app.use('/api/auth', authRoutes);
-  
+
   // Use JWT auth routes for token-based API authentication
   app.use('/api/jwt', jwtAuthRoutes);
-  
+
   // Use search routes
   app.use('/api/search', searchRoutes);
-  
+
   // Use media routes
   app.use(mediaRoutes);
-  
+
   // Use CSRF routes
   app.use('/api', csrfRoutes);
-  
+
   // Use TypeScript error management routes with Replit Auth protection for admin-only operations
   app.use('/api/typescript/admin', isAuthenticated, typescriptErrorRoutes);
-  
+
   // Use simplified TypeScript error management routes for better performance
   app.use('/api/typescript-simple', typescriptErrorSimpleRoutes);
-  
+
   // Use secure API routes with comprehensive security checks
   app.use('/api/secure/public', publicRouter);
   app.use('/api/secure/auth', authenticatedRouter);
   app.use('/api/secure/admin', adminRouter);
-  
+
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', async (req, res) => {
     // Only allow admins to run the verification
@@ -296,11 +296,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         message: 'Admin access required' 
       });
     }
-    
+
     try {
       // Run the API security verification
       const results = await verifyApiSecurity();
-      
+
       res.json({
         success: true,
         results: results,
@@ -325,23 +325,23 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(401).json({ message: 'Not authenticated' });
     }
   });
-  
+
   // Replit Auth specific user endpoint
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       console.log("Replit Auth user claims:", req.user?.claims);
-      
+
       if (!req.user?.claims?.sub) {
         return res.status(400).json({ message: "Invalid user data" });
       }
-      
+
       // Get the complete user profile from our database using the Replit ID
       const user = await storage.getUser(req.user.claims.sub);
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found in database" });
       }
-      
+
       // Return safe user data
       const safeUser = createSafeUser(user);
       res.json(safeUser);
@@ -350,50 +350,50 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Failed to fetch user data" });
     }
   });
-  
+
   // Direct login endpoint for testing (in addition to the auth routes)
   app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
-    
+
     try {
       console.log("Attempting login for user:", username);
-      
+
       // First, try to use a direct database query to get full user information
       // This bypasses any caching or middleware that might interfere
       let fullUserRecord = null;
-      
+
       try {
         // Direct database query to get user
         const userRows = await db.select().from(users).where(eq(users.username, username));
         console.log(`Direct DB query for ${username} found ${userRows.length} rows`);
-        
+
         if (userRows.length > 0) {
           fullUserRecord = userRows[0];
         }
       } catch (dbError) {
         console.error("Database query error:", dbError);
       }
-      
+
       // If we didn't find the user with direct query, try the storage method
       if (!fullUserRecord) {
         fullUserRecord = await storage.getUserByUsername(username);
       }
-      
+
       // User exists in database
       if (fullUserRecord) {
         console.log("User found in database:", fullUserRecord.username);
-        
+
         // For demo purposes, using hardcoded password verification
         // In a real app, we'd use bcrypt to compare against stored hash
         if ((username === 'admin' && password === 'admin123') || 
             (username === 'superadmin' && password === 'superadmin123') || 
             (username === 'user' && password === 'user123')) {
-          
+
           // IMPORTANT: Create a sanitized user object without sensitive fields
           const sanitizedUser = createSafeUser(fullUserRecord);
-          
+
           console.log("Sanitized login response for:", sanitizedUser.username);
-          
+
           // Save user to session
           try {
             if (req.session) {
@@ -413,13 +413,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           } catch (sessionError) {
             console.error("Session save error:", sessionError);
           }
-          
+
           // Return sanitized user data
           return res.status(200).json(sanitizedUser);
         }
       } else {
         console.log("User not found in database, checking mock users");
-        
+
         // For demo only - hardcoded users
         const mockUsers = {
           'admin': {
@@ -465,7 +465,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             updatedAt: new Date()
           }
         };
-        
+
         // Simple test account validation
         if (username === 'admin' && password === 'admin123') {
           // Save user to session with proper session handling
@@ -488,7 +488,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             console.error("Session save error:", sessionError);
           }
           return res.status(200).json(mockUsers.admin);
-          
+
         } else if (username === 'superadmin' && password === 'superadmin123') {
           // Save user to session with proper session handling
           try {
@@ -510,7 +510,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             console.error("Session save error:", sessionError);
           }
           return res.status(200).json(mockUsers.superadmin);
-          
+
         } else if (username === 'user' && password === 'user123') {
           // Save user to session with proper session handling
           try {
@@ -534,7 +534,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           return res.status(200).json(mockUsers.user);
         }
       }
-      
+
       // Incorrect credentials
       res.status(401).json({ message: 'Invalid username or password' });
     } catch (error) {
@@ -577,17 +577,17 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
     try {
       console.log('Fetching admin statistics...');
-      
+
       // Get system stats
       const users = await storage.getAllUsers();
       const pendingComments = await storage.getUnapprovedComments();
       const pendingPosts = await storage.getUnapprovedPosts();
-      
+
       // Get content stats
       const posts = await storage.getAllPosts();
       const tracks = await storage.getAllTracks();
       const products = await storage.getAllProducts();
-      
+
       // Calculate active users - users who have logged in within the last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -636,12 +636,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
       // Generate recent activities (placeholder for now)
       const recentActivities = [];
-      
+
       // Simulating recent activities by taking newest users and generating activities
       const newestUsers = [...users]
         .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
         .slice(0, 5);
-        
+
       newestUsers.forEach((user, index) => {
         recentActivities.push({
           id: index + 1,
@@ -666,7 +666,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         userRolesDistribution,
         recentActivities
       });
-      
+
       console.log('Admin stats successfully retrieved');
     } catch (error) {
       console.error("Error fetching admin stats:", error);
@@ -740,7 +740,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           await storage.deleteUser(userId);
           // @ts-ignore - Response type issue
   return res.json({ success: true, message: "User deleted successfully" });
-          
+
         case 'ban':
           // Check if user is trying to ban themselves
           if (userId === req.user.id) {
@@ -765,7 +765,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
           const bannedUser = await storage.banUser(userId);
           return res.json(createSafeUser(bannedUser));
-          
+
         case 'unban':
           // Get user to unban and perform role checks
           const userToUnban = await storage.getUser(userId);
@@ -852,15 +852,15 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       // Validate email format
       const email = req.params.email;
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-      
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;;
+
       if (!emailRegex.test(email)) {
         return res.status(400).json({ 
           message: "Invalid email format",
           exists: false
         });
       }
-      
+
       // Use the ORM's parameterized query to prevent SQL injection
       const subscriber = await storage.findSubscriberByEmail(email);
       res.json({ exists: !!subscriber });
@@ -930,16 +930,16 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error fetching newsletters" });
     }
   });
-  
+
   // Test endpoint for safe user data (for testing purposes only)
   app.get("/api/test/safe-user", async (req, res) => {
     try {
       const user = await storage.getUserByUsername('admin');
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       // Create a safe version of the user object
       const safeUser = {
         id: user.id,
@@ -950,7 +950,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         twoFactorEnabled: user.twoFactorEnabled,
         createdAt: user.createdAt
       };
-      
+
       // Return both the full user (for debugging) and safe user
       res.json({
         fullUser: user,
@@ -1267,7 +1267,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     }
   });
-  
+
   // Authentication security scan endpoint
   app.get("/api/security/auth-scan", async (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
@@ -1629,9 +1629,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const isAuthenticated = typeof req.isAuthenticated === 'function' 
         ? req.isAuthenticated() 
         : false;
-      
+
       const isAdmin = isAuthenticated && req.user?.role && ['admin', 'super_admin'].includes(req.user.role);
-      
+
       // During development, return all posts
       const filteredPosts = process.env.NODE_ENV === 'production' && !isAdmin
         ? posts.filter(post => post.approved)
@@ -1652,14 +1652,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     const isAuthenticated = typeof req.isAuthenticated === 'function' 
       ? req.isAuthenticated() 
       : false;
-    
+
     const isAdmin = isAuthenticated && req.user?.role && ['admin', 'super_admin'].includes(req.user.role);
-    
+
     // During development, allow access to unapproved posts
     if (process.env.NODE_ENV === 'production' && (!isAuthenticated || !isAdmin)) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const posts = await storage.getUnapprovedPosts();
       res.json(posts);
@@ -1711,29 +1711,29 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       }
     }
   });
-  
+
   app.patch("/api/posts/:id", async (req, res) => {
     // Check authentication and authorization
     if (!req.isAuthenticated()) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const postId = parseInt(req.params.id);
       const existingPost = await storage.getPostById(postId);
-      
+
       if (!existingPost) {
         return res.status(404).json({ message: "Post not found" });
       }
-      
+
       // Check if user is authorized to edit this post
       const isAuthor = existingPost.authorId === req.user.id;
       const isAdmin = req.user?.role === 'admin' || req.user?.role === 'super_admin';
-      
+
       if (!isAuthor && !isAdmin) {
         return res.status(403).json({ message: "Unauthorized to edit this post" });
       }
-      
+
       // Update the post
       const updatedData = req.body;
       const updatedPost = await storage.updatePost(postId, updatedData);
@@ -1743,29 +1743,29 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error updating post" });
     }
   });
-  
+
   app.delete("/api/posts/:id", async (req, res) => {
     // Check authentication
     if (!req.isAuthenticated()) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const postId = parseInt(req.params.id);
       const existingPost = await storage.getPostById(postId);
-      
+
       if (!existingPost) {
         return res.status(404).json({ message: "Post not found" });
       }
-      
+
       // Check if user is authorized to delete this post
       const isAuthor = existingPost.authorId === req.user.id;
       const isAdmin = req.user?.role === 'admin' || req.user?.role === 'super_admin';
-      
+
       if (!isAuthor && !isAdmin) {
         return res.status(403).json({ message: "Unauthorized to delete this post" });
       }
-      
+
       // Delete the post
       await storage.deletePost(postId);
       res.json({ success: true, message: "Post deleted successfully" });
@@ -2227,7 +2227,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     }
     next();
   }, dbMonitorRoutes);
-  
+
   // Database security routes
   // Main database security routes (authenticated)
   app.use('/api/admin/database-security', (req, res, next) => {
@@ -2237,10 +2237,10 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     }
     next();
   }, databaseSecurityRoutes);
-  
+
   // Special route for testing database validation without authentication or CSRF
   app.use('/api/test/database-security', databaseSecurityRoutes);
-  
+
   // Apply database security middleware globally
   app.use(validateDatabaseQuery);
   app.use(sanitizeDatabaseParams);
@@ -2251,7 +2251,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   app.get('/api/products', (req, res, next) => {
     res.redirect('/api/shop/products');
   });
-  
+
   // Test page route
   app.get('/test-shop', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'test-page.html'));
@@ -2270,7 +2270,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   app.use('/api/security/audit', auditSecurityRoutes);
   app.use('/api/security/dashboard', securityDashboardRoutes);
   app.use('/api/test', testSecurityRouter);
-  
+
   // Import test API routes (these bypass CSRF protection for testing)
   // These routes are explicitly mounted WITHOUT any CSRF protection
   import('./routes/test-api').then(module => {
@@ -2279,10 +2279,10 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     if (process.env.NODE_ENV !== 'production') {
       // Create a special router just for test routes
       const testRouter = express.Router();
-      
+
       // Disable CSRF specifically for this router before mounting the routes
       console.log('[SECURITY] WARNING: Test API routes enabled - these bypass CSRF protection');
-      
+
       // This is our top-level CSRF exemption setting
       app.use('/api/test-only', (req, res, next) => {
         // Mark the route as exempt from CSRF checks
@@ -2293,10 +2293,10 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   }).catch(error => {
     console.error('Failed to load test API routes:', error);
   });
-  
+
   // Quantum-resistant security API routes
   app.use('/api/security/quantum', secureApiRoutes);
-  
+
   // TODO: Fix API routes protection with missing modules
   // Temporarily commented out to fix build errors
   /*
@@ -2317,7 +2317,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     ]
   });
   */
-  
+
   // Log API protection status
   console.log('[API-PROTECTION] Advanced API protection temporarily disabled due to missing modules');
 
@@ -2425,31 +2425,31 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
         return res.status(403).json({ message: "Unauthorized" });
       }
-      
+
       // Get status filter from query parameter
       const statusFilter = req.query.status as string;
-      
+
       // Fetch content items based on status filter
       let contentItems = await storage.getAllContentItems();
-      
+
       // Apply status filter if provided
       if (statusFilter && statusFilter !== 'all') {
         contentItems = contentItems.filter(item => item.status === statusFilter);
       }
-      
+
       // Enhance content items with user information
       const users = await storage.getAllUsers();
       const enhancedItems = contentItems.map(item => {
         const createdByUser = item.createdBy ? users.find(u => u.id === item.createdBy) : null;
         const reviewerUser = item.reviewerId ? users.find(u => u.id === item.reviewerId) : null;
-        
+
         return {
           ...item,
           createdByName: createdByUser ? createdByUser.username : undefined,
           reviewerName: reviewerUser ? reviewerUser.username : undefined
         };
       });
-      
+
       res.json(enhancedItems);
     } catch (error) {
       console.error("Error fetching admin content items:", error);
@@ -2464,23 +2464,23 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
         return res.status(403).json({ message: "Unauthorized" });
       }
-      
+
       const contentId = parseInt(req.params.id);
-      
+
       // Fetch workflow history
       const history = await storage.getContentWorkflowHistory(contentId);
-      
+
       // Enhance history with user information
       const users = await storage.getAllUsers();
       const enhancedHistory = history.map(entry => {
         const actor = entry.actorId ? users.find(u => u.id === entry.actorId) : null;
-        
+
         return {
           ...entry,
           actorName: actor ? actor.username : undefined
         };
       });
-      
+
       res.json(enhancedHistory);
     } catch (error) {
       console.error("Error fetching content workflow history:", error);
@@ -2495,16 +2495,16 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
         return res.status(403).json({ message: "Unauthorized" });
       }
-      
+
       const contentId = parseInt(req.params.id);
       const { status, reviewNotes, scheduledPublishAt, expirationDate } = req.body;
-      
+
       // Get current content status
       const currentContent = await storage.getContentItemById(contentId);
       if (!currentContent) {
         return res.status(404).json({ message: "Content not found" });
       }
-      
+
       // Update content item status
       const updatedContent = await storage.updateContentStatus(
         contentId, 
@@ -2516,7 +2516,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
           expirationDate: expirationDate ? new Date(expirationDate) : undefined
         }
       );
-      
+
       res.json(updatedContent);
     } catch (error) {
       console.error("Error updating content status:", error);

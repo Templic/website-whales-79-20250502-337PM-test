@@ -8,7 +8,7 @@ import { SpotlightEffect } from "@/components/SpotlightEffect";
 
 export default function BlogPage() {
   const { toast } = useToast();
-  
+
   // Mock blog posts data since the API endpoint is not available
   const mockPosts: Post[] = [
     {
@@ -50,14 +50,22 @@ export default function BlogPage() {
   ];
 
   // Setup a simulated data fetch with the mock data
-  const { data: posts, isLoading, error } = useQuery<Post[]>({
+  const { data: posts, isLoading, error, refetch } = useQuery<Post[]>({
     queryKey: ["/api/posts"],
     queryFn: async () => {
-      // Simulate network request
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return mockPosts;
+      try {
+        const res = await fetch("/api/posts");
+        if (!res.ok) {
+          throw new Error(`Failed to fetch posts: ${res.statusText}`);
+        }
+        return res.json();
+      } catch (err) {
+        console.error("Blog posts fetch error:", err);
+        throw err;
+      }
     },
-    retry: 1,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
   const handleLoadMore = () => {
@@ -81,7 +89,7 @@ export default function BlogPage() {
             <div className="relative z-10 p-8 text-center">
               <p className="text-red-400 mb-4">Failed to load blog posts. Please try again later.</p>
               <Button 
-                onClick={() => window.location.reload()}
+                onClick={refetch}
                 className="bg-[#00ebd6] text-black hover:bg-[#fe0064] hover:text-white"
               >
                 Retry
