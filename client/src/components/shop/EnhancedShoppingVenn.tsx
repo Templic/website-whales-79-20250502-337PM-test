@@ -35,92 +35,95 @@ const EnhancedShoppingVenn: React.FC<EnhancedShoppingVennProps> = ({
           </p>
         </div>
         
-        {/* Venn Diagram with two overlapping circles - Improved version based on screenshot */}
-        <div className="relative h-[46rem] md:h-[38rem]">
+        {/* Perfect Venn Diagram with two circular circles and small overlap */}
+        <div className="relative h-[46rem] md:h-[32rem] mx-auto max-w-6xl">
           {/* Dark background container */}
-          <div className="absolute inset-0 bg-indigo-950/80 rounded-3xl backdrop-blur-lg"></div>
+          <div className="absolute inset-0 bg-indigo-950/80 rounded-3xl shadow-inner"></div>
           
-          {/* Container for mobile layout (vertical) or desktop layout (horizontal) */}
-          <div className="relative h-full flex flex-col md:flex-row items-center justify-center">
-            {/* Shop Together Circle - Top/Left */}
-            <div className="relative w-[90%] md:w-[60%] aspect-square rounded-full border border-purple-400/60 
-                         z-10 md:left-[5%] md:top-[5%] flex flex-col items-center justify-center
-                         bg-indigo-900/60 backdrop-blur-sm mb-16 md:mb-0 
-                         shadow-lg shadow-purple-800/30">
-              {/* Icon */}
-              <div className="absolute top-[15%] md:top-[15%] left-1/2 transform -translate-x-1/2 h-14 w-14 rounded-full 
-                         bg-indigo-800/80 flex items-center justify-center shadow-lg">
-                <Users className="h-7 w-7 text-purple-200" />
+          {/* Container for Venn diagram with proper horizontal spacing */}
+          <div className="relative h-full flex items-center justify-center pt-8 px-4">
+            
+            {/* Perfectly round circles in a row for desktop */}
+            <div className="relative flex flex-col md:flex-row items-center justify-center w-full">
+              
+              {/* Perfect Circle 1: Shop Together */}
+              <div className="relative w-[80%] md:w-[400px] aspect-square rounded-full 
+                           bg-indigo-800/60 backdrop-blur-md border border-indigo-500/30
+                           flex flex-col items-center justify-center z-10 mb-12 md:mb-0 md:mr-[-40px]
+                           shadow-lg shadow-indigo-900/40">
+                
+                {/* Content container with perfect spacing */}
+                <div className="flex flex-col items-center justify-center w-full h-full px-8 py-6">
+                  {/* Icon in small circle at top */}
+                  <div className="w-14 h-14 rounded-full bg-indigo-700/80 flex items-center justify-center mb-4">
+                    <Users className="h-7 w-7 text-purple-200" />
+                  </div>
+                  
+                  {/* Title with proper spacing */}
+                  <h3 className="text-2xl font-bold text-white cosmic-text-glow mb-3">
+                    Shop Together
+                  </h3>
+                  
+                  {/* Description text with proper width & spacing */}
+                  <p className="text-center text-gray-200 text-sm leading-relaxed mb-6 max-w-[260px]">
+                    Browse and shop with friends in real-time, share product recommendations,
+                    and make collective purchasing decisions
+                  </p>
+                  
+                  {/* Button with proper styling */}
+                  <Button 
+                    variant="outline" 
+                    className="bg-indigo-700/40 border-indigo-400/40 text-white
+                              hover:bg-indigo-600/60 shadow cosmic-hover-glow"
+                    onClick={onStartSession}
+                    size="default"
+                  >
+                    <Users className="h-4 w-4 mr-2" /> Start Session
+                  </Button>
+                </div>
               </div>
               
-              {/* Title - Increased size and glow */}
-              <h3 className="absolute top-[28%] md:top-[28%] left-1/2 transform -translate-x-1/2 text-2xl md:text-3xl 
-                       font-bold text-white cosmic-text-glow">
-                Shop Together
-              </h3>
-              
-              {/* Description - Centered properly within circle */}
-              <p className="absolute top-[40%] md:top-[40%] left-1/2 transform -translate-x-1/2 text-sm text-gray-200 
-                       max-w-[280px] text-center leading-relaxed px-4">
-                Browse and shop with friends in real-time, share product recommendations,
-                and make collective purchasing decisions
-              </p>
-              
-              {/* Button - Positioned properly at bottom */}
-              <Button 
-                variant="outline" 
-                className="absolute top-[68%] md:top-[68%] left-1/2 transform -translate-x-1/2 bg-indigo-800/70 
-                        border-purple-400/60 hover:bg-indigo-700/80 shadow-md shadow-purple-500/40 
-                        hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 cosmic-hover-glow"
-                onClick={onStartSession}
-                size="lg"
-              >
-                <Users className="h-5 w-5 mr-2" /> Start Session
-              </Button>
-            </div>
-            
-            {/* Co-Design Studio Circle - Bottom/Right */}
-            <div className="relative w-[90%] md:w-[60%] aspect-square rounded-full border border-purple-400/60 
-                         -mt-52 md:mt-0 md:-ml-40 md:left-[8%] md:top-[10%] z-20 flex flex-col items-center justify-center
-                         bg-violet-900/60 backdrop-blur-sm
-                         shadow-lg shadow-purple-800/30">
-              {/* Icon */}
-              <div className="absolute top-[15%] md:top-[15%] left-1/2 transform -translate-x-1/2 h-14 w-14 rounded-full 
-                          bg-indigo-800/80 flex items-center justify-center shadow-lg">
-                <Sparkles className="h-7 w-7 text-purple-200" />
+              {/* Perfect Circle 2: Co-Design Studio */}
+              <div className="relative w-[80%] md:w-[400px] aspect-square rounded-full 
+                           bg-purple-800/60 backdrop-blur-md border border-purple-500/30
+                           flex flex-col items-center justify-center z-20 md:ml-[-40px] -mt-20 md:mt-0
+                           shadow-lg shadow-purple-900/40">
+                
+                {/* Content container with perfect spacing */}
+                <div className="flex flex-col items-center justify-center w-full h-full px-8 py-6">
+                  {/* Icon in small circle at top */}
+                  <div className="w-14 h-14 rounded-full bg-purple-700/80 flex items-center justify-center mb-4">
+                    <Sparkles className="h-7 w-7 text-purple-200" />
+                  </div>
+                  
+                  {/* Title with proper spacing */}
+                  <h3 className="text-2xl font-bold text-white cosmic-text-glow mb-3">
+                    Co-Design Studio
+                  </h3>
+                  
+                  {/* Description text with proper width & spacing */}
+                  <p className="text-center text-gray-200 text-sm leading-relaxed mb-6 max-w-[260px]">
+                    Create and customize your own cosmic products with our interactive design
+                    tools, collaborate with others on design ideas
+                  </p>
+                  
+                  {/* Button with proper styling */}
+                  <Button 
+                    variant="outline" 
+                    className="bg-purple-700/40 border-purple-400/40 text-white
+                              hover:bg-purple-600/60 shadow cosmic-hover-glow"
+                    onClick={onCreateDesign}
+                    size="default"
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Create Design
+                  </Button>
+                </div>
               </div>
               
-              {/* Title - Increased size and glow */}
-              <h3 className="absolute top-[28%] md:top-[28%] left-1/2 transform -translate-x-1/2 text-2xl md:text-3xl 
-                       font-bold text-white cosmic-text-glow">
-                Co-Design Studio
-              </h3>
-              
-              {/* Description - Centered properly within circle */}
-              <p className="absolute top-[40%] md:top-[40%] left-1/2 transform -translate-x-1/2 text-sm text-gray-200 
-                       max-w-[280px] text-center leading-relaxed px-4">
-                Create and customize your own cosmic products with our interactive design
-                tools, collaborate with others on design ideas
-              </p>
-              
-              {/* Button - Positioned properly at bottom */}
-              <Button 
-                variant="outline" 
-                className="absolute top-[68%] md:top-[68%] left-1/2 transform -translate-x-1/2 bg-indigo-800/70 
-                        border-purple-400/60 hover:bg-indigo-700/80 shadow-md shadow-purple-500/40 
-                        hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 cosmic-hover-glow"
-                onClick={onCreateDesign}
-                size="lg"
-              >
-                <Plus className="h-5 w-5 mr-2" /> Create Design
-              </Button>
+              {/* Small overlap glow effect in the intersection */}
+              <div className="absolute top-1/2 left-1/2 md:left-[calc(50%-20px)] transform -translate-x-1/2 -translate-y-1/2
+                           w-16 h-16 rounded-full bg-indigo-500/20 filter blur-sm z-30"></div>
             </div>
-            
-            {/* Enhanced overlap effect */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 md:-translate-x-[10%] -translate-y-[30%] md:-translate-y-[10%] 
-                        w-40 h-40 md:w-40 md:h-40 rounded-full bg-purple-500/20 backdrop-blur-md z-30"></div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 md:-translate-x-[10%] -translate-y-[30%] md:-translate-y-[10%]
-                        w-6 h-6 rounded-full bg-purple-400/60 animate-pulse z-40"></div>
           </div>
         </div>
       </div>
