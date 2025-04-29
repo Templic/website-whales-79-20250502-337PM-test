@@ -503,65 +503,141 @@ export const projectFiles = pgTable('project_files', {
   metadata: json('metadata')
 });
 
-// Content management tables
+// Content Management System - Enhanced Schema
+
+// Content Type Enum
+export const contentTypeEnum = pgEnum('content_type', [
+  'text',
+  'html',
+  'image',
+  'video',
+  'audio',
+  'document',
+  'json'
+]);
+
+// Content Status Enum
+export const contentStatusEnum = pgEnum('content_status', [
+  'draft',
+  'review',
+  'approved',
+  'published',
+  'archived',
+  'scheduled'
+]);
+
+// Review Status Enum
+export const reviewStatusEnum = pgEnum('review_status', [
+  'pending',
+  'in_progress',
+  'approved',
+  'rejected',
+  'changes_requested'
+]);
+
+// Content Items Table with Enhanced Schema
 export const contentItems = pgTable('content_items', {
   id: serial('id').primaryKey(),
   key: text('key').notNull().unique(),
-  type: text('type').notNull(), // e.g., 'text', 'image', 'html', 'json'
+  
+  // Content Type (using enum for type safety)
+  type: contentTypeEnum('type').notNull().default('text'),
+  
+  // Core Content Fields
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  page: text('page').notNull(),
+  section: text('section').notNull().default('main'), // Default section for data integrity
+  imageUrl: text('image_url'),
+  
+  // Status and Versioning
+  status: contentStatusEnum('status').notNull().default('draft'),
+  version: integer('version').notNull().default(1),
+  
+  // Review Workflow
+  reviewerId: varchar('reviewer_id', { length: 255 }).references(() => users.id),
+  reviewStatus: reviewStatusEnum('review_status'),
+  reviewStartedAt: timestamp('review_started_at'),
+  reviewCompletedAt: timestamp('review_completed_at'),
+  reviewNotes: text('review_notes'),
+  
+  // Publishing Schedule
+  scheduledPublishAt: timestamp('scheduled_publish_at'),
+  expirationDate: timestamp('expiration_date'),
+  
+  // Audit Information
+  createdBy: varchar('created_by', { length: 255 }).references(() => users.id),
+  lastModifiedBy: varchar('last_modified_by', { length: 255 }).references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  
+  // Extended Metadata
+  metadata: json('metadata'),
+  tags: text('tags').array(), // Array of tags for better content organization
+  localeCode: text('locale_code').default('en-US'), // Internationalization support
+  isActive: boolean('is_active').notNull().default(true)
+});
+
+// Content Version History Table
+export const contentHistory = pgTable('content_history', {
+  id: serial('id').primaryKey(),
+  contentId: integer('content_id').notNull().references(() => contentItems.id, { onDelete: 'cascade' }),
+  version: integer('version').notNull(),
+  type: contentTypeEnum('type').notNull(),
   title: text('title').notNull(),
   content: text('content').notNull(),
   page: text('page').notNull(),
   section: text('section').notNull(),
   imageUrl: text('image_url'),
-  status: text('status').notNull().default('draft'), // draft, review, approved, published, archived
-  version: integer('version').notNull().default(1),
-  reviewerId: varchar('reviewer_id', { length: 255 }).references(() => users.id),
-  reviewStatus: text('review_status'),
-  reviewStartedAt: timestamp('review_started_at'),
-  reviewCompletedAt: timestamp('review_completed_at'),
-  reviewNotes: text('review_notes'),
-  scheduledPublishAt: timestamp('scheduled_publish_at'),
-  expirationDate: timestamp('expiration_date'),
-  lastModifiedBy: varchar('last_modified_by', { length: 255 }).references(() => users.id),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  metadata: json('metadata')
-});
-
-export const contentHistory = pgTable('content_history', {
-  id: serial('id').primaryKey(),
-  contentId: integer('content_id').notNull().references(() => contentItems.id),
-  version: integer('version').notNull(),
-  type: text('type').notNull(),
-  title: text('title').notNull(),
-  content: text('content').notNull(),
-  page: text('page'),
-  section: text('section'),
-  imageUrl: text('image_url'),
+  status: contentStatusEnum('status').notNull(),
+  metadata: json('metadata'),
+  tags: text('tags').array(),
   modifiedAt: timestamp('modified_at').defaultNow().notNull(),
   modifiedBy: varchar('modified_by', { length: 255 }).references(() => users.id),
-  changeDescription: text('change_description')
+  changeDescription: text('change_description'),
+  diffData: json('diff_data'), // Stores the diff between this version and previous
+  isAutosave: boolean('is_autosave').notNull().default(false)
 });
 
+// Content Usage and Analytics Table
 export const contentUsage = pgTable('content_usage', {
   id: serial('id').primaryKey(),
-  contentId: integer('content_id').notNull().references(() => contentItems.id),
+  contentId: integer('content_id').notNull().references(() => contentItems.id, { onDelete: 'cascade' }),
   location: text('location').notNull(), // e.g., 'homepage', 'blog', 'product'
   path: text('path').notNull(), // URL path
   views: integer('views').notNull().default(0),
+  uniqueViews: integer('unique_views').notNull().default(0),
+  clickEvents: integer('click_events').notNull().default(0),
+  averageDwellTimeSeconds: integer('average_dwell_time_seconds').default(0),
   lastViewed: timestamp('last_viewed').defaultNow().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull()
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deviceTypes: json('device_types').default({}), // Store device type statistics
+  referrers: json('referrers').default({}) // Store referrer statistics
 });
 
+// Content Relationships Table (for tracking relationships between content items)
+export const contentRelationships = pgTable('content_relationships', {
+  id: serial('id').primaryKey(),
+  sourceContentId: integer('source_content_id').notNull().references(() => contentItems.id, { onDelete: 'cascade' }),
+  targetContentId: integer('target_content_id').notNull().references(() => contentItems.id, { onDelete: 'cascade' }),
+  relationshipType: text('relationship_type').notNull(), // e.g., 'parent', 'related', 'recommendation', 'next', 'previous'
+  sortOrder: integer('sort_order').default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  createdBy: varchar('created_by', { length: 255 }).references(() => users.id),
+  isActive: boolean('is_active').notNull().default(true)
+});
+
+// Content Workflow History Table (for tracking status changes)
 export const contentWorkflowHistory = pgTable('content_workflow_history', {
   id: serial('id').primaryKey(),
-  contentId: integer('content_id').notNull().references(() => contentItems.id),
-  fromStatus: text('from_status').notNull(),
-  toStatus: text('to_status').notNull(),
-  actorId: varchar('actor_id', { length: 255 }).notNull().references(() => users.id),
-  actionAt: timestamp('action_at').defaultNow().notNull(),
-  comments: text('comments')
+  contentId: integer('content_id').notNull().references(() => contentItems.id, { onDelete: 'cascade' }),
+  previousStatus: contentStatusEnum('previous_status').notNull(),
+  newStatus: contentStatusEnum('new_status').notNull(),
+  changedBy: varchar('changed_by', { length: 255 }).references(() => users.id),
+  changedAt: timestamp('changed_at').defaultNow().notNull(),
+  comments: text('comments'),
+  metadata: json('metadata')
 });
 
 // Simple album and track tables for the music section
@@ -764,7 +840,7 @@ export const insertContentUsageSchema = createInsertSchema(contentUsage).omit({
 
 export const insertContentWorkflowHistorySchema = createInsertSchema(contentWorkflowHistory).omit({
   id: true,
-  actionAt: true,
+  changedAt: true,
 });
 
 export const insertTrackSchema = createInsertSchema(tracks).omit({
@@ -890,6 +966,108 @@ export type InsertCollaborationProposal = z.infer<typeof insertCollaborationProp
 
 export type Patron = typeof patrons.$inferSelect;
 export type InsertPatron = z.infer<typeof insertPatronSchema>;
+
+// ===================================================================
+// Content Management Relations
+// ===================================================================
+
+// Content Items Relations
+export const contentItemsRelations = relations(contentItems, ({ one, many }) => ({
+  // User who created the content
+  creator: one(users, {
+    fields: [contentItems.createdBy],
+    references: [users.id],
+  }),
+  
+  // User who last modified the content
+  lastModifier: one(users, {
+    fields: [contentItems.lastModifiedBy],
+    references: [users.id],
+  }),
+  
+  // User who is reviewing the content
+  reviewer: one(users, {
+    fields: [contentItems.reviewerId],
+    references: [users.id],
+  }),
+  
+  // History of content versions
+  versionHistory: many(contentHistory),
+  
+  // Usage statistics across different pages
+  usageStats: many(contentUsage),
+  
+  // Workflow status history
+  workflowHistory: many(contentWorkflowHistory),
+  
+  // Content relationships where this content is the source
+  outgoingRelationships: many(contentRelationships, { relationName: 'sourceContent' }),
+  
+  // Content relationships where this content is the target
+  incomingRelationships: many(contentRelationships, { relationName: 'targetContent' }),
+}));
+
+// Content History Relations
+export const contentHistoryRelations = relations(contentHistory, ({ one }) => ({
+  // Content item this history entry belongs to
+  contentItem: one(contentItems, {
+    fields: [contentHistory.contentId],
+    references: [contentItems.id],
+  }),
+  
+  // User who modified this version
+  modifier: one(users, {
+    fields: [contentHistory.modifiedBy],
+    references: [users.id],
+  }),
+}));
+
+// Content Usage Relations
+export const contentUsageRelations = relations(contentUsage, ({ one }) => ({
+  // Content item this usage data belongs to
+  contentItem: one(contentItems, {
+    fields: [contentUsage.contentId],
+    references: [contentItems.id],
+  }),
+}));
+
+// Content Workflow History Relations
+export const contentWorkflowHistoryRelations = relations(contentWorkflowHistory, ({ one }) => ({
+  // Content item this workflow history belongs to
+  contentItem: one(contentItems, {
+    fields: [contentWorkflowHistory.contentId],
+    references: [contentItems.id],
+  }),
+  
+  // User who changed the status
+  statusChanger: one(users, {
+    fields: [contentWorkflowHistory.changedBy],
+    references: [users.id],
+  }),
+}));
+
+// Content Relationships Relations
+export const contentRelationshipsRelations = relations(contentRelationships, ({ one }) => ({
+  // Source content item in the relationship
+  sourceContent: one(contentItems, {
+    fields: [contentRelationships.sourceContentId],
+    references: [contentItems.id],
+    relationName: 'outgoingRelationships',
+  }),
+  
+  // Target content item in the relationship
+  targetContent: one(contentItems, {
+    fields: [contentRelationships.targetContentId],
+    references: [contentItems.id],
+    relationName: 'incomingRelationships',
+  }),
+  
+  // User who created the relationship
+  creator: one(users, {
+    fields: [contentRelationships.createdBy],
+    references: [users.id],
+  }),
+}));
 
 // ===================================================================
 // Music-related Relations
