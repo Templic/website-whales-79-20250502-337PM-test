@@ -31,7 +31,7 @@ export const posts = pgTable("posts", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   content: text("content").notNull(),
-  authorId: integer("author_id").references(() => users.id).notNull(),
+  authorId: varchar("author_id", { length: 255 }).references(() => users.id).notNull(),
   category: text("category"),
   slug: text("slug").notNull().unique(),
   coverImage: text("cover_image"),
@@ -44,7 +44,7 @@ export const posts = pgTable("posts", {
 export const comments = pgTable("comments", {
   id: serial("id").primaryKey(),
   postId: integer("post_id").notNull().references(() => posts.id),
-  authorId: integer("author_id").references(() => users.id).notNull(),
+  authorId: varchar("author_id", { length: 255 }).references(() => users.id).notNull(),
   content: text("content").notNull(),
   approved: boolean("approved").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -136,7 +136,7 @@ export const products = pgTable("products", {
 // Orders table
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
+  userId: varchar("user_id", { length: 255 }).references(() => users.id),
   status: orderStatusEnum("status").notNull().default("pending"),
   total: numeric("total", { precision: 10, scale: 2 }).notNull(),
   subtotal: numeric("subtotal", { precision: 10, scale: 2 }).notNull(),
@@ -190,7 +190,7 @@ export const orderItems = pgTable("order_items", {
 export const carts = pgTable("carts", {
   id: serial("id").primaryKey(),
   sessionId: text("session_id").notNull(),
-  userId: integer("user_id").references(() => users.id),
+  userId: varchar("user_id", { length: 255 }).references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
 });
@@ -284,7 +284,7 @@ export const typeScriptErrors = pgTable('typescript_errors', {
   resolved_at: timestamp('resolved_at'),
   fix_id: integer('fix_id'),
   pattern_id: integer('pattern_id'),
-  user_id: integer('user_id'),
+  user_id: varchar('user_id', { length: 255 }).references(() => users.id),
   metadata: json('metadata'),
   first_detected_at: timestamp('first_detected_at').defaultNow().notNull(),
   occurrence_count: integer('occurrence_count').notNull().default(1),
@@ -585,6 +585,44 @@ export const albums = pgTable('albums', {
   updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
 
+// Tour dates table
+export const tourDates = pgTable('tour_dates', {
+  id: serial('id').primaryKey(),
+  date: timestamp('date').notNull(),
+  venue: text('venue').notNull(),
+  city: text('city').notNull(),
+  country: text('country').notNull(),
+  ticketUrl: text('ticket_url'),
+  isSoldOut: boolean('is_sold_out').notNull().default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Collaboration proposals table
+export const collaborationProposals = pgTable('collaboration_proposals', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  artistName: text('artist_name'),
+  proposalType: text('proposal_type').notNull(),
+  description: text('description').notNull(),
+  status: text('status').notNull().default('pending'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Patrons table
+export const patrons = pgTable('patrons', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id', { length: 255 }).references(() => users.id),
+  tier: text('tier').notNull(),
+  since: timestamp('since').defaultNow().notNull(),
+  contribution: numeric('contribution', { precision: 10, scale: 2 }).notNull(),
+  status: text('status').notNull().default('active'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
 // ===================================================================
 // Insert Schemas
 // ===================================================================
@@ -738,6 +776,24 @@ export const insertAlbumSchema = createInsertSchema(albums).omit({
   updatedAt: true,
 });
 
+export const insertTourDateSchema = createInsertSchema(tourDates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCollaborationProposalSchema = createInsertSchema(collaborationProposals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPatronSchema = createInsertSchema(patrons).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // ===================================================================
 // Types
 // ===================================================================
@@ -822,3 +878,12 @@ export type InsertTrack = z.infer<typeof insertTrackSchema>;
 
 export type Album = typeof albums.$inferSelect;
 export type InsertAlbum = z.infer<typeof insertAlbumSchema>;
+
+export type TourDate = typeof tourDates.$inferSelect;
+export type InsertTourDate = z.infer<typeof insertTourDateSchema>;
+
+export type CollaborationProposal = typeof collaborationProposals.$inferSelect;
+export type InsertCollaborationProposal = z.infer<typeof insertCollaborationProposalSchema>;
+
+export type Patron = typeof patrons.$inferSelect;
+export type InsertPatron = z.infer<typeof insertPatronSchema>;
