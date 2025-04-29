@@ -129,27 +129,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               }}
             />
             
-            {/* Improve contrast for better visibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-60"></div>
+            {/* Enhanced contrast gradient for better visibility */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-75"></div>
           </div>
         </Link>
 
-        {/* Move badges to more visible positions */}
+        {/* Redesigned badges with improved visibility */}
         {(featured || isNew || discountPercent) && (
           <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
             {featured && (
-              <Badge variant="default" className="cosmic-badge cosmic-hover-glow px-2 py-1 text-xs font-medium shadow-md">
-                Featured
+              <Badge variant="default" className="cosmic-badge cosmic-hover-glow px-3 py-1.5 text-xs font-semibold shadow-lg bg-amber-600 text-white border border-amber-400/30">
+                Bestseller
               </Badge>
             )}
             {isNew && (
-              <Badge variant="outline" className="bg-primary/20 border-primary/50 cosmic-badge cosmic-hover-glow px-2 py-1 text-xs font-medium shadow-md">
-                New
+              <Badge variant="outline" className="bg-indigo-600/40 border-indigo-400/50 cosmic-badge cosmic-hover-glow px-3 py-1.5 text-xs font-semibold shadow-lg text-white">
+                ZODIAC
               </Badge>
             )}
             {discountPercent && (
-              <Badge variant="destructive" className="cosmic-badge-highlight cosmic-hover-glow px-2 py-1 text-xs font-medium shadow-md">
-                -{discountPercent}%
+              <Badge variant="destructive" className="cosmic-badge-highlight cosmic-hover-glow px-3 py-1.5 text-xs font-semibold shadow-lg bg-emerald-600 text-white border border-emerald-400/30">
+                {discountPercent}% Off
               </Badge>
             )}
           </div>
@@ -202,28 +202,43 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <span className="font-semibold cosmic-price text-base">{formattedPrice}</span>
           )}
         </div>
-        <Button
-          size="sm"
-          className={cn(
-            "cosmic-btn cosmic-hover-glow w-full sm:w-auto shadow-md",
-            !inStock && "opacity-70 cursor-not-allowed",
-            isProductInCart && "bg-green-700 hover:bg-green-800"
-          )}
-          disabled={!inStock || isProductInCart}
-          onClick={isProductInCart ? undefined : handleAddToCart}
-        >
-          {isProductInCart ? (
-            <Link href="/cart" className="w-full flex items-center justify-center">
-              <ShoppingCart className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="whitespace-nowrap">View in Cart</span>
-            </Link>
-          ) : (
-            <>
-              <ShoppingCart className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="whitespace-nowrap">{inStock ? "Add to Cart" : "Out of Stock"}</span>
-            </>
-          )}
-        </Button>
+        
+        {/* Product action buttons */}
+        <div className="flex w-full sm:w-auto gap-2 mt-2 sm:mt-0">
+          {/* Explore Button */}
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1 bg-indigo-800/40 border-indigo-500/40 text-white hover:bg-indigo-700/60 shadow-md cosmic-hover-glow"
+            onClick={() => window.location.href = `/shop/product/${id}`}
+          >
+            Explore
+          </Button>
+          
+          {/* Buy Now / Add to Cart Button */}
+          <Button
+            size="sm"
+            className={cn(
+              "flex-1 bg-violet-800/80 hover:bg-violet-700 text-white cosmic-hover-glow shadow-md px-3",
+              !inStock && "opacity-70 cursor-not-allowed",
+              isProductInCart && "bg-green-700 hover:bg-green-800"
+            )}
+            disabled={!inStock || isProductInCart}
+            onClick={isProductInCart ? undefined : handleAddToCart}
+          >
+            {isProductInCart ? (
+              <Link href="/cart" className="w-full flex items-center justify-center">
+                <ShoppingCart className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="whitespace-nowrap">View in Cart</span>
+              </Link>
+            ) : (
+              <>
+                <ShoppingCart className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="whitespace-nowrap">{inStock ? "Buy Now" : "Out of Stock"}</span>
+              </>
+            )}
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );
