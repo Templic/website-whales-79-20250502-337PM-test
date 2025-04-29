@@ -515,14 +515,14 @@ export const contentItems = pgTable('content_items', {
   imageUrl: text('image_url'),
   status: text('status').notNull().default('draft'), // draft, review, approved, published, archived
   version: integer('version').notNull().default(1),
-  reviewerId: integer('reviewer_id'),
+  reviewerId: varchar('reviewer_id', { length: 255 }).references(() => users.id),
   reviewStatus: text('review_status'),
   reviewStartedAt: timestamp('review_started_at'),
   reviewCompletedAt: timestamp('review_completed_at'),
   reviewNotes: text('review_notes'),
   scheduledPublishAt: timestamp('scheduled_publish_at'),
   expirationDate: timestamp('expiration_date'),
-  lastModifiedBy: integer('last_modified_by'),
+  lastModifiedBy: varchar('last_modified_by', { length: 255 }).references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   metadata: json('metadata')
@@ -539,7 +539,7 @@ export const contentHistory = pgTable('content_history', {
   section: text('section'),
   imageUrl: text('image_url'),
   modifiedAt: timestamp('modified_at').defaultNow().notNull(),
-  modifiedBy: integer('modified_by'),
+  modifiedBy: varchar('modified_by', { length: 255 }).references(() => users.id),
   changeDescription: text('change_description')
 });
 
@@ -559,7 +559,7 @@ export const contentWorkflowHistory = pgTable('content_workflow_history', {
   contentId: integer('content_id').notNull().references(() => contentItems.id),
   fromStatus: text('from_status').notNull(),
   toStatus: text('to_status').notNull(),
-  actorId: integer('actor_id').notNull(),
+  actorId: varchar('actor_id', { length: 255 }).notNull().references(() => users.id),
   actionAt: timestamp('action_at').defaultNow().notNull(),
   comments: text('comments')
 });
