@@ -390,10 +390,14 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
-    linear-gradient(to right, rgba(0, 235, 214, 0.05), rgba(124, 58, 237, 0.05)),
-    repeating-linear-gradient(to bottom, transparent, transparent 10px, rgba(0, 235, 214, 0.03) 10px, rgba(0, 235, 214, 0.03) 20px);
-  opacity: 0.6;
+  background: 
+    radial-gradient(
+      circle at center,
+      rgba(0, 235, 214, 0.01) 0%,
+      rgba(124, 58, 237, 0.01) 50%,
+      rgba(0, 235, 214, 0.01) 100%
+    );
+  opacity: 0.2;
   z-index: 0;
   pointer-events: none;
 }
@@ -404,15 +408,19 @@
 }
 
 .cosmic-shape-hover:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0 20px rgba(0, 235, 214, 0.3), 0 0 40px rgba(0, 235, 214, 0.15) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(0, 235, 214, 0.2), 0 0 30px rgba(0, 235, 214, 0.1) !important;
 }
 
 .cosmic-shape-hover:hover::before {
-  opacity: 0.9;
-  background-image: 
-    linear-gradient(to right, rgba(0, 235, 214, 0.08), rgba(124, 58, 237, 0.08)),
-    repeating-linear-gradient(to bottom, transparent, transparent 8px, rgba(0, 235, 214, 0.05) 8px, rgba(0, 235, 214, 0.05) 16px);
+  opacity: 0.3;
+  background: 
+    radial-gradient(
+      circle at center,
+      rgba(0, 235, 214, 0.03) 0%,
+      rgba(124, 58, 237, 0.02) 50%,
+      rgba(0, 235, 214, 0.01) 100%
+    );
 }
 
 /* Animated wave effect */
