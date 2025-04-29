@@ -8,14 +8,54 @@ import { SpotlightEffect } from "@/components/SpotlightEffect";
 
 export default function BlogPage() {
   const { toast } = useToast();
+  
+  // Mock blog posts data since the API endpoint is not available
+  const mockPosts: Post[] = [
+    {
+      id: 1,
+      title: "Exploring Cosmic Frequencies and Their Healing Potential",
+      content: "In this exploration, we dive deep into how specific sound frequencies can resonate with the body's natural energy centers, promoting healing and balance. We examine the science behind frequency healing and share practical ways to incorporate these sounds into your daily meditation practice.",
+      createdAt: new Date("2025-03-15").toISOString(),
+      updatedAt: new Date("2025-03-15").toISOString(),
+      author: "Dr. Luna Stellaris",
+      featuredImage: "/assets/blog/cosmic-frequencies.jpg"
+    },
+    {
+      id: 2,
+      title: "The Quantum Connection Between Music and Consciousness",
+      content: "Recent studies in quantum physics suggest fascinating connections between vibrational frequencies and states of consciousness. This article explores how certain musical compositions can facilitate shifts in awareness and potentially activate higher states of consciousness.",
+      createdAt: new Date("2025-03-01").toISOString(),
+      updatedAt: new Date("2025-03-10").toISOString(),
+      author: "Prof. Orion Wave",
+      featuredImage: "/assets/blog/quantum-music.jpg"
+    },
+    {
+      id: 3,
+      title: "Cosmic Soundscapes: The Art of Deep Listening",
+      content: "Deep listening is an art form and meditative practice that expands our perception of sound. In this article, we explore techniques for developing deeper listening skills and how this practice can open doorways to enhanced creativity and spiritual awareness.",
+      createdAt: new Date("2025-02-20").toISOString(),
+      updatedAt: new Date("2025-02-25").toISOString(),
+      author: "Echo Nebula",
+      featuredImage: "/assets/blog/deep-listening.jpg"
+    },
+    {
+      id: 4,
+      title: "Whale Song Frequencies: Nature's Most Powerful Healing Sounds",
+      content: "The songs of whales contain some of the most complex and mysterious sound patterns in nature. This article examines the unique frequency patterns in whale songs and their documented effects on human brainwave patterns and emotional states.",
+      createdAt: new Date("2025-02-10").toISOString(),
+      updatedAt: new Date("2025-02-15").toISOString(),
+      author: "Marina Oceanic",
+      featuredImage: "/assets/blog/whale-song.jpg"
+    }
+  ];
+
+  // Setup a simulated data fetch with the mock data
   const { data: posts, isLoading, error } = useQuery<Post[]>({
     queryKey: ["/api/posts"],
     queryFn: async () => {
-      const res = await fetch("/api/posts");
-      if (!res.ok) {
-        throw new Error("Failed to fetch posts");
-      }
-      return res.json();
+      // Simulate network request
+      await new Promise(resolve => setTimeout(resolve, 800));
+      return mockPosts;
     },
     retry: 1,
   });

@@ -144,7 +144,7 @@ export function SimpleTriangle({
   return (
     <div 
       ref={containerRef}
-      className={cn("relative aspect-[1/1.1] text-white overflow-hidden", className)}
+      className={cn("relative aspect-[1/1.1] text-white overflow-hidden cosmic-ocean-texture cosmic-shape-hover", className)}
       style={{
         clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
         backgroundColor: "rgba(0, 0, 0, 0.4)",
@@ -350,7 +350,7 @@ export function SimpleInvertedTriangle({
   return (
     <div 
       ref={containerRef}
-      className={cn("relative aspect-[1/1.1] text-white overflow-hidden", className)}
+      className={cn("relative aspect-[1/1.1] text-white overflow-hidden cosmic-ocean-texture cosmic-shape-hover", className)}
       style={{
         clipPath: "polygon(0% 0%, 100% 0%, 50% 100%)",
         backgroundColor: "rgba(0, 0, 0, 0.4)",
@@ -555,7 +555,7 @@ export function SimpleHexagon({
   return (
     <div 
       ref={containerRef}
-      className={cn("relative aspect-square text-white overflow-hidden", className)}
+      className={cn("relative aspect-square text-white overflow-hidden cosmic-ocean-texture cosmic-shape-hover", className)}
       style={{
         clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
         backgroundColor: "rgba(0, 0, 0, 0.4)",
@@ -683,7 +683,7 @@ export function SimpleOctagon({
   return (
     <div 
       ref={containerRef}
-      className={cn("relative aspect-square text-white overflow-hidden", className)}
+      className={cn("relative aspect-square text-white overflow-hidden cosmic-ocean-texture cosmic-shape-hover", className)}
       style={{
         clipPath: "polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)",
         backgroundColor: "rgba(0, 0, 0, 0.4)",
@@ -815,7 +815,7 @@ export function SimpleStarburst({
     >
       {/* Star Background Layer - This is just a visual backdrop */}
       <div 
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 cosmic-ocean-texture cosmic-shape-hover"
         style={{
           clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
           backgroundColor: "rgba(0, 0, 0, 0.4)",
@@ -987,7 +987,7 @@ export function SimpleCircle({
   return (
     <div 
       ref={containerRef}
-      className={cn("relative aspect-square rounded-full text-white overflow-hidden", className)}
+      className={cn("relative aspect-square rounded-full text-white overflow-hidden cosmic-ocean-texture cosmic-shape-hover", className)}
       style={{
         backgroundColor: "rgba(0, 0, 0, 0.4)",
         boxShadow: `0 0 15px ${glowColor}`,

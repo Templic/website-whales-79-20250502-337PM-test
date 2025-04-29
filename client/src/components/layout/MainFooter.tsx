@@ -244,7 +244,7 @@ export function MainFooter() {
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
                 <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-xl opacity-20 group-hover:opacity-40 transition-all duration-500"></div>
-                <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">DW</span>
+                <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">DLW</span>
               </div>
               <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-300">
                 Dale Loves Whales

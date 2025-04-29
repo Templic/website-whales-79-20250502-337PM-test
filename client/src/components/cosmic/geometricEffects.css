@@ -173,15 +173,17 @@
 .clip-path-hexagon,
 .clip-path-diamond,
 .clip-path-triangle,
-.clip-path-pentagon {
+.clip-path-pentagon,
+.clip-path-octagon {
   position: relative;
 }
 
-/* Glow effect for geometric shapes */
+/* Enhanced glow effect for geometric shapes */
 .clip-path-hexagon::after,
 .clip-path-diamond::after,
 .clip-path-triangle::after,
-.clip-path-pentagon::after {
+.clip-path-pentagon::after,
+.clip-path-octagon::after {
   content: '';
   position: absolute;
   inset: -2px;
@@ -189,6 +191,50 @@
   filter: blur(15px);
   opacity: 0.7;
   z-index: -1;
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Wavy cosmic texture for geometric shapes */
+.clip-path-hexagon::before,
+.clip-path-diamond::before,
+.clip-path-triangle::before,
+.clip-path-pentagon::before,
+.clip-path-octagon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(45deg, rgba(0, 235, 214, 0.02) 0px, rgba(0, 235, 214, 0.02) 2px, transparent 2px, transparent 10px),
+    repeating-linear-gradient(-45deg, rgba(0, 235, 214, 0.02) 0px, rgba(0, 235, 214, 0.02) 2px, transparent 2px, transparent 10px);
+  mix-blend-mode: overlay;
+  opacity: 0.6;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Pulsing glow animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    filter: blur(15px);
+    opacity: 0.7;
+  }
+  50% {
+    filter: blur(20px);
+    opacity: 0.9;
+  }
+}
+
+/* Add wavy animation to geometric shapes when hovered */
+.cosmic-shape-hover:hover::before {
+  animation: cosmic-wave 15s linear infinite;
+}
+
+/* Octagon shape */
+.clip-path-octagon {
+  clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+  position: relative;
+  padding: 20% !important;
+  box-sizing: border-box;
 }
 
 /* Text container glow effects */
