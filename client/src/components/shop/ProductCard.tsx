@@ -113,7 +113,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
 
   return (
-    <Card className="overflow-hidden cosmic-glass-card cosmic-scale in">
+    <Card className="overflow-hidden cosmic-glass-card cosmic-scale in relative h-full flex flex-col">
       <div className="relative">
         <Link href={`/shop/product/${id}`}>
           <div className="overflow-hidden aspect-square relative group cursor-pointer clip-path-octagon">
@@ -128,44 +128,49 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 console.log("Image error for product:", name, "Using fallback:", target.src);
               }}
             />
-            {(featured || isNew || discountPercent) && (
-              <div className="absolute top-2 right-2 flex flex-col gap-2">
-                {featured && (
-                  <Badge variant="default" className="cosmic-badge cosmic-hover-glow">
-                    Featured
-                  </Badge>
-                )}
-                {isNew && (
-                  <Badge variant="outline" className="bg-primary/20 cosmic-badge cosmic-hover-glow">
-                    New
-                  </Badge>
-                )}
-                {discountPercent && (
-                  <Badge variant="destructive" className="cosmic-badge-highlight cosmic-hover-glow">
-                    -{discountPercent}%
-                  </Badge>
-                )}
-              </div>
-            )}
+            
+            {/* Improve contrast for better visibility */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-60"></div>
           </div>
         </Link>
+
+        {/* Move badges to more visible positions */}
+        {(featured || isNew || discountPercent) && (
+          <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
+            {featured && (
+              <Badge variant="default" className="cosmic-badge cosmic-hover-glow px-2 py-1 text-xs font-medium shadow-md">
+                Featured
+              </Badge>
+            )}
+            {isNew && (
+              <Badge variant="outline" className="bg-primary/20 border-primary/50 cosmic-badge cosmic-hover-glow px-2 py-1 text-xs font-medium shadow-md">
+                New
+              </Badge>
+            )}
+            {discountPercent && (
+              <Badge variant="destructive" className="cosmic-badge-highlight cosmic-hover-glow px-2 py-1 text-xs font-medium shadow-md">
+                -{discountPercent}%
+              </Badge>
+            )}
+          </div>
+        )}
 
         <Button
           size="icon"
           variant="secondary"
-          className="absolute top-2 left-2 h-8 w-8 rounded-full opacity-70 hover:opacity-100 cosmic-btn-icon cosmic-hover-glow"
+          className="absolute top-3 left-3 h-8 w-8 rounded-full opacity-80 hover:opacity-100 cosmic-btn-icon cosmic-hover-glow shadow-md z-10"
         >
           <Heart className="h-4 w-4" />
         </Button>
       </div>
 
-      <CardContent className="p-4">
+      <CardContent className="p-4 flex-grow">
         <div className="flex flex-col sm:flex-row justify-between mb-2">
-          <div className="space-y-1">
+          <div className="space-y-1 flex-grow">
             <Link href={`/shop/product/${id}`}>
-              <h3 className="font-medium cosmic-hover-text cursor-pointer text-lg line-clamp-1 min-h-[28px]">{name}</h3>
+              <h3 className="font-medium cosmic-hover-text cursor-pointer text-lg truncate max-w-full" title={name}>{name}</h3>
             </Link>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1 text-sm text-white/80">
               {categories.slice(0, 1).map((category) => (
                 <Link key={category} href={`/shop/${category.toLowerCase()}`}>
                   <span className="cosmic-hover-text cursor-pointer">{category}</span>
@@ -173,53 +178,49 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 mt-1 sm:mt-0 ml-0 sm:ml-2">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
             <span className="text-sm">{rating.toFixed(1)}</span>
           </div>
         </div>
 
-        <div className="line-clamp-3 text-sm text-muted-foreground mb-4 min-h-[70px] max-h-[70px] overflow-hidden">
+        <div className="line-clamp-3 text-sm text-white/80 mb-4 min-h-[60px] max-h-[60px] overflow-hidden" title={description}>
           {description}
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 flex flex-col sm:flex-row justify-between items-center gap-3">
-        <div>
+      <CardFooter className="p-4 pt-0 flex flex-col sm:flex-row justify-between items-center gap-3 mt-auto">
+        <div className="w-full sm:w-auto text-center sm:text-left">
           {discountedPrice ? (
-            <>
-              <span className="text-muted-foreground line-through text-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+              <span className="text-white/60 line-through text-sm mr-2">
                 {formattedPrice}
               </span>
-              <span className="font-semibold text-primary">{discountedPrice}</span>
-            </>
+              <span className="font-semibold text-primary text-base">{discountedPrice}</span>
+            </div>
           ) : (
-            <span className="font-semibold cosmic-price">{formattedPrice}</span>
+            <span className="font-semibold cosmic-price text-base">{formattedPrice}</span>
           )}
         </div>
         <Button
           size="sm"
           className={cn(
-            "cosmic-btn cosmic-hover-glow w-full sm:w-auto",
-            !inStock && "opacity-50 cursor-not-allowed",
+            "cosmic-btn cosmic-hover-glow w-full sm:w-auto shadow-md",
+            !inStock && "opacity-70 cursor-not-allowed",
             isProductInCart && "bg-green-700 hover:bg-green-800"
           )}
           disabled={!inStock || isProductInCart}
           onClick={isProductInCart ? undefined : handleAddToCart}
         >
           {isProductInCart ? (
-            <>
-              <Link href="/cart">
-                <span className="flex items-center">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  View in Cart
-                </span>
-              </Link>
-            </>
+            <Link href="/cart" className="w-full flex items-center justify-center">
+              <ShoppingCart className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="whitespace-nowrap">View in Cart</span>
+            </Link>
           ) : (
             <>
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              {inStock ? "Add to Cart" : "Out of Stock"}
+              <ShoppingCart className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="whitespace-nowrap">{inStock ? "Add to Cart" : "Out of Stock"}</span>
             </>
           )}
         </Button>

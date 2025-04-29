@@ -288,26 +288,34 @@ const ShopPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen relative bg-[#050f28] text-[#e8e6e3]">
-      <CosmicBackground opacity={0.45} color="indigo" nebulaEffect={true} />
+    <div className="min-h-screen relative bg-[#121b35] text-[#f1f0ee]">
+      {/* Adjusted background with higher brightness */}
+      <CosmicBackground opacity={0.35} color="indigo" nebulaEffect={true} />
       
-      {/* Sacred geometry elements in page margins */}
+      {/* Improved lighting overlay for better visibility */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-indigo-900/5 via-blue-900/5 to-violet-900/5 pointer-events-none"></div>
+      
+      {/* Sacred geometry elements in page margins with better visibility */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         {/* Left margin sacred geometry - one at top, one at bottom */}
-        <div className="absolute top-40 left-5 opacity-20 hidden md:block">
+        <div className="absolute top-40 left-5 opacity-30 hidden md:block">
           <SacredGeometry variant="merkaba" size={120} animated={true} />
         </div>
-        <div className="absolute bottom-40 left-5 opacity-20 hidden md:block">
+        <div className="absolute bottom-40 left-5 opacity-30 hidden md:block">
           <SacredGeometry variant="dodecahedron" size={120} animated={true} />
         </div>
         
         {/* Right margin sacred geometry - one at top, one at bottom */}
-        <div className="absolute top-40 right-5 opacity-20 hidden md:block">
+        <div className="absolute top-40 right-5 opacity-30 hidden md:block">
           <SacredGeometry variant="icosahedron" size={120} animated={true} />
         </div>
-        <div className="absolute bottom-40 right-5 opacity-20 hidden md:block">
+        <div className="absolute bottom-40 right-5 opacity-30 hidden md:block">
           <SacredGeometry variant="flower-of-life" size={120} animated={true} />
         </div>
+        
+        {/* Additional ambient lighting elements */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-indigo-500/10 filter blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-violet-500/10 filter blur-3xl animate-pulse"></div>
       </div>
 
       <div className="container mx-auto px-4 py-8">

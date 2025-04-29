@@ -39,18 +39,24 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ filters = { category: 
   const displayProducts = products.length > 0 ? products : initialProducts;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-      {/* Map through filtered products and render ProductCards */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8">
+      {/* Map through filtered products and render ProductCards with improved layout */}
       {displayProducts.length > 0 ? (
         displayProducts.map(product => (
-          <ProductCard 
-            key={product.id}
-            product={product}
-          />
+          <div key={product.id} className="flex h-full cosmic-fade-in in">
+            <ProductCard 
+              key={product.id}
+              product={product}
+            />
+          </div>
         ))
       ) : (
-        <div className="col-span-full flex items-center justify-center p-10">
-          <p className="text-center text-muted-foreground">No products found matching your criteria</p>
+        <div className="col-span-full flex items-center justify-center p-10 bg-indigo-900/10 rounded-lg backdrop-blur-sm">
+          <p className="text-center text-white py-8">
+            <span className="block text-3xl mb-2">✨</span>
+            No cosmic products found matching your criteria
+            <span className="block text-sm mt-2 text-white/70">Try adjusting your filters to discover more</span>
+          </p>
         </div>
       )}
     </div>
