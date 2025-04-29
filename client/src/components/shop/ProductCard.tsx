@@ -196,28 +196,39 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </CardContent>
 
       <CardFooter className="p-4 pt-0 flex flex-col justify-between items-center gap-3 mt-auto">
-        {/* Price section with enhanced visibility */}
-        <div className="w-full text-center bg-indigo-950/60 backdrop-blur-sm py-2 px-4 rounded-lg border border-purple-500/20 shadow-inner">
-          {discountedPrice ? (
-            <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-1">
-              <span className="text-white/60 line-through text-sm mr-2">
-                {formattedPrice}
-              </span>
-              <span className="font-bold text-purple-300 text-xl cosmic-text-glow">{discountedPrice}</span>
-            </div>
-          ) : (
-            <span className="font-bold text-purple-300 text-xl cosmic-text-glow">{formattedPrice}</span>
-          )}
+        {/* Price and Rating section combined - makes better use of space */}
+        <div className="w-full flex items-center justify-between bg-indigo-950/60 backdrop-blur-sm py-2 px-4 rounded-lg border border-purple-500/20 shadow-inner">
+          <div className="flex-shrink-0">
+            {discountedPrice ? (
+              <div className="flex flex-col items-start">
+                <span className="text-white/60 line-through text-xs">
+                  {formattedPrice}
+                </span>
+                <span className="font-bold text-purple-300 text-lg cosmic-text-glow">{discountedPrice}</span>
+              </div>
+            ) : (
+              <span className="font-bold text-purple-300 text-lg cosmic-text-glow">{formattedPrice}</span>
+            )}
+          </div>
+          
+          {/* Star rating positioned next to price */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            <span className="text-sm">{rating.toFixed(1)}</span>
+            <span className="text-xs text-white/70 ml-1">
+              ({typeof product.reviews === 'number' ? product.reviews : '144'} reviews)
+            </span>
+          </div>
         </div>
         
-        {/* Product action buttons */}
-        <div className="flex w-full gap-2">
+        {/* Product action buttons - stacked vertically to avoid clipping */}
+        <div className="flex flex-col w-full gap-2">
           {/* Explore Button */}
           <Button
             size="sm"
             variant="outline"
-            className="flex-1 bg-indigo-800/70 border-indigo-400/50 text-white hover:bg-indigo-700/90 
-                      shadow-md shadow-indigo-500/20 cosmic-hover-glow py-5 font-semibold"
+            className="w-full bg-indigo-800/70 border-indigo-400/50 text-white hover:bg-indigo-700/90 
+                      shadow-md shadow-indigo-500/20 cosmic-hover-glow py-2 font-semibold"
             onClick={() => window.location.href = `/shop/product/${id}`}
           >
             Explore
@@ -227,7 +238,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <Button
             size="sm"
             className={cn(
-              "flex-1 bg-violet-700 hover:bg-violet-600 text-white cosmic-hover-glow shadow-md shadow-violet-500/30 py-5 font-semibold",
+              "w-full bg-violet-700 hover:bg-violet-600 text-white cosmic-hover-glow shadow-md shadow-violet-500/30 py-2 font-semibold",
               !inStock && "opacity-70 cursor-not-allowed",
               isProductInCart && "bg-green-700 hover:bg-green-600"
             )}

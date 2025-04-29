@@ -141,6 +141,45 @@ export function SimpleTriangle({
     child !== heading && child !== button
   );
 
+  // Format heading with a line break if it's longer than 10 characters
+  const formatHeading = (headingElement: React.ReactElement) => {
+    const headingText = (headingElement.props as any).children || '';
+    // Don't modify if it's not a string or already contains line breaks
+    if (typeof headingText !== 'string' || headingText.includes('\n')) {
+      return headingElement;
+    }
+    
+    // If heading is longer than 10 characters, add a line break at a good position
+    if (headingText.length > 10) {
+      // Find a good split point (space around the middle)
+      const words = headingText.split(' ');
+      if (words.length > 1) {
+        // For 2-3 words, put the last word on a new line
+        // For more words, try to balance the lines
+        const splitIndex = words.length <= 3 ? words.length - 1 : Math.ceil(words.length / 2);
+        
+        const firstLine = words.slice(0, splitIndex).join(' ');
+        const secondLine = words.slice(splitIndex).join(' ');
+        
+        // Create new element with the line-broken text
+        return React.cloneElement(headingElement, {
+          children: (
+            <>
+              <span className="block">{firstLine}</span>
+              <span className="block">{secondLine}</span>
+            </>
+          ),
+          className: cn(fontSize.heading, 'font-medium leading-tight', (headingElement.props as any).className || '')
+        });
+      }
+    }
+    
+    // If no changes needed, return with updated className
+    return React.cloneElement(headingElement, {
+      className: cn(fontSize.heading, 'font-medium leading-tight', (headingElement.props as any).className || '')
+    });
+  };
+
   return (
     <div 
       ref={containerRef}
@@ -178,20 +217,18 @@ export function SimpleTriangle({
       
       {/* Content Container with calculated spacing based on triangle geometry */}
       {/* Move all content closer to center, away from corners */}
-      <div className="absolute inset-x-0 bottom-0 top-[10%] flex flex-col justify-center items-center">
-        {/* Reduced content area to ensure text stays within triangle shape */}
-        <div className="w-[60%] h-[75%] flex flex-col justify-center items-center">
+      <div className="absolute inset-x-0 bottom-0 top-[12%] flex flex-col justify-center items-center">
+        {/* Further reduced content area to ensure text stays within triangle shape */}
+        <div className="w-[55%] h-[70%] flex flex-col justify-center items-center">
         
-          {/* Heading at top - in a triangle, place heading in wider part (bottom) */}
-          <div className="w-full text-center mb-0">
+          {/* Heading at top with improved formatting and positioning */}
+          <div className="w-full text-center mb-0 mt-2">
             {heading && (
               <div className="text-center">
                 {React.isValidElement(heading) && 
                  typeof heading.type === 'string' && 
                  ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
-                  React.cloneElement(heading as React.ReactElement, {
-                    className: cn(fontSize.heading, 'font-medium leading-none', (heading.props as any).className || ''),
-                  }) : heading
+                  formatHeading(heading as React.ReactElement) : heading
                 }
               </div>
             )}
@@ -201,7 +238,7 @@ export function SimpleTriangle({
           <ShapeDivider width="30%" opacity={30} margin="0.2rem 0 0.2rem 0" />
           
           {/* Main content with triangle-shaped text layout */}
-          <div className="w-[90%] flex-grow flex flex-col justify-center items-center overflow-y-auto m-0 p-0 pb-2">
+          <div className="w-[85%] flex-grow flex flex-col justify-center items-center overflow-y-auto m-0 p-0 pb-2">
             {/* Map to create triangle-shaped paragraph text */}
             {content.map((item, index) => {
               if (React.isValidElement(item) && item.type === 'p') {
@@ -212,10 +249,10 @@ export function SimpleTriangle({
                 const words = typeof textContent === 'string' ? textContent.split(' ') : [];
                 
                 // Only apply special formatting if we have enough words
-                if (words.length >= 6) {
+                if (words.length >= 5) {
                   // Calculate a triangular distribution that gets wider at the bottom
                   const totalWords = words.length;
-                  const numLines = Math.min(6, Math.ceil(totalWords / 2));
+                  const numLines = Math.min(5, Math.ceil(totalWords / 2));
                   
                   // Calculate words per line to create a triangular shape
                   // First line has fewest words, last line has most
@@ -255,7 +292,7 @@ export function SimpleTriangle({
                             lineIndex < lines.length - 1 ? 'mb-0' : 'mb-1'
                           )}
                           style={{
-                            width: `${Math.min(100, 40 + (lineIndex * 60 / numLines))}%`, // Width increases with each line
+                            width: `${Math.min(100, 40 + (lineIndex * 55 / numLines))}%`, // Width increases with each line but more controlled
                             textAlign: 'center'
                           }}
                         >
@@ -265,7 +302,42 @@ export function SimpleTriangle({
                     </div>
                   );
                 } else {
-                  // For short paragraphs, use the default styling
+                  // For short paragraphs, create 2-3 line breaks for better visual appearance
+                  if (typeof textContent === 'string' && textContent.length > 30) {
+                    const words = textContent.split(' ');
+                    const totalWords = words.length;
+                    // Aim for 2-3 lines of text
+                    const numLines = Math.min(3, Math.max(2, Math.ceil(totalWords / 5)));
+                    const wordsPerLine = Math.ceil(totalWords / numLines);
+                    
+                    const lines = [];
+                    for (let i = 0; i < numLines; i++) {
+                      const startIdx = i * wordsPerLine;
+                      const endIdx = Math.min(startIdx + wordsPerLine, totalWords);
+                      if (startIdx < totalWords) {
+                        lines.push(words.slice(startIdx, endIdx).join(' '));
+                      }
+                    }
+                    
+                    return (
+                      <div key={`triangle-content-${index}`} className="text-center">
+                        {lines.map((line, lineIndex) => (
+                          <div 
+                            key={`line-${lineIndex}`}
+                            className={cn(
+                              fontSize.content,
+                              'leading-tight mx-auto',
+                              lineIndex < lines.length - 1 ? 'mb-0' : 'mb-1'
+                            )}
+                          >
+                            {line}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                  
+                  // For very short text, use default styling
                   return React.cloneElement(item as React.ReactElement, {
                     className: cn(fontSize.content, 'my-0 leading-tight text-center', (item.props as any).className || ''),
                     key: `triangle-content-${index}`
@@ -278,7 +350,7 @@ export function SimpleTriangle({
           
           {/* Button - positioned closer to content with full visibility */}
           {button && (
-            <div className="mt-0 mb-3 flex justify-center items-center w-full">
+            <div className="mt-0 mb-5 flex justify-center items-center w-full">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
@@ -680,6 +752,90 @@ export function SimpleOctagon({
     child !== heading && child !== button
   );
 
+  // Format heading with a line break if it's longer than 10 characters
+  const formatHeading = (headingElement: React.ReactElement) => {
+    const headingText = (headingElement.props as any).children || '';
+    // Don't modify if it's not a string or already contains line breaks
+    if (typeof headingText !== 'string' || headingText.includes('\n')) {
+      return headingElement;
+    }
+    
+    // If heading is longer than 10 characters, add a line break at a good position
+    if (headingText.length > 10) {
+      // Find a good split point (space around the middle)
+      const words = headingText.split(' ');
+      if (words.length > 1) {
+        // For 2-3 words, put the last word on a new line
+        // For more words, try to balance the lines
+        const splitIndex = words.length <= 3 ? words.length - 1 : Math.ceil(words.length / 2);
+        
+        const firstLine = words.slice(0, splitIndex).join(' ');
+        const secondLine = words.slice(splitIndex).join(' ');
+        
+        // Create new element with the line-broken text
+        return React.cloneElement(headingElement, {
+          children: (
+            <>
+              <span className="block">{firstLine}</span>
+              <span className="block">{secondLine}</span>
+            </>
+          ),
+          className: cn(fontSize.heading, 'font-medium leading-tight', (headingElement.props as any).className || '')
+        });
+      }
+    }
+    
+    // If no changes needed, return with updated className
+    return React.cloneElement(headingElement, {
+      className: cn(fontSize.heading, 'font-medium leading-tight', (headingElement.props as any).className || '')
+    });
+  };
+  
+  // Function to format paragraph text with line breaks for better visual appearance
+  const formatParagraph = (paragraphElement: React.ReactElement) => {
+    const textContent = (paragraphElement.props as any).children || '';
+    
+    if (typeof textContent === 'string' && textContent.length > 20) {
+      const words = textContent.split(' ');
+      const totalWords = words.length;
+      
+      // Aim for 3-4 lines of text for better visual appearance in octagon
+      const numLines = Math.min(4, Math.max(2, Math.ceil(totalWords / 4)));
+      const wordsPerLine = Math.ceil(totalWords / numLines);
+      
+      const lines = [];
+      for (let i = 0; i < numLines; i++) {
+        const startIdx = i * wordsPerLine;
+        const endIdx = Math.min(startIdx + wordsPerLine, totalWords);
+        if (startIdx < totalWords) {
+          lines.push(words.slice(startIdx, endIdx).join(' '));
+        }
+      }
+      
+      return (
+        <div key={`octagon-content-split`} className="text-center">
+          {lines.map((line, lineIndex) => (
+            <div 
+              key={`line-${lineIndex}`}
+              className={cn(
+                fontSize.content,
+                'leading-tight mx-auto',
+                lineIndex < lines.length - 1 ? 'mb-0' : 'mb-1'
+              )}
+            >
+              {line}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
+    // For short text, return as is with proper styling
+    return React.cloneElement(paragraphElement, {
+      className: cn(fontSize.content, 'm-0 leading-tight text-center', (paragraphElement.props as any).className || '')
+    });
+  };
+
   return (
     <div 
       ref={containerRef}
@@ -716,45 +872,41 @@ export function SimpleOctagon({
       </div>
       
       {/* Content Container - ensure content stays within octagon boundaries */}
-      <div className="absolute inset-[10%] flex flex-col justify-center items-center">
-        {/* Title - adaptive sizing */}
+      <div className="absolute inset-[8%] flex flex-col justify-center items-center">
+        {/* Title with improved formatting */}
         {heading && (
-          <div className="text-center mb-0">
+          <div className="text-center mb-1">
             {React.isValidElement(heading) && 
              typeof heading.type === 'string' && 
              ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
-              React.cloneElement(heading as React.ReactElement, {
-                className: cn(fontSize.heading, 'font-medium leading-none m-0', (heading.props as any).className || ''),
-              }) : heading
+              formatHeading(heading as React.ReactElement) : heading
             }
           </div>
         )}
         
         {/* Divider */}
-        <ShapeDivider width="60%" opacity={30} margin="0" />
+        <ShapeDivider width="60%" opacity={30} margin="0.1rem 0" />
         
-        {/* Content - kept away from edges with adaptive sizing */}
-        <div className="w-full max-w-[85%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
+        {/* Content with improved line breaking */}
+        <div className="w-full max-w-[90%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
-              return React.cloneElement(item as React.ReactElement, {
-                className: cn(fontSize.content, 'm-0 leading-tight', (item.props as any).className || ''),
-                key: `octagon-content-${index}`
-              });
+              return formatParagraph(item as React.ReactElement);
             }
             return item;
           })}
         </div>
         
-        {/* Button - octagon shaped to match container */}
+        {/* Button with rounder corners to avoid clipping */}
         {button && (
-          <div className="mt-0 mb-0 flex justify-center items-center">
+          <div className="mt-1 mb-1 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
                 className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                 style: {
-                  clipPath: "polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)",
-                  padding: "0.2rem 0.8rem",
+                  // Less aggressive clipping with more rounded corners
+                  borderRadius: "0.4rem",
+                  padding: "0.3rem 1rem",
                   background: (button.props as any).className?.includes('bg-') 
                     ? undefined 
                     : "rgba(0, 100, 255, 0.8)",
@@ -762,8 +914,11 @@ export function SimpleOctagon({
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
-                  minWidth: "3rem",
-                  boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)"
+                  minWidth: "4rem",
+                  minHeight: "1.8rem",
+                  boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
+                  fontSize: "0.75rem",
+                  fontWeight: "bold"
                 }
               }) : button
             }
@@ -807,6 +962,89 @@ export function SimpleStarburst({
   const content = childArray.filter(child => 
     child !== heading && child !== button
   );
+  
+  // Format heading with a line break if it's longer than 10 characters
+  const formatHeading = (headingElement: React.ReactElement) => {
+    const headingText = (headingElement.props as any).children || '';
+    // Don't modify if it's not a string or already contains line breaks
+    if (typeof headingText !== 'string' || headingText.includes('\n')) {
+      return headingElement;
+    }
+    
+    // Split heading if it's longer than 10 characters
+    if (headingText.length > 10) {
+      const words = headingText.split(' ');
+      if (words.length > 1) {
+        // For 2-3 words, put the last word on a new line
+        // For more words, try to balance the lines
+        const splitIndex = words.length <= 3 ? words.length - 1 : Math.ceil(words.length / 2);
+        
+        const firstLine = words.slice(0, splitIndex).join(' ');
+        const secondLine = words.slice(splitIndex).join(' ');
+        
+        // Create new element with the line-broken text
+        return React.cloneElement(headingElement, {
+          children: (
+            <>
+              <span className="block">{firstLine}</span>
+              <span className="block">{secondLine}</span>
+            </>
+          ),
+          className: cn('text-sm font-bold leading-tight', (headingElement.props as any).className || '')
+        });
+      }
+    }
+    
+    // If no changes needed, return with updated className
+    return React.cloneElement(headingElement, {
+      className: cn('text-sm font-bold leading-tight', (headingElement.props as any).className || '')
+    });
+  };
+  
+  // Function to split paragraph text into multiple lines for better formatting
+  const formatParagraph = (paragraphElement: React.ReactElement) => {
+    const textContent = (paragraphElement.props as any).children || '';
+    
+    if (typeof textContent === 'string' && textContent.length > 20) {
+      const words = textContent.split(' ');
+      const totalWords = words.length;
+      
+      // Aim for 3-4 lines of text for better visual appearance in star
+      const numLines = Math.min(4, Math.max(2, Math.ceil(totalWords / 4)));
+      const wordsPerLine = Math.ceil(totalWords / numLines);
+      
+      const lines = [];
+      for (let i = 0; i < numLines; i++) {
+        const startIdx = i * wordsPerLine;
+        const endIdx = Math.min(startIdx + wordsPerLine, totalWords);
+        if (startIdx < totalWords) {
+          lines.push(words.slice(startIdx, endIdx).join(' '));
+        }
+      }
+      
+      return (
+        <div key={`starburst-content-split`} className="text-center">
+          {lines.map((line, lineIndex) => (
+            <div 
+              key={`line-${lineIndex}`}
+              className={cn(
+                fontSize.content,
+                'leading-tight mx-auto',
+                lineIndex < lines.length - 1 ? 'mb-0' : 'mb-1'
+              )}
+            >
+              {line}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
+    // For short text, return as is with proper styling
+    return React.cloneElement(paragraphElement, {
+      className: cn(fontSize.content, 'my-0 leading-tight text-center', (paragraphElement.props as any).className || '')
+    });
+  };
   
   return (
     <div 
@@ -855,34 +1093,29 @@ export function SimpleStarburst({
           <div 
             className="flex flex-col justify-center items-center"
             style={{ 
-              width: '60%',
+              width: '70%', // Increased from 60% to allow more content space
               margin: '10% 0 0 0' // Push down a bit to avoid top star point
             }}
           >
-            {/* Title */}
+            {/* Title with improved formatting */}
             {heading && (
               <div className="text-center mb-1 w-full">
                 {React.isValidElement(heading) && 
                  typeof heading.type === 'string' && 
                  ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
-                  React.cloneElement(heading as React.ReactElement, {
-                    className: cn('text-sm font-bold', (heading.props as any).className || ''),
-                  }) : heading
+                  formatHeading(heading as React.ReactElement) : heading
                 }
               </div>
             )}
             
             {/* Divider - shorter for star */}
-            <ShapeDivider width="20%" opacity={30} margin="0" />
+            <ShapeDivider width="30%" opacity={30} margin="0.1rem 0" />
             
-            {/* Content */}
-            <div className="w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center py-1">
+            {/* Content with improved line breaking */}
+            <div className="w-[90%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center py-1">
               {content.map((item, index) => {
                 if (React.isValidElement(item) && item.type === 'p') {
-                  return React.cloneElement(item as React.ReactElement, {
-                    className: cn('text-xs my-0 leading-tight', (item.props as any).className || ''),
-                    key: `starburst-content-${index}`
-                  });
+                  return formatParagraph(item as React.ReactElement);
                 }
                 return item;
               })}
@@ -890,10 +1123,10 @@ export function SimpleStarburst({
           </div>
         </div>
         
-        {/* Button placed in a safe area outside the star points */}
+        {/* Button placed in a safe area with better positioning */}
         {button && (
           <div 
-            className="z-20 pb-[25%]" // Push up to avoid bottom star points
+            className="z-20 pb-[20%]" // Reduced padding to bring button closer to content
           >
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
