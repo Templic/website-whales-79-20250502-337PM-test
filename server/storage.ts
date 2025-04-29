@@ -11,7 +11,6 @@ import {
   type Post, type InsertPost,
   type Comment, type InsertComment,
   type ProductCategory, type InsertProductCategory,
-  type Category, type InsertCategory,
   type Subscriber, type InsertSubscriber,
   type Newsletter, type InsertNewsletter,
   type Product, type InsertProduct,
@@ -24,6 +23,9 @@ import {
   type ProjectFile, type InsertProjectFile,
   // Custom types for our application
   type Track, type Album, type ContentItem, type ContentHistory, type ContentUsage, type ContentWorkflowHistory,
+  type TourDate, type InsertTourDate, 
+  type CollaborationProposal, type InsertCollaborationProposal,
+  type Patron, type InsertPatron,
   // Tables we need
   users, posts, comments,
   // TypeScript error management tables
@@ -31,7 +33,9 @@ import {
   // Product tables for e-commerce
   products, productCategories, newsletters, subscribers,
   // Content management tables
-  contentItems, contentHistory, contentUsage, contentWorkflowHistory
+  contentItems, contentHistory, contentUsage, contentWorkflowHistory,
+  // New tables
+  collaborationProposals, patrons, tourDates
 } from "../shared/schema";
 import { sql, eq, and, desc, gt, count, max } from "drizzle-orm";
 import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";
@@ -1162,94 +1166,91 @@ export class PostgresStorage implements IStorage {
       } */
       
       // 6. Initialize collaboration proposals
-      const collaborationProposalsTable = pgTable('collaboration_proposals', {
-        id: serial('id').primaryKey(),
-        artist_name: text('artist_name').notNull(),
-        email: text('email').notNull(),
-        proposal_type: text('proposal_type').notNull(),
-        description: text('description').notNull(),
-        status: text('status').default('pending'),
-        created_at: timestamp('created_at').defaultNow()
-      });
-      
-      await initializeTable('collaboration_proposals', collaborationProposalsTable, [
+      // Use the collaboration_proposals table from schema instead of creating a new one
+      await initializeTable('collaboration_proposals', collaborationProposals, [
         {
-          artist_name: 'Luna Echo',
+          name: 'Luna Echo',
           email: 'luna@example.com',
-          proposal_type: 'Music Collaboration',
+          artistName: 'Luna Echo',
+          proposalType: 'Music Collaboration',
           description: 'Interested in creating a cosmic ambient track together',
           status: 'pending'
         },
         {
-          artist_name: 'DJ Starlight',
+          name: 'DJ Starlight',
           email: 'djstar@example.com',
-          proposal_type: 'Live Performance',
+          artistName: 'DJ Starlight',
+          proposalType: 'Live Performance',
           description: 'Would love to collaborate for an ocean-themed event',
           status: 'pending'
         },
         {
-          artist_name: 'The Wave Riders',
+          name: 'The Wave Riders',
           email: 'wave@example.com',
-          proposal_type: 'Album Feature',
+          artistName: 'The Wave Riders',
+          proposalType: 'Album Feature',
           description: 'Proposing a joint EP focused on marine conservation',
           status: 'pending'
         }
       ]);
 
       // 7. Initialize patrons
-      const patronsTable = pgTable('patrons', {
-        id: serial('id').primaryKey(),
-        name: text('name').notNull(),
-        email: text('email').notNull(),
-        tier: text('tier').notNull(),
-        subscription_date: timestamp('subscription_date').defaultNow(),
-        active: integer('active').default(1)
-      });
-      
-      await initializeTable('patrons', patronsTable, [
-        { name: 'Alex Thompson', email: 'alex@example.com', tier: 'Whale Guardian' },
-        { name: 'Maria Garcia', email: 'maria@example.com', tier: 'Ocean Protector' },
-        { name: 'James Wilson', email: 'james@example.com', tier: 'Wave Rider' }
+      // Use the patrons table from schema instead of creating a new one
+      await initializeTable('patrons', patrons, [
+        { 
+          userId: '76364a95-eb36-4b08-aaac-454e8bd66e9b', // admin user
+          tier: 'Whale Guardian', 
+          contribution: '50.00',
+          status: 'active'
+        },
+        { 
+          userId: 'c8f6a8a2-bfa7-477b-8174-a10432f573bd', // superadmin user
+          tier: 'Ocean Protector',
+          contribution: '25.00',
+          status: 'active'
+        },
+        { 
+          userId: 'cc81a6e2-2309-4c38-827e-97e139530a14', // regular user
+          tier: 'Wave Rider',
+          contribution: '10.00',
+          status: 'active'
+        }
       ]);
       
       // 8. Initialize tour dates
-      const tourDatesTable = pgTable('tour_dates', {
-        id: serial('id').primaryKey(),
-        venue: text('venue').notNull(),
-        city: text('city').notNull(),
-        date: timestamp('date').notNull(),
-        ticket_link: text('ticket_link'),
-        status: text('status').default('upcoming')
-      });
-      
-      await initializeTable('tour_dates', tourDatesTable, [
+      // Use the tour_dates table from schema instead of creating a new one
+      await initializeTable('tour_dates', tourDates, [
             {
               venue: 'Ocean Sound Arena',
               city: 'Miami',
+              country: 'USA',
               date: new Date('2024-04-15 20:00:00'),
-              ticket_link: 'https://tickets.example.com/miami',
-              status: 'upcoming'
+              ticketUrl: 'https://tickets.example.com/miami',
+              isSoldOut: false
             },
             {
               venue: 'Cosmic Waves Theater',
               city: 'Los Angeles',
+              country: 'USA',
               date: new Date('2024-05-01 19:30:00'),
-              ticket_link: 'https://tickets.example.com/la',
-              status: 'upcoming'
+              ticketUrl: 'https://tickets.example.com/la',
+              isSoldOut: false
             },
             {
               venue: 'Blue Note Jazz Club',
               city: 'New York',
+              country: 'USA',
               date: new Date('2024-05-15 21:00:00'),
-              ticket_link: 'https://tickets.example.com/ny',
-              status: 'upcoming'
+              ticketUrl: 'https://tickets.example.com/ny',
+              isSoldOut: false
             },
             {
               venue: 'Marine Gardens',
               city: 'Seattle',
+              country: 'USA',
               date: new Date('2024-06-01 20:00:00'),
-              ticket_link: 'https://tickets.example.com/seattle',
-              status: 'upcoming'
+              ticketUrl: 'https://tickets.example.com/seattle',
+              isSoldOut: false
             }
           ]);
       
