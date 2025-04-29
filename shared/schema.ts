@@ -561,9 +561,12 @@ export const contentItems = pgTable('content_items', {
   reviewCompletedAt: timestamp('review_completed_at'),
   reviewNotes: text('review_notes'),
   
-  // Publishing Schedule
+  // Publishing Schedule and History
   scheduledPublishAt: timestamp('scheduled_publish_at'),
+  publishedAt: timestamp('published_at'),
   expirationDate: timestamp('expiration_date'),
+  archivedAt: timestamp('archived_at'),
+  archiveReason: text('archive_reason'),
   
   // Audit Information
   createdBy: varchar('created_by', { length: 255 }).references(() => users.id),
