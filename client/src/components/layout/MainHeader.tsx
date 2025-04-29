@@ -26,7 +26,10 @@ import {
   Calendar,
   ShoppingBag,
   Home,
-  MessageSquare
+  MessageSquare,
+  Users,
+  Heart,
+  Mail
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAccessibility } from "@/contexts/AccessibilityContext";
@@ -60,10 +63,10 @@ const secondaryNavItems: NavItem[] = [
 
 // Community links that should be accessible
 const communityLinks: NavItem[] = [
-  { name: "Newsletter", path: "/newsletter", icon: <Music className="h-4 w-4 mr-1" />, glowColor: "cyan" },
-  { name: "Community", path: "/community", icon: <Music className="h-4 w-4 mr-1" />, glowColor: "purple" },
-  { name: "Collaboration", path: "/collaboration", icon: <Music className="h-4 w-4 mr-1" />, glowColor: "cyan" },
-  { name: "Contact", path: "/contact", icon: <Music className="h-4 w-4 mr-1" />, glowColor: "purple" }
+  { name: "Community Hub", path: "/community", icon: <Users className="h-4 w-4 mr-1" />, glowColor: "purple" },
+  { name: "Newsletter", path: "/newsletter", icon: <Mail className="h-4 w-4 mr-1" />, glowColor: "cyan" },
+  { name: "Collaboration", path: "/collaboration", icon: <Heart className="h-4 w-4 mr-1" />, glowColor: "cyan" },
+  { name: "Contact", path: "/contact", icon: <MessageSquare className="h-4 w-4 mr-1" />, glowColor: "purple" }
 ];
 
 // Music links for mobile
