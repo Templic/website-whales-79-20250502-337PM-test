@@ -355,7 +355,8 @@ export const scanResults = pgTable('scan_results', {
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
   posts: many(posts),
-  comments: many(comments)
+  comments: many(comments),
+  patrons: many(patrons)
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
@@ -449,6 +450,8 @@ export const errorAnalysisRelations = relations(errorAnalysis, ({ one }) => ({
     references: [typeScriptErrors.id],
   }),
 }));
+
+// Music-related relations will be defined after all tables are declared
 
 // Error Fix History table
 export const errorFixHistory = pgTable('error_fix_history', {
@@ -561,19 +564,7 @@ export const contentWorkflowHistory = pgTable('content_workflow_history', {
   comments: text('comments')
 });
 
-// Simple track and album tables for the music section
-export const tracks = pgTable('tracks', {
-  id: serial('id').primaryKey(),
-  title: text('title').notNull(),
-  artist: text('artist').notNull(),
-  duration: text('duration').notNull(),
-  audioUrl: text('audio_url').notNull(),
-  published: boolean('published').default(false).notNull(),
-  albumId: integer('album_id'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull()
-});
-
+// Simple album and track tables for the music section
 export const albums = pgTable('albums', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
@@ -581,6 +572,18 @@ export const albums = pgTable('albums', {
   coverImage: text('cover_image'),
   releaseDate: timestamp('release_date'),
   description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+export const tracks = pgTable('tracks', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  artist: text('artist').notNull(),
+  duration: text('duration').notNull(),
+  audioUrl: text('audio_url').notNull(),
+  published: boolean('published').default(false).notNull(),
+  albumId: integer('album_id').references(() => albums.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
@@ -887,3 +890,34 @@ export type InsertCollaborationProposal = z.infer<typeof insertCollaborationProp
 
 export type Patron = typeof patrons.$inferSelect;
 export type InsertPatron = z.infer<typeof insertPatronSchema>;
+
+// ===================================================================
+// Music-related Relations
+// ===================================================================
+
+// Add relation definitions after all tables are defined to avoid reference errors
+export const tourDatesRelations = relations(tourDates, ({ }) => ({
+  // No relations yet, can be expanded as needed
+}));
+
+export const collaborationProposalsRelations = relations(collaborationProposals, ({ }) => ({
+  // No relations yet, can be expanded as needed
+}));
+
+export const patronsRelations = relations(patrons, ({ one }) => ({
+  user: one(users, {
+    fields: [patrons.userId],
+    references: [users.id],
+  }),
+}));
+
+export const tracksRelations = relations(tracks, ({ one }) => ({
+  album: one(albums, {
+    fields: [tracks.albumId],
+    references: [albums.id],
+  }),
+}));
+
+export const albumsRelations = relations(albums, ({ many }) => ({
+  tracks: many(tracks),
+}));
