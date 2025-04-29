@@ -185,100 +185,108 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
   };
 
   return (
-    <Card className="cosmic-glass-card overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 shop-item"
-      style={{
-        clipPath: "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 72%, 0% 28%)", // Wider octagon shape for better content fit
-        backgroundColor: "rgba(155, 135, 245, 0.05)"
-      }}>
-      <div className="p-4 sm:p-6 pt-6 sm:pt-8 pb-8 sm:pb-10 flex flex-col items-center"> {/* Responsive padding */}
-        {/* Octagon image container */}
-        <div className="relative w-full aspect-[5/4] mb-3 overflow-hidden">
-          <div 
-            className="absolute inset-0 border border-purple-500/20 overflow-hidden flex items-center justify-center"
-            style={{
-              clipPath: "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 72%, 0% 28%)", // Matching octagon shape
-              background: "linear-gradient(to bottom, rgba(75, 0, 130, 0.1), rgba(20, 20, 60, 0.2))"
-            }}
-          >
-            <img 
-              src={item.image} 
-              alt={item.name} 
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.onerror = null; // Prevent infinite loops
-                
-                // Use category-specific fallback
-                const fallbacks: Record<string, string> = {
-                  'jewelry': '/images/products/samples/cosmic-pendant.jpg',
-                  'spiritual': '/images/products/samples/sacred-geometry.jpg',
-                  'clothing': '/images/products/samples/sacred-geometry-tshirt.jpg',
-                  'accessories': '/images/products/samples/spiritual-journal.jpg',
-                  'home': '/images/products/samples/meditation-cushion.jpg'
-                };
-                
-                target.src = fallbacks[item.category] || '/images/products/samples/cosmic-pendant.jpg';
+    <div className="relative">
+      {/* Octagonal background with broader clip path */}
+      <div 
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-indigo-950/30 to-purple-950/20 backdrop-blur-sm border border-purple-500/20"
+        style={{
+          clipPath: "polygon(26% 0%, 74% 0%, 100% 26%, 100% 74%, 74% 100%, 26% 100%, 0% 74%, 0% 26%)",
+          backgroundColor: "rgba(155, 135, 245, 0.05)"
+        }}
+      />
+      
+      {/* Regular card layout with proper spacing to stay within the octagon shape */}
+      <Card className="cosmic-glass-card overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 shop-item bg-transparent border-0 shadow-none">
+        <div className="p-4 sm:p-6 pt-6 sm:pt-8 pb-8 sm:pb-10 flex flex-col items-center">
+          {/* Octagon image container - still using clip path */}
+          <div className="relative w-[85%] aspect-[5/4] mb-4 overflow-hidden">
+            <div 
+              className="absolute inset-0 border border-purple-500/20 overflow-hidden flex items-center justify-center"
+              style={{
+                clipPath: "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 72%, 0% 28%)",
+                background: "linear-gradient(to bottom, rgba(75, 0, 130, 0.1), rgba(20, 20, 60, 0.2))"
               }}
-            />
-          </div>
-
-          {/* Purple border overlay */}
-          <div 
-            className="absolute inset-0 border border-purple-500/30 pointer-events-none"
-            style={{
-              clipPath: "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 72%, 0% 28%)", // Matching octagon shape
-            }}
-          ></div>
-
-          {/* Heart button */}
-          <div className="absolute top-2 right-4 z-10">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 hover:text-white cosmic-hover-glow"
             >
-              <Heart className="h-3 w-3" />
-            </Button>
-          </div>
-
-          {/* Badges */}
-          <div className="absolute left-4 top-2 flex flex-col gap-1 z-10">
-            {item.isExclusive && (
-              <Badge className="bg-purple-500 text-white text-xs py-0">
-                Exclusive
-              </Badge>
-            )}
-            {item.isBestseller && (
-              <Badge className="bg-amber-500 text-white text-xs py-0">
-                Bestseller
-              </Badge>
-            )}
-            {item.discount && (
-              <Badge className="bg-emerald-500 text-white text-xs py-0">
-                {item.discount}% Off
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        <div className="w-full text-center">
-          <h3 className="text-base sm:text-lg font-semibold mb-1 line-clamp-1 overflow-ellipsis">{item.name}</h3>
-          <p className="text-muted-foreground text-sm mb-2 sm:mb-3 line-clamp-2 min-h-[2.5rem] overflow-hidden">{item.description}</p>
-
-          <div className="flex items-center justify-center mb-2 sm:mb-3">
-            <div className="flex items-center">
-              <Star className="h-3 w-3 sm:h-4 sm:w-4 text-amber-400 fill-amber-400" />
-              <span className="ml-1 text-xs sm:text-sm font-medium">{item.rating}</span>
+              <img 
+                src={item.image} 
+                alt={item.name} 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null; // Prevent infinite loops
+                  
+                  // Use category-specific fallback
+                  const fallbacks: Record<string, string> = {
+                    'jewelry': '/images/products/samples/cosmic-pendant.jpg',
+                    'spiritual': '/images/products/samples/sacred-geometry.jpg',
+                    'clothing': '/images/products/samples/sacred-geometry-tshirt.jpg',
+                    'accessories': '/images/products/samples/spiritual-journal.jpg',
+                    'home': '/images/products/samples/meditation-cushion.jpg'
+                  };
+                  
+                  target.src = fallbacks[item.category] || '/images/products/samples/cosmic-pendant.jpg';
+                }}
+              />
             </div>
-            <span className="mx-1 sm:mx-2 text-muted-foreground">·</span>
-            <span className="text-xs text-muted-foreground">{item.reviews} reviews</span>
+
+            {/* Purple border overlay */}
+            <div 
+              className="absolute inset-0 border border-purple-500/30 pointer-events-none"
+              style={{
+                clipPath: "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 72%, 0% 28%)",
+              }}
+            ></div>
+
+            {/* Badges - now positioned to avoid clipping */}
+            <div className="absolute left-1 top-1 flex flex-col gap-1 z-10">
+              {item.isExclusive && (
+                <Badge className="bg-purple-500/90 text-white text-xs py-0 px-1.5 rounded-sm backdrop-blur-sm">
+                  Exclusive
+                </Badge>
+              )}
+              {item.isBestseller && (
+                <Badge className="bg-amber-500/90 text-white text-xs py-0 px-1.5 rounded-sm backdrop-blur-sm">
+                  Bestseller
+                </Badge>
+              )}
+              {item.discount && (
+                <Badge className="bg-emerald-500/90 text-white text-xs py-0 px-1.5 rounded-sm backdrop-blur-sm">
+                  {item.discount}% Off
+                </Badge>
+              )}
+            </div>
+            
+            {/* Heart button - repositioned */}
+            <div className="absolute top-1 right-1 z-10">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 hover:text-white cosmic-hover-glow"
+              >
+                <Heart className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
 
-          <div className="flex justify-between items-center px-2 mb-2 sm:mb-3">
-            <div>
+          {/* Content area - using max-width to ensure content stays within octagon */}
+          <div className="w-full text-center max-w-[80%] mx-auto">
+            <h3 className="text-base sm:text-lg font-semibold mb-1 line-clamp-1 overflow-ellipsis">{item.name}</h3>
+            <p className="text-muted-foreground text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2 min-h-[2.5rem] overflow-hidden">{item.description}</p>
+
+            <div className="flex items-center justify-center mb-2 sm:mb-3">
+              <div className="flex items-center">
+                <Star className="h-3 w-3 sm:h-4 sm:w-4 text-amber-400 fill-amber-400" />
+                <span className="ml-1 text-xs sm:text-sm font-medium">{item.rating}</span>
+              </div>
+              <span className="mx-1 sm:mx-2 text-muted-foreground">·</span>
+              <span className="text-xs text-muted-foreground">{item.reviews} reviews</span>
+            </div>
+
+            {/* Price display - centered and properly sized */}
+            <div className="flex justify-center items-center mb-3 sm:mb-4">
               {item.discount ? (
-                <div className="flex flex-col items-start">
-                  <span className="text-base sm:text-lg font-bold">
+                <div className="flex flex-col items-center">
+                  <span className="text-base sm:text-lg font-bold text-purple-300 cosmic-text-glow">
                     ${(item.price * (1 - item.discount / 100)).toFixed(2)}
                   </span>
                   <span className="text-xs text-muted-foreground line-through">
@@ -286,34 +294,34 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
                   </span>
                 </div>
               ) : (
-                <span className="text-base sm:text-lg font-bold">${item.price.toFixed(2)}</span>
+                <span className="text-base sm:text-lg font-bold text-purple-300 cosmic-text-glow">${item.price.toFixed(2)}</span>
               )}
             </div>
-          </div>
 
-          {/* Two-button layout with consistent naming as requested */}
-          <div className="shop-item-buttons flex w-full gap-2 mt-1">
-            <Button 
-              size="sm" 
-              variant="outline"
-              className="flex-1 py-1 h-8 sm:h-9 text-xs sm:text-sm border-purple-400 text-purple-500 hover:text-purple-700 hover:bg-purple-50 cosmic-hover-glow"
-              onClick={handleViewProduct}
-            >
-              Explore
-            </Button>
-            
-            <Button 
-              size="sm" 
-              className="flex-1 py-1 h-8 sm:h-9 text-xs sm:text-sm gap-1 bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 border-0 cosmic-hover-glow"
-              onClick={() => onAddToCart && onAddToCart(item)}
-            >
-              <ShoppingCart className="h-3 w-3 mr-1" />
-              Buy Now
-            </Button>
+            {/* Buttons - reduced width to avoid octagon edges */}
+            <div className="shop-item-buttons flex flex-col w-full gap-2 mt-1 max-w-[85%] mx-auto">
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="w-full py-1 h-8 sm:h-9 text-xs sm:text-sm border-purple-400 text-purple-500 hover:text-purple-700 hover:bg-purple-50 cosmic-hover-glow"
+                onClick={handleViewProduct}
+              >
+                Explore
+              </Button>
+              
+              <Button 
+                size="sm" 
+                className="w-full py-1 h-8 sm:h-9 text-xs sm:text-sm gap-1 bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 border-0 cosmic-hover-glow"
+                onClick={() => onAddToCart && onAddToCart(item)}
+              >
+                <ShoppingCart className="h-3 w-3 mr-1" />
+                Buy Now
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 };
 
