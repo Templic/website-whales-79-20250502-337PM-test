@@ -2,12 +2,19 @@
  * TourPage.tsx
  * 
  * Migrated as part of the repository reorganization.
+ * Updated to use the new responsive geometric shapes.
  */
 
 import { useEffect } from "react";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
-import GeometricSection from "@/components/cosmic/GeometricSection";
-import HawaiianIslandsMap from "@/components/tour/HawaiianIslandsMap";
+
+// Import geometric shape components from the responsive demo
+import { 
+  SimpleHexagon, 
+  SimpleOctagon,
+  SimpleTriangle,
+  SimpleStarburst
+} from '../components/cosmic/SimpleGeometry';
 
 export default function TourPage() {
   useEffect(() => {
@@ -20,57 +27,112 @@ export default function TourPage() {
       <div className="container mx-auto px-4 py-8">
         <h1 className="cosmic-heading-responsive font-bold text-[#00ebd6] mb-6">Tour Dates</h1>
 
-        <GeometricSection 
-          variant="secondary" 
-          shape="trapezoid" 
-          title="Upcoming Tour Dates"
-          subtitle="Join Dale Loves Whales on an unforgettable cosmic journey. Find your city and grab your tickets now!"
-          alignment="center"
-        >
-          <div className="tour-items space-y-4 sm:space-y-6">
-            <div className="tour-item cosmic-glow-box p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center transform hover:-translate-y-1 transition-transform duration-300">
-              <div className="tour-details mb-4 sm:mb-0">
-                <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6]">Honolulu, HI</h3>
-                <p className="cosmic-text-responsive-sm">Date: August 15, 2025</p>
-                <p className="cosmic-text-responsive-sm">Venue: Waikiki Beach Shell</p>
-              </div>
-              <div className="relative self-end sm:self-center">
-                <button disabled className="bg-gray-500 text-white px-4 sm:px-6 py-1 sm:py-2 rounded-full cursor-not-allowed shadow-lg opacity-70 text-sm sm:text-base">
-                  Sold Out
+        {/* Upcoming Tour Dates Section */}
+        <div className="mb-12">
+          <h2 className="cosmic-heading-responsive-sm text-[#00ebd6] mb-6 text-center">
+            Upcoming Tour Dates
+          </h2>
+          <p className="text-center mb-8 max-w-2xl mx-auto">
+            Join Dale Loves Whales on an unforgettable cosmic journey. Find your city and grab your tickets now!
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Honolulu Tour Card */}
+            <div className="w-full">
+              <SimpleHexagon className="w-full max-w-[350px] mx-auto">
+                <h3>Honolulu, HI</h3>
+                <p>Date: August 15, 2025<br/>Venue: Waikiki Beach Shell</p>
+                <button className="bg-red-500 hover:bg-red-700 text-white rounded relative overflow-hidden">
+                  <span className="relative z-10">Sold Out</span>
+                  <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
+                    <span className="absolute -rotate-12 border-2 border-white text-white px-1 py-0.5 text-xs font-bold rounded whitespace-nowrap">
+                      SOLD OUT
+                    </span>
+                  </div>
                 </button>
-                <div className="absolute -rotate-12 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-2 border-red-500 text-red-500 px-2 py-1 text-xs sm:text-sm font-bold rounded">
-                  SOLD OUT
-                </div>
-              </div>
+              </SimpleHexagon>
             </div>
 
-            <div className="tour-item cosmic-glow-box p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center transform hover:-translate-y-1 transition-transform duration-300">
-              <div className="tour-details mb-4 sm:mb-0">
-                <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6]">Big Island, HI</h3>
-                <p className="cosmic-text-responsive-sm">Date: September 10, 2025</p>
-                <p className="cosmic-text-responsive-sm">Venue: Hilo Bay Concert Hall</p>
-              </div>
-              <div className="relative self-end sm:self-center">
-                <button disabled className="bg-gray-500 text-white px-4 sm:px-6 py-1 sm:py-2 rounded-full cursor-not-allowed shadow-lg opacity-70 text-sm sm:text-base">
-                  Sold Out
+            {/* Big Island Tour Card */}
+            <div className="w-full">
+              <SimpleOctagon className="w-full max-w-[350px] mx-auto">
+                <h3>Big Island, HI</h3>
+                <p>Date: September 10, 2025<br/>Venue: Hilo Bay Concert Hall</p>
+                <button className="bg-red-500 hover:bg-red-700 text-white rounded relative overflow-hidden">
+                  <span className="relative z-10">Sold Out</span>
+                  <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
+                    <span className="absolute -rotate-12 border-2 border-white text-white px-1 py-0.5 text-xs font-bold rounded whitespace-nowrap">
+                      SOLD OUT
+                    </span>
+                  </div>
                 </button>
-                <div className="absolute -rotate-12 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-2 border-red-500 text-red-500 px-2 py-1 text-xs sm:text-sm font-bold rounded">
-                  SOLD OUT
-                </div>
-              </div>
+              </SimpleOctagon>
             </div>
           </div>
-        </GeometricSection>
+        </div>
 
-        <GeometricSection 
-          variant="primary" 
-          shape="hexagon" 
-          title="Past Shows"
-          subtitle="Look back at memorable performances and dive into the cosmic memories."
-          alignment="center"
-          className="mt-8 sm:mt-12"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        {/* Past Shows Section */}
+        <div className="mb-12">
+          <h2 className="cosmic-heading-responsive-sm text-[#00ebd6] mb-6 text-center">
+            Past Shows
+          </h2>
+          <p className="text-center mb-8 max-w-2xl mx-auto">
+            Look back at memorable performances and dive into the cosmic memories.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Maui Show */}
+            <div className="w-full">
+              <SimpleTriangle className="w-full max-w-[350px] mx-auto">
+                <h3>Maui, HI - 2024</h3>
+                <p>"A magical sunset performance at the historic Lahaina venue."</p>
+                <button className="bg-blue-500 hover:bg-blue-700 text-white rounded">
+                  View Photos
+                </button>
+              </SimpleTriangle>
+            </div>
+            
+            {/* Kauai Show */}
+            <div className="w-full">
+              <SimpleStarburst className="w-full max-w-[350px] mx-auto">
+                <h3>Kauai, HI - 2023</h3>
+                <p>"An enchanting evening under the stars at Hanalei Bay."</p>
+                <button className="bg-purple-500 hover:bg-purple-700 text-white rounded">
+                  View Photos
+                </button>
+              </SimpleStarburst>
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive Tour Map Section */}
+        <div className="mb-16 mt-12">
+          <h2 className="cosmic-heading-responsive-sm text-[#00ebd6] mb-6 text-center">
+            Interactive Tour Map
+          </h2>
+          <p className="text-center mb-8 max-w-2xl mx-auto">
+            Explore Dale's Hawaiian Islands tour locations - click on map markers for details
+          </p>
+          
+          <div className="w-full max-w-5xl mx-auto bg-black/30 backdrop-blur-sm rounded-xl p-2" style={{ minHeight: '700px' }}>
+            <iframe 
+              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d967162.6791891221!2d-157.87105924999998!3d21.289373449999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2sus!4v1645667421851!5m2!1sen!2sus"
+              className="w-full h-full min-h-[650px] rounded-lg border-0"
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Hawaiian Islands Map"
+            />
+          </div>
+        </div>
+
+        {/* Featured Photo Gallery Section */}
+        <div className="mb-16">
+          <h2 className="cosmic-heading-responsive-sm text-[#00ebd6] mb-6 text-center">
+            Tour Photo Gallery
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
             <div className="past-show bg-[rgba(48,52,54,0.5)] rounded-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
               <div className="w-full aspect-video overflow-hidden">
                 <img 
@@ -109,30 +171,7 @@ export default function TourPage() {
               </div>
             </div>
           </div>
-        </GeometricSection>
-
-        <GeometricSection 
-          variant="secondary" 
-          shape="shield" 
-          title="Interactive Tour Map"
-          subtitle="Explore Dale's Hawaiian Islands tour locations - click on map markers for details"
-          alignment="center"
-          textContained={true}
-          backgroundStyle="glass"
-          className="mt-8 sm:mt-12 mb-16"
-          style={{ minHeight: '700px', display: 'flex', flexDirection: 'column' }}
-        >
-          <div className="w-full h-full flex-grow overflow-hidden relative bg-black/30 backdrop-blur-sm rounded-xl p-2">
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d967162.6791891221!2d-157.87105924999998!3d21.289373449999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2sus!4v1645667421851!5m2!1sen!2sus"
-                className="w-full h-full min-h-[650px] rounded-lg border-0"
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Hawaiian Islands Map"
-              />
-            </div>
-        </GeometricSection>
+        </div>
       </div>
     </>
   );

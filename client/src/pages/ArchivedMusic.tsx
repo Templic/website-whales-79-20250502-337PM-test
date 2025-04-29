@@ -14,6 +14,13 @@ import { cosmicAlbums, cosmicTracks } from "@/data/archived-music";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CosmicReveal } from "@/components/features/cosmic/CosmicReveal";
+// Import geometric shape components from SimpleGeometry
+import { 
+  SimpleHexagon, 
+  SimpleOctagon,
+  SimpleCircle,
+  SimpleStarburst
+} from '../components/cosmic/SimpleGeometry';
 
 interface ArchivedMusicProps {}
 
@@ -183,30 +190,35 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
 
               <section className="albums-section">
                 <h2 className="cosmic-heading-responsive font-bold text-[#00ebd6] mb-6">Albums & EPs</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 p-4">
                   {albums.map(album => (
-                    <div key={album.id} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl hover:transform hover:-translate-y-2 transition-all duration-300 relative">
-                      <h3 className="cosmic-heading-responsive-sm text-[#00ebd6] mb-3">{album.title}</h3>
-                      <p className="cosmic-text-responsive-sm mb-2">Release Date: {album.releaseDate ? new Date(album.releaseDate).toLocaleDateString() : 'TBA'}</p>
-                      <p className="cosmic-text-responsive-sm mb-4">{album.description || 'No description available'}</p>
-                      <a
-                        href={`/album/${album.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block bg-[#00ebd6] text-black px-4 py-2 rounded hover:bg-[#00c4b3] transition-colors"
-                      >
-                        Stream Now
-                      </a>
-                      {(user?.role === 'admin' || user?.role === 'super_admin') && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-2 right-2 text-red-500 hover:text-red-700"
-                          onClick={() => handleDeleteAlbum(album.id)}
-                        >
-                          <X className="h-6 w-6" />
-                        </Button>
-                      )}
+                    <div key={album.id} className="w-full relative">
+                      {/* Import SimpleHexagon at the top of the file */}
+                      <div className="w-full relative">
+                        <div className="w-full max-w-[350px] mx-auto relative">
+                          <SimpleHexagon className="w-full" glowColor="rgba(0, 235, 214, 0.5)">
+                            <h3>{album.title}</h3>
+                            <p>Release Date: {album.releaseDate ? new Date(album.releaseDate).toLocaleDateString() : 'TBA'}</p>
+                            <p>{album.description || 'No description available'}</p>
+                            <button 
+                              onClick={() => window.open(`/album/${album.id}`, '_blank')}
+                              className="bg-[#00ebd6] text-black hover:bg-[#00c4b3] rounded"
+                            >
+                              Stream Now
+                            </button>
+                          </SimpleHexagon>
+                          {(user?.role === 'admin' || user?.role === 'super_admin') && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-2 right-2 z-10 text-red-500 hover:text-red-700"
+                              onClick={() => handleDeleteAlbum(album.id)}
+                            >
+                              <X className="h-6 w-6" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))}
                   {albums.length === 0 && (
@@ -236,35 +248,49 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
 
               <section className="tracks-section">
                 <h2 className="cosmic-heading-responsive font-bold text-[#00ebd6] mb-6">All Tracks</h2>
-                <div className="grid gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
                   {tracks.map(track => (
-                    <div key={track.id} className="bg-[rgba(10,50,92,0.6)] p-4 rounded-lg hover:bg-[rgba(10,50,92,0.8)] transition-all relative">
-                      <h3 className="cosmic-heading-responsive-sm mb-2 text-[#00ebd6]">{track.title}</h3>
-                      <div className="flex flex-col space-y-2 mb-4">
-                        <p className="cosmic-text-responsive-sm">Artist: {track.artist}</p>
-                        <p className="cosmic-text-responsive-sm">Duration: {track.duration || 'Unknown'}</p>
+                    <div key={track.id} className="w-full relative">
+                      <div className="w-full max-w-[350px] mx-auto relative">
+                        <SimpleStarburst className="w-full" glowColor="rgba(254, 0, 100, 0.5)">
+                          <h3>{track.title}</h3>
+                          <p>Artist: {track.artist}</p>
+                          <p>Duration: {track.duration || 'Unknown'}</p>
+                          <audio
+                            controls
+                            className="w-full focus:outline-none my-2"
+                            style={{
+                              height: '40px',
+                              filter: 'invert(85%) hue-rotate(175deg) brightness(1.1)'
+                            }}
+                          >
+                            <source src={`/uploads/${track.audioUrl}`} type="audio/mpeg" />
+                            Your browser does not support the audio element.
+                          </audio>
+                          <button 
+                            onClick={() => {
+                              toast({
+                                title: "Track Selected",
+                                description: `You've selected "${track.title}". Full player coming soon.`,
+                                duration: 3000
+                              })
+                            }}
+                            className="bg-[#fe0064] text-white hover:bg-[#d0004e] rounded"
+                          >
+                            Play Track
+                          </button>
+                        </SimpleStarburst>
+                        {(user?.role === 'admin' || user?.role === 'super_admin') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 z-10 text-red-500 hover:text-red-700"
+                            onClick={() => handleDeleteTrack(track.id)}
+                          >
+                            <X className="h-6 w-6" />
+                          </Button>
+                        )}
                       </div>
-                      <audio
-                        controls
-                        className="w-full focus:outline-none"
-                        style={{
-                          height: '40px',
-                          filter: 'invert(85%) hue-rotate(175deg) brightness(1.1)'
-                        }}
-                      >
-                        <source src={`/uploads/${track.audioUrl}`} type="audio/mpeg" />
-                        Your browser does not support the audio element.
-                      </audio>
-                      {(user?.role === 'admin' || user?.role === 'super_admin') && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-2 right-2 text-red-500 hover:text-red-700"
-                          onClick={() => handleDeleteTrack(track.id)}
-                        >
-                          <X className="h-6 w-6" />
-                        </Button>
-                      )}
                     </div>
                   ))}
                   {tracks.length === 0 && (

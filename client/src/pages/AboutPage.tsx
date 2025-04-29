@@ -2,14 +2,22 @@
  * AboutPage.tsx
  * 
  * Revamped with sacred geometry and sound themes.
+ * Updated to use the new responsive geometric shapes.
  */
 import { useEffect, useState } from "react";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
 import SacredGeometry from "@/components/cosmic/SacredGeometry";
-import GeometricSection from "@/components/cosmic/GeometricSection";
 import { Play, Pause, Music, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+// Import geometric shape components from the responsive demo
+import { 
+  SimpleHexagon, 
+  SimpleOctagon,
+  SimpleCircle,
+  SimpleStarburst
+} from '../components/cosmic/SimpleGeometry';
 
 export default function AboutPage() {
   useEffect(() => {
@@ -48,141 +56,134 @@ export default function AboutPage() {
           />
         </div>
 
-        {/* Biography Section with geometric shape */}
-        <GeometricSection 
-          shape="hexagon"
-          backgroundStyle="gradient"
-          title="Cosmic Biography"
-          className="mb-16 cosmic-slide-up"
-          decorative={true}
-        >
-          {/* Specifically designed to fill the hexagon shape with a layout that conforms to its contours */}
-          <div className="relative pt-2 pb-4">
-            {/* Central large image with cosmic overlay */}
-            <div className="mx-auto mb-6 px-4 relative" style={{ maxWidth: "min(85%, 700px)" }}>
-              <div className="absolute -top-5 -left-2 z-10">
-                <SacredGeometry 
-                  type="pentagon-star" 
-                  size={60} 
-                  color="#fe0064" 
-                />
-              </div>
-              <div className="relative rounded-xl overflow-hidden shadow-2xl w-full">
-                <img
-                  src="/images/dale-with-flowers-and-staff.jpg"
-                  alt="Dale the Whale portrait with cosmic overlay"
-                  className="w-full h-auto relative z-0"
-                />
-                <div className="absolute inset-0 bg-gradient-to-br from-[rgba(254,0,100,0.3)] to-[rgba(0,235,214,0.3)]" />
+        {/* Biography Section using SimpleHexagon */}
+        <div className="mb-16 cosmic-slide-up">
+          <div className="mx-auto max-w-[650px]">
+            <SimpleHexagon className="w-full">
+              <h3>Cosmic Biography</h3>
+              <p>Dale the Whale is an innovative musician whose sounds traverse the cosmic depths and tropical shores of our imagination. Blending celestial synths with organic rhythms, Dale creates a unique auditory experience that transports listeners to vibrant new dimensions.</p>
+              <button 
+                onClick={toggleAudio} 
+                className="bg-blue-500 hover:bg-blue-700 text-white rounded"
+              >
+                {audioPlaying ? 'Pause Music' : 'Play Music'}
+              </button>
+            </SimpleHexagon>
+          </div>
+        </div>
 
-                <div className="absolute bottom-4 right-4 z-10 backdrop-blur-sm bg-black/40 rounded-full p-2">
-                  <Button 
-                    onClick={toggleAudio} 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-10 w-10 rounded-full bg-[#00ebd6]/20 text-white hover:bg-[#00ebd6]/40"
-                  >
-                    {audioPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                  </Button>
-                </div>
+        {/* Central image with audio controls */}
+        <div className="mx-auto mb-12 px-4 relative" style={{ maxWidth: "min(85%, 700px)" }}>
+          <div className="relative rounded-xl overflow-hidden shadow-2xl w-full">
+            <img
+              src="/images/dale-with-flowers-and-staff.jpg"
+              alt="Dale the Whale portrait with cosmic overlay"
+              className="w-full h-auto relative z-0"
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-[rgba(254,0,100,0.3)] to-[rgba(0,235,214,0.3)]" />
 
-                {/* Audio waveform visualization (simulated) */}
-                <div className="absolute bottom-0 left-0 right-0 h-8 flex items-end justify-center z-10 px-4">
-                  <div className={cn("audio-bar h-1 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-1" : "")} style={{width: "3px"}}></div>
-                  <div className={cn("audio-bar h-4 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-2" : "")} style={{width: "3px"}}></div>
-                  <div className={cn("audio-bar h-2 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-3" : "")} style={{width: "3px"}}></div>
-                  <div className={cn("audio-bar h-6 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-4" : "")} style={{width: "3px"}}></div>
-                  <div className={cn("audio-bar h-3 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-5" : "")} style={{width: "3px"}}></div>
-                  <div className={cn("audio-bar h-5 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-1" : "")} style={{width: "3px"}}></div>
-                  <div className={cn("audio-bar h-7 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-2" : "")} style={{width: "3px"}}></div>
-                  <div className={cn("audio-bar h-2 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-3" : "")} style={{width: "3px"}}></div>
-                  <div className={cn("audio-bar h-4 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-4" : "")} style={{width: "3px"}}></div>
-                  <div className={cn("audio-bar h-6 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-5" : "")} style={{width: "3px"}}></div>
-                </div>
-              </div>
+            <div className="absolute bottom-4 right-4 z-10 backdrop-blur-sm bg-black/40 rounded-full p-2">
+              <Button 
+                onClick={toggleAudio} 
+                variant="ghost" 
+                size="icon" 
+                className="h-10 w-10 rounded-full bg-[#00ebd6]/20 text-white hover:bg-[#00ebd6]/40"
+              >
+                {audioPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+              </Button>
             </div>
 
-            {/* Biography text shaped to flow with hexagon */}
-            <div className="px-8 space-y-4 mx-auto" style={{ maxWidth: "min(90%, 900px)" }}>
-              <div className="flex items-center justify-center mb-3">
-                <Music className="w-7 h-7 text-[#00ebd6] mr-3" />
-                <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6]">Sonic Explorer</h3>
-              </div>
-              
-              <div className="text-center max-w-4xl mx-auto cosmic-text-container">
-                <p className="cosmic-text-responsive">Dale the Whale is an innovative musician whose sounds traverse the cosmic depths and tropical shores of our imagination. Blending celestial synths with organic rhythms, Dale creates a unique auditory experience that transports listeners to vibrant new dimensions.</p>
-              </div>
-              
-              <div className="grid md:grid-cols-2 gap-4 mt-6">
-                <div>
-                  <p className="cosmic-text-responsive">Born under starry skies and raised with a deep connection to the ocean, Dale's musical journey has been shaped by both the mysteries of the cosmos and the fluid, graceful nature of marine life.</p>
-                </div>
-                <div>
-                  <p className="cosmic-text-responsive">This duality is reflected in every note, every beat, and every lyric of his transformative compositions. With influences ranging from cosmic jazz to tropical ambient, Dale creates soundscapes that resonate with the universe.</p>
-                </div>
-              </div>
+            {/* Audio waveform visualization (simulated) */}
+            <div className="absolute bottom-0 left-0 right-0 h-8 flex items-end justify-center z-10 px-4">
+              <div className={cn("audio-bar h-1 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-1" : "")} style={{width: "3px"}}></div>
+              <div className={cn("audio-bar h-4 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-2" : "")} style={{width: "3px"}}></div>
+              <div className={cn("audio-bar h-2 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-3" : "")} style={{width: "3px"}}></div>
+              <div className={cn("audio-bar h-6 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-4" : "")} style={{width: "3px"}}></div>
+              <div className={cn("audio-bar h-3 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-5" : "")} style={{width: "3px"}}></div>
+              <div className={cn("audio-bar h-5 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-1" : "")} style={{width: "3px"}}></div>
+              <div className={cn("audio-bar h-7 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-2" : "")} style={{width: "3px"}}></div>
+              <div className={cn("audio-bar h-2 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-3" : "")} style={{width: "3px"}}></div>
+              <div className={cn("audio-bar h-4 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-4" : "")} style={{width: "3px"}}></div>
+              <div className={cn("audio-bar h-6 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-5" : "")} style={{width: "3px"}}></div>
             </div>
           </div>
-        </GeometricSection>
+        </div>
 
-        {/* Community Engagement section with unique geometric shape */}
-        <GeometricSection
-          shape="pentagon"
-          backgroundStyle="glass"
-          title="Cosmic Community Engagement"
-          className="mb-16 shadow-glow-cosmic mt-10 pt-4"
-          decorative={true}
-        >
-          <div className="p-8">
-            <div className="flex items-center gap-2 mb-6 mt-4">
-              <Volume2 className="w-6 h-6 text-[#fe0064]" />
-              <p className="cosmic-text-responsive">Dale is not only known for his innovative sound but also for his dedication to the community. He actively collaborates with like-minded artists and participates in community projects aimed at spreading creative energy and healing positivity.</p>
+        {/* Artist journey details section with grid of geometric cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          {/* Sonic Explorer */}
+          <div className="w-full">
+            <SimpleOctagon className="w-full max-w-[350px] mx-auto">
+              <h3>Sonic Explorer</h3>
+              <p>Born under starry skies and raised with a deep connection to the ocean, Dale's musical journey has been shaped by both the mysteries of the cosmos and the fluid, graceful nature of marine life.</p>
+              <button className="bg-purple-500 hover:bg-purple-700 text-white rounded">
+                Learn More
+              </button>
+            </SimpleOctagon>
+          </div>
+
+          {/* Musical Style */}
+          <div className="w-full">
+            <SimpleCircle className="w-full max-w-[350px] mx-auto">
+              <h3>Musical Style</h3>
+              <p>This duality is reflected in every note, every beat, and every lyric of his transformative compositions. With influences ranging from cosmic jazz to tropical ambient, Dale creates soundscapes that resonate with the universe.</p>
+              <button className="bg-teal-500 hover:bg-teal-700 text-white rounded">
+                Listen
+              </button>
+            </SimpleCircle>
+          </div>
+
+          {/* Community Engagement */}
+          <div className="w-full">
+            <SimpleStarburst className="w-full max-w-[350px] mx-auto">
+              <h3>Community Engagement</h3>
+              <p>Dale is not only known for his innovative sound but also for his dedication to the community. He actively collaborates with like-minded artists and participates in projects aimed at spreading creative energy.</p>
+              <button className="bg-red-500 hover:bg-red-700 text-white rounded">
+                Connect
+              </button>
+            </SimpleStarburst>
+          </div>
+        </div>
+
+        {/* Harmonizing & Resonating section */}
+        <div className="mb-16 shadow-glow-cosmic mt-10 pt-4">
+          <h2 className="cosmic-heading-responsive font-bold text-[#00ebd6] mb-8 text-center">Harmonizing With Others</h2>
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl border border-[rgba(0,235,214,0.3)] backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 opacity-10">
+                <SacredGeometry type="metatron-cube" size={100} color="#00ebd6" />
+              </div>
+              <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6] mb-4 relative z-10 text-shadow-lg">Harmonizing With Others</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start">
+                  <span className="text-[#fe0064] mr-2 mt-1">★</span>
+                  <span className="cosmic-text-responsive-sm">Collaborative music projects with emerging and established artists, creating cosmic jams that transcend traditional boundaries.</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#fe0064] mr-2 mt-1">★</span>
+                  <span className="cosmic-text-responsive-sm">Immersive workshops and masterclasses aimed at nurturing local talent, where participants learn to channel their inner celestial creativity.</span>
+                </li>
+              </ul>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl border border-[rgba(0,235,214,0.3)] backdrop-blur-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 opacity-10">
-                  <SacredGeometry type="metatron-cube" size={100} color="#00ebd6" />
-                </div>
-                <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6] mb-4 relative z-10 text-shadow-lg">Harmonizing With Others</h3>
-                <ul className="space-y-3">
-                  <li className="flex items-start">
-                    <span className="text-[#fe0064] mr-2 mt-1">★</span>
-                    <span className="cosmic-text-responsive-sm">Collaborative music projects with emerging and established artists, creating cosmic jams that transcend traditional boundaries.</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-[#fe0064] mr-2 mt-1">★</span>
-                    <span className="cosmic-text-responsive-sm">Immersive workshops and masterclasses aimed at nurturing local talent, where participants learn to channel their inner celestial creativity.</span>
-                  </li>
-                </ul>
+            <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl border border-[rgba(0,235,214,0.3)] backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 opacity-10">
+                <SacredGeometry type="golden-spiral" size={100} color="#00ebd6" />
               </div>
-
-              <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl border border-[rgba(0,235,214,0.3)] backdrop-blur-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 opacity-10">
-                  <SacredGeometry type="golden-spiral" size={100} color="#00ebd6" />
-                </div>
-                <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6] mb-4 relative z-10 text-shadow-lg">Resonating With Purpose</h3>
-                <ul className="space-y-3">
-                  <li className="flex items-start">
-                    <span className="text-[#fe0064] mr-2 mt-1 flex-shrink-0">★</span>
-                    <span className="cosmic-text-responsive-sm">Benefit concerts under the stars, with proceeds supporting ocean conservation and community development initiatives.</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-[#fe0064] mr-2 mt-1 flex-shrink-0">★</span>
-                    <span className="cosmic-text-responsive-sm">Interactive digital experiences where fans can share their stories and connect through the universal language of music.</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="text-center relative mt-16">
-              <div className="absolute left-1/2 -translate-x-1/2 -top-12 opacity-30">
-                <SacredGeometry type="vesica-piscis" size={80} color="#fe0064" />
-              </div>
-              <p className="cosmic-text-responsive max-w-3xl mx-auto relative z-10 cosmic-text-container">Through these initiatives, Dale the Whale continues to foster a creative and inclusive environment that empowers individuals and celebrates the transformative power of music. His community-centered approach reflects his belief that music, like the cosmic forces that inspire it, has the power to unite, heal, and inspire across all boundaries.</p>
+              <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6] mb-4 relative z-10 text-shadow-lg">Resonating With Purpose</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start">
+                  <span className="text-[#fe0064] mr-2 mt-1 flex-shrink-0">★</span>
+                  <span className="cosmic-text-responsive-sm">Benefit concerts under the stars, with proceeds supporting ocean conservation and community development initiatives.</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#fe0064] mr-2 mt-1 flex-shrink-0">★</span>
+                  <span className="cosmic-text-responsive-sm">Interactive digital experiences where fans can share their stories and connect through the universal language of music.</span>
+                </li>
+              </ul>
             </div>
           </div>
-        </GeometricSection>
+        </div>
         
         {/* Artistic Journey image section */}
         <div className="mb-16 mt-10 cosmic-fade-in">
@@ -201,33 +202,41 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Sound Philosophy section with geometric shapes */}
-        <GeometricSection
-          shape="wave"
-          backgroundStyle="gradient"
-          title="Sound Philosophy"
-          className="mb-16 cosmic-slide-up"
-        >
-          <div className="grid md:grid-cols-3 gap-4 p-8">
-            <div className="cosmic-glow-box p-6 rounded-lg text-center flex flex-col items-center">
-              <SacredGeometry type="flower-of-life" size={80} color="#00ebd6" />
-              <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6] my-4">Harmonic Unity</h3>
-              <p className="cosmic-text-responsive-sm">Sound frequencies that align with the natural harmonics of the universe, creating resonance between listener and cosmos.</p>
+        {/* Sound Philosophy section with responsive shape cards */}
+        <div className="mb-16 mt-16">
+          <h2 className="cosmic-heading-responsive font-bold text-[#00ebd6] mb-8 text-center">Sound Philosophy</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="w-full">
+              <SimpleHexagon className="w-full max-w-[280px] mx-auto">
+                <h3>Harmonic Unity</h3>
+                <p>Sound frequencies that align with the natural harmonics of the universe, creating resonance between listener and cosmos.</p>
+                <button className="bg-blue-500 hover:bg-blue-700 text-white rounded">
+                  Experience
+                </button>
+              </SimpleHexagon>
             </div>
-
-            <div className="cosmic-glow-box p-6 rounded-lg text-center flex flex-col items-center">
-              <SacredGeometry type="metatron-cube" size={80} color="#fe0064" />
-              <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6] my-4">Geometric Rhythms</h3>
-              <p className="cosmic-text-responsive-sm">Structured patterns of sound that mirror sacred geometry, forming mathematical relationships that speak to our deepest consciousness.</p>
+            
+            <div className="w-full">
+              <SimpleHexagon className="w-full max-w-[280px] mx-auto">
+                <h3>Geometric Rhythms</h3>
+                <p>Structured patterns of sound that mirror sacred geometry, forming mathematical relationships that speak to our deepest consciousness.</p>
+                <button className="bg-green-500 hover:bg-green-700 text-white rounded">
+                  Discover
+                </button>
+              </SimpleHexagon>
             </div>
-
-            <div className="cosmic-glow-box p-6 rounded-lg text-center flex flex-col items-center">
-              <SacredGeometry type="sri-yantra" size={80} color="#00ebd6" />
-              <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6] my-4">Oceanic Flow</h3>
-              <p className="cosmic-text-responsive-sm">Fluid, evolving soundscapes inspired by the rhythmic movements of ocean waves and the mysterious songs of whales.</p>
+            
+            <div className="w-full">
+              <SimpleHexagon className="w-full max-w-[280px] mx-auto">
+                <h3>Oceanic Flow</h3>
+                <p>Fluid, evolving soundscapes inspired by the rhythmic movements of ocean waves and the mysterious songs of whales.</p>
+                <button className="bg-yellow-500 hover:bg-yellow-700 text-white rounded">
+                  Flow
+                </button>
+              </SimpleHexagon>
             </div>
           </div>
-        </GeometricSection>
+        </div>
       </div>
 
       {/* Add CSS animations for audio visualization */}
