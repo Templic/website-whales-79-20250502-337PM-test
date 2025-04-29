@@ -135,13 +135,13 @@ export default function AboutPage() {
 
           {/* Community Engagement */}
           <div className="w-full">
-            <SimpleStarburst className="w-full max-w-[350px] mx-auto">
+            <SimpleOctagon className="w-full max-w-[350px] mx-auto">
               <h3>Community Engagement</h3>
               <p>Dale is not only known for his innovative sound but also for his dedication to the community. He actively collaborates with like-minded artists and participates in projects aimed at spreading creative energy.</p>
               <button className="bg-red-500 hover:bg-red-700 text-white rounded">
                 Connect
               </button>
-            </SimpleStarburst>
+            </SimpleOctagon>
           </div>
         </div>
 

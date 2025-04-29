@@ -140,23 +140,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         </Link>
 
-        {/* Redesigned badges with improved visibility */}
+        {/* Redesigned badges with improved visibility and no clipping */}
         {(featured || isNew || discountPercent) && (
-          <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
+          <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
             {featured && (
-              <Badge variant="default" className="cosmic-badge cosmic-hover-glow px-3 py-1.5 text-xs font-semibold shadow-lg bg-amber-600 text-white border border-amber-400/30">
+              <div className="px-2.5 py-1 text-xs font-bold shadow-lg bg-amber-600 text-white border border-amber-400/50 rounded-md">
                 Bestseller
-              </Badge>
+              </div>
             )}
             {isNew && (
-              <Badge variant="outline" className="bg-indigo-600/40 border-indigo-400/50 cosmic-badge cosmic-hover-glow px-3 py-1.5 text-xs font-semibold shadow-lg text-white">
+              <div className="px-2.5 py-1 text-xs font-bold shadow-lg bg-indigo-600/90 text-white border border-indigo-400/50 rounded-md">
                 ZODIAC
-              </Badge>
+              </div>
             )}
             {discountPercent && (
-              <Badge variant="destructive" className="cosmic-badge-highlight cosmic-hover-glow px-3 py-1.5 text-xs font-semibold shadow-lg bg-emerald-600 text-white border border-emerald-400/30">
+              <div className="px-2.5 py-1 text-xs font-bold shadow-lg bg-emerald-600 text-white border border-emerald-400/50 rounded-md">
                 {discountPercent}% Off
-              </Badge>
+              </div>
             )}
           </div>
         )}
