@@ -113,14 +113,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
 
   return (
-    <Card className="overflow-hidden cosmic-glass-card cosmic-scale in relative h-full flex flex-col">
+    <Card className="overflow-hidden cosmic-glass-card cosmic-scale in relative h-full flex flex-col shadow-xl shadow-indigo-900/30">
       <div className="relative">
         <Link href={`/shop/product/${id}`}>
-          <div className="overflow-hidden aspect-square relative group cursor-pointer clip-path-octagon">
+          <div className="overflow-hidden aspect-square relative group cursor-pointer clip-path-octagon border-2 border-indigo-600/30">
+            {/* Glowing backdrop for product image */}
+            <div className="absolute inset-0 bg-gradient-radial from-indigo-600/20 via-purple-600/10 to-transparent z-0"></div>
+            
             <img
               src={image || getProductPlaceholderImage(name, description, categories)}
               alt={name}
-              className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+              className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110 relative z-0"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.onerror = null; // Prevent infinite loops
@@ -129,8 +132,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               }}
             />
             
-            {/* Enhanced contrast gradient for better visibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-75"></div>
+            {/* Enhanced lighting and contrast gradient for better visibility */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent opacity-80 z-10"></div>
+            
+            {/* Subtle glow effect on hover */}
+            <div className="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/10 transition-all duration-300 z-20"></div>
           </div>
         </Link>
 
@@ -189,27 +195,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 flex flex-col sm:flex-row justify-between items-center gap-3 mt-auto">
-        <div className="w-full sm:w-auto text-center sm:text-left">
+      <CardFooter className="p-4 pt-0 flex flex-col justify-between items-center gap-3 mt-auto">
+        {/* Price section with enhanced visibility */}
+        <div className="w-full text-center bg-indigo-950/60 backdrop-blur-sm py-2 px-4 rounded-lg border border-purple-500/20 shadow-inner">
           {discountedPrice ? (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-1">
               <span className="text-white/60 line-through text-sm mr-2">
                 {formattedPrice}
               </span>
-              <span className="font-semibold text-primary text-base">{discountedPrice}</span>
+              <span className="font-bold text-purple-300 text-xl cosmic-text-glow">{discountedPrice}</span>
             </div>
           ) : (
-            <span className="font-semibold cosmic-price text-base">{formattedPrice}</span>
+            <span className="font-bold text-purple-300 text-xl cosmic-text-glow">{formattedPrice}</span>
           )}
         </div>
         
         {/* Product action buttons */}
-        <div className="flex w-full sm:w-auto gap-2 mt-2 sm:mt-0">
+        <div className="flex w-full gap-2">
           {/* Explore Button */}
           <Button
             size="sm"
             variant="outline"
-            className="flex-1 bg-indigo-800/40 border-indigo-500/40 text-white hover:bg-indigo-700/60 shadow-md cosmic-hover-glow"
+            className="flex-1 bg-indigo-800/70 border-indigo-400/50 text-white hover:bg-indigo-700/90 
+                      shadow-md shadow-indigo-500/20 cosmic-hover-glow py-5 font-semibold"
             onClick={() => window.location.href = `/shop/product/${id}`}
           >
             Explore
@@ -219,9 +227,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <Button
             size="sm"
             className={cn(
-              "flex-1 bg-violet-800/80 hover:bg-violet-700 text-white cosmic-hover-glow shadow-md px-3",
+              "flex-1 bg-violet-700 hover:bg-violet-600 text-white cosmic-hover-glow shadow-md shadow-violet-500/30 py-5 font-semibold",
               !inStock && "opacity-70 cursor-not-allowed",
-              isProductInCart && "bg-green-700 hover:bg-green-800"
+              isProductInCart && "bg-green-700 hover:bg-green-600"
             )}
             disabled={!inStock || isProductInCart}
             onClick={isProductInCart ? undefined : handleAddToCart}

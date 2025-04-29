@@ -35,65 +35,92 @@ const EnhancedShoppingVenn: React.FC<EnhancedShoppingVennProps> = ({
           </p>
         </div>
         
-        {/* Venn Diagram with two partially overlapping circles */}
-        <div className="relative h-[44rem] md:h-[34rem]">
+        {/* Venn Diagram with two overlapping circles - Improved version based on screenshot */}
+        <div className="relative h-[46rem] md:h-[38rem]">
+          {/* Dark background container */}
+          <div className="absolute inset-0 bg-indigo-950/80 rounded-3xl backdrop-blur-lg"></div>
+          
           {/* Container for mobile layout (vertical) or desktop layout (horizontal) */}
           <div className="relative h-full flex flex-col md:flex-row items-center justify-center">
-            {/* Left/Top Circle - Shop Together */}
-            <div className="relative w-[82%] md:w-[48%] aspect-square rounded-full border border-purple-400/40 
-                         md:left-[8%] z-10 flex flex-col items-center justify-center
-                         bg-gradient-to-b from-indigo-900/30 to-purple-900/30 backdrop-blur-sm mb-12 md:mb-0 
-                         shadow-lg shadow-purple-800/20">
-              {/* Center the content properly in the circle */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
-                <div className="h-12 w-12 rounded-full bg-indigo-800/60 flex items-center justify-center mb-3 shadow-md">
-                  <Users className="h-6 w-6 text-purple-200" />
-                </div>
-                <h3 className="text-xl md:text-2xl font-semibold text-white mb-3 cosmic-text-glow">Shop Together</h3>
-                <p className="text-sm text-gray-200 max-w-[240px] text-center mb-6 leading-relaxed">
-                  Browse and shop with friends in real-time, share product recommendations,
-                  and make collective purchasing decisions
-                </p>
-                <Button 
-                  variant="outline" 
-                  className="bg-indigo-800/50 border-purple-400/40 hover:bg-indigo-700/70 shadow-md shadow-purple-500/30 hover:shadow-lg hover:shadow-purple-500/40 transition-all duration-300 cosmic-hover-glow"
-                  onClick={onStartSession}
-                  size="lg"
-                >
-                  <Users className="h-4 w-4 mr-2" /> Start Session
-                </Button>
+            {/* Shop Together Circle - Top/Left */}
+            <div className="relative w-[90%] md:w-[60%] aspect-square rounded-full border border-purple-400/60 
+                         z-10 md:left-[5%] md:top-[5%] flex flex-col items-center justify-center
+                         bg-indigo-900/60 backdrop-blur-sm mb-16 md:mb-0 
+                         shadow-lg shadow-purple-800/30">
+              {/* Icon */}
+              <div className="absolute top-[15%] md:top-[15%] left-1/2 transform -translate-x-1/2 h-14 w-14 rounded-full 
+                         bg-indigo-800/80 flex items-center justify-center shadow-lg">
+                <Users className="h-7 w-7 text-purple-200" />
               </div>
+              
+              {/* Title - Increased size and glow */}
+              <h3 className="absolute top-[28%] md:top-[28%] left-1/2 transform -translate-x-1/2 text-2xl md:text-3xl 
+                       font-bold text-white cosmic-text-glow">
+                Shop Together
+              </h3>
+              
+              {/* Description - Centered properly within circle */}
+              <p className="absolute top-[40%] md:top-[40%] left-1/2 transform -translate-x-1/2 text-sm text-gray-200 
+                       max-w-[280px] text-center leading-relaxed px-4">
+                Browse and shop with friends in real-time, share product recommendations,
+                and make collective purchasing decisions
+              </p>
+              
+              {/* Button - Positioned properly at bottom */}
+              <Button 
+                variant="outline" 
+                className="absolute top-[68%] md:top-[68%] left-1/2 transform -translate-x-1/2 bg-indigo-800/70 
+                        border-purple-400/60 hover:bg-indigo-700/80 shadow-md shadow-purple-500/40 
+                        hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 cosmic-hover-glow"
+                onClick={onStartSession}
+                size="lg"
+              >
+                <Users className="h-5 w-5 mr-2" /> Start Session
+              </Button>
             </div>
             
-            {/* Right/Bottom Circle - Co-Design Studio */}
-            <div className="relative w-[82%] md:w-[48%] aspect-square rounded-full border border-purple-400/40 
-                         md:right-[8%] -mt-32 md:mt-0 z-0 flex flex-col items-center justify-center
-                         bg-gradient-to-b from-violet-900/30 to-indigo-900/30 backdrop-blur-sm
-                         shadow-lg shadow-purple-800/20">
-              {/* Center the content properly in the circle */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
-                <div className="h-12 w-12 rounded-full bg-indigo-800/60 flex items-center justify-center mb-3 shadow-md">
-                  <Sparkles className="h-6 w-6 text-purple-200" />
-                </div>
-                <h3 className="text-xl md:text-2xl font-semibold text-white mb-3 cosmic-text-glow">Co-Design Studio</h3>
-                <p className="text-sm text-gray-200 max-w-[240px] text-center mb-6 leading-relaxed">
-                  Create and customize your own cosmic products with our interactive design
-                  tools, collaborate with others on design ideas
-                </p>
-                <Button 
-                  variant="outline" 
-                  className="bg-indigo-800/50 border-purple-400/40 hover:bg-indigo-700/70 shadow-md shadow-purple-500/30 hover:shadow-lg hover:shadow-purple-500/40 transition-all duration-300 cosmic-hover-glow"
-                  onClick={onCreateDesign}
-                  size="lg"
-                >
-                  <Plus className="h-4 w-4 mr-2" /> Create Design
-                </Button>
+            {/* Co-Design Studio Circle - Bottom/Right */}
+            <div className="relative w-[90%] md:w-[60%] aspect-square rounded-full border border-purple-400/60 
+                         -mt-52 md:mt-0 md:-ml-40 md:left-[8%] md:top-[10%] z-20 flex flex-col items-center justify-center
+                         bg-violet-900/60 backdrop-blur-sm
+                         shadow-lg shadow-purple-800/30">
+              {/* Icon */}
+              <div className="absolute top-[15%] md:top-[15%] left-1/2 transform -translate-x-1/2 h-14 w-14 rounded-full 
+                          bg-indigo-800/80 flex items-center justify-center shadow-lg">
+                <Sparkles className="h-7 w-7 text-purple-200" />
               </div>
+              
+              {/* Title - Increased size and glow */}
+              <h3 className="absolute top-[28%] md:top-[28%] left-1/2 transform -translate-x-1/2 text-2xl md:text-3xl 
+                       font-bold text-white cosmic-text-glow">
+                Co-Design Studio
+              </h3>
+              
+              {/* Description - Centered properly within circle */}
+              <p className="absolute top-[40%] md:top-[40%] left-1/2 transform -translate-x-1/2 text-sm text-gray-200 
+                       max-w-[280px] text-center leading-relaxed px-4">
+                Create and customize your own cosmic products with our interactive design
+                tools, collaborate with others on design ideas
+              </p>
+              
+              {/* Button - Positioned properly at bottom */}
+              <Button 
+                variant="outline" 
+                className="absolute top-[68%] md:top-[68%] left-1/2 transform -translate-x-1/2 bg-indigo-800/70 
+                        border-purple-400/60 hover:bg-indigo-700/80 shadow-md shadow-purple-500/40 
+                        hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 cosmic-hover-glow"
+                onClick={onCreateDesign}
+                size="lg"
+              >
+                <Plus className="h-5 w-5 mr-2" /> Create Design
+              </Button>
             </div>
             
-            {/* Decorative elements to enhance the Venn overlap */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-20 h-20 md:w-40 md:h-40 rounded-full bg-purple-500/10 backdrop-blur-md filter z-20 hidden md:block"></div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-purple-400/50 animate-pulse filter blur-sm z-30 hidden md:block"></div>
+            {/* Enhanced overlap effect */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 md:-translate-x-[10%] -translate-y-[30%] md:-translate-y-[10%] 
+                        w-40 h-40 md:w-40 md:h-40 rounded-full bg-purple-500/20 backdrop-blur-md z-30"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 md:-translate-x-[10%] -translate-y-[30%] md:-translate-y-[10%]
+                        w-6 h-6 rounded-full bg-purple-400/60 animate-pulse z-40"></div>
           </div>
         </div>
       </div>
