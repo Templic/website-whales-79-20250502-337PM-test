@@ -146,6 +146,7 @@ import jwtAuthRoutes from './routes/jwtAuthRoutes';
 import contentRoutes from './routes/content';
 import contentWorkflowRoutes from './routes/content-workflow';
 import contentAIRoutes from './routes/contentAI';
+import contentRecommendationsRoutes from './routes/contentRecommendations';
 import notificationsRoutes from './routes/notifications';
 import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search/index';
@@ -270,6 +271,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   // Use media routes
   app.use(mediaRoutes);
+
+  // Use content AI routes
+  app.use('/api/content-ai', contentAIRoutes);
+
+  // Use content recommendations routes
+  app.use('/api/content-recommendations', contentRecommendationsRoutes);
 
   // Use CSRF routes
   app.use('/api', csrfRoutes);
