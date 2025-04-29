@@ -236,112 +236,163 @@ export default function ShopSearchPage() {
     );
   };
 
+  useEffect(() => {
+    // Scroll to top when the page loads
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex flex-col md:flex-row items-start gap-8">
-        {/* Filters sidebar */}
-        <div className="w-full md:w-64 space-y-6">
-          <div>
-            <h2 className="text-lg font-medium mb-2">Search</h2>
-            <ProductSearchComponent 
-              placeholder="Search products..."
-              className="w-full"
-              onResultClick={handleProductSelect}
-            />
-          </div>
-          
-          <Separator />
-          
-          <div>
-            <h2 className="text-lg font-medium mb-2">Categories</h2>
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <Button
-                  variant={category === 'all' ? 'default' : 'ghost'}
-                  className="w-full justify-start px-2"
-                  onClick={() => setCategory('all')}
-                >
-                  All Categories
-                </Button>
-              </div>
-              
-              {categoryList.map(cat => (
-                <div className="flex items-center" key={cat}>
-                  <Button
-                    variant={category === cat ? 'default' : 'ghost'}
-                    className="w-full justify-start px-2"
-                    onClick={() => setCategory(cat)}
-                  >
-                    {cat}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <Separator />
-          
-          <div>
-            <h2 className="text-lg font-medium mb-2">Price Range</h2>
-            <div className="space-y-3">
-              <Slider
-                value={priceRange}
-                min={0}
-                max={1000}
-                step={10}
-                onValueChange={(value) => setPriceRange(value as [number, number])}
-                className="my-6"
-              />
-              <div className="flex justify-between">
-                <span>${priceRange[0]}</span>
-                <span>${priceRange[1]}</span>
-              </div>
-            </div>
-          </div>
-          
-          <Separator />
-          
-          <div>
-            <h2 className="text-lg font-medium mb-2">Sort By</h2>
-            <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Sort By" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest</SelectItem>
-                <SelectItem value="price-low-high">Price: Low to High</SelectItem>
-                <SelectItem value="price-high-low">Price: High to Low</SelectItem>
-                <SelectItem value="rating">Rating</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Cosmic Background with purple/blue gradient */}
+      <div className="fixed inset-0 bg-gradient-to-b from-blue-950 via-indigo-950 to-violet-950 z-0" />
+      
+      {/* Sacred Geometry Patterns */}
+      <div className="fixed inset-0 z-0 opacity-10">
+        <div className="absolute top-0 left-0 w-72 h-72 transform -translate-x-1/4 -translate-y-1/4">
+          <div className="w-full h-full border-2 border-indigo-400 rounded-full" />
+          <div className="absolute inset-4 border-2 border-blue-400 rounded-full" />
+          <div className="absolute inset-8 border-2 border-violet-400 rounded-full" />
+          <div className="absolute inset-12 border-2 border-pink-400 rounded-full" />
         </div>
         
-        {/* Main content */}
-        <div className="flex-1">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">Shop</h1>
-            {searchQuery && (
-              <p className="text-muted-foreground">
-                Search results for "{searchQuery}"
-                {category !== 'all' && ` in ${category}`}
-              </p>
-            )}
-            {!searchQuery && category !== 'all' && (
-              <p className="text-muted-foreground">
-                Browsing {category}
-              </p>
-            )}
+        <div className="absolute bottom-0 right-0 w-96 h-96 transform translate-x-1/4 translate-y-1/4">
+          <div className="w-full h-full border-2 border-indigo-400 rounded-full" />
+          <div className="absolute inset-4 border-2 border-teal-400 rounded-full" />
+          <div className="absolute inset-8 border-2 border-cyan-400 rounded-full" />
+          <div className="absolute inset-12 border-2 border-blue-400 rounded-full" />
+        </div>
+        
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-30">
+          <div className="w-96 h-96 border-2 border-white rounded-full animate-pulse" />
+        </div>
+      </div>
+      
+      {/* Animated stars */}
+      <div className="fixed inset-0 z-0">
+        {Array.from({length: 50}).map((_, i) => (
+          <div 
+            key={i}
+            className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+            style={{
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              opacity: Math.random() * 0.7 + 0.3,
+              animationDuration: `${Math.random() * 3 + 2}s`,
+              animationDelay: `${Math.random() * 2}s`
+            }}
+          />
+        ))}
+      </div>
+      
+      {/* Main content with cosmic glass effect */}
+      <div className="container relative z-10 mx-auto py-12 px-4">
+        <div className="flex flex-col md:flex-row items-start gap-8">
+          {/* Filters sidebar with cosmic styling */}
+          <div className="w-full md:w-64 space-y-6 cosmic-glass-card p-6 rounded-xl backdrop-blur-sm">
+            <div>
+              <h2 className="text-lg font-medium mb-2 cosmic-gradient-text">Cosmic Search</h2>
+              <ProductSearchComponent 
+                placeholder="Search celestial products..."
+                className="w-full cosmic-glass-field"
+                onResultClick={handleProductSelect}
+              />
+            </div>
             
-            {products && (
-              <p className="text-muted-foreground mt-1">
-                {products.length} products • {formatPriceRange()}
-              </p>
-            )}
+            <Separator className="bg-indigo-300/20" />
+            
+            <div>
+              <h2 className="text-lg font-medium mb-2 cosmic-gradient-text">Sacred Categories</h2>
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <Button
+                    variant={category === 'all' ? 'default' : 'ghost'}
+                    className={`w-full justify-start px-2 ${category === 'all' ? 'bg-indigo-800/70 hover:bg-indigo-700/70' : 'hover:bg-indigo-900/40'}`}
+                    onClick={() => setCategory('all')}
+                  >
+                    All Categories
+                  </Button>
+                </div>
+                
+                {categoryList.map(cat => (
+                  <div className="flex items-center" key={cat}>
+                    <Button
+                      variant={category === cat ? 'default' : 'ghost'}
+                      className={`w-full justify-start px-2 ${category === cat ? 'bg-indigo-800/70 hover:bg-indigo-700/70' : 'hover:bg-indigo-900/40'}`}
+                      onClick={() => setCategory(cat)}
+                    >
+                      {cat}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <Separator className="bg-indigo-300/20" />
+            
+            <div>
+              <h2 className="text-lg font-medium mb-2 cosmic-gradient-text">Energy Exchange</h2>
+              <div className="space-y-3">
+                <Slider
+                  value={priceRange}
+                  min={0}
+                  max={1000}
+                  step={10}
+                  onValueChange={(value) => setPriceRange(value as [number, number])}
+                  className="my-6 cosmic-slider"
+                />
+                <div className="flex justify-between cosmic-glow text-indigo-200">
+                  <span>${priceRange[0]}</span>
+                  <span>${priceRange[1]}</span>
+                </div>
+              </div>
+            </div>
+            
+            <Separator className="bg-indigo-300/20" />
+            
+            <div>
+              <h2 className="text-lg font-medium mb-2 cosmic-gradient-text">Cosmic Order</h2>
+              <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
+                <SelectTrigger className="w-full cosmic-glass-field border-indigo-300/30">
+                  <SelectValue placeholder="Sort By" />
+                </SelectTrigger>
+                <SelectContent className="cosmic-glass-card">
+                  <SelectItem value="newest">Newest Arrivals</SelectItem>
+                  <SelectItem value="price-low-high">Energy: Low to High</SelectItem>
+                  <SelectItem value="price-high-low">Energy: High to Low</SelectItem>
+                  <SelectItem value="rating">Vibration Level</SelectItem>
+                  <SelectItem value="name">Sacred Name</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
-          {renderProducts()}
+          {/* Main content */}
+          <div className="flex-1">
+            <div className="mb-8 cosmic-glass-card p-6 rounded-xl backdrop-blur-sm">
+              <h1 className="text-3xl font-bold mb-2 cosmic-gradient-text">Sacred Treasures</h1>
+              {searchQuery && (
+                <p className="text-indigo-200">
+                  Search results for "{searchQuery}"
+                  {category !== 'all' && ` in ${category}`}
+                </p>
+              )}
+              {!searchQuery && category !== 'all' && (
+                <p className="text-indigo-200">
+                  Browsing {category}
+                </p>
+              )}
+              
+              {products && (
+                <p className="text-indigo-200/80 mt-1">
+                  {products.length} cosmic items • {formatPriceRange()}
+                </p>
+              )}
+            </div>
+            
+            <div className="cosmic-glass-card p-6 rounded-xl backdrop-blur-sm">
+              {renderProducts()}
+            </div>
+          </div>
         </div>
       </div>
     </div>
