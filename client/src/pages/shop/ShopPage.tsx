@@ -288,22 +288,25 @@ const ShopPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen relative">
-      <CosmicBackground opacity={0.4} />
+    <div className="min-h-screen relative bg-[#050f28] text-[#e8e6e3]">
+      <CosmicBackground opacity={0.45} color="indigo" nebulaEffect={true} />
       
       {/* Sacred geometry elements in page margins */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         {/* Left margin sacred geometry - one at top, one at bottom */}
-        <div className="absolute top-40 left-5 opacity-10 hidden md:block">
+        <div className="absolute top-40 left-5 opacity-20 hidden md:block">
           <SacredGeometry variant="merkaba" size={120} animated={true} />
         </div>
-        <div className="absolute bottom-40 left-5 opacity-10 hidden md:block">
+        <div className="absolute bottom-40 left-5 opacity-20 hidden md:block">
           <SacredGeometry variant="dodecahedron" size={120} animated={true} />
         </div>
         
         {/* Right margin sacred geometry - one at top, one at bottom */}
-        <div className="absolute top-40 right-5 opacity-10 hidden md:block">
+        <div className="absolute top-40 right-5 opacity-20 hidden md:block">
           <SacredGeometry variant="icosahedron" size={120} animated={true} />
+        </div>
+        <div className="absolute bottom-40 right-5 opacity-20 hidden md:block">
+          <SacredGeometry variant="flower-of-life" size={120} animated={true} />
         </div>
       </div>
 

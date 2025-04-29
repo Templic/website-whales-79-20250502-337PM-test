@@ -195,9 +195,33 @@ export default function CartPage() {
     }
   };
 
+  useEffect(() => {
+    // Scroll to top of page when component mounts
+    window.scrollTo(0, 0);
+  }, []);
+  
   return (
-    <div className="min-h-screen relative">
-      <CosmicBackground opacity={0.2} />
+    <div className="min-h-screen relative bg-[#050f28] text-[#e8e6e3]">
+      <CosmicBackground opacity={0.4} color="purple" nebulaEffect={true} />
+      
+      {/* Sacred geometry elements in page margins */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Left margin sacred geometry - one at top, one at bottom */}
+        <div className="absolute top-40 left-5 opacity-20 hidden md:block">
+          <SacredGeometry variant="seed-of-life" size={120} animated={true} />
+        </div>
+        <div className="absolute bottom-40 left-5 opacity-20 hidden md:block">
+          <SacredGeometry variant="tetrahedron" size={120} animated={true} />
+        </div>
+        
+        {/* Right margin sacred geometry - one at top, one at bottom */}
+        <div className="absolute top-40 right-5 opacity-20 hidden md:block">
+          <SacredGeometry variant="sri-yantra" size={120} animated={true} />
+        </div>
+        <div className="absolute bottom-40 right-5 opacity-20 hidden md:block">
+          <SacredGeometry variant="metatron-cube" size={120} animated={true} />
+        </div>
+      </div>
       
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
