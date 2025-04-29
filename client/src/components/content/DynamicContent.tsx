@@ -45,6 +45,15 @@ const DynamicContent: React.FC<DynamicContentProps> = ({
 }) => {
   const [contentError, setContentError] = useState<boolean>(false);
 
+  // Derive page name from content key if not provided
+  const derivedPage = page || contentKey.split('-')[0] || 'general';
+  
+  // Derive section name from content key if not provided
+  const derivedSection = section || (() => {
+    const parts = contentKey.split('-');
+    return parts.length > 1 ? parts[1] : 'main';
+  })();
+
   // Fetch content item by key
   const { data: contentItem, isLoading, error } = useQuery<ContentItemType, Error>({
     queryKey: [`/api/content/key/${contentKey}`],
@@ -57,9 +66,9 @@ const DynamicContent: React.FC<DynamicContentProps> = ({
           return response.json();
         }
         
-        // If content doesn't exist and we have fallback text and page/section info, 
+        // If content doesn't exist and we have fallback text, 
         // create a new content item automatically (for admin convenience)
-        if (response.status === 404 && fallback && page && section) {
+        if (response.status === 404 && fallback) {
           try {
             const contentType = asImage ? 'image' : 'text';
             const title = contentKey
@@ -71,8 +80,8 @@ const DynamicContent: React.FC<DynamicContentProps> = ({
               key: contentKey,
               title: title,
               content: fallback,
-              page: page,
-              section: section,
+              page: derivedPage,
+              section: derivedSection,
               type: contentType
             };
             
@@ -91,6 +100,7 @@ const DynamicContent: React.FC<DynamicContentProps> = ({
               return createResponse.json();
             } else {
               // If creation failed, we'll just use the fallback text
+              console.error('Failed to create content item:', contentKey);
               throw new Error('Failed to create content');
             }
           } catch (createErr) {

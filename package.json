@@ -106,7 +106,7 @@
     "memoizee": "^0.4.17",
     "memorystore": "^1.6.7",
     "nodemailer": "^6.10.0",
-    "openai": "^4.96.0",
+    "openai": "^4.96.1",
     "openid-client": "^6.4.2",
     "ora": "^8.2.0",
     "passport": "^0.7.0",
