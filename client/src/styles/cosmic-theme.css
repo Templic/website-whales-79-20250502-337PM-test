@@ -390,16 +390,109 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    radial-gradient(
-      circle at center,
-      rgba(0, 235, 214, 0.01) 0%,
-      rgba(124, 58, 237, 0.01) 50%,
-      rgba(0, 235, 214, 0.01) 100%
-    );
+  background-image: none;
   opacity: 0.2;
   z-index: 0;
   pointer-events: none;
+  overflow: hidden;
+}
+
+/* Add multiple transverse wave layers */
+.cosmic-ocean-texture::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: none;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* First wave */
+.cosmic-ocean-texture .wave1,
+.cosmic-ocean-texture::before {
+  animation: transverse-wave1 18s linear infinite;
+}
+
+/* Second wave */
+.cosmic-ocean-texture .wave2,
+.cosmic-ocean-texture::after {
+  animation: transverse-wave2 15s linear infinite;
+  animation-delay: -5s;
+  opacity: 0.1;
+}
+
+@keyframes transverse-wave1 {
+  0% {
+    background: repeating-linear-gradient(90deg, 
+      transparent 0%, 
+      transparent 20%,
+      rgba(0, 235, 214, 0.02) 21%,
+      rgba(0, 235, 214, 0.02) 22%,
+      transparent 23%,
+      transparent 40%,
+      rgba(0, 235, 214, 0.01) 41%,
+      rgba(0, 235, 214, 0.01) 42%,
+      transparent 43%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    background-position: 0% center;
+  }
+  100% {
+    background: repeating-linear-gradient(90deg, 
+      transparent 0%, 
+      transparent 20%,
+      rgba(0, 235, 214, 0.02) 21%,
+      rgba(0, 235, 214, 0.02) 22%,
+      transparent 23%,
+      transparent 40%,
+      rgba(0, 235, 214, 0.01) 41%,
+      rgba(0, 235, 214, 0.01) 42%,
+      transparent 43%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    background-position: -200% center;
+  }
+}
+
+@keyframes transverse-wave2 {
+  0% {
+    background: repeating-linear-gradient(90deg, 
+      transparent 0%, 
+      transparent 30%,
+      rgba(124, 58, 237, 0.02) 31%,
+      rgba(124, 58, 237, 0.02) 32%,
+      transparent 33%,
+      transparent 50%,
+      rgba(124, 58, 237, 0.01) 51%,
+      rgba(124, 58, 237, 0.01) 52%,
+      transparent 53%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    background-position: 0% center;
+  }
+  100% {
+    background: repeating-linear-gradient(90deg, 
+      transparent 0%, 
+      transparent 30%,
+      rgba(124, 58, 237, 0.02) 31%,
+      rgba(124, 58, 237, 0.02) 32%,
+      transparent 33%,
+      transparent 50%,
+      rgba(124, 58, 237, 0.01) 51%,
+      rgba(124, 58, 237, 0.01) 52%,
+      transparent 53%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    background-position: -200% center;
+  }
 }
 
 /* Hover effect for cosmic shapes */
@@ -414,13 +507,12 @@
 
 .cosmic-shape-hover:hover::before {
   opacity: 0.3;
-  background: 
-    radial-gradient(
-      circle at center,
-      rgba(0, 235, 214, 0.03) 0%,
-      rgba(124, 58, 237, 0.02) 50%,
-      rgba(0, 235, 214, 0.01) 100%
-    );
+  animation: transverse-wave1 12s linear infinite !important;
+}
+
+.cosmic-shape-hover:hover::after {
+  opacity: 0.2;
+  animation: transverse-wave2 10s linear infinite !important;
 }
 
 /* Animated wave effect */
