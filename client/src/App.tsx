@@ -121,6 +121,7 @@ import DynamicContentDemo from "@/pages/demo/DynamicContentDemo";
 import PerformanceDemoPage from "@/pages/PerformanceDemoPage";
 import ResponsiveDemo from "./pages/ResponsiveDemo";
 import ResponsiveDemo2 from "./pages/ResponsiveDemo2";
+import ContentAIDemo from "@/pages/ContentAIDemo";
 
 // MainHeader is now included in MainLayout, no longer needed here
 
@@ -246,6 +247,7 @@ function AppRouter() {
           <Route path="/cosmic-test" component={CosmicTest} />
           <Route path="/type-system-demo" component={TypeSystemDemo} />
           <Route path="/dynamic-content-demo" component={DynamicContentDemo} />
+          <Route path="/content-ai-demo" component={ContentAIDemo} />
           <Route path="/performance" component={PerformanceDemoPage} />
           <Route path="/responsive-demo" component={ResponsiveDemo} />
           <Route path="/responsive-demo2" component={ResponsiveDemo2} />
