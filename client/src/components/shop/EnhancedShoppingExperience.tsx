@@ -96,19 +96,27 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
       {/* Feature cards (Quality Guarantee section) - Moved to top as requested */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-4 md:px-6">
         {shoppingFeatures.map((feature) => (
-          <Card key={feature.id} className="p-4 md:p-6 cosmic-glass-card" 
-            style={{
-              clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
-              backgroundColor: "rgba(155, 135, 245, 0.05)"
-            }}>
-            <div className="flex flex-col items-center text-center mt-6">
-              <div className="mb-4 bg-primary/10 p-3 rounded-full">
-                {feature.icon}
+          <div className="relative">
+            {/* Octagonal background with improved clipping */}
+            <div 
+              className="absolute inset-0 -z-10 bg-gradient-to-b from-indigo-950/30 to-purple-950/20 backdrop-blur-sm border border-purple-500/20"
+              style={{
+                clipPath: "polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)",
+                backgroundColor: "rgba(155, 135, 245, 0.05)"
+              }}
+            />
+            
+            {/* Card content without clipping */}
+            <Card key={feature.id} className="p-4 md:p-6 cosmic-glass-card bg-transparent border-0 shadow-none"> 
+              <div className="flex flex-col items-center text-center mt-4">
+                <div className="mb-4 bg-primary/10 p-3 rounded-full">
+                  {feature.icon}
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground text-sm max-w-[85%] mx-auto">{feature.description}</p>
               </div>
-              <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-              <p className="text-muted-foreground text-sm">{feature.description}</p>
-            </div>
-          </Card>
+            </Card>
+          </div>
         ))}
       </div>
 
@@ -146,97 +154,116 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 px-4 md:px-0">
           {featuredProducts.map((product) => (
-            <Card key={product.id} className="overflow-hidden cosmic-glass-card p-4 h-full flex flex-col"
-              style={{
-                clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
-                backgroundColor: "rgba(155, 135, 245, 0.05)"
-              }}>
-              <div className="relative mb-4 mt-6 px-4">
-                <div className="relative overflow-hidden" style={{
-                  clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
-                }}>
-                  <img 
-                    src={product.image} 
-                    alt={product.name}
-                    className="w-full h-48 object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.onerror = null; // Prevent infinite loops
-                      
-                      // Use tag-specific fallback
-                      const fallbacks: Record<string, string> = {
-                        'Crystal': '/images/products/samples/cosmic-pendant.jpg',
-                        'Energy': '/images/products/samples/clear-quartz.jpg',
-                        'Apparel': '/images/products/samples/sacred-geometry-tshirt.jpg',
-                        'Meditation': '/images/products/samples/meditation-cushion.jpg',
-                        'Sustainable': '/images/products/samples/meditation-cushion.jpg',
-                        'Sacred Geometry': '/images/products/samples/sacred-geometry.jpg'
-                      };
-                      
-                      // Find a matching tag
-                      let fallbackImg = '/images/products/samples/cosmic-pendant.jpg';
-                      for (const tag of product.tags) {
-                        if (fallbacks[tag]) {
-                          fallbackImg = fallbacks[tag];
-                          break;
+            <div className="relative">
+              {/* Hexagonal background with slightly larger clip path */}
+              <div 
+                className="absolute inset-0 -z-10 bg-gradient-to-b from-indigo-950/30 to-purple-950/20 backdrop-blur-sm border border-purple-500/20"
+                style={{
+                  clipPath: "polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)",
+                  backgroundColor: "rgba(155, 135, 245, 0.05)"
+                }}
+              />
+            
+              {/* Regular card with content that stays within safe areas */}
+              <Card key={product.id} className="overflow-hidden cosmic-glass-card p-4 h-full flex flex-col bg-transparent border-0 shadow-none">
+                <div className="relative mb-4 mt-6 px-4">
+                  {/* Product image in hexagonal container - maintain shape */}
+                  <div className="relative overflow-hidden w-[85%] mx-auto" style={{
+                    clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
+                  }}>
+                    <img 
+                      src={product.image} 
+                      alt={product.name}
+                      className="w-full h-48 object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null; // Prevent infinite loops
+                        
+                        // Use tag-specific fallback
+                        const fallbacks: Record<string, string> = {
+                          'Crystal': '/images/products/samples/cosmic-pendant.jpg',
+                          'Energy': '/images/products/samples/clear-quartz.jpg',
+                          'Apparel': '/images/products/samples/sacred-geometry-tshirt.jpg',
+                          'Meditation': '/images/products/samples/meditation-cushion.jpg',
+                          'Sustainable': '/images/products/samples/meditation-cushion.jpg',
+                          'Sacred Geometry': '/images/products/samples/sacred-geometry.jpg'
+                        };
+                        
+                        // Find a matching tag
+                        let fallbackImg = '/images/products/samples/cosmic-pendant.jpg';
+                        for (const tag of product.tags) {
+                          if (fallbacks[tag]) {
+                            fallbackImg = fallbacks[tag];
+                            break;
+                          }
                         }
-                      }
-                      
-                      target.src = fallbackImg;
-                    }}
-                  />
-                </div>
-                
-                {product.limited && (
-                  <div className="absolute top-2 right-8">
-                    <Badge className="bg-amber-500 text-white flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Limited Edition
-                    </Badge>
+                        
+                        target.src = fallbackImg;
+                      }}
+                    />
                   </div>
-                )}
-              </div>
-              
-              <div className="flex-1 flex flex-col px-4">
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {product.tags.map((tag, i) => (
-                    <Badge key={i} variant="outline" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
+                  
+                  {/* Limited Edition badge - positioned to avoid clipping */}
+                  {product.limited && (
+                    <div className="absolute top-1 right-4">
+                      <Badge className="bg-amber-500/90 text-white flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-sm backdrop-blur-sm">
+                        <Clock className="h-3 w-3" />
+                        Limited Edition
+                      </Badge>
+                    </div>
+                  )}
                 </div>
                 
-                <h3 className="text-xl font-semibold mb-2 line-clamp-1 overflow-ellipsis">{product.name}</h3>
-                <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3 min-h-[4.5rem] overflow-hidden">{product.description}</p>
-                
-                <div className="flex items-center mb-4">
-                  <div className="flex mr-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star 
-                        key={i} 
-                        size={16} 
-                        className={i < Math.floor(product.rating) ? "text-amber-400 fill-amber-400" : "text-gray-300"} 
-                      />
+                {/* Content area with reduced width to ensure it stays within hexagon */}
+                <div className="flex-1 flex flex-col px-4 max-w-[90%] mx-auto">
+                  {/* Product tags */}
+                  <div className="flex flex-wrap justify-center gap-2 mb-2">
+                    {product.tags.slice(0, 3).map((tag, i) => (
+                      <Badge key={i} variant="outline" className="text-xs">
+                        {tag}
+                      </Badge>
                     ))}
                   </div>
-                  <span className="text-sm text-muted-foreground">
-                    {product.rating} ({product.reviewCount} reviews)
-                  </span>
+                  
+                  {/* Product name and description */}
+                  <h3 className="text-lg sm:text-xl font-semibold mb-2 line-clamp-1 overflow-ellipsis text-center">{product.name}</h3>
+                  <p className="text-muted-foreground text-xs sm:text-sm mb-3 flex-1 line-clamp-3 min-h-[4.5rem] overflow-hidden text-center">{product.description}</p>
+                  
+                  {/* Ratings section */}
+                  <div className="flex items-center justify-center mb-3">
+                    <div className="flex mr-2">
+                      {[...Array(5)].map((_, i) => (
+                        <Star 
+                          key={i} 
+                          size={16} 
+                          className={i < Math.floor(product.rating) ? "text-amber-400 fill-amber-400" : "text-gray-300"} 
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs sm:text-sm text-muted-foreground">
+                      {product.rating} ({product.reviewCount})
+                    </span>
+                  </div>
+                  
+                  {/* Price - centered */}
+                  <div className="flex justify-center items-center mb-4">
+                    <span className="text-lg sm:text-xl font-bold text-purple-300 cosmic-text-glow">${product.price.toFixed(2)}</span>
+                  </div>
+                  
+                  {/* View Product button - full width, centered */}
+                  <div className="flex justify-center mb-4 max-w-[85%] mx-auto">
+                    <Button 
+                      size="sm"
+                      onClick={() => onProductView && onProductView(product.id)}
+                      className="w-full bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 cosmic-hover-glow"
+                    >
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      View Product
+                    </Button>
+                  </div>
                 </div>
-                
-                <div className="flex justify-between items-center mb-6">
-                  <span className="text-xl font-bold">${product.price.toFixed(2)}</span>
-                  <Button 
-                    size="sm"
-                    onClick={() => onProductView && onProductView(product.id)}
-                    className="bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 cosmic-hover-glow"
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    View Product
-                  </Button>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
           ))}
         </div>
       </div>
