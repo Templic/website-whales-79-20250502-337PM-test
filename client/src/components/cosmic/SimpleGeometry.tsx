@@ -348,32 +348,35 @@ export function SimpleTriangle({
             })}
           </div>
           
-          {/* Button - positioned closer to content with full visibility */}
+          {/* Button - using full rounded corners to prevent clipping */}
           {button && (
             <div className="mt-0 mb-5 flex justify-center items-center w-full">
               {React.isValidElement(button) && button.type === 'button' ? 
                 React.cloneElement(button as React.ReactElement, {
                   className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                   style: {
-                    clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
-                    padding: "0.25rem 1.5rem 0.35rem", // Further increased horizontal padding
+                    borderRadius: "9999px", // Pill shape to prevent any clipping
+                    padding: "0.25rem 1.5rem 0.25rem",
                     background: (button.props as any).className?.includes('bg-') 
                       ? undefined 
                       : "rgba(0, 100, 255, 0.8)",
                     border: "1px solid rgba(255, 255, 255, 0.5)",
-                    width: "auto",
-                    minWidth: "5.5rem", // Further increased minimum width to fit text
-                    minHeight: "2.1rem", // Maintain height
+                    width: "auto", 
+                    maxWidth: "90%",
+                    minWidth: "5rem",
+                    minHeight: "1.6rem",
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center", 
                     boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
                     textAlign: "center",
                     lineHeight: "1",
-                    fontSize: "0.8rem", // Slightly smaller font for better fit
-                    transform: "translateY(-0.15rem) scale(0.95)", // Scale down slightly for better fit
-                    margin: "0 auto", // Center horizontally
-                    letterSpacing: "-0.01rem" // Tighten letter spacing slightly
+                    fontSize: "0.7rem",
+                    fontWeight: "bold",
+                    margin: "0 auto",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
                   }
                 }) : button
               }
@@ -897,15 +900,15 @@ export function SimpleOctagon({
           })}
         </div>
         
-        {/* Button with rounder corners to avoid clipping */}
+        {/* Button with full rounded corners and no clipping */}
         {button && (
           <div className="mt-1 mb-1 flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
                 className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
                 style: {
-                  // Less aggressive clipping with more rounded corners
-                  borderRadius: "0.4rem",
+                  // No clipping with fully rounded corners
+                  borderRadius: "9999px", // pill shape
                   padding: "0.3rem 1rem",
                   background: (button.props as any).className?.includes('bg-') 
                     ? undefined 
@@ -915,10 +918,15 @@ export function SimpleOctagon({
                   justifyContent: "center",
                   alignItems: "center",
                   minWidth: "4rem",
-                  minHeight: "1.8rem",
+                  minHeight: "1.5rem",
                   boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
-                  fontSize: "0.75rem",
-                  fontWeight: "bold"
+                  fontSize: "0.7rem",
+                  fontWeight: "bold",
+                  maxWidth: "80%",
+                  margin: "0 auto",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap"
                 }
               }) : button
             }

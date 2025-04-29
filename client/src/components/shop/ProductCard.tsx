@@ -116,7 +116,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <Card className="overflow-hidden cosmic-glass-card cosmic-scale in relative h-full flex flex-col shadow-xl shadow-indigo-900/30">
       <div className="relative">
         <Link href={`/shop/product/${id}`}>
-          <div className="overflow-hidden aspect-square relative group cursor-pointer clip-path-octagon border-2 border-indigo-600/30">
+          <div className="overflow-hidden aspect-square relative group cursor-pointer border-2 border-indigo-600/30 rounded-lg">
             {/* Glowing backdrop for product image */}
             <div className="absolute inset-0 bg-gradient-radial from-indigo-600/20 via-purple-600/10 to-transparent z-0"></div>
             
@@ -142,20 +142,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Redesigned badges with improved visibility and no clipping */}
         {(featured || isNew || discountPercent) && (
-          <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
+          <div className="absolute top-2 right-2 flex flex-col gap-2 z-30">
             {featured && (
-              <div className="px-2.5 py-1 text-xs font-bold shadow-lg bg-amber-600 text-white border border-amber-400/50 rounded-md">
-                Bestseller
+              <div className="px-2 py-0.5 text-[10px] leading-normal font-bold shadow bg-amber-500 text-white border border-amber-300 rounded-sm">
+                BESTSELLER
               </div>
             )}
             {isNew && (
-              <div className="px-2.5 py-1 text-xs font-bold shadow-lg bg-indigo-600/90 text-white border border-indigo-400/50 rounded-md">
+              <div className="px-2 py-0.5 text-[10px] leading-normal font-bold shadow bg-indigo-500 text-white border border-indigo-300 rounded-sm">
                 ZODIAC
               </div>
             )}
             {discountPercent && (
-              <div className="px-2.5 py-1 text-xs font-bold shadow-lg bg-emerald-600 text-white border border-emerald-400/50 rounded-md">
-                {discountPercent}% Off
+              <div className="px-2 py-0.5 text-[10px] leading-normal font-bold shadow bg-emerald-500 text-white border border-emerald-300 rounded-sm">
+                {discountPercent}% OFF
               </div>
             )}
           </div>
