@@ -122,6 +122,7 @@ import PerformanceDemoPage from "@/pages/PerformanceDemoPage";
 import ResponsiveDemo from "./pages/ResponsiveDemo";
 import ResponsiveDemo2 from "./pages/ResponsiveDemo2";
 import ContentAIDemo from "@/pages/ContentAIDemo";
+import ContentRecommendationsDemo from "@/pages/ContentRecommendationsDemo";
 
 // MainHeader is now included in MainLayout, no longer needed here
 
