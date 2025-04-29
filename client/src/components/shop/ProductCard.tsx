@@ -116,33 +116,37 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <Card className="overflow-hidden cosmic-glass-card cosmic-scale in relative h-full flex flex-col shadow-xl shadow-indigo-900/30">
       <div className="relative">
         <Link href={`/shop/product/${id}`}>
-          <div className="overflow-hidden aspect-square relative group cursor-pointer clip-path-octagon border-2 border-indigo-600/30">
-            {/* Glowing backdrop for product image */}
-            <div className="absolute inset-0 bg-gradient-radial from-indigo-600/20 via-purple-600/10 to-transparent z-0"></div>
-            
-            <img
-              src={image || getProductPlaceholderImage(name, description, categories)}
-              alt={name}
-              className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110 relative z-0"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.onerror = null; // Prevent infinite loops
-                target.src = getProductPlaceholderImage(name, description, categories);
-                console.log("Image error for product:", name, "Using fallback:", target.src);
-              }}
-            />
-            
-            {/* Enhanced lighting and contrast gradient for better visibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent opacity-80 z-10"></div>
-            
-            {/* Subtle glow effect on hover */}
-            <div className="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/10 transition-all duration-300 z-20"></div>
+          {/* Octagon clip path applied only to the image container, not affecting buttons */}
+          <div className="overflow-hidden aspect-square relative group cursor-pointer border-2 border-indigo-600/30 mx-auto" style={{ width: '85%' }}>
+            {/* Separate octagon shape inside the container */}
+            <div className="absolute inset-0 clip-path-octagon overflow-hidden">
+              {/* Glowing backdrop for product image */}
+              <div className="absolute inset-0 bg-gradient-radial from-indigo-600/20 via-purple-600/10 to-transparent z-0"></div>
+              
+              <img
+                src={image || getProductPlaceholderImage(name, description, categories)}
+                alt={name}
+                className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110 relative z-0"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null; // Prevent infinite loops
+                  target.src = getProductPlaceholderImage(name, description, categories);
+                  console.log("Image error for product:", name, "Using fallback:", target.src);
+                }}
+              />
+              
+              {/* Enhanced lighting and contrast gradient for better visibility */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent opacity-80 z-10"></div>
+              
+              {/* Subtle glow effect on hover */}
+              <div className="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/10 transition-all duration-300 z-20"></div>
+            </div>
           </div>
         </Link>
 
         {/* Redesigned badges with improved visibility and no clipping */}
         {(featured || isNew || discountPercent) && (
-          <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
+          <div className="absolute top-2 right-8 flex flex-col gap-2 z-30">
             {featured && (
               <div className="px-2.5 py-1 text-xs font-bold shadow-lg bg-amber-600 text-white border border-amber-400/50 rounded-md">
                 Bestseller
@@ -164,7 +168,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <Button
           size="icon"
           variant="secondary"
-          className="absolute top-3 left-3 h-8 w-8 rounded-full opacity-80 hover:opacity-100 cosmic-btn-icon cosmic-hover-glow shadow-md z-10"
+          className="absolute top-3 left-8 h-8 w-8 rounded-full opacity-80 hover:opacity-100 cosmic-btn-icon cosmic-hover-glow shadow-md z-30"
         >
           <Heart className="h-4 w-4" />
         </Button>
@@ -197,8 +201,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       <CardFooter className="p-4 pt-0 flex flex-col justify-between items-center gap-3 mt-auto">
         {/* Price and Rating section combined - makes better use of space */}
-        <div className="w-full flex items-center justify-between bg-indigo-950/60 backdrop-blur-sm py-2 px-4 rounded-lg border border-purple-500/20 shadow-inner">
-          <div className="flex-shrink-0">
+        <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between bg-indigo-950/60 backdrop-blur-sm py-2 px-4 rounded-lg border border-purple-500/20 shadow-inner">
+          <div className="flex-shrink-0 mb-1 sm:mb-0 w-full sm:w-auto">
             {discountedPrice ? (
               <div className="flex flex-col items-start">
                 <span className="text-white/60 line-through text-xs">
@@ -211,19 +215,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             )}
           </div>
           
-          {/* Star rating positioned next to price */}
-          <div className="flex items-center gap-1 flex-shrink-0">
+          {/* Star rating positioned next to price or below on smaller screens */}
+          <div className="flex items-center gap-1 flex-shrink-0 w-full sm:w-auto">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
             <span className="text-sm">{rating.toFixed(1)}</span>
-            <span className="text-xs text-white/70 ml-1">
+            <span className="text-xs text-white/70 ml-1 truncate">
               ({typeof product.reviews === 'number' ? product.reviews : '144'} reviews)
             </span>
           </div>
         </div>
         
-        {/* Product action buttons - stacked vertically to avoid clipping */}
-        <div className="flex flex-col w-full gap-2">
-          {/* Explore Button */}
+        {/* Product action buttons - with reduced horizontal padding to avoid clipping */}
+        <div className="flex flex-col w-full gap-2 px-4 md:px-8 max-w-[90%] mx-auto">
+          {/* Explore Button - reduced padding */}
           <Button
             size="sm"
             variant="outline"
@@ -234,7 +238,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             Explore
           </Button>
           
-          {/* Buy Now / Add to Cart Button */}
+          {/* Buy Now / Add to Cart Button - reduced padding */}
           <Button
             size="sm"
             className={cn(
