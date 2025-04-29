@@ -21,22 +21,45 @@ export default function SoundHealingPage() {
       {/* Cosmic Background */}
       <CosmicBackground opacity={0.5} color="blue" nebulaEffect={true} />
       
-      {/* Sacred geometry elements in page margins */}
+      {/* Sacred geometry elements throughout the page */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Left margin sacred geometry - one at top, one at bottom */}
-        <div className="absolute top-40 left-5 opacity-10 hidden md:block">
-          <SacredGeometry type="vesica-piscis" size={120} animate={true} />
+        {/* Left margin sacred geometry - multiple layers */}
+        <div className="absolute top-40 left-5 opacity-15 hidden md:block">
+          <SacredGeometry type="vesica-piscis" size={120} animate={true} color="rgba(100, 150, 255, 0.5)" />
+          <div className="absolute -left-10 -top-10">
+            <SacredGeometry type="flower-of-life" size={60} animate={true} color="rgba(120, 170, 255, 0.4)" />
+          </div>
         </div>
-        <div className="absolute bottom-40 left-5 opacity-10 hidden md:block">
-          <SacredGeometry type="sri-yantra" size={120} animate={true} />
+        <div className="absolute bottom-40 left-5 opacity-15 hidden md:block">
+          <SacredGeometry type="sri-yantra" size={120} animate={true} color="rgba(140, 90, 255, 0.5)" />
+          <div className="absolute -left-5 bottom-20">
+            <SacredGeometry type="seed-of-life" size={40} animate={true} color="rgba(160, 120, 255, 0.4)" />
+          </div>
         </div>
         
-        {/* Right margin sacred geometry - one at top, one at bottom */}
-        <div className="absolute top-40 right-5 opacity-10 hidden md:block">
-          <SacredGeometry type="hexagon" size={120} animate={true} />
+        {/* Right margin sacred geometry - multiple layers */}
+        <div className="absolute top-40 right-5 opacity-15 hidden md:block">
+          <SacredGeometry type="hexagon" size={120} animate={true} color="rgba(90, 140, 255, 0.5)" />
+          <div className="absolute right-10 top-20">
+            <SacredGeometry type="torus" size={50} animate={true} color="rgba(100, 180, 255, 0.4)" />
+          </div>
         </div>
-        <div className="absolute bottom-40 right-5 opacity-10 hidden md:block">
-          <SacredGeometry type="metatron-cube" size={120} animate={true} />
+        <div className="absolute bottom-40 right-5 opacity-15 hidden md:block">
+          <SacredGeometry type="metatron-cube" size={120} animate={true} color="rgba(110, 90, 255, 0.5)" />
+          <div className="absolute right-5 bottom-30">
+            <SacredGeometry type="tree-of-life" size={50} animate={true} color="rgba(120, 100, 255, 0.4)" />
+          </div>
+        </div>
+        
+        {/* Center floating sacred geometries */}
+        <div className="absolute left-1/2 top-1/4 transform -translate-x-1/2 opacity-10">
+          <SacredGeometry type="merkaba" size={200} animate={true} color="rgba(130, 100, 255, 0.15)" />
+        </div>
+        <div className="absolute left-1/4 top-2/3 transform -translate-x-1/2 opacity-8">
+          <SacredGeometry type="fibonacci-spiral" size={150} animate={true} color="rgba(80, 130, 255, 0.15)" rotationSpeed={0.2} />
+        </div>
+        <div className="absolute right-1/4 top-1/3 transform translate-x-1/2 opacity-8">
+          <SacredGeometry type="icosahedron" size={100} animate={true} color="rgba(150, 110, 255, 0.15)" rotationSpeed={0.15} />
         </div>
       </div>
       <div className="max-w-5xl mx-auto py-16 px-4 relative z-10">
@@ -291,22 +314,87 @@ export default function SoundHealingPage() {
           </div>
         </section>
         
+        {/* Frequency Visualization Section */}
+        <section className="mb-16 relative">
+          <div className="absolute -left-10 top-1/2 transform -translate-y-1/2 opacity-10 hidden lg:block">
+            <SacredGeometry type="fibonacci-spiral" size={180} animate={true} color="rgba(100, 150, 255, 0.4)" />
+          </div>
+          <div className="absolute -right-10 top-1/2 transform -translate-y-1/2 opacity-10 hidden lg:block">
+            <SacredGeometry type="flower-of-life" size={180} animate={true} color="rgba(140, 120, 255, 0.4)" />
+          </div>
+          
+          <h2 className="text-3xl font-semibold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300 flex items-center justify-center">
+            <Sparkles className="h-7 w-7 mr-3 text-blue-400" />
+            <span>Frequency Visualization</span>
+          </h2>
+          
+          <div className="bg-gradient-to-br from-blue-900/20 to-violet-900/20 border border-indigo-700/20 backdrop-blur-sm rounded-2xl p-8 mb-6 relative overflow-hidden">
+            <div className="absolute inset-0 opacity-5">
+              <SacredGeometry type="wave-circle" size={600} animate={true} color="rgba(255, 255, 255, 0.8)" />
+            </div>
+            <div className="relative z-10 grid md:grid-cols-4 gap-4 text-center">
+              <div className="p-4 bg-blue-900/30 rounded-xl border border-blue-800/30 backdrop-blur-sm">
+                <h3 className="text-blue-300 font-medium mb-2">432 Hz</h3>
+                <p className="text-blue-100/80 text-sm">Natural frequency that resonates with the universe</p>
+                <div className="mt-3 h-24 flex items-center justify-center">
+                  <SacredGeometry type="wave-pattern" size={100} animate={true} color="rgba(59, 130, 246, 0.6)" />
+                </div>
+              </div>
+              <div className="p-4 bg-indigo-900/30 rounded-xl border border-indigo-800/30 backdrop-blur-sm">
+                <h3 className="text-indigo-300 font-medium mb-2">528 Hz</h3>
+                <p className="text-blue-100/80 text-sm">The "Miracle Tone" - repairs DNA and brings transformation</p>
+                <div className="mt-3 h-24 flex items-center justify-center">
+                  <SacredGeometry type="sacred-spiral" size={100} animate={true} color="rgba(99, 102, 241, 0.6)" />
+                </div>
+              </div>
+              <div className="p-4 bg-violet-900/30 rounded-xl border border-violet-800/30 backdrop-blur-sm">
+                <h3 className="text-violet-300 font-medium mb-2">639 Hz</h3>
+                <p className="text-blue-100/80 text-sm">Enhances communication and harmonizes relationships</p>
+                <div className="mt-3 h-24 flex items-center justify-center">
+                  <SacredGeometry type="harmony-pattern" size={100} animate={true} color="rgba(139, 92, 246, 0.6)" />
+                </div>
+              </div>
+              <div className="p-4 bg-purple-900/30 rounded-xl border border-purple-800/30 backdrop-blur-sm">
+                <h3 className="text-purple-300 font-medium mb-2">852 Hz</h3>
+                <p className="text-blue-100/80 text-sm">Awakens intuition and returns spiritual order</p>
+                <div className="mt-3 h-24 flex items-center justify-center">
+                  <SacredGeometry type="merkaba" size={100} animate={true} color="rgba(168, 85, 247, 0.6)" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Call to Action */}
         <div className="text-center p-8 bg-gradient-to-br from-blue-900/20 to-indigo-900/20 rounded-2xl border border-blue-700/20 backdrop-blur-sm relative">
           <div className="absolute -top-5 -left-5 w-20 h-20 bg-blue-500/30 rounded-full blur-xl"></div>
           <div className="absolute -bottom-5 -right-5 w-20 h-20 bg-indigo-500/30 rounded-full blur-xl"></div>
           
-          <p className="text-xl max-w-3xl mx-auto mb-8 text-blue-100">
+          {/* Sacred geometry behind CTA text */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-5">
+            <SacredGeometry type="dodecahedron" size={300} animate={true} color="rgba(255, 255, 255, 0.8)" rotationSpeed={0.1} />
+          </div>
+          
+          <p className="text-xl max-w-3xl mx-auto mb-8 text-blue-100 relative z-10">
             Our music incorporates sound healing principles and specific frequencies to enhance your 
             well-being. Explore our tracks to experience the healing power of sound in your daily life.
           </p>
           
-          <Link href="/music-release">
-            <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border-none shadow-lg shadow-blue-900/30 text-white px-8 py-6">
-              <Music className="mr-2 h-5 w-5" />
-              Experience Our Healing Music
-            </Button>
-          </Link>
+          <div className="relative z-10">
+            <Link href="/music-release">
+              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border-none shadow-lg shadow-blue-900/30 text-white px-8 py-6">
+                <Music className="mr-2 h-5 w-5" />
+                Experience Our Healing Music
+              </Button>
+            </Link>
+          </div>
+          
+          {/* Animated sacred geometry circles */}
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 opacity-30 pointer-events-none flex space-x-2">
+            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" style={{ animationDuration: '1.5s' }}></div>
+            <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" style={{ animationDuration: '2s' }}></div>
+            <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" style={{ animationDuration: '2.5s' }}></div>
+          </div>
         </div>
       </div>
     </div>
