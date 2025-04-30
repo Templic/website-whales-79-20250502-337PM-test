@@ -86,7 +86,7 @@ export default function TourPage() {
               <SimpleTriangle className="w-full max-w-[350px] mx-auto">
                 <h3>Maui, HI - 2024</h3>
                 <p>"A magical sunset performance at the historic Lahaina venue."</p>
-                <button className="bg-blue-500 hover:bg-blue-700 text-white rounded">
+                <button className="bg-blue-500 hover:bg-blue-700 text-white rounded whitespace-nowrap px-4 py-2">
                   View Photos
                 </button>
               </SimpleTriangle>
@@ -97,7 +97,7 @@ export default function TourPage() {
               <SimpleStarburst className="w-full max-w-[350px] mx-auto">
                 <h3>Kauai, HI - 2023</h3>
                 <p>"An enchanting evening under the stars at Hanalei Bay."</p>
-                <button className="bg-purple-500 hover:bg-purple-700 text-white rounded">
+                <button className="bg-purple-500 hover:bg-purple-700 text-white rounded whitespace-nowrap px-4 py-2">
                   View Photos
                 </button>
               </SimpleStarburst>
@@ -116,7 +116,7 @@ export default function TourPage() {
           
           <div className="w-full max-w-5xl mx-auto bg-black/30 backdrop-blur-sm rounded-xl p-2" style={{ minHeight: '700px' }}>
             <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d4123443.7632127695!2d-167.91141362388457!3d22.40399147399387!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2sus!4v1682970147321!5m2!1sen!2sus"
+              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d2039937.8277222582!2d-158.39973539784665!3d20.90177456662921!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2sus!4v1682970147321!5m2!1sen!2sus"
               className="w-full h-full min-h-[650px] rounded-lg border-0"
               allowFullScreen
               loading="lazy"
