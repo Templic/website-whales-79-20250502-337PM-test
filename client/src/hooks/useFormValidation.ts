@@ -107,7 +107,8 @@ export function useFormValidation<T extends FieldValues>({
             }
             
             if (currentObj) {
-              acc[field.toString()] = currentObj;
+              // Use type assertion for index access
+              (acc as any)[field.toString()] = currentObj;
             }
             
             return acc;
@@ -135,7 +136,7 @@ export function useFormValidation<T extends FieldValues>({
                 field,
                 message: result,
                 code: 'custom',
-                severity: 'error',
+                severity: ValidationSeverity.ERROR,
                 context: ValidationContext.CLIENT,
                 path: [field]
               });
@@ -179,7 +180,7 @@ export function useFormValidation<T extends FieldValues>({
           field: 'form',
           message: 'An unexpected validation error occurred',
           code: 'unknown',
-          severity: 'error',
+          severity: ValidationSeverity.ERROR,
           context: ValidationContext.CLIENT
         }],
         ValidationContext.CLIENT

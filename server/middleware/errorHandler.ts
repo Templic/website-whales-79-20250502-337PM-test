@@ -284,7 +284,7 @@ export function errorHandler(
   );
   
   // Send the response
-  res.status(normalizedError.statusCode).json(normalizedError);
+  res.status(normalizedError.statusCode || 500).json(normalizedError);
 }
 
 /**

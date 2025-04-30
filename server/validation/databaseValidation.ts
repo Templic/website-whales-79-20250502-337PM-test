@@ -258,8 +258,8 @@ export function createDatabaseValidator<T extends object = any>(
           code: err.code,
           severity: ValidationSeverity.ERROR,
           context: ValidationContext.DATABASE,
-          path: err.path,
-          value: err.input
+          path: err.path.map(p => String(p)),
+          value: err.message ? err.message : undefined
         }));
         
         return createValidationResult(
@@ -324,13 +324,13 @@ export function createDatabaseValidator<T extends object = any>(
     /**
      * Safely execute a database query with validation
      */
-    return async <T>(
-      data: T,
-      operation: (db: PgDatabase<any>, validatedData: T) => Promise<R>
+    return async <U>(
+      data: U,
+      operation: (db: PgDatabase<any>, validatedData: U) => Promise<R>
     ): Promise<{ result?: R; validationResult: ValidationResult }> => {
-      // Wrap the operation
-      const wrappedOperation = withValidation((validatedData: T) => 
-        operation(db, validatedData)
+      // Wrap the operation with explicit type casting
+      const wrappedOperation = withValidation<R>((validatedData) => 
+        operation(db, validatedData as unknown as U)
       );
       
       // Execute with validation
