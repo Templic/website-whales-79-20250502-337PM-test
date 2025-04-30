@@ -58,7 +58,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, isBefore, isAfter, addDays } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarIcon, Clock, Calendar as CalendarIcon2, TimerOff, AlertCircle, Clock10 } from "lucide-react";
+import { CalendarIcon, Clock, Calendar as CalendarIcon2, TimerOff, AlertCircle, Clock10, EyeIcon } from "lucide-react";
 import { 
   Select,
   SelectContent,
@@ -69,6 +69,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import ContentPreview from "./ContentPreview";
 
 // Types
 interface ContentItem {
