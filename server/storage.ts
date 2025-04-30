@@ -38,7 +38,7 @@ import {
   // Content management tables
   contentItems, contentHistory, contentUsage, contentWorkflowHistory,
   // Theme system tables
-  themes, themeAnalytics,
+  themes, themeAnalytics, themeEvents,
   // New tables
   collaborationProposals, patrons, tourDates
 } from "../shared/schema";
@@ -239,6 +239,12 @@ export interface IStorage {
   getThemeAnalytics(themeId: number): Promise<ThemeAnalytic | null>;
   updateThemeAnalytics(themeId: number, data: Partial<InsertThemeAnalytic>): Promise<ThemeAnalytic>;
   recordThemeUsage(themeId: number, userId?: string): Promise<void>;
+  recordThemeEvent(event: { 
+    themeId: number;
+    eventType: string;
+    userId?: string;
+    metadata?: Record<string, any>;
+  }): Promise<void>;
   getThemeUsageReport(fromDate?: Date, toDate?: Date): Promise<{
     mostUsedThemes: Array<{ themeId: number; name: string; applications: number }>;
     topRatedThemes: Array<{ themeId: number; name: string; sentiment: number }>;

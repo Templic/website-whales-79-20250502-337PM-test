@@ -22,6 +22,7 @@ import StylesProvider from "@/components/common/StylesProvider";
 import FontLoader from "@/components/common/FontLoader";
 import { ThemeController } from "@/components/ui/ThemeController";
 import { OrientationProvider } from "./contexts/OrientationContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -110,6 +111,9 @@ const EditButtonPage = () => <EditButtonPageFC />;
 
 // TypeScript Error Management
 import TypeScriptErrorDashboard from "@/pages/admin/TypeScriptErrorDashboard";
+
+// Theme Pages
+import { ThemePage } from '@/pages/ThemePage';
 
 // Search Pages
 import SearchPage from "@/pages/SearchPage";

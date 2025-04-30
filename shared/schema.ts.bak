@@ -1503,3 +1503,43 @@ export const albumsRelations = relations(albums, ({ many }) => ({
 // ===================================================================
 // Theme System Insert Schemas and Types
 // ===================================================================
+
+// Theme insert schema
+export const insertThemeSchema = createInsertSchema(themes, {
+  // Optional fields with defaults
+  isPublic: z.boolean().default(false),
+  tokens: z.record(z.any()).optional().default({}),
+  tags: z.array(z.string()).optional().default([]),
+})
+.omit({ id: true, createdAt: true, updatedAt: true });
+
+// Theme analytics insert schema
+export const insertThemeAnalyticsSchema = createInsertSchema(themeAnalytics, {
+  // Optional fields with defaults
+  applications: z.number().default(0),
+  uniqueUsers: z.number().default(0),
+  totalEvents: z.number().default(0),
+  anonymousUsage: z.number().default(0),
+  eventCounts: z.record(z.number()).default({}),
+  rawAnalytics: z.array(z.any()).default([]),
+})
+.omit({ id: true, createdAt: true, updatedAt: true });
+
+// Theme event insert schema
+export const insertThemeEventSchema = createInsertSchema(themeEvents, {
+  metadata: z.record(z.any()).optional().default({}),
+})
+.omit({ id: true, createdAt: true });
+
+// Type definitions
+export type InsertTheme = z.infer<typeof insertThemeSchema>;
+export type Theme = typeof themes.$inferSelect;
+
+export type InsertThemeAnalytics = z.infer<typeof insertThemeAnalyticsSchema>;
+export type ThemeAnalytics = typeof themeAnalytics.$inferSelect;
+
+export type InsertThemeEvent = z.infer<typeof insertThemeEventSchema>;
+export type ThemeEvent = typeof themeEvents.$inferSelect;
+
+// Helper type for passing category to Theme creation
+export type ThemeCategory = 'light' | 'dark' | 'colorful' | 'monochrome' | 'accessible' | 'professional' | 'playful' | 'minimalist' | 'custom' | 'ai-generated';

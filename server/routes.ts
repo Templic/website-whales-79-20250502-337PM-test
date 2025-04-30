@@ -40,6 +40,7 @@ import typescriptErrorRoutes from './routes/typescript-error-routes';
 import typescriptErrorSimpleRoutes from './routes/typescript-error-simple-routes';
 import adminRoutes from './admin-routes';
 import aiThemeGeneratorRoutes from './routes/ai-theme-generator';
+import themeRoutes from './routes/theme-routes';
 import {
   insertSubscriberSchema,
   insertNewsletterSchema,
@@ -153,8 +154,8 @@ import notificationsRoutes from './routes/notifications';
 import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search/index';
 import csrfRoutes from './routes/csrf-routes';
-import themeRoutes from './routes/themes';
-import aiThemeGeneratorRoutes from './routes/ai-theme-generator';
+// Use our newly created themes routes
+import themeAPIRoutes from './routes/theme-routes';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 import { protectApiRoutes } from './security/apiRoutesProtector';
 
@@ -299,11 +300,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Use admin utilities routes
   app.use('/api/admin/utilities', isAuthenticated, adminRoutes);
   
-  // Use theme management routes
-  app.use('/api/themes', themeRoutes);
-  
-  // Use AI theme generator routes
-  app.use('/api/themes/ai', aiThemeGeneratorRoutes);
+  // Use our comprehensive theme management routes
+  app.use('/api/themes', themeAPIRoutes);
 
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', async (req, res) => {
