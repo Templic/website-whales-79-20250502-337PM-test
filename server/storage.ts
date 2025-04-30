@@ -231,9 +231,34 @@ export interface IStorage {
   getThemeById(id: number): Promise<Theme | null>;
   getThemesByUserId(userId: string): Promise<Theme[]>;
   getPublicThemes(): Promise<Theme[]>;
+  getThemesByParentId(parentId: number): Promise<Theme[]>;
+  getRelatedThemes(themeId: number, limit?: number): Promise<Theme[]>;
   createTheme(theme: InsertTheme): Promise<Theme>;
   updateTheme(id: number, theme: Partial<InsertTheme>): Promise<Theme>;
   deleteTheme(id: number): Promise<void>;
+  
+  // Theme version methods
+  createThemeVersion(themeId: number, data: { 
+    version: string; 
+    tokens: Record<string, any>; 
+    metadata?: Record<string, any>; 
+  }): Promise<any>;
+  getThemeVersions(themeId: number): Promise<any[]>;
+  getThemeVersion(themeId: number, versionId: number): Promise<any | null>;
+  
+  // Theme showcase methods
+  getThemeShowcase(options: {
+    category?: string;
+    tag?: string;
+    limit?: number;
+    offset?: number;
+    includeUsageStats?: boolean;
+    includePreviewImages?: boolean;
+  }): Promise<{
+    themes: Theme[];
+    totalCount: number;
+    hasMore: boolean;
+  }>;
   
   // Theme analytics methods
   getThemeAnalytics(themeId: number): Promise<ThemeAnalytic | null>;
@@ -241,6 +266,11 @@ export interface IStorage {
   recordThemeUsage(themeId: number, userId?: string): Promise<void>;
   recordThemeEvent(event: { 
     themeId: number;
+    eventType: string;
+    userId?: string;
+    metadata?: Record<string, any>;
+  }): Promise<void>;
+  recordSystemEvent(event: {
     eventType: string;
     userId?: string;
     metadata?: Record<string, any>;

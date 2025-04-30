@@ -155,7 +155,7 @@ import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search/index';
 import csrfRoutes from './routes/csrf-routes';
 // Use our newly created themes routes
-import themeAPIRoutes from './routes/theme-routes';
+import themeRoutes from './routes/theme-routes';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 import { protectApiRoutes } from './security/apiRoutesProtector';
 
@@ -301,7 +301,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.use('/api/admin/utilities', isAuthenticated, adminRoutes);
   
   // Use our comprehensive theme management routes
-  app.use('/api/themes', themeAPIRoutes);
+  app.use('/api/themes', themeRoutes);
 
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', async (req, res) => {

@@ -1,49 +1,70 @@
-import express from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { storage } from '../storage';
 import { z } from 'zod';
-import { insertThemeSchema } from '../../shared/schema';
-import { validateRequest } from '../middlewares/validation';
-import { Request, Response, NextFunction } from 'express';
+import { insertThemeSchema } from '@shared/schema';
 
-/**
- * Middleware to check if user has admin or super_admin privileges
- */
+const router = Router();
+
+// Middleware to check if user has admin or super_admin privileges
 const isAdminOrSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
-  const userRole = req.session?.user?.role;
-  if (userRole === 'admin' || userRole === 'super_admin') {
-    return next();
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Authentication required' });
   }
-  return res.status(403).json({ error: 'Unauthorized. Admin privileges required.' });
+  
+  if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+    return res.status(403).json({ error: 'Admin privileges required' });
+  }
+  
+  next();
 };
 
-/**
- * Middleware to check theme ownership or admin privileges
- * Admins can access any theme, regular users can only access their own
- */
+// Middleware to check theme ownership or admin privileges
+// Admins can access any theme, regular users can only access their own
 const isOwnerOrAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  
   const themeId = parseInt(req.params.id);
+  
   if (isNaN(themeId)) {
     return res.status(400).json({ error: 'Invalid theme ID' });
   }
   
-  const theme = await storage.getThemeById(themeId);
-  if (!theme) {
-    return res.status(404).json({ error: 'Theme not found' });
+  try {
+    const theme = await storage.getThemeById(themeId);
+    
+    if (!theme) {
+      return res.status(404).json({ error: 'Theme not found' });
+    }
+    
+    // Allow access if user is admin/super_admin or the theme owner
+    if (
+      req.user.role === 'admin' || 
+      req.user.role === 'super_admin' ||
+      theme.userId === req.user.id
+    ) {
+      return next();
+    }
+    
+    // If theme is not public and user is not owner/admin, deny access
+    if (!theme.isPublic) {
+      return res.status(403).json({ error: 'You do not have permission to access this theme' });
+    }
+    
+    // Allow read-only access to public themes
+    if (req.method === 'GET') {
+      return next();
+    }
+    
+    // Deny write access to non-owners
+    return res.status(403).json({ error: 'You do not have permission to modify this theme' });
+    
+  } catch (error) {
+    console.error('Error in isOwnerOrAdmin middleware:', error);
+    return res.status(500).json({ error: 'Server error' });
   }
-  
-  const userRole = req.session?.user?.role;
-  const userId = req.session?.user?.id;
-  
-  if (userRole === 'admin' || userRole === 'super_admin' || theme.userId === userId) {
-    // Set theme on request for later use
-    req.theme = theme;
-    return next();
-  }
-  
-  return res.status(403).json({ error: 'You do not have permission to access this theme' });
 };
-
-const router = express.Router();
 
 // Get all public themes
 router.get('/public', async (req, res) => {
@@ -52,298 +73,475 @@ router.get('/public', async (req, res) => {
     res.json(themes);
   } catch (error) {
     console.error('Error fetching public themes:', error);
-    res.status(500).json({ error: 'Failed to fetch public themes' });
+    res.status(500).json({ error: 'Error fetching themes' });
   }
 });
 
-// Get themes by user
-router.get('/user/:userId', async (req, res) => {
+// Get theme showcase with filters, pagination and stats
+router.get('/showcase', async (req, res) => {
   try {
-    const { userId } = req.params;
-    const themes = await storage.getThemesByUserId(userId);
+    const category = req.query.category as string;
+    const tag = req.query.tag as string;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+    const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+    const includeUsageStats = req.query.includeUsageStats !== 'false';
+    const includePreviewImages = req.query.includePreviewImages !== 'false';
+    
+    const result = await storage.getThemeShowcase({
+      category,
+      tag,
+      limit,
+      offset,
+      includeUsageStats,
+      includePreviewImages
+    });
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching theme showcase:', error);
+    res.status(500).json({ error: 'Error fetching theme showcase' });
+  }
+});
+
+// Get all theme categories
+router.get('/categories', async (req, res) => {
+  try {
+    // Extract unique categories from themes
+    const themes = await storage.getAllThemes();
+    const categories = new Set<string>();
+    
+    themes.forEach(theme => {
+      if (theme.metadata?.category) {
+        categories.add(theme.metadata.category);
+      }
+    });
+    
+    res.json(Array.from(categories));
+  } catch (error) {
+    console.error('Error fetching theme categories:', error);
+    res.status(500).json({ error: 'Error fetching theme categories' });
+  }
+});
+
+// Get all theme tags
+router.get('/tags', async (req, res) => {
+  try {
+    // Extract unique tags from themes
+    const themes = await storage.getAllThemes();
+    const tags = new Set<string>();
+    
+    themes.forEach(theme => {
+      if (theme.tags && Array.isArray(theme.tags)) {
+        theme.tags.forEach(tag => tags.add(tag));
+      }
+    });
+    
+    res.json(Array.from(tags));
+  } catch (error) {
+    console.error('Error fetching theme tags:', error);
+    res.status(500).json({ error: 'Error fetching theme tags' });
+  }
+});
+
+// Get all themes (admin only)
+router.get('/', isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const themes = await storage.getAllThemes();
     res.json(themes);
   } catch (error) {
-    console.error('Error fetching user themes:', error);
-    res.status(500).json({ error: 'Failed to fetch user themes' });
+    console.error('Error fetching all themes:', error);
+    res.status(500).json({ error: 'Error fetching themes' });
   }
 });
 
-// Get specific theme
+// Get user's themes
+router.get('/user', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  
+  try {
+    const themes = await storage.getThemesByUserId(req.user.id);
+    res.json(themes);
+  } catch (error) {
+    console.error(`Error fetching themes for user ${req.user.id}:`, error);
+    res.status(500).json({ error: 'Error fetching themes' });
+  }
+});
+
+// Get theme by ID
 router.get('/:id', async (req, res) => {
+  const themeId = parseInt(req.params.id);
+  
+  if (isNaN(themeId)) {
+    return res.status(400).json({ error: 'Invalid theme ID' });
+  }
+  
   try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid theme ID' });
-    }
+    const theme = await storage.getThemeById(themeId);
     
-    const theme = await storage.getThemeById(id);
     if (!theme) {
       return res.status(404).json({ error: 'Theme not found' });
     }
     
-    res.json(theme);
+    // Check if theme is public or user has access
+    if (
+      theme.isPublic || 
+      (req.isAuthenticated() && (
+        req.user.role === 'admin' || 
+        req.user.role === 'super_admin' ||
+        theme.userId === req.user.id
+      ))
+    ) {
+      return res.json(theme);
+    }
+    
+    // Otherwise, deny access
+    return res.status(403).json({ error: 'You do not have permission to access this theme' });
   } catch (error) {
-    console.error('Error fetching theme:', error);
-    res.status(500).json({ error: 'Failed to fetch theme' });
+    console.error(`Error fetching theme ${req.params.id}:`, error);
+    res.status(500).json({ error: 'Error fetching theme' });
   }
 });
 
-// Create new theme (admin only)
-router.post('/', isAdminOrSuperAdmin, validateRequest({
-  body: insertThemeSchema.extend({
-    userId: z.string().optional().nullable(),
-    tokens: z.record(z.any()),
-    tags: z.array(z.string()).default([]),
-    isPublic: z.boolean().default(false),
-    parentThemeId: z.number().optional().nullable(),
-    version: z.string().default('1.0.0')
-  })
-}), async (req, res) => {
+// Get child themes
+router.get('/:id/children', async (req, res) => {
+  const parentId = parseInt(req.params.id);
+  
+  if (isNaN(parentId)) {
+    return res.status(400).json({ error: 'Invalid parent theme ID' });
+  }
+  
   try {
-    // Set the creator's userId if not provided
-    if (!req.body.userId) {
-      req.body.userId = req.session?.user?.id;
-    }
-    
-    // If extending another theme, load its properties
-    if (req.body.parentThemeId) {
-      const parentTheme = await storage.getThemeById(req.body.parentThemeId);
-      if (!parentTheme) {
-        return res.status(404).json({ error: 'Parent theme not found' });
-      }
-      
-      // Merge tokens from parent theme if not explicitly provided
-      if (!req.body.tokens) {
-        req.body.tokens = parentTheme.tokens;
-      } else {
-        // Deep merge parent and child tokens
-        req.body.tokens = {
-          ...parentTheme.tokens,
-          ...req.body.tokens
-        };
-      }
-      
-      // Add inheritance information in metadata
-      req.body.metadata = {
-        ...(req.body.metadata || {}),
-        inheritance: {
-          parentId: parentTheme.id,
-          parentName: parentTheme.name,
-          inheritedAt: new Date(),
-        }
-      };
-    }
-    
-    const newTheme = await storage.createTheme(req.body);
-    
-    // Record theme creation event
-    await storage.recordThemeEvent({
-      themeId: newTheme.id,
-      eventType: 'theme_created',
-      userId: req.session?.user?.id,
-      metadata: { isPublic: newTheme.isPublic }
-    });
-    
-    res.status(201).json(newTheme);
+    const themes = await storage.getThemesByParentId(parentId);
+    res.json(themes);
   } catch (error) {
-    console.error('Error creating theme:', error);
-    res.status(500).json({ error: 'Failed to create theme' });
+    console.error(`Error fetching child themes for parent ${parentId}:`, error);
+    res.status(500).json({ error: 'Error fetching child themes' });
   }
 });
 
-// Update theme (restricted to admins or original creator)
-router.put('/:id', isOwnerOrAdmin, validateRequest({
-  body: insertThemeSchema.partial().extend({
-    tokens: z.record(z.any()).optional(),
-    tags: z.array(z.string()).optional(),
-    version: z.string().optional(),
-    metadata: z.record(z.any()).optional()
-  })
-}), async (req, res) => {
+// Get related themes
+router.get('/:id/related', async (req, res) => {
+  const themeId = parseInt(req.params.id);
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 5;
+  
+  if (isNaN(themeId)) {
+    return res.status(400).json({ error: 'Invalid theme ID' });
+  }
+  
   try {
-    const id = parseInt(req.params.id);
-    const theme = req.theme; // From middleware
+    const themes = await storage.getRelatedThemes(themeId, limit);
+    res.json(themes);
+  } catch (error) {
+    console.error(`Error fetching related themes for ${themeId}:`, error);
+    res.status(500).json({ error: 'Error fetching related themes' });
+  }
+});
+
+// Get theme versions
+router.get('/:id/versions', isOwnerOrAdmin, async (req, res) => {
+  const themeId = parseInt(req.params.id);
+  
+  if (isNaN(themeId)) {
+    return res.status(400).json({ error: 'Invalid theme ID' });
+  }
+  
+  try {
+    const versions = await storage.getThemeVersions(themeId);
+    res.json(versions);
+  } catch (error) {
+    console.error(`Error fetching versions for theme ${themeId}:`, error);
+    res.status(500).json({ error: 'Error fetching theme versions' });
+  }
+});
+
+// Get specific theme version
+router.get('/:id/versions/:versionId', isOwnerOrAdmin, async (req, res) => {
+  const themeId = parseInt(req.params.id);
+  const versionId = parseInt(req.params.versionId);
+  
+  if (isNaN(themeId) || isNaN(versionId)) {
+    return res.status(400).json({ error: 'Invalid ID' });
+  }
+  
+  try {
+    const version = await storage.getThemeVersion(themeId, versionId);
     
-    // Create a snapshot of the current theme before updating
-    await storage.createThemeVersion(id, {
-      version: theme.version,
-      tokens: theme.tokens,
+    if (!version) {
+      return res.status(404).json({ error: 'Version not found' });
+    }
+    
+    res.json(version);
+  } catch (error) {
+    console.error(`Error fetching version ${versionId} for theme ${themeId}:`, error);
+    res.status(500).json({ error: 'Error fetching theme version' });
+  }
+});
+
+// Restore theme to a specific version
+router.post('/:id/versions/:versionId/restore', isOwnerOrAdmin, async (req, res) => {
+  const themeId = parseInt(req.params.id);
+  const versionId = parseInt(req.params.versionId);
+  
+  if (isNaN(themeId) || isNaN(versionId)) {
+    return res.status(400).json({ error: 'Invalid ID' });
+  }
+  
+  try {
+    // Get the version to restore
+    const version = await storage.getThemeVersion(themeId, versionId);
+    
+    if (!version) {
+      return res.status(404).json({ error: 'Version not found' });
+    }
+    
+    // Get the current theme
+    const theme = await storage.getThemeById(themeId);
+    
+    if (!theme) {
+      return res.status(404).json({ error: 'Theme not found' });
+    }
+    
+    // Update the theme with the version's tokens
+    const updatedTheme = await storage.updateTheme(themeId, {
+      tokens: version.tokens,
+      version: version.version,
       metadata: {
-        ...(theme.metadata || {}),
-        snapshotAt: new Date(),
-        snapshotBy: req.session?.user?.id,
-        snapshotReason: req.body.metadata?.updateReason || 'regular_update'
+        ...theme.metadata,
+        restoredFrom: {
+          versionId: version.id,
+          version: version.version,
+          timestamp: new Date()
+        }
       }
     });
     
-    // Auto-increment version if significant changes are detected
-    if (req.body.tokens && Object.keys(req.body.tokens).length > 0) {
-      if (!req.body.version) {
-        // Increment version number (simple semver-like bump)
-        const currentVersion = theme.version || '1.0.0';
-        const [major, minor, patch] = currentVersion.split('.').map(v => parseInt(v));
-        req.body.version = `${major}.${minor}.${patch + 1}`;
-      }
-    }
-    
-    const updatedTheme = await storage.updateTheme(id, req.body);
-    
-    // Record theme update event
-    await storage.recordThemeEvent({
-      themeId: id,
-      eventType: 'theme_updated',
-      userId: req.session?.user?.id,
-      metadata: { 
-        oldVersion: theme.version,
-        newVersion: updatedTheme.version,
-        updateReason: req.body.metadata?.updateReason || 'general_update'
+    // Create a new version to record this restore operation
+    await storage.createThemeVersion(themeId, {
+      version: `${version.version}-restored`,
+      tokens: version.tokens,
+      metadata: {
+        restoredFrom: version.id,
+        restoredBy: req.user.id,
+        restoredAt: new Date(),
+        snapshotReason: `Restored from version ${version.version}`
       }
     });
     
-    res.json(updatedTheme);
+    res.json({
+      success: true,
+      theme: updatedTheme
+    });
   } catch (error) {
-    console.error('Error updating theme:', error);
-    res.status(500).json({ error: 'Failed to update theme' });
+    console.error(`Error restoring theme ${themeId} to version ${versionId}:`, error);
+    res.status(500).json({ error: 'Error restoring theme version' });
   }
 });
 
-// Delete theme
-router.delete('/:id', async (req, res) => {
+// Get theme analytics
+router.get('/:id/analytics', isOwnerOrAdmin, async (req, res) => {
+  const themeId = parseInt(req.params.id);
+  
+  if (isNaN(themeId)) {
+    return res.status(400).json({ error: 'Invalid theme ID' });
+  }
+  
   try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid theme ID' });
-    }
-    
-    const theme = await storage.getThemeById(id);
-    if (!theme) {
-      return res.status(404).json({ error: 'Theme not found' });
-    }
-    
-    // Check user ownership (except admins who can delete all themes)
-    const userRole = req.session?.user?.role || 'user';
-    const userId = req.session?.user?.id;
-    
-    if (userRole !== 'admin' && userRole !== 'super_admin' && theme.userId !== userId) {
-      return res.status(403).json({ error: 'You do not have permission to delete this theme' });
-    }
-    
-    await storage.deleteTheme(id);
-    res.status(204).send();
+    const analytics = await storage.getThemeAnalytics(themeId);
+    res.json(analytics || { themeId, applications: 0, views: 0 });
   } catch (error) {
-    console.error('Error deleting theme:', error);
-    res.status(500).json({ error: 'Failed to delete theme' });
+    console.error(`Error fetching analytics for theme ${themeId}:`, error);
+    res.status(500).json({ error: 'Error fetching theme analytics' });
   }
 });
 
 // Record theme usage
 router.post('/:id/usage', async (req, res) => {
+  const themeId = parseInt(req.params.id);
+  
+  if (isNaN(themeId)) {
+    return res.status(400).json({ error: 'Invalid theme ID' });
+  }
+  
   try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid theme ID' });
-    }
-    
-    const theme = await storage.getThemeById(id);
-    if (!theme) {
-      return res.status(404).json({ error: 'Theme not found' });
-    }
-    
-    const userId = req.session?.user?.id;
-    await storage.recordThemeUsage(id, userId);
-    
-    res.status(200).json({ success: true });
+    const userId = req.isAuthenticated() ? req.user.id : undefined;
+    await storage.recordThemeUsage(themeId, userId);
+    res.json({ success: true });
   } catch (error) {
-    console.error('Error recording theme usage:', error);
-    res.status(500).json({ error: 'Failed to record theme usage' });
+    console.error(`Error recording usage for theme ${themeId}:`, error);
+    res.status(500).json({ error: 'Error recording theme usage' });
   }
 });
 
-// Get theme analytics
-router.get('/:id/analytics', async (req, res) => {
+// Create a new theme (admin only)
+router.post('/', isAdminOrSuperAdmin, async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid theme ID' });
-    }
+    // Parse and validate request body
+    const themeData = insertThemeSchema.parse(req.body);
     
-    const theme = await storage.getThemeById(id);
-    if (!theme) {
-      return res.status(404).json({ error: 'Theme not found' });
-    }
+    // Set the current user as the theme creator
+    const themeWithUser = {
+      ...themeData,
+      userId: req.user.id
+    };
     
-    // Check if user has permission to see analytics
-    const userRole = req.session?.user?.role || 'user';
-    const userId = req.session?.user?.id;
+    // Create the theme
+    const newTheme = await storage.createTheme(themeWithUser);
     
-    if (userRole !== 'admin' && userRole !== 'super_admin' && theme.userId !== userId) {
-      return res.status(403).json({ error: 'You do not have permission to view analytics for this theme' });
-    }
-    
-    const analytics = await storage.getThemeAnalytics(id);
-    res.json(analytics);
-  } catch (error) {
-    console.error('Error fetching theme analytics:', error);
-    res.status(500).json({ error: 'Failed to fetch theme analytics' });
-  }
-});
-
-// Record theme event (for tracking different interactions)
-router.post('/:id/event', validateRequest({
-  body: z.object({
-    eventType: z.string(),
-    metadata: z.record(z.any()).optional()
-  })
-}), async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid theme ID' });
-    }
-    
-    const { eventType, metadata } = req.body;
-    const userId = req.session?.user?.id;
-    
-    await storage.recordThemeEvent({
-      themeId: id,
-      eventType,
-      userId,
-      metadata
+    // Create initial version
+    await storage.createThemeVersion(newTheme.id, {
+      version: newTheme.version || '1.0.0',
+      tokens: newTheme.tokens,
+      metadata: {
+        createdBy: req.user.id,
+        createdAt: new Date(),
+        snapshotReason: 'Initial creation'
+      }
     });
     
-    res.status(200).json({ success: true });
+    res.status(201).json(newTheme);
   } catch (error) {
-    console.error('Error recording theme event:', error);
-    res.status(500).json({ error: 'Failed to record theme event' });
+    console.error('Error creating theme:', error);
+    
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ 
+        error: 'Invalid theme data', 
+        details: error.errors 
+      });
+    }
+    
+    res.status(500).json({ error: 'Error creating theme' });
   }
 });
 
-// Get overall theme usage report (admin only)
-router.get('/reports/usage', async (req, res) => {
+// Update a theme
+router.put('/:id', isOwnerOrAdmin, async (req, res) => {
+  const themeId = parseInt(req.params.id);
+  
+  if (isNaN(themeId)) {
+    return res.status(400).json({ error: 'Invalid theme ID' });
+  }
+  
   try {
-    // Only allow admins to access this report
-    const userRole = req.session?.user?.role || 'user';
-    if (userRole !== 'admin' && userRole !== 'super_admin') {
-      return res.status(403).json({ error: 'You do not have permission to view usage reports' });
+    // Get current theme data
+    const currentTheme = await storage.getThemeById(themeId);
+    
+    if (!currentTheme) {
+      return res.status(404).json({ error: 'Theme not found' });
     }
     
-    // Parse date parameters
-    let fromDate: Date | undefined;
-    let toDate: Date | undefined;
+    // Check if tokens are changing
+    const tokensChanged = JSON.stringify(currentTheme.tokens) !== JSON.stringify(req.body.tokens);
     
-    if (req.query.from) {
-      fromDate = new Date(req.query.from as string);
+    // If tokens changed or version changed, create a version record
+    if (tokensChanged || currentTheme.version !== req.body.version) {
+      await storage.createThemeVersion(themeId, {
+        version: currentTheme.version,
+        tokens: currentTheme.tokens,
+        metadata: {
+          updatedBy: req.user.id,
+          updatedAt: new Date(),
+          snapshotReason: 'Pre-update snapshot'
+        }
+      });
     }
     
-    if (req.query.to) {
-      toDate = new Date(req.query.to as string);
+    // Update the theme
+    const updatedTheme = await storage.updateTheme(themeId, {
+      ...req.body,
+      updatedAt: new Date()
+    });
+    
+    res.json(updatedTheme);
+  } catch (error) {
+    console.error(`Error updating theme ${themeId}:`, error);
+    
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ 
+        error: 'Invalid theme data', 
+        details: error.errors 
+      });
     }
+    
+    res.status(500).json({ error: 'Error updating theme' });
+  }
+});
+
+// Delete a theme (soft delete by setting isArchived flag)
+router.delete('/:id', isOwnerOrAdmin, async (req, res) => {
+  const themeId = parseInt(req.params.id);
+  
+  if (isNaN(themeId)) {
+    return res.status(400).json({ error: 'Invalid theme ID' });
+  }
+  
+  try {
+    // Soft delete by updating isArchived flag
+    await storage.updateTheme(themeId, { 
+      isArchived: true,
+      metadata: {
+        archivedBy: req.user.id,
+        archivedAt: new Date()
+      }
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Error deleting theme ${themeId}:`, error);
+    res.status(500).json({ error: 'Error deleting theme' });
+  }
+});
+
+// Permanently delete a theme (super_admin only)
+router.delete('/:id/permanent', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  
+  if (req.user.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Super admin privileges required' });
+  }
+  
+  const themeId = parseInt(req.params.id);
+  
+  if (isNaN(themeId)) {
+    return res.status(400).json({ error: 'Invalid theme ID' });
+  }
+  
+  try {
+    // Record the deletion event before deleting
+    await storage.recordSystemEvent({
+      eventType: 'theme_permanently_deleted',
+      userId: req.user.id,
+      metadata: {
+        themeId,
+        deletedAt: new Date(),
+        reason: req.body.reason || 'Not specified'
+      }
+    });
+    
+    // Permanently delete the theme
+    await storage.deleteTheme(themeId);
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Error permanently deleting theme ${themeId}:`, error);
+    res.status(500).json({ error: 'Error permanently deleting theme' });
+  }
+});
+
+// Get usage report for all themes (admin only)
+router.get('/reports/usage', isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const fromDate = req.query.from ? new Date(req.query.from as string) : undefined;
+    const toDate = req.query.to ? new Date(req.query.to as string) : undefined;
     
     const report = await storage.getThemeUsageReport(fromDate, toDate);
     res.json(report);
   } catch (error) {
     console.error('Error generating theme usage report:', error);
-    res.status(500).json({ error: 'Failed to generate theme usage report' });
+    res.status(500).json({ error: 'Error generating theme usage report' });
   }
 });
 
