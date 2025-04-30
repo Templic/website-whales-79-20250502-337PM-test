@@ -1,283 +1,261 @@
-/**
- * Theme API Hook
- * 
- * This hook provides access to the theme management API endpoints:
- * - Fetch public themes
- * - Fetch user themes
- * - Create, update, delete themes
- * - Record theme usage
- * - Query theme history and versions
- */
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Theme, InsertTheme } from '../../shared/schema';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
-import type { Theme } from '../../shared/schema';
+// Type definitions for API responses
+interface ThemeStatsResponse {
+  totalThemes: number;
+  publicThemes: number;
+  privateThemes: number;
+  recentUsage: number;
+  topThemes: { id: number; name: string; count: number }[];
+}
+
+interface ThemeCategoryResponse {
+  name: string;
+  count: number;
+}
+
+interface ThemeTagResponse {
+  tag: string;
+  count: number;
+}
 
 export const useThemeAPI = () => {
-  // Query key constants
-  const QUERY_KEYS = {
-    PUBLIC_THEMES: '/api/themes/public',
-    USER_THEMES: (userId: string) => `/api/themes/user/${userId}`,
-    THEME: (id: number) => `/api/themes/${id}`,
-    THEME_HISTORY: (id: number) => `/api/themes/${id}/history`,
-    THEME_STATS: '/api/themes/stats',
-    THEME_CATEGORIES: '/api/themes/categories',
-    THEME_TAGS: '/api/themes/tags',
-  };
-
-  // Function to get public themes
-  const usePublicThemes = () => {
-    return useQuery({
-      queryKey: [QUERY_KEYS.PUBLIC_THEMES],
-      // The actual fetch is handled by the default queryFn in queryClient
+  const { toast } = useToast();
+  
+  // GET /api/themes
+  const useGetThemes = () => {
+    return useQuery({ 
+      queryKey: ['/api/themes'],
+      staleTime: 1000 * 60 * 5, // 5 minutes
     });
   };
-
-  // Function to get user themes
-  const useUserThemes = (userId: string) => {
-    return useQuery({
-      queryKey: [QUERY_KEYS.USER_THEMES(userId)],
-      enabled: !!userId, // Only run query if userId is available
+  
+  // GET /api/themes/:id
+  const useGetTheme = (id: number) => {
+    return useQuery({ 
+      queryKey: ['/api/themes', id],
+      enabled: !!id,
     });
   };
-
-  // Function to get a specific theme by ID
-  const useTheme = (id: number) => {
-    return useQuery({
-      queryKey: [QUERY_KEYS.THEME(id)],
-      enabled: id > 0, // Only run query if id is valid
+  
+  // GET /api/themes/stats
+  const useGetThemeStats = () => {
+    return useQuery<ThemeStatsResponse>({ 
+      queryKey: ['/api/themes/stats'],
+      staleTime: 1000 * 60 * 15, // 15 minutes
     });
   };
-
-  // Function to get theme history
-  const useThemeHistory = (id: number) => {
-    return useQuery({
-      queryKey: [QUERY_KEYS.THEME_HISTORY(id)],
-      enabled: id > 0, // Only run query if id is valid
+  
+  // GET /api/themes/categories
+  const useGetThemeCategories = () => {
+    return useQuery<ThemeCategoryResponse[]>({ 
+      queryKey: ['/api/themes/categories'],
+      staleTime: 1000 * 60 * 30, // 30 minutes
     });
   };
-
-  // Function to get theme stats
-  const useThemeStats = () => {
-    return useQuery({
-      queryKey: [QUERY_KEYS.THEME_STATS],
+  
+  // GET /api/themes/tags
+  const useGetThemeTags = () => {
+    return useQuery<ThemeTagResponse[]>({ 
+      queryKey: ['/api/themes/tags'],
+      staleTime: 1000 * 60 * 30, // 30 minutes
     });
   };
-
-  // Function to get theme categories
-  const useThemeCategories = () => {
-    return useQuery({
-      queryKey: [QUERY_KEYS.THEME_CATEGORIES],
+  
+  // GET /api/themes/:id/history
+  const useGetThemeHistory = (themeId: number) => {
+    return useQuery({ 
+      queryKey: ['/api/themes', themeId, 'history'],
+      enabled: !!themeId,
     });
   };
-
-  // Function to get theme tags
-  const useThemeTags = () => {
-    return useQuery({
-      queryKey: [QUERY_KEYS.THEME_TAGS],
-    });
-  };
-
-  // Function to create a new theme
+  
+  // POST /api/themes
   const useCreateTheme = () => {
     return useMutation({
-      mutationFn: async (theme: Omit<Theme, 'id' | 'createdAt' | 'updatedAt'>) => {
-        const response = await fetch('/api/themes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(theme),
-        });
-        
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Failed to create theme');
-        }
-        
-        return await response.json();
+      mutationFn: async (theme: InsertTheme) => {
+        const res = await apiRequest('POST', '/api/themes', theme);
+        return await res.json();
       },
       onSuccess: () => {
-        // Invalidate relevant queries to refresh data
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PUBLIC_THEMES] });
-        // Don't invalidate user themes yet since we don't know the ID
+        queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/themes/stats'] });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: 'Error',
+          description: `Failed to create theme: ${error.message}`,
+          variant: 'destructive',
+        });
       },
     });
   };
-
-  // Function to update a theme
+  
+  // PATCH /api/themes/:id
   const useUpdateTheme = () => {
     return useMutation({
       mutationFn: async (theme: Theme) => {
-        const response = await fetch(`/api/themes/${theme.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(theme),
-        });
-        
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Failed to update theme');
-        }
-        
-        return await response.json();
+        const res = await apiRequest('PATCH', `/api/themes/${theme.id}`, theme);
+        return await res.json();
       },
       onSuccess: (data) => {
-        // Invalidate relevant queries to refresh data
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PUBLIC_THEMES] });
-        if (data.userId) {
-          queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER_THEMES(data.userId)] });
-        }
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.THEME(data.id)] });
+        queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/themes', data.id] });
+        queryClient.invalidateQueries({ queryKey: ['/api/themes/stats'] });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: 'Error',
+          description: `Failed to update theme: ${error.message}`,
+          variant: 'destructive',
+        });
       },
     });
   };
-
-  // Function to delete a theme
+  
+  // DELETE /api/themes/:id
   const useDeleteTheme = () => {
     return useMutation({
       mutationFn: async (themeId: number) => {
-        const response = await fetch(`/api/themes/${themeId}`, {
-          method: 'DELETE',
-        });
-        
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Failed to delete theme');
-        }
-        
-        return themeId;
+        await apiRequest('DELETE', `/api/themes/${themeId}`);
       },
-      onSuccess: (themeId) => {
-        // Invalidate relevant queries to refresh data
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PUBLIC_THEMES] });
-        // User ID is not available here, so we'll use a prefix match
-        queryClient.invalidateQueries({ 
-          predicate: (query) => {
-            const queryKey = query.queryKey.join('/');
-            return queryKey.includes('/api/themes/user/');
-          }
+      onSuccess: (_, themeId) => {
+        queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/themes', themeId] });
+        queryClient.invalidateQueries({ queryKey: ['/api/themes/stats'] });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: 'Error',
+          description: `Failed to delete theme: ${error.message}`,
+          variant: 'destructive',
         });
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.THEME(themeId)] });
       },
     });
   };
-
-  // Function to clone a theme
+  
+  // POST /api/themes/:id/clone
   const useCloneTheme = () => {
     return useMutation({
-      mutationFn: async ({ id, name }: { id: number, name: string }) => {
-        const response = await fetch(`/api/themes/${id}/clone`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name }),
-        });
-        
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Failed to clone theme');
-        }
-        
-        return await response.json();
+      mutationFn: async ({ id, name }: { id: number; name?: string }) => {
+        const res = await apiRequest('POST', `/api/themes/${id}/clone`, { name });
+        return await res.json();
       },
       onSuccess: () => {
-        // Invalidate relevant queries to refresh data
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PUBLIC_THEMES] });
-        // User ID is not available here, so we'll use a prefix match
-        queryClient.invalidateQueries({ 
-          predicate: (query) => {
-            const queryKey = query.queryKey.join('/');
-            return queryKey.includes('/api/themes/user/');
-          }
+        queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/themes/stats'] });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: 'Error',
+          description: `Failed to clone theme: ${error.message}`,
+          variant: 'destructive',
         });
       },
     });
   };
-
-  // Function to publish a theme
+  
+  // POST /api/themes/:id/publish
   const usePublishTheme = () => {
     return useMutation({
       mutationFn: async (themeId: number) => {
-        const response = await fetch(`/api/themes/${themeId}/publish`, {
-          method: 'PUT',
-        });
-        
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Failed to publish theme');
-        }
-        
-        return await response.json();
+        const res = await apiRequest('POST', `/api/themes/${themeId}/publish`);
+        return await res.json();
       },
       onSuccess: (data) => {
-        // Invalidate relevant queries to refresh data
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PUBLIC_THEMES] });
-        if (data.userId) {
-          queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER_THEMES(data.userId)] });
-        }
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.THEME(data.id)] });
+        queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/themes', data.id] });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: 'Error',
+          description: `Failed to publish theme: ${error.message}`,
+          variant: 'destructive',
+        });
       },
     });
   };
-
-  // Function to unpublish a theme
+  
+  // POST /api/themes/:id/unpublish
   const useUnpublishTheme = () => {
     return useMutation({
       mutationFn: async (themeId: number) => {
-        const response = await fetch(`/api/themes/${themeId}/unpublish`, {
-          method: 'PUT',
-        });
-        
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Failed to unpublish theme');
-        }
-        
-        return await response.json();
+        const res = await apiRequest('POST', `/api/themes/${themeId}/unpublish`);
+        return await res.json();
       },
       onSuccess: (data) => {
-        // Invalidate relevant queries to refresh data
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PUBLIC_THEMES] });
-        if (data.userId) {
-          queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER_THEMES(data.userId)] });
-        }
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.THEME(data.id)] });
+        queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/themes', data.id] });
       },
-    });
-  };
-
-  // Function to record theme usage
-  const useRecordThemeUsage = () => {
-    return useMutation({
-      mutationFn: async (themeId: number) => {
-        const response = await fetch(`/api/themes/${themeId}/record-usage`, {
-          method: 'POST',
+      onError: (error: Error) => {
+        toast({
+          title: 'Error',
+          description: `Failed to unpublish theme: ${error.message}`,
+          variant: 'destructive',
         });
-        
-        if (!response.ok) {
-          // Don't throw for recording usage - just log and continue
-          console.error('Failed to record theme usage');
-        }
-        
-        return themeId;
       },
-      // No invalidation needed since stats are periodically fetched
     });
   };
-
-  // Return all the hooks
+  
+  // POST /api/themes/generate
+  const useGenerateTheme = () => {
+    return useMutation({
+      mutationFn: async (prompt: string) => {
+        const res = await apiRequest('POST', '/api/themes/generate', { prompt });
+        return await res.json();
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: 'Error',
+          description: `Failed to generate theme: ${error.message}`,
+          variant: 'destructive',
+        });
+      },
+    });
+  };
+  
+  // POST /api/themes/:id/versions/:historyId/restore
+  const useRestoreThemeVersion = () => {
+    return useMutation({
+      mutationFn: async ({ themeId, historyId }: { themeId: number; historyId: number }) => {
+        const res = await apiRequest('POST', `/api/themes/${themeId}/versions/${historyId}/restore`);
+        return await res.json();
+      },
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/themes', data.id] });
+        queryClient.invalidateQueries({ queryKey: ['/api/themes', data.id, 'history'] });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: 'Error',
+          description: `Failed to restore theme version: ${error.message}`,
+          variant: 'destructive',
+        });
+      },
+    });
+  };
+  
   return {
-    usePublicThemes,
-    useUserThemes,
-    useTheme,
-    useThemeHistory,
-    useThemeStats,
-    useThemeCategories,
-    useThemeTags,
+    useGetThemes,
+    useGetTheme,
+    useGetThemeStats,
+    useGetThemeCategories,
+    useGetThemeTags,
+    useGetThemeHistory,
     useCreateTheme,
     useUpdateTheme,
     useDeleteTheme,
     useCloneTheme,
     usePublishTheme,
     useUnpublishTheme,
-    useRecordThemeUsage,
+    useGenerateTheme,
+    useRestoreThemeVersion,
   };
 };

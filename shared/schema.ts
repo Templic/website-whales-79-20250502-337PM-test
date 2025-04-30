@@ -1059,6 +1059,29 @@ export const insertThemeEventSchema = createInsertSchema(themeEvents, {
   createdAt: true,
 });
 
+// Theme version insert schema
+export const insertThemeVersionSchema = createInsertSchema(themeVersions, {
+  tokens: z.record(z.any()).optional().default({}),
+  metadata: z.record(z.any()).optional().default({}),
+}).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Theme history insert schema
+export const insertThemeHistorySchema = createInsertSchema(themeHistories, {
+  changes: z.record(z.any()).optional().default({}),
+}).omit({
+  id: true,
+  timestamp: true,
+});
+
+// Theme usage insert schema
+export const insertThemeUsageSchema = createInsertSchema(themeUsage).omit({
+  id: true,
+  timestamp: true,
+});
+
 export const insertPatronSchema = createInsertSchema(patrons).omit({
   id: true,
   createdAt: true,
@@ -1168,6 +1191,15 @@ export type InsertThemeAnalytic = z.infer<typeof insertThemeAnalyticsSchema>;
 
 export type ThemeEvent = typeof themeEvents.$inferSelect;
 export type InsertThemeEvent = z.infer<typeof insertThemeEventSchema>;
+
+export type ThemeVersion = typeof themeVersions.$inferSelect;
+export type InsertThemeVersion = z.infer<typeof insertThemeVersionSchema>;
+
+export type ThemeHistory = typeof themeHistories.$inferSelect;
+export type InsertThemeHistory = z.infer<typeof insertThemeHistorySchema>;
+
+export type ThemeUsage = typeof themeUsage.$inferSelect;
+export type InsertThemeUsage = z.infer<typeof insertThemeUsageSchema>;
 
 // Helper type for passing category to Theme creation
 export type ThemeCategory = 'light' | 'dark' | 'colorful' | 'monochrome' | 'accessible' | 'professional' | 'playful' | 'minimalist' | 'custom' | 'ai-generated';
