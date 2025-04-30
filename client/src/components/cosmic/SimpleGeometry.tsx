@@ -188,11 +188,12 @@ export function SimpleTriangle({
         clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
         backgroundColor: "rgba(0, 0, 0, 0.4)",
         boxShadow: `0 0 15px ${glowColor}`,
-        border: "1px solid rgba(255, 255, 255, 0.1)"
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        zIndex: 1 // Ensure base container has explicit z-index
       }}
     >
       {/* Background pattern */}
-      <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0 opacity-10" style={{ zIndex: -1 }}>
         <svg
           width="100%"
           height="100%"
@@ -427,11 +428,12 @@ export function SimpleInvertedTriangle({
         clipPath: "polygon(0% 0%, 100% 0%, 50% 100%)",
         backgroundColor: "rgba(0, 0, 0, 0.4)",
         boxShadow: `0 0 15px ${glowColor}`,
-        border: "1px solid rgba(255, 255, 255, 0.1)"
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        zIndex: 1 // Ensure base container has explicit z-index
       }}
     >
       {/* Background pattern */}
-      <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0 opacity-10" style={{ zIndex: -1 }}>
         <svg
           width="100%"
           height="100%"
@@ -632,11 +634,12 @@ export function SimpleHexagon({
         clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
         backgroundColor: "rgba(0, 0, 0, 0.4)",
         boxShadow: `0 0 15px ${glowColor}`,
-        border: "1px solid rgba(255, 255, 255, 0.1)"
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        zIndex: 1 // Ensure base container has explicit z-index
       }}
     >
       {/* Background pattern */}
-      <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0 opacity-10" style={{ zIndex: -1 }}>
         <svg
           width="100%"
           height="100%"
@@ -844,11 +847,12 @@ export function SimpleOctagon({
         clipPath: "polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)",
         backgroundColor: "rgba(0, 0, 0, 0.4)",
         boxShadow: `0 0 15px ${glowColor}`,
-        border: "1px solid rgba(255, 255, 255, 0.1)"
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        zIndex: 1 // Ensure base container has explicit z-index
       }}
     >
       {/* Background pattern */}
-      <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0 opacity-10" style={{ zIndex: -1 }}>
         <svg
           width="100%"
           height="100%"
@@ -1058,11 +1062,12 @@ export function SimpleStarburst({
           clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
           backgroundColor: "rgba(0, 0, 0, 0.4)",
           boxShadow: `0 0 15px ${glowColor}`,
-          border: "1px solid rgba(255, 255, 255, 0.1)"
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          zIndex: -1 // Ensure star shape stays behind content
         }}
       >
         {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 opacity-10" style={{ zIndex: -2 }}>
           <svg
             width="100%"
             height="100%"

@@ -609,7 +609,7 @@ export function SacredGeometry({
   }
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("relative", className)} style={{ zIndex: 0 }}>
       {/* Canvas */}
       <div 
         className="relative aspect-square"
@@ -618,6 +618,7 @@ export function SacredGeometry({
         <canvas
           ref={canvasRef}
           className="w-full h-full"
+          style={{ zIndex: -1 }}
         />
         
         {isRendering && (
