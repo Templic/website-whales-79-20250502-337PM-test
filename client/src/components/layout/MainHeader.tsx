@@ -29,7 +29,10 @@ import {
   MessageSquare,
   Users,
   Heart,
-  Mail
+  Mail,
+  ArrowLeft,
+  ArrowRight,
+  RotateCw
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAccessibility } from "@/contexts/AccessibilityContext";
@@ -398,16 +401,44 @@ export function MainHeader() {
 
             {/* Search, Theme & User */}
             <div className="hidden md:flex items-center space-x-4">
-              <form onSubmit={handleSearchSubmit} className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-[140px] lg:w-[200px] px-3 py-2 bg-black/30 text-white placeholder:text-gray-400 border border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
-                />
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-              </form>
+              <div className="flex flex-col space-y-2">
+                <form onSubmit={handleSearchSubmit} className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-[140px] lg:w-[200px] px-3 py-2 bg-black/30 text-white placeholder:text-gray-400 border border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                  />
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                </form>
+                <div className="flex space-x-2 justify-center">
+                  <button 
+                    onClick={() => window.history.back()}
+                    className="p-1 bg-black/30 border border-white/10 rounded-md hover:bg-white/10 transition-colors"
+                    aria-label="Go back"
+                    title="Go back"
+                  >
+                    <ArrowLeft size={16} className="text-white/70" />
+                  </button>
+                  <button 
+                    onClick={() => window.history.forward()}
+                    className="p-1 bg-black/30 border border-white/10 rounded-md hover:bg-white/10 transition-colors"
+                    aria-label="Go forward"
+                    title="Go forward"
+                  >
+                    <ArrowRight size={16} className="text-white/70" />
+                  </button>
+                  <button 
+                    onClick={() => window.location.reload()}
+                    className="p-1 bg-black/30 border border-white/10 rounded-md hover:bg-white/10 transition-colors"
+                    aria-label="Reload page"
+                    title="Reload page"
+                  >
+                    <RotateCw size={16} className="text-white/70" />
+                  </button>
+                </div>
+              </div>
               
               {/* Theme Toggle removed - now managed in MainLayout */}
               <div className="flex items-center">
@@ -758,6 +789,34 @@ export function MainHeader() {
                       Search
                     </button>
                   </form>
+                  
+                  {/* Mobile Navigation Controls */}
+                  <div className="flex justify-between mt-4 bg-black/30 rounded-md p-2 border border-white/10">
+                    <button 
+                      onClick={() => window.history.back()}
+                      className="p-2 rounded-md hover:bg-white/10 transition-colors flex flex-col items-center"
+                      aria-label="Go back"
+                    >
+                      <ArrowLeft size={18} className="text-white/70 mb-1" />
+                      <span className="text-xs text-white/70">Back</span>
+                    </button>
+                    <button 
+                      onClick={() => window.history.forward()}
+                      className="p-2 rounded-md hover:bg-white/10 transition-colors flex flex-col items-center"
+                      aria-label="Go forward"
+                    >
+                      <ArrowRight size={18} className="text-white/70 mb-1" />
+                      <span className="text-xs text-white/70">Forward</span>
+                    </button>
+                    <button 
+                      onClick={() => window.location.reload()}
+                      className="p-2 rounded-md hover:bg-white/10 transition-colors flex flex-col items-center"
+                      aria-label="Reload page"
+                    >
+                      <RotateCw size={18} className="text-white/70 mb-1" />
+                      <span className="text-xs text-white/70">Reload</span>
+                    </button>
+                  </div>
 
                   {/* Mobile Auth Buttons */}
                   <div className="mt-8 space-y-4">

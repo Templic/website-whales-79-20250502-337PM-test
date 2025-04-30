@@ -42,13 +42,8 @@ export default function TourPage() {
               <SimpleHexagon className="w-full max-w-[350px] mx-auto">
                 <h3>Honolulu, HI</h3>
                 <p>Date: August 15, 2025<br/>Venue: Waikiki Beach Shell</p>
-                <button className="bg-red-500 hover:bg-red-700 text-white rounded relative overflow-hidden whitespace-nowrap px-4 py-2 min-w-[100px]">
-                  <span className="relative z-10">Sold Out</span>
-                  <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
-                    <span className="absolute -rotate-12 border-2 border-white text-white px-1 py-0.5 text-xs font-bold rounded whitespace-nowrap">
-                      SOLD OUT
-                    </span>
-                  </div>
+                <button className="bg-red-500 hover:bg-red-700 text-white rounded whitespace-nowrap px-4 py-2 min-w-[100px]">
+                  Sold Out
                 </button>
               </SimpleHexagon>
             </div>
@@ -58,13 +53,8 @@ export default function TourPage() {
               <SimpleOctagon className="w-full max-w-[350px] mx-auto">
                 <h3>Big Island, HI</h3>
                 <p>Date: September 10, 2025<br/>Venue: Hilo Bay Concert Hall</p>
-                <button className="bg-red-500 hover:bg-red-700 text-white rounded relative overflow-hidden whitespace-nowrap px-4 py-2 min-w-[100px]">
-                  <span className="relative z-10">Sold Out</span>
-                  <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
-                    <span className="absolute -rotate-12 border-2 border-white text-white px-1 py-0.5 text-xs font-bold rounded whitespace-nowrap">
-                      SOLD OUT
-                    </span>
-                  </div>
+                <button className="bg-red-500 hover:bg-red-700 text-white rounded whitespace-nowrap px-4 py-2 min-w-[100px]">
+                  Sold Out
                 </button>
               </SimpleOctagon>
             </div>
@@ -116,7 +106,7 @@ export default function TourPage() {
           
           <div className="w-full max-w-5xl mx-auto bg-black/30 backdrop-blur-sm rounded-xl p-2" style={{ minHeight: '700px' }}>
             <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d2039937.8277222582!2d-158.39973539784665!3d20.90177456662921!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2sus!4v1682970147321!5m2!1sen!2sus"
+              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d2663525.3112356835!2d-161.67382492051866!3d21.476153723897597!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2sus!4v1682970147321!5m2!1sen!2sus"
               className="w-full h-full min-h-[650px] rounded-lg border-0"
               allowFullScreen
               loading="lazy"
