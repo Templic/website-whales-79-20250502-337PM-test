@@ -113,7 +113,7 @@ const EditButtonPage = () => <EditButtonPageFC />;
 import TypeScriptErrorDashboard from "@/pages/admin/TypeScriptErrorDashboard";
 
 // Theme Pages
-import { ThemePage } from '@/pages/ThemePage';
+import ThemePage from '@/pages/ThemePage';
 
 // Search Pages
 import SearchPage from "@/pages/SearchPage";
@@ -230,6 +230,10 @@ function AppRouter() {
           <Route path="/resources/sacred-geometry" component={SacredGeometryPage} />
           <Route path="/resources/sound-healing" component={SoundHealingPage} />
           <Route path="/resources/meditation" component={MeditationTechniquesPage} />
+          
+          {/* Theme Management */}
+          <Route path="/themes" component={ThemePage} />
+          <ProtectedRoute path="/admin/themes" component={ThemePage} requiredRole="admin" />
           
           {/* Legal & Info */}
           <Route path="/sitemap" component={SitemapPage} />

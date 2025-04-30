@@ -234,10 +234,11 @@ export const themes = pgTable('themes', {
   name: varchar('name', { length: 100 }).notNull(),
   description: text('description'),
   userId: varchar('user_id', { length: 255 }).references(() => users.id),
+  parentThemeId: integer('parent_theme_id'),
   primaryColor: varchar('primary_color', { length: 50 }),
   accentColor: varchar('accent_color', { length: 50 }),
   backgroundColor: varchar('background_color', { length: 50 }),
-  foregroundColor: varchar('foreground_color', { length: 50 }),
+  textColor: varchar('text_color', { length: 50 }).default('#111827'),
   fontFamily: varchar('font_family', { length: 255 }),
   borderRadius: varchar('border_radius', { length: 20 }),
   isPublic: boolean('is_public').default(false),
@@ -245,6 +246,35 @@ export const themes = pgTable('themes', {
   tags: text('tags').array(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Theme versions table - for tracking all versions of a theme
+export const themeVersions = pgTable('theme_versions', {
+  id: serial('id').primaryKey(),
+  themeId: integer('theme_id').references(() => themes.id).notNull(),
+  version: varchar('version', { length: 20 }).notNull(),
+  tokens: json('tokens').$type<Record<string, any>>(),
+  metadata: json('metadata').$type<Record<string, any>>(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Theme histories table - for tracking all changes made to a theme
+export const themeHistories = pgTable('theme_histories', {
+  id: serial('id').primaryKey(),
+  themeId: integer('theme_id').references(() => themes.id).notNull(),
+  action: varchar('action', { length: 50 }).notNull(),
+  version: varchar('version', { length: 20 }),
+  userId: varchar('user_id', { length: 255 }).references(() => users.id),
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
+  changes: json('changes').$type<Record<string, any>>(),
+});
+
+// Theme usage table - for tracking when themes are used
+export const themeUsage = pgTable('theme_usage', {
+  id: serial('id').primaryKey(),
+  themeId: integer('theme_id').references(() => themes.id).notNull(),
+  userId: varchar('user_id', { length: 255 }).references(() => users.id),
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
 });
 
 // Theme analytics table
@@ -496,12 +526,54 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
 }));
 
 // Theme system relations
+// Parent theme ID field is already defined in the original themes table
+// We'll handle the relation in the themesRelations object
+
 export const themesRelations = relations(themes, ({ one, many }) => ({
   user: one(users, {
     fields: [themes.userId],
     references: [users.id]
   }),
-  analytics: many(themeAnalytics)
+  analytics: many(themeAnalytics),
+  versions: many(themeVersions),
+  histories: many(themeHistories),
+  usages: many(themeUsage),
+  parent: one(themes, {
+    fields: [themes.parentThemeId],
+    references: [themes.id]
+  }),
+  children: many(themes, {
+    relationName: "parentChild"
+  })
+}));
+
+export const themeVersionsRelations = relations(themeVersions, ({ one }) => ({
+  theme: one(themes, {
+    fields: [themeVersions.themeId],
+    references: [themes.id]
+  })
+}));
+
+export const themeHistoriesRelations = relations(themeHistories, ({ one }) => ({
+  theme: one(themes, {
+    fields: [themeHistories.themeId],
+    references: [themes.id]
+  }),
+  user: one(users, {
+    fields: [themeHistories.userId],
+    references: [users.id]
+  })
+}));
+
+export const themeUsageRelations = relations(themeUsage, ({ one }) => ({
+  theme: one(themes, {
+    fields: [themeUsage.themeId],
+    references: [themes.id]
+  }),
+  user: one(users, {
+    fields: [themeUsage.userId],
+    references: [users.id]
+  })
 }));
 
 export const themeAnalyticsRelations = relations(themeAnalytics, ({ one }) => ({
