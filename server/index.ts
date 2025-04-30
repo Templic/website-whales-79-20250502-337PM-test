@@ -14,6 +14,7 @@ import { runDeferredSecurityScan } from './securityScan';
 import { enableMaximumSecurity } from './security/enableMaximumSecurity';
 import { scheduleIntelligentMaintenance } from './db-maintenance';
 import { loadConfig, getEnabledFeatures, config } from './config';
+import { runMigrations } from './run-migrations.js';
 import { initBackgroundServices, stopBackgroundServices } from './background-services';
 import expressSession from 'express-session';
 import cookieParser from 'cookie-parser';
@@ -62,6 +63,16 @@ async function initializeServer() {
     await initializeDatabase();
     const dbConnectTime = Date.now() - dbStartTime;
     log(`Database connected in ${dbConnectTime}ms`, 'server');
+    
+    // Run database migrations
+    try {
+      log('Running database migrations...', 'server');
+      await runMigrations();
+      log('Database migrations completed successfully', 'server');
+    } catch (migrationError) {
+      log(`Error running migrations: ${migrationError}`, 'server');
+      console.error('Migration error:', migrationError);
+    }
 
     // === STAGE 2: Core Server Components ===
     // Basic middleware

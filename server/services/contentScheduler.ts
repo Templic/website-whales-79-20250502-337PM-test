@@ -195,14 +195,13 @@ export async function runContentScheduler() {
                 contentId: item.id,
                 contentTitle: item.title,
                 message: `Failed to automatically publish content "${item.title}" after ${retryCount} attempt(s). Manual intervention required.`,
-                actionRequired: true,
-                severity: 'high'
+                actionRequired: true
               });
               
               // Also notify content creator
               if (item.createdBy) {
                 await sendNotification({
-                  type: 'content_publication_failed',
+                  type: 'system_message',
                   userId: item.createdBy,
                   contentId: item.id,
                   contentTitle: item.title,
