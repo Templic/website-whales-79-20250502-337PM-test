@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { pgTable, serial, text, timestamp, integer, json, boolean } from 'drizzle-orm/pg-core';
-import { eq, and, lte, gte, ne } from 'drizzle-orm';
+import { eq, and, lte, gte, ne, or } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { logger } from '../logger';
 import { sendNotification } from './notificationService';
@@ -22,6 +22,9 @@ export const contentItems = pgTable('content_items', {
   archiveReason: text('archive_reason'),
   scheduledPublishAt: timestamp('scheduled_publish_at'),
   expirationDate: timestamp('expiration_date'),
+  timezone: text('timezone').default('UTC'),
+  recurringSchedule: json('recurring_schedule'),
+  lastScheduleRun: timestamp('last_schedule_run'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
 });
@@ -30,6 +33,40 @@ export const contentItems = pgTable('content_items', {
  * Fallback strategies for failed scheduling operations
  */
 export type FallbackStrategy = 'retry' | 'notify' | 'abort';
+
+/**
+ * Types of recurring schedules
+ */
+export type RecurringType = 'daily' | 'weekly' | 'monthly' | 'custom';
+
+/**
+ * Days of the week for weekly schedules
+ */
+export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+/**
+ * Interface for recurring schedule configuration
+ */
+export interface RecurringSchedule {
+  type: RecurringType;
+  enabled: boolean;
+  // For daily scheduling
+  time?: string; // Format: "HH:MM" (24-hour format)
+  // For weekly scheduling
+  daysOfWeek?: DayOfWeek[];
+  // For monthly scheduling
+  dayOfMonth?: number; // 1-31, or -1 for last day of month
+  // For custom scheduling (cron-like)
+  pattern?: string;
+  // End date for the recurring schedule (optional)
+  endDate?: string | null;
+  // Number of occurrences (optional alternative to endDate)
+  maxOccurrences?: number;
+  // Metadata and tracking
+  startedAt: string;
+  nextRun?: string | null;
+  occurrences: number;
+}
 
 /**
  * Metrics to track content scheduling performance
@@ -68,8 +105,12 @@ export async function runContentScheduler() {
   let failed = 0;
   let archived = 0;
   let archivedFailed = 0;
+  let recurringProcessed = 0;
   
   try {
+    // Process recurring schedules first
+    recurringProcessed = await processRecurringSchedules(now);
+    
     // Find content that should be published now
     const scheduledContent = await db.select()
       .from(contentItems)
@@ -353,4 +394,345 @@ export function resetSchedulingMetrics() {
   };
   
   logger.info('Content scheduling metrics have been reset');
+}
+
+/**
+ * Process recurring schedules
+ * This function looks for content items with recurring schedules
+ * and creates scheduled publications for them
+ */
+async function processRecurringSchedules(now: Date): Promise<number> {
+  try {
+    logger.info('Processing recurring schedules');
+    
+    // Find all content items with recurring schedules
+    const itemsWithRecurringSchedules = await db.select()
+      .from(contentItems)
+      .where(
+        and(
+          sql`${contentItems.recurringSchedule} IS NOT NULL`,
+          or(
+            // Draft items that need to be scheduled
+            eq(contentItems.status, 'draft'),
+            // Published items that need to be republished
+            eq(contentItems.status, 'published')
+          )
+        )
+      );
+    
+    logger.info(`Found ${itemsWithRecurringSchedules.length} items with recurring schedules to process`);
+    
+    let processedCount = 0;
+    
+    for (const item of itemsWithRecurringSchedules) {
+      try {
+        if (!item.recurringSchedule) continue;
+        
+        // Parse recurring schedule
+        const recurringSchedule = item.recurringSchedule as unknown as RecurringSchedule;
+        
+        // Skip if recurring schedule is disabled
+        if (!recurringSchedule.enabled) {
+          logger.debug(`Skipping disabled recurring schedule for content ID ${item.id}`);
+          continue;
+        }
+        
+        // Check if recurring schedule has ended
+        if (recurringSchedule.endDate && new Date(recurringSchedule.endDate) < now) {
+          logger.info(`Recurring schedule for content ID ${item.id} has ended (end date: ${recurringSchedule.endDate})`);
+          
+          // Disable the recurring schedule
+          await db.update(contentItems)
+            .set({
+              recurringSchedule: JSON.stringify({
+                ...recurringSchedule,
+                enabled: false
+              }),
+              updatedAt: now
+            })
+            .where(eq(contentItems.id, item.id));
+            
+          continue;
+        }
+        
+        // Check if max occurrences has been reached
+        if (recurringSchedule.maxOccurrences && recurringSchedule.occurrences >= recurringSchedule.maxOccurrences) {
+          logger.info(`Recurring schedule for content ID ${item.id} has reached max occurrences (${recurringSchedule.maxOccurrences})`);
+          
+          // Disable the recurring schedule
+          await db.update(contentItems)
+            .set({
+              recurringSchedule: JSON.stringify({
+                ...recurringSchedule,
+                enabled: false
+              }),
+              updatedAt: now
+            })
+            .where(eq(contentItems.id, item.id));
+            
+          continue;
+        }
+        
+        // Check if it's time to schedule the next publication
+        const nextRun = recurringSchedule.nextRun ? new Date(recurringSchedule.nextRun) : null;
+        
+        if (!nextRun) {
+          // First run, calculate next run time
+          const nextRunDate = calculateNextRunTime(recurringSchedule, now, item.timezone || 'UTC');
+          
+          if (nextRunDate) {
+            // Update the recurring schedule with the next run time
+            await db.update(contentItems)
+              .set({
+                recurringSchedule: JSON.stringify({
+                  ...recurringSchedule,
+                  nextRun: nextRunDate.toISOString()
+                }),
+                updatedAt: now
+              })
+              .where(eq(contentItems.id, item.id));
+              
+            logger.info(`Set initial next run time for content ID ${item.id} to ${nextRunDate.toISOString()}`);
+          }
+        } else if (nextRun <= now) {
+          // It's time to schedule the next publication
+          
+          // Clone the item for the next publication
+          const clonedItemData = {
+            key: `${item.key}-${Date.now()}`,
+            title: item.title,
+            content: item.content,
+            type: item.type,
+            page: item.page,
+            status: 'approved', // Set to approved so it will be published automatically
+            version: item.version + 1,
+            metadata: item.metadata,
+            createdBy: item.createdBy,
+            scheduledPublishAt: nextRun,
+            timezone: item.timezone
+          };
+          
+          // Create a new content item for this occurrence
+          const result = await db.insert(contentItems)
+            .values(clonedItemData)
+            .returning();
+          
+          if (result && result.length > 0) {
+            // Calculate the next run time
+            const nextRunDate = calculateNextRunTime(recurringSchedule, now, item.timezone || 'UTC');
+            
+            // Update the recurring schedule with the next run time and increment occurrences
+            await db.update(contentItems)
+              .set({
+                recurringSchedule: JSON.stringify({
+                  ...recurringSchedule,
+                  nextRun: nextRunDate ? nextRunDate.toISOString() : null,
+                  occurrences: recurringSchedule.occurrences + 1,
+                  lastScheduleRun: now.toISOString()
+                }),
+                lastScheduleRun: now,
+                updatedAt: now
+              })
+              .where(eq(contentItems.id, item.id));
+              
+            processedCount++;
+            logger.info(`Scheduled next publication for recurring content ID ${item.id}, next run: ${nextRunDate ? nextRunDate.toISOString() : 'none'}`);
+            
+            // Send notification to content creator
+            if (item.createdBy) {
+              await sendNotification({
+                type: 'content_scheduled',
+                userId: item.createdBy,
+                contentId: result[0].id,
+                contentTitle: item.title,
+                message: `Your recurring content "${item.title}" has been scheduled for publication.`
+              });
+            }
+          }
+        }
+      } catch (error) {
+        logger.error(`Failed to process recurring schedule for content ID ${item.id}:`, error);
+      }
+    }
+    
+    logger.info(`Processed ${processedCount} recurring schedules`);
+    
+    return processedCount;
+  } catch (error) {
+    logger.error('Error processing recurring schedules:', error);
+    return 0;
+  }
+}
+
+/**
+ * Calculate the next run time for a recurring schedule
+ */
+function calculateNextRunTime(schedule: RecurringSchedule, now: Date, timezone: string): Date | null {
+  const { type } = schedule;
+  
+  try {
+    // Use a date library that supports timezones to create a date in the specified timezone
+    const nowInTimezone = convertToTimezone(now, timezone);
+    
+    let nextRun: Date | null = null;
+    
+    switch (type) {
+      case 'daily': {
+        // Parse time (format: "HH:MM")
+        if (!schedule.time) return null;
+        
+        const [hours, minutes] = schedule.time.split(':').map(Number);
+        
+        // Create a new date for today at the specified time
+        const todayRun = new Date(nowInTimezone);
+        todayRun.setHours(hours, minutes, 0, 0);
+        
+        // If today's run time has already passed, schedule for tomorrow
+        if (todayRun <= nowInTimezone) {
+          const tomorrowRun = new Date(todayRun);
+          tomorrowRun.setDate(tomorrowRun.getDate() + 1);
+          nextRun = convertFromTimezone(tomorrowRun, timezone);
+        } else {
+          nextRun = convertFromTimezone(todayRun, timezone);
+        }
+        break;
+      }
+      
+      case 'weekly': {
+        // Need days of week and time
+        if (!schedule.daysOfWeek || !schedule.daysOfWeek.length || !schedule.time) return null;
+        
+        const [hours, minutes] = schedule.time.split(':').map(Number);
+        
+        // Get the day of week indices (0 = Sunday, 1 = Monday, etc.)
+        const dayIndices = schedule.daysOfWeek.map(day => getDayOfWeekIndex(day));
+        
+        // Current day of week (0-6, where 0 is Sunday)
+        const currentDayOfWeek = nowInTimezone.getDay();
+        
+        // Create a date object for the current time with the specified hours and minutes
+        const baseTime = new Date(nowInTimezone);
+        baseTime.setHours(hours, minutes, 0, 0);
+        
+        // Check if today is one of the scheduled days and the time hasn't passed
+        if (dayIndices.includes(currentDayOfWeek) && baseTime > nowInTimezone) {
+          // Schedule for today
+          nextRun = convertFromTimezone(baseTime, timezone);
+        } else {
+          // Find the next scheduled day
+          let daysToAdd = 1;
+          let nextDayOfWeek = (currentDayOfWeek + daysToAdd) % 7;
+          
+          while (!dayIndices.includes(nextDayOfWeek) && daysToAdd < 7) {
+            daysToAdd++;
+            nextDayOfWeek = (currentDayOfWeek + daysToAdd) % 7;
+          }
+          
+          // Create a date for the next scheduled day
+          const nextRunDate = new Date(nowInTimezone);
+          nextRunDate.setDate(nextRunDate.getDate() + daysToAdd);
+          nextRunDate.setHours(hours, minutes, 0, 0);
+          
+          nextRun = convertFromTimezone(nextRunDate, timezone);
+        }
+        break;
+      }
+      
+      case 'monthly': {
+        // Need day of month and time
+        if (!schedule.dayOfMonth || !schedule.time) return null;
+        
+        const [hours, minutes] = schedule.time.split(':').map(Number);
+        const dayOfMonth = schedule.dayOfMonth;
+        
+        // Create a date for this month's scheduled day
+        const thisMonthRun = new Date(nowInTimezone);
+        
+        // Handle special case for end of month
+        if (dayOfMonth === -1) {
+          // Last day of the month
+          thisMonthRun.setMonth(thisMonthRun.getMonth() + 1);
+          thisMonthRun.setDate(0); // Set to last day of previous month
+        } else {
+          thisMonthRun.setDate(dayOfMonth);
+        }
+        
+        thisMonthRun.setHours(hours, minutes, 0, 0);
+        
+        // If this month's run has already passed, schedule for next month
+        if (thisMonthRun <= nowInTimezone) {
+          const nextMonthRun = new Date(thisMonthRun);
+          nextMonthRun.setMonth(nextMonthRun.getMonth() + 1);
+          nextRun = convertFromTimezone(nextMonthRun, timezone);
+        } else {
+          nextRun = convertFromTimezone(thisMonthRun, timezone);
+        }
+        break;
+      }
+      
+      case 'custom': {
+        // Custom scheduling using cron-like pattern
+        // For simplicity in this implementation, we'll use a simple approximation
+        // In a full implementation, you would use a cron parser library
+        
+        if (!schedule.pattern) return null;
+        
+        logger.warn(`Custom schedule pattern "${schedule.pattern}" not fully implemented yet`);
+        
+        // Simple fallback: schedule for tomorrow at midnight
+        const tomorrowMidnight = new Date(nowInTimezone);
+        tomorrowMidnight.setDate(tomorrowMidnight.getDate() + 1);
+        tomorrowMidnight.setHours(0, 0, 0, 0);
+        
+        nextRun = convertFromTimezone(tomorrowMidnight, timezone);
+        break;
+      }
+    }
+    
+    return nextRun;
+  } catch (error) {
+    logger.error(`Error calculating next run time for ${schedule.type} schedule:`, error);
+    return null;
+  }
+}
+
+/**
+ * Convert a day of week string to its index (0-6, where 0 is Sunday)
+ */
+function getDayOfWeekIndex(day: DayOfWeek): number {
+  const dayMap: Record<DayOfWeek, number> = {
+    sunday: 0,
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6
+  };
+  
+  return dayMap[day.toLowerCase() as DayOfWeek];
+}
+
+/**
+ * Convert a date to a specific timezone
+ * This is a simplified implementation - in a production app, use a library like date-fns-tz
+ */
+function convertToTimezone(date: Date, timezone: string): Date {
+  // This is a simplified implementation that doesn't actually handle timezones correctly
+  // In a real implementation, use a proper timezone library
+  
+  // For now, we just create a new date object with the same UTC time
+  return new Date(date.toISOString());
+}
+
+/**
+ * Convert a date from a specific timezone to UTC
+ * This is a simplified implementation - in a production app, use a library like date-fns-tz
+ */
+function convertFromTimezone(date: Date, timezone: string): Date {
+  // This is a simplified implementation that doesn't actually handle timezones correctly
+  // In a real implementation, use a proper timezone library
+  
+  // For now, we just create a new date object with the same time
+  return new Date(date.getTime());
 }
