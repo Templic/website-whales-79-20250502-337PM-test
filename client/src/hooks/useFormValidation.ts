@@ -1,60 +1,116 @@
 /**
  * Form Validation Hook
  * 
- * This hook provides real-time validation for forms with immediate feedback
- * and progressive validation as the user interacts with fields.
+ * This hook integrates our validation framework with react-hook-form
+ * to provide a unified validation experience.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useForm, UseFormReturn, Path, FieldValues } from 'react-hook-form';
 import { z } from 'zod';
-import { UseFormReturn, FieldValues, Path } from 'react-hook-form';
 import { 
   ValidationContext, 
-  ValidationResult, 
-  createValidationResult, 
-  ValidationError,
-  zodErrorToValidationError,
-  ValidationSeverity
-} from '../lib/validation/types';
+  ValidationError, 
+  ValidationResult,
+  ValidationSeverity,
+  createValidationError,
+  createValidationResult
+} from '../../../shared/validation/validationTypes';
 
-interface UseFormValidationProps<T extends FieldValues> {
-  form: UseFormReturn<T>;
-  schema: z.ZodType<T>;
-  mode?: 'onChange' | 'onBlur' | 'onSubmit' | 'onTouched' | 'all';
-  validateFields?: Array<keyof T>;
-  customValidators?: Record<string, (value: any, formValues: T) => string | true>;
-  dependentFields?: Record<string, Array<keyof T>>;
+/**
+ * Convert Zod errors to our validation format
+ */
+function zodErrorToValidationError(
+  error: z.ZodError,
+  context: ValidationContext
+): ValidationError[] {
+  return error.errors.map(issue => ({
+    field: issue.path.join('.'),
+    message: issue.message,
+    code: issue.code,
+    severity: ValidationSeverity.ERROR,
+    context,
+    path: issue.path.map(String)
+  }));
 }
 
-interface FormValidationState<T extends FieldValues> {
+/**
+ * Field validation status type
+ */
+type FieldValidationStatus = 'valid' | 'invalid' | 'pending';
+
+/**
+ * Custom validator function type
+ */
+type CustomValidator<T> = (
+  value: any, 
+  data: T
+) => true | string;
+
+/**
+ * Form validation state
+ */
+interface FormValidationState<T> {
   isValidating: boolean;
   validationResult: ValidationResult;
   validationErrors: Record<string, string>;
   touchedFields: Set<keyof T>;
   dirtyFields: Set<keyof T>;
-  fieldValidationStatus: Record<string, 'pending' | 'valid' | 'invalid'>;
+  fieldValidationStatus: Record<string, FieldValidationStatus>;
 }
 
 /**
- * Custom hook for form validation with immediate feedback
+ * Form validation mode
  */
-export function useFormValidation<T extends FieldValues>({
-  form,
-  schema,
-  mode = 'onTouched',
-  validateFields = [],
-  customValidators = {},
-  dependentFields = {}
-}: UseFormValidationProps<T>) {
+type ValidationMode = 
+  | 'onChange'   // Validate on every change
+  | 'onBlur'     // Validate on blur
+  | 'onSubmit'   // Validate only on submit
+  | 'onTouched'  // Validate fields that have been touched
+  | 'all';       // Validate all fields at all times
+
+/**
+ * Form validation hook props
+ */
+interface UseFormValidationProps<T extends FieldValues> {
+  schema: z.ZodType<T>;
+  defaultValues?: Partial<T>;
+  mode?: ValidationMode;
+  customValidators?: Record<string, CustomValidator<T>>;
+  dependentFields?: Record<string, Array<keyof T>>;
+}
+
+/**
+ * Form validation hook 
+ */
+export function useFormValidation<T extends FieldValues>(
+  props: UseFormValidationProps<T>
+) {
   const { 
-    watch, 
-    formState,
-    trigger,
-    getValues,
-    setError,
-    clearErrors
-  } = form;
+    schema, 
+    defaultValues, 
+    mode = 'onChange',
+    customValidators = {},
+    dependentFields = {}
+  } = props;
   
+  // Use react-hook-form
+  const {
+    register,
+    handleSubmit,
+    formState,
+    getValues,
+    setValue,
+    reset,
+    watch,
+    setError,
+    clearErrors,
+    trigger
+  } = useForm<T>({
+    defaultValues: defaultValues as T
+  });
+  
+  // Track validation state
   const [state, setState] = useState<FormValidationState<T>>({
     isValidating: false,
     validationResult: createValidationResult(true, [], ValidationContext.CLIENT),
@@ -64,26 +120,33 @@ export function useFormValidation<T extends FieldValues>({
     fieldValidationStatus: {}
   });
   
-  const allFields = useMemo(() => {
-    return validateFields.length > 0 
-      ? validateFields 
-      : Object.keys(getValues()) as Array<keyof T>;
-  }, [validateFields, getValues]);
-  
-  // Track touched and dirty fields
+  // Update touched fields when fields are touched
   useEffect(() => {
-    const { touchedFields, dirtyFields } = formState;
+    const touchedFieldNames = Object.keys(formState.touchedFields) as Array<keyof T>;
     
-    setState(prev => ({
-      ...prev,
-      touchedFields: new Set(Object.keys(touchedFields) as Array<keyof T>),
-      dirtyFields: new Set(Object.keys(dirtyFields) as Array<keyof T>)
-    }));
-  }, [formState.touchedFields, formState.dirtyFields]);
+    if (touchedFieldNames.length > 0) {
+      setState(prev => ({
+        ...prev,
+        touchedFields: new Set([...prev.touchedFields, ...touchedFieldNames])
+      }));
+    }
+  }, [formState.touchedFields]);
   
-  // Create a validation function with context
+  // Update dirty fields when fields are changed
+  useEffect(() => {
+    const dirtyFieldNames = Object.keys(formState.dirtyFields) as Array<keyof T>;
+    
+    if (dirtyFieldNames.length > 0) {
+      setState(prev => ({
+        ...prev,
+        dirtyFields: new Set([...prev.dirtyFields, ...dirtyFieldNames])
+      }));
+    }
+  }, [formState.dirtyFields]);
+  
+  // Validate form data with schema and custom validators
   const validateFormData = useCallback(async (
-    data: Partial<T>,
+    data: T,
     fieldsToValidate?: Array<keyof T>
   ): Promise<ValidationResult> => {
     try {

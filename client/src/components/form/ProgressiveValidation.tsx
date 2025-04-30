@@ -1,288 +1,311 @@
 /**
  * Progressive Validation Component
  * 
- * This component provides real-time validation feedback to users as they
- * complete form fields, with visual indicators of validation status.
+ * This component provides real-time feedback as users input data,
+ * validating each field progressively and showing inline feedback.
  */
 
 import React, { useState, useEffect } from 'react';
-import { UseFormReturn, FieldValues, Path } from 'react-hook-form';
+import { useForm, Controller, FieldValues, Path } from 'react-hook-form';
 import { z } from 'zod';
 import { useFormValidation } from '../../hooks/useFormValidation';
-// Import validation types using relative path
+import { ValidationSeverity } from '../../../../shared/validation/validationTypes';
+
+// Import UI components from Shadcn
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  ValidationContext, 
-  ValidationSeverity, 
-  ValidationError 
-} from '../../lib/validation/types';
+  Form, 
+  FormControl, 
+  FormDescription, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+// Validation status indicator component
+interface ValidationIndicatorProps {
+  status: 'valid' | 'invalid' | 'pending' | null;
+}
+
+function ValidationIndicator({ status }: ValidationIndicatorProps) {
+  if (!status) return null;
+  
+  return (
+    <div className="inline-flex ml-2">
+      {status === 'valid' && (
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          className="h-5 w-5 text-green-500" 
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M5 13l4 4L19 7" 
+          />
+        </svg>
+      )}
+      
+      {status === 'invalid' && (
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          className="h-5 w-5 text-red-500" 
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M6 18L18 6M6 6l12 12" 
+          />
+        </svg>
+      )}
+      
+      {status === 'pending' && (
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          className="h-5 w-5 text-yellow-500 animate-spin" 
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+          />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+interface FieldConfig {
+  name: string;
+  label: string;
+  description?: string;
+  type: 'text' | 'email' | 'password' | 'number' | 'checkbox' | 'select';
+  placeholder?: string;
+  options?: Array<{
+    value: string;
+    label: string;
+  }>;
+  dependsOn?: string[];
+}
 
 interface ProgressiveValidationProps<T extends FieldValues> {
-  form: UseFormReturn<T>;
   schema: z.ZodType<T>;
-  children: React.ReactNode;
-  mode?: 'onChange' | 'onBlur' | 'onSubmit' | 'onTouched' | 'all';
-  showValidationStatus?: boolean;
-  customValidators?: Record<string, (value: any, formValues: T) => string | true>;
-  dependentFields?: Record<string, Array<keyof T>>;
-  onValidationChange?: (isValid: boolean) => void;
+  fields: FieldConfig[];
+  defaultValues?: Partial<T>;
+  onSubmit: (data: T) => void;
+  submitText?: string;
+  validationMode?: 'onChange' | 'onBlur' | 'onSubmit' | 'onTouched' | 'all';
+  showIndicators?: boolean;
 }
 
-/**
- * Field validation status component
- */
-interface FieldStatusProps {
-  status: 'pending' | 'valid' | 'invalid';
-  severity?: string;
-}
-
-const FieldStatus: React.FC<FieldStatusProps> = ({ status, severity = 'error' }) => {
-  if (status === 'pending') return null;
-  
-  return (
-    <div className={`field-status-indicator ${status}`} aria-live="polite">
-      {status === 'valid' ? (
-        <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-green-500">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-          <path
-            d="M8 12l3 3 5-5"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ) : (
-        <svg viewBox="0 0 24 24" fill="none" className={`w-5 h-5 ${
-          severity === 'critical' ? 'text-red-600' : 
-          severity === 'error' ? 'text-red-500' : 
-          severity === 'warning' ? 'text-yellow-500' : 
-          'text-blue-500'
-        }`}>
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-          <path
-            d="M12 8v4M12 16h.01"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      )}
-    </div>
-  );
-};
-
-/**
- * Form validation context
- */
-interface FormValidationContextType<T extends FieldValues> {
-  fieldStatus: Record<string, 'pending' | 'valid' | 'invalid'>;
-  errors: Record<string, string>;
-  isValid: boolean;
-  touchedFields: Set<keyof T>;
-  dirtyFields: Set<keyof T>;
-  getFieldStatus: (name: string) => {
-    status: 'pending' | 'valid' | 'invalid';
-    message?: string;
-    severity?: string;
-  };
-}
-
-const FormValidationContext = React.createContext<FormValidationContextType<any>>({
-  fieldStatus: {},
-  errors: {},
-  isValid: false,
-  touchedFields: new Set(),
-  dirtyFields: new Set(),
-  getFieldStatus: () => ({ status: 'pending' })
-});
-
-/**
- * Hook to access form validation context
- */
-export const useFormValidationContext = <T extends FieldValues>() => 
-  React.useContext(FormValidationContext as React.Context<FormValidationContextType<T>>);
-
-/**
- * Progressive validation wrapper component
- */
 export function ProgressiveValidation<T extends FieldValues>({
-  form,
   schema,
-  children,
-  mode = 'onTouched',
-  showValidationStatus = true,
-  customValidators,
-  dependentFields,
-  onValidationChange
+  fields,
+  defaultValues,
+  onSubmit,
+  submitText = 'Submit',
+  validationMode = 'onChange',
+  showIndicators = true
 }: ProgressiveValidationProps<T>) {
-  const { 
-    isValidating, 
-    validationResult, 
-    validationErrors,
-    fieldValidationStatus,
-    touchedFields,
-    dirtyFields,
-    isValid
-  } = useFormValidation({
-    form,
-    schema,
-    mode,
-    customValidators,
-    dependentFields
+  // Setup form with validation
+  const form = useForm<T>({
+    defaultValues: defaultValues as T
   });
   
-  // Track validation status changes
-  useEffect(() => {
-    onValidationChange?.(isValid);
-  }, [isValid, onValidationChange]);
-  
-  // Get field validation status
-  const getFieldStatus = (name: string) => {
-    const status = fieldValidationStatus[name] || 'pending';
-    const message = validationErrors[name];
-    
-    // Determine severity from validation results
-    let severity = 'error';
-    if (message) {
-      const error = validationResult.errors.find(e => e.field === name);
-      if (error) {
-        severity = error.severity || 'error';
-      }
+  // Build dependency map for fields
+  const dependencyMap: Record<string, Array<string>> = {};
+  fields.forEach(field => {
+    if (field.dependsOn && field.dependsOn.length > 0) {
+      field.dependsOn.forEach(dep => {
+        if (!dependencyMap[dep]) {
+          dependencyMap[dep] = [];
+        }
+        dependencyMap[dep].push(field.name);
+      });
     }
+  });
+  
+  // Use the validation hook
+  const validation = useFormValidation({
+    schema,
+    defaultValues,
+    mode: validationMode,
+    dependentFields: dependencyMap as Record<string, Array<keyof T>>
+  });
+  
+  // Handle form submission
+  const handleSubmit = form.handleSubmit(async (data) => {
+    // Validate all fields before submitting
+    const result = await validation.validateAll();
     
-    return { status, message, severity };
+    if (result.valid) {
+      onSubmit(data);
+    }
+  });
+  
+  return (
+    <Form {...form}>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {fields.map((field) => (
+          <FormField
+            key={field.name}
+            control={form.control}
+            name={field.name as Path<T>}
+            render={({ field: formField }) => (
+              <FormItem>
+                <div className="flex items-center">
+                  <FormLabel>{field.label}</FormLabel>
+                  {showIndicators && (
+                    <ValidationIndicator 
+                      status={validation.fieldValidationStatus[field.name]}
+                    />
+                  )}
+                </div>
+                <FormControl>
+                  {field.type === 'select' ? (
+                    <Select
+                      value={formField.value as string}
+                      onValueChange={formField.onChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={field.placeholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {field.options?.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : field.type === 'checkbox' ? (
+                    <Checkbox
+                      checked={formField.value as boolean}
+                      onCheckedChange={formField.onChange}
+                    />
+                  ) : (
+                    <Input
+                      {...formField}
+                      type={field.type}
+                      placeholder={field.placeholder}
+                    />
+                  )}
+                </FormControl>
+                {field.description && (
+                  <FormDescription>{field.description}</FormDescription>
+                )}
+                <FormMessage>
+                  {validation.validationErrors[field.name]}
+                </FormMessage>
+              </FormItem>
+            )}
+          />
+        ))}
+        
+        <Button type="submit" disabled={validation.isValidating}>
+          {validation.isValidating ? 'Validating...' : submitText}
+        </Button>
+      </form>
+    </Form>
+  );
+}
+
+// Example usage of progressive validation
+export function ProgressiveValidationExample() {
+  // Define schema
+  const userSchema = z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Please enter a valid email address'),
+    age: z.number().min(18, 'Must be at least 18 years old'),
+    agreeToTerms: z.boolean().refine(val => val === true, {
+      message: 'You must agree to the terms'
+    }),
+    role: z.enum(['user', 'admin', 'editor'])
+  });
+  
+  // Define fields
+  const fields: FieldConfig[] = [
+    {
+      name: 'name',
+      label: 'Name',
+      type: 'text',
+      placeholder: 'Enter your name'
+    },
+    {
+      name: 'email',
+      label: 'Email',
+      type: 'email',
+      placeholder: 'Enter your email'
+    },
+    {
+      name: 'age',
+      label: 'Age',
+      type: 'number',
+      placeholder: 'Enter your age'
+    },
+    {
+      name: 'role',
+      label: 'Role',
+      type: 'select',
+      options: [
+        { value: 'user', label: 'User' },
+        { value: 'admin', label: 'Admin' },
+        { value: 'editor', label: 'Editor' }
+      ]
+    },
+    {
+      name: 'agreeToTerms',
+      label: 'I agree to the terms and conditions',
+      type: 'checkbox'
+    }
+  ];
+  
+  // Define default values
+  const defaultValues = {
+    name: '',
+    email: '',
+    age: 18,
+    agreeToTerms: false,
+    role: 'user'
   };
   
-  const contextValue: FormValidationContextType<T> = {
-    fieldStatus: fieldValidationStatus,
-    errors: validationErrors,
-    isValid,
-    touchedFields,
-    dirtyFields,
-    getFieldStatus
+  // Handle form submission
+  const handleSubmit = (data: any) => {
+    console.log('Form submitted:', data);
   };
   
   return (
-    <FormValidationContext.Provider value={contextValue}>
-      {children}
-    </FormValidationContext.Provider>
-  );
-}
-
-/**
- * Form field validation wrapper
- */
-interface ValidatedFieldProps {
-  name: string;
-  children: React.ReactNode;
-  showValidationStatus?: boolean;
-}
-
-export const ValidatedField: React.FC<ValidatedFieldProps> = ({
-  name,
-  children,
-  showValidationStatus = true
-}) => {
-  const { getFieldStatus, touchedFields } = useFormValidationContext();
-  const { status, message, severity } = getFieldStatus(name);
-  
-  // Don't show validation until field is touched
-  const shouldShowValidation = showValidationStatus && 
-    (status !== 'pending' && touchedFields.has(name));
-  
-  return (
-    <div className="validated-field-wrapper">
-      <div className="field-with-status">
-        {children}
-        {shouldShowValidation && (
-          <FieldStatus status={status} severity={severity} />
-        )}
-      </div>
-      {shouldShowValidation && status === 'invalid' && message && (
-        <div 
-          className={`text-sm mt-1 ${
-            severity === 'critical' ? 'text-red-600' : 
-            severity === 'error' ? 'text-red-500' : 
-            severity === 'warning' ? 'text-yellow-500' : 
-            'text-blue-500'
-          }`} 
-          aria-live="polite"
-        >
-          {message}
-        </div>
-      )}
+    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow">
+      <h2 className="text-2xl font-bold mb-6">Sign Up</h2>
+      <ProgressiveValidation
+        schema={userSchema}
+        fields={fields}
+        defaultValues={defaultValues}
+        onSubmit={handleSubmit}
+        submitText="Create Account"
+        validationMode="onChange"
+      />
     </div>
   );
-};
-
-/**
- * Form validation summary component
- */
-interface ValidationSummaryProps {
-  showOnlyWhenInvalid?: boolean;
-  className?: string;
 }
-
-export const ValidationSummary: React.FC<ValidationSummaryProps> = ({
-  showOnlyWhenInvalid = true,
-  className = ''
-}) => {
-  const { errors, isValid } = useFormValidationContext();
-  
-  // Don't show if valid and configured to hide
-  if (showOnlyWhenInvalid && isValid) {
-    return null;
-  }
-  
-  const errorList = Object.entries(errors);
-  
-  return (
-    <div 
-      className={`rounded border px-4 py-3 ${
-        errorList.length > 0 
-          ? 'border-red-400 bg-red-50 text-red-800' 
-          : 'border-green-400 bg-green-50 text-green-800'
-      } ${className}`}
-      role="alert"
-      aria-live="polite"
-    >
-      {errorList.length > 0 ? (
-        <>
-          <div className="flex items-center font-medium">
-            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 mr-2">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-              <path
-                d="M12 8v4M12 16h.01"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Please correct the following errors:
-          </div>
-          <ul className="mt-1 list-disc list-inside text-sm">
-            {errorList.map(([field, message]) => (
-              <li key={field}>{message}</li>
-            ))}
-          </ul>
-        </>
-      ) : (
-        <div className="flex items-center font-medium">
-          <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 mr-2 text-green-500">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-            <path
-              d="M8 12l3 3 5-5"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Form is valid and ready to submit
-        </div>
-      )}
-    </div>
-  );
-};
