@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useThemeAPI } from '@/hooks/useThemeAPI';
 import { useAuth } from '@/hooks/use-auth';
@@ -12,14 +12,32 @@ import ThemeHistory from '@/components/theme/ThemeHistory';
 
 import {
   Paintbrush,
-  Plus,
-  Trash,
+  PlusCircle,
+  Settings,
   History,
-  Sparkles,
-  Save,
   ChevronLeft,
+  RotateCcw,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  Lock,
+  User,
+  Eye,
+  Palette,
+  Grid,
+  List,
+  Sliders,
+  SlidersHorizontal,
+  Globe,
+  Search,
+  X,
+  Check,
+  Clock,
+  ArrowLeft,
+  RefreshCcw,
+  Save,
+  Image,
+  FileImage,
+  LucideIcon
 } from 'lucide-react';
 
 import {
@@ -53,687 +71,518 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 
-interface DeleteConfirmationProps {
-  theme: Theme;
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-}
-
-const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
-  theme,
-  isOpen,
-  onClose,
-  onConfirm,
-}) => {
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete Theme</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete the theme "{theme.name}"?
-            This action cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-interface AIGenerationDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onGenerate: (prompt: string) => void;
-  isGenerating: boolean;
-}
-
-const AIGenerationDialog: React.FC<AIGenerationDialogProps> = ({
-  isOpen,
-  onClose,
-  onGenerate,
-  isGenerating,
-}) => {
-  const [prompt, setPrompt] = useState('');
-  
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Generate Theme with AI</DialogTitle>
-          <DialogDescription>
-            Provide a description of the theme you want to generate.
-            Our AI will create a unique theme based on your prompt.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="E.g., A dark theme with purple accents inspired by a cosmic night sky..."
-            className="w-full h-32 p-2 border rounded-md"
-          />
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => onGenerate(prompt)}
-            disabled={!prompt.trim() || isGenerating}
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
 const ThemePage: React.FC = () => {
-  const [location, navigate] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { currentTheme, setCurrentTheme } = useTheme();
   
-  // Define states for UI management
-  const [activeTab, setActiveTab] = useState('gallery');
-  const [selectedThemeId, setSelectedThemeId] = useState<number | null>(null);
-  const [editingTheme, setEditingTheme] = useState<Theme | null>(null);
-  const [viewingHistoryForTheme, setViewingHistoryForTheme] = useState<number | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-  const [themeToDelete, setThemeToDelete] = useState<Theme | null>(null);
-  const [aiDialogOpen, setAiDialogOpen] = useState<boolean>(false);
-  const [generatingTheme, setGeneratingTheme] = useState<boolean>(false);
-  
-  // Get API hooks
-  const {
-    useGetThemes,
-    useDeleteTheme,
-    useGenerateTheme,
+  // Theme context for managing the current theme
+  const { 
+    currentTheme, 
+    setCurrentTheme,
+    defaultTheme,
+    resetToDefaultTheme,
+    isLoading: isLoadingContext
+  } = useTheme();
+
+  // API hooks for fetching and managing themes
+  const { 
+    useGetThemes, 
+    useDeleteTheme, 
     usePublishTheme,
     useUnpublishTheme,
-    useRestoreThemeVersion
+    useRestoreThemeVersion,
   } = useThemeAPI();
   
-  // Query for themes
+  // Query to fetch all themes
   const {
     data: themes = [],
-    isLoading,
-    isError,
-    error,
+    isLoading: isLoadingThemes,
+    isError: isThemesError,
+    error: themesError,
   } = useGetThemes();
-  
-  // Mutations
+
+  // Mutations for theme actions
   const deleteThemeMutation = useDeleteTheme();
-  const generateThemeMutation = useGenerateTheme();
   const publishThemeMutation = usePublishTheme();
   const unpublishThemeMutation = useUnpublishTheme();
-  const restoreVersionMutation = useRestoreThemeVersion();
+  const restoreThemeMutation = useRestoreThemeVersion();
   
-  // Get the selected theme object from ID
-  const selectedTheme = themes.find((theme: Theme) => theme.id === selectedThemeId);
+  // State for managing UI
+  const [activeTab, setActiveTab] = useState<string>('browse');
+  const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
+  const [isCreatingTheme, setIsCreatingTheme] = useState(false);
+  const [isEditingTheme, setIsEditingTheme] = useState(false);
+  const [isViewingHistory, setIsViewingHistory] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
-  // Check admin/super_admin status
+  // Check if the user has admin privileges
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
   
-  // Create empty theme object for new theme
-  const emptyTheme: Theme = {
-    id: 0,
-    name: '',
-    description: '',
-    userId: user?.id,
-    primaryColor: '#3b82f6',
-    accentColor: '#10b981',
-    backgroundColor: '#ffffff',
-    textColor: '#111827',
-    borderRadius: '0.5rem',
-    isPublic: false,
-    tags: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
+  // Helper to check if user can edit a theme
+  const canEditTheme = (theme: Theme): boolean => {
+    if (!user) return false;
+    return isAdmin || theme.userId === user.id;
   };
   
-  // Handler functions
-  const handleSaveTheme = async (theme: Theme) => {
-    setEditingTheme(null);
-    setActiveTab('gallery');
+  // Refresh theme if needed after actions
+  const handleThemeUpdate = (updatedTheme: Theme) => {
+    if (currentTheme?.id === updatedTheme.id) {
+      setCurrentTheme(updatedTheme);
+    }
+  };
+  
+  // Handle theme deletion
+  const handleDeleteTheme = async () => {
+    if (!selectedTheme) return;
+    
+    try {
+      await deleteThemeMutation.mutateAsync(selectedTheme.id);
+      
+      toast({
+        title: "Theme deleted",
+        description: "The theme has been successfully deleted",
+      });
+      
+      // If the deleted theme was the current one, reset to default
+      if (currentTheme?.id === selectedTheme.id) {
+        resetToDefaultTheme();
+      }
+      
+      // Reset state
+      setSelectedTheme(null);
+      setShowDeleteDialog(false);
+      setActiveTab('browse');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete theme",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle theme publishing
+  const handlePublishTheme = async (theme: Theme) => {
+    try {
+      const updatedTheme = await publishThemeMutation.mutateAsync(theme.id);
+      handleThemeUpdate(updatedTheme);
+      
+      toast({
+        title: "Theme published",
+        description: "The theme is now publicly available",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to publish theme",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle theme unpublishing
+  const handleUnpublishTheme = async (theme: Theme) => {
+    try {
+      const updatedTheme = await unpublishThemeMutation.mutateAsync(theme.id);
+      handleThemeUpdate(updatedTheme);
+      
+      toast({
+        title: "Theme unpublished",
+        description: "The theme is now private",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to unpublish theme",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle theme selection
+  const handleSelectTheme = (theme: Theme) => {
+    setCurrentTheme(theme);
     
     toast({
-      title: 'Theme Saved',
-      description: `The theme "${theme.name}" has been saved successfully.`,
+      title: "Theme applied",
+      description: `"${theme.name}" is now active`,
     });
   };
   
-  const handleDeleteTheme = (theme: Theme) => {
-    setThemeToDelete(theme);
-    setDeleteDialogOpen(true);
+  // Handle theme editor actions
+  const handleCreateTheme = () => {
+    setIsCreatingTheme(true);
+    setSelectedTheme(null);
+    setActiveTab('edit');
   };
   
-  const confirmDeleteTheme = () => {
-    if (!themeToDelete) return;
-    
-    deleteThemeMutation.mutate(themeToDelete.id, {
-      onSuccess: () => {
-        toast({
-          title: 'Theme Deleted',
-          description: `The theme "${themeToDelete.name}" has been deleted.`,
-        });
-        
-        setDeleteDialogOpen(false);
-        setThemeToDelete(null);
-        
-        // If the deleted theme was selected, unselect it
-        if (selectedThemeId === themeToDelete.id) {
-          setSelectedThemeId(null);
-        }
-        
-        // If the current theme was deleted, set to default
-        if (currentTheme?.id === themeToDelete.id) {
-          // Find a default theme
-          const defaultTheme = themes.find((t: Theme) => t.isPublic && !t.userId) || themes[0];
-          if (defaultTheme) {
-            setCurrentTheme(defaultTheme);
-          }
-        }
-      },
-      onError: (error) => {
-        toast({
-          title: 'Error',
-          description: `Failed to delete theme: ${error.message}`,
-          variant: 'destructive',
-        });
-      }
-    });
+  const handleEditTheme = (theme: Theme) => {
+    setSelectedTheme(theme);
+    setIsEditingTheme(true);
+    setActiveTab('edit');
   };
   
-  const handleCloneTheme = (theme: Theme) => {
-    // Create a copy of the theme for editing
-    setEditingTheme({
-      ...theme,
-      id: 0, // Set ID to 0 to indicate it's a new theme
-      name: `Copy of ${theme.name}`,
-      userId: user?.id, // Assign to current user
-      isPublic: false, // Set to private by default
-    });
-    setActiveTab('editor');
+  const handleSaveTheme = (theme: Theme) => {
+    setSelectedTheme(theme);
+    setIsCreatingTheme(false);
+    setIsEditingTheme(false);
+    setActiveTab('browse');
   };
   
-  const handlePublishTheme = (theme: Theme) => {
-    publishThemeMutation.mutate(theme.id, {
-      onSuccess: () => {
-        toast({
-          title: 'Theme Published',
-          description: `The theme "${theme.name}" is now available to all users.`,
-        });
-      },
-      onError: (error) => {
-        toast({
-          title: 'Error',
-          description: `Failed to publish theme: ${error.message}`,
-          variant: 'destructive',
-        });
-      }
-    });
+  const handleCancelEdit = () => {
+    setIsCreatingTheme(false);
+    setIsEditingTheme(false);
+    setActiveTab('browse');
   };
   
-  const handleUnpublishTheme = (theme: Theme) => {
-    unpublishThemeMutation.mutate(theme.id, {
-      onSuccess: () => {
-        toast({
-          title: 'Theme Unpublished',
-          description: `The theme "${theme.name}" is now private.`,
-        });
-      },
-      onError: (error) => {
-        toast({
-          title: 'Error',
-          description: `Failed to unpublish theme: ${error.message}`,
-          variant: 'destructive',
-        });
-      }
-    });
-  };
-  
+  // Handle theme history
   const handleViewHistory = (theme: Theme) => {
-    setViewingHistoryForTheme(theme.id);
+    setSelectedTheme(theme);
+    setIsViewingHistory(true);
     setActiveTab('history');
   };
   
-  const handleRestoreVersion = (historyId: number) => {
-    if (!viewingHistoryForTheme) return;
-    
-    restoreVersionMutation.mutate(
-      { themeId: viewingHistoryForTheme, historyId },
-      {
-        onSuccess: () => {
-          toast({
-            title: 'Version Restored',
-            description: 'The theme has been restored to the selected version.',
-          });
-        },
-        onError: (error) => {
-          toast({
-            title: 'Error',
-            description: `Failed to restore version: ${error.message}`,
-            variant: 'destructive',
-          });
-        }
-      }
-    );
+  const handleCloseHistory = () => {
+    setIsViewingHistory(false);
+    setActiveTab('browse');
   };
   
-  const handleAIGenerate = (prompt: string) => {
-    setGeneratingTheme(true);
+  const handleRestoreVersion = async (historyId: number) => {
+    if (!selectedTheme) return;
     
-    generateThemeMutation.mutate(prompt, {
-      onSuccess: (newTheme) => {
-        setGeneratingTheme(false);
-        setAiDialogOpen(false);
-        
-        toast({
-          title: 'Theme Generated',
-          description: `A new theme "${newTheme.name}" has been created based on your prompt.`,
-        });
-        
-        // Switch to editing the new theme
-        setEditingTheme(newTheme);
-        setActiveTab('editor');
-      },
-      onError: (error) => {
-        setGeneratingTheme(false);
-        
-        toast({
-          title: 'Error',
-          description: `Failed to generate theme: ${error.message}`,
-          variant: 'destructive',
-        });
-      }
-    });
+    try {
+      const updatedTheme = await restoreThemeMutation.mutateAsync({
+        themeId: selectedTheme.id,
+        historyId,
+      });
+      
+      handleThemeUpdate(updatedTheme);
+      
+      toast({
+        title: "Theme restored",
+        description: "The theme has been restored to a previous version",
+      });
+      
+      // Close history view
+      setIsViewingHistory(false);
+      setActiveTab('browse');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to restore theme",
+        variant: "destructive",
+      });
+    }
   };
   
-  const canEdit = (theme: Theme) => userThemes.some(t => t.id === theme.id);
+  // Helper to categorize themes
+  const systemThemes = themes.filter(t => !t.userId);
+  const userThemes = themes.filter(t => t.userId === user?.id);
+  const otherUserThemes = themes.filter(t => t.userId && t.userId !== user?.id);
   
-  // Filter themes into different categories
-  const systemThemes = themes.filter((theme: Theme) => !theme.userId);
-  const userThemes = themes.filter((theme: Theme) => theme.userId === user?.id);
-  const publicThemes = themes.filter((theme: Theme) => theme.isPublic && theme.userId !== user?.id);
+  // Loading and error states
+  const isLoading = isLoadingContext || isLoadingThemes;
   
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
   
-  if (isError) {
+  if (isThemesError) {
     return (
-      <div className="container mx-auto py-8">
-        <Card className="mx-auto max-w-2xl">
-          <CardHeader>
-            <CardTitle className="flex items-center text-destructive">
-              <AlertTriangle className="h-5 w-5 mr-2" />
-              Error Loading Themes
-            </CardTitle>
-            <CardDescription>
-              There was a problem loading the themes.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-destructive">
-              {error instanceof Error ? error.message : 'Unknown error'}
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button onClick={() => window.location.reload()}>
-              Retry
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="flex items-center text-destructive">
+            <AlertTriangle className="h-5 w-5 mr-2" />
+            Error Loading Themes
+          </CardTitle>
+          <CardDescription>
+            There was a problem loading the themes.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-destructive/90 mb-4">
+            {themesError instanceof Error ? themesError.message : "Unknown error occurred"}
+          </p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
   
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Theme Manager</h1>
-          <p className="text-muted-foreground">
-            Customize the look and feel of the application with themes
-          </p>
-        </div>
-        
-        <div className="flex mt-4 md:mt-0 space-x-2">
-          {isAdmin && (
-            <Button 
-              variant="outline"
-              onClick={() => setAiDialogOpen(true)}
-            >
-              <Sparkles className="mr-2 h-4 w-4" />
-              AI Generate
-            </Button>
-          )}
+    <div className="container max-w-7xl mx-auto py-10">
+      <div className="flex flex-col space-y-8">
+        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight">Themes</h1>
+            <p className="text-lg text-muted-foreground mt-1">
+              Customize the appearance of the application
+            </p>
+          </div>
           
-          {isAdmin && (
-            <Button
-              onClick={() => {
-                setEditingTheme(emptyTheme);
-                setActiveTab('editor');
-              }}
+          {(isAdmin || user) && (
+            <Button 
+              onClick={handleCreateTheme}
+              className="self-start"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <PlusCircle className="h-4 w-4 mr-2" />
               Create Theme
             </Button>
           )}
         </div>
-      </div>
-      
-      <Tabs 
-        value={activeTab} 
-        onValueChange={setActiveTab}
-        className="w-full"
-      >
-        <TabsList className="w-full justify-start mb-6">
-          <TabsTrigger value="gallery">Theme Gallery</TabsTrigger>
-          {isAdmin && <TabsTrigger value="manage">Manage Themes</TabsTrigger>}
-          {isAdmin && editingTheme && <TabsTrigger value="editor">Theme Editor</TabsTrigger>}
-          {isAdmin && viewingHistoryForTheme && <TabsTrigger value="history">Theme History</TabsTrigger>}
-        </TabsList>
         
-        <TabsContent value="gallery" className="space-y-6">
-          <div className="space-y-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="browse">Browse Themes</TabsTrigger>
+            {isCreatingTheme && (
+              <TabsTrigger value="edit">Create Theme</TabsTrigger>
+            )}
+            {isEditingTheme && selectedTheme && (
+              <TabsTrigger value="edit">Edit Theme</TabsTrigger>
+            )}
+            {isViewingHistory && selectedTheme && (
+              <TabsTrigger value="history">Theme History</TabsTrigger>
+            )}
+          </TabsList>
+          
+          <TabsContent value="browse" className="space-y-8">
             {/* Currently Active Theme */}
-            {currentTheme && (
-              <div className="space-y-3">
-                <h2 className="text-xl font-semibold flex items-center">
-                  <Paintbrush className="h-5 w-5 mr-2" />
-                  Current Theme
-                </h2>
-                <div className="max-w-md">
-                  <ThemeCard 
-                    theme={currentTheme} 
+            <div className="space-y-4">
+              <h2 className="text-2xl font-semibold tracking-tight">
+                Current Theme
+              </h2>
+              
+              {currentTheme ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <ThemeCard
+                    theme={currentTheme}
                     isActive={true}
-                    onEdit={isAdmin && canEdit(currentTheme) ? () => {
-                      setEditingTheme(currentTheme);
-                      setActiveTab('editor');
+                    onEdit={canEditTheme(currentTheme) ? () => handleEditTheme(currentTheme) : undefined}
+                    onDelete={canEditTheme(currentTheme) ? () => {
+                      setSelectedTheme(currentTheme);
+                      setShowDeleteDialog(true);
                     } : undefined}
-                    onClone={isAdmin ? () => handleCloneTheme(currentTheme) : undefined}
-                    onHistory={isAdmin ? () => handleViewHistory(currentTheme) : undefined}
-                    canEdit={isAdmin && canEdit(currentTheme)}
-                    canDelete={false} // Don't allow deleting the active theme
-                    canPublish={isAdmin}
+                    onPublish={
+                      canEditTheme(currentTheme) && !currentTheme.isPublic 
+                        ? () => handlePublishTheme(currentTheme) 
+                        : undefined
+                    }
+                    onUnpublish={
+                      canEditTheme(currentTheme) && currentTheme.isPublic 
+                        ? () => handleUnpublishTheme(currentTheme) 
+                        : undefined
+                    }
+                    onHistory={canEditTheme(currentTheme) ? () => handleViewHistory(currentTheme) : undefined}
+                    canEdit={canEditTheme(currentTheme)}
+                    canDelete={canEditTheme(currentTheme)}
+                    canPublish={canEditTheme(currentTheme)}
                   />
                 </div>
+              ) : (
+                <Card className="border-dashed border-muted">
+                  <CardContent className="flex flex-col items-center justify-center py-10">
+                    <Paintbrush className="h-8 w-8 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground text-center max-w-md">
+                      No theme is currently applied. Select one from the available themes below.
+                    </p>
+                    {defaultTheme && (
+                      <Button
+                        variant="outline"
+                        className="mt-4"
+                        onClick={() => handleSelectTheme(defaultTheme)}
+                      >
+                        Apply Default Theme
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+            
+            {/* System Themes */}
+            {systemThemes.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-semibold tracking-tight">
+                  System Themes
+                </h2>
+                <ThemeShowcase
+                  themes={systemThemes}
+                  currentTheme={currentTheme || undefined}
+                  onSelectTheme={handleSelectTheme}
+                  isFilterable={true}
+                  isSearchable={true}
+                />
               </div>
             )}
             
-            {/* Available Themes */}
-            <div className="space-y-3">
-              <h2 className="text-xl font-semibold">Available Themes</h2>
-              <ThemeShowcase
-                themes={themes}
-                onSelectTheme={(theme) => {
-                  setCurrentTheme(theme);
-                  setSelectedThemeId(theme.id);
-                  
-                  toast({
-                    title: 'Theme Applied',
-                    description: `The theme "${theme.name}" has been applied.`,
-                  });
-                }}
-                currentTheme={currentTheme || undefined}
-                isFilterable={true}
-                isSearchable={true}
-                showActions={true}
-              />
-            </div>
-          </div>
-        </TabsContent>
-        
-        {isAdmin && (
-          <TabsContent value="manage" className="space-y-6">
-            <Tabs defaultValue="your-themes">
-              <TabsList>
-                <TabsTrigger value="your-themes">Your Themes</TabsTrigger>
-                <TabsTrigger value="system-themes">System Themes</TabsTrigger>
-                <TabsTrigger value="public-themes">Public Themes</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="your-themes" className="space-y-6 pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {userThemes.length === 0 ? (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>No Themes Yet</CardTitle>
-                        <CardDescription>
-                          You haven't created any themes yet.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardFooter>
-                        <Button 
-                          onClick={() => {
-                            setEditingTheme(emptyTheme);
-                            setActiveTab('editor');
-                          }}
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Create Theme
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ) : (
-                    userThemes.map((theme: Theme) => (
-                      <ThemeCard
-                        key={theme.id}
-                        theme={theme}
-                        isActive={currentTheme?.id === theme.id}
-                        onSelect={(theme) => {
-                          setCurrentTheme(theme);
-                          toast({
-                            title: 'Theme Applied',
-                            description: `The theme "${theme.name}" has been applied.`,
-                          });
-                        }}
-                        onEdit={() => {
-                          setEditingTheme(theme);
-                          setActiveTab('editor');
-                        }}
-                        onDelete={() => handleDeleteTheme(theme)}
-                        onClone={() => handleCloneTheme(theme)}
-                        onPublish={!theme.isPublic ? () => handlePublishTheme(theme) : undefined}
-                        onUnpublish={theme.isPublic ? () => handleUnpublishTheme(theme) : undefined}
-                        onHistory={() => handleViewHistory(theme)}
-                        canEdit={true}
-                        canDelete={true}
-                        canPublish={true}
-                      />
-                    ))
-                  )}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="system-themes" className="space-y-6 pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {systemThemes.length === 0 ? (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>No System Themes</CardTitle>
-                        <CardDescription>
-                          There are no system themes available.
-                        </CardDescription>
-                      </CardHeader>
-                    </Card>
-                  ) : (
-                    systemThemes.map((theme: Theme) => (
-                      <ThemeCard
-                        key={theme.id}
-                        theme={theme}
-                        isActive={currentTheme?.id === theme.id}
-                        onSelect={(theme) => {
-                          setCurrentTheme(theme);
-                          toast({
-                            title: 'Theme Applied',
-                            description: `The theme "${theme.name}" has been applied.`,
-                          });
-                        }}
-                        onClone={() => handleCloneTheme(theme)}
-                        onHistory={() => handleViewHistory(theme)}
-                        canEdit={false}
-                        canDelete={false}
-                        canPublish={false}
-                      />
-                    ))
-                  )}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="public-themes" className="space-y-6 pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {publicThemes.length === 0 ? (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>No Public Themes</CardTitle>
-                        <CardDescription>
-                          There are no public themes created by other users.
-                        </CardDescription>
-                      </CardHeader>
-                    </Card>
-                  ) : (
-                    publicThemes.map((theme: Theme) => (
-                      <ThemeCard
-                        key={theme.id}
-                        theme={theme}
-                        isActive={currentTheme?.id === theme.id}
-                        onSelect={(theme) => {
-                          setCurrentTheme(theme);
-                          toast({
-                            title: 'Theme Applied',
-                            description: `The theme "${theme.name}" has been applied.`,
-                          });
-                        }}
-                        onClone={() => handleCloneTheme(theme)}
-                        onHistory={() => handleViewHistory(theme)}
-                        canEdit={false}
-                        canDelete={false}
-                        canPublish={false}
-                      />
-                    ))
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
+            {/* User Themes */}
+            {user && userThemes.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-semibold tracking-tight">
+                  Your Themes
+                </h2>
+                <ThemeShowcase
+                  themes={userThemes}
+                  currentTheme={currentTheme || undefined}
+                  onSelectTheme={handleSelectTheme}
+                  isFilterable={true}
+                  isSearchable={true}
+                />
+              </div>
+            )}
+            
+            {/* Other User Themes */}
+            {otherUserThemes.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-semibold tracking-tight">
+                  Community Themes
+                </h2>
+                <ThemeShowcase
+                  themes={otherUserThemes}
+                  currentTheme={currentTheme || undefined}
+                  onSelectTheme={handleSelectTheme}
+                  isFilterable={true}
+                  isSearchable={true}
+                />
+              </div>
+            )}
           </TabsContent>
-        )}
-        
-        {isAdmin && editingTheme && (
-          <TabsContent value="editor">
-            <Card>
-              <CardHeader>
+          
+          <TabsContent value="edit">
+            {isCreatingTheme && (
+              <div className="space-y-4">
                 <div className="flex items-center">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="mr-2"
-                    onClick={() => {
-                      setEditingTheme(null);
-                      setActiveTab('gallery');
-                    }}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="mb-4"
+                    onClick={handleCancelEdit}
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Back
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
+                <h2 className="text-2xl font-semibold tracking-tight">
+                  Create New Theme
+                </h2>
                 <ThemeEditor
-                  theme={editingTheme.id !== 0 ? editingTheme : undefined}
-                  onCancel={() => {
-                    setEditingTheme(null);
-                    setActiveTab('gallery');
-                  }}
+                  isNew={true}
                   onSave={handleSaveTheme}
-                  isAdmin={isAdmin}
+                  onCancel={handleCancelEdit}
                 />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-        
-        {isAdmin && viewingHistoryForTheme && (
-          <TabsContent value="history">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mr-2"
-                      onClick={() => {
-                        setViewingHistoryForTheme(null);
-                        setActiveTab('gallery');
-                      }}
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-1" />
-                      Back
-                    </Button>
-                    <CardTitle>Theme History</CardTitle>
-                  </div>
-                  
-                  <CardDescription>
-                    {themes.find((t: Theme) => t.id === viewingHistoryForTheme)?.name || 'Theme'}
-                  </CardDescription>
+              </div>
+            )}
+            
+            {isEditingTheme && selectedTheme && (
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="mb-4"
+                    onClick={handleCancelEdit}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Back
+                  </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
+                <h2 className="text-2xl font-semibold tracking-tight">
+                  Edit Theme: {selectedTheme.name}
+                </h2>
+                <ThemeEditor
+                  theme={selectedTheme}
+                  onSave={handleSaveTheme}
+                  onCancel={handleCancelEdit}
+                />
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="history">
+            {isViewingHistory && selectedTheme && (
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="mb-4"
+                    onClick={handleCloseHistory}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Back
+                  </Button>
+                </div>
+                <h2 className="text-2xl font-semibold tracking-tight">
+                  Theme History: {selectedTheme.name}
+                </h2>
                 <ThemeHistory
-                  themeId={viewingHistoryForTheme}
+                  themeId={selectedTheme.id}
                   onRestoreVersion={handleRestoreVersion}
                 />
-              </CardContent>
-            </Card>
+              </div>
+            )}
           </TabsContent>
-        )}
-      </Tabs>
+        </Tabs>
+      </div>
       
-      {/* Confirmation Dialogs */}
-      {themeToDelete && (
-        <DeleteConfirmation
-          theme={themeToDelete}
-          isOpen={deleteDialogOpen}
-          onClose={() => setDeleteDialogOpen(false)}
-          onConfirm={confirmDeleteTheme}
-        />
-      )}
-      
-      <AIGenerationDialog
-        isOpen={aiDialogOpen}
-        onClose={() => setAiDialogOpen(false)}
-        onGenerate={handleAIGenerate}
-        isGenerating={generatingTheme}
-      />
+      {/* Confirmation Dialog for Theme Deletion */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Theme</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this theme? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {selectedTheme && (
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-8 h-8 rounded-full"
+                  style={{ backgroundColor: selectedTheme.primaryColor }}
+                />
+                <div>
+                  <p className="font-medium">{selectedTheme.name}</p>
+                  {selectedTheme.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-1">
+                      {selectedTheme.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteTheme}
+              disabled={deleteThemeMutation.isPending}
+            >
+              {deleteThemeMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Theme"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

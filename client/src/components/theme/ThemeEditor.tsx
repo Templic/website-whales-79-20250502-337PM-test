@@ -1,22 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Theme, InsertTheme } from '../../../shared/schema';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useThemeAPI } from '@/hooks/useThemeAPI';
-import { useForm } from 'react-hook-form';
+import { HexColorPicker } from 'react-colorful';
 import { useToast } from '@/hooks/use-toast';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Paintbrush, Save, Trash, X, Eye, EyeOff, Copy, Plus, Sparkles, Tags, Settings } from 'lucide-react';
 
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from '@/components/ui/form';
+  Palette,
+  Save,
+  PlusCircle,
+  X,
+  Trash2,
+  RotateCcw,
+  Copy,
+  Check,
+  AlertTriangle,
+  Globe,
+  Lock,
+  Eye,
+  EyeOff,
+  Loader2,
+  Sliders
+} from 'lucide-react';
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
 import {
   Accordion,
@@ -50,798 +59,777 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 
-// Color picker
-import { HexColorPicker, HexColorInput } from 'react-colorful';
-
 interface ThemeEditorProps {
   theme?: Theme;
-  onCancel?: () => void;
+  isNew?: boolean;
   onSave?: (theme: Theme) => void;
-  isAdmin?: boolean;
+  onCancel?: () => void;
+  isLoading?: boolean;
 }
+
+interface ColorPickerFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  previewClass?: string;
+}
+
+const ColorPickerField: React.FC<ColorPickerFieldProps> = ({
+  label,
+  value,
+  onChange,
+  previewClass,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  const handleChange = (color: string) => {
+    onChange(color);
+  };
+  
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <Label>{label}</Label>
+        <div className="flex items-center gap-2">
+          <div 
+            className={cn(
+              "w-5 h-5 rounded-full border cursor-pointer transition-all",
+              previewClass
+            )}
+            style={{ backgroundColor: value }}
+            onClick={() => setIsOpen(true)}
+          />
+          <Input
+            type="text"
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            className="w-28 h-8 text-xs"
+          />
+        </div>
+      </div>
+      
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
+          <div 
+            className="w-full h-10 rounded-md cursor-pointer flex items-center justify-between px-4 border"
+            style={{ backgroundColor: value }}
+          >
+            <span className="text-sm font-medium" style={{ 
+              color: isLightColor(value) ? '#000000' : '#ffffff',
+              mixBlendMode: 'difference'
+            }}>
+              {value}
+            </span>
+            <Palette className="h-4 w-4" style={{ 
+              color: isLightColor(value) ? '#000000' : '#ffffff',
+              mixBlendMode: 'difference'
+            }} />
+          </div>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-3" align="center">
+          <HexColorPicker color={value} onChange={handleChange} />
+          <div className="grid grid-cols-5 gap-1 mt-2">
+            {presetColors.map((color) => (
+              <div
+                key={color}
+                className="w-6 h-6 rounded-md cursor-pointer border"
+                style={{ backgroundColor: color }}
+                onClick={() => {
+                  handleChange(color);
+                }}
+              />
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
+
+// Helper to determine if a color is light or dark
+const isLightColor = (color: string): boolean => {
+  // Remove the hash if it exists
+  color = color.replace('#', '');
+  
+  // Handle hex shorthand (e.g. #FFF)
+  if (color.length === 3) {
+    color = color[0] + color[0] + color[1] + color[1] + color[2] + color[2];
+  }
+  
+  const r = parseInt(color.substr(0, 2), 16);
+  const g = parseInt(color.substr(2, 2), 16);
+  const b = parseInt(color.substr(4, 2), 16);
+  
+  // YIQ equation to determine brightness
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return yiq >= 128;
+};
+
+// Preset colors for quick selection
+const presetColors = [
+  '#ffffff', '#f8f9fa', '#e9ecef', '#dee2e6', '#ced4da', 
+  '#6c757d', '#495057', '#343a40', '#212529', '#000000',
+  '#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#84cc16', '#831843', '#1e293b'
+];
 
 const ThemeEditor: React.FC<ThemeEditorProps> = ({
   theme,
-  onCancel,
+  isNew = false,
   onSave,
-  isAdmin = false,
+  onCancel,
+  isLoading = false,
 }) => {
   const { toast } = useToast();
-  const { currentTheme } = useTheme();
   const { useCreateTheme, useUpdateTheme } = useThemeAPI();
-  
   const createThemeMutation = useCreateTheme();
   const updateThemeMutation = useUpdateTheme();
   
-  const [activeTab, setActiveTab] = useState('basic');
-  const [previewMode, setPreviewMode] = useState(false);
+  // Form validation schema
+  const themeFormSchema = z.object({
+    name: z.string().min(1, "Name is required").max(50, "Name is too long"),
+    description: z.string().max(200, "Description is too long").optional(),
+    primaryColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid color format"),
+    accentColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid color format"),
+    backgroundColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid color format"),
+    textColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid color format"),
+    borderRadius: z.string().optional(),
+    fontFamily: z.string().optional(),
+    isPublic: z.boolean().default(false),
+  });
+  
+  // Create form with validation
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors, isDirty },
+  } = useForm<z.infer<typeof themeFormSchema>>({
+    resolver: zodResolver(themeFormSchema),
+    defaultValues: theme ? {
+      name: theme.name,
+      description: theme.description || '',
+      primaryColor: theme.primaryColor || '#3b82f6',
+      accentColor: theme.accentColor || '#10b981',
+      backgroundColor: theme.backgroundColor || '#ffffff',
+      textColor: theme.textColor || '#000000',
+      borderRadius: theme.borderRadius || '0.5rem',
+      fontFamily: theme.fontFamily || '',
+      isPublic: theme.isPublic || false,
+    } : {
+      name: '',
+      description: '',
+      primaryColor: '#3b82f6',
+      backgroundColor: '#ffffff',
+      accentColor: '#10b981',
+      textColor: '#000000',
+      borderRadius: '0.5rem',
+      fontFamily: '',
+      isPublic: false,
+    }
+  });
+  
+  // Track tags as a separate state since they're not supported by react-hook-form directly
+  const [tags, setTags] = useState<string[]>(theme?.tags || []);
   const [newTag, setNewTag] = useState('');
   
-  // Determine if this is create or edit mode
-  const isEditMode = !!theme;
+  // Track if form is submitting
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // For simple tag input
-  const handleAddTag = () => {
-    if (newTag.trim() !== '' && !form.getValues().tags?.includes(newTag.trim())) {
-      const currentTags = form.getValues().tags || [];
-      form.setValue('tags', [...currentTags, newTag.trim()]);
+  // Track if theme preview is shown in "Preview" tab
+  const [showPreview, setShowPreview] = useState(false);
+  
+  // Track current form values for preview
+  const formValues = watch();
+  
+  // Update preview tab when form values change
+  const [previewTheme, setPreviewTheme] = useState<Theme | null>(null);
+  
+  // Update the form when the theme changes (e.g. prop update)
+  useEffect(() => {
+    if (theme) {
+      reset({
+        name: theme.name,
+        description: theme.description || '',
+        primaryColor: theme.primaryColor || '#3b82f6',
+        accentColor: theme.accentColor || '#10b981',
+        backgroundColor: theme.backgroundColor || '#ffffff',
+        textColor: theme.textColor || '#000000',
+        borderRadius: theme.borderRadius || '0.5rem',
+        fontFamily: theme.fontFamily || '',
+        isPublic: theme.isPublic || false,
+      });
+      setTags(theme.tags || []);
+    }
+  }, [theme, reset]);
+  
+  // Update preview theme whenever form values change
+  useEffect(() => {
+    const updatedTheme = {
+      ...(theme || {}),
+      name: formValues.name,
+      description: formValues.description,
+      primaryColor: formValues.primaryColor,
+      accentColor: formValues.accentColor,
+      backgroundColor: formValues.backgroundColor,
+      textColor: formValues.textColor,
+      borderRadius: formValues.borderRadius,
+      fontFamily: formValues.fontFamily,
+      isPublic: formValues.isPublic,
+      tags: tags,
+    } as Theme;
+    
+    setPreviewTheme(updatedTheme);
+  }, [formValues, tags, theme]);
+  
+  // Handle adding a tag
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && newTag.trim()) {
+      e.preventDefault();
+      if (tags.includes(newTag.trim())) {
+        toast({
+          title: "Duplicate tag",
+          description: "This tag already exists",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (tags.length >= 10) {
+        toast({
+          title: "Too many tags",
+          description: "Maximum 10 tags allowed",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setTags([...tags, newTag.trim()]);
       setNewTag('');
     }
   };
   
-  const handleRemoveTag = (tagToRemove: string) => {
-    const currentTags = form.getValues().tags || [];
-    form.setValue(
-      'tags',
-      currentTags.filter(tag => tag !== tagToRemove)
-    );
+  // Handle removing a tag
+  const handleRemoveTag = (tag: string) => {
+    setTags(tags.filter(t => t !== tag));
   };
   
-  // Setup form validation schema
-  const formSchema = z.object({
-    name: z.string().min(2, 'Name must be at least 2 characters'),
-    description: z.string().optional(),
-    primaryColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Must be a valid HEX color'),
-    accentColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Must be a valid HEX color'),
-    backgroundColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Must be a valid HEX color'),
-    textColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Must be a valid HEX color'),
-    borderRadius: z.string().optional(),
-    fontFamily: z.string().optional(),
-    isPublic: z.boolean().default(false),
-    tags: z.array(z.string()).optional(),
-    // tokens can be any shape
-    tokens: z.record(z.any()).optional(),
-    // Additional fields for optional advanced features
-    parentThemeId: z.number().optional().nullable(),
-  });
-  
-  type FormValues = z.infer<typeof formSchema>;
-  
-  // Default values for new theme
-  const defaultValues: FormValues = {
-    name: '',
-    description: '',
-    primaryColor: '#3b82f6', // Blue
-    accentColor: '#10b981',  // Green
-    backgroundColor: '#ffffff', // White
-    textColor: '#111827',    // Near black
-    borderRadius: '0.5rem',
-    fontFamily: '',
-    isPublic: false,
-    tags: [],
-    tokens: {},
-    parentThemeId: null,
-  };
-  
-  // Initialize form with theme values or defaults
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: isEditMode
-      ? {
-          name: theme.name,
-          description: theme.description || '',
-          primaryColor: theme.primaryColor || defaultValues.primaryColor,
-          accentColor: theme.accentColor || defaultValues.accentColor,
-          backgroundColor: theme.backgroundColor || defaultValues.backgroundColor,
-          textColor: theme.textColor || defaultValues.textColor,
-          borderRadius: theme.borderRadius || defaultValues.borderRadius,
-          fontFamily: theme.fontFamily || '',
-          isPublic: theme.isPublic || false,
-          tags: theme.tags || [],
-          tokens: theme.tokens || {},
-          parentThemeId: theme.parentThemeId || null,
+  // Handle form submission
+  const onSubmit = async (data: z.infer<typeof themeFormSchema>) => {
+    try {
+      setIsSubmitting(true);
+      
+      const themeData = {
+        ...data,
+        tags,
+      };
+      
+      if (isNew) {
+        // Create new theme
+        const newTheme = await createThemeMutation.mutateAsync(themeData as InsertTheme);
+        
+        toast({
+          title: "Theme created",
+          description: "Your theme has been created successfully",
+        });
+        
+        if (onSave) {
+          onSave(newTheme);
         }
-      : defaultValues,
-  });
-  
-  const handleSubmit = (values: FormValues) => {
-    if (isEditMode) {
-      // Update existing theme
-      updateThemeMutation.mutate({
-        ...theme,
-        ...values,
-      }, {
-        onSuccess: (updatedTheme) => {
-          toast({
-            title: 'Theme updated',
-            description: `${updatedTheme.name} has been updated successfully.`,
-          });
-          
-          if (onSave) {
-            onSave(updatedTheme);
-          }
-        },
+      } else if (theme) {
+        // Update existing theme
+        const updatedTheme = await updateThemeMutation.mutateAsync({
+          ...theme,
+          ...themeData,
+        } as Theme);
+        
+        toast({
+          title: "Theme updated",
+          description: "Your theme has been updated successfully",
+        });
+        
+        if (onSave) {
+          onSave(updatedTheme);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving theme:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
       });
-    } else {
-      // Create new theme
-      createThemeMutation.mutate(values as InsertTheme, {
-        onSuccess: (newTheme) => {
-          toast({
-            title: 'Theme created',
-            description: `${newTheme.name} has been created successfully.`,
-          });
-          
-          // Reset form after successful creation
-          form.reset();
-          
-          if (onSave) {
-            onSave(newTheme);
-          }
-        },
-      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
-  // Preview component for the theme being edited
-  const ThemePreview = () => {
-    const formValues = form.getValues();
+  // Render theme preview
+  const renderThemePreview = () => {
+    if (!previewTheme) return null;
     
     return (
-      <div className="overflow-hidden rounded-lg border mb-4">
-        <div 
-          className="p-6" 
-          style={{
-            backgroundColor: formValues.backgroundColor,
-            color: formValues.textColor,
-          }}
+      <div className="space-y-8">
+        <div
+          className="w-full h-64 rounded-lg overflow-hidden border"
+          style={{ backgroundColor: previewTheme.backgroundColor }}
         >
-          <div className="flex flex-col gap-4">
-            <div 
-              className="h-10 rounded-t-lg flex items-center px-4" 
-              style={{
-                backgroundColor: formValues.primaryColor,
-                color: '#ffffff',
-                borderRadius: formValues.borderRadius,
-              }}
-            >
-              Header Bar
-            </div>
-            
-            <div className="space-y-3">
-              <h2
-                className="text-2xl font-bold" 
-                style={{ color: formValues.textColor }}
+          <div className="p-6">
+            <div className="mb-4">
+              <h2 
+                style={{ color: previewTheme.textColor }}
+                className="text-2xl font-bold mb-2"
               >
-                {formValues.name || 'Theme Preview'}
+                {previewTheme.name || 'Theme Preview'}
               </h2>
-              
-              <p style={{ color: formValues.textColor }}>
-                {formValues.description || 'This is how your theme will look to users.'}
+              <p 
+                style={{ color: previewTheme.textColor }}
+                className="opacity-80"
+              >
+                {previewTheme.description || 'This is how your theme will look.'}
               </p>
             </div>
             
-            <div className="flex flex-wrap gap-2">
-              <div 
-                className="px-4 py-2 rounded" 
-                style={{
-                  backgroundColor: formValues.primaryColor,
-                  color: '#ffffff',
-                  borderRadius: formValues.borderRadius,
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div
+                className="p-3 rounded"
+                style={{ 
+                  backgroundColor: previewTheme.primaryColor,
+                  borderRadius: previewTheme.borderRadius || '0.5rem',
+                }}
+              >
+                <p 
+                  className="font-medium" 
+                  style={{ 
+                    color: isLightColor(previewTheme.primaryColor) ? '#000000' : '#ffffff',
+                  }}
+                >
+                  Primary Color
+                </p>
+              </div>
+              
+              <div
+                className="p-3 rounded"
+                style={{ 
+                  backgroundColor: previewTheme.accentColor,
+                  borderRadius: previewTheme.borderRadius || '0.5rem',
+                }}
+              >
+                <p 
+                  className="font-medium" 
+                  style={{ 
+                    color: isLightColor(previewTheme.accentColor) ? '#000000' : '#ffffff',
+                  }}
+                >
+                  Accent Color
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap gap-2 mb-4">
+              <button
+                style={{ 
+                  backgroundColor: previewTheme.primaryColor,
+                  color: isLightColor(previewTheme.primaryColor) ? '#000000' : '#ffffff',
+                  borderRadius: previewTheme.borderRadius || '0.5rem',
+                  padding: '0.5rem 1rem',
+                  border: 'none',
+                  cursor: 'pointer',
                 }}
               >
                 Primary Button
-              </div>
+              </button>
               
-              <div 
-                className="px-4 py-2 rounded border" 
-                style={{
-                  backgroundColor: 'transparent', 
-                  borderColor: formValues.accentColor,
-                  color: formValues.accentColor,
-                  borderRadius: formValues.borderRadius,
+              <button
+                style={{ 
+                  backgroundColor: 'transparent',
+                  color: previewTheme.textColor,
+                  borderRadius: previewTheme.borderRadius || '0.5rem',
+                  padding: '0.5rem 1rem',
+                  border: `1px solid ${previewTheme.accentColor}`,
+                  cursor: 'pointer',
                 }}
               >
                 Secondary Button
-              </div>
+              </button>
             </div>
             
-            <div className="flex flex-wrap gap-1">
-              {formValues.tags?.map((tag, index) => (
-                <div 
-                  key={index}
-                  className="px-2 py-1 text-xs rounded" 
-                  style={{
-                    backgroundColor: formValues.accentColor,
-                    color: '#ffffff',
-                    borderRadius: formValues.borderRadius,
-                  }}
-                >
-                  {tag}
-                </div>
-              ))}
-            </div>
-            
-            <div
-              className="p-3 mt-3 rounded"
-              style={{
+            <div 
+              className="p-3 rounded"
+              style={{ 
                 backgroundColor: 'rgba(0,0,0,0.05)',
-                borderRadius: formValues.borderRadius,
+                borderRadius: previewTheme.borderRadius || '0.5rem',
               }}
             >
-              <div className="flex justify-between items-center">
-                <div>Card Element</div>
-                <div 
-                  className="h-6 w-6 rounded-full flex items-center justify-center"
-                  style={{
-                    backgroundColor: formValues.accentColor,
-                    color: '#ffffff',
-                  }}
-                >
-                  <Paintbrush className="h-3 w-3" />
+              <p style={{ color: previewTheme.textColor }}>
+                Text will appear like this on your theme's background.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-lg font-medium mb-2">Theme Properties</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Name:</span>
+                <span className="font-medium">{previewTheme.name}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Primary Color:</span>
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: previewTheme.primaryColor }}
+                  />
+                  <span>{previewTheme.primaryColor}</span>
+                </div>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Accent Color:</span>
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: previewTheme.accentColor }}
+                  />
+                  <span>{previewTheme.accentColor}</span>
+                </div>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Background Color:</span>
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-4 h-4 rounded-full border"
+                    style={{ backgroundColor: previewTheme.backgroundColor }}
+                  />
+                  <span>{previewTheme.backgroundColor}</span>
+                </div>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Text Color:</span>
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: previewTheme.textColor }}
+                  />
+                  <span>{previewTheme.textColor}</span>
+                </div>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Border Radius:</span>
+                <span>{previewTheme.borderRadius}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Visibility:</span>
+                <div className="flex items-center gap-1">
+                  {previewTheme.isPublic ? (
+                    <>
+                      <Globe className="h-3.5 w-3.5" />
+                      <span>Public</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="h-3.5 w-3.5" />
+                      <span>Private</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-medium mb-2">Tags</h3>
+            {previewTheme.tags && previewTheme.tags.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {previewTheme.tags.map((tag, i) => (
+                  <Badge key={i} variant="secondary">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No tags added</p>
+            )}
+            
+            {previewTheme.description && (
+              <>
+                <h3 className="text-lg font-medium mt-4 mb-2">Description</h3>
+                <p className="text-muted-foreground">{previewTheme.description}</p>
+              </>
+            )}
           </div>
         </div>
       </div>
     );
   };
   
-  // Custom color picker field component
-  const ColorPickerField = ({ name, label, description }: { name: string, label: string, description?: string }) => {
+  if (isLoading) {
     return (
-      <FormField
-        control={form.control}
-        name={name}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{label}</FormLabel>
-            <div className="flex gap-2 items-center">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <div 
-                    className="h-10 w-10 rounded-md border cursor-pointer flex items-center justify-center overflow-hidden"
-                    style={{ backgroundColor: field.value }}
-                  >
-                    <span className="sr-only">Pick a color</span>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-3">
-                  <HexColorPicker color={field.value} onChange={field.onChange} />
-                </PopoverContent>
-              </Popover>
-              
-              <div className="flex-1">
-                <FormControl>
-                  <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                    <span className="mr-2 opacity-70">#</span>
-                    <HexColorInput
-                      color={field.value}
-                      onChange={field.onChange}
-                      prefixed={false}
-                      className="flex-1 bg-transparent outline-none"
-                    />
-                  </div>
-                </FormControl>
-              </div>
-            </div>
-            {description && <FormDescription>{description}</FormDescription>}
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+        <div className="flex justify-end space-x-2">
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-24" />
+        </div>
+      </div>
     );
-  };
-  
-  // Border radius field with preview
-  const BorderRadiusField = () => {
-    return (
-      <FormField
-        control={form.control}
-        name="borderRadius"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Border Radius</FormLabel>
-            <div className="flex space-x-2">
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <div 
-                className="h-10 w-10 border flex-shrink-0"
-                style={{ borderRadius: field.value }}
-              />
-            </div>
-            <FormDescription>
-              Use CSS values like 0.5rem, 8px, or 0 for no radius
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    );
-  };
-  
-  // Font family selection
-  const FontFamilyField = () => {
-    return (
-      <FormField
-        control={form.control}
-        name="fontFamily"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Font Family</FormLabel>
-            <FormControl>
-              <Input {...field} placeholder="e.g., 'Inter', sans-serif" />
-            </FormControl>
-            <FormDescription>
-              Use CSS font family format: 'Primary Font', fallback, sans-serif
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    );
-  };
-  
-  // Visibility toggle for public/private
-  const VisibilityField = () => {
-    return (
-      <FormField
-        control={form.control}
-        name="isPublic"
-        render={({ field }) => (
-          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-            <div className="space-y-0.5">
-              <FormLabel className="text-base">
-                {field.value ? 'Public Theme' : 'Private Theme'}
-              </FormLabel>
-              <FormDescription>
-                {field.value 
-                  ? 'Anyone can see and use this theme'
-                  : 'Only you can see and use this theme'}
-              </FormDescription>
-            </div>
-            <FormControl>
-              <Switch
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                disabled={!isAdmin}
-              />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-    );
-  };
-  
-  // Tags input
-  const TagsField = () => {
-    return (
-      <FormField
-        control={form.control}
-        name="tags"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Tags</FormLabel>
-            <div className="flex items-center space-x-2">
-              <Input
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                placeholder="Add a tag..."
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleAddTag}
-                disabled={!newTag.trim()}
-                size="sm"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {field.value?.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
-                  {tag}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto w-auto p-0 ml-1"
-                    onClick={() => handleRemoveTag(tag)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              ))}
-              {!field.value?.length && (
-                <div className="text-sm text-muted-foreground">No tags added</div>
-              )}
-            </div>
-            <FormDescription>
-              Add tags to categorize your theme (e.g., dark, light, professional)
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    );
-  };
-  
-  const AIGenerateButton = () => {
-    const [prompt, setPrompt] = useState('');
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [aiDialogOpen, setAiDialogOpen] = useState(false);
-    
-    const handleGenerate = () => {
-      if (!prompt.trim()) return;
-      
-      setIsGenerating(true);
-      
-      // Mock implementation - replace with actual API call
-      setTimeout(() => {
-        // Example generated values
-        const primaryColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
-        const accentColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
-        const backgroundColor = '#ffffff';
-        const textColor = '#111827';
-        
-        form.setValue('primaryColor', primaryColor);
-        form.setValue('accentColor', accentColor);
-        form.setValue('backgroundColor', backgroundColor);
-        form.setValue('textColor', textColor);
-        
-        // Add a tag for AI generated
-        const currentTags = form.getValues().tags || [];
-        if (!currentTags.includes('ai-generated')) {
-          form.setValue('tags', [...currentTags, 'ai-generated']);
-        }
-        
-        // Add some of the prompt words as tags
-        const promptWords = prompt.split(' ')
-          .filter(word => word.length > 3)
-          .slice(0, 3);
-          
-        promptWords.forEach(word => {
-          const currentTags = form.getValues().tags || [];
-          if (!currentTags.includes(word)) {
-            form.setValue('tags', [...currentTags, word]);
-          }
-        });
-        
-        setIsGenerating(false);
-        setAiDialogOpen(false);
-        
-        toast({
-          title: 'Theme generated',
-          description: 'AI has generated a theme based on your prompt.',
-        });
-      }, 1500);
-    };
-    
-    return (
-      <Dialog open={aiDialogOpen} onOpenChange={setAiDialogOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" className="w-full">
-            <Sparkles className="h-4 w-4 mr-2" />
-            Generate with AI
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Generate Theme with AI</DialogTitle>
-            <DialogDescription>
-              Describe your desired theme and our AI will generate color palettes and styles.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-2">
-            <Textarea
-              placeholder="Describe your theme... e.g., 'Ocean blue theme with calm colors for a meditation app'"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              className="h-32"
-            />
-            
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">
-                {prompt.length > 0 ? `${prompt.length} characters` : 'Enter a description'}
-              </div>
-              {prompt.length < 10 && prompt.length > 0 && (
-                <div className="text-sm text-yellow-500">
-                  Add more detail for better results
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setAiDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleGenerate} 
-              disabled={!prompt.trim() || prompt.length < 5 || isGenerating}
-            >
-              {isGenerating ? (
-                <>
-                  <div className="animate-spin mr-2">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generate
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  };
-  
-  const isSubmitting = createThemeMutation.isPending || updateThemeMutation.isPending;
+  }
   
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">
-            {isEditMode ? `Edit Theme: ${theme.name}` : 'Create New Theme'}
-          </h2>
-          <p className="text-muted-foreground">
-            {isEditMode
-              ? 'Update the properties of your existing theme'
-              : 'Design a new theme to customize the appearance of the application'}
-          </p>
-        </div>
+    <div className="space-y-8">
+      <Tabs defaultValue="edit" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="edit">Edit</TabsTrigger>
+          <TabsTrigger value="preview">Preview</TabsTrigger>
+        </TabsList>
         
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPreviewMode(!previewMode)}
-          >
-            {previewMode ? (
-              <>
-                <EyeOff className="h-4 w-4 mr-2" />
-                Hide Preview
-              </>
-            ) : (
-              <>
-                <Eye className="h-4 w-4 mr-2" />
-                Show Preview
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-      
-      {previewMode && <ThemePreview />}
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-          <Tabs defaultValue="basic" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-3 mb-6">
-              <TabsTrigger value="basic">Basic</TabsTrigger>
-              <TabsTrigger value="appearance">Appearance</TabsTrigger>
-              <TabsTrigger value="advanced">Advanced</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="basic" className="space-y-6">
-              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Theme Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="My Theme" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        A unique name for your theme
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
+        <TabsContent value="edit" className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Name</Label>
+                  <Input 
+                    id="name" 
+                    {...register('name')} 
+                    placeholder="My Custom Theme" 
+                  />
+                  {errors.name && (
+                    <p className="text-destructive text-sm mt-1">{errors.name.message}</p>
                   )}
-                />
+                </div>
                 
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Input placeholder="A brief description..." {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Describe the purpose or style of this theme
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea 
+                    id="description" 
+                    {...register('description')} 
+                    placeholder="A brief description of your theme" 
+                    className="resize-none" 
+                    rows={3} 
+                  />
+                  {errors.description && (
+                    <p className="text-destructive text-sm mt-1">{errors.description.message}</p>
                   )}
-                />
-              </div>
-              
-              <VisibilityField />
-              <TagsField />
-              
-              <div className="flex justify-center mt-6">
-                <AIGenerateButton />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="appearance" className="space-y-6">
-              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                <ColorPickerField 
-                  name="primaryColor" 
-                  label="Primary Color" 
-                  description="Used for main UI elements like buttons and headers"
-                />
+                </div>
                 
-                <ColorPickerField 
-                  name="accentColor" 
-                  label="Accent Color" 
-                  description="Used for highlights and secondary elements"
-                />
-              </div>
-              
-              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                <ColorPickerField 
-                  name="backgroundColor" 
-                  label="Background Color" 
-                  description="The main background color of the application"
-                />
+                <div>
+                  <Label>Tags</Label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {tags.map((tag) => (
+                      <Badge 
+                        key={tag} 
+                        variant="secondary"
+                        className="flex items-center gap-1 pr-1"
+                      >
+                        {tag}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 p-0 rounded-full"
+                          onClick={() => handleRemoveTag(tag)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex">
+                    <Input
+                      type="text"
+                      placeholder="Add a tag (press Enter)"
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      onKeyDown={handleAddTag}
+                      className="flex-1"
+                    />
+                  </div>
+                  <p className="text-muted-foreground text-xs mt-1">
+                    Press Enter to add. Maximum 10 tags.
+                  </p>
+                </div>
                 
-                <ColorPickerField 
-                  name="textColor" 
-                  label="Text Color" 
-                  description="The primary color used for text content"
-                />
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="isPublic"
+                    checked={watch('isPublic')}
+                    onCheckedChange={(checked) => setValue('isPublic', checked)}
+                  />
+                  <Label htmlFor="isPublic" className="flex items-center gap-2">
+                    {watch('isPublic') ? (
+                      <>
+                        <Globe className="h-4 w-4" />
+                        Public theme (visible to all users)
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="h-4 w-4" />
+                        Private theme (only visible to you)
+                      </>
+                    )}
+                  </Label>
+                </div>
               </div>
               
-              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                <BorderRadiusField />
-                <FontFamilyField />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="advanced" className="space-y-6">
-              <Alert>
-                <Settings className="h-4 w-4" />
-                <AlertTitle>Advanced Settings</AlertTitle>
-                <AlertDescription>
-                  These settings are for advanced users and allow more granular control over the theme.
-                </AlertDescription>
-              </Alert>
-              
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="tokens">
-                  <AccordionTrigger>Custom Tokens</AccordionTrigger>
-                  <AccordionContent>
-                    <div className="p-4 border rounded-md bg-muted/50">
-                      <p className="text-muted-foreground text-sm mb-2">
-                        Custom tokens are stored as CSS variables and can be used throughout the application.
-                        You can edit these in the theme JSON directly.
-                      </p>
-                      <Textarea
-                        rows={8}
-                        value={JSON.stringify(form.getValues().tokens || {}, null, 2)}
-                        onChange={(e) => {
-                          try {
-                            const parsed = JSON.parse(e.target.value);
-                            form.setValue('tokens', parsed);
-                          } catch (err) {
-                            // Don't update if JSON is invalid
-                          }
-                        }}
-                        className="font-mono text-sm"
-                      />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="inheritance">
-                  <AccordionTrigger>Theme Inheritance</AccordionTrigger>
-                  <AccordionContent>
-                    <div className="p-4 border rounded-md bg-muted/50">
-                      <p className="text-muted-foreground text-sm mb-4">
-                        Themes can inherit properties from a parent theme. When properties are missing,
-                        they'll be taken from the parent theme.
-                      </p>
-                      <div className="text-sm">
-                        Parent theme selection not yet implemented.
+              {/* Colors and Styling */}
+              <div className="space-y-4">
+                <Accordion type="single" collapsible defaultValue="colors">
+                  <AccordionItem value="colors">
+                    <AccordionTrigger>Colors</AccordionTrigger>
+                    <AccordionContent className="pt-4">
+                      <div className="space-y-4">
+                        <ColorPickerField
+                          label="Primary Color"
+                          value={watch('primaryColor')}
+                          onChange={(color) => setValue('primaryColor', color, { shouldDirty: true })}
+                          previewClass="ring-offset-background"
+                        />
+                        {errors.primaryColor && (
+                          <p className="text-destructive text-sm mt-1">{errors.primaryColor.message}</p>
+                        )}
+                        
+                        <ColorPickerField
+                          label="Accent Color"
+                          value={watch('accentColor')}
+                          onChange={(color) => setValue('accentColor', color, { shouldDirty: true })}
+                          previewClass="ring-offset-background"
+                        />
+                        {errors.accentColor && (
+                          <p className="text-destructive text-sm mt-1">{errors.accentColor.message}</p>
+                        )}
+                        
+                        <ColorPickerField
+                          label="Background Color"
+                          value={watch('backgroundColor')}
+                          onChange={(color) => setValue('backgroundColor', color, { shouldDirty: true })}
+                          previewClass="ring-offset-background"
+                        />
+                        {errors.backgroundColor && (
+                          <p className="text-destructive text-sm mt-1">{errors.backgroundColor.message}</p>
+                        )}
+                        
+                        <ColorPickerField
+                          label="Text Color"
+                          value={watch('textColor')}
+                          onChange={(color) => setValue('textColor', color, { shouldDirty: true })}
+                          previewClass="ring-offset-background"
+                        />
+                        {errors.textColor && (
+                          <p className="text-destructive text-sm mt-1">{errors.textColor.message}</p>
+                        )}
                       </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </TabsContent>
-          </Tabs>
-          
-          <Separator />
-          
-          <div className="flex justify-between">
-            {onCancel ? (
-              <Button type="button" variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-            ) : (
-              <div />
-            )}
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="styling">
+                    <AccordionTrigger>Additional Styling</AccordionTrigger>
+                    <AccordionContent className="pt-4">
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="borderRadius">Border Radius</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="borderRadius"
+                              {...register('borderRadius')}
+                              placeholder="0.5rem"
+                            />
+                            <Select
+                              value={watch('borderRadius')}
+                              onValueChange={(value) => setValue('borderRadius', value, { shouldDirty: true })}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue placeholder="Presets" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="0">None</SelectItem>
+                                <SelectItem value="0.25rem">Small</SelectItem>
+                                <SelectItem value="0.5rem">Medium</SelectItem>
+                                <SelectItem value="1rem">Large</SelectItem>
+                                <SelectItem value="9999px">Full</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="fontFamily">Font Family</Label>
+                          <Input
+                            id="fontFamily"
+                            {...register('fontFamily')}
+                            placeholder="Inter, system-ui, sans-serif"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Enter a comma-separated list of font families
+                          </p>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            </div>
             
-            <div className="flex space-x-2">
-              {isEditMode && (
+            <div className="flex justify-end space-x-2">
+              {onCancel && (
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    // Clone the current theme to a new form
-                    form.reset({
-                      ...form.getValues(),
-                      name: `Copy of ${form.getValues().name}`,
-                      parentThemeId: theme.id,
-                    });
-                    
-                    // Could add logic here to switch to "create" mode
-                    toast({
-                      title: 'Theme cloned',
-                      description: 'You are now editing a copy of the original theme.',
-                    });
-                  }}
+                  onClick={onCancel}
                 >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Clone
+                  Cancel
                 </Button>
               )}
               
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !isDirty}
+                className="min-w-24"
+              >
                 {isSubmitting ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin mr-2">
-                      <Paintbrush className="h-4 w-4" />
-                    </div>
-                    <span>{isEditMode ? 'Updating...' : 'Creating...'}</span>
-                  </div>
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {isNew ? 'Creating...' : 'Saving...'}
+                  </>
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    {isEditMode ? 'Update Theme' : 'Create Theme'}
+                    {isNew ? 'Create Theme' : 'Save Changes'}
                   </>
                 )}
               </Button>
             </div>
-          </div>
-        </form>
-      </Form>
+          </form>
+        </TabsContent>
+        
+        <TabsContent value="preview">
+          {renderThemePreview()}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

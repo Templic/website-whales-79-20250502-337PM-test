@@ -1,21 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Theme } from '../../../shared/schema';
 import { useTheme } from '@/contexts/ThemeContext';
+
 import {
-  Paintbrush,
   Search,
   Filter,
+  X,
   Check,
-  ChevronDown,
-  Sparkles,
+  Tags,
   Grid,
   List,
-  Heart,
-  Download,
-  Share,
+  SlidersHorizontal,
+  Paintbrush,
   Star,
-  ArrowRight,
-  Copy,
+  Zap,
+  SunMoon,
+  Users,
+  Calendar,
+  Ghost,
+  AlertTriangle,
+  ChevronDown
 } from 'lucide-react';
 
 import {
@@ -37,6 +41,7 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -48,420 +53,412 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import ThemeCard from './ThemeCard';
 
 interface ThemeShowcaseProps {
   themes: Theme[];
-  onSelectTheme?: (theme: Theme) => void;
   currentTheme?: Theme;
+  onSelectTheme: (theme: Theme) => void;
   isFilterable?: boolean;
   isSearchable?: boolean;
   showActions?: boolean;
-  layout?: 'grid' | 'list';
-  emptyMessage?: React.ReactNode;
+  initialFilters?: {
+    category?: string;
+    tags?: string[];
+    sort?: 'newest' | 'popular' | 'name';
+  };
 }
 
 const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({
   themes,
-  onSelectTheme,
   currentTheme,
-  isFilterable = true,
-  isSearchable = true,
-  showActions = true,
-  layout = 'grid',
-  emptyMessage = 'No themes found'
+  onSelectTheme,
+  isFilterable = false,
+  isSearchable = false,
+  showActions = false,
+  initialFilters = {},
 }) => {
-  const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [viewLayout, setViewLayout] = useState<'grid' | 'list'>(layout);
-  const [showOnlyPublic, setShowOnlyPublic] = useState<boolean>(false);
-  const [sortBy, setSortBy] = useState<string>('newest');
+  // State for filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(initialFilters.category || 'all');
+  const [selectedTags, setSelectedTags] = useState<string[]>(initialFilters.tags || []);
+  const [sortBy, setSortBy] = useState<'newest' | 'popular' | 'name'>(initialFilters.sort || 'newest');
+  const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
+  const [showFilters, setShowFilters] = useState(false);
   
-  // Get all categories from the themes (from tags)
-  const allCategories = React.useMemo(() => {
-    const categories = new Set<string>();
-    categories.add('all');
-    
-    themes.forEach(theme => {
-      if (theme.tags) {
-        theme.tags.forEach(tag => categories.add(tag));
+  // Extract all available tags from themes
+  const allTags = [...new Set(themes.flatMap(theme => theme.tags || []))].sort();
+  
+  // Toggle a tag in the selected tags array
+  const toggleTag = (tag: string) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(selectedTags.filter(t => t !== tag));
+    } else {
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
+  
+  // Filter themes based on search query, category, and tags
+  const filteredThemes = themes.filter(theme => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesName = theme.name.toLowerCase().includes(query);
+      const matchesDescription = theme.description?.toLowerCase().includes(query) || false;
+      const matchesTags = theme.tags?.some(tag => tag.toLowerCase().includes(query)) || false;
+      
+      if (!matchesName && !matchesDescription && !matchesTags) {
+        return false;
       }
-    });
+    }
     
-    return Array.from(categories);
-  }, [themes]);
+    // Category filter
+    if (selectedCategory === 'system' && theme.userId) {
+      return false;
+    }
+    if (selectedCategory === 'user' && !theme.userId) {
+      return false;
+    }
+    if (selectedCategory === 'public' && !theme.isPublic) {
+      return false;
+    }
+    if (selectedCategory === 'private' && theme.isPublic) {
+      return false;
+    }
+    
+    // Tags filter
+    if (selectedTags.length > 0) {
+      return selectedTags.every(tag => theme.tags?.includes(tag));
+    }
+    
+    return true;
+  });
   
-  // Filter and sort themes
-  const filteredThemes = React.useMemo(() => {
-    return themes
-      .filter(theme => {
-        // Filter by public/private
-        if (showOnlyPublic && !theme.isPublic) {
-          return false;
-        }
-        
-        // Filter by category
-        if (activeCategory !== 'all' && (!theme.tags || !theme.tags.includes(activeCategory))) {
-          return false;
-        }
-        
-        // Filter by search
-        if (searchTerm) {
-          const searchLower = searchTerm.toLowerCase();
-          const nameMatch = theme.name.toLowerCase().includes(searchLower);
-          const descMatch = theme.description?.toLowerCase().includes(searchLower) ?? false;
-          const tagMatch = theme.tags?.some(tag => tag.toLowerCase().includes(searchLower)) ?? false;
-          
-          return nameMatch || descMatch || tagMatch;
-        }
-        
-        return true;
-      })
-      .sort((a, b) => {
-        switch (sortBy) {
-          case 'newest':
-            return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-          case 'oldest':
-            return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
-          case 'name':
-            return a.name.localeCompare(b.name);
-          case 'name-desc':
-            return b.name.localeCompare(a.name);
-          default:
-            return 0;
-        }
-      });
-  }, [themes, activeCategory, searchTerm, showOnlyPublic, sortBy]);
+  // Sort the filtered themes
+  const sortedThemes = [...filteredThemes].sort((a, b) => {
+    if (sortBy === 'newest') {
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    }
+    if (sortBy === 'name') {
+      return a.name.localeCompare(b.name);
+    }
+    // For 'popular', we'd usually use analytics data - fallback to name sorting for now
+    return a.name.localeCompare(b.name);
+  });
   
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+  // Reset filters
+  const resetFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setSelectedTags([]);
+    setSortBy('newest');
   };
   
-  // Render UI Components based on theme colors
-  const renderThemePreview = (theme: Theme) => {
+  // Render the category tabs
+  const renderCategoryTabs = () => {
     return (
-      <div 
-        className="rounded-md overflow-hidden"
-        style={{ 
-          backgroundColor: theme.backgroundColor,
-          color: theme.textColor,
-          borderRadius: theme.borderRadius || '0.5rem',
-        }}
-      >
-        <div className="p-4">
-          <div className="flex justify-between items-start mb-4">
-            <div 
-              className="h-8 w-32 rounded-md flex items-center justify-center text-xs"
-              style={{ 
-                backgroundColor: theme.primaryColor,
-                color: '#ffffff',
-              }}
-            >
-              Header
-            </div>
-            
-            <div 
-              className="h-8 w-8 rounded-full flex items-center justify-center text-xs"
-              style={{ 
-                backgroundColor: theme.accentColor,
-                color: '#ffffff',
-              }}
-            >
-              <Paintbrush className="h-4 w-4" />
-            </div>
-          </div>
-          
-          <div className="space-y-2 mb-4">
-            <div 
-              className="h-3 w-3/4 rounded-sm"
-              style={{ backgroundColor: theme.textColor, opacity: 0.2 }}
-            />
-            <div 
-              className="h-3 w-1/2 rounded-sm"
-              style={{ backgroundColor: theme.textColor, opacity: 0.2 }}
-            />
-            <div 
-              className="h-3 w-5/6 rounded-sm"
-              style={{ backgroundColor: theme.textColor, opacity: 0.2 }}
-            />
-          </div>
-          
-          <div className="flex space-x-2 mb-4">
-            <div 
-              className="px-3 py-1 text-xs rounded-md"
-              style={{ 
-                backgroundColor: theme.primaryColor, 
-                color: '#ffffff',
-                opacity: 0.8,
-              }}
-            >
-              Button
-            </div>
-            <div 
-              className="px-3 py-1 text-xs rounded-md"
-              style={{ 
-                backgroundColor: 'transparent', 
-                border: `1px solid ${theme.accentColor}`,
-                color: theme.accentColor,
-              }}
-            >
-              Button
-            </div>
-          </div>
-          
-          <div className="flex flex-wrap gap-1">
-            {theme.tags && theme.tags.map((tag, i) => (
-              <div 
-                key={i}
-                className="px-2 py-1 text-xs rounded-md"
-                style={{ 
-                  backgroundColor: theme.textColor,
-                  color: theme.backgroundColor,
-                  opacity: 0.2,
-                }}
-              >
-                {tag}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+        <TabsList className="w-full grid grid-cols-4">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="system">System</TabsTrigger>
+          <TabsTrigger value="user">Custom</TabsTrigger>
+          <TabsTrigger value="public">Public</TabsTrigger>
+        </TabsList>
+      </Tabs>
     );
   };
   
-  // Render the search and filter bar
-  const renderFilters = () => {
-    if (!isFilterable && !isSearchable) return null;
-    
+  // Render the tag badges
+  const renderTagSelector = () => {
     return (
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        {isSearchable && (
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search themes..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="pl-10"
-            />
-          </div>
-        )}
-        
-        {isFilterable && (
-          <div className="flex flex-wrap gap-2">
-            <Select
-              value={activeCategory}
-              onValueChange={setActiveCategory}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                {allCategories.map(category => (
-                  <SelectItem key={category} value={category}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Select
-              value={sortBy}
-              onValueChange={setSortBy}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest</SelectItem>
-                <SelectItem value="oldest">Oldest</SelectItem>
-                <SelectItem value="name">Name (A-Z)</SelectItem>
-                <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="public-only"
-                checked={showOnlyPublic}
-                onCheckedChange={setShowOnlyPublic}
-              />
-              <Label htmlFor="public-only" className="text-sm">
-                Public only
-              </Label>
-            </div>
-            
-            <div className="flex justify-end items-center border rounded-md overflow-hidden">
-              <Button
-                variant={viewLayout === 'grid' ? 'default' : 'ghost'}
-                size="icon"
-                className="h-9 w-9 rounded-none"
-                onClick={() => setViewLayout('grid')}
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Separator orientation="vertical" className="h-5" />
-              <Button
-                variant={viewLayout === 'list' ? 'default' : 'ghost'}
-                size="icon"
-                className="h-9 w-9 rounded-none"
-                onClick={() => setViewLayout('list')}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+      <div className="flex flex-wrap gap-1 mt-4">
+        {allTags.map((tag, i) => (
+          <Badge
+            key={i}
+            variant={selectedTags.includes(tag) ? 'default' : 'outline'}
+            className="cursor-pointer transition-colors"
+            onClick={() => toggleTag(tag)}
+          >
+            {tag}
+            {selectedTags.includes(tag) && (
+              <X className="h-3 w-3 ml-1" />
+            )}
+          </Badge>
+        ))}
+        {allTags.length === 0 && (
+          <div className="text-sm text-muted-foreground">No tags available</div>
         )}
       </div>
     );
   };
   
-  // Render theme as a grid item
-  const renderGridItem = (theme: Theme) => {
-    const isActive = currentTheme?.id === theme.id;
-    
+  // Render the sort options
+  const renderSortOptions = () => {
     return (
-      <Card key={theme.id} className={`transition-all duration-300 overflow-hidden ${isActive ? 'ring-2 ring-primary' : ''}`}>
-        <div 
-          className="w-full h-3"
-          style={{ backgroundColor: theme.primaryColor }}
+      <Select value={sortBy} onValueChange={(value: 'newest' | 'popular' | 'name') => setSortBy(value)}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Sort by" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value="newest">Newest</SelectItem>
+            <SelectItem value="popular">Most Popular</SelectItem>
+            <SelectItem value="name">Alphabetical</SelectItem>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    );
+  };
+  
+  // Render the grid/list view toggle
+  const renderViewTypeToggle = () => {
+    return (
+      <div className="flex space-x-1">
+        <Button
+          variant={viewType === 'grid' ? 'default' : 'outline'}
+          size="icon"
+          onClick={() => setViewType('grid')}
+          className="h-8 w-8"
+        >
+          <Grid className="h-4 w-4" />
+        </Button>
+        <Button
+          variant={viewType === 'list' ? 'default' : 'outline'}
+          size="icon"
+          onClick={() => setViewType('list')}
+          className="h-8 w-8"
+        >
+          <List className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  };
+  
+  // Render the search bar
+  const renderSearchBar = () => {
+    return (
+      <div className="relative">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search themes..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-8"
         />
-        
-        <CardHeader className="p-4">
-          <div className="flex justify-between items-start">
-            <CardTitle className="text-lg font-semibold">{theme.name}</CardTitle>
-            {isActive && (
-              <Badge variant="outline" className="ml-2">
-                <Check className="h-3 w-3 mr-1" />
-                Active
-              </Badge>
-            )}
-          </div>
-          {theme.description && (
-            <CardDescription className="mt-1 line-clamp-2">
-              {theme.description}
-            </CardDescription>
-          )}
-        </CardHeader>
-        
-        <CardContent className="px-4 pt-0 pb-4">
-          <div className="mb-4 rounded overflow-hidden">
-            {renderThemePreview(theme)}
-          </div>
-          
-          <div className="flex flex-wrap gap-1 mt-2">
-            {theme.tags && theme.tags.map((tag, i) => (
-              <Badge key={i} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-        
-        {onSelectTheme && (
-          <CardFooter className="px-4 py-3 bg-muted/10 flex justify-between">
-            <Button
-              variant={isActive ? "secondary" : "default"}
-              onClick={() => onSelectTheme(theme)}
-              disabled={isActive}
-              className="w-full"
-            >
-              {isActive ? (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Applied
-                </>
-              ) : (
-                <>
-                  <Paintbrush className="h-4 w-4 mr-2" />
-                  Apply
-                </>
-              )}
-            </Button>
-          </CardFooter>
+        {searchQuery && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-1 top-1.5 h-6 w-6"
+            onClick={() => setSearchQuery('')}
+          >
+            <X className="h-4 w-4" />
+          </Button>
         )}
+      </div>
+    );
+  };
+  
+  // Render the filter section
+  const renderFilterSection = () => {
+    const hasActiveFilters = selectedCategory !== 'all' || selectedTags.length > 0 || sortBy !== 'newest';
+    
+    return (
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-1"
+          >
+            <Filter className="h-3.5 w-3.5 mr-1" />
+            Filters
+            <ChevronDown className="h-3.5 w-3.5 ml-1" />
+          </Button>
+          
+          <div className="flex space-x-2">
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={resetFilters}>
+                Reset
+              </Button>
+            )}
+            
+            {renderViewTypeToggle()}
+          </div>
+        </div>
+        
+        {showFilters && (
+          <div className="mt-4 p-4 border rounded-md bg-muted/40">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium mb-1.5 block">Categories</Label>
+                {renderCategoryTabs()}
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium mb-1.5 block">Sort By</Label>
+                {renderSortOptions()}
+              </div>
+            </div>
+            
+            <div className="mt-4">
+              <Label className="text-sm font-medium mb-1.5 block">Tags</Label>
+              {renderTagSelector()}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  // Display appropriate message when no themes match the filter
+  const renderEmptyState = () => {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center text-muted-foreground">
+            <Ghost className="h-5 w-5 mr-2" />
+            No Themes Found
+          </CardTitle>
+          <CardDescription>
+            There are no themes matching your current filters.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            Try adjusting your filters or search query to find more themes.
+          </p>
+          <Button variant="outline" onClick={resetFilters}>
+            Reset Filters
+          </Button>
+        </CardContent>
       </Card>
     );
   };
   
-  // Render theme as a list item
-  const renderListItem = (theme: Theme) => {
-    const isActive = currentTheme?.id === theme.id;
-    
+  // Display error state
+  const renderErrorState = () => {
     return (
-      <Card key={theme.id} className={`transition-all duration-300 ${isActive ? 'ring-2 ring-primary' : ''}`}>
-        <div className="flex items-center p-4">
-          <div className="flex-shrink-0 w-32 h-20 mr-4 rounded-md overflow-hidden">
-            {renderThemePreview(theme)}
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex justify-between">
-              <h3 className="text-lg font-medium">{theme.name}</h3>
-              {isActive && (
-                <Badge variant="outline" className="ml-2">
-                  <Check className="h-3 w-3 mr-1" />
-                  Active
-                </Badge>
-              )}
-            </div>
-            
-            {theme.description && (
-              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                {theme.description}
-              </p>
-            )}
-            
-            <div className="flex flex-wrap gap-1 mt-2">
-              {theme.tags && theme.tags.map((tag, i) => (
-                <Badge key={i} variant="secondary" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          
-          {onSelectTheme && (
-            <div className="flex-shrink-0 ml-4">
-              <Button
-                variant={isActive ? "secondary" : "default"}
-                onClick={() => onSelectTheme(theme)}
-                disabled={isActive}
-                size="sm"
-              >
-                {isActive ? (
-                  <>
-                    <Check className="h-4 w-4 mr-1" />
-                    Applied
-                  </>
-                ) : "Apply"}
-              </Button>
-            </div>
-          )}
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center text-destructive">
+            <AlertTriangle className="h-5 w-5 mr-2" />
+            Error Loading Themes
+          </CardTitle>
+          <CardDescription>
+            There was a problem loading the themes.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-destructive/90 mb-4">
+            Please try refreshing the page.
+          </p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Refresh
+          </Button>
+        </CardContent>
       </Card>
     );
+  };
+  
+  // Render the themes in grid or list view
+  const renderThemes = () => {
+    if (sortedThemes.length === 0) {
+      return renderEmptyState();
+    }
+    
+    if (viewType === 'grid') {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sortedThemes.map((theme) => (
+            <ThemeCard
+              key={theme.id}
+              theme={theme}
+              isActive={currentTheme?.id === theme.id}
+              onSelect={onSelectTheme}
+              canEdit={false}
+              canDelete={false}
+              canPublish={false}
+            />
+          ))}
+        </div>
+      );
+    } else {
+      return (
+        <div className="space-y-2">
+          {sortedThemes.map((theme) => (
+            <Card key={theme.id} className="overflow-hidden hover:shadow-sm">
+              <div className="flex items-center p-3">
+                <div 
+                  className="h-6 w-6 mr-3 rounded-full flex-shrink-0" 
+                  style={{ backgroundColor: theme.primaryColor }}
+                />
+                <div className="flex-1">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-medium">
+                      {theme.name}
+                      {currentTheme?.id === theme.id && (
+                        <Badge variant="outline" className="ml-2">
+                          <Check className="h-3 w-3 mr-1" />
+                          Active
+                        </Badge>
+                      )}
+                    </h3>
+                    <Button 
+                      variant={currentTheme?.id === theme.id ? "outline" : "default"}
+                      size="sm"
+                      onClick={() => onSelectTheme(theme)}
+                      disabled={currentTheme?.id === theme.id}
+                    >
+                      {currentTheme?.id === theme.id ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 mr-1.5" />
+                          Applied
+                        </>
+                      ) : (
+                        <>
+                          <Paintbrush className="h-3.5 w-3.5 mr-1.5" />
+                          Apply
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {theme.description && (
+                    <p className="text-sm text-muted-foreground">
+                      {theme.description}
+                    </p>
+                  )}
+                  
+                  {theme.tags && theme.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {theme.tags.map((tag, i) => (
+                        <Badge key={i} variant="secondary" className="text-xs px-1.5 py-0">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      );
+    }
   };
   
   return (
-    <div>
-      {renderFilters()}
-      
-      {filteredThemes.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-muted-foreground">{emptyMessage}</div>
-        </div>
-      ) : (
-        <div className={viewLayout === 'grid' 
-          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          : "space-y-4"
-        }>
-          {filteredThemes.map(theme => 
-            viewLayout === 'grid' 
-              ? renderGridItem(theme)
-              : renderListItem(theme)
-          )}
+    <div className="space-y-4">
+      {(isSearchable || isFilterable) && (
+        <div className="space-y-4">
+          {isSearchable && renderSearchBar()}
+          {isFilterable && renderFilterSection()}
         </div>
       )}
+      
+      {renderThemes()}
     </div>
   );
 };
