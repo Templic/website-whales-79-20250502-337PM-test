@@ -749,4 +749,141 @@ router.get('/analytics', requireAuth, requireRole(['admin', 'super_admin']), asy
   }
 });
 
+// Update content scheduling with advanced features
+router.patch('/content/:id/schedule', requireAuth, requireRole(['admin', 'editor', 'super_admin']), async (req, res) => {
+  try {
+    const contentId = parseInt(req.params.id);
+    const userId = req.session.user?.id;
+    
+    if (!contentId || isNaN(contentId)) {
+      return res.status(400).json({ error: 'Invalid content ID' });
+    }
+    
+    const {
+      scheduledPublishAt,
+      expirationDate,
+      fallbackStrategy = 'retry',
+      previewEnabled = true,
+      mediaUrls = [],
+      notes
+    } = req.body;
+    
+    // Validate dates if provided
+    if (scheduledPublishAt && expirationDate) {
+      const scheduleDate = new Date(scheduledPublishAt);
+      const expireDate = new Date(expirationDate);
+      
+      if (expireDate <= scheduleDate) {
+        return res.status(400).json({ 
+          error: 'Expiration date must be after scheduled publish date',
+        });
+      }
+    }
+    
+    // Validate media URLs for security
+    if (mediaUrls && Array.isArray(mediaUrls)) {
+      for (const url of mediaUrls) {
+        // Basic URL validation
+        try {
+          new URL(url);
+        } catch (e) {
+          return res.status(400).json({ 
+            error: 'Invalid media URL format', 
+            details: `Invalid URL: ${url}`
+          });
+        }
+        
+        // Check for disallowed protocols (security)
+        if (!url.startsWith('https://') && !url.startsWith('http://')) {
+          return res.status(400).json({ 
+            error: 'Invalid media URL protocol',
+            details: 'Only HTTP and HTTPS protocols are allowed'
+          });
+        }
+      }
+    }
+    
+    // Get existing content
+    const existingContent = await db
+      .select()
+      .from(contentItems)
+      .where(eq(contentItems.id, contentId))
+      .limit(1);
+      
+    if (!existingContent.length) {
+      return res.status(404).json({ error: 'Content not found' });
+    }
+    
+    // Prepare new metadata
+    const existingMetadata = existingContent[0].metadata || {};
+    const updatedMetadata = {
+      ...existingMetadata,
+      schedulingMetadata: {
+        fallbackStrategy,
+        previewEnabled,
+        mediaUrls,
+        schedulingNotes: notes || '',
+        lastUpdatedBy: userId,
+        lastUpdatedAt: new Date().toISOString(),
+        securityHash: Date.now().toString(36) + Math.random().toString(36).substr(2) // Security token for tracking changes
+      }
+    };
+    
+    // Update the content schedule
+    await db
+      .update(contentItems)
+      .set({
+        scheduledPublishAt: scheduledPublishAt ? new Date(scheduledPublishAt) : null,
+        expirationDate: expirationDate ? new Date(expirationDate) : null,
+        metadata: updatedMetadata,
+        updatedAt: new Date(),
+        lastModifiedBy: userId
+      })
+      .where(eq(contentItems.id, contentId));
+      
+    // Add entry to workflow history
+    await db.insert(contentWorkflowHistory)
+      .values({
+        contentId: contentId,
+        action: 'schedule_updated',
+        userId: userId,
+        actionDate: new Date(),
+        comments: notes || 'Schedule updated',
+        metadata: {
+          scheduledPublishAt: scheduledPublishAt,
+          expirationDate: expirationDate,
+          fallbackStrategy,
+          previewEnabled,
+          mediaUrlsCount: mediaUrls.length
+        }
+      });
+    
+    // Log the action with security context
+    logger.info(`Content schedule updated for content ID ${contentId} by user ${userId}`, {
+      securityContext: {
+        contentId,
+        userId,
+        action: 'schedule_update',
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    // Respond with success but don't include sensitive data
+    res.json({ 
+      success: true, 
+      message: 'Content schedule updated successfully',
+      content: {
+        id: contentId,
+        scheduledPublishAt,
+        expirationDate,
+        previewEnabled
+      }
+    });
+    
+  } catch (error) {
+    logger.error('Error updating content schedule:', error);
+    res.status(500).json({ error: 'Failed to update content schedule' });
+  }
+});
+
 export default router;

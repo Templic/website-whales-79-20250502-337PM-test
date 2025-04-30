@@ -27,12 +27,19 @@ export const contentItems = pgTable('content_items', {
 });
 
 /**
+ * Fallback strategies for failed scheduling operations
+ */
+export type FallbackStrategy = 'retry' | 'notify' | 'abort';
+
+/**
  * Metrics to track content scheduling performance
  */
 export interface ContentSchedulingMetrics {
   totalScheduled: number;
   successfullyPublished: number;
   failedPublications: number;
+  retryAttempts: number;
+  retrySuccesses: number;
   upcomingExpiring: number;
   successRate: number;
   lastRunAt: Date;
@@ -43,6 +50,8 @@ let schedulingMetrics: ContentSchedulingMetrics = {
   totalScheduled: 0,
   successfullyPublished: 0,
   failedPublications: 0,
+  retryAttempts: 0,
+  retrySuccesses: 0,
   upcomingExpiring: 0,
   successRate: 0,
   lastRunAt: new Date()
