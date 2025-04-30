@@ -38,6 +38,7 @@ import { verifyApiSecurity } from './security/apiSecurityVerification';
 import { enhancedCsrfProtection } from './security/middleware/enhancedCsrfProtection';
 import typescriptErrorRoutes from './routes/typescript-error-routes';
 import typescriptErrorSimpleRoutes from './routes/typescript-error-simple-routes';
+import adminRoutes from './admin-routes';
 import {
   insertSubscriberSchema,
   insertNewsletterSchema,
@@ -291,6 +292,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.use('/api/secure/public', publicRouter);
   app.use('/api/secure/auth', authenticatedRouter);
   app.use('/api/secure/admin', adminRouter);
+  
+  // Use admin utilities routes
+  app.use('/api/admin/utilities', isAuthenticated, adminRoutes);
 
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', async (req, res) => {

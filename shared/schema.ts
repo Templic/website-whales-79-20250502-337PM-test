@@ -4,6 +4,7 @@
  * Contains schema definitions for:
  * 1. Core application tables (users, products, orders, etc.)
  * 2. TypeScript error management system tables
+ * 3. Admin utilities (data audit, repair, import/export, batch operations)
  */
 import { relations } from 'drizzle-orm';
 import {
@@ -971,6 +972,213 @@ export type Patron = typeof patrons.$inferSelect;
 export type InsertPatron = z.infer<typeof insertPatronSchema>;
 
 // ===================================================================
+// Admin Utilities Schema
+// ===================================================================
+
+// Data Audit Action Types
+export const auditActionEnum = pgEnum('audit_action', [
+  'create',
+  'update',
+  'delete',
+  'view',
+  'export',
+  'import',
+  'repair',
+  'batch_operation',
+  'schema_change'
+]);
+
+// Data Repair Status
+export const repairStatusEnum = pgEnum('repair_status', [
+  'pending',
+  'in_progress',
+  'completed',
+  'failed',
+  'reverted'
+]);
+
+// Import/Export Format
+export const dataFormatEnum = pgEnum('data_format', [
+  'json',
+  'csv',
+  'xml',
+  'excel',
+  'sql'
+]);
+
+// Data Audit Log
+export const dataAuditLogs = pgTable('data_audit_logs', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id', { length: 255 }).references(() => users.id),
+  action: auditActionEnum('action').notNull(),
+  tableAffected: text('table_affected').notNull(),
+  recordId: text('record_id').notNull(),
+  oldValues: json('old_values'),
+  newValues: json('new_values'),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
+  details: text('details'),
+  metadata: json('metadata')
+});
+
+// Data Repair Tasks
+export const dataRepairTasks = pgTable('data_repair_tasks', {
+  id: serial('id').primaryKey(),
+  tableAffected: text('table_affected').notNull(),
+  issueType: text('issue_type').notNull(),
+  issueDescription: text('issue_description').notNull(),
+  recordIds: text('record_ids').array(),
+  status: repairStatusEnum('status').notNull().default('pending'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at'),
+  createdBy: varchar('created_by', { length: 255 }).references(() => users.id),
+  assignedTo: varchar('assigned_to', { length: 255 }).references(() => users.id),
+  priority: integer('priority').notNull().default(1),
+  solution: text('solution'),
+  repairScript: text('repair_script'),
+  isAutomated: boolean('is_automated').notNull().default(false),
+  completedAt: timestamp('completed_at'),
+  metadata: json('metadata')
+});
+
+// Data Import/Export Jobs
+export const dataImportExportJobs = pgTable('data_import_export_jobs', {
+  id: serial('id').primaryKey(),
+  jobType: text('job_type', { enum: ['import', 'export'] }).notNull(),
+  tableAffected: text('table_affected').notNull(),
+  format: dataFormatEnum('format').notNull(),
+  status: text('status', { enum: ['pending', 'processing', 'completed', 'failed'] }).notNull().default('pending'),
+  filePath: text('file_path'),
+  recordCount: integer('record_count'),
+  validationErrors: json('validation_errors'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at'),
+  createdBy: varchar('created_by', { length: 255 }).references(() => users.id),
+  completedAt: timestamp('completed_at'),
+  config: json('config'),
+  filters: json('filters'),
+  metadata: json('metadata')
+});
+
+// Batch Operations
+export const batchOperations = pgTable('batch_operations', {
+  id: serial('id').primaryKey(),
+  operationType: text('operation_type', { enum: ['update', 'delete', 'create'] }).notNull(),
+  tableAffected: text('table_affected').notNull(),
+  recordIds: text('record_ids').array(),
+  status: text('status', { enum: ['pending', 'in_progress', 'completed', 'failed', 'reverted'] }).notNull().default('pending'),
+  changes: json('changes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at'),
+  createdBy: varchar('created_by', { length: 255 }).references(() => users.id),
+  completedAt: timestamp('completed_at'),
+  transactionId: text('transaction_id'),
+  isRollbackable: boolean('is_rollbackable').notNull().default(true),
+  metadata: json('metadata')
+});
+
+// Schema Migration Wizards
+export const schemaMigrations = pgTable('schema_migrations', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description').notNull(),
+  status: text('status', { enum: ['draft', 'ready', 'applied', 'failed'] }).notNull().default('draft'),
+  forwardScript: text('forward_script').notNull(),
+  rollbackScript: text('rollback_script'),
+  appliedAt: timestamp('applied_at'),
+  appliedBy: varchar('applied_by', { length: 255 }).references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at'),
+  createdBy: varchar('created_by', { length: 255 }).references(() => users.id),
+  version: text('version').notNull(),
+  checksum: text('checksum'),
+  dependencies: text('dependencies').array(),
+  metadata: json('metadata')
+});
+
+// Self-Healing Data Fixes
+export const dataAutoFixes = pgTable('data_auto_fixes', {
+  id: serial('id').primaryKey(),
+  issuePattern: text('issue_pattern').notNull(),
+  fixName: text('fix_name').notNull(),
+  description: text('description').notNull(),
+  fixScript: text('fix_script').notNull(),
+  tableAffected: text('table_affected').notNull(),
+  isActive: boolean('is_active').notNull().default(true),
+  successCount: integer('success_count').notNull().default(0),
+  failCount: integer('fail_count').notNull().default(0),
+  lastRun: timestamp('last_run'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at'),
+  createdBy: varchar('created_by', { length: 255 }).references(() => users.id),
+  triggerCondition: json('trigger_condition'),
+  metadata: json('metadata')
+});
+
+// Create schemas for the admin utility tables
+export const insertDataAuditLogSchema = createInsertSchema(dataAuditLogs).omit({
+  id: true,
+  timestamp: true
+});
+
+export const insertDataRepairTaskSchema = createInsertSchema(dataRepairTasks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true
+});
+
+export const insertDataImportExportJobSchema = createInsertSchema(dataImportExportJobs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true
+});
+
+export const insertBatchOperationSchema = createInsertSchema(batchOperations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true
+});
+
+export const insertSchemaMigrationSchema = createInsertSchema(schemaMigrations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  appliedAt: true
+});
+
+export const insertDataAutoFixSchema = createInsertSchema(dataAutoFixes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastRun: true,
+  successCount: true,
+  failCount: true
+});
+
+// Type definitions for admin utility tables
+export type DataAuditLog = typeof dataAuditLogs.$inferSelect;
+export type InsertDataAuditLog = z.infer<typeof insertDataAuditLogSchema>;
+
+export type DataRepairTask = typeof dataRepairTasks.$inferSelect;
+export type InsertDataRepairTask = z.infer<typeof insertDataRepairTaskSchema>;
+
+export type DataImportExportJob = typeof dataImportExportJobs.$inferSelect;
+export type InsertDataImportExportJob = z.infer<typeof insertDataImportExportJobSchema>;
+
+export type BatchOperation = typeof batchOperations.$inferSelect;
+export type InsertBatchOperation = z.infer<typeof insertBatchOperationSchema>;
+
+export type SchemaMigration = typeof schemaMigrations.$inferSelect;
+export type InsertSchemaMigration = z.infer<typeof insertSchemaMigrationSchema>;
+
+export type DataAutoFix = typeof dataAutoFixes.$inferSelect;
+export type InsertDataAutoFix = z.infer<typeof insertDataAutoFixSchema>;
+
+// ===================================================================
 // Content Management Relations
 // ===================================================================
 
@@ -1088,6 +1296,66 @@ export const collaborationProposalsRelations = relations(collaborationProposals,
 export const patronsRelations = relations(patrons, ({ one }) => ({
   user: one(users, {
     fields: [patrons.userId],
+    references: [users.id],
+  }),
+}));
+
+// ===================================================================
+// Admin Utilities Relations
+// ===================================================================
+
+// Data Audit Logs Relations
+export const dataAuditLogsRelations = relations(dataAuditLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [dataAuditLogs.userId],
+    references: [users.id],
+  }),
+}));
+
+// Data Repair Tasks Relations
+export const dataRepairTasksRelations = relations(dataRepairTasks, ({ one }) => ({
+  creator: one(users, {
+    fields: [dataRepairTasks.createdBy],
+    references: [users.id],
+  }),
+  assignee: one(users, {
+    fields: [dataRepairTasks.assignedTo],
+    references: [users.id],
+  }),
+}));
+
+// Data Import/Export Jobs Relations
+export const dataImportExportJobsRelations = relations(dataImportExportJobs, ({ one }) => ({
+  creator: one(users, {
+    fields: [dataImportExportJobs.createdBy],
+    references: [users.id],
+  }),
+}));
+
+// Batch Operations Relations
+export const batchOperationsRelations = relations(batchOperations, ({ one }) => ({
+  creator: one(users, {
+    fields: [batchOperations.createdBy],
+    references: [users.id],
+  }),
+}));
+
+// Schema Migrations Relations
+export const schemaMigrationsRelations = relations(schemaMigrations, ({ one }) => ({
+  creator: one(users, {
+    fields: [schemaMigrations.createdBy],
+    references: [users.id],
+  }),
+  applier: one(users, {
+    fields: [schemaMigrations.appliedBy],
+    references: [users.id],
+  }),
+}));
+
+// Data Auto Fixes Relations
+export const dataAutoFixesRelations = relations(dataAutoFixes, ({ one }) => ({
+  creator: one(users, {
+    fields: [dataAutoFixes.createdBy],
     references: [users.id],
   }),
 }));

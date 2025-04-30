@@ -1,169 +1,209 @@
-# Admin Portal Documentation
+# Admin Portal: Comprehensive Data Management Utilities
+
+This document provides an overview of the Admin Portal's utilities for comprehensive data management, including audit logs, repair capabilities, import/export tools, batch operations, schema migrations, and auto fixes.
 
 ## Overview
 
-The Admin Portal provides a centralized interface for authorized administrators to manage website content, monitor user activity, and configure system settings. This document details the structure, features, and usage of the Admin Portal with a focus on content management capabilities.
+The Admin Portal provides a suite of utilities to help administrators manage application data effectively:
 
-## Table of Contents
+1. **Data Audit Logs**: Track all changes to data with detailed audit trails
+2. **Data Repair Tasks**: Identify and fix data issues with a structured approach
+3. **Import/Export Jobs**: Manage bulk data import and export operations
+4. **Batch Operations**: Run batch updates and deletes with transaction support
+5. **Schema Migrations**: Manage database schema changes with versioning
+6. **Data Auto Fixes**: Automate common data repair patterns
 
-1. [Access and Authentication](#access-and-authentication)
-2. [Admin Layout and Navigation](#admin-layout-and-navigation)
-3. [Content Management System](#content-management-system)
-4. [Content Versioning and History](#content-versioning-and-history)
-5. [Content Usage Tracking and Reports](#content-usage-tracking-and-reports)
-6. [API Reference](#api-reference)
-7. [Troubleshooting](#troubleshooting)
+## Architecture
 
-## Access and Authentication
+The Admin Utilities are built on a layered architecture:
 
-The Admin Portal is accessible only to users with admin privileges. The system supports role-based access control with:
+1. **Database Layer**: PostgreSQL tables with appropriate schemas and indexes
+2. **Storage Layer**: `DatabaseStorage` class implementing the admin operations
+3. **API Layer**: RESTful endpoints in `admin-routes.ts` for accessing the utilities
+4. **Security Layer**: All endpoints protected with authentication and admin role checks
+5. **UI Layer**: React components for interacting with the utilities (coming soon)
 
-- **Admin**: Access to most administrative functions
-- **Super Admin**: Full access to all administrative functions including system settings
+## Admin Utilities API
 
-### Access Points
+All APIs are available under the `/api/admin/utilities` prefix and require authentication with admin role.
 
-- **URL**: `/admin` - Main admin dashboard
-- **URL**: `/admin/content` - Content Management interface
+### Data Audit Logs
 
-## Admin Layout and Navigation
+Track all changes made to data with detailed information:
 
-The Admin Portal uses a consistent layout (`AdminLayout`) component that provides:
+- `GET /api/admin/utilities/audit-logs`: Get all audit logs (with optional filters)
+- `GET /api/admin/utilities/audit-logs/:id`: Get a specific audit log by ID
+- `POST /api/admin/utilities/audit-logs`: Create a new audit log entry
 
-- Navigation sidebar for quick access to different admin modules
-- Header with user information and global actions
-- Main content area for specific administrative functions
-- Responsive design that adapts to different screen sizes
+Audit logs automatically capture:
+- User who made the change
+- Action performed (create, update, delete, etc.)
+- Table affected
+- Record ID
+- Old and new values
+- IP address and user agent
+- Timestamp
 
-## Content Management System
+### Data Repair Tasks
 
-The Content Management System (CMS) allows administrators to create, edit, and delete dynamic content throughout the website without requiring code changes. This enables non-technical staff to maintain the website content efficiently.
+Manage data repair operations with tracking:
 
-### Content Types
+- `GET /api/admin/utilities/repair-tasks`: Get all repair tasks (with optional filters)
+- `GET /api/admin/utilities/repair-tasks/:id`: Get a specific repair task by ID
+- `POST /api/admin/utilities/repair-tasks`: Create a new repair task
+- `PUT /api/admin/utilities/repair-tasks/:id`: Update a repair task
+- `POST /api/admin/utilities/repair-tasks/:id/assign`: Assign a repair task to a user
+- `POST /api/admin/utilities/repair-tasks/:id/status`: Change the status of a repair task
 
-The CMS supports multiple content types:
+### Import/Export Jobs
 
-- **Text**: Simple text content displayed throughout the site
-- **HTML**: Rich formatted content with text styling, links, and embedded media
-- **Image**: Image content with metadata and styling options
+Manage data import and export operations:
 
-### Content Structure
+- `GET /api/admin/utilities/import-export-jobs`: Get all import/export jobs (with optional filters)
+- `GET /api/admin/utilities/import-export-jobs/:id`: Get a specific import/export job by ID
+- `POST /api/admin/utilities/import-export-jobs`: Create a new import/export job
+- `PUT /api/admin/utilities/import-export-jobs/:id/status`: Update the status of an import/export job
 
-Each content item contains:
+### Batch Operations
 
-- **Key**: Unique identifier used for retrieval (e.g., `home_hero_title`)
-- **Title**: Human-readable name for the content item
-- **Content**: The actual content value (text, HTML, or image URL)
-- **Type**: Content type (text, HTML, or image)
-- **Page**: The website page this content belongs to
-- **Section**: The section within the page where this content appears
-- **Version**: Current version number of the content
-- **Created/Updated dates**: Timestamps for creation and last update
+Run operations on multiple records at once:
 
-### Content Management Interface
+- `GET /api/admin/utilities/batch-operations`: Get all batch operations (with optional filters)
+- `GET /api/admin/utilities/batch-operations/:id`: Get a specific batch operation by ID
+- `POST /api/admin/utilities/batch-operations`: Create a new batch operation
+- `PUT /api/admin/utilities/batch-operations/:id/status`: Update the status of a batch operation
 
-The Content Management Page (`ContentManagementPage.tsx`) provides:
+### Schema Migrations
 
-- List view of all content items with filtering and search capabilities
-- Content creation form for adding new content
-- Content editing interface with WYSIWYG editor for HTML content
-- Deletion confirmation with safety prompts
-- Version history access
-- Usage reporting
+Manage database schema changes:
 
-## Content Versioning and History
+- `GET /api/admin/utilities/schema-migrations`: Get all schema migrations (with optional filters)
+- `GET /api/admin/utilities/schema-migrations/:id`: Get a specific schema migration by ID
+- `POST /api/admin/utilities/schema-migrations`: Create a new schema migration
+- `PUT /api/admin/utilities/schema-migrations/:id`: Update a schema migration
+- `POST /api/admin/utilities/schema-migrations/:id/apply`: Apply a schema migration
 
-The system maintains a full history of all content changes, enabling administrators to track modifications and restore previous versions if needed.
+### Data Auto Fixes
 
-### History Tracking
+Automate common data repair patterns:
 
-For each content update, the system automatically:
-- Creates a new history record in the `content_history` table
-- Increments the version number
-- Records who made the change and when
-- Stores the previous content state
+- `GET /api/admin/utilities/auto-fixes`: Get all auto fixes (with optional filters)
+- `GET /api/admin/utilities/auto-fixes/:id`: Get a specific auto fix by ID
+- `POST /api/admin/utilities/auto-fixes`: Create a new auto fix
+- `PUT /api/admin/utilities/auto-fixes/:id`: Update an auto fix
+- `PUT /api/admin/utilities/auto-fixes/:id/toggle`: Enable or disable an auto fix
+- `POST /api/admin/utilities/auto-fixes/:id/run-result`: Record the result of an auto fix run
 
-### History Interface
+## Database Schema
 
-The Content History interface (`ContentHistoryView.tsx`) provides:
+The database schema for admin utilities includes the following tables:
 
-- Chronological list of all versions of a content item
-- Timestamps for each version with formatted date display
-- Version numbers with visual badge indicators
-- One-click restoration to previous versions with confirmation
-- Ability to manually create new versions with custom descriptions
+1. **data_audit_logs**: Stores detailed audit logs of all data changes
+2. **data_repair_tasks**: Manages tasks for repairing data issues
+3. **data_import_export_jobs**: Tracks import and export operations
+4. **batch_operations**: Manages operations performed on multiple records
+5. **schema_migrations**: Stores database schema migration scripts
+6. **data_auto_fixes**: Defines automated data repair rules
 
-### Creating Manual Versions
+## Security Considerations
 
-Administrators can also manually create a version checkpoint:
-- Click the "Create Version" button in the history view
-- Add an optional description of the current state or changes
-- This creates a snapshot that can be restored later
+The Admin Utilities implement several security measures:
 
-## Content Usage Tracking and Reports
+1. **Authentication**: All endpoints require authentication
+2. **Authorization**: All endpoints require admin role
+3. **Audit Logging**: All actions are logged for accountability
+4. **Input Validation**: All inputs are validated to prevent injection attacks
+5. **Transaction Support**: Batch operations use transactions for data integrity
+6. **Error Handling**: Proper error handling to prevent information leakage
 
-The system tracks how and where content is used throughout the website, providing insights into content effectiveness and identifying unused or redundant content.
+## Future Enhancements
 
-### Usage Tracking
+Planned improvements for the Admin Utilities:
 
-The system automatically records:
-- Each time content is viewed
-- Where the content is displayed (location and path)
-- When the content was last viewed
-- Total view count for each content item
+1. **UI Components**: React components for interacting with the utilities
+2. **Advanced Search**: More powerful search and filtering capabilities
+3. **Scheduled Operations**: Run batch operations on a schedule
+4. **Export Templates**: Customize export formats with templates
+5. **Data Quality Rules**: Define rules for automated data quality checks
+6. **Custom Reports**: Generate custom reports based on audit logs
+7. **Multi-tenancy Support**: Support for multi-tenant data management
+8. **Workflow Automation**: Define workflows for data management tasks
+9. **Role-based Access Control**: More granular control over admin capabilities
+10. **Integration with External Systems**: Import/export data from/to external systems
 
-### Usage Reports
+## API Examples
 
-The Content Usage Report interface (`ContentUsageReport.tsx`) provides:
+### Create an Audit Log
 
-- Overview of content usage across the site
-- Filtering by key, page, section, and type
-- Analytics on most viewed content (sorted by view count)
-- Display of locations where content is used
-- Refresh capability to get up-to-date usage metrics
+```http
+POST /api/admin/utilities/audit-logs
+Content-Type: application/json
 
-## API Reference
+{
+  "action": "update",
+  "tableAffected": "users",
+  "recordId": "123",
+  "oldValues": {
+    "username": "old_username",
+    "email": "old_email@example.com"
+  },
+  "newValues": {
+    "username": "new_username",
+    "email": "new_email@example.com"
+  },
+  "details": "Updated user profile information"
+}
+```
 
-### Content Management Endpoints
+### Create a Repair Task
 
-| Endpoint | Method | Description | Access |
-|----------|--------|-------------|--------|
-| `/api/content` | GET | Get all content items | Admin |
-| `/api/content/:id` | GET | Get a specific content item | Admin |
-| `/api/content` | POST | Create a new content item | Admin |
-| `/api/content/:id` | PUT | Update a content item | Admin |
-| `/api/content/:id` | DELETE | Delete a content item | Admin |
+```http
+POST /api/admin/utilities/repair-tasks
+Content-Type: application/json
 
-### Content History Endpoints
+{
+  "tableAffected": "products",
+  "issueType": "missing_data",
+  "issueDescription": "Products missing category information",
+  "recordIds": ["100", "101", "102"],
+  "priority": 2,
+  "solution": "Assign default category 'Uncategorized' to products with null category"
+}
+```
 
-| Endpoint | Method | Description | Access |
-|----------|--------|-------------|--------|
-| `/api/content/:id/history` | GET | Get version history for a content item | Admin |
-| `/api/content/:id/version` | POST | Create a new version of content | Admin |
-| `/api/content/history/:historyId/restore` | POST | Restore content to a previous version | Admin |
+### Create an Import Job
 
-### Content Usage Endpoints
+```http
+POST /api/admin/utilities/import-export-jobs
+Content-Type: application/json
 
-| Endpoint | Method | Description | Access |
-|----------|--------|-------------|--------|
-| `/api/content/:id/usage` | POST | Record usage of content | Public |
-| `/api/content/:id/view` | POST | Increment view count | Public |
-| `/api/content/report/usage` | GET | Get content usage report | Admin |
+{
+  "jobType": "import",
+  "tableAffected": "subscribers",
+  "format": "csv",
+  "filePath": "/uploads/subscribers.csv",
+  "config": {
+    "delimiter": ",",
+    "hasHeader": true,
+    "columns": ["email", "firstName", "lastName", "subscribed"]
+  }
+}
+```
 
-## Troubleshooting
+### Create a Batch Operation
 
-### Common Issues
+```http
+POST /api/admin/utilities/batch-operations
+Content-Type: application/json
 
-1. **Content not appearing on website**: Check that the content key matches exactly what's expected in the template.
-2. **History not being recorded**: Ensure database permissions are properly set for the content_history table.
-3. **Usage tracking not working**: Verify that the frontend components are correctly calling the usage tracking endpoints.
-
-### Error Logging
-
-All actions in the Content Management System are logged for audit and troubleshooting purposes. Check the server logs for the following prefixes:
-
-- `[CONTENT_API]`: Content endpoint issues
-- `[HISTORY_API]`: Version history issues
-- `[USAGE_API]`: Usage tracking issues
-
-*Last updated: April 12, 2025*
+{
+  "operationType": "update",
+  "tableAffected": "products",
+  "recordIds": ["200", "201", "202", "203"],
+  "changes": {
+    "isDiscounted": true,
+    "discountPercentage": 10
+  },
+  "isRollbackable": true
+}
+```
