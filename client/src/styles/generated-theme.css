@@ -1,0 +1,169 @@
+:root {
+  --color-purple-500: hsl(265, 89%, 66%);
+  --color-teal-500: hsl(182, 100%, 40%);
+  --color-success: hsl(142, 71%, 45%);
+  --color-warning: hsl(38, 92%, 50%);
+  --color-danger: hsl(0, 84%, 60%);
+  --color-info: hsl(217, 91%, 60%);
+  --font-sans: "Space Grotesk", system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-display: "Almendra", serif;
+  --font-nebula: "Nebula", sans-serif;
+  --radius: 0.5rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --transition-duration: 250ms;
+  --transition-timing: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root {
+  --background: hsl(37, 20%, 95%);
+  --foreground: hsl(0, 0%, 18%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(0, 0%, 18%);
+  --primary: hsl(263, 83%, 58%);
+  --primary-foreground: hsl(210, 100%, 98%);
+  --secondary: hsl(37, 23%, 89%);
+  --secondary-foreground: hsl(0, 0%, 18%);
+  --accent: hsl(185, 100%, 40%);
+  --accent-foreground: hsl(210, 100%, 98%);
+  --muted: hsl(37, 23%, 89%);
+  --muted-foreground: hsl(0, 0%, 43%);
+  --border: hsl(40, 8%, 85%);
+  --input: hsl(0, 0%, 100%);
+  --ring: hsl(263, 83%, 58%);
+
+  /* HSL color values for Tailwind compatibility */
+  --background-hsl: 37, 20%, 95%;
+  --foreground-hsl: 0, 0%, 18%;
+  --card-hsl: 0, 0%, 100%;
+  --card-foreground-hsl: 0, 0%, 18%;
+  --primary-hsl: 263, 83%, 58%;
+  --primary-foreground-hsl: 210, 100%, 98%;
+  --secondary-hsl: 37, 23%, 89%;
+  --secondary-foreground-hsl: 0, 0%, 18%;
+  --accent-hsl: 185, 100%, 40%;
+  --accent-foreground-hsl: 210, 100%, 98%;
+  --muted-hsl: 37, 23%, 89%;
+  --muted-foreground-hsl: 0, 0%, 43%;
+  --border-hsl: 40, 8%, 85%;
+  --input-hsl: 0, 0%, 100%;
+  --ring-hsl: 263, 83%, 58%;
+}
+
+.dark {
+  --background: hsl(225, 23%, 5%);
+  --foreground: hsl(210, 40%, 96%);
+  --card: hsl(220, 47%, 14%);
+  --card-foreground: hsl(210, 40%, 96%);
+  --primary: hsl(263, 85%, 66%);
+  --primary-foreground: hsl(210, 100%, 98%);
+  --secondary: hsl(218, 45%, 18%);
+  --secondary-foreground: hsl(210, 40%, 96%);
+  --accent: hsl(185, 100%, 40%);
+  --accent-foreground: hsl(210, 100%, 98%);
+  --muted: hsl(220, 45%, 15%);
+  --muted-foreground: hsl(215, 25%, 67%);
+  --border: hsl(218, 45%, 21%);
+  --input: hsl(220, 45%, 15%);
+  --ring: hsl(263, 85%, 66%);
+
+  /* HSL color values for Tailwind compatibility */
+  --background-hsl: 225, 23%, 5%;
+  --foreground-hsl: 210, 40%, 96%;
+  --card-hsl: 220, 47%, 14%;
+  --card-foreground-hsl: 210, 40%, 96%;
+  --primary-hsl: 263, 85%, 66%;
+  --primary-foreground-hsl: 210, 100%, 98%;
+  --secondary-hsl: 218, 45%, 18%;
+  --secondary-foreground-hsl: 210, 40%, 96%;
+  --accent-hsl: 185, 100%, 40%;
+  --accent-foreground-hsl: 210, 100%, 98%;
+  --muted-hsl: 220, 45%, 15%;
+  --muted-foreground-hsl: 215, 25%, 67%;
+  --border-hsl: 218, 45%, 21%;
+  --input-hsl: 220, 45%, 15%;
+  --ring-hsl: 263, 85%, 66%;
+}
+
+.blackout {
+  --background: hsl(0, 0%, 0%);
+  --foreground: hsl(280, 100%, 98%);
+  --card: hsl(260, 87%, 5%);
+  --card-foreground: hsl(0, 0%, 100%);
+  --primary: hsl(290, 100%, 50%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(260, 65%, 9%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(290, 100%, 53%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(260, 65%, 5%);
+  --muted-foreground: hsl(276, 100%, 86%);
+  --border: hsl(270, 56%, 25%);
+  --input: hsl(260, 65%, 5%);
+  --ring: hsl(290, 100%, 60%);
+  --cosmic-glow: rgba(209, 0, 255, 0.4);
+  --cosmic-shadow: 0 0 20px rgba(209, 0, 255, 0.25);
+  --cosmic-stardust: rgba(102, 0, 255, 0.15);
+
+  /* HSL color values for Tailwind compatibility */
+  --background-hsl: 0, 0%, 0%;
+  --foreground-hsl: 280, 100%, 98%;
+  --card-hsl: 260, 87%, 5%;
+  --card-foreground-hsl: 0, 0%, 100%;
+  --primary-hsl: 290, 100%, 50%;
+  --primary-foreground-hsl: 0, 0%, 100%;
+  --secondary-hsl: 260, 65%, 9%;
+  --secondary-foreground-hsl: 0, 0%, 100%;
+  --accent-hsl: 290, 100%, 53%;
+  --accent-foreground-hsl: 0, 0%, 100%;
+  --muted-hsl: 260, 65%, 5%;
+  --muted-foreground-hsl: 276, 100%, 86%;
+  --border-hsl: 270, 56%, 25%;
+  --input-hsl: 260, 65%, 5%;
+  --ring-hsl: 290, 100%, 60%;
+}
+
+.contrast-high {
+  --contrast-multiplier: 1.2;
+  --foreground: hsl(0, 0%, 100%);
+  --muted-foreground: hsl(0, 0%, 90%);
+  --border: hsl(0, 0%, 100%);
+}
+
+.contrast-maximum {
+  --contrast-multiplier: 1.5;
+  --background: hsl(0, 0%, 0%);
+  --foreground: hsl(0, 0%, 100%);
+  --card: hsl(0, 0%, 10%);
+  --card-foreground: hsl(0, 0%, 100%);
+  --primary: hsl(263, 100%, 70%);
+  --accent: hsl(185, 100%, 60%);
+  --border: hsl(0, 0%, 100%);
+  --muted-foreground: hsl(0, 0%, 90%);
+}
+
+.motion-full {
+  --transition-duration: 250ms;
+  --transition-timing: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.motion-reduced {
+  --transition-duration: 150ms;
+  --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.motion-none {
+  --transition-duration: 0ms;
+  --transition-timing: linear;
+}
+
+.reduced-motion *, .motion-none * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+

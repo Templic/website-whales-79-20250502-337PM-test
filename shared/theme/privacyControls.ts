@@ -128,10 +128,13 @@ function applyPrivacySettings(options: ThemePrivacyOptions): void {
   // Handle tracking
   if (!options.allowThemeTracking) {
     // Set a flag that can be checked by analytics modules
-    window.__themeTrackingDisabled = true;
+    // Using type assertion since it's a custom property
+    (window as any).__themeTrackingDisabled = true;
   } else {
-    // @ts-ignore - Custom property
-    delete window.__themeTrackingDisabled;
+    // Remove the flag if tracking is allowed
+    if ((window as any).__themeTrackingDisabled) {
+      delete (window as any).__themeTrackingDisabled;
+    }
   }
 }
 
