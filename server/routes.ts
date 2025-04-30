@@ -156,6 +156,7 @@ import searchRoutes from './routes/search/index';
 import csrfRoutes from './routes/csrf-routes';
 // Use our newly created themes routes
 import themeRoutes from './routes/theme-routes';
+import deadlinksRoutes from './routes/deadlinks';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 import { protectApiRoutes } from './security/apiRoutesProtector';
 
@@ -302,6 +303,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use our comprehensive theme management routes
   app.use('/api/themes', themeRoutes);
+  
+  // Use deadlinks routes for link checking functionality
+  app.use('/api/deadlinks', deadlinksRoutes);
 
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', async (req, res) => {
