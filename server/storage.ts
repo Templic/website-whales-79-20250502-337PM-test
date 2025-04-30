@@ -21,6 +21,9 @@ import {
   type ErrorFixHistory, type InsertErrorFixHistory,
   type ProjectAnalysis, type InsertProjectAnalysis,
   type ProjectFile, type InsertProjectFile,
+  // Theme system types
+  type Theme, type InsertTheme,
+  type ThemeAnalytic, type InsertThemeAnalytic,
   // Custom types for our application
   type Track, type Album, type ContentItem, type ContentHistory, type ContentUsage, type ContentWorkflowHistory,
   type TourDate, type InsertTourDate, 
@@ -34,6 +37,8 @@ import {
   products, productCategories, newsletters, subscribers,
   // Content management tables
   contentItems, contentHistory, contentUsage, contentWorkflowHistory,
+  // Theme system tables
+  themes, themeAnalytics,
   // New tables
   collaborationProposals, patrons, tourDates
 } from "../shared/schema";
@@ -220,6 +225,26 @@ export interface IStorage {
   getProjectFileByPath(filePath: string): Promise<ProjectFile | null>;
   getAllProjectFiles(): Promise<ProjectFile[]>;
   getProjectFilesWithErrors(): Promise<ProjectFile[]>;
+  
+  // Theme system methods
+  getAllThemes(): Promise<Theme[]>;
+  getThemeById(id: number): Promise<Theme | null>;
+  getThemesByUserId(userId: string): Promise<Theme[]>;
+  getPublicThemes(): Promise<Theme[]>;
+  createTheme(theme: InsertTheme): Promise<Theme>;
+  updateTheme(id: number, theme: Partial<InsertTheme>): Promise<Theme>;
+  deleteTheme(id: number): Promise<void>;
+  
+  // Theme analytics methods
+  getThemeAnalytics(themeId: number): Promise<ThemeAnalytic | null>;
+  updateThemeAnalytics(themeId: number, data: Partial<InsertThemeAnalytic>): Promise<ThemeAnalytic>;
+  recordThemeUsage(themeId: number, userId?: string): Promise<void>;
+  getThemeUsageReport(fromDate?: Date, toDate?: Date): Promise<{
+    mostUsedThemes: Array<{ themeId: number; name: string; applications: number }>;
+    topRatedThemes: Array<{ themeId: number; name: string; sentiment: number }>;
+    averageUsageTime: number;
+    totalUniqueUsers: number;
+  }>;
 }
 
 export class PostgresStorage implements IStorage {

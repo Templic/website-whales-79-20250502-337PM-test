@@ -1,14 +1,16 @@
 /**
  * Theme Manager Component
  * 
- * A comprehensive component for managing themes.
- * It provides interfaces for listing, viewing, creating, editing, and applying themes.
+ * This component provides a comprehensive interface for managing themes.
+ * It includes theme browsing, creation, editing, and administration.
  */
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@shared/theme/ThemeContext';
+import { ThemeTokens } from '@shared/theme/tokens';
 import {
   Card,
   CardContent,
@@ -26,6 +28,7 @@ import {
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -43,75 +46,72 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AIThemeGenerator } from './AIThemeGenerator';
+import { ThemeAnalytics } from './ThemeAnalytics';
+import { ThemeTypeScriptIntegration } from './ThemeTypeScriptIntegration';
 import { ThemeViewer } from './ThemeViewer';
-import { ThemeEditor } from './ThemeEditor';
-import { ThemeTokens } from '@shared/theme/tokens';
-import { useTheme } from '@shared/theme/ThemeContext';
+import { Check, ChevronDown, Download, Edit, Loader2, MoreHorizontal, Plus, Share, Trash, Upload } from 'lucide-react';
 
 interface ThemeManagerProps {
-  userId?: number; // Optional: filter themes by user
-  showMyThemesOnly?: boolean;
-  canCreate?: boolean;
-  canEdit?: boolean;
-  canDelete?: boolean;
-  canApply?: boolean;
+  userId?: number;
+  isAdmin?: boolean;
 }
 
-export function ThemeManager({
-  userId,
-  showMyThemesOnly = false,
-  canCreate = true,
-  canEdit = true,
-  canDelete = true,
-  canApply = true,
-}: ThemeManagerProps) {
-  const [activeTab, setActiveTab] = useState('browse');
-  const [selectedThemeId, setSelectedThemeId] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+export function ThemeManager({ userId, isAdmin = false }: ThemeManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { setTokens } = useTheme();
-
+  
+  // State
+  const [selectedThemeId, setSelectedThemeId] = useState<number | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importData, setImportData] = useState('');
+  const [activeTab, setActiveTab] = useState('browse');
+  
   // Fetch themes
-  const { data: themes, isLoading } = useQuery({
-    queryKey: ['/api/themes', { userId: showMyThemesOnly ? userId : undefined }],
+  const { data: themes, isLoading: isLoadingThemes } = useQuery({
+    queryKey: ['/api/themes', { userId }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (showMyThemesOnly && userId) {
-        params.set('userId', userId.toString());
-      }
+      if (userId) params.append('userId', userId.toString());
+      
       return apiRequest(`/api/themes?${params.toString()}`);
     },
   });
-
-  // Fetch single theme for viewing/editing
-  const { data: selectedTheme, isLoading: isLoadingSelectedTheme } = useQuery({
-    queryKey: ['/api/themes', selectedThemeId],
-    enabled: !!selectedThemeId,
-  });
-
-  // Search themes
-  const { data: searchResults, isLoading: isSearching } = useQuery({
-    queryKey: ['/api/themes/search', searchQuery],
-    enabled: searchQuery.length > 2,
-    queryFn: async () => {
-      return apiRequest(`/api/themes/search?query=${encodeURIComponent(searchQuery)}`);
+  
+  // Apply theme mutation
+  const applyThemeMutation = useMutation({
+    mutationFn: async (themeId: number) => {
+      return apiRequest(`/api/themes/${themeId}/tokens`);
+    },
+    onSuccess: (data) => {
+      setTokens(data as ThemeTokens);
+      
+      toast({
+        title: 'Theme applied',
+        description: 'The selected theme has been applied to the application.',
+      });
+    },
+    onError: (error) => {
+      console.error('Error applying theme:', error);
+      toast({
+        title: 'Error applying theme',
+        description: 'There was a problem applying the theme. Please try again.',
+        variant: 'destructive',
+      });
     },
   });
-
-  // Delete a theme
+  
+  // Delete theme mutation
   const deleteThemeMutation = useMutation({
     mutationFn: async (themeId: number) => {
       return apiRequest(`/api/themes/${themeId}`, {
@@ -121,241 +121,364 @@ export function ThemeManager({
     onSuccess: () => {
       toast({
         title: 'Theme deleted',
-        description: 'The theme has been permanently deleted.',
+        description: 'The selected theme has been permanently deleted.',
       });
       
-      queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
+      // Close the dialog and refresh themes
       setIsDeleteDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
     },
     onError: (error) => {
+      console.error('Error deleting theme:', error);
       toast({
         title: 'Error deleting theme',
         description: 'There was a problem deleting the theme. Please try again.',
         variant: 'destructive',
       });
-      console.error('Error deleting theme:', error);
-    }
+    },
   });
-
-  // Apply a theme to the current session
-  const handleApplyTheme = (tokens: ThemeTokens) => {
-    try {
-      // Update the theme context with the new tokens
-      setTokens(tokens);
-      
+  
+  // Import theme mutation
+  const importThemeMutation = useMutation({
+    mutationFn: async (themeData: string) => {
+      try {
+        const parsedTheme = JSON.parse(themeData);
+        return apiRequest('/api/themes/import', {
+          method: 'POST',
+          data: { theme: parsedTheme },
+        });
+      } catch (error) {
+        throw new Error('Invalid JSON format');
+      }
+    },
+    onSuccess: () => {
       toast({
-        title: 'Theme applied',
-        description: 'The theme has been applied to your interface.',
+        title: 'Theme imported',
+        description: 'The theme has been successfully imported.',
       });
       
-      // Close the dialog if open
-      setIsViewDialogOpen(false);
-    } catch (error) {
+      // Close the dialog and refresh themes
+      setIsImportDialogOpen(false);
+      setImportData('');
+      queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
+    },
+    onError: (error) => {
+      console.error('Error importing theme:', error);
       toast({
-        title: 'Error applying theme',
-        description: 'There was a problem applying the theme. Please try again.',
+        title: 'Error importing theme',
+        description: `There was a problem importing the theme: ${(error as Error).message}`,
         variant: 'destructive',
       });
-      console.error('Error applying theme:', error);
+    },
+  });
+  
+  // Export theme function
+  const handleExportTheme = async (themeId: number) => {
+    try {
+      const themeData = await apiRequest(`/api/themes/${themeId}/export`);
+      
+      // Create a blob and download it
+      const blob = new Blob([JSON.stringify(themeData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `theme-${themeId}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: 'Theme exported',
+        description: 'The theme has been successfully exported.',
+      });
+    } catch (error) {
+      console.error('Error exporting theme:', error);
+      toast({
+        title: 'Error exporting theme',
+        description: 'There was a problem exporting the theme.',
+        variant: 'destructive',
+      });
     }
   };
-
-  // Handle theme creation
-  const handleThemeCreated = (result: any) => {
-    toast({
-      title: 'Theme created',
-      description: 'Your new theme has been created successfully.',
-    });
-    
-    queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
-    setIsCreateDialogOpen(false);
+  
+  // Handle theme delete click
+  const handleDeleteClick = (themeId: number) => {
+    setSelectedThemeId(themeId);
+    setIsDeleteDialogOpen(true);
   };
-
-  // Handle theme update
-  const handleThemeUpdated = (result: any) => {
-    toast({
-      title: 'Theme updated',
-      description: 'Your theme has been updated successfully.',
-    });
-    
-    queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/themes', selectedThemeId] });
-    setIsEditDialogOpen(false);
+  
+  // Handle theme application
+  const handleApplyTheme = (themeId: number) => {
+    applyThemeMutation.mutate(themeId);
   };
-
-  // Filter themes based on search query
-  const filteredThemes = searchQuery.length > 2
-    ? searchResults || []
-    : themes || [];
+  
+  // Handle theme creation from AI generator
+  const handleSaveAITheme = (tokens: ThemeTokens, metadata: any) => {
+    // Save the generated theme to the server
+    apiRequest('/api/themes', {
+      method: 'POST',
+      data: {
+        name: metadata.name,
+        description: metadata.description || metadata.prompt,
+        tokens,
+        isPublic: true,
+      },
+    })
+      .then(() => {
+        toast({
+          title: 'Theme saved',
+          description: 'Your AI-generated theme has been saved to your library.',
+        });
+        
+        // Refresh themes
+        queryClient.invalidateQueries({ queryKey: ['/api/themes'] });
+        
+        // Switch to browse tab
+        setActiveTab('browse');
+      })
+      .catch((error) => {
+        console.error('Error saving AI theme:', error);
+        toast({
+          title: 'Error saving theme',
+          description: 'There was a problem saving your AI-generated theme.',
+          variant: 'destructive',
+        });
+      });
+  };
+  
+  // Handle import function
+  const handleImport = (e: React.FormEvent) => {
+    e.preventDefault();
+    importThemeMutation.mutate(importData);
+  };
+  
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Theme Manager</CardTitle>
-              <CardDescription>
-                Browse, create, and manage themes for your application
-              </CardDescription>
-            </div>
-            {canCreate && (
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                Create Theme
-              </Button>
-            )}
+      <Tabs 
+        value={activeTab} 
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-3xl font-bold">Theme Management</h2>
+            <p className="text-muted-foreground">
+              Browse, create, and manage themes for your application
+            </p>
           </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="browse" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6">
-              <TabsTrigger value="browse">Browse Themes</TabsTrigger>
-              {showMyThemesOnly && (
-                <TabsTrigger value="my-themes">My Themes</TabsTrigger>
-              )}
-              <TabsTrigger value="featured">Featured</TabsTrigger>
-            </TabsList>
-            
-            <div className="flex items-center mb-6">
+          <TabsList>
+            <TabsTrigger value="browse">Browse</TabsTrigger>
+            <TabsTrigger value="create">Create</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="developer">Developer</TabsTrigger>
+            )}
+          </TabsList>
+        </div>
+        
+        <TabsContent value="browse" className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-2">
               <Input
                 placeholder="Search themes..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-sm"
+                className="max-w-xs"
               />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <span>Filter</span> <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuLabel>Filter By</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>My Themes</DropdownMenuItem>
+                  <DropdownMenuItem>Public Themes</DropdownMenuItem>
+                  <DropdownMenuItem>Private Themes</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>Light Themes</DropdownMenuItem>
+                  <DropdownMenuItem>Dark Themes</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-
-            <TabsContent value="browse" className="space-y-4">
-              <ThemeList 
-                themes={filteredThemes}
-                isLoading={isLoading || isSearching}
-                onView={(id) => {
-                  setSelectedThemeId(id);
-                  setIsViewDialogOpen(true);
-                }}
-                onEdit={canEdit ? (id) => {
-                  setSelectedThemeId(id);
-                  setIsEditDialogOpen(true);
-                } : undefined}
-                onDelete={canDelete ? (id) => {
-                  setSelectedThemeId(id);
-                  setIsDeleteDialogOpen(true);
-                } : undefined}
-              />
-            </TabsContent>
-            
-            <TabsContent value="my-themes" className="space-y-4">
-              <ThemeList 
-                themes={filteredThemes.filter(theme => theme.userId === userId)}
-                isLoading={isLoading || isSearching}
-                onView={(id) => {
-                  setSelectedThemeId(id);
-                  setIsViewDialogOpen(true);
-                }}
-                onEdit={canEdit ? (id) => {
-                  setSelectedThemeId(id);
-                  setIsEditDialogOpen(true);
-                } : undefined}
-                onDelete={canDelete ? (id) => {
-                  setSelectedThemeId(id);
-                  setIsDeleteDialogOpen(true);
-                } : undefined}
-              />
-            </TabsContent>
-            
-            <TabsContent value="featured" className="space-y-4">
-              <ThemeList 
-                themes={filteredThemes.filter(theme => theme.featured)}
-                isLoading={isLoading || isSearching}
-                onView={(id) => {
-                  setSelectedThemeId(id);
-                  setIsViewDialogOpen(true);
-                }}
-                onEdit={canEdit ? (id) => {
-                  setSelectedThemeId(id);
-                  setIsEditDialogOpen(true);
-                } : undefined}
-                onDelete={canDelete ? (id) => {
-                  setSelectedThemeId(id);
-                  setIsDeleteDialogOpen(true);
-                } : undefined}
-              />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-
-      {/* Create Theme Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Create New Theme</DialogTitle>
-            <DialogDescription>
-              Design a new theme for your application
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[70vh] overflow-y-auto py-2">
-            <ThemeEditor
-              onSave={handleThemeCreated}
-              onCancel={() => setIsCreateDialogOpen(false)}
-            />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsImportDialogOpen(true)}
+                className="gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Import
+              </Button>
+              <Button
+                onClick={() => setActiveTab('create')}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                New Theme
+              </Button>
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Theme Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Edit Theme</DialogTitle>
-            <DialogDescription>
-              Modify this theme's properties and design
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[70vh] overflow-y-auto py-2">
-            {selectedThemeId && (
-              <ThemeEditor
-                themeId={selectedThemeId}
-                onSave={handleThemeUpdated}
-                onCancel={() => setIsEditDialogOpen(false)}
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* View Theme Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Theme Details</DialogTitle>
-            <DialogDescription>
-              View the details and preview of this theme
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[70vh] overflow-y-auto py-2">
-            {selectedThemeId && (
-              <ThemeViewer
-                themeId={selectedThemeId}
-                onApply={canApply ? handleApplyTheme : undefined}
-                onExport={(tokens) => {
-                  // Export theme as JSON
-                  const dataStr = "data:text/json;charset=utf-8," + 
-                    encodeURIComponent(JSON.stringify(tokens, null, 2));
-                  const downloadAnchorNode = document.createElement('a');
-                  downloadAnchorNode.setAttribute("href", dataStr);
-                  downloadAnchorNode.setAttribute("download", `theme-${selectedThemeId}.json`);
-                  document.body.appendChild(downloadAnchorNode);
-                  downloadAnchorNode.click();
-                  downloadAnchorNode.remove();
-                }}
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
+          
+          {isLoadingThemes ? (
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : themes?.length ? (
+            <Card>
+              <Table>
+                <TableCaption>
+                  All available themes
+                </TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[150px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {themes.map((theme: any) => (
+                    <TableRow key={theme.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="h-8 w-8 rounded-full border"
+                            style={{ 
+                              background: `linear-gradient(135deg, ${theme.primaryColor || '#888'} 0%, ${theme.accentColor || '#eee'} 100%)` 
+                            }}
+                          />
+                          <div className="flex flex-col">
+                            <span>{theme.name}</span>
+                            {theme.description && (
+                              <span className="text-xs text-muted-foreground truncate max-w-xs">
+                                {theme.description}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{formatDate(theme.createdAt)}</TableCell>
+                      <TableCell>
+                        {theme.isPublic ? (
+                          <Badge>Public</Badge>
+                        ) : (
+                          <Badge variant="outline">Private</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleApplyTheme(theme.id)}
+                            disabled={applyThemeMutation.isPending && applyThemeMutation.variables === theme.id}
+                          >
+                            {applyThemeMutation.isPending && applyThemeMutation.variables === theme.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Check className="h-4 w-4" />
+                            )}
+                            Apply
+                          </Button>
+                          
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem 
+                                onClick={() => handleExportTheme(theme.id)}
+                                className="flex items-center gap-2"
+                              >
+                                <Download className="h-4 w-4" /> Export
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="flex items-center gap-2"
+                              >
+                                <Share className="h-4 w-4" /> Share
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="flex items-center gap-2"
+                              >
+                                <Edit className="h-4 w-4" /> Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteClick(theme.id)}
+                                className="flex items-center gap-2 text-red-600"
+                              >
+                                <Trash className="h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          ) : (
+            <Card className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="rounded-full bg-muted p-6 mb-4">
+                <div className="h-12 w-12 rounded-full border-4 border-dashed border-muted-foreground flex items-center justify-center">
+                  <Plus className="h-6 w-6 text-muted-foreground" />
+                </div>
+              </div>
+              <CardTitle className="mb-2">No themes found</CardTitle>
+              <CardDescription className="max-w-md mx-auto mb-6">
+                You haven't created any themes yet. Create your first theme to customize the appearance of your application.
+              </CardDescription>
+              <Button
+                onClick={() => setActiveTab('create')}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Create Theme
+              </Button>
+            </Card>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="create">
+          <AIThemeGenerator
+            onSaveTheme={handleSaveAITheme}
+          />
+        </TabsContent>
+        
+        <TabsContent value="analytics">
+          <ThemeAnalytics
+            themeId={selectedThemeId || undefined}
+            userId={userId}
+            isAdmin={isAdmin}
+          />
+        </TabsContent>
+        
+        {isAdmin && (
+          <TabsContent value="developer">
+            <ThemeTypeScriptIntegration />
+          </TabsContent>
+        )}
+      </Tabs>
+      
+      {/* Delete confirmation dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -364,7 +487,7 @@ export function ThemeManager({
               Are you sure you want to delete this theme? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end space-x-2 pt-4">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
@@ -376,132 +499,59 @@ export function ThemeManager({
               onClick={() => selectedThemeId && deleteThemeMutation.mutate(selectedThemeId)}
               disabled={deleteThemeMutation.isPending}
             >
-              {deleteThemeMutation.isPending ? 'Deleting...' : 'Delete Theme'}
+              {deleteThemeMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash className="h-4 w-4 mr-2" />
+              )}
+              Delete
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-// Theme List Component
-function ThemeList({ 
-  themes, 
-  isLoading, 
-  onView,
-  onEdit,
-  onDelete
-}: { 
-  themes: any[]; 
-  isLoading: boolean;
-  onView: (id: number) => void;
-  onEdit?: (id: number) => void;
-  onDelete?: (id: number) => void;
-}) {
-  if (isLoading) {
-    return <ThemeListSkeleton />;
-  }
-
-  if (!themes || themes.length === 0) {
-    return (
-      <div className="text-center py-10 text-muted-foreground">
-        No themes found. Create a new theme to get started.
-      </div>
-    );
-  }
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Theme Name</TableHead>
-          <TableHead>Creator</TableHead>
-          <TableHead>Version</TableHead>
-          <TableHead>Tags</TableHead>
-          <TableHead>Updated</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {themes.map((theme) => (
-          <TableRow key={theme.id}>
-            <TableCell className="font-medium">{theme.name}</TableCell>
-            <TableCell>{theme.userName || `User ${theme.userId}`}</TableCell>
-            <TableCell>{theme.latestVersion || '1.0.0'}</TableCell>
-            <TableCell>
-              <div className="flex flex-wrap gap-1">
-                {theme.tags && theme.tags.map((tag: string) => (
-                  <Badge key={tag} variant="outline" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            </TableCell>
-            <TableCell>
-              {theme.updatedAt 
-                ? new Date(theme.updatedAt).toLocaleDateString() 
-                : 'Unknown'}
-            </TableCell>
-            <TableCell className="text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      className="h-4 w-4"
-                    >
-                      <circle cx="12" cy="12" r="1" />
-                      <circle cx="12" cy="5" r="1" />
-                      <circle cx="12" cy="19" r="1" />
-                    </svg>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => onView(theme.id)}>
-                    View
-                  </DropdownMenuItem>
-                  {onEdit && (
-                    <DropdownMenuItem onClick={() => onEdit(theme.id)}>
-                      Edit
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  {onDelete && (
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => onDelete(theme.id)}
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
-}
-
-// Theme List Loading Skeleton
-function ThemeListSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Skeleton className="h-10 w-full" />
-        {Array(5).fill(0).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full" />
-        ))}
-      </div>
+      
+      {/* Import dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import Theme</DialogTitle>
+            <DialogDescription>
+              Paste the JSON data of the theme you want to import.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleImport}>
+            <div className="space-y-4 py-4">
+              <textarea
+                className="w-full h-48 p-3 border rounded-md font-mono text-sm"
+                placeholder='{"name": "My Theme", "tokens": {...}}'
+                value={importData}
+                onChange={(e) => setImportData(e.target.value)}
+                required
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsImportDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={importThemeMutation.isPending || !importData.trim()}
+              >
+                {importThemeMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4 mr-2" />
+                )}
+                Import
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

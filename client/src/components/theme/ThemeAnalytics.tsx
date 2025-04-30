@@ -1,25 +1,12 @@
 /**
  * Theme Analytics Component
  * 
- * This component displays analytics about theme usage and popularity.
- * It shows usage statistics, user engagement, and accessibility compliance.
+ * This component provides insights and statistics for theme usage
+ * and performance across the application.
  */
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Bar, Line, Pie } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
 import { apiRequest } from '@/lib/queryClient';
 import {
   Card,
@@ -43,811 +30,497 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import { BarChart, LineChart, PieChart } from '@/components/ui/charts';
+import { 
+  BarChart3, 
+  Calendar, 
+  LineChart as LineChartIcon, 
+  PieChart as PieChartIcon,
+  Users, 
+  Share2,
+  Download
+} from 'lucide-react';
 
 interface ThemeAnalyticsProps {
-  themeId?: number; // Optional: specific theme to analyze
-  userId?: number; // Optional: filter by user
-  isAdmin?: boolean; // Whether to show admin-only analytics
+  themeId?: number;
+  userId?: number;
+  isAdmin?: boolean;
 }
 
-export function ThemeAnalytics({
-  themeId,
-  userId,
-  isAdmin = false,
-}: ThemeAnalyticsProps) {
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
+export function ThemeAnalytics({ themeId, userId, isAdmin = false }: ThemeAnalyticsProps) {
+  const [timeRange, setTimeRange] = useState('30days');
+  const [activeTab, setActiveTab] = useState('usage');
   
-  // Fetch theme usage analytics
-  const { data: usageData, isLoading: isLoadingUsage } = useQuery({
-    queryKey: ['/api/themes/analytics/usage', { themeId, userId, timeRange }],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (themeId) params.set('themeId', themeId.toString());
-      if (userId) params.set('userId', userId.toString());
-      params.set('timeRange', timeRange);
-      
-      return apiRequest(`/api/themes/analytics/usage?${params.toString()}`);
+  // Mock analytics data - will be replaced with real API calls
+  const usageData = {
+    totalApplications: 1243,
+    uniqueUsers: 526,
+    averageTimeActive: '3.2 days',
+    popularComponents: [
+      { name: 'Buttons', usage: 78 },
+      { name: 'Cards', usage: 65 },
+      { name: 'Forms', usage: 52 },
+      { name: 'Navigation', usage: 47 },
+      { name: 'Dialogs', usage: 38 },
+    ],
+    usageByDay: Array.from({ length: 30 }, (_, i) => ({
+      date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
+      applications: Math.floor(Math.random() * 100) + 20,
+    })),
+    userSentiment: {
+      positive: 72,
+      neutral: 23,
+      negative: 5,
     },
-  });
+  };
   
-  // Fetch theme engagement analytics (e.g., views, downloads, shares)
-  const { data: engagementData, isLoading: isLoadingEngagement } = useQuery({
-    queryKey: ['/api/themes/analytics/engagement', { themeId, userId, timeRange }],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (themeId) params.set('themeId', themeId.toString());
-      if (userId) params.set('userId', userId.toString());
-      params.set('timeRange', timeRange);
-      
-      return apiRequest(`/api/themes/analytics/engagement?${params.toString()}`);
-    },
-  });
+  const accessibilityData = {
+    wcagCompliance: 'AA',
+    contrastRatio: 4.8,
+    colorBlindnessPerformance: 'Good',
+    motionReductionSupport: 'Partial',
+    keyboardNavigability: 'Excellent',
+    issuesByCategory: [
+      { category: 'Color Contrast', issues: 2 },
+      { category: 'Focus Indicators', issues: 1 },
+      { category: 'Hover States', issues: 3 },
+      { category: 'Text Sizing', issues: 0 },
+      { category: 'Animation Control', issues: 2 },
+    ],
+  };
   
-  // Fetch theme accessibility compliance
-  const { data: accessibilityData, isLoading: isLoadingAccessibility } = useQuery({
-    queryKey: ['/api/themes/analytics/accessibility', { themeId, userId }],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (themeId) params.set('themeId', themeId.toString());
-      if (userId) params.set('userId', userId.toString());
-      
-      return apiRequest(`/api/themes/analytics/accessibility?${params.toString()}`);
-    },
-  });
-
-  // Demo data for usage chart (in a real app, this would come from API)
-  const usageChartData = {
-    labels: getLabelsForTimeRange(timeRange),
-    datasets: [
-      {
-        label: 'Theme Applied',
-        data: generateDemoData(timeRange, 10, 50),
-        borderColor: 'rgb(53, 162, 235)',
-        backgroundColor: 'rgba(53, 162, 235, 0.5)',
-      },
+  const performanceData = {
+    firstLoadTime: '284ms',
+    themeChangeTime: '86ms',
+    cssSize: '32KB',
+    renderingEfficiency: 'Excellent',
+    memoryUsage: 'Low',
+    performanceByBrowser: [
+      { browser: 'Chrome', score: 92 },
+      { browser: 'Firefox', score: 89 },
+      { browser: 'Safari', score: 84 },
+      { browser: 'Edge', score: 90 },
     ],
   };
-
-  // Demo data for engagement chart
-  const engagementChartData = {
-    labels: getLabelsForTimeRange(timeRange),
-    datasets: [
-      {
-        label: 'Views',
-        data: generateDemoData(timeRange, 100, 500),
-        backgroundColor: 'rgba(53, 162, 235, 0.5)',
-      },
-      {
-        label: 'Downloads',
-        data: generateDemoData(timeRange, 10, 50),
-        backgroundColor: 'rgba(75, 192, 192, 0.5)',
-      },
-      {
-        label: 'Shares',
-        data: generateDemoData(timeRange, 1, 20),
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-      },
-    ],
-  };
-
-  // Demo data for accessibility compliance
-  const accessibilityChartData = {
-    labels: ['Contrast Ratio', 'Color Blind Safe', 'Reduced Motion Support', 'Screen Reader Ready'],
-    datasets: [
-      {
-        label: 'Compliance Score',
-        data: [85, 90, 100, 95],
-        backgroundColor: [
-          'rgba(75, 192, 192, 0.5)',
-          'rgba(53, 162, 235, 0.5)',
-          'rgba(255, 206, 86, 0.5)',
-          'rgba(153, 102, 255, 0.5)',
-        ],
-        borderColor: [
-          'rgba(75, 192, 192, 1)',
-          'rgba(53, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(153, 102, 255, 1)',
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  // Demo data for theme comparison
-  const comparisonChartData = {
-    labels: ['Performance', 'Accessibility', 'Popularity', 'Versatility', 'Complexity'],
-    datasets: [
-      {
-        label: 'Your Theme',
-        data: [90, 85, 65, 80, 40],
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-        borderWidth: 1,
-      },
-      {
-        label: 'Average',
-        data: [70, 65, 75, 60, 50],
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  // Loading states
-  if (isLoadingUsage || isLoadingEngagement || isLoadingAccessibility) {
-    return <ThemeAnalyticsSkeleton />;
-  }
-
+  
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <CardTitle>{themeId ? 'Theme Analytics' : 'Theme System Analytics'}</CardTitle>
-          <CardDescription>
-            Track usage, engagement, and accessibility metrics
-          </CardDescription>
+          <h2 className="text-3xl font-bold">Theme Analytics</h2>
+          <p className="text-muted-foreground">
+            Insights and statistics about theme performance and usage
+          </p>
         </div>
-        <div className="flex items-center gap-4">
-          <Select
-            value={timeRange}
-            onValueChange={(value) => setTimeRange(value as any)}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Time Range" />
+        
+        <div className="flex items-center gap-3">
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Time range" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-              <SelectItem value="1y">Last year</SelectItem>
+              <SelectItem value="7days">Last 7 days</SelectItem>
+              <SelectItem value="30days">Last 30 days</SelectItem>
+              <SelectItem value="90days">Last 90 days</SelectItem>
+              <SelectItem value="year">Last 12 months</SelectItem>
+              <SelectItem value="all">All time</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm">
-            Export Report
+          
+          <Button variant="outline" size="icon">
+            <Download className="h-4 w-4" />
+          </Button>
+          
+          <Button variant="outline" size="icon">
+            <Share2 className="h-4 w-4" />
           </Button>
         </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="usage">
-          <TabsList className="mb-6">
-            <TabsTrigger value="usage">Usage</TabsTrigger>
-            <TabsTrigger value="engagement">Engagement</TabsTrigger>
-            <TabsTrigger value="accessibility">Accessibility</TabsTrigger>
-            {isAdmin && <TabsTrigger value="admin">Admin Insights</TabsTrigger>}
-          </TabsList>
-
-          <TabsContent value="usage">
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <MetricCard
-                  title="Total Applications"
-                  value="1,248"
-                  trend="+12.5%"
-                  trendDirection="up"
-                />
-                <MetricCard
-                  title="Active Users"
-                  value="384"
-                  trend="+5.3%"
-                  trendDirection="up"
-                />
-                <MetricCard
-                  title="Avg. Session Duration"
-                  value="4m 32s"
-                  trend="-1.2%"
-                  trendDirection="down"
-                />
-              </div>
-              
-              <div className="h-80">
-                <Line
-                  data={usageChartData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                      },
-                    },
-                    plugins: {
-                      title: {
-                        display: true,
-                        text: 'Theme Usage Over Time',
-                      },
-                    },
-                  }}
-                />
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium mb-4">Usage Breakdown</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Device Type</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-60">
-                      <Pie
-                        data={{
-                          labels: ['Desktop', 'Mobile', 'Tablet'],
-                          datasets: [
-                            {
-                              data: [65, 25, 10],
-                              backgroundColor: [
-                                'rgba(53, 162, 235, 0.5)',
-                                'rgba(75, 192, 192, 0.5)',
-                                'rgba(255, 206, 86, 0.5)',
-                              ],
-                              borderColor: [
-                                'rgba(53, 162, 235, 1)',
-                                'rgba(75, 192, 192, 1)',
-                                'rgba(255, 206, 86, 1)',
-                              ],
-                              borderWidth: 1,
-                            },
-                          ],
-                        }}
-                        options={{
-                          responsive: true,
-                          maintainAspectRatio: false,
-                        }}
-                      />
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Mode Preference</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-60">
-                      <Pie
-                        data={{
-                          labels: ['Light', 'Dark', 'System'],
-                          datasets: [
-                            {
-                              data: [30, 45, 25],
-                              backgroundColor: [
-                                'rgba(255, 206, 86, 0.5)',
-                                'rgba(54, 162, 235, 0.5)',
-                                'rgba(153, 102, 255, 0.5)',
-                              ],
-                              borderColor: [
-                                'rgba(255, 206, 86, 1)',
-                                'rgba(54, 162, 235, 1)',
-                                'rgba(153, 102, 255, 1)',
-                              ],
-                              borderWidth: 1,
-                            },
-                          ],
-                        }}
-                        options={{
-                          responsive: true,
-                          maintainAspectRatio: false,
-                        }}
-                      />
-                    </CardContent>
-                  </Card>
+      </div>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="usage" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Usage</span>
+          </TabsTrigger>
+          <TabsTrigger value="accessibility" className="flex items-center gap-2">
+            <PieChartIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Accessibility</span>
+          </TabsTrigger>
+          <TabsTrigger value="performance" className="flex items-center gap-2">
+            <LineChartIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Performance</span>
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="usage" className="space-y-6 mt-6">
+          <div className="grid md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Applications
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{usageData.totalApplications}</div>
+                <p className="text-xs text-muted-foreground">
+                  +12.5% from previous period
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Unique Users
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{usageData.uniqueUsers}</div>
+                <p className="text-xs text-muted-foreground">
+                  +8.2% from previous period
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Avg. Time Active
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{usageData.averageTimeActive}</div>
+                <p className="text-xs text-muted-foreground">
+                  +1.4 days from previous period
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="grid md:grid-cols-7 gap-6">
+            <Card className="md:col-span-4">
+              <CardHeader>
+                <CardTitle>Daily Applications</CardTitle>
+                <CardDescription>
+                  Number of times this theme was applied daily
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  {/* Placeholder for chart */}
+                  <div className="w-full h-full bg-muted/20 rounded-md flex items-center justify-center">
+                    <BarChart3 className="h-12 w-12 text-muted" />
+                    <span className="sr-only">Chart showing daily applications</span>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="engagement">
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <MetricCard
-                  title="Total Views"
-                  value="5,842"
-                  trend="+18.7%"
-                  trendDirection="up"
-                />
-                <MetricCard
-                  title="Downloads"
-                  value="1,284"
-                  trend="+22.3%"
-                  trendDirection="up"
-                />
-                <MetricCard
-                  title="Shares"
-                  value="347"
-                  trend="+15.1%"
-                  trendDirection="up"
-                />
-                <MetricCard
-                  title="Rating"
-                  value="4.7/5"
-                  trend="+0.2"
-                  trendDirection="up"
-                />
-              </div>
-              
-              <div className="h-80">
-                <Bar
-                  data={engagementChartData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      title: {
-                        display: true,
-                        text: 'Engagement Metrics Over Time',
-                      },
-                      legend: {
-                        position: 'top' as const,
-                      },
-                    },
-                  }}
-                />
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium mb-4">Most Engaged Components</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {['Button', 'Card', 'Form', 'Navigation', 'Typography'].map((component) => (
-                    <Card key={component}>
-                      <CardHeader className="py-3">
-                        <CardTitle className="text-base">{component}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="py-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="bg-primary rounded-full h-3 w-3"></div>
-                            <span>Usage Score</span>
-                          </div>
-                          <span className="font-semibold">{Math.floor(Math.random() * 40) + 60}%</span>
+              </CardContent>
+            </Card>
+            
+            <Card className="md:col-span-3">
+              <CardHeader>
+                <CardTitle>Popular Components</CardTitle>
+                <CardDescription>
+                  Most frequently used UI components
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {usageData.popularComponents.map((component) => (
+                    <div key={component.name} className="flex items-center">
+                      <div className="w-1/3 font-medium">{component.name}</div>
+                      <div className="w-2/3">
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div
+                            className="bg-primary rounded-full h-2"
+                            style={{ width: `${Math.min((component.usage / 100) * 100, 100)}%` }}
+                          />
                         </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="flex items-center gap-2">
-                            <div className="bg-secondary rounded-full h-3 w-3"></div>
-                            <span>Customization</span>
-                          </div>
-                          <span className="font-semibold">{Math.floor(Math.random() * 40) + 60}%</span>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {component.usage}% usage
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="accessibility">
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <MetricCard
-                  title="Overall Score"
-                  value="92/100"
-                  trend="+4 pts"
-                  trendDirection="up"
-                  color="green"
-                />
-                <MetricCard
-                  title="WCAG Compliance"
-                  value="AA+"
-                  badges={['AA', 'AAA']}
-                />
-                <MetricCard
-                  title="Color Contrast"
-                  value="4.8:1"
-                  trend="+0.3"
-                  trendDirection="up"
-                />
-                <MetricCard
-                  title="Screen Reader"
-                  value="Excellent"
-                  color="green"
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Accessibility Scores</CardTitle>
-                    <CardDescription>Breakdown by category</CardDescription>
-                  </CardHeader>
-                  <CardContent className="h-60">
-                    <Radar
-                      data={accessibilityChartData}
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                          r: {
-                            min: 0,
-                            max: 100,
-                          },
-                        },
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Accessibility Issues</CardTitle>
-                    <CardDescription>Detected problems</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between p-2 border rounded-md">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
-                            Warning
-                          </Badge>
-                          <span>Button text contrast ratio (3.8:1)</span>
-                        </div>
-                        <Button variant="outline" size="sm">Fix</Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 border rounded-md">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-green-100 text-green-800">
-                            Suggestion
-                          </Badge>
-                          <span>Add reduced motion alternative</span>
-                        </div>
-                        <Button variant="outline" size="sm">Fix</Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 border rounded-md">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-green-100 text-green-800">
-                            Suggestion
-                          </Badge>
-                          <span>Improve focus indicator visibility</span>
-                        </div>
-                        <Button variant="outline" size="sm">Fix</Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {['Keyboard Navigation', 'Color Blind Mode', 'High Contrast', 'Screen Reader'].map((feature) => (
-                  <Card key={feature} className="flex flex-col items-center p-4">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3">
-                      <CheckIcon className="h-6 w-6" />
-                    </div>
-                    <CardTitle className="text-sm text-center">{feature}</CardTitle>
-                    <CardDescription className="text-center">Supported</CardDescription>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-
-          {isAdmin && (
-            <TabsContent value="admin">
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <MetricCard
-                    title="Total Themes"
-                    value="248"
-                    trend="+35"
-                    trendDirection="up"
-                  />
-                  <MetricCard
-                    title="Active Developers"
-                    value="86"
-                    trend="+12"
-                    trendDirection="up"
-                  />
-                  <MetricCard
-                    title="System Load"
-                    value="23%"
-                    trend="-5%"
-                    trendDirection="up"
-                    color="green"
-                  />
+              </CardContent>
+            </Card>
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>User Sentiment</CardTitle>
+              <CardDescription>
+                Feedback based on user interactions and explicit ratings
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="w-[200px] h-[200px] relative">
+                  {/* Placeholder for pie chart */}
+                  <div className="w-full h-full bg-muted/20 rounded-full flex items-center justify-center">
+                    <PieChartIcon className="h-12 w-12 text-muted" />
+                    <span className="sr-only">Pie chart showing user sentiment</span>
+                  </div>
                 </div>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Theme Comparison</CardTitle>
-                    <CardDescription>Your theme vs. system average</CardDescription>
-                  </CardHeader>
-                  <CardContent className="h-80">
-                    <Radar
-                      data={comparisonChartData}
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                          r: {
-                            min: 0,
-                            max: 100,
-                          },
-                        },
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-
-                <div>
-                  <h3 className="text-lg font-medium mb-4">System Performance</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Theme Processing Time</CardTitle>
-                      </CardHeader>
-                      <CardContent className="h-60">
-                        <Line
-                          data={{
-                            labels: getLabelsForTimeRange('30d', 7),
-                            datasets: [
-                              {
-                                label: 'Processing Time (ms)',
-                                data: generateDemoData('30d', 50, 150, 7),
-                                borderColor: 'rgb(75, 192, 192)',
-                                backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                              },
-                            ],
-                          }}
-                          options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                          }}
-                        />
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">API Requests</CardTitle>
-                      </CardHeader>
-                      <CardContent className="h-60">
-                        <Line
-                          data={{
-                            labels: getLabelsForTimeRange('30d', 7),
-                            datasets: [
-                              {
-                                label: 'API Requests',
-                                data: generateDemoData('30d', 500, 2000, 7),
-                                borderColor: 'rgb(255, 99, 132)',
-                                backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                              },
-                            ],
-                          }}
-                          options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                          }}
-                        />
-                      </CardContent>
-                    </Card>
+                
+                <div className="space-y-4 flex-1">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-green-500" />
+                        <span>Positive</span>
+                      </div>
+                      <span className="font-medium">{usageData.userSentiment.positive}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className="bg-green-500 rounded-full h-2"
+                        style={{ width: `${usageData.userSentiment.positive}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-blue-500" />
+                        <span>Neutral</span>
+                      </div>
+                      <span className="font-medium">{usageData.userSentiment.neutral}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className="bg-blue-500 rounded-full h-2"
+                        style={{ width: `${usageData.userSentiment.neutral}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-red-500" />
+                        <span>Negative</span>
+                      </div>
+                      <span className="font-medium">{usageData.userSentiment.negative}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className="bg-red-500 rounded-full h-2"
+                        style={{ width: `${usageData.userSentiment.negative}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </TabsContent>
-          )}
-        </Tabs>
-      </CardContent>
-      <CardFooter className="flex justify-between border-t pt-6">
-        <div className="text-sm text-muted-foreground">
-          Data last updated: {new Date().toLocaleString()}
-        </div>
-        <Button variant="outline" size="sm">
-          Refresh Data
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-}
-
-// Metric Card Component
-interface MetricCardProps {
-  title: string;
-  value: string;
-  trend?: string;
-  trendDirection?: 'up' | 'down';
-  color?: 'default' | 'green' | 'red' | 'blue';
-  badges?: string[];
-}
-
-function MetricCard({
-  title,
-  value,
-  trend,
-  trendDirection,
-  color = 'default',
-  badges,
-}: MetricCardProps) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="text-sm font-medium text-muted-foreground">{title}</div>
-        <div className="mt-2 flex items-center">
-          <div className={`text-2xl font-bold ${
-            color === 'green' ? 'text-green-600'
-            : color === 'red' ? 'text-red-600'
-            : color === 'blue' ? 'text-blue-600'
-            : ''
-          }`}>
-            {value}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="accessibility" className="space-y-6 mt-6">
+          <div className="grid md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  WCAG Compliance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{accessibilityData.wcagCompliance}</div>
+                <p className="text-xs text-muted-foreground">
+                  Meets AA conformance level
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Contrast Ratio
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{accessibilityData.contrastRatio}:1</div>
+                <p className="text-xs text-muted-foreground">
+                  Exceeds minimum requirements
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Colorblindness
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{accessibilityData.colorBlindnessPerformance}</div>
+                <p className="text-xs text-muted-foreground">
+                  Works well across simulations
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Keyboard Nav
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{accessibilityData.keyboardNavigability}</div>
+                <p className="text-xs text-muted-foreground">
+                  Fully navigable without mouse
+                </p>
+              </CardContent>
+            </Card>
           </div>
-          {trend && (
-            <span className={`ml-2 flex items-center text-sm ${
-              trendDirection === 'up' ? 'text-green-600'
-              : trendDirection === 'down' ? 'text-red-600'
-              : ''
-            }`}>
-              {trendDirection === 'up' ? <ArrowUpIcon className="mr-1 h-4 w-4" /> 
-              : trendDirection === 'down' ? <ArrowDownIcon className="mr-1 h-4 w-4" /> 
-              : null}
-              {trend}
-            </span>
-          )}
-        </div>
-        {badges && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {badges.map((badge) => (
-              <Badge key={badge} variant="outline" className="text-xs">
-                {badge}
-              </Badge>
-            ))}
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Accessibility Issues</CardTitle>
+              <CardDescription>
+                Detected issues by category
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {accessibilityData.issuesByCategory.map((issue) => (
+                  <div key={issue.category} className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="font-medium">{issue.category}</span>
+                      <span className={`${issue.issues > 0 ? 'text-amber-500' : 'text-green-500'} font-medium`}>
+                        {issue.issues} {issue.issues === 1 ? 'issue' : 'issues'}
+                      </span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className={`${issue.issues > 0 ? 'bg-amber-500' : 'bg-green-500'} rounded-full h-2`}
+                        style={{ width: issue.issues > 0 ? `${(issue.issues / 5) * 100}%` : '100%' }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="performance" className="space-y-6 mt-6">
+          <div className="grid md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  First Load Time
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{performanceData.firstLoadTime}</div>
+                <p className="text-xs text-muted-foreground">
+                  -18ms from previous version
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Theme Change
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{performanceData.themeChangeTime}</div>
+                <p className="text-xs text-muted-foreground">
+                  -12ms from previous version
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  CSS Size
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{performanceData.cssSize}</div>
+                <p className="text-xs text-muted-foreground">
+                  -4KB from previous version
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Memory Usage
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{performanceData.memoryUsage}</div>
+                <p className="text-xs text-muted-foreground">
+                  Optimized variable usage
+                </p>
+              </CardContent>
+            </Card>
           </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-// Radar Chart Component (needed for accessibility chart)
-function Radar({ data, options }: { data: any; options: any }) {
-  return (
-    <div className="h-full w-full">
-      <div style={{ position: 'relative', height: '100%', width: '100%' }}>
-        <Bar  // Fallback to Bar since we don't have RadarElement registered
-          data={data}
-          options={options}
-        />
-      </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Performance by Browser</CardTitle>
+              <CardDescription>
+                Theme rendering performance across browsers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {performanceData.performanceByBrowser.map((browser) => (
+                  <div key={browser.browser} className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{browser.browser}</span>
+                      <span className="text-sm">{browser.score}/100</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className={`rounded-full h-2 ${
+                          browser.score >= 90
+                            ? 'bg-green-500'
+                            : browser.score >= 80
+                            ? 'bg-amber-500'
+                            : 'bg-red-500'
+                        }`}
+                        style={{ width: `${browser.score}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Performance Trend</CardTitle>
+              <CardDescription>
+                Theme performance over time
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                {/* Placeholder for chart */}
+                <div className="w-full h-full bg-muted/20 rounded-md flex items-center justify-center">
+                  <LineChartIcon className="h-12 w-12 text-muted" />
+                  <span className="sr-only">Chart showing performance trend</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
-  );
-}
-
-// Loading skeleton
-function ThemeAnalyticsSkeleton() {
-  return (
-    <Card className="w-full">
-      <CardHeader>
-        <Skeleton className="h-8 w-1/3" />
-        <Skeleton className="h-4 w-1/4 mt-2" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-10 w-full mb-6" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-        </div>
-        <Skeleton className="h-80 w-full mb-6" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Skeleton className="h-60 w-full" />
-          <Skeleton className="h-60 w-full" />
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Skeleton className="h-4 w-2/3" />
-      </CardFooter>
-    </Card>
-  );
-}
-
-// Helper functions
-function getLabelsForTimeRange(timeRange: string, count = 0): string[] {
-  const today = new Date();
-  let labels: string[] = [];
-  
-  switch (timeRange) {
-    case '7d':
-      labels = Array.from({ length: count || 7 }, (_, i) => {
-        const date = new Date(today);
-        date.setDate(date.getDate() - (7 - i - 1));
-        return date.toLocaleDateString('en-US', { weekday: 'short' });
-      });
-      break;
-    case '30d':
-      labels = Array.from({ length: count || 10 }, (_, i) => {
-        const date = new Date(today);
-        date.setDate(date.getDate() - Math.floor((30 / (count || 10)) * (10 - i - 1)));
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      });
-      break;
-    case '90d':
-      labels = Array.from({ length: count || 12 }, (_, i) => {
-        const date = new Date(today);
-        date.setDate(date.getDate() - Math.floor((90 / (count || 12)) * (12 - i - 1)));
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      });
-      break;
-    case '1y':
-      labels = Array.from({ length: count || 12 }, (_, i) => {
-        const date = new Date(today);
-        date.setMonth(date.getMonth() - (12 - i - 1));
-        return date.toLocaleDateString('en-US', { month: 'short' });
-      });
-      break;
-  }
-  
-  return labels;
-}
-
-function generateDemoData(timeRange: string, min: number, max: number, count = 0): number[] {
-  const length = count || (timeRange === '7d' ? 7 : timeRange === '30d' ? 10 : timeRange === '90d' ? 12 : 12);
-  return Array.from({ length }, () => Math.floor(Math.random() * (max - min + 1)) + min);
-}
-
-// Icon components
-function CheckIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
-function ArrowUpIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <line x1="12" y1="19" x2="12" y2="5" />
-      <polyline points="5 12 12 5 19 12" />
-    </svg>
-  );
-}
-
-function ArrowDownIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <polyline points="19 12 12 19 5 12" />
-    </svg>
   );
 }

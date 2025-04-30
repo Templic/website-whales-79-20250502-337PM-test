@@ -224,6 +224,44 @@ export const coupons = pgTable("coupons", {
 });
 
 // ===================================================================
+// Theme System Schema
+// ===================================================================
+
+// Themes table
+export const themes = pgTable('themes', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  userId: varchar('user_id', { length: 255 }).references(() => users.id),
+  primaryColor: varchar('primary_color', { length: 50 }),
+  accentColor: varchar('accent_color', { length: 50 }),
+  backgroundColor: varchar('background_color', { length: 50 }),
+  foregroundColor: varchar('foreground_color', { length: 50 }),
+  fontFamily: varchar('font_family', { length: 255 }),
+  borderRadius: varchar('border_radius', { length: 20 }),
+  isPublic: boolean('is_public').default(false),
+  tokens: json('tokens').$type<Record<string, any>>(),
+  tags: text('tags').array(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Theme analytics table
+export const themeAnalytics = pgTable('theme_analytics', {
+  id: serial('id').primaryKey(),
+  themeId: integer('theme_id').references(() => themes.id).notNull(),
+  applications: integer('applications').default(0),
+  uniqueUsers: integer('unique_users').default(0),
+  avgTimeActive: numeric('avg_time_active').default(0),
+  userSentiment: numeric('user_sentiment').default(0),
+  componentUsage: json('component_usage').$type<Record<string, number>>(),
+  accessibilityScore: numeric('accessibility_score').default(0),
+  performance: numeric('performance').default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ===================================================================
 // TypeScript Error Management Schema
 // ===================================================================
 
@@ -357,7 +395,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
   posts: many(posts),
   comments: many(comments),
-  patrons: many(patrons)
+  patrons: many(patrons),
+  themes: many(themes)
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
@@ -426,6 +465,22 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   product: one(products, {
     fields: [cartItems.productId],
     references: [products.id]
+  })
+}));
+
+// Theme system relations
+export const themesRelations = relations(themes, ({ one, many }) => ({
+  user: one(users, {
+    fields: [themes.userId],
+    references: [users.id]
+  }),
+  analytics: many(themeAnalytics)
+}));
+
+export const themeAnalyticsRelations = relations(themeAnalytics, ({ one }) => ({
+  theme: one(themes, {
+    fields: [themeAnalytics.themeId],
+    references: [themes.id]
   })
 }));
 
@@ -871,6 +926,19 @@ export const insertCollaborationProposalSchema = createInsertSchema(collaboratio
   updatedAt: true,
 });
 
+// Theme system insert schemas
+export const insertThemeSchema = createInsertSchema(themes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertThemeAnalyticsSchema = createInsertSchema(themeAnalytics).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertPatronSchema = createInsertSchema(patrons).omit({
   id: true,
   createdAt: true,
@@ -970,6 +1038,13 @@ export type InsertCollaborationProposal = z.infer<typeof insertCollaborationProp
 
 export type Patron = typeof patrons.$inferSelect;
 export type InsertPatron = z.infer<typeof insertPatronSchema>;
+
+// Theme system types
+export type Theme = typeof themes.$inferSelect;
+export type InsertTheme = z.infer<typeof insertThemeSchema>;
+
+export type ThemeAnalytic = typeof themeAnalytics.$inferSelect;
+export type InsertThemeAnalytic = z.infer<typeof insertThemeAnalyticsSchema>;
 
 // ===================================================================
 // Admin Utilities Schema

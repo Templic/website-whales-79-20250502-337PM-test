@@ -39,6 +39,7 @@ import { enhancedCsrfProtection } from './security/middleware/enhancedCsrfProtec
 import typescriptErrorRoutes from './routes/typescript-error-routes';
 import typescriptErrorSimpleRoutes from './routes/typescript-error-simple-routes';
 import adminRoutes from './admin-routes';
+import aiThemeGeneratorRoutes from './routes/ai-theme-generator';
 import {
   insertSubscriberSchema,
   insertNewsletterSchema,
@@ -300,6 +301,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use theme management routes
   app.use('/api/themes', themeRoutes);
+  
+  // Use AI theme generator routes
+  app.use('/api/themes/ai', aiThemeGeneratorRoutes);
 
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', async (req, res) => {

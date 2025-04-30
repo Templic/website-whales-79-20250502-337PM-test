@@ -1,325 +1,413 @@
 /**
  * AI Theme Generator Routes
  * 
- * This module provides the API routes for AI-powered theme generation.
- * It interfaces with OpenAI to create themes based on user input.
+ * This module provides endpoints for AI-assisted theme generation.
+ * It leverages OpenAI to create themes based on natural language descriptions.
  */
 
 import express from 'express';
-import { z } from 'zod';
 import OpenAI from 'openai';
-import { defaultLightTokens, defaultDarkTokens } from '@shared/theme/defaultThemes';
-import { ThemeTokens } from '@shared/theme/tokens';
+import { z } from 'zod';
 import { validateRequest } from '../middlewares/validation';
-import { analyzeThemeAccessibility } from '@shared/theme/accessibility';
+import { isAuthenticated } from '../replitAuth';
+import { ThemeTokens } from '../../shared/theme/tokens';
+import { db } from '../db';
+import { themes } from '../../shared/schema';
+
+const router = express.Router();
 
 // Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Request validation schema
-const themeGenerationSchema = z.object({
-  prompt: z.string(),
-  name: z.string(),
-  baseStyle: z.enum(['modern', 'classic', 'playful', 'corporate', 'minimal']),
-  colorPreference: z.enum(['warm', 'cool', 'neutral', 'vibrant', 'pastel', 'dark', 'light']),
-  accessibility: z.boolean(),
-  complexity: z.number().min(1).max(5),
-  description: z.string().optional(),
+// Schema for theme generation request
+const generateThemeSchema = z.object({
+  prompt: z.string().min(3).max(500),
+  mode: z.enum(['light', 'dark', 'system']).default('system'),
+  style: z.enum(['vibrant', 'minimal', 'corporate', 'playful', 'natural']).default('vibrant'),
 });
 
-const router = express.Router();
+// Schema for theme enhancement request
+const enhanceThemeSchema = z.object({
+  tokens: z.any(), // Using any because ThemeTokens is complex to model in Zod
+  prompt: z.string().min(3).max(500),
+});
+
+// Schema for theme accessibility improvement request
+const improveAccessibilitySchema = z.object({
+  tokens: z.any(), // Using any because ThemeTokens is complex to model in Zod
+  contrast: z.enum(['standard', 'high']).default('standard'),
+  colorBlindness: z.enum(['none', 'protanopia', 'deuteranopia', 'tritanopia']).default('none'),
+});
 
 /**
+ * Generate a theme based on a natural language prompt
  * POST /api/themes/ai/generate
- * Generates theme tokens using AI
  */
-router.post('/generate', validateRequest({ body: themeGenerationSchema }), async (req, res) => {
-  try {
-    const {
-      prompt,
-      baseStyle,
-      colorPreference,
-      accessibility,
-      complexity,
-    } = req.body;
-
-    // Create prompt for OpenAI
-    const systemPrompt = `You are an expert UI/UX designer and design token specialist. 
-    Your task is to generate a comprehensive theme for a web application based on the user's preferences.
-    The theme should include a set of design tokens following a modern design system approach.
-    Always output valid JSON that matches the TypeScript ThemeTokens interface.
-    If accessibility is required, ensure all color combinations meet WCAG AA standards with appropriate contrast ratios.`;
-
-    const userPrompt = `Create a theme with the following characteristics:
-    - Description: "${prompt}"
-    - Base style: ${baseStyle}
-    - Color preference: ${colorPreference}
-    - Accessibility optimized: ${accessibility ? 'Yes' : 'No'}
-    - Complexity level: ${complexity} (on a scale of 1-5)
-    
-    Generate a complete ThemeTokens object including:
-    1. Color tokens (background, foreground, primary, secondary, accent, muted, destructive, etc.)
-    2. Typography tokens (font families, sizes, weights, line heights, etc.)
-    3. Spacing tokens
-    4. Border radius tokens
-    5. Shadow tokens
-    6. Animation tokens
-    7. Component-specific tokens (for buttons, cards, inputs, badges, etc.)
-    
-    Format the response as a valid JSON object that matches the ThemeTokens interface. 
-    Include design insights about your choices.`;
-
-    // Generate tokens using OpenAI
-    console.log('Generating theme tokens with OpenAI...');
-    const completion = await openai.chat.completions.create({
-      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.7,
-    });
-
-    // Parse the response
-    const responseContent = completion.choices[0].message.content;
-    if (!responseContent) {
-      throw new Error('No response content from AI');
-    }
-
+router.post(
+  '/generate',
+  validateRequest({ body: generateThemeSchema }),
+  async (req, res) => {
     try {
-      const jsonResponse = JSON.parse(responseContent);
-      let generatedTokens: ThemeTokens;
-      let insights: string[] = [];
+      const { prompt, mode, style } = req.body;
 
-      // Extract tokens and insights
-      if (jsonResponse.tokens && jsonResponse.insights) {
-        generatedTokens = jsonResponse.tokens;
-        insights = jsonResponse.insights;
-      } else if (jsonResponse.theme && jsonResponse.insights) {
-        generatedTokens = jsonResponse.theme;
-        insights = jsonResponse.insights;
-      } else {
-        // Assume the entire response is the tokens
-        generatedTokens = jsonResponse;
-        insights = [];
+      // Prepare system message with context
+      const systemMessage = `You are an expert design assistant that helps generate theme tokens for web applications. 
+      Generate a theme in ${mode} mode with a ${style} style that matches this description: "${prompt}".
+      Your response should be JSON containing theme tokens following this structure:
+      {
+        "colors": {
+          "primary": "hsl value",
+          "primaryLight": "hsl value",
+          "primaryDark": "hsl value",
+          "secondary": "hsl value",
+          "accent": "hsl value",
+          "background": "hsl value",
+          "foreground": "hsl value",
+          "muted": "hsl value",
+          "mutedForeground": "hsl value"
+        },
+        "borderRadius": {
+          "small": "value in px",
+          "medium": "value in px",
+          "large": "value in px"
+        },
+        "spacing": {
+          "xs": "value in px",
+          "sm": "value in px",
+          "md": "value in px",
+          "lg": "value in px",
+          "xl": "value in px"
+        },
+        "typography": {
+          "fontFamily": "font stack",
+          "headings": {
+            "fontFamily": "font stack",
+            "fontWeight": "value"
+          },
+          "body": {
+            "fontFamily": "font stack",
+            "fontWeight": "value",
+            "lineHeight": "value"
+          }
+        },
+        "metadata": {
+          "name": "theme name based on prompt",
+          "description": "brief description of theme based on prompt",
+          "tags": ["tag1", "tag2", "tag3"]
+        }
       }
-
-      // Validate basic token structure
-      const requiredProps = [
-        'background', 'foreground', 'primary', 'secondary', 
-        'typography', 'spacing', 'radius'
-      ];
       
-      // Check if all required properties exist
-      const missingProps = requiredProps.filter(prop => !generatedTokens[prop]);
-      
-      if (missingProps.length > 0) {
-        console.log(`Missing required properties: ${missingProps.join(', ')}`);
-        // Fall back to merging with default tokens
-        const baseTokens = colorPreference === 'dark' ? defaultDarkTokens : defaultLightTokens;
-        generatedTokens = { ...baseTokens, ...generatedTokens };
-      }
+      Use HSL color format. Ensure proper contrast ratios for accessibility.`;
 
-      // If accessibility is enabled, analyze the theme
-      if (accessibility) {
-        const accessibilityResults = analyzeThemeAccessibility(generatedTokens);
-        const accessibilityInsight = `Accessibility Analysis: The theme has a contrast ratio of ${accessibilityResults.contrastRatio.toFixed(2)}:1 for primary text, which is ${accessibilityResults.passes ? 'compliant' : 'not compliant'} with WCAG AA standards.`;
-        insights.push(accessibilityInsight);
-      }
-
-      // Return the generated theme
-      res.json({
-        theme: generatedTokens,
-        insights,
-        name: req.body.name,
-        description: req.body.description || prompt,
+      // Make OpenAI API call
+      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemMessage },
+          { role: "user", content: prompt }
+        ],
+        response_format: { type: "json_object" }
       });
-    } catch (parseError) {
-      console.error('Error parsing AI response:', parseError);
-      console.log('Response content:', responseContent);
-      res.status(500).json({ 
-        error: 'Failed to parse AI response',
-        details: (parseError as Error).message
+
+      // Extract the theme tokens from the response
+      const content = response.choices[0].message.content;
+      
+      if (!content) {
+        return res.status(500).json({
+          error: 'Failed to generate theme',
+          message: 'The AI model did not return any content'
+        });
+      }
+
+      // Parse the response into a ThemeTokens object
+      try {
+        const themeData = JSON.parse(content);
+        
+        // Return the generated theme tokens
+        res.json({
+          tokens: themeData,
+          prompt,
+          mode,
+          style,
+          usage: response.usage
+        });
+      } catch (parseError) {
+        console.error('Error parsing theme data:', parseError);
+        return res.status(500).json({
+          error: 'Failed to parse generated theme',
+          message: 'The AI response could not be parsed as JSON'
+        });
+      }
+    } catch (error) {
+      console.error('Error generating theme:', error);
+      res.status(500).json({
+        error: 'Failed to generate theme',
+        message: error instanceof Error ? error.message : 'Unknown error'
       });
     }
-  } catch (error) {
-    console.error('Error generating theme with AI:', error);
-    res.status(500).json({ 
-      error: 'Failed to generate theme',
-      details: (error as Error).message
-    });
   }
-});
+);
 
 /**
+ * Enhance an existing theme based on a natural language prompt
  * POST /api/themes/ai/enhance
- * Enhances an existing theme using AI
  */
-router.post('/enhance', async (req, res) => {
-  try {
-    const { 
-      tokens, 
-      enhanceOptions = { 
-        accessibility: true, 
-        contrast: false, 
-        colors: false, 
-        typography: false 
-      } 
-    } = req.body;
-
-    // Create prompt for OpenAI
-    const systemPrompt = `You are an expert UI/UX designer specializing in enhancing design tokens.
-    Your task is to improve an existing theme based on the enhancement options provided.
-    Always output valid JSON that matches the TypeScript ThemeTokens interface.`;
-
-    const userPrompt = `Enhance the following theme according to these options:
-    - Improve accessibility: ${enhanceOptions.accessibility ? 'Yes' : 'No'}
-    - Increase contrast: ${enhanceOptions.contrast ? 'Yes' : 'No'}
-    - Refine color palette: ${enhanceOptions.colors ? 'Yes' : 'No'}
-    - Optimize typography: ${enhanceOptions.typography ? 'Yes' : 'No'}
-    
-    Here is the current theme:
-    ${JSON.stringify(tokens, null, 2)}
-    
-    Return the enhanced theme as a valid JSON object, and include a list of improvements made.`;
-
-    // Generate enhanced tokens using OpenAI
-    console.log('Enhancing theme tokens with OpenAI...');
-    const completion = await openai.chat.completions.create({
-      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.5,
-    });
-
-    // Parse the response
-    const responseContent = completion.choices[0].message.content;
-    if (!responseContent) {
-      throw new Error('No response content from AI');
-    }
-
+router.post(
+  '/enhance',
+  validateRequest({ body: enhanceThemeSchema }),
+  async (req, res) => {
     try {
-      const jsonResponse = JSON.parse(responseContent);
-      let enhancedTokens: ThemeTokens;
-      let improvements: string[] = [];
+      const { tokens, prompt } = req.body;
 
-      // Extract tokens and improvements
-      if (jsonResponse.tokens && jsonResponse.improvements) {
-        enhancedTokens = jsonResponse.tokens;
-        improvements = jsonResponse.improvements;
-      } else if (jsonResponse.theme && jsonResponse.improvements) {
-        enhancedTokens = jsonResponse.theme;
-        improvements = jsonResponse.improvements;
-      } else {
-        // Assume the entire response is the tokens
-        enhancedTokens = jsonResponse;
-        improvements = ["Theme enhanced with AI assistance"];
+      // Prepare system message with context
+      const systemMessage = `You are an expert design assistant that helps enhance theme tokens for web applications.
+      Modify the provided theme tokens according to this instruction: "${prompt}".
+      Keep the same structure but update color values, typography, spacing, or border radius as needed.
+      Return the complete modified theme as JSON.`;
+
+      // Make OpenAI API call
+      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemMessage },
+          { role: "user", content: JSON.stringify(tokens) + "\n\nEnhance with: " + prompt }
+        ],
+        response_format: { type: "json_object" }
+      });
+
+      // Extract the enhanced theme tokens from the response
+      const content = response.choices[0].message.content;
+      
+      if (!content) {
+        return res.status(500).json({
+          error: 'Failed to enhance theme',
+          message: 'The AI model did not return any content'
+        });
       }
 
-      // Return the enhanced theme
-      res.json({
-        theme: enhancedTokens,
-        improvements,
-      });
-    } catch (parseError) {
-      console.error('Error parsing AI response:', parseError);
-      res.status(500).json({ 
-        error: 'Failed to parse AI response',
-        details: (parseError as Error).message 
+      // Parse the response into a ThemeTokens object
+      try {
+        const enhancedTheme = JSON.parse(content);
+        
+        // Return the enhanced theme tokens
+        res.json({
+          original: tokens,
+          enhanced: enhancedTheme,
+          prompt,
+          usage: response.usage
+        });
+      } catch (parseError) {
+        console.error('Error parsing enhanced theme data:', parseError);
+        return res.status(500).json({
+          error: 'Failed to parse enhanced theme',
+          message: 'The AI response could not be parsed as JSON'
+        });
+      }
+    } catch (error) {
+      console.error('Error enhancing theme:', error);
+      res.status(500).json({
+        error: 'Failed to enhance theme',
+        message: error instanceof Error ? error.message : 'Unknown error'
       });
     }
-  } catch (error) {
-    console.error('Error enhancing theme with AI:', error);
-    res.status(500).json({ 
-      error: 'Failed to enhance theme',
-      details: (error as Error).message 
-    });
   }
-});
+);
 
 /**
+ * Improve the accessibility of a theme
+ * POST /api/themes/ai/improve-accessibility
+ */
+router.post(
+  '/improve-accessibility',
+  validateRequest({ body: improveAccessibilitySchema }),
+  async (req, res) => {
+    try {
+      const { tokens, contrast, colorBlindness } = req.body;
+
+      // Prepare system message with context
+      const systemMessage = `You are an expert in web accessibility that optimizes theme tokens for web applications.
+      Modify the provided theme tokens to enhance accessibility with these requirements:
+      - Contrast level: ${contrast === 'high' ? 'High (WCAG AAA)' : 'Standard (WCAG AA)'}
+      - Color blindness adaptation: ${colorBlindness !== 'none' ? colorBlindness : 'No specific adaptation'}
+      
+      Return the complete modified theme as JSON with improved color contrast and accessibility.`;
+
+      // Make OpenAI API call
+      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemMessage },
+          { role: "user", content: JSON.stringify(tokens) }
+        ],
+        response_format: { type: "json_object" }
+      });
+
+      // Extract the accessible theme tokens from the response
+      const content = response.choices[0].message.content;
+      
+      if (!content) {
+        return res.status(500).json({
+          error: 'Failed to improve accessibility',
+          message: 'The AI model did not return any content'
+        });
+      }
+
+      // Parse the response into a ThemeTokens object
+      try {
+        const accessibleTheme = JSON.parse(content);
+        
+        // Return the accessible theme tokens
+        res.json({
+          original: tokens,
+          accessible: accessibleTheme,
+          contrast,
+          colorBlindness,
+          usage: response.usage
+        });
+      } catch (parseError) {
+        console.error('Error parsing accessible theme data:', parseError);
+        return res.status(500).json({
+          error: 'Failed to parse accessible theme',
+          message: 'The AI response could not be parsed as JSON'
+        });
+      }
+    } catch (error) {
+      console.error('Error improving accessibility:', error);
+      res.status(500).json({
+        error: 'Failed to improve accessibility',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+);
+
+/**
+ * Analyze color harmony and accessibility of a theme
  * POST /api/themes/ai/analyze
- * Analyzes a theme and provides insights
  */
 router.post('/analyze', async (req, res) => {
   try {
     const { tokens } = req.body;
 
-    // Create prompt for OpenAI
-    const systemPrompt = `You are an expert UI/UX designer and accessibility specialist.
-    Your task is to analyze a theme's design tokens and provide detailed insights.
-    Focus on accessibility, visual harmony, usability, and areas for improvement.`;
-
-    const userPrompt = `Analyze this theme and provide detailed insights:
-    ${JSON.stringify(tokens, null, 2)}
+    // Prepare system message with context
+    const systemMessage = `You are an expert design analyst that evaluates theme tokens for web applications.
+    Analyze the provided theme tokens and provide feedback on:
+    1. Color harmony and visual appeal
+    2. Accessibility and contrast issues
+    3. Typography choices
+    4. Overall consistency
     
-    Please provide:
-    1. Accessibility assessment (contrast ratios, readability)
-    2. Color harmony analysis
-    3. Typography evaluation
-    4. Component token consistency
-    5. Specific improvement suggestions
-    6. Overall theme rating (1-10)
-    
-    Return your analysis as a JSON object with clear sections and explanations.`;
+    Provide the analysis in JSON format with these sections.`;
 
-    // Analyze tokens using OpenAI
-    console.log('Analyzing theme tokens with OpenAI...');
-    const completion = await openai.chat.completions.create({
-      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    // Make OpenAI API call
+    // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
+        { role: "system", content: systemMessage },
+        { role: "user", content: JSON.stringify(tokens) }
       ],
-      response_format: { type: "json_object" },
-      temperature: 0.3,
+      response_format: { type: "json_object" }
     });
 
-    // Parse the response
-    const responseContent = completion.choices[0].message.content;
-    if (!responseContent) {
-      throw new Error('No response content from AI');
+    // Extract the analysis from the response
+    const content = response.choices[0].message.content;
+    
+    if (!content) {
+      return res.status(500).json({
+        error: 'Failed to analyze theme',
+        message: 'The AI model did not return any content'
+      });
     }
 
+    // Parse the response into an analysis object
     try {
-      const analysis = JSON.parse(responseContent);
+      const analysis = JSON.parse(content);
       
-      // Run local accessibility analysis as well
-      const accessibilityResults = analyzeThemeAccessibility(tokens);
-      
-      // Combine AI analysis with local analysis
-      const combinedAnalysis = {
-        ...analysis,
-        localAccessibility: {
-          contrastRatio: accessibilityResults.contrastRatio,
-          passes: accessibilityResults.passes,
-          wcagLevel: accessibilityResults.wcagLevel,
-        }
-      };
-
       // Return the analysis
-      res.json(combinedAnalysis);
+      res.json({
+        theme: tokens,
+        analysis,
+        usage: response.usage
+      });
     } catch (parseError) {
-      console.error('Error parsing AI response:', parseError);
-      res.status(500).json({ 
-        error: 'Failed to parse AI analysis',
-        details: (parseError as Error).message 
+      console.error('Error parsing theme analysis:', parseError);
+      return res.status(500).json({
+        error: 'Failed to parse theme analysis',
+        message: 'The AI response could not be parsed as JSON'
       });
     }
   } catch (error) {
-    console.error('Error analyzing theme with AI:', error);
-    res.status(500).json({ 
+    console.error('Error analyzing theme:', error);
+    res.status(500).json({
       error: 'Failed to analyze theme',
-      details: (error as Error).message 
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * Generate theme variations
+ * POST /api/themes/ai/variations
+ */
+router.post('/variations', async (req, res) => {
+  try {
+    const { tokens, count = 3 } = req.body;
+
+    // Prepare system message with context
+    const systemMessage = `You are an expert design assistant that generates theme variations for web applications.
+    Create ${count} variations of the provided theme tokens, keeping the same structure but with different color palettes and subtle changes to typography and spacing.
+    Return an array of ${count} complete theme variations as JSON.`;
+
+    // Make OpenAI API call
+    // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemMessage },
+        { role: "user", content: JSON.stringify(tokens) }
+      ],
+      response_format: { type: "json_object" }
+    });
+
+    // Extract the variations from the response
+    const content = response.choices[0].message.content;
+    
+    if (!content) {
+      return res.status(500).json({
+        error: 'Failed to generate variations',
+        message: 'The AI model did not return any content'
+      });
+    }
+
+    // Parse the response into variations
+    try {
+      const variations = JSON.parse(content);
+      
+      // Return the variations
+      res.json({
+        original: tokens,
+        variations,
+        count,
+        usage: response.usage
+      });
+    } catch (parseError) {
+      console.error('Error parsing theme variations:', parseError);
+      return res.status(500).json({
+        error: 'Failed to parse theme variations',
+        message: 'The AI response could not be parsed as JSON'
+      });
+    }
+  } catch (error) {
+    console.error('Error generating theme variations:', error);
+    res.status(500).json({
+      error: 'Failed to generate variations',
+      message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

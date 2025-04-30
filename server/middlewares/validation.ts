@@ -1,57 +1,112 @@
 /**
- * Request Validation Middleware
+ * Validation Middleware
  * 
- * This middleware validates incoming requests using Zod schemas.
- * It supports validation of request body, query parameters, and URL parameters.
+ * This module provides middleware for validating request parameters.
+ * It uses Zod schemas to ensure data integrity and proper error handling.
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { AnyZodObject, z } from 'zod';
+import { ZodSchema } from 'zod';
 
-interface ValidationSchemas {
-  body?: AnyZodObject;
-  query?: AnyZodObject;
-  params?: AnyZodObject;
+interface ValidateRequestOptions {
+  body?: ZodSchema;
+  query?: ZodSchema;
+  params?: ZodSchema;
 }
 
 /**
- * Middleware factory for request validation
+ * Middleware to validate request data using Zod schemas
+ * @param schema Validation schemas for body, query, and params
+ * @returns Express middleware function
  */
-export const validateRequest = (schemas: ValidationSchemas) => {
+export function validateRequest(schema: ValidateRequestOptions) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Validate request body if schema is provided
-      if (schemas.body) {
-        req.body = await schemas.body.parseAsync(req.body);
+      // Validate request body if schema provided
+      if (schema.body) {
+        req.body = await schema.body.parseAsync(req.body);
       }
       
-      // Validate query parameters if schema is provided
-      if (schemas.query) {
-        req.query = await schemas.query.parseAsync(req.query);
+      // Validate query parameters if schema provided
+      if (schema.query) {
+        req.query = await schema.query.parseAsync(req.query);
       }
       
-      // Validate route parameters if schema is provided
-      if (schemas.params) {
-        req.params = await schemas.params.parseAsync(req.params);
+      // Validate route parameters if schema provided
+      if (schema.params) {
+        req.params = await schema.params.parseAsync(req.params);
       }
       
-      // Proceed to the route handler if validation passes
       next();
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        // Return a 400 Bad Request with the validation errors
-        return res.status(400).json({
-          status: 'error',
-          message: 'Validation failed',
-          errors: error.errors.map(err => ({
-            path: err.path.join('.'),
-            message: err.message
-          }))
-        });
-      }
+      // Handle validation errors
+      console.error('Validation error:', error);
       
-      // For other types of errors, pass to the error handler
-      next(error);
+      // Format error message for response
+      const formattedError = formatZodError(error);
+      
+      // Return validation error response
+      res.status(400).json({
+        error: 'Validation Error',
+        details: formattedError
+      });
     }
   };
-};
+}
+
+/**
+ * Format Zod error for consistent response structure
+ * @param error Zod error
+ * @returns Formatted error object
+ */
+function formatZodError(error: any) {
+  // If it's a Zod validation error, format it nicely
+  if (error.errors && Array.isArray(error.errors)) {
+    return error.errors.map((err: any) => ({
+      path: err.path.join('.'),
+      message: err.message
+    }));
+  }
+  
+  // For other types of errors, return a generic message
+  return [{ 
+    path: 'validation', 
+    message: 'Invalid request data' 
+  }];
+}
+
+/**
+ * Middleware to log request details
+ * Useful for debugging but can be disabled in production
+ */
+export function requestLogger(req: Request, res: Response, next: NextFunction) {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  console.log('Request Body:', req.body);
+  console.log('Request Query:', req.query);
+  next();
+}
+
+/**
+ * Enhanced error handling middleware
+ */
+export function errorHandler(err: any, req: Request, res: Response, next: NextFunction) {
+  console.error('Server error:', err);
+  
+  // Determine status code based on error type
+  let statusCode = 500;
+  let message = 'Internal Server Error';
+  
+  if (err.statusCode) {
+    statusCode = err.statusCode;
+    message = err.message || 'An error occurred';
+  } else if (err.code === 'VALIDATION_ERROR') {
+    statusCode = 400;
+    message = err.message || 'Validation failed';
+  }
+  
+  // Send error response
+  res.status(statusCode).json({
+    error: message,
+    details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+}
