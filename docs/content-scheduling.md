@@ -1,130 +1,136 @@
-# Advanced Content Scheduling System
+# Content Scheduling System
 
-## Overview
+This document outlines the features and functionality of the Content Scheduling System, which allows for precise control over when content is published and expired.
 
-The Advanced Content Scheduling System allows for precise control over when content is published and archived, with support for recurring schedules across different time zones.
-
-## Key Features
+## Core Features
 
 ### 1. Precise Date-Time Scheduling
-- Schedule content with exact date and time
-- Set expiration dates for automatic archival
-- Preview scheduled content before publication
 
-### 2. Recurring Schedules
-- **Daily**: Publish content every day at a specific time
-- **Weekly**: Select specific days of the week for publication
-- **Monthly**: Publish on specific days of the month
-- **Custom**: Advanced scheduling using patterns (future enhancement)
+The system allows content to be scheduled with precise date and time settings:
 
-### 3. Timezone Support
-- Schedule content based on specific time zones
-- Support global content strategies with localized timing
-- Timezone-aware scheduling calculations
+- **Date Selection**: Calendar-based date picker with validation
+- **Time Selection**: Time input with HH:MM format
+- **Combined Date-Time**: Accurate to the minute for publishing and expiration
+- **Future Scheduling**: Can only schedule content for future dates
+- **Immediate Publishing**: Option to publish content immediately
 
-### 4. Fallback Strategies
-- **Retry**: Automatically retry failed publications up to 3 times
-- **Notify**: Send admin notifications for failed publications
-- **Abort**: Log failures without retries or notifications
+### 2. Timezone Support
+
+Content scheduling supports multiple timezones:
+
+- **Global Scheduling**: Set different timezones for content from around the world
+- **Standard Timezones**: Support for all major timezones (UTC, ET, PT, GMT, etc.)
+- **Timezone Display**: Clear indication of which timezone is being used
+- **Consistent Timing**: Server-side timezone conversion to ensure accuracy
+
+### 3. Content Preview
+
+Preview how scheduled content will appear before publication:
+
+- **Pre-publication Preview**: See exactly how content will look when published
+- **Device Simulation**: Preview content on desktop, tablet, or mobile views
+- **Full Content Display**: Renders text, HTML, markdown, and media elements
+- **Timezone Context**: Shows scheduled time with timezone context
+- **Expiration Information**: Displays expiration information when applicable
+
+### 4. Advanced Fallback Mechanisms
+
+Sophisticated error handling for failed publication attempts:
+
+- **Retry Strategy**: Automatically retry failed publications (default)
+- **Notification Only**: Alert administrators but don't retry
+- **Abort**: Cancel publication attempt entirely
+- **Logging**: Complete error logging with timestamps and error details
+- **Metrics Tracking**: Monitors success/failure rates for publications
 
 ### 5. Security Features
-- Validation of content and scheduling parameters
-- Secure handling of media URLs
-- Input sanitization for all API requests
+
+Enhanced security measures for all scheduling operations:
+
+- **Input Validation**: Comprehensive validation of all date inputs
+- **Parameter Sanitization**: Protection against injection attacks
+- **Permission Controls**: Only authorized administrators can schedule content
+- **Audit Logging**: All scheduling actions are logged with user information
+- **Secure Previews**: Content previews respect authentication requirements
+
+### 6. Recurring Schedule Support
+
+Support for repeating publication schedules:
+
+- **Daily Publications**: Content that refreshes each day
+- **Weekly Schedules**: Content published on specific days of the week
+- **Monthly Patterns**: Content published on specific days of the month
+- **Custom Intervals**: Support for custom publication intervals
+- **Pattern Management**: Easy management of recurring patterns
 
 ## Technical Implementation
 
-### Database Schema
-The content scheduling system extends the `content_items` table with:
+### Scheduler Service
 
-```sql
-timezone TEXT DEFAULT 'UTC',
-recurring_schedule JSONB,
-last_schedule_run TIMESTAMP
-```
+The content scheduler runs every 5 minutes and performs the following operations:
 
-### Recurring Schedule Structure
-```typescript
-export interface RecurringSchedule {
-  type: 'daily' | 'weekly' | 'monthly' | 'custom';
-  enabled: boolean;
-  time?: string; // Format: "HH:MM" (24-hour format)
-  daysOfWeek?: ('monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday')[];
-  dayOfMonth?: number; // 1-31, or -1 for last day of month
-  pattern?: string; // For custom scheduling (future enhancement)
-  endDate?: string | null;
-  maxOccurrences?: number;
-  startedAt: string;
-  nextRun?: string | null;
-  occurrences: number;
-}
-```
+1. Scan for content scheduled for publication
+2. Process any recurring schedules
+3. Identify content scheduled for expiration
+4. Update content status based on schedule
+5. Log all activities and update metrics
 
-### Timezone Handling
-Content scheduling uses date-fns-tz library to correctly handle timezone conversions when calculating publication schedules.
+### Database Schema 
 
-### System Workflow
-1. Content scheduler runs at regular intervals (every 5 minutes)
-2. First processes any recurring schedules to create scheduled content items
-3. Then publishes content items that have reached their scheduled publication time
-4. Archives expired content
-5. Sends notifications for content expiring soon
+The content scheduling functionality is supported by the following schema fields:
 
-## Usage Examples
+- `scheduledPublishAt`: ISO timestamp for when content should be published
+- `expirationDate`: ISO timestamp for when content should be archived
+- `timezone`: String identifier for the timezone (e.g., "America/New_York")
+- `recurringSchedule`: JSON object defining recurring publication patterns
+- `fallbackStrategy`: String enum ('retry', 'notify', 'abort')
+- `previewEnabled`: Boolean indicating if preview is allowed
 
-### Set a Basic Schedule
-```typescript
-// Schedule content for 2025-05-15 at 14:30 UTC
-await db.update(contentItems)
-  .set({
-    scheduledPublishAt: new Date('2025-05-15T14:30:00Z'),
-    status: 'approved'
-  })
-  .where(eq(contentItems.id, itemId));
-```
+### Preview Component
 
-### Configure a Recurring Schedule
-```typescript
-// Publish content every Monday, Wednesday, and Friday at 9:00 AM in New York time zone
-const recurringSchedule: RecurringSchedule = {
-  type: 'weekly',
-  enabled: true,
-  time: '09:00',
-  daysOfWeek: ['monday', 'wednesday', 'friday'],
-  startedAt: new Date().toISOString(),
-  occurrences: 0
-};
+The ContentPreview component offers the following features:
 
-await db.update(contentItems)
-  .set({
-    recurringSchedule: JSON.stringify(recurringSchedule),
-    timezone: 'America/New_York',
-    status: 'draft'
-  })
-  .where(eq(contentItems.id, itemId));
-```
+- **Responsive Design**: Adapts to different device sizes
+- **Media Support**: Properly displays images and other media
+- **Content Formatting**: Preserves original content formatting
+- **Metadata Display**: Shows relevant scheduling metadata
+- **Interactive Controls**: Device toggles and other interactive elements
 
-### Set Expiration
-```typescript
-// Set content to expire after 30 days from publication
-const thirtyDaysLater = new Date();
-thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30);
+## Best Practices
 
-await db.update(contentItems)
-  .set({
-    expirationDate: thirtyDaysLater
-  })
-  .where(eq(contentItems.id, itemId));
-```
+### For Content Scheduling
 
-## Metrics and Monitoring
+1. Always check the timezone when scheduling content for global audiences
+2. Use the preview feature to verify content appearance before scheduling
+3. Consider setting appropriate expiration dates for time-sensitive content
+4. Use detailed notes to document the purpose of scheduled content
+5. Regularly review upcoming scheduled content
 
-The content scheduling system maintains metrics on:
-- Total scheduled items
-- Successfully published items
-- Failed publications
-- Retry attempts and successes
-- Upcoming expiring content
-- Overall success rate
+### For Content Preview
 
-These metrics can be accessed via the `getSchedulingMetrics()` function.
+1. Check content on multiple device views
+2. Verify that all media displays correctly
+3. Ensure text formatting is preserved
+4. Confirm scheduling information is accurate
+5. Test interactive elements if applicable
+
+## Security Considerations
+
+The content scheduling system implements the following security measures:
+
+1. Input validation for all date/time fields
+2. Parameterized queries for all database operations
+3. Permission checks for all scheduling operations
+4. Rate limiting for scheduling API endpoints
+5. Audit logging for all scheduling actions
+6. Secure URL handling for media in previews
+
+## Troubleshooting
+
+Common issues and their solutions:
+
+1. **Content Not Publishing**: Check timezone settings and server time
+2. **Preview Not Working**: Verify content ID and access permissions
+3. **Recurring Schedule Issues**: Check pattern configuration
+4. **Timezone Discrepancies**: Verify client and server timezone settings
+5. **Media Not Showing in Preview**: Check URL validity and permissions

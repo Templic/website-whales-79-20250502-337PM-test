@@ -84,6 +84,8 @@ interface ContentItem {
   location: string;
   scheduledPublishAt?: string | null;
   expirationDate?: string | null;
+  timezone?: string;
+  recurringSchedule?: any;
 }
 
 // Form schemas
@@ -93,6 +95,7 @@ const scheduleSchema = z.object({
   scheduledPublishTime: z.string().optional(),
   expirationDate: z.date().optional().nullable(),
   expirationTime: z.string().optional(),
+  timezone: z.string().default('UTC'),
   fallbackStrategy: z.enum(['retry', 'notify', 'abort']).default('retry'),
   previewEnabled: z.boolean().default(true),
   mediaUrls: z.array(z.string()).optional(),
@@ -128,6 +131,7 @@ const ContentScheduler: React.FC = () => {
       scheduledPublishTime: "09:00",
       expirationDate: null,
       expirationTime: "23:59",
+      timezone: "UTC",
       fallbackStrategy: "retry",
       previewEnabled: true,
       mediaUrls: [],
@@ -177,6 +181,7 @@ const ContentScheduler: React.FC = () => {
           expirationDate: fullExpirationDate ? fullExpirationDate.toISOString() : null,
           fallbackStrategy: data.fallbackStrategy,
           previewEnabled: data.previewEnabled,
+          timezone: data.timezone,
           mediaUrls: data.mediaUrls || [],
           notes: data.notes,
         }
@@ -228,6 +233,7 @@ const ContentScheduler: React.FC = () => {
       scheduledPublishTime: scheduledTime,
       expirationDate: expirationDate,
       expirationTime: expirationTime,
+      timezone: content.timezone || "UTC",
       fallbackStrategy: "retry",
       previewEnabled: true,
       mediaUrls: [],
@@ -398,13 +404,22 @@ const ContentScheduler: React.FC = () => {
                             : '—'}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleScheduleContent(content)}
-                          >
-                            Edit Schedule
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            {content.scheduledPublishAt && (
+                              <ContentPreview 
+                                contentId={content.id} 
+                                scheduledDate={content.scheduledPublishAt} 
+                                timezone={content.timezone || "UTC"} 
+                              />
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleScheduleContent(content)}
+                            >
+                              Edit Schedule
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -578,6 +593,44 @@ const ContentScheduler: React.FC = () => {
               <div className="space-y-4">
                 <h4 className="text-sm font-medium">Advanced Options</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="timezone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Timezone</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select timezone" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>Common Timezones</SelectLabel>
+                              <SelectItem value="UTC">UTC (Coordinated Universal Time)</SelectItem>
+                              <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
+                              <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
+                              <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
+                              <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
+                              <SelectItem value="Europe/London">London (GMT/BST)</SelectItem>
+                              <SelectItem value="Europe/Paris">Central European (CET/CEST)</SelectItem>
+                              <SelectItem value="Asia/Tokyo">Japan (JST)</SelectItem>
+                              <SelectItem value="Australia/Sydney">Sydney (AEST/AEDT)</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Timezone for scheduled dates
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
                   <FormField
                     control={form.control}
                     name="fallbackStrategy"
