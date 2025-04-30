@@ -8,11 +8,16 @@
  * Usage: node scripts/check-deadlinks.js [--fix] [--output=json|text]
  */
 
-const fs = require('fs');
-const path = require('path');
-const axios = require('axios');
-const cheerio = require('cheerio');
-const { execSync } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
+
+// Get the directory name equivalent to __dirname in CommonJS
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configuration
 const config = {
@@ -478,3 +483,6 @@ main().catch(error => {
   console.error('Error:', error);
   process.exit(1);
 });
+
+// In ES modules, there's no need for module.exports
+// The script will run automatically when executed
