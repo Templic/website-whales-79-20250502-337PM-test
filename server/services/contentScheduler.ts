@@ -85,41 +85,97 @@ export async function runContentScheduler() {
     
     // Process each scheduled content item
     for (const item of scheduledContent) {
-      try {
-        // Update status to published
-        await db.update(contentItems)
-          .set({
-            status: 'published',
-            updatedAt: now,
-            // We need to add a custom field for published date
-            publishedAt: now
-          })
-          .where(eq(contentItems.id, item.id));
-        
-        // Send notification
-        await sendNotification({
-          type: 'content_published',
-          userId: item.createdBy,
-          contentId: item.id,
-          contentTitle: item.title,
-          message: `Your content "${item.title}" has been published automatically.`
-        });
-        
-        published++;
-        logger.info(`Published content ID ${item.id}: ${item.title}`);
-      } catch (error) {
-        failed++;
-        logger.error(`Failed to publish content ID ${item.id}:`, error);
-        
-        // Send failure notification to admin
-        await sendNotification({
-          type: 'system_message',
-          userId: null, // System notification, will be sent to all admins
-          contentId: item.id,
-          contentTitle: item.title,
-          message: `Failed to automatically publish content "${item.title}". Manual intervention required.`,
-          actionRequired: true
-        });
+      // Get the fallback strategy from metadata (default to 'retry')
+      const fallbackStrategy = 
+        item.metadata && 
+        (item.metadata as any).schedulingMetadata && 
+        (item.metadata as any).schedulingMetadata.fallbackStrategy ? 
+        (item.metadata as any).schedulingMetadata.fallbackStrategy as FallbackStrategy : 
+        'retry';
+      
+      let publishSuccess = false;
+      let maxRetries = fallbackStrategy === 'retry' ? 3 : 1;
+      let retryCount = 0;
+      
+      // Retry loop (will run only once for notify or abort strategies)
+      while (!publishSuccess && retryCount < maxRetries) {
+        try {
+          // Update status to published
+          await db.update(contentItems)
+            .set({
+              status: 'published',
+              updatedAt: now,
+              // We need to add a custom field for published date
+              publishedAt: now
+            })
+            .where(eq(contentItems.id, item.id));
+          
+          // Send notification
+          await sendNotification({
+            type: 'content_published',
+            userId: item.createdBy,
+            contentId: item.id,
+            contentTitle: item.title,
+            message: `Your content "${item.title}" has been published automatically.`
+          });
+          
+          // If reaching here, publication was successful
+          publishSuccess = true;
+          published++;
+          
+          // Update retry metrics if this was a retry attempt
+          if (retryCount > 0) {
+            schedulingMetrics.retrySuccesses++;
+            logger.info(`Successfully published content ID ${item.id} after ${retryCount} retry attempts.`);
+          } else {
+            logger.info(`Published content ID ${item.id}: ${item.title}`);
+          }
+        } catch (error) {
+          retryCount++;
+          schedulingMetrics.retryAttempts++;
+          
+          // Log the error
+          logger.error(`Failed to publish content ID ${item.id}, attempt ${retryCount}:`, error);
+          
+          if (retryCount < maxRetries && fallbackStrategy === 'retry') {
+            // Wait for a short time before retrying
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            logger.info(`Retrying publication for content ID ${item.id}, attempt ${retryCount + 1}...`);
+          } else {
+            // All retries failed or not using retry strategy
+            failed++;
+            
+            // Handle based on fallback strategy
+            if (fallbackStrategy === 'notify' || fallbackStrategy === 'retry') {
+              // Send notification to admin and content creator
+              await sendNotification({
+                type: 'system_message',
+                userId: null, // System notification, will be sent to all admins
+                contentId: item.id,
+                contentTitle: item.title,
+                message: `Failed to automatically publish content "${item.title}" after ${retryCount} attempt(s). Manual intervention required.`,
+                actionRequired: true,
+                severity: 'high'
+              });
+              
+              // Also notify content creator
+              if (item.createdBy) {
+                await sendNotification({
+                  type: 'content_publication_failed',
+                  userId: item.createdBy,
+                  contentId: item.id,
+                  contentTitle: item.title,
+                  message: `Your content "${item.title}" could not be published automatically. An administrator has been notified.`
+                });
+              }
+              
+              logger.warn(`Publication failed for content ID ${item.id}. Admin notification sent.`);
+            } else if (fallbackStrategy === 'abort') {
+              // For abort strategy, we don't send notifications, just log the failure
+              logger.warn(`Publication aborted for content ID ${item.id} per fallback strategy setting.`);
+            }
+          }
+        }
       }
     }
     
@@ -207,23 +263,31 @@ export async function runContentScheduler() {
       }
     }
     
-    // Update metrics
+    // Get the current retry metrics
+    const retryAttempts = schedulingMetrics.retryAttempts;
+    const retrySuccesses = schedulingMetrics.retrySuccesses;
+    
+    // Update metrics with all results, including retries
     updateSchedulingMetrics({
       published,
       failed,
       archived,
       archivedFailed,
-      upcomingExpiring: expiringContent.length
+      upcomingExpiring: expiringContent.length,
+      retryAttempts,
+      retrySuccesses
     });
     
-    logger.info(`Content scheduler completed: Published ${published}, Failed ${failed}, Archived ${archived}, Archived Failed ${archivedFailed}`);
+    logger.info(`Content scheduler completed: Published ${published}, Failed ${failed}, Archived ${archived}, Archived Failed ${archivedFailed}, Retry Attempts ${retryAttempts}, Retry Successes ${retrySuccesses}`);
     
     return {
       published,
       failed,
       archived,
       archivedFailed,
-      upcomingExpiring: expiringContent.length
+      upcomingExpiring: expiringContent.length,
+      retryAttempts,
+      retrySuccesses
     };
   } catch (error) {
     logger.error('Error running content scheduler:', error);
@@ -240,11 +304,23 @@ function updateSchedulingMetrics(result: {
   archived: number;
   archivedFailed: number;
   upcomingExpiring: number;
+  retryAttempts?: number;
+  retrySuccesses?: number;
 }) {
   schedulingMetrics.totalScheduled += result.published + result.failed;
   schedulingMetrics.successfullyPublished += result.published;
   schedulingMetrics.failedPublications += result.failed;
   schedulingMetrics.upcomingExpiring = result.upcomingExpiring;
+  
+  // Optionally update retry metrics if provided
+  if (result.retryAttempts !== undefined) {
+    schedulingMetrics.retryAttempts += result.retryAttempts;
+  }
+  
+  if (result.retrySuccesses !== undefined) {
+    schedulingMetrics.retrySuccesses += result.retrySuccesses;
+  }
+  
   schedulingMetrics.lastRunAt = new Date();
   
   if (schedulingMetrics.totalScheduled > 0) {
@@ -269,6 +345,8 @@ export function resetSchedulingMetrics() {
     totalScheduled: 0,
     successfullyPublished: 0,
     failedPublications: 0,
+    retryAttempts: 0,
+    retrySuccesses: 0,
     upcomingExpiring: 0,
     successRate: 0,
     lastRunAt: new Date()
