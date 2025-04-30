@@ -153,6 +153,7 @@ import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search/index';
 import csrfRoutes from './routes/csrf-routes';
 import themeRoutes from './routes/themes';
+import aiThemeGeneratorRoutes from './routes/ai-theme-generator';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 import { protectApiRoutes } from './security/apiRoutesProtector';
 
