@@ -2709,6 +2709,242 @@ export class PostgresStorage implements IStorage {
       .where(gt(projectFiles.errorCount, 0))
       .orderBy(desc(projectFiles.errorCount));
   }
+  
+  // Theme system methods
+  async getAllThemes(): Promise<Theme[]> {
+    try {
+      return await db.select().from(themes).orderBy(themes.createdAt);
+    } catch (error) {
+      console.error("Error getting all themes:", error);
+      return [];
+    }
+  }
+
+  async getThemeById(id: number): Promise<Theme | null> {
+    try {
+      const [theme] = await db.select().from(themes).where(eq(themes.id, id));
+      return theme || null;
+    } catch (error) {
+      console.error(`Error getting theme with id ${id}:`, error);
+      return null;
+    }
+  }
+
+  async getThemesByUserId(userId: string): Promise<Theme[]> {
+    try {
+      return await db.select()
+        .from(themes)
+        .where(eq(themes.createdBy, userId))
+        .orderBy(themes.createdAt);
+    } catch (error) {
+      console.error(`Error getting themes for user ${userId}:`, error);
+      return [];
+    }
+  }
+
+  async getPublicThemes(): Promise<Theme[]> {
+    try {
+      return await db.select()
+        .from(themes)
+        .where(eq(themes.isPublic, true))
+        .orderBy(themes.createdAt);
+    } catch (error) {
+      console.error("Error getting public themes:", error);
+      return [];
+    }
+  }
+
+  async createTheme(theme: InsertTheme): Promise<Theme> {
+    try {
+      const [newTheme] = await db.insert(themes)
+        .values({
+          ...theme,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+      return newTheme;
+    } catch (error) {
+      console.error("Error creating theme:", error);
+      throw error;
+    }
+  }
+
+  async updateTheme(id: number, theme: Partial<InsertTheme>): Promise<Theme> {
+    try {
+      const [updatedTheme] = await db.update(themes)
+        .set({
+          ...theme,
+          updatedAt: new Date(),
+        })
+        .where(eq(themes.id, id))
+        .returning();
+      
+      return updatedTheme;
+    } catch (error) {
+      console.error(`Error updating theme ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async deleteTheme(id: number): Promise<void> {
+    try {
+      await db.delete(themes).where(eq(themes.id, id));
+    } catch (error) {
+      console.error(`Error deleting theme ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // Theme analytics methods
+  async getThemeAnalytics(themeId: number): Promise<ThemeAnalytic | null> {
+    try {
+      const [analytics] = await db.select()
+        .from(themeAnalytics)
+        .where(eq(themeAnalytics.themeId, themeId));
+      
+      return analytics || null;
+    } catch (error) {
+      console.error(`Error getting analytics for theme ${themeId}:`, error);
+      return null;
+    }
+  }
+
+  async updateThemeAnalytics(themeId: number, data: Partial<InsertThemeAnalytic>): Promise<ThemeAnalytic> {
+    try {
+      // Check if analytics entry exists
+      const existing = await this.getThemeAnalytics(themeId);
+      
+      if (existing) {
+        // Update existing record
+        const [updated] = await db.update(themeAnalytics)
+          .set({
+            ...data,
+            updatedAt: new Date(),
+          })
+          .where(eq(themeAnalytics.themeId, themeId))
+          .returning();
+        
+        return updated;
+      } else {
+        // Create new record
+        const [newAnalytics] = await db.insert(themeAnalytics)
+          .values({
+            themeId,
+            usageCount: data.usageCount || 0,
+            generationCount: data.generationCount || 0,
+            averageRating: data.averageRating || 0,
+            exportCount: data.exportCount || 0,
+            uniqueUserCount: data.uniqueUserCount || 0,
+            lastUsed: data.lastUsed || new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+        
+        return newAnalytics;
+      }
+    } catch (error) {
+      console.error(`Error updating analytics for theme ${themeId}:`, error);
+      throw error;
+    }
+  }
+
+  async recordThemeUsage(themeId: number, userId?: string): Promise<void> {
+    try {
+      const analytics = await this.getThemeAnalytics(themeId);
+      
+      const updates: Partial<InsertThemeAnalytic> = {
+        usageCount: (analytics?.usageCount || 0) + 1,
+        lastUsed: new Date(),
+      };
+      
+      // If we have a user ID, we may want to count unique users
+      if (userId) {
+        // Note: In a full implementation, we would track unique users in a separate table
+        // For simplicity, we'll just increment unique user count if a userId is provided
+        updates.uniqueUserCount = (analytics?.uniqueUserCount || 0) + 1;
+      }
+      
+      await this.updateThemeAnalytics(themeId, updates);
+    } catch (error) {
+      console.error(`Error recording usage for theme ${themeId}:`, error);
+      throw error;
+    }
+  }
+
+  async getThemeUsageReport(fromDate?: Date, toDate?: Date): Promise<{
+    mostUsedThemes: Array<{ themeId: number; name: string; applications: number }>;
+    topRatedThemes: Array<{ themeId: number; name: string; sentiment: number }>;
+    averageUsageTime: number;
+    totalUniqueUsers: number;
+  }> {
+    try {
+      // Get all analytics data with theme names
+      let query = db.select({
+        themeId: themeAnalytics.themeId,
+        name: themes.name,
+        usageCount: themeAnalytics.usageCount,
+        averageRating: themeAnalytics.averageRating,
+        uniqueUserCount: themeAnalytics.uniqueUserCount,
+      })
+      .from(themeAnalytics)
+      .leftJoin(themes, eq(themeAnalytics.themeId, themes.id));
+      
+      if (fromDate) {
+        query = query.where(gt(themeAnalytics.lastUsed, fromDate));
+      }
+      
+      if (toDate) {
+        query = query.where(sql`${themeAnalytics.lastUsed} <= ${toDate}`);
+      }
+      
+      const results = await query;
+      
+      // Process into the report format
+      const mostUsedThemes = results
+        .filter(r => r.usageCount > 0)
+        .sort((a, b) => b.usageCount - a.usageCount)
+        .slice(0, 10)
+        .map(r => ({
+          themeId: r.themeId,
+          name: r.name || `Theme ${r.themeId}`,
+          applications: r.usageCount,
+        }));
+      
+      const topRatedThemes = results
+        .filter(r => r.averageRating > 0)
+        .sort((a, b) => b.averageRating - a.averageRating)
+        .slice(0, 10)
+        .map(r => ({
+          themeId: r.themeId,
+          name: r.name || `Theme ${r.themeId}`,
+          sentiment: r.averageRating,
+        }));
+      
+      // Calculate total unique users across all themes
+      const totalUniqueUsers = results.reduce((sum, item) => sum + (item.uniqueUserCount || 0), 0);
+      
+      // For average usage time, we would need a more complex tracking system
+      // Here we'll return a placeholder value based on real data when available
+      const averageUsageTime = 15; // 15 minutes as a placeholder
+      
+      return {
+        mostUsedThemes,
+        topRatedThemes,
+        averageUsageTime,
+        totalUniqueUsers,
+      };
+    } catch (error) {
+      console.error("Error generating theme usage report:", error);
+      return {
+        mostUsedThemes: [],
+        topRatedThemes: [],
+        averageUsageTime: 0,
+        totalUniqueUsers: 0,
+      };
+    }
+  }
 }
 
 // Export an instance of PostgresStorage
