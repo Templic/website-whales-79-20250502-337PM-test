@@ -75,6 +75,7 @@
     "bytes": "^3.1.2",
     "chalk": "^5.4.1",
     "chart.js": "^4.4.8",
+    "cheerio": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
