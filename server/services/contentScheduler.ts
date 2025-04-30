@@ -4,6 +4,8 @@ import { eq, and, lte, gte, ne, or } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { logger } from '../logger';
 import { sendNotification } from './notificationService';
+import { format, addDays, addMonths, setHours, setMinutes, setSeconds, isAfter, isBefore, getDay, parse } from 'date-fns';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 // Define content items table locally since it's not in shared/schema.ts
 export const contentItems = pgTable('content_items', {
@@ -713,25 +715,31 @@ function getDayOfWeekIndex(day: DayOfWeek): number {
 }
 
 /**
- * Convert a date to a specific timezone
- * This is a simplified implementation - in a production app, use a library like date-fns-tz
+ * Convert a UTC date to a specific timezone
+ * Uses date-fns-tz toZonedTime function to handle timezone conversions properly
  */
 function convertToTimezone(date: Date, timezone: string): Date {
-  // This is a simplified implementation that doesn't actually handle timezones correctly
-  // In a real implementation, use a proper timezone library
-  
-  // For now, we just create a new date object with the same UTC time
-  return new Date(date.toISOString());
+  try {
+    // Convert the UTC date to the specified timezone
+    return toZonedTime(date, timezone);
+  } catch (error) {
+    logger.error(`Error converting date to timezone ${timezone}:`, error);
+    // Fall back to UTC if there's an error
+    return new Date(date.toISOString());
+  }
 }
 
 /**
  * Convert a date from a specific timezone to UTC
- * This is a simplified implementation - in a production app, use a library like date-fns-tz
+ * Uses date-fns-tz fromZonedTime function to handle timezone conversions properly
  */
 function convertFromTimezone(date: Date, timezone: string): Date {
-  // This is a simplified implementation that doesn't actually handle timezones correctly
-  // In a real implementation, use a proper timezone library
-  
-  // For now, we just create a new date object with the same time
-  return new Date(date.getTime());
+  try {
+    // Convert the zoned date to UTC
+    return fromZonedTime(date, timezone);
+  } catch (error) {
+    logger.error(`Error converting date from timezone ${timezone}:`, error);
+    // Fall back to UTC if there's an error
+    return new Date(date.getTime());
+  }
 }
