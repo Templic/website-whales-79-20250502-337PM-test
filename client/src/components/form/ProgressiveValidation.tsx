@@ -9,7 +9,12 @@ import React, { useState, useEffect } from 'react';
 import { UseFormReturn, FieldValues, Path } from 'react-hook-form';
 import { z } from 'zod';
 import { useFormValidation } from '../../hooks/useFormValidation';
-import { ValidationSeverity } from '../../../shared/validation/validationTypes';
+// Import validation types using relative path
+import { 
+  ValidationContext, 
+  ValidationSeverity, 
+  ValidationError 
+} from '../../lib/validation/types';
 
 interface ProgressiveValidationProps<T extends FieldValues> {
   form: UseFormReturn<T>;

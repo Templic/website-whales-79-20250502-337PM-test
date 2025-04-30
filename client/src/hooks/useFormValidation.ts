@@ -13,8 +13,9 @@ import {
   ValidationResult, 
   createValidationResult, 
   ValidationError,
-  zodErrorToValidationError
-} from '../../../shared/validation/validationTypes';
+  zodErrorToValidationError,
+  ValidationSeverity
+} from '../lib/validation/types';
 
 interface UseFormValidationProps<T extends FieldValues> {
   form: UseFormReturn<T>;
@@ -93,7 +94,8 @@ export function useFormValidation<T extends FieldValues>({
         const partialSchema = z.object(
           fieldsToValidate.reduce((acc, field) => {
             const fieldPath = field.toString().split('.');
-            let currentObj = schema.shape as any;
+            // Access schema properties safely with type assertion
+            let currentObj = schema as any;
             
             for (const pathPart of fieldPath) {
               if (currentObj && currentObj[pathPart]) {
@@ -265,7 +267,7 @@ export function useFormValidation<T extends FieldValues>({
   }, [getValues, validateFormData]);
   
   // Validate specific fields
-  const validateFields = useCallback(async (fields: Array<keyof T>) => {
+  const validateSpecificFields = useCallback(async (fields: Array<keyof T>) => {
     const currentValues = getValues();
     return validateFormData(currentValues, fields);
   }, [getValues, validateFormData]);
@@ -286,7 +288,7 @@ export function useFormValidation<T extends FieldValues>({
   return {
     ...state,
     validateAll,
-    validateFields,
+    validateFields: validateSpecificFields,
     resetValidation,
     isValid: state.validationResult.valid && Object.keys(state.validationErrors).length === 0
   };
