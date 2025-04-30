@@ -111,6 +111,7 @@ const EditButtonPage = () => <EditButtonPageFC />;
 
 // TypeScript Error Management
 import TypeScriptErrorDashboard from "@/pages/admin/TypeScriptErrorDashboard";
+import DeadLinkCheckerPage from "@/pages/admin/DeadLinkCheckerPage";
 
 // Theme Pages
 import ThemePage from '@/pages/ThemePage';
@@ -223,6 +224,7 @@ function AppRouter() {
           <ProtectedRoute path="/admin/media/audio" component={AudioPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/edit-button" component={EditButtonPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/typescript-errors" component={TypeScriptErrorDashboard} requiredRole="super_admin" />
+          <ProtectedRoute path="/admin/deadlinks" component={DeadLinkCheckerPage} requiredRole="admin" />
 
           {/* Resource Pages */}
           <Route path="/resources" component={ResourcesPage} />

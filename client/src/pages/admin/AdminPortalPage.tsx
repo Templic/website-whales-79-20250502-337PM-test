@@ -26,7 +26,8 @@ import {
   ShieldCheck,
   Calendar,
   Zap,
-  Code
+  Code,
+  Link2
 } from "lucide-react";
 import {
   Tooltip,
@@ -366,6 +367,12 @@ export default function AdminPortalPage() {
                     <Link href="/admin/typescript-errors">
                       <Code className="h-8 w-8 text-primary" />
                       <span>TypeScript Errors</span>
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="h-24 flex flex-col gap-2 items-center justify-center" asChild>
+                    <Link href="/admin/deadlinks">
+                      <Link2 className="h-8 w-8 text-primary" />
+                      <span>Dead Link Checker</span>
                     </Link>
                   </Button>
                 </div>
