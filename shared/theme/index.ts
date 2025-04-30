@@ -11,6 +11,9 @@
  * - Dynamic theme generation
  * - Color manipulation
  * - Semantic analysis
+ * - Tailwind CSS integration
+ * - Component styling
+ * - AI-powered theme analysis
  */
 
 // Token System
@@ -135,6 +138,93 @@ export {
   type ThemeTransformOptions,
   type GeneratedTheme
 } from './themeTransformer';
+
+// PHASE 2: Tailwind CSS Integration
+
+// Tailwind Integration
+export {
+  // Core utilities
+  tokenToTailwindFormat,
+  generateTailwindTheme,
+  extendTailwindConfig,
+  
+  // CSS utilities
+  tailwindThemeToCssVars,
+  generateTailwindUtilities,
+  
+  // Runtime utilities
+  tw,
+  cx,
+  createVariants,
+  
+  // Types
+  type TailwindThemeExtension
+} from './tailwindIntegration';
+
+// Tailwind Variables
+export {
+  // CSS variable generation
+  generateThemeModeVariables,
+  generateContrastVariables,
+  generateMotionVariables,
+  generateSystemPreferenceRules,
+  generateResponsiveVariables,
+  generateCssVariables,
+  injectThemeStylesheet,
+  
+  // Types
+  type ThemeVariablesConfig
+} from './tailwindVariables';
+
+// Component Styles
+export {
+  // Core utilities
+  createComponentStyle,
+  createComponentLibrary,
+  
+  // Preset component patterns
+  commonComponentPatterns,
+  
+  // Types
+  type StyleVariant,
+  type ComponentStyle
+} from './componentStyles';
+
+// Build Tool Plugins
+export {
+  // Vite plugin
+  harmonizeThemeVitePlugin,
+  
+  // Webpack plugin
+  HarmonizeThemeWebpackPlugin,
+  
+  // Rollup plugin
+  harmonizeThemeRollupPlugin,
+  
+  // PostCSS plugin
+  harmonizeThemePostCssPlugin
+} from './plugins';
+
+// AI-Powered Theme Analysis
+export {
+  // Analysis utilities
+  analyzeTheme,
+  getThemeRecommendations,
+  generateAITheme,
+  getSemanticColorNames,
+  generateAccessibleVariations,
+  
+  // Types
+  type ThemeAnalysis,
+  type ThemeRecommendation,
+  type ThemeGenerationOptions
+} from './aiThemeAnalyzer';
+
+// Theme Preview Component
+export {
+  ThemePreviewPanel,
+  type ThemePreviewPanelProps
+} from './ThemePreviewPanel';
 
 // Common theme utilities
 export const isDarkMode = () => {
