@@ -1,0 +1,1604 @@
+{
+  "meta": {
+    "baseUrl": "http://localhost:3000",
+    "timestamp": "2025-04-30T23:55:57.823Z",
+    "visitedUrls": [
+      "http://localhost:3000"
+    ],
+    "validRoutes": [
+      "/AIChatMenuPage",
+      "/AboutPage",
+      "/AdminPortalPage",
+      "/AnalyticsPage",
+      "/ArchivePage",
+      "/ArchivedMusic",
+      "/AuthPage",
+      "/BlogPage",
+      "/BlogPostPage",
+      "/CartPage",
+      "/CheckoutPage",
+      "/CollaborationPage",
+      "/CollaborativeShoppingPage",
+      "/CommunityPage",
+      "/ContactPage",
+      "/ContentAIDemo",
+      "/ContentRecommendationsDemo",
+      "/CosmicConnectivityPage",
+      "/CosmicExperiencePage",
+      "/CosmicMerchandisePage",
+      "/DataRequest",
+      "/EngagePage",
+      "/newsletter",
+      "/EnhancedCommunityPage",
+      "/FAQPage",
+      "/HomePage",
+      "/ImmersivePage",
+      "/Login",
+      "/MusicReleasePage",
+      "/NewsletterPage",
+      "/PasswordRecoveryPage",
+      "/PerformanceDemoPage",
+      "/PrivacyPolicy",
+      "/ProductDetailPage",
+      "/ProductPage",
+      "/ResponsiveDemo",
+      "/ResponsiveDemo2",
+      "/SearchPage",
+      "/SecurityDashboardPage",
+      "/SecurityTestPage",
+      "/ShopPage",
+      "/SitemapPage",
+      "/TermsOfService",
+      "/ThemePage",
+      "/TourPage",
+      "/TypeSystemDemo",
+      "/admin/AdminPortalPage",
+      "/admin/AnalyticsPage",
+      "/admin/AudioPage",
+      "/admin/CommentsManagementPage",
+      "/admin/ContentManagementPage",
+      "/admin/ContentSchedulerPage",
+      "/admin/ContentWorkflowPage",
+      "/admin/DeadLinkCheckerPage",
+      "/admin/EditButtonPage",
+      "/admin/EnhancedAnalyticsPage",
+      "/admin/GalleryPage",
+      "/admin/MediaPage.backup",
+      "/admin/MediaPage",
+      "/admin/MusicPage",
+      "/admin/NewsletterManagementPage",
+      "/admin/PostsPage",
+      "/admin/RoleManagementPage",
+      "/admin/SecurityAlertsPage",
+      "/admin/SecuritySettingsPage",
+      "/admin",
+      "/admin/ShopManagementPage",
+      "/admin/TypeScriptErrorDashboard",
+      "/admin/UserActivityPage",
+      "/admin/UsersPage",
+      "/admin/VideoPage",
+      "/archived/ArchivePage",
+      "/archived/test/ButtonDemo",
+      "/backups/CosmicMerchandisePage.backup",
+      "/blog/BlogPage",
+      "/blog/BlogPostPage",
+      "/community/CommunityPage",
+      "/community/EnhancedCommunityPage",
+      "/community/RevampedCommunityPage",
+      "/demo/DynamicContentDemo",
+      "/experience/CosmicConnectivityPage",
+      "/home",
+      "/music/ArchivedMusic",
+      "/music/MusicReleasePage",
+      "/music/MusicSearchPage",
+      "/not-found",
+      "/old-pages/ArchivePage_old",
+      "/old-pages/CosmicExperienceImmersivePage_old",
+      "/old-pages/CosmicExperiencePage_old",
+      "/old-pages/ImmersivePage_old",
+      "/old-pages/MusicArchivePage_old",
+      "/old-pages/ShopPage_old",
+      "/resources/FrequencyGuidePage",
+      "/resources/MeditationTechniquesPage",
+      "/resources/ResourcesPage",
+      "/resources/SacredGeometryPage",
+      "/resources/SoundHealingPage",
+      "/shop/CartPage",
+      "/shop/CheckoutPage",
+      "/shop/CollaborativeShoppingPage",
+      "/shop/CosmicMerchandisePage",
+      "/shop/OrderConfirmationPage",
+      "/shop/OrderTrackingPage",
+      "/shop/ProductPage",
+      "/shop/ShopPage",
+      "/shop/ShopSearchPage",
+      "/test/AudioComponentsDemo",
+      "/test/ButtonDemo",
+      "/test/CosmicComponentsDemo",
+      "/test/CosmicTest",
+      "/test/NewComponentsDemo",
+      "/",
+      "/test/demo/ComponentsCatalog",
+      "/test/demo/CosmicComponentsDemo",
+      "/tests/binaural-beat-performance-test",
+      "/user-portal"
+    ]
+  },
+  "summary": {
+    "visitedUrls": 1,
+    "brokenLinks": 1,
+    "deadEndButtons": 0,
+    "componentsWithIssues": 243
+  },
+  "brokenLinks": [
+    {
+      "url": "http://localhost:3000",
+      "parentUrl": null,
+      "status": 0,
+      "message": "connect ECONNREFUSED 127.0.0.1:3000",
+      "type": "request",
+      "element": "page"
+    }
+  ],
+  "deadEndButtons": [],
+  "componentsWithIssues": [
+    {
+      "file": "client/src/components/LoginForm.tsx",
+      "line": 36,
+      "content": "<button type=\"submit\">Login</button>",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/admin/PerformanceDashboard.tsx",
+      "line": 495,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/admin/PerformanceDashboard.tsx",
+      "line": 501,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/admin/PerformanceDashboard.tsx",
+      "line": 507,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/admin/PerformanceDashboard.tsx",
+      "line": 513,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/admin/PerformanceDashboard.tsx",
+      "line": 519,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/admin/PerformanceDashboard.tsx",
+      "line": 817,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/admin/PerformanceDashboard.tsx",
+      "line": 827,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/EnhancedAccessibilityControls.tsx",
+      "line": 131,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/EnhancedAccessibilityControls.tsx",
+      "line": 213,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/EnhancedAccessibilityControls.tsx",
+      "line": 225,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/EnhancedAccessibilityControls.tsx",
+      "line": 237,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/EnhancedAccessibilityControls.tsx",
+      "line": 259,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/EnhancedAccessibilityControls.tsx",
+      "line": 271,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/EnhancedAccessibilityControls.tsx",
+      "line": 283,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/EnhancedAccessibilityControls.tsx",
+      "line": 295,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/EnhancedAccessibilityControls.tsx",
+      "line": 307,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/EnhancedAccessibilityControls.tsx",
+      "line": 319,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/ServiceWorkerManager.tsx",
+      "line": 206,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/ServiceWorkerManager.tsx",
+      "line": 213,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/ServiceWorkerManager.tsx",
+      "line": 223,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/ServiceWorkerManager.tsx",
+      "line": 278,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/accessibility-controls.tsx",
+      "line": 216,
+      "content": "<button id=\"confirm-cancel\">Cancel</button>",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/accessibility-controls.tsx",
+      "line": 217,
+      "content": "<button id=\"confirm-proceed\">Proceed</button>",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/accessibility-controls.tsx",
+      "line": 472,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/accessibility-controls.tsx",
+      "line": 560,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/accessibility-controls.tsx",
+      "line": 572,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/accessibility-controls.tsx",
+      "line": 584,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/cosmic-footer.tsx",
+      "line": 255,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/cosmic-footer.tsx",
+      "line": 501,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/cosmic-navigation.tsx",
+      "line": 189,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/cosmic-navigation.tsx",
+      "line": 248,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/optimized-accessibility-controls.tsx",
+      "line": 226,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/optimized-accessibility-controls.tsx",
+      "line": 294,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/optimized-accessibility-controls.tsx",
+      "line": 301,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/common/optimized-accessibility-controls.tsx",
+      "line": 308,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/content/ContentEditorWithAI.tsx",
+      "line": 105,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/cosmic/ui/sacred-geometry.tsx",
+      "line": 519,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/examples/ProductListExample.tsx",
+      "line": 159,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/examples/ProductListExample.tsx",
+      "line": 176,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/examples/ProductListExample.tsx",
+      "line": 185,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/admin/Modal.tsx",
+      "line": 80,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/ReleaseEngagement.tsx",
+      "line": 114,
+      "content": "<button className=\"flex items-center gap-1 text-sm text-white/60 hover:text-purple-400 transition-colors\">",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/ReleaseEngagement.tsx",
+      "line": 118,
+      "content": "<button className=\"text-sm text-white/60 hover:text-purple-400 transition-colors\">Reply</button>",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/ReleaseEngagement.tsx",
+      "line": 242,
+      "content": "<button className=\"flex items-center gap-1 text-sm text-white/60 hover:text-purple-400 transition-colors\">",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/ReleaseEngagement.tsx",
+      "line": 246,
+      "content": "<button className=\"text-sm text-white/60 hover:text-purple-400 transition-colors\">Reply</button>",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/ReleaseEngagement.tsx",
+      "line": 370,
+      "content": "<button className=\"flex items-center gap-1 text-sm text-white/60 hover:text-purple-400 transition-colors\">",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/ReleaseEngagement.tsx",
+      "line": 374,
+      "content": "<button className=\"text-sm text-white/60 hover:text-purple-400 transition-colors\">Reply</button>",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/ReleaseEngagement.tsx",
+      "line": 498,
+      "content": "<button className=\"flex items-center gap-1 text-sm text-white/60 hover:text-purple-400 transition-colors\">",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/ReleaseEngagement.tsx",
+      "line": 502,
+      "content": "<button className=\"text-sm text-white/60 hover:text-purple-400 transition-colors\">Reply</button>",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.optimized.tsx",
+      "line": 653,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.optimized.tsx",
+      "line": 659,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.optimized.tsx",
+      "line": 690,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.optimized.tsx",
+      "line": 708,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.optimized.tsx",
+      "line": 716,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.optimized.tsx",
+      "line": 722,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.optimized.tsx",
+      "line": 738,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.optimized.tsx",
+      "line": 755,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.optimized.tsx",
+      "line": 762,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.tsx",
+      "line": 459,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.tsx",
+      "line": 468,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.tsx",
+      "line": 502,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.tsx",
+      "line": 520,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.tsx",
+      "line": 528,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/binaural-beat-generator.tsx",
+      "line": 551,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 808,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 1550,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 1574,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 2391,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3251,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3406,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3420,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3447,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3455,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3469,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3477,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3491,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3499,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3513,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3521,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3557,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3565,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/breath-sync-player.tsx",
+      "line": 3594,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/dynamic-playlists.tsx",
+      "line": 87,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/dynamic-playlists.tsx",
+      "line": 109,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/dynamic-playlists.tsx",
+      "line": 232,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/dynamic-playlists.tsx",
+      "line": 330,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/dynamic-playlists.tsx",
+      "line": 352,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/dynamic-playlists.tsx",
+      "line": 475,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/dynamic-playlists.tsx",
+      "line": 577,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/dynamic-playlists.tsx",
+      "line": 599,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/dynamic-playlists.tsx",
+      "line": 720,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/interactive-discography-map.tsx",
+      "line": 312,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/lyrics-section.tsx",
+      "line": 73,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/lyrics-section.tsx",
+      "line": 186,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/lyrics-section.tsx",
+      "line": 299,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/lyrics-section.tsx",
+      "line": 412,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/mood-based-player.tsx",
+      "line": 560,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/mood-based-player.tsx",
+      "line": 666,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/mood-based-player.tsx",
+      "line": 1394,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/mood-based-player.tsx",
+      "line": 1500,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/musical-journey-timeline.tsx",
+      "line": 235,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/musical-journey-timeline.tsx",
+      "line": 247,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/musical-journey-timeline.tsx",
+      "line": 361,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/musical-journey-timeline.tsx",
+      "line": 462,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/musical-journey-timeline.tsx",
+      "line": 474,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/musical-journey-timeline.tsx",
+      "line": 588,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/track-segmentation-viewer.tsx",
+      "line": 306,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/track-segmentation-viewer.tsx",
+      "line": 600,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/track-segmentation-viewer.tsx",
+      "line": 894,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/voice-controlled-player.tsx",
+      "line": 1174,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/audio/voice-controlled-player.tsx",
+      "line": 2643,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/CommunitySuggestionsSearchComponent.tsx",
+      "line": 255,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/NewsletterSearchComponent.tsx",
+      "line": 178,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/community-feedback-loop.tsx",
+      "line": 192,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/community-feedback-loop.tsx",
+      "line": 262,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/community-feedback-loop.tsx",
+      "line": 277,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/community-feedback-loop.tsx",
+      "line": 348,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/community-feedback-loop.tsx",
+      "line": 574,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/community-feedback-loop.tsx",
+      "line": 644,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/community-feedback-loop.tsx",
+      "line": 659,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/community-feedback-loop.tsx",
+      "line": 730,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/donation-module.tsx",
+      "line": 180,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/donation-module.tsx",
+      "line": 193,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/donation-module.tsx",
+      "line": 248,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/donation-module.tsx",
+      "line": 261,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/donation-module.tsx",
+      "line": 531,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/donation-module.tsx",
+      "line": 544,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/donation-module.tsx",
+      "line": 599,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/community/donation-module.tsx",
+      "line": 612,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/Aeroaura.tsx",
+      "line": 706,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/Aeroaura.tsx",
+      "line": 993,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/Aeroaura.tsx",
+      "line": 1039,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/SacredGeometry.tsx",
+      "line": 738,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/SacredGeometry.tsx",
+      "line": 755,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-accordion.tsx",
+      "line": 235,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-alert.tsx",
+      "line": 75,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-button.tsx",
+      "line": 78,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-carousel.tsx",
+      "line": 307,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-carousel.tsx",
+      "line": 322,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-carousel.tsx",
+      "line": 342,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-drawer.tsx",
+      "line": 153,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-dropdown.tsx",
+      "line": 225,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-media-player.tsx",
+      "line": 573,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-media-player.tsx",
+      "line": 584,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-media-player.tsx",
+      "line": 594,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-media-player.tsx",
+      "line": 606,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-media-player.tsx",
+      "line": 615,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-media-player.tsx",
+      "line": 634,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-media-player.tsx",
+      "line": 660,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-media-player.tsx",
+      "line": 670,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-media-player.tsx",
+      "line": 680,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-media-player.tsx",
+      "line": 690,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-modal.tsx",
+      "line": 163,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-sidebar.tsx",
+      "line": 237,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-sidebar.tsx",
+      "line": 250,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-sidebar.tsx",
+      "line": 284,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-sidebar.tsx",
+      "line": 339,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-tabs.tsx",
+      "line": 107,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/cosmic-toast.tsx",
+      "line": 166,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/sacred-geometry-demo.tsx",
+      "line": 55,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/sacred-geometry-demo.tsx",
+      "line": 61,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/sacred-geometry-demo.tsx",
+      "line": 67,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/sacred-geometry-demo.tsx",
+      "line": 139,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/sacred-geometry-demo.tsx",
+      "line": 145,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/sacred-geometry-demo.tsx",
+      "line": 151,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/sacred-geometry-visualizer.tsx",
+      "line": 751,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/cosmic/sacred-geometry-visualizer.tsx",
+      "line": 887,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/design-system/button/CosmicButton.tsx",
+      "line": 28,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/ProductQuickView.tsx",
+      "line": 138,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/ProductQuickView.tsx",
+      "line": 153,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/merchandise-storytelling.tsx",
+      "line": 188,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/merchandise-storytelling.tsx",
+      "line": 245,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/merchandise-storytelling.tsx",
+      "line": 502,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/merchandise-storytelling.tsx",
+      "line": 559,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/virtual-try-on.tsx",
+      "line": 257,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/virtual-try-on.tsx",
+      "line": 275,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/virtual-try-on.tsx",
+      "line": 405,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/virtual-try-on.tsx",
+      "line": 423,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/virtual-try-on.tsx",
+      "line": 559,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/virtual-try-on.tsx",
+      "line": 577,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/virtual-try-on.tsx",
+      "line": 846,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/virtual-try-on.tsx",
+      "line": 864,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/virtual-try-on.tsx",
+      "line": 994,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/virtual-try-on.tsx",
+      "line": 1012,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/virtual-try-on.tsx",
+      "line": 1148,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/features/shop/virtual-try-on.tsx",
+      "line": 1166,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/form/ValidationSummary.tsx",
+      "line": 193,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/layout/Footer.tsx",
+      "line": 104,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/layout/Header.tsx",
+      "line": 86,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/layout/Header.tsx",
+      "line": 94,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/layout/MainFooter.tsx",
+      "line": 370,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/layout/MainHeader.tsx",
+      "line": 361,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/layout/MainHeader.tsx",
+      "line": 416,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/layout/MainHeader.tsx",
+      "line": 424,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/layout/MainHeader.tsx",
+      "line": 432,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/layout/MainHeader.tsx",
+      "line": 785,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/layout/MainHeader.tsx",
+      "line": 795,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/layout/MainHeader.tsx",
+      "line": 803,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/layout/MainHeader.tsx",
+      "line": 811,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/layout/MainNavigation.tsx",
+      "line": 140,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/search/AdvancedSearchPage.tsx",
+      "line": 235,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/security/ui/core/SecurityDashboardLayout.tsx",
+      "line": 178,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/security/ui/core/SecurityEventCard.tsx",
+      "line": 306,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/security/ui/core/SecurityEventCard.tsx",
+      "line": 323,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/shop/ProductQuickView.tsx",
+      "line": 132,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/shop/ProductQuickView.tsx",
+      "line": 147,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/shop/SearchBar.tsx",
+      "line": 22,
+      "content": "<button>Search</button>",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/shop/SearchBar.tsx",
+      "line": 27,
+      "content": "<button>Search</button>",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/system/HealthCheck.tsx",
+      "line": 89,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/theme/ColorPicker.tsx",
+      "line": 132,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/theme/ThemeEditor.tsx",
+      "line": 436,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/theme/ThemeEditor.tsx",
+      "line": 449,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/tour/HawaiianIslandsMap.tsx",
+      "line": 248,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/tour/HawaiianIslandsMap.tsx",
+      "line": 256,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/tour/HawaiianIslandsMap.tsx",
+      "line": 263,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/tour/HawaiianIslandsMap.tsx",
+      "line": 287,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-accordion.tsx",
+      "line": 235,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-alert.tsx",
+      "line": 75,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-button.tsx",
+      "line": 74,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-carousel.tsx",
+      "line": 307,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-carousel.tsx",
+      "line": 322,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-carousel.tsx",
+      "line": 342,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-drawer.tsx",
+      "line": 153,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-dropdown.tsx",
+      "line": 225,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-media-player.tsx",
+      "line": 573,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-media-player.tsx",
+      "line": 584,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-media-player.tsx",
+      "line": 594,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-media-player.tsx",
+      "line": 606,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-media-player.tsx",
+      "line": 615,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-media-player.tsx",
+      "line": 634,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-media-player.tsx",
+      "line": 660,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-media-player.tsx",
+      "line": 670,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-media-player.tsx",
+      "line": 680,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-media-player.tsx",
+      "line": 690,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-modal.tsx",
+      "line": 163,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-sidebar.tsx",
+      "line": 237,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-sidebar.tsx",
+      "line": 250,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-sidebar.tsx",
+      "line": 284,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-sidebar.tsx",
+      "line": 339,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/cosmic-tabs.tsx",
+      "line": 107,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/sidebar.tsx",
+      "line": 300,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    },
+    {
+      "file": "client/src/components/ui/toast.tsx",
+      "line": 33,
+      "content": "<button",
+      "suggestion": "Add an onClick handler or href attribute"
+    }
+  ]
+}

@@ -13,7 +13,7 @@ const router = Router();
 const scanJobs: Record<string, any> = {};
 
 // Base directory for storing scan reports
-const REPORTS_DIR = path.join(process.cwd(), 'public');
+const REPORTS_DIR = process.cwd();
 
 // Ensure the reports directory exists
 if (!fs.existsSync(REPORTS_DIR)) {

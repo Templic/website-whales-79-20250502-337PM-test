@@ -21,13 +21,13 @@ const __dirname = path.dirname(__filename);
 
 // Configuration
 const config = {
-  baseUrl: process.env.BASE_URL || 'http://localhost:3000',
+  baseUrl: process.env.BASE_URL || 'http://localhost:5000',
   pagesDir: path.join(process.cwd(), 'client/src/pages'),
   componentsDir: path.join(process.cwd(), 'client/src/components'),
   outputFormat: 'text', // 'text' or 'json'
   fixLinks: false,
   maxDepth: 3,
-  outputFile: 'deadlinks-report.json',
+  outputFile: path.join(process.cwd(), 'deadlinks-report.json'),
   validationRules: {
     ignoreExternalLinks: false,
     ignoreAnchors: false,
@@ -470,8 +470,20 @@ async function main() {
     componentsWithIssues
   };
   
-  fs.writeFileSync(config.outputFile, JSON.stringify(report, null, 2));
-  console.log(`\nReport saved to ${config.outputFile}`);
+  try {
+    fs.writeFileSync(config.outputFile, JSON.stringify(report, null, 2));
+    console.log(`\nReport saved to ${config.outputFile}`);
+  } catch (error) {
+    console.error(`Error saving report: ${error.message}`);
+    // Fallback to current directory
+    const fallbackPath = path.join(process.cwd(), 'deadlinks-report.json');
+    try {
+      fs.writeFileSync(fallbackPath, JSON.stringify(report, null, 2));
+      console.log(`\nReport saved to fallback location: ${fallbackPath}`);
+    } catch (fallbackError) {
+      console.error(`Failed to save report to fallback location: ${fallbackError.message}`);
+    }
+  }
   
   // Exit with appropriate code
   const hasIssues = brokenLinks.length > 0 || deadEndButtons.length > 0 || componentsWithIssues.length > 0;
