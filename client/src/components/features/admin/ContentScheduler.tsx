@@ -68,6 +68,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Types
 interface ContentItem {
@@ -88,27 +89,25 @@ interface ContentItem {
 const scheduleSchema = z.object({
   contentId: z.number(),
   scheduledPublishAt: z.date().optional().nullable(),
-  expirationDate: z
-    .date()
-    .optional()
-    .nullable()
-    .refine(
-      (date) => {
-        if (!date) return true;
-        const publishDate = z.date().optional().nullable().parse(
-          z.object({ scheduledPublishAt: z.date().optional().nullable() }).parse(
-            useForm().getValues()
-          ).scheduledPublishAt
-        );
-        if (!publishDate) return true;
-        return isAfter(date, publishDate);
-      },
-      {
-        message: "Expiration date must be after the scheduled publish date",
-      }
-    ),
+  scheduledPublishTime: z.string().optional(),
+  expirationDate: z.date().optional().nullable(),
+  expirationTime: z.string().optional(),
+  fallbackStrategy: z.enum(['retry', 'notify', 'abort']).default('retry'),
+  previewEnabled: z.boolean().default(true),
+  mediaUrls: z.array(z.string()).optional(),
   notes: z.string().optional(),
-});
+})
+  .refine(
+    (data) => {
+      if (!data.expirationDate) return true;
+      if (!data.scheduledPublishAt) return true;
+      return isAfter(data.expirationDate, data.scheduledPublishAt);
+    },
+    {
+      message: "Expiration date must be after the scheduled publish date",
+      path: ["expirationDate"]
+    }
+  );
 
 type ScheduleFormValues = z.infer<typeof scheduleSchema>;
 
@@ -125,7 +124,12 @@ const ContentScheduler: React.FC = () => {
     defaultValues: {
       contentId: 0,
       scheduledPublishAt: null,
+      scheduledPublishTime: "09:00",
       expirationDate: null,
+      expirationTime: "23:59",
+      fallbackStrategy: "retry",
+      previewEnabled: true,
+      mediaUrls: [],
       notes: "",
     },
   });
@@ -136,15 +140,43 @@ const ContentScheduler: React.FC = () => {
     queryFn: () => apiRequest('GET', '/api/admin/content'),
   });
 
+  // Helper function to combine date and time
+  const combineDateAndTime = (date: Date | null, timeString: string | undefined): Date | null => {
+    if (!date) return null;
+    
+    // Default to current time if no time string provided
+    if (!timeString) return date;
+    
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const newDate = new Date(date);
+    newDate.setHours(hours);
+    newDate.setMinutes(minutes);
+    return newDate;
+  };
+
   // Update content schedule mutation
   const updateScheduleMutation = useMutation({
     mutationFn: (data: ScheduleFormValues) => {
+      // Combine date and time values
+      const fullPublishDate = combineDateAndTime(
+        data.scheduledPublishAt || null, 
+        data.scheduledPublishTime
+      );
+      
+      const fullExpirationDate = combineDateAndTime(
+        data.expirationDate || null,
+        data.expirationTime
+      );
+      
       return apiRequest(
         'PATCH',
         `/api/admin/content/${data.contentId}/schedule`,
         {
-          scheduledPublishAt: data.scheduledPublishAt ? new Date(data.scheduledPublishAt).toISOString() : null,
-          expirationDate: data.expirationDate ? new Date(data.expirationDate).toISOString() : null,
+          scheduledPublishAt: fullPublishDate ? fullPublishDate.toISOString() : null,
+          expirationDate: fullExpirationDate ? fullExpirationDate.toISOString() : null,
+          fallbackStrategy: data.fallbackStrategy,
+          previewEnabled: data.previewEnabled,
+          mediaUrls: data.mediaUrls || [],
           notes: data.notes,
         }
       );
@@ -175,12 +207,32 @@ const ContentScheduler: React.FC = () => {
   // Handle edit schedule click
   const handleScheduleContent = (content: ContentItem) => {
     setSelectedContent(content);
+    
+    // Extract time info if dates exist
+    const scheduledDate = content.scheduledPublishAt ? new Date(content.scheduledPublishAt) : null;
+    const expirationDate = content.expirationDate ? new Date(content.expirationDate) : null;
+    
+    // Get time in HH:MM format for existing dates or use defaults
+    const scheduledTime = scheduledDate 
+      ? `${scheduledDate.getHours().toString().padStart(2, '0')}:${scheduledDate.getMinutes().toString().padStart(2, '0')}`
+      : "09:00";
+      
+    const expirationTime = expirationDate
+      ? `${expirationDate.getHours().toString().padStart(2, '0')}:${expirationDate.getMinutes().toString().padStart(2, '0')}`
+      : "23:59";
+    
     form.reset({
       contentId: content.id,
-      scheduledPublishAt: content.scheduledPublishAt ? new Date(content.scheduledPublishAt) : null,
-      expirationDate: content.expirationDate ? new Date(content.expirationDate) : null,
+      scheduledPublishAt: scheduledDate,
+      scheduledPublishTime: scheduledTime,
+      expirationDate: expirationDate,
+      expirationTime: expirationTime,
+      fallbackStrategy: "retry",
+      previewEnabled: true,
+      mediaUrls: [],
       notes: "",
     });
+    
     setIsScheduleDialogOpen(true);
   };
 
@@ -381,98 +433,229 @@ const ContentScheduler: React.FC = () => {
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onScheduleSubmit)} className="space-y-6">
+              {/* Publication Date */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium">Publication Schedule</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="scheduledPublishAt"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Publication Date</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={`w-full pl-3 text-left font-normal ${
+                                  !field.value && "text-muted-foreground"
+                                }`}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Select date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value || undefined}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                isBefore(date, new Date())
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="scheduledPublishTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Publication Time</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="time"
+                            {...field}
+                            disabled={!form.watch("scheduledPublishAt")}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormDescription>
+                  When the content should be automatically published. Leave empty for immediate publication.
+                </FormDescription>
+              </div>
+
+              {/* Expiration Date and Time */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium">Expiration Schedule</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="expirationDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Expiration Date</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={`w-full pl-3 text-left font-normal ${
+                                  !field.value && "text-muted-foreground"
+                                }`}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Select date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value || undefined}
+                              onSelect={field.onChange}
+                              disabled={(date) => {
+                                const publishDate = form.getValues("scheduledPublishAt");
+                                if (publishDate) {
+                                  return isBefore(date, publishDate);
+                                }
+                                return isBefore(date, new Date());
+                              }}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="expirationTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expiration Time</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="time"
+                            {...field}
+                            disabled={!form.watch("expirationDate")}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormDescription>
+                  When the content should be automatically archived. Leave empty if content doesn't expire.
+                </FormDescription>
+              </div>
+
+              {/* Advanced Options */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium">Advanced Options</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="fallbackStrategy"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Fallback Strategy</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select strategy" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="retry">Retry (Default)</SelectItem>
+                            <SelectItem value="notify">Notify Admin Only</SelectItem>
+                            <SelectItem value="abort">Abort</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          What to do if scheduling fails
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="previewEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Enable Content Preview</FormLabel>
+                          <FormDescription>
+                            Allow content to be previewed before publication
+                          </FormDescription>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Media URLs */}
               <FormField
                 control={form.control}
-                name="scheduledPublishAt"
+                name="mediaUrls"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Schedule Publication</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={`w-full pl-3 text-left font-normal ${
-                              !field.value && "text-muted-foreground"
-                            }`}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a publication date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value || undefined}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            isBefore(date, new Date())
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                  <FormItem>
+                    <FormLabel>Media URLs</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Enter media URLs (one per line)..."
+                        onChange={(e) => {
+                          const urls = e.target.value.split('\n').filter(url => url.trim().length > 0);
+                          field.onChange(urls);
+                        }}
+                        value={field.value?.join('\n') || ''}
+                      />
+                    </FormControl>
                     <FormDescription>
-                      When the content should be automatically published. Leave empty for immediate publication.
+                      Add multimedia content URLs (images, videos) to be included with this content
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="expirationDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Set Expiration</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={`w-full pl-3 text-left font-normal ${
-                              !field.value && "text-muted-foreground"
-                            }`}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick an expiration date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value || undefined}
-                          onSelect={field.onChange}
-                          disabled={(date) => {
-                            const publishDate = form.getValues("scheduledPublishAt");
-                            if (publishDate) {
-                              return isBefore(date, publishDate);
-                            }
-                            return isBefore(date, new Date());
-                          }}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormDescription>
-                      When the content should be automatically archived. Leave empty if content doesn't expire.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              {/* Notes */}
               <FormField
                 control={form.control}
                 name="notes"
