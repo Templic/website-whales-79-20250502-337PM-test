@@ -170,8 +170,8 @@ export function zodErrorToValidationError(
     code: err.code,
     severity: ValidationSeverity.ERROR,
     context,
-    path: err.path,
-    value: err.input
+    path: err.path.map(p => String(p)),
+    value: err.message ? err.message : undefined
   }));
 }
 
