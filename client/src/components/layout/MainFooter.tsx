@@ -187,8 +187,13 @@ export function MainFooter() {
           ) : (
             <Link
               href={link.path}
-              className="text-[#e8e6e3] hover:text-[#00ebd6] transition-colors text-sm flex items-center"
-              onClick={() => window.scrollTo(0, 0)}
+              className="text-[#e8e6e3] hover:text-[#00ebd6] transition-colors text-sm flex items-center cursor-pointer z-50 relative"
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo(0, 0);
+                // Use a small delay to ensure the scroll happens before navigating
+                setTimeout(() => window.location.href = link.path, 10);
+              }}
             >
               {link.icon && link.icon}
               {link.name}
@@ -237,7 +242,11 @@ export function MainFooter() {
               href="/" 
               className="flex items-center space-x-2 group"
               aria-label="Dale Loves Whales - Return to home page"
-              onClick={() => window.scrollTo(0, 0)}
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo(0, 0);
+                setTimeout(() => window.location.href = "/", 10);
+              }}
             >
               <div className="relative h-10 w-10">
                 {/* Animated logo with cyan-purple gradient matching header */}
@@ -323,7 +332,11 @@ export function MainFooter() {
                 <Link 
                   href="/admin" 
                   className="text-[#fe0064] hover:text-cyan-400 font-semibold flex items-center"
-                  onClick={() => window.scrollTo(0, 0)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.scrollTo(0, 0);
+                    setTimeout(() => window.location.href = "/admin", 10);
+                  }}
                 >
                   <Shield className="h-4 w-4 mr-2" />
                   Admin Portal
@@ -385,24 +398,36 @@ export function MainFooter() {
             <div className="flex space-x-2 text-[#e8e6e3]/30">
               <Link 
                 href="/privacy" 
-                className="text-xs hover:text-cyan-400 transition-colors"
-                onClick={() => window.scrollTo(0, 0)}
+                className="text-xs hover:text-cyan-400 transition-colors cursor-pointer z-50 relative"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.scrollTo(0, 0);
+                  setTimeout(() => window.location.href = "/privacy", 10);
+                }}
               >
                 Privacy
               </Link>
               <span>•</span>
               <Link 
                 href="/terms" 
-                className="text-xs hover:text-cyan-400 transition-colors"
-                onClick={() => window.scrollTo(0, 0)}
+                className="text-xs hover:text-cyan-400 transition-colors cursor-pointer z-50 relative"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.scrollTo(0, 0);
+                  setTimeout(() => window.location.href = "/terms", 10);
+                }}
               >
                 Terms
               </Link>
               <span>•</span>
               <Link 
                 href="/sitemap" 
-                className="text-xs hover:text-cyan-400 transition-colors"
-                onClick={() => window.scrollTo(0, 0)}
+                className="text-xs hover:text-cyan-400 transition-colors cursor-pointer z-50 relative"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.scrollTo(0, 0);
+                  setTimeout(() => window.location.href = "/sitemap", 10);
+                }}
               >
                 Sitemap
               </Link>
