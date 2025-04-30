@@ -1,8 +1,8 @@
 /**
- * Fix Database Timezone Column
+ * Fix Recurring Schedule Column
  * 
- * This script adds the missing "timezone" column to the relevant tables in the database
- * to resolve the error: "error: column "timezone" does not exist"
+ * This script adds the missing "recurring_schedule" column to the relevant tables in the database
+ * to resolve the error: "error: column "recurring_schedule" does not exist"
  */
 import { config } from 'dotenv';
 import { Pool, neonConfig } from '@neondatabase/serverless';
@@ -20,8 +20,8 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL
 });
 
-async function addTimezonesToDatabase() {
-  console.log('Starting database timezone column fix...');
+async function addRecurringScheduleColumn() {
+  console.log('Starting database recurring_schedule column fix...');
   
   try {
     // Connect to the database
@@ -32,7 +32,7 @@ async function addTimezonesToDatabase() {
       // Start a transaction
       await client.query('BEGIN');
       
-      // Identify which tables need the timezone column
+      // Identify which tables need the recurring_schedule column
       // Based on the error logs and our database inspection, these are the content-related tables
       const tablesResult = await client.query(`
         SELECT table_name 
@@ -41,45 +41,43 @@ async function addTimezonesToDatabase() {
         AND table_name IN ('content_items', 'content_relationships', 'content_usage', 'content_workflow_history', 'content_history')
       `);
       
-      console.log(`Found ${tablesResult.rowCount} potential tables to check for timezone column`);
+      console.log(`Found ${tablesResult.rowCount} tables to check for recurring_schedule column`);
       
       for (const row of tablesResult.rows) {
         const tableName = row.table_name;
         
-        // Check if timezone column already exists
+        // Check if recurring_schedule column already exists
         const columnResult = await client.query(`
           SELECT column_name 
           FROM information_schema.columns 
           WHERE table_schema = 'public' 
           AND table_name = $1 
-          AND column_name = 'timezone'
+          AND column_name = 'recurring_schedule'
         `, [tableName]);
         
         if (columnResult.rowCount === 0) {
-          console.log(`Adding timezone column to ${tableName}...`);
+          console.log(`Adding recurring_schedule column to ${tableName}...`);
           
-          // Add the timezone column with a default value
+          // Add the recurring_schedule column with a default false value
           await client.query(`
             ALTER TABLE ${tableName} 
-            ADD COLUMN timezone TEXT DEFAULT 'UTC'
+            ADD COLUMN recurring_schedule BOOLEAN DEFAULT false
           `);
           
-
-          
-          console.log(`Successfully added timezone column to ${tableName}`);
+          console.log(`Successfully added recurring_schedule column to ${tableName}`);
         } else {
-          console.log(`Timezone column already exists in ${tableName}`);
+          console.log(`recurring_schedule column already exists in ${tableName}`);
         }
       }
       
       // Commit the transaction
       await client.query('COMMIT');
-      console.log('Database timezone fix completed successfully');
+      console.log('Database recurring_schedule fix completed successfully');
       
     } catch (err) {
       // Rollback in case of error
       await client.query('ROLLBACK');
-      console.error('Error during database timezone column fix:', err);
+      console.error('Error during database recurring_schedule column fix:', err);
       throw err;
     } finally {
       // Release the client back to the pool
@@ -95,17 +93,13 @@ async function addTimezonesToDatabase() {
   }
 }
 
-// Check if this script is being run directly (not imported)
-const isMain = url.fileURLToPath(import.meta.url) === process.argv[1];
-if (isMain) {
-  // Execute the function
-  addTimezonesToDatabase()
-    .then(() => {
-      console.log('Database timezone fix script completed');
-      process.exit(0);
-    })
-    .catch(err => {
-      console.error('Database timezone fix script failed:', err);
-      process.exit(1);
-    });
-}
+// Execute the function
+addRecurringScheduleColumn()
+  .then(() => {
+    console.log('Database recurring_schedule fix script completed');
+    process.exit(0);
+  })
+  .catch(err => {
+    console.error('Database recurring_schedule fix script failed:', err);
+    process.exit(1);
+  });

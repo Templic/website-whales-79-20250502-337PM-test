@@ -42,7 +42,7 @@ export default function TourPage() {
               <SimpleHexagon className="w-full max-w-[350px] mx-auto">
                 <h3>Honolulu, HI</h3>
                 <p>Date: August 15, 2025<br/>Venue: Waikiki Beach Shell</p>
-                <button className="bg-red-500 hover:bg-red-700 text-white rounded relative overflow-hidden">
+                <button className="bg-red-500 hover:bg-red-700 text-white rounded relative overflow-hidden whitespace-nowrap px-4 py-2 min-w-[100px]">
                   <span className="relative z-10">Sold Out</span>
                   <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
                     <span className="absolute -rotate-12 border-2 border-white text-white px-1 py-0.5 text-xs font-bold rounded whitespace-nowrap">
@@ -58,7 +58,7 @@ export default function TourPage() {
               <SimpleOctagon className="w-full max-w-[350px] mx-auto">
                 <h3>Big Island, HI</h3>
                 <p>Date: September 10, 2025<br/>Venue: Hilo Bay Concert Hall</p>
-                <button className="bg-red-500 hover:bg-red-700 text-white rounded relative overflow-hidden">
+                <button className="bg-red-500 hover:bg-red-700 text-white rounded relative overflow-hidden whitespace-nowrap px-4 py-2 min-w-[100px]">
                   <span className="relative z-10">Sold Out</span>
                   <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
                     <span className="absolute -rotate-12 border-2 border-white text-white px-1 py-0.5 text-xs font-bold rounded whitespace-nowrap">
