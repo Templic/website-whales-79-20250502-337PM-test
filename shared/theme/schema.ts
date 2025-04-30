@@ -66,16 +66,13 @@ export const themeVersionsRelations = relations(themeVersions, ({ one }) => ({
 
 // User theme preferences table - stores user-specific theme preferences
 export const userThemePreferences = pgTable('user_theme_preferences', {
-  userId: integer('user_id').notNull(),
+  userId: integer('user_id').notNull().primaryKey(),
   themeId: integer('theme_id').references(() => themes.id, { onDelete: 'set null' }),
   themeMode: text('theme_mode').default('light').notNull(),
   themeContrast: text('theme_contrast').default('default').notNull(),
   themeMotion: text('theme_motion').default('normal').notNull(),
   customSettings: jsonb('custom_settings'),
   lastUpdated: timestamp('last_updated').defaultNow().notNull(),
-  
-  // Primary key on user ID (one preference set per user)
-  primaryKey: primaryKey({ columns: [userThemePreferences.userId] }),
 });
 
 // User theme preferences relations

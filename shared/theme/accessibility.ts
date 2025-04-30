@@ -5,8 +5,16 @@
  * ensuring that all theme choices meet accessibility standards.
  */
 
-import { getContrastRatio, parseColor, isDarkColor, getAccessibleTextColor } from './colorUtils';
+import { getContrastRatio, parseColor, isDarkColor, getAccessibleTextColor as getAccessibleColor, rgbToHsl, hslToString, hslToRgb } from './colorUtils';
 import { themeTokenMappings } from './tokens';
+
+// Re-export the function with the name expected by themeTransformer.ts
+export const getAccessibleTextColor = getAccessibleColor;
+
+/**
+ * Generate an accessible color palette based on a primary color
+ * This ensures all generated colors have proper contrast against common backgrounds
+ */
 
 // Define minimum contrast ratios according to WCAG guidelines
 const WCAG_AA_NORMAL = 4.5;

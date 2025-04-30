@@ -152,6 +152,7 @@ import notificationsRoutes from './routes/notifications';
 import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search/index';
 import csrfRoutes from './routes/csrf-routes';
+import themeRoutes from './routes/themes';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 import { protectApiRoutes } from './security/apiRoutesProtector';
 
@@ -295,6 +296,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use admin utilities routes
   app.use('/api/admin/utilities', isAuthenticated, adminRoutes);
+  
+  // Use theme management routes
+  app.use('/api/themes', themeRoutes);
 
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', async (req, res) => {

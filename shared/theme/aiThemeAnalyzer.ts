@@ -10,7 +10,7 @@
  */
 
 import OpenAI from 'openai';
-import { baseTokens, extendedTokens, type ThemeTokens } from './tokens';
+import { baseTokens, type ThemeTokens, extendedTokens } from './tokens';
 import { ThemeMode, ThemeContrast } from './ThemeContext';
 import { checkContrast, type AccessibilityAuditResult } from './accessibility';
 import { generatePalette, hexToRgb, rgbToHsl, type HSL } from './colorUtils';

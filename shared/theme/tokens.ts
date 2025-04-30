@@ -9,6 +9,26 @@
  * consistency across the application.
  */
 
+// Define the theme tokens interface
+export interface ThemeTokens {
+  background: string;
+  foreground: string;
+  card: string;
+  cardForeground: string;
+  primary: string;
+  primaryForeground: string;
+  secondary: string;
+  secondaryForeground: string;
+  accent: string;
+  accentForeground: string;
+  muted: string;
+  mutedForeground: string;
+  border: string;
+  input: string;
+  ring: string;
+  [key: string]: string; // For custom token extensions
+}
+
 // Base color palette - derived from the cosmic theme
 export const baseTokens = {
   // Core color palette
@@ -310,5 +330,78 @@ export const colorPalettes = {
     warning: baseTokens.colors.cosmic.warning,
     danger: baseTokens.colors.cosmic.danger,
     info: baseTokens.colors.cosmic.info,
+  },
+};
+
+// Extended tokens with additional properties for specific components and use cases
+export const extendedTokens = {
+  ...baseTokens,
+  components: {
+    button: {
+      primary: {
+        background: themeTokenMappings.dark.primary,
+        text: themeTokenMappings.dark.primaryForeground,
+        hover: 'hsl(263, 85%, 60%)',
+        active: 'hsl(263, 85%, 56%)',
+        disabled: 'hsl(263, 40%, 50%)',
+      },
+      secondary: {
+        background: themeTokenMappings.dark.secondary,
+        text: themeTokenMappings.dark.secondaryForeground,
+        hover: 'hsl(218, 45%, 22%)',
+        active: 'hsl(218, 45%, 25%)',
+        disabled: 'hsl(218, 25%, 30%)',
+      },
+      accent: {
+        background: themeTokenMappings.dark.accent,
+        text: themeTokenMappings.dark.accentForeground,
+        hover: 'hsl(185, 100%, 45%)',
+        active: 'hsl(185, 100%, 50%)',
+        disabled: 'hsl(185, 50%, 40%)',
+      },
+    },
+    input: {
+      background: themeTokenMappings.dark.input,
+      text: themeTokenMappings.dark.foreground,
+      placeholder: themeTokenMappings.dark.mutedForeground,
+      border: themeTokenMappings.dark.border,
+      focus: themeTokenMappings.dark.ring,
+    },
+    card: {
+      background: themeTokenMappings.dark.card,
+      text: themeTokenMappings.dark.cardForeground,
+      border: themeTokenMappings.dark.border,
+      highlight: 'hsl(263, 85%, 70%)',
+    },
+    modal: {
+      background: themeTokenMappings.dark.card,
+      text: themeTokenMappings.dark.cardForeground,
+      overlay: 'rgba(0, 0, 0, 0.75)',
+      shadow: '0 4px 25px rgba(0, 0, 0, 0.3)',
+    },
+    navigation: {
+      background: themeTokenMappings.dark.background,
+      text: themeTokenMappings.dark.foreground,
+      active: themeTokenMappings.dark.primary,
+      hover: 'hsl(263, 40%, 40%)',
+    },
+    tooltip: {
+      background: 'hsl(220, 47%, 20%)',
+      text: 'hsl(210, 40%, 96%)',
+      shadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+    },
+    badge: {
+      background: themeTokenMappings.dark.secondary,
+      text: themeTokenMappings.dark.secondaryForeground,
+      success: baseTokens.colors.cosmic.success,
+      warning: baseTokens.colors.cosmic.warning,
+      danger: baseTokens.colors.cosmic.danger,
+      info: baseTokens.colors.cosmic.info,
+    },
+  },
+  effects: {
+    glow: '0 0 15px rgba(139, 92, 246, 0.3), 0 0 30px rgba(139, 92, 246, 0.15)',
+    shimmer: 'linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent)',
+    glassmorphism: 'backdrop-filter: blur(10px)',
   },
 };
