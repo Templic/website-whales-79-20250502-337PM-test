@@ -8,6 +8,7 @@
 import express from 'express';
 import { z } from 'zod';
 import { themeRepository } from './repository';
+import { themeService } from './service';
 import { 
   insertThemeSchema,
   insertThemeVersionSchema,
@@ -370,6 +371,110 @@ router.get('/theme-templates', async (req, res) => {
   } catch (error) {
     console.error('Error listing theme templates:', error);
     res.status(500).json({ error: 'Failed to list theme templates' });
+  }
+});
+
+// ---------------- Advanced Service Routes ----------------
+
+/**
+ * POST /api/themes/with-version
+ * Create a new theme with an initial version in one operation
+ */
+router.post('/themes/with-version', async (req, res) => {
+  try {
+    const { theme: themeData, version: versionData } = req.body;
+    
+    // Validate theme data
+    const validatedTheme = await insertThemeSchema.parseAsync(themeData);
+    
+    // Validate version data (without themeId which will be added by the service)
+    const { themeId, ...versionWithoutThemeId } = await insertThemeVersionSchema.parseAsync(versionData);
+    
+    const result = await themeService.createThemeWithVersion(
+      validatedTheme,
+      versionWithoutThemeId
+    );
+    
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('Error creating theme with version:', error);
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ 
+        error: 'Validation failed', 
+        details: error.errors 
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to create theme with version' });
+    }
+  }
+});
+
+/**
+ * POST /api/themes/:id/clone
+ * Clone a theme
+ */
+router.post('/themes/:id/clone', async (req, res) => {
+  try {
+    const themeId = parseInt(req.params.id);
+    const { name, userId } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required for cloned theme' });
+    }
+    
+    const result = await themeService.cloneTheme(themeId, name, userId);
+    
+    if (!result) {
+      return res.status(404).json({ error: 'Theme not found or error creating clone' });
+    }
+    
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('Error cloning theme:', error);
+    res.status(500).json({ error: 'Failed to clone theme' });
+  }
+});
+
+/**
+ * GET /api/themes/search
+ * Search for themes
+ */
+router.get('/themes/search', async (req, res) => {
+  try {
+    const { query } = req.query;
+    
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+    
+    const themes = await themeService.searchThemes(query, {
+      limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
+      offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
+      userId: req.query.userId ? parseInt(req.query.userId as string) : undefined,
+      publicOnly: req.query.publicOnly === 'true'
+    });
+    
+    res.json(themes);
+  } catch (error) {
+    console.error('Error searching themes:', error);
+    res.status(500).json({ error: 'Failed to search themes' });
+  }
+});
+
+/**
+ * GET /api/users/:userId/recommended-themes
+ * Get recommended themes for a user
+ */
+router.get('/users/:userId/recommended-themes', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+    
+    const themes = await themeService.getRecommendedThemes(userId, limit);
+    res.json(themes);
+  } catch (error) {
+    console.error('Error getting recommended themes:', error);
+    res.status(500).json({ error: 'Failed to get recommended themes' });
   }
 });
 
