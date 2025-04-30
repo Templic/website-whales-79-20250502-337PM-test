@@ -3,6 +3,45 @@ import { storage } from '../storage';
 import { z } from 'zod';
 import { insertThemeSchema } from '../../shared/schema';
 import { validateRequest } from '../middlewares/validation';
+import { Request, Response, NextFunction } from 'express';
+
+/**
+ * Middleware to check if user has admin or super_admin privileges
+ */
+const isAdminOrSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
+  const userRole = req.session?.user?.role;
+  if (userRole === 'admin' || userRole === 'super_admin') {
+    return next();
+  }
+  return res.status(403).json({ error: 'Unauthorized. Admin privileges required.' });
+};
+
+/**
+ * Middleware to check theme ownership or admin privileges
+ * Admins can access any theme, regular users can only access their own
+ */
+const isOwnerOrAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  const themeId = parseInt(req.params.id);
+  if (isNaN(themeId)) {
+    return res.status(400).json({ error: 'Invalid theme ID' });
+  }
+  
+  const theme = await storage.getThemeById(themeId);
+  if (!theme) {
+    return res.status(404).json({ error: 'Theme not found' });
+  }
+  
+  const userRole = req.session?.user?.role;
+  const userId = req.session?.user?.id;
+  
+  if (userRole === 'admin' || userRole === 'super_admin' || theme.userId === userId) {
+    // Set theme on request for later use
+    req.theme = theme;
+    return next();
+  }
+  
+  return res.status(403).json({ error: 'You do not have permission to access this theme' });
+};
 
 const router = express.Router();
 
@@ -49,16 +88,62 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create new theme
-router.post('/', validateRequest({
+// Create new theme (admin only)
+router.post('/', isAdminOrSuperAdmin, validateRequest({
   body: insertThemeSchema.extend({
     userId: z.string().optional().nullable(),
     tokens: z.record(z.any()),
-    tags: z.array(z.string()).default([])
+    tags: z.array(z.string()).default([]),
+    isPublic: z.boolean().default(false),
+    parentThemeId: z.number().optional().nullable(),
+    version: z.string().default('1.0.0')
   })
 }), async (req, res) => {
   try {
+    // Set the creator's userId if not provided
+    if (!req.body.userId) {
+      req.body.userId = req.session?.user?.id;
+    }
+    
+    // If extending another theme, load its properties
+    if (req.body.parentThemeId) {
+      const parentTheme = await storage.getThemeById(req.body.parentThemeId);
+      if (!parentTheme) {
+        return res.status(404).json({ error: 'Parent theme not found' });
+      }
+      
+      // Merge tokens from parent theme if not explicitly provided
+      if (!req.body.tokens) {
+        req.body.tokens = parentTheme.tokens;
+      } else {
+        // Deep merge parent and child tokens
+        req.body.tokens = {
+          ...parentTheme.tokens,
+          ...req.body.tokens
+        };
+      }
+      
+      // Add inheritance information in metadata
+      req.body.metadata = {
+        ...(req.body.metadata || {}),
+        inheritance: {
+          parentId: parentTheme.id,
+          parentName: parentTheme.name,
+          inheritedAt: new Date(),
+        }
+      };
+    }
+    
     const newTheme = await storage.createTheme(req.body);
+    
+    // Record theme creation event
+    await storage.recordThemeEvent({
+      themeId: newTheme.id,
+      eventType: 'theme_created',
+      userId: req.session?.user?.id,
+      metadata: { isPublic: newTheme.isPublic }
+    });
+    
     res.status(201).json(newTheme);
   } catch (error) {
     console.error('Error creating theme:', error);
@@ -66,33 +151,55 @@ router.post('/', validateRequest({
   }
 });
 
-// Update theme
-router.put('/:id', validateRequest({
+// Update theme (restricted to admins or original creator)
+router.put('/:id', isOwnerOrAdmin, validateRequest({
   body: insertThemeSchema.partial().extend({
     tokens: z.record(z.any()).optional(),
-    tags: z.array(z.string()).optional()
+    tags: z.array(z.string()).optional(),
+    version: z.string().optional(),
+    metadata: z.record(z.any()).optional()
   })
 }), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid theme ID' });
-    }
+    const theme = req.theme; // From middleware
     
-    const theme = await storage.getThemeById(id);
-    if (!theme) {
-      return res.status(404).json({ error: 'Theme not found' });
-    }
+    // Create a snapshot of the current theme before updating
+    await storage.createThemeVersion(id, {
+      version: theme.version,
+      tokens: theme.tokens,
+      metadata: {
+        ...(theme.metadata || {}),
+        snapshotAt: new Date(),
+        snapshotBy: req.session?.user?.id,
+        snapshotReason: req.body.metadata?.updateReason || 'regular_update'
+      }
+    });
     
-    // Check user ownership (except admins who can edit all themes)
-    const userRole = req.session?.user?.role || 'user';
-    const userId = req.session?.user?.id;
-    
-    if (userRole !== 'admin' && userRole !== 'super_admin' && theme.userId !== userId) {
-      return res.status(403).json({ error: 'You do not have permission to edit this theme' });
+    // Auto-increment version if significant changes are detected
+    if (req.body.tokens && Object.keys(req.body.tokens).length > 0) {
+      if (!req.body.version) {
+        // Increment version number (simple semver-like bump)
+        const currentVersion = theme.version || '1.0.0';
+        const [major, minor, patch] = currentVersion.split('.').map(v => parseInt(v));
+        req.body.version = `${major}.${minor}.${patch + 1}`;
+      }
     }
     
     const updatedTheme = await storage.updateTheme(id, req.body);
+    
+    // Record theme update event
+    await storage.recordThemeEvent({
+      themeId: id,
+      eventType: 'theme_updated',
+      userId: req.session?.user?.id,
+      metadata: { 
+        oldVersion: theme.version,
+        newVersion: updatedTheme.version,
+        updateReason: req.body.metadata?.updateReason || 'general_update'
+      }
+    });
+    
     res.json(updatedTheme);
   } catch (error) {
     console.error('Error updating theme:', error);
