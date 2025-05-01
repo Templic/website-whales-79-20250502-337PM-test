@@ -18,7 +18,7 @@ import { logSecurityEvent } from './advanced/SecurityLogger';
 import { SecurityEventCategory, SecurityEventSeverity } from './advanced/SecurityFabric';
 import { AuditAction, AuditCategory, logAuditEvent } from './advanced/audit/AuditLogService';
 import { ValidationEngine } from './advanced/apiValidation/ValidationEngine';
-import { csrfProtectionMiddleware } from './advanced/csrf/CSRFProtection';
+import { csrfProtectionMiddleware, csrfTokenMiddleware } from './advanced/csrf/CSRFProtection';
 import { hasRole, isAuthenticated } from '../utils/auth-utils';
 import { UserRole } from '../utils/auth-config';
 
@@ -128,7 +128,7 @@ export function createSecurityMiddleware(level: SecurityLevel = SecurityLevel.BA
     
     // CSRF protection
     if (features.csrfProtection) {
-      middlewares.push(csrfProtectionMiddleware);
+      middlewares.push((req, res, next) => csrfProtectionMiddleware(req, res, next, ['/api/login', '/api/register', '/api/upload']));
     }
     
     // Account lockout (always applied for login routes)

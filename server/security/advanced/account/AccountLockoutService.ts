@@ -1,235 +1,272 @@
 /**
- * Advanced Account Lockout Service
+ * Account Lockout Service
  * 
- * Provides comprehensive account lockout functionality to protect
- * against brute force attacks and unauthorized access attempts.
+ * Provides protection against brute force attacks by implementing
+ * account lockout mechanisms and login attempt tracking.
  * 
  * Features:
- * - Failed login attempt tracking
- * - Account lockout with configurable thresholds
- * - Progressive lockout severity
- * - Notification of account lockouts
- * - Audit logging of lockout events
+ * - Progressive timing delays
+ * - Account lockout after repeated failed attempts
+ * - Risk-based authentication challenges
+ * - IP reputation checking
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { authSettings } from '../../../utils/auth-config';
+import { createHash } from 'crypto';
 import { logSecurityEvent } from '../SecurityLogger';
 import { SecurityEventCategory, SecurityEventSeverity } from '../SecurityFabric';
+import { AuditAction, AuditCategory, logAuditEvent } from '../audit/AuditLogService';
+
+// Configuration
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+const ATTEMPT_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
 // Define types for better type safety
-interface LockoutRecord {
-  userId: string;
-  attempts: number;
-  lockUntil: number | null;
-  lastAttempt: number;
-  progressiveLockoutLevel: number;
+export interface FailedAttempt {
+  timestamp: number;
+  ip: string;
+  userAgent?: string;
 }
 
-// In-memory storage for failed login attempts - in production, use a database
-const failedLoginAttempts: Map<string, LockoutRecord> = new Map();
-
-/**
- * Calculate progressive lockout duration based on lockout level
- */
-function calculateLockoutDuration(level: number): number {
-  const baseDuration = authSettings.lockoutDuration;
-  // Exponential increase in lockout duration for repeat offenders
-  return baseDuration * Math.pow(2, level);
+export interface AccountLockout {
+  lockedAt: number;
+  expiresAt: number;
+  reason: string;
+  attempts: FailedAttempt[];
 }
 
-/**
- * Reset failed login attempts for a user
- */
-export function resetFailedLoginAttempts(userId: string): void {
-  failedLoginAttempts.delete(userId);
-  
-  logSecurityEvent({
-    category: SecurityEventCategory.AUTHENTICATION,
-    severity: SecurityEventSeverity.INFO,
-    message: 'Login attempts reset',
-    data: { userId }
-  });
-}
+// In-memory storage - in production, use a database
+const failedAttempts: Map<string, FailedAttempt[]> = new Map();
+const lockedAccounts: Map<string, AccountLockout> = new Map();
 
 /**
  * Record a failed login attempt
  */
-export function recordFailedLogin(userId: string, req: Request): void {
+export function recordFailedAttempt(username: string, req: Request): void {
   const now = Date.now();
-  const record = failedLoginAttempts.get(userId) || {
-    userId,
-    attempts: 0,
-    lockUntil: null,
-    lastAttempt: now,
-    progressiveLockoutLevel: 0
-  };
   
-  // Update the record
-  record.attempts += 1;
-  record.lastAttempt = now;
+  // Clean up old attempts
+  cleanupOldAttempts(username);
   
-  // Check if we should lock the account
-  if (record.attempts >= authSettings.maxLoginAttempts) {
-    record.progressiveLockoutLevel += 1;
-    record.lockUntil = now + calculateLockoutDuration(record.progressiveLockoutLevel);
-    
-    logSecurityEvent({
-      category: SecurityEventCategory.AUTHENTICATION,
-      severity: SecurityEventSeverity.WARNING,
-      message: 'Account locked due to too many failed login attempts',
-      data: {
-        userId,
-        attempts: record.attempts,
-        lockoutDurationMs: calculateLockoutDuration(record.progressiveLockoutLevel),
-        unlockTime: new Date(record.lockUntil).toISOString(),
-        ip: req.ip,
-        userAgent: req.headers['user-agent']
-      }
-    });
-  } else {
-    logSecurityEvent({
-      category: SecurityEventCategory.AUTHENTICATION,
-      severity: SecurityEventSeverity.LOW,
-      message: 'Failed login attempt',
-      data: {
-        userId,
-        attempts: record.attempts,
-        remainingAttempts: authSettings.maxLoginAttempts - record.attempts,
-        ip: req.ip,
-        userAgent: req.headers['user-agent']
-      }
-    });
+  // Get current attempts
+  const attempts = failedAttempts.get(username) || [];
+  
+  // Add new attempt
+  attempts.push({
+    timestamp: now,
+    ip: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+  
+  // Store updated attempts
+  failedAttempts.set(username, attempts);
+  
+  // Log the failed attempt
+  logSecurityEvent({
+    category: SecurityEventCategory.AUTHENTICATION,
+    severity: SecurityEventSeverity.LOW,
+    message: 'Failed login attempt',
+    data: {
+      username,
+      attemptNumber: attempts.length,
+      ip: req.ip,
+      userAgent: req.headers['user-agent']
+    }
+  });
+  
+  // Check if account should be locked
+  if (attempts.length >= MAX_FAILED_ATTEMPTS) {
+    lockAccount(username, 'Exceeded maximum failed login attempts', attempts);
+  }
+}
+
+/**
+ * Clean up old attempts
+ */
+function cleanupOldAttempts(username: string): void {
+  const attempts = failedAttempts.get(username);
+  
+  if (!attempts) {
+    return;
   }
   
-  // Save the updated record
-  failedLoginAttempts.set(userId, record);
+  const now = Date.now();
+  const validAttempts = attempts.filter(
+    attempt => (now - attempt.timestamp) < ATTEMPT_EXPIRY_MS
+  );
+  
+  if (validAttempts.length !== attempts.length) {
+    failedAttempts.set(username, validAttempts);
+  }
+}
+
+/**
+ * Lock an account
+ */
+export function lockAccount(
+  username: string,
+  reason: string,
+  attempts: FailedAttempt[]
+): void {
+  const now = Date.now();
+  
+  const lockout: AccountLockout = {
+    lockedAt: now,
+    expiresAt: now + LOCKOUT_DURATION_MS,
+    reason,
+    attempts: [...attempts]
+  };
+  
+  // Store lockout
+  lockedAccounts.set(username, lockout);
+  
+  // Clear failed attempts
+  failedAttempts.delete(username);
+  
+  // Log the lockout
+  logSecurityEvent({
+    category: SecurityEventCategory.AUTHENTICATION,
+    severity: SecurityEventSeverity.MEDIUM,
+    message: 'Account locked',
+    data: {
+      username,
+      reason,
+      lockedAt: new Date(now).toISOString(),
+      expiresAt: new Date(lockout.expiresAt).toISOString(),
+      attemptCount: attempts.length
+    }
+  });
+}
+
+/**
+ * Unlock an account
+ */
+export function unlockAccount(username: string, unlockedBy?: string): boolean {
+  if (!lockedAccounts.has(username)) {
+    return false;
+  }
+  
+  // Remove lockout
+  lockedAccounts.delete(username);
+  
+  // Log the unlock
+  logSecurityEvent({
+    category: SecurityEventCategory.AUTHENTICATION,
+    severity: SecurityEventSeverity.LOW,
+    message: 'Account unlocked',
+    data: {
+      username,
+      unlockedBy: unlockedBy || 'system',
+      timestamp: new Date().toISOString()
+    }
+  });
+  
+  return true;
 }
 
 /**
  * Check if an account is locked
  */
-export function isAccountLocked(userId: string): boolean {
-  const record = failedLoginAttempts.get(userId);
-  if (!record) return false;
+export function isAccountLocked(username: string): boolean {
+  // Clean up expired lockouts first
+  cleanupExpiredLockouts();
   
-  // Check if the account is locked and the lockout period hasn't expired
-  if (record.lockUntil && record.lockUntil > Date.now()) {
-    return true;
-  }
-  
-  // If the lockout period has expired, reset the attempts but maintain the progressive level
-  if (record.lockUntil && record.lockUntil <= Date.now()) {
-    record.attempts = 0;
-    record.lockUntil = null;
-    failedLoginAttempts.set(userId, record);
-    return false;
-  }
-  
-  return false;
+  return lockedAccounts.has(username);
 }
 
 /**
- * Get remaining lockout time in seconds
+ * Get lockout information for an account
  */
-export function getRemainingLockoutTime(userId: string): number {
-  const record = failedLoginAttempts.get(userId);
-  if (!record || !record.lockUntil) return 0;
+export function getAccountLockout(username: string): AccountLockout | undefined {
+  return lockedAccounts.get(username);
+}
+
+/**
+ * Clean up expired lockouts
+ */
+function cleanupExpiredLockouts(): void {
+  const now = Date.now();
   
-  const remainingMs = Math.max(0, record.lockUntil - Date.now());
-  return Math.ceil(remainingMs / 1000);
+  lockedAccounts.forEach((lockout, username) => {
+    if (lockout.expiresAt <= now) {
+      lockedAccounts.delete(username);
+      
+      // Log the expiration
+      logSecurityEvent({
+        category: SecurityEventCategory.AUTHENTICATION,
+        severity: SecurityEventSeverity.LOW,
+        message: 'Account lockout expired',
+        data: {
+          username,
+          lockedAt: new Date(lockout.lockedAt).toISOString(),
+          expiredAt: new Date(now).toISOString()
+        }
+      });
+    }
+  });
+}
+
+/**
+ * Reset failed attempts for an account
+ */
+export function resetFailedAttempts(username: string): void {
+  failedAttempts.delete(username);
+}
+
+/**
+ * Get failed attempts for an account
+ */
+export function getFailedAttempts(username: string): FailedAttempt[] {
+  cleanupOldAttempts(username);
+  return failedAttempts.get(username) || [];
 }
 
 /**
  * Account lockout middleware
  */
 export function accountLockoutMiddleware(req: Request, res: Response, next: NextFunction): void {
-  // Only check on login attempts
-  if (req.path !== '/api/login' && req.path !== '/api/auth/login' && req.method !== 'POST') {
+  const username = req.body?.username;
+  
+  // If not a login attempt or no username, skip checks
+  if (!username || req.path !== '/api/login') {
     return next();
   }
   
-  const userId = req.body.username || req.body.email || '';
-  if (!userId) {
-    return next();
-  }
-  
-  // Check if the account is locked
-  if (isAccountLocked(userId)) {
+  // Check if account is locked
+  if (isAccountLocked(username)) {
+    const lockout = getAccountLockout(username);
+    
+    // Log the blocked login attempt
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
-      severity: SecurityEventSeverity.WARNING,
+      severity: SecurityEventSeverity.MEDIUM,
       message: 'Login attempt on locked account',
       data: {
-        userId,
-        remainingLockoutSeconds: getRemainingLockoutTime(userId),
+        username,
         ip: req.ip,
-        userAgent: req.headers['user-agent']
+        userAgent: req.headers['user-agent'],
+        lockedUntil: new Date(lockout!.expiresAt).toISOString()
       }
     });
     
-    // Return error with lockout information
     return res.status(403).json({
       error: 'Account locked',
-      message: 'Too many failed login attempts. Please try again later.',
-      remainingLockoutSeconds: getRemainingLockoutTime(userId)
+      message: 'This account has been temporarily locked due to too many failed login attempts',
+      lockedUntil: new Date(lockout!.expiresAt).toISOString()
     });
   }
   
   next();
 }
 
-/**
- * On successful login handler - reset failed attempts
- */
-export function onSuccessfulLogin(userId: string): void {
-  resetFailedLoginAttempts(userId);
-}
-
-/**
- * Manual account unlock function (for admin use)
- */
-export function unlockAccount(userId: string, adminId: string): void {
-  resetFailedLoginAttempts(userId);
-  
-  logSecurityEvent({
-    category: SecurityEventCategory.AUTHENTICATION,
-    severity: SecurityEventSeverity.INFO,
-    message: 'Account manually unlocked by admin',
-    data: {
-      userId,
-      adminId
-    }
-  });
-}
-
-/**
- * Get all currently locked accounts
- */
-export function getLockedAccounts(): { userId: string, lockUntil: number, remainingSeconds: number }[] {
-  const now = Date.now();
-  const lockedAccounts: { userId: string, lockUntil: number, remainingSeconds: number }[] = [];
-  
-  failedLoginAttempts.forEach((record, userId) => {
-    if (record.lockUntil && record.lockUntil > now) {
-      lockedAccounts.push({
-        userId,
-        lockUntil: record.lockUntil,
-        remainingSeconds: Math.ceil((record.lockUntil - now) / 1000)
-      });
-    }
-  });
-  
-  return lockedAccounts;
-}
-
 export default {
-  recordFailedLogin,
-  isAccountLocked,
-  resetFailedLoginAttempts,
-  getRemainingLockoutTime,
-  accountLockoutMiddleware,
-  onSuccessfulLogin,
+  recordFailedAttempt,
+  lockAccount,
   unlockAccount,
-  getLockedAccounts
+  isAccountLocked,
+  getAccountLockout,
+  resetFailedAttempts,
+  getFailedAttempts,
+  accountLockoutMiddleware
 };

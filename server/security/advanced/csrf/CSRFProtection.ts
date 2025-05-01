@@ -1,337 +1,197 @@
 /**
- * Cross-Site Request Forgery (CSRF) Protection Module
+ * CSRF Protection
  * 
- * This module provides CSRF protection utilities and middleware for Express applications.
- * It generates, validates, and manages CSRF tokens to protect against CSRF attacks.
+ * Provides Cross-Site Request Forgery (CSRF) protection mechanisms
+ * for the application. Helps prevent malicious sites from making requests
+ * on behalf of authenticated users.
+ * 
+ * Features:
+ * - CSRF token generation and validation
+ * - Secure token management
+ * - Support for exempt routes
+ * - Integration with security middleware
  */
 
-import * as crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
-import { securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
-import { SecurityEventSeverity, SecurityEventCategory } from '../blockchain/ImmutableSecurityLogs';
+import { randomBytes } from 'crypto';
+import { logSecurityEvent } from '../SecurityLogger';
+import { SecurityEventCategory, SecurityEventSeverity } from '../SecurityFabric';
 
-// Declare session property on Express Request
-declare global {
-  namespace Express {
-    interface Request {
-      session?: {
-        id?: string;
-        [key: string]: any;
-      };
-    }
-  }
-}
+// Configuration
+const CSRF_COOKIE_NAME = 'csrf-token';
+const CSRF_HEADER_NAME = 'x-csrf-token';
+const TOKEN_LENGTH = 32;
+const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-/**
- * CSRF configuration options
- */
-export interface CSRFOptions {
-  /**
-   * The name of the CSRF token cookie (default: '_csrf')
-   */
-  cookieName?: string;
-  
-  /**
-   * The name of the CSRF token header (default: 'x-csrf-token')
-   */
-  headerName?: string;
-  
-  /**
-   * The expiration time of the CSRF token in milliseconds (default: 24 hours)
-   */
-  expiryTime?: number;
-  
-  /**
-   * Routes to exclude from CSRF protection (default: [])
-   */
-  excludeRoutes?: string[];
-  
-  /**
-   * Whether to enable double-submit verification (default: true)
-   */
-  doubleSubmitVerification?: boolean;
-}
-
-/**
- * Default CSRF options
- */
-const defaultOptions: CSRFOptions = {
-  cookieName: '_csrf',
-  headerName: 'x-csrf-token',
-  expiryTime: 24 * 60 * 60 * 1000, // 24 hours
-  excludeRoutes: [],
-  doubleSubmitVerification: true
+// Token store
+type TokenData = {
+  token: string;
+  expiresAt: number;
 };
 
+// In-memory token store (in production, use a distributed cache or database)
+const tokenStore: Map<string, TokenData> = new Map();
+
 /**
- * CSRF token data
+ * Generate a new CSRF token
  */
-interface CSRFTokenData {
-  token: string;
-  expires: number;
-  /**
-   * Unique identifier for this token for tracking purposes
-   */
-  id?: string;
-  /**
-   * Session identifier this token is associated with
-   */
-  sessionId?: string;
-  /**
-   * Route this token was generated for (if using per-route tokens)
-   */
-  route?: string;
-  /**
-   * Whether this token has been used (for one-time tokens)
-   */
-  used?: boolean;
-  /**
-   * Creation timestamp
-   */
-  created: number;
+export function generateToken(): string {
+  return randomBytes(TOKEN_LENGTH).toString('hex');
 }
 
 /**
- * CSRF protection class
+ * Set CSRF token cookie and return the token
  */
-export class CSRFProtection {
-  /**
-   * CSRF options
-   */
-  private options: CSRFOptions;
+export function setTokenCookie(res: Response): string {
+  const token = generateToken();
+  const expiresAt = Date.now() + TOKEN_EXPIRY_MS;
   
-  /**
-   * Create a new CSRF protection instance
-   */
-  constructor(options: CSRFOptions = {}) {
-    this.options = { ...defaultOptions, ...options };
+  // Store token
+  tokenStore.set(token, { token, expiresAt });
+  
+  // Set cookie
+  res.cookie(CSRF_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: TOKEN_EXPIRY_MS
+  });
+  
+  return token;
+}
+
+/**
+ * Validate CSRF token
+ */
+export function validateToken(token: string | undefined): boolean {
+  if (!token) {
+    return false;
   }
   
-  /**
-   * Generate a new CSRF token
-   * @param sessionId Optional session ID to associate with the token
-   * @param route Optional route this token is for (for per-route tokens)
-   */
-  public generateToken(sessionId?: string, route?: string): CSRFTokenData {
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiryTime = this.options.expiryTime ?? defaultOptions.expiryTime ?? 24 * 60 * 60 * 1000; // Default to 24 hours
-    const expires = Date.now() + expiryTime;
-    const created = Date.now();
-    const id = crypto.randomBytes(8).toString('hex');
-    
-    return { 
-      token, 
-      expires, 
-      created,
-      id,
-      sessionId,
-      route,
-      used: false
-    };
+  // Clean up expired tokens
+  cleanupExpiredTokens();
+  
+  // Check if token exists
+  const tokenData = tokenStore.get(token);
+  if (!tokenData) {
+    return false;
   }
   
-  /**
-   * Validate a CSRF token
-   * @param request The HTTP request to validate
-   * @param route Optional route to validate the token against (for per-route tokens)
-   * @returns A validation result with boolean success and potential reason for failure
-   */
-  public validateToken(request: Request, route?: string): { valid: boolean; reason?: string } {
-    const cookieName = this.options.cookieName || defaultOptions.cookieName;
-    const headerName = this.options.headerName || defaultOptions.headerName;
-    
-    // Extract tokens
-    if (!request.cookies || !request.headers) {
-      return { valid: false, reason: 'No cookies or headers in request' };
+  // Check if token is expired
+  if (tokenData.expiresAt < Date.now()) {
+    tokenStore.delete(token);
+    return false;
+  }
+  
+  return true;
+}
+
+/**
+ * Clean up expired tokens
+ */
+function cleanupExpiredTokens(): void {
+  const now = Date.now();
+  
+  tokenStore.forEach((data, token) => {
+    if (data.expiresAt < now) {
+      tokenStore.delete(token);
     }
+  });
+}
+
+/**
+ * CSRF token middleware - sets CSRF token
+ */
+export function csrfTokenMiddleware(req: Request, res: Response, next: NextFunction): void {
+  // Only set token on GET requests
+  if (req.method === 'GET') {
+    // Get token from cookie
+    const existingToken = req.cookies[CSRF_COOKIE_NAME];
     
-    if (!cookieName) {
-      return { valid: false, reason: 'CSRF cookie name is undefined' };
-    }
-    
-    if (!headerName) {
-      return { valid: false, reason: 'CSRF header name is undefined' };
-    }
-    
-    const cookieToken = request.cookies[cookieName];
-    const headerToken = request.headers[headerName.toLowerCase()] as string;
-    
-    // Check if tokens exist
-    if (!cookieToken) {
-      return { valid: false, reason: 'Missing CSRF cookie token' };
-    }
-    
-    if (!headerToken) {
-      return { valid: false, reason: 'Missing CSRF header token' };
-    }
-    
-    // Parse cookie token data
-    try {
-      const cookieTokenData = JSON.parse(Buffer.from(cookieToken, 'base64').toString('utf-8')) as CSRFTokenData;
-      
-      // Check if token is expired
-      if (cookieTokenData.expires < Date.now()) {
-        return { valid: false, reason: 'CSRF token expired' };
-      }
-      
-      // If token is marked as used and this is a one-time token
-      if (cookieTokenData.used === true) {
-        return { valid: false, reason: 'CSRF token already used (one-time token)' };
-      }
-      
-      // If token was created too recently (potential token stealing attack)
-      const minimumTokenAge = 500; // 500ms minimum token age
-      if (cookieTokenData.created && (Date.now() - cookieTokenData.created < minimumTokenAge)) {
-        return { valid: false, reason: 'CSRF token too new (potential token stealing attack)' };
-      }
-      
-      // If route-specific tokens are being used, validate the route
-      if (route && cookieTokenData.route && cookieTokenData.route !== route) {
-        return { valid: false, reason: 'CSRF token is for a different route' };
-      }
-      
-      // If double-submit verification is enabled, check if tokens match
-      if (this.options.doubleSubmitVerification !== false) {
-        if (cookieTokenData.token !== headerToken) {
-          return { valid: false, reason: 'CSRF token mismatch between cookie and header' };
-        }
-      }
-      
-      // Mark token as used if it's a one-time token
-      // In a production system, this would be persisted in a cache/store
-      cookieTokenData.used = true;
-      
-      return { valid: true };
-    } catch (error) {
-      console.error('Error validating CSRF token:', error);
-      return { valid: false, reason: 'Invalid CSRF token format' };
+    // If token exists and is valid, don't generate a new one
+    if (existingToken && validateToken(existingToken)) {
+      res.locals.csrfToken = existingToken;
+    } else {
+      // Generate and set new token
+      const token = setTokenCookie(res);
+      res.locals.csrfToken = token;
     }
   }
   
-  /**
-   * Set CSRF token cookie and return the token
-   */
-  public setTokenCookie(response: Response): string {
-    const cookieName = this.options.cookieName || defaultOptions.cookieName;
-    const tokenData = this.generateToken();
-    const maxAge = this.options.expiryTime || defaultOptions.expiryTime;
-    
-    if (!cookieName) {
-      throw new Error('CSRF cookie name is undefined');
+  next();
+}
+
+/**
+ * Is the route exempt from CSRF protection?
+ */
+function isExemptRoute(req: Request, exemptRoutes: string[]): boolean {
+  // If the route is in the exempt list
+  return exemptRoutes.some(route => {
+    // Exact match
+    if (route === req.path) {
+      return true;
     }
     
-    // Set cookie
-    response.cookie(cookieName, Buffer.from(JSON.stringify(tokenData)).toString('base64'), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge
+    // Wildcard match (e.g., /api/auth/*)
+    if (route.endsWith('*')) {
+      const prefix = route.substring(0, route.length - 1);
+      return req.path.startsWith(prefix);
+    }
+    
+    return false;
+  });
+}
+
+/**
+ * CSRF protection middleware - validates CSRF token
+ */
+export function csrfProtectionMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+  exemptRoutes: string[] = []
+): void {
+  // Skip validation for GET, HEAD, OPTIONS
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+  
+  // Skip exempt routes
+  if (isExemptRoute(req, exemptRoutes)) {
+    return next();
+  }
+  
+  // Get token from request headers
+  const token = req.headers[CSRF_HEADER_NAME] as string | undefined;
+  
+  // If token is missing or invalid
+  if (!validateToken(token)) {
+    // Log the CSRF attempt
+    logSecurityEvent({
+      category: SecurityEventCategory.CSRF,
+      severity: SecurityEventSeverity.HIGH,
+      message: 'CSRF token validation failed',
+      data: {
+        path: req.path,
+        method: req.method,
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      }
     });
     
-    return tokenData.token;
+    return res.status(403).json({
+      error: 'CSRF token validation failed',
+      message: 'Invalid or missing CSRF token'
+    });
   }
   
-  /**
-   * Create CSRF protection middleware
-   */
-  public createMiddleware(): (req: Request, res: Response, next: NextFunction) => void {
-    return (req: Request, res: Response, next: NextFunction) => {
-      // Skip for non-state-changing methods
-      if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-        return next();
-      }
-      
-      // Skip for excluded routes
-      const excludeRoutes = this.options.excludeRoutes || [];
-      for (const route of excludeRoutes) {
-        if (req.path.startsWith(route)) {
-          return next();
-        }
-      }
-      
-      // Validate token
-      const validationResult = this.validateToken(req, req.path);
-      
-      if (!validationResult.valid) {
-        // Log security event with detailed reason
-        securityBlockchain.addSecurityEvent({
-          severity: SecurityEventSeverity.HIGH,
-          category: SecurityEventCategory.ATTACK_ATTEMPT,
-          message: `CSRF token validation failed: ${validationResult.reason || 'Unknown reason'}`,
-          ipAddress: req.ip || req.socket.remoteAddress || 'unknown',
-          metadata: {
-            method: req.method,
-            path: req.path,
-            reason: validationResult.reason,
-            userAgent: req.headers['user-agent']
-          }
-        }).catch(error => {
-          console.error('Error logging CSRF validation failure:', error);
-        });
-        
-        return res.status(403).json({
-          error: 'Invalid CSRF token',
-          message: 'CSRF validation failed',
-          reason: validationResult.reason || 'Token validation failed'
-        });
-      }
-      
-      // On successful validation, generate a new token for the next request
-      // This implements per-request tokens for maximum security
-      const newToken = this.generateToken(
-        req.session?.id, // Use session ID if available 
-        req.path        // Use current path for route-specific tokens
-      );
-      
-      // Set the new token in the response
-      const cookieName = this.options.cookieName || defaultOptions.cookieName;
-      if (!cookieName) {
-        console.error('CSRF cookie name is undefined');
-        return next();
-      }
-      
-      const cookieValue = Buffer.from(JSON.stringify(newToken)).toString('base64');
-      const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax' as const,
-        maxAge: this.options.expiryTime || defaultOptions.expiryTime
-      };
-      
-      res.cookie(cookieName, cookieValue, cookieOptions);
-      
-      // Also set the token header for SPA/AJAX use
-      res.setHeader('X-CSRF-Token', newToken.token);
-      
-      next();
-    };
-  }
-  
-  /**
-   * Create middleware to set CSRF token
-   */
-  public createTokenMiddleware(): (req: Request, res: Response, next: NextFunction) => void {
-    return (req: Request, res: Response, next: NextFunction) => {
-      // Set token cookie and expose token in header
-      const token = this.setTokenCookie(res);
-      res.setHeader('X-CSRF-Token', token);
-      
-      next();
-    };
-  }
+  next();
 }
 
-/**
- * Default CSRF protection instance
- */
-export const csrfProtection = new CSRFProtection();
-
-/**
- * Default CSRF protection middleware
- */
-export const csrfMiddleware = csrfProtection.createMiddleware();
-
-/**
- * Default CSRF token middleware
- */
-export const csrfTokenMiddleware = csrfProtection.createTokenMiddleware();
+export default {
+  generateToken,
+  setTokenCookie,
+  validateToken,
+  csrfTokenMiddleware,
+  csrfProtectionMiddleware
+};
