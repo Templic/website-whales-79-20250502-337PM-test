@@ -1308,11 +1308,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Get a single newsletter by ID
-  app.get("/api/newsletters/:id", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.get("/api/newsletters/:id", isAdmin, async (req, res) => {
 
     try {
       const id = parseInt(req.params.id);
@@ -1331,15 +1327,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   // Create a new newsletter with validation
   app.post("/api/newsletters", [
-    // Authentication check
-    isAuthenticated,
-    (req, res, next) => {
-      // Check for admin role
-      if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-        return res.status(403).json({ message: "Admin role required" });
-      }
-      next();
-    },
+    // Admin role check
+    isAdmin,
     // Basic validation using express-validator
     body('title').trim().notEmpty().withMessage('Title is required').isLength({ min: 3, max: 100 }).withMessage('Title must be between 3 and 100 characters').escape(),
     body('content').trim().notEmpty().withMessage('Content is required').isLength({ min: 50 }).withMessage('Content must be at least 50 characters'),
@@ -1363,11 +1352,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Update an existing newsletter
-  app.patch("/api/newsletters/:id", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.patch("/api/newsletters/:id", isAdmin, async (req, res) => {
 
     try {
       const id = parseInt(req.params.id);
@@ -1396,11 +1381,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Send a newsletter
-  app.post("/api/newsletters/:id/send", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.post("/api/newsletters/:id/send", isAdmin, async (req, res) => {
 
     try {
       const id = parseInt(req.params.id);
@@ -1449,11 +1430,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Get unapproved comments
-  app.get("/api/admin/comments/unapproved", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.get("/api/admin/comments/unapproved", isAdmin, async (req, res) => {
 
     try {
       const comments = await storage.getUnapprovedComments();
@@ -1492,11 +1469,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Get recent tracks for review
-  app.get("/api/admin/tracks/recent", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.get("/api/admin/tracks/recent", isAdmin, async (req, res) => {
 
     try {
       const tracks = await storage.getTracks();
@@ -1533,11 +1506,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Approve a post
-  app.post("/api/admin/posts/:postId/approve", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.post("/api/admin/posts/:postId/approve", isAdmin, async (req, res) => {
 
     try {
       const postId = parseInt(req.params.postId);
@@ -1550,11 +1519,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Approve a comment
-  app.post("/api/admin/comments/:commentId/approve", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.post("/api/admin/comments/:commentId/approve", isAdmin, async (req, res) => {
 
     try {
       const commentId = parseInt(req.params.commentId);
@@ -1567,11 +1532,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Reject a comment
-  app.post("/api/admin/comments/:commentId/reject", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.post("/api/admin/comments/:commentId/reject", isAdmin, async (req, res) => {
 
     try {
       const commentId = parseInt(req.params.commentId);
@@ -1584,11 +1545,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Delete a track
-  app.delete("/api/admin/tracks/:trackId", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.delete("/api/admin/tracks/:trackId", isAdmin, async (req, res) => {
 
     try {
       const trackId = parseInt(req.params.trackId);
@@ -1651,11 +1608,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  app.post("/api/posts/:id/approve", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.post("/api/posts/:id/approve", isAdmin, async (req, res) => {
     try {
       const post = await storage.approvePost(Number(req.params.id));
       res.json(post);
@@ -1847,11 +1800,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  app.post("/api/posts/comments/:id/approve", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.post("/api/posts/comments/:id/approve", isAdmin, async (req, res) => {
     try {
       const comment = await storage.approveComment(Number(req.params.id));
       res.json(comment);
@@ -1888,11 +1837,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   }
 });
 
-app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+app.post("/api/posts/comments/:id/reject", isAdmin, async (req, res) => {
     try {
       const comment = await storage.rejectComment(Number(req.params.id));
       res.json(comment);
@@ -1965,11 +1910,7 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
   });
 
   // Music upload route
-  app.post("/api/upload/music", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.post("/api/upload/music", isAdmin, async (req, res) => {
 
     if (!req.files || !req.files.file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -2048,11 +1989,7 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
   });
 
   // Delete music endpoint
-  app.delete("/api/tracks/:id", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.delete("/api/tracks/:id", isAdmin, async (req, res) => {
 
     try {
       const trackId = Number(req.params.id);
@@ -2068,15 +2005,8 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
   //This route was duplicated in the original code.  Removing the duplicate.
 
     // Admin analytics endpoint
-  app.get("/api/admin/analytics/detailed", isAuthenticated, async (req, res) => {
-    // Check for BYPASS_AUTHENTICATION variable from protected-route.tsx
-    const bypassAuth = process.env.NODE_ENV !== 'production';
-
-    // Even when using isAuthenticated middleware, we still check admin role (bypassed in dev environment)
-    if (!bypassAuth && (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      console.log('Authorization failed for analytics endpoint - Admin role required');
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.get("/api/admin/analytics/detailed", isAdmin, async (req, res) => {
+    // No need to check admin role as this is now handled by the isAdmin middleware
 
     try {
       console.log('Fetching admin analytics data...');
@@ -2209,23 +2139,11 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
   });
 
   // Database monitoring routes
-  app.use('/api/admin/db-monitor', isAuthenticated, (req, res, next) => {
-    // Check for admin role after authentication
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
-    next();
-  }, dbMonitorRoutes);
+  app.use('/api/admin/db-monitor', isAdmin, dbMonitorRoutes);
 
   // Database security routes
   // Main database security routes (authenticated)
-  app.use('/api/admin/database-security', isAuthenticated, (req, res, next) => {
-    // Check for admin role after authentication
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
-    next();
-  }, databaseSecurityRoutes);
+  app.use('/api/admin/database-security', isAdmin, databaseSecurityRoutes);
 
   // Special route for testing database validation without authentication or CSRF
   app.use('/api/test/database-security', databaseSecurityRoutes);
@@ -2350,11 +2268,7 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
   });
 
   // Get security settings (admin only)
-  app.get('/api/security/settings', isAuthenticated, (req, res) => {
-    // Check for admin role after authentication
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.get('/api/security/settings', isAdmin, (req, res) => {
 
     try {
       const settings = getSecuritySettings();
@@ -2366,11 +2280,7 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
   });
 
   // Update a security setting (admin only)
-  app.post('/api/security/settings', isAuthenticated, (req, res) => {
-    // Check for admin role after authentication
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.post('/api/security/settings', isAdmin, (req, res) => {
 
     try {
       const { setting, enabled } = req.body;
@@ -2411,12 +2321,8 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
 
   // Get security logs (admin only)
   // Enhanced Admin Content Management API
-  app.get("/api/admin/content", isAuthenticated, async (req, res) => {
+  app.get("/api/admin/content", isAdmin, async (req, res) => {
     try {
-      // Check for admin role after authentication
-      if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-        return res.status(403).json({ message: "Admin role required" });
-      }
 
       // Get status filter from query parameter
       const statusFilter = req.query.status as string;
@@ -2450,12 +2356,8 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
   });
 
   // Get workflow history for a content item
-  app.get("/api/admin/content/:id/history", isAuthenticated, async (req, res) => {
+  app.get("/api/admin/content/:id/history", isAdmin, async (req, res) => {
     try {
-      // Check for admin role after authentication
-      if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-        return res.status(403).json({ message: "Admin role required" });
-      }
 
       const contentId = parseInt(req.params.id);
 
@@ -2481,12 +2383,8 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
   });
 
   // Update content workflow status
-  app.patch("/api/admin/content/:id/status", isAuthenticated, async (req, res) => {
+  app.patch("/api/admin/content/:id/status", isAdmin, async (req, res) => {
     try {
-      // Check for admin role after authentication
-      if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-        return res.status(403).json({ message: "Admin role required" });
-      }
 
       const contentId = parseInt(req.params.id);
       const { status, reviewNotes, scheduledPublishAt, expirationDate } = req.body;
@@ -2516,11 +2414,7 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
     }
   });
 
-  app.get('/api/security/logs', isAuthenticated, (req, res) => {
-    // Check for admin role after authentication
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.get('/api/security/logs', isAdmin, (req, res) => {
 
     try {
       const securityLogsDir = path.join(process.cwd(), 'logs', 'security');
