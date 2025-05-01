@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "baseUrl": "http://localhost:5000",
+    "startTime": "2025-05-01T00:14:50.342Z",
+    "endTime": "2025-05-01T00:14:55.434Z",
+    "duration": 5.092,
+    "maxDepth": 2
+  },
+  "summary": {
+    "pagesVisited": 1,
+    "internalLinksFound": 0,
+    "brokenLinks": 0,
+    "deadEndButtons": 0
+  },
+  "homepage": {
+    "homepage": true,
+    "links": {
+      "total": 1,
+      "deadEnds": 0,
+      "items": []
+    },
+    "buttons": {
+      "total": 0,
+      "deadEnds": 0,
+      "items": []
+    }
+  },
+  "brokenLinks": [],
+  "deadEndButtons": [],
+  "visitedPages": [
+    "http://localhost:5000"
+  ]
+}

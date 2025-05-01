@@ -245,6 +245,92 @@ async function crawlPage(url, parentUrl = null, depth = 0) {
 }
 
 /**
+ * A simple version that just checks the homepage without recursive crawling
+ */
+async function simpleCheck() {
+  try {
+    console.log(`\nRunning simple check on: ${config.baseUrl}`);
+    
+    // Fetch and parse the homepage only
+    const response = await axios.get(config.baseUrl, { 
+      validateStatus: false,
+      timeout: config.requestTimeout
+    });
+    
+    if (response.status >= 400) {
+      console.error(`HTTP Error ${response.status} on homepage`);
+      return { 
+        homepage: false,
+        error: `HTTP Error: ${response.status}`
+      };
+    }
+    
+    console.log(`Homepage loaded successfully (${response.status})`);
+    
+    // Parse the HTML
+    const $ = cheerio.load(response.data);
+    
+    // Extract all links (with broader selector)
+    const links = [];
+    $('a, [href]').each((index, element) => {
+      const href = $(element).attr('href');
+      const text = $(element).text().trim();
+      const tagName = $(element).prop('tagName')?.toLowerCase();
+      
+      if (href) {
+        links.push({
+          url: href,
+          text: text || '[No Text]',
+          empty: !href,
+          element: tagName || 'unknown'
+        });
+      }
+    });
+    
+    // Extract all buttons (with broader selector)
+    const buttons = [];
+    $('button, input[type="button"], input[type="submit"], .btn, [role="button"], [data-role="button"], [class*="button"], [type="button"]').each((index, element) => {
+      const onClick = $(element).attr('onclick');
+      const href = $(element).attr('href');
+      const text = $(element).text().trim() || $(element).attr('value') || $(element).attr('title');
+      const tagName = $(element).prop('tagName')?.toLowerCase();
+      
+      buttons.push({
+        text: text || '[No Text]',
+        hasAction: !!(onClick || href),
+        element: tagName || 'unknown'
+      });
+    });
+    
+    console.log(`Found ${links.length} links and ${buttons.length} buttons on homepage`);
+    
+    // Count dead-end elements
+    const deadEndLinks = links.filter(link => link.empty);
+    const deadEndButtons = buttons.filter(button => !button.hasAction);
+    
+    return {
+      homepage: true,
+      links: {
+        total: links.length,
+        deadEnds: deadEndLinks.length,
+        items: deadEndLinks
+      },
+      buttons: {
+        total: buttons.length,
+        deadEnds: deadEndButtons.length,
+        items: deadEndButtons
+      }
+    };
+  } catch (error) {
+    console.error(`Error checking homepage: ${error.message}`);
+    return {
+      homepage: false,
+      error: error.message
+    };
+  }
+}
+
+/**
  * Main function to run the checker
  */
 async function main() {
@@ -252,12 +338,20 @@ async function main() {
   console.log(`Scan started at: ${startTime.toISOString()}`);
   
   try {
-    // Start crawling from the base URL
-    await crawlPage(config.baseUrl);
+    // First do a simple check of the homepage
+    const simpleResults = await simpleCheck();
     
-    // Wait for all the queued crawls to finish (simple approach)
-    console.log('\nWaiting for all crawls to complete...');
-    await new Promise(resolve => setTimeout(resolve, config.timeout));
+    // Then do a more comprehensive crawl if the homepage was accessible
+    if (simpleResults.homepage) {
+      console.log('\nHomepage is accessible, proceeding with crawl...');
+      await crawlPage(config.baseUrl);
+      
+      // Wait for some crawls to finish but with shorter timeout
+      console.log('\nWaiting for crawls to complete (limited time)...');
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Just 5 seconds
+    } else {
+      console.error(`\nHomepage is not accessible: ${simpleResults.error}`);
+    }
     
     // Generate report
     const endTime = new Date();
@@ -314,6 +408,7 @@ async function main() {
         brokenLinks: brokenLinks.length,
         deadEndButtons: deadEndButtons.length
       },
+      homepage: simpleResults, // Add the homepage check results
       brokenLinks,
       deadEndButtons,
       visitedPages: Array.from(pages)
