@@ -88,7 +88,10 @@ export default function HomePage() {
                     section="activity" 
                   />
                 </p>
-                <button className="bg-blue-500 hover:bg-blue-700 text-white rounded">
+                <button 
+                  onClick={() => window.location.href = '/about'} 
+                  className="bg-blue-500 hover:bg-blue-700 text-white rounded"
+                >
                   Learn More
                 </button>
               </SimpleTriangle>
@@ -113,7 +116,10 @@ export default function HomePage() {
                     section="vibes" 
                   />
                 </p>
-                <button className="bg-purple-500 hover:bg-purple-700 text-white rounded">
+                <button 
+                  onClick={() => window.location.href = '/immersive'} 
+                  className="bg-purple-500 hover:bg-purple-700 text-white rounded"
+                >
                   Explore
                 </button>
               </SimpleOctagon>
