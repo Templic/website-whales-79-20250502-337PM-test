@@ -26,7 +26,7 @@ if (!fs.existsSync(REPORTS_DIR)) {
 router.post('/scan', (req, res) => {
   try {
     const scanId = uuidv4();
-    const outputFile = path.join(REPORTS_DIR, 'deadlinks-report.json');
+    const outputFile = path.join(REPORTS_DIR, 'deadlinks-simple-report.json');
     
     // Create a new scan job
     scanJobs[scanId] = {
@@ -37,8 +37,10 @@ router.post('/scan', (req, res) => {
     };
     
     // Execute the dead link checker script
-    const scriptPath = path.join(process.cwd(), 'scripts', 'check-deadlinks.js');
-    const command = `node ${scriptPath} --output=json`;
+    const scriptPath = path.join(process.cwd(), 'scripts', 'simple-deadlink-checker.js');
+    const command = `node ${scriptPath}`;
+    
+    console.log(`Executing scan: ${scriptPath}`);
     
     const child = exec(command, (error, stdout, stderr) => {
       if (error) {
@@ -52,6 +54,8 @@ router.post('/scan', (req, res) => {
         console.error(`Script stderr: ${stderr}`);
       }
       
+      console.log(`Scan stdout: ${stdout.substring(0, 200)}...`);
+      
       // Read the output file
       try {
         if (fs.existsSync(outputFile)) {
@@ -59,9 +63,11 @@ router.post('/scan', (req, res) => {
           scanJobs[scanId].status = 'completed';
           scanJobs[scanId].results = results;
           scanJobs[scanId].endTime = new Date().toISOString();
+          console.log('Scan completed successfully, results loaded');
         } else {
           scanJobs[scanId].status = 'error';
           scanJobs[scanId].error = 'Output file not found';
+          console.error(`Output file not found at ${outputFile}`);
         }
       } catch (readError) {
         console.error(`Error reading output file: ${readError.message}`);
@@ -103,12 +109,17 @@ router.get('/status/:scanId', (req, res) => {
  */
 router.get('/latest', (req, res) => {
   try {
-    const outputFile = path.join(REPORTS_DIR, 'deadlinks-report.json');
+    const outputFile = path.join(REPORTS_DIR, 'deadlinks-simple-report.json');
+    const legacyOutputFile = path.join(REPORTS_DIR, 'deadlinks-report.json');
     
     if (fs.existsSync(outputFile)) {
       const results = JSON.parse(fs.readFileSync(outputFile, 'utf8'));
       res.json(results);
+    } else if (fs.existsSync(legacyOutputFile)) {
+      const results = JSON.parse(fs.readFileSync(legacyOutputFile, 'utf8'));
+      res.json(results);
     } else {
+      console.log(`No report files found at ${outputFile} or ${legacyOutputFile}`);
       res.status(404).json({ error: 'No scan results found' });
     }
   } catch (error) {
@@ -270,7 +281,9 @@ router.post('/fix-button', (req, res) => {
  */
 router.post('/run-cli', (req, res) => {
   try {
-    const scriptPath = path.join(process.cwd(), 'scripts', 'check-deadlinks.js');
+    const scriptPath = path.join(process.cwd(), 'scripts', 'simple-deadlink-checker.js');
+    
+    console.log(`Executing script: ${scriptPath}`);
     
     // Execute the script and capture output
     exec(`node ${scriptPath}`, (error, stdout, stderr) => {
@@ -279,6 +292,7 @@ router.post('/run-cli', (req, res) => {
         return res.status(500).json({ error: error.message, stdout, stderr });
       }
       
+      console.log('Script executed successfully');
       res.json({ success: true, stdout, stderr });
     });
   } catch (error) {

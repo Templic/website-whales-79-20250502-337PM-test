@@ -1,9 +1,9 @@
 {
   "meta": {
-    "baseUrl": "http://localhost:3000",
-    "timestamp": "2025-04-30T23:55:57.823Z",
+    "baseUrl": "http://localhost:5000",
+    "timestamp": "2025-05-01T00:00:40.507Z",
     "visitedUrls": [
-      "http://localhost:3000"
+      "http://localhost:5000"
     ],
     "validRoutes": [
       "/AIChatMenuPage",
@@ -126,20 +126,11 @@
   },
   "summary": {
     "visitedUrls": 1,
-    "brokenLinks": 1,
+    "brokenLinks": 0,
     "deadEndButtons": 0,
     "componentsWithIssues": 243
   },
-  "brokenLinks": [
-    {
-      "url": "http://localhost:3000",
-      "parentUrl": null,
-      "status": 0,
-      "message": "connect ECONNREFUSED 127.0.0.1:3000",
-      "type": "request",
-      "element": "page"
-    }
-  ],
+  "brokenLinks": [],
   "deadEndButtons": [],
   "componentsWithIssues": [
     {
