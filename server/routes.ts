@@ -184,7 +184,7 @@ const transporter = createTransport({
 // CSRF protection middleware is already imported at the top of the file
 
 export async function registerRoutes(app: express.Application): Promise<Server> {
-  // Set up Replit Auth
+  // Set up our authentication system
   await setupAuth(app);
 
   // Add Replit Auth routes to CSRF exempt list
@@ -321,13 +321,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.use('/api/deadlinks', deadlinksRoutes);
 
   // Register API security verification endpoint (admin only)
-  app.get('/api/security/verify-api', async (req, res) => {
+  app.get('/api/security/verify-api', isAuthenticated, async (req, res) => {
     // Only allow admins to run the verification
-    if (!req.isAuthenticated || !req.isAuthenticated() || 
-        (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
       return res.status(403).json({ 
         success: false, 
-        message: 'Admin access required' 
+        message: 'Admin role required' 
       });
     }
 
@@ -350,14 +349,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Get current user endpoint
-  app.get('/api/user', (req, res) => {
-    if (req.isAuthenticated && req.isAuthenticated()) {
-      // Use the safe user creator to return only non-sensitive fields
-      const safeUser = createSafeUser(req.user);
-      res.json(safeUser);
-    } else {
-      res.status(401).json({ message: 'Not authenticated' });
-    }
+  app.get('/api/user', isAuthenticated, (req, res) => {
+    // Use the safe user creator to return only non-sensitive fields
+    const safeUser = createSafeUser(req.user);
+    res.json(safeUser);
   });
 
   // Replit Auth specific user endpoint
@@ -584,9 +579,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.use('/images', express.static(path.join(process.cwd(), 'public/images')));
 
   // Get subscribers list
-  app.get("/api/subscribers", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.get("/api/subscribers", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
     try {
       console.log("Fetching all subscribers...");
@@ -600,13 +596,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Admin Stats API
-  app.get("/api/admin/stats", async (req, res) => {
+  app.get("/api/admin/stats", isAuthenticated, async (req, res) => {
     // Allow development bypass for testing
     const bypassAuth = process.env.NODE_ENV !== 'production';
 
-    if (!bypassAuth && (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin'))) {
-      console.log('Authentication failed for admin stats endpoint');
-      return res.status(403).json({ message: "Unauthorized" });
+    // Check for admin role
+    if (!bypassAuth && (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      console.log('Admin role check failed for admin stats endpoint');
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -709,9 +706,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // User management routes
-  app.get("/api/users", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.get("/api/users", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
     try {
       const users = await storage.getAllUsers();
@@ -724,9 +722,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // User update endpoint
-  app.patch("/api/users/:userId", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.patch("/api/users/:userId", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -907,9 +906,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Content management endpoints for Admin
 
   // Get unapproved posts
-  app.get("/api/admin/posts/unapproved", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.get("/api/admin/posts/unapproved", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
