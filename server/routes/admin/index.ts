@@ -15,13 +15,26 @@ import postsRoutes from './posts-routes';
 
 const router = express.Router();
 
+// Add type interface to properly type Express.User
+import { User } from '@shared/schema';
+
+// Extend Express Request interface
+declare global {
+  namespace Express {
+    interface User {
+      id: string;
+      username: string;
+      role: string;
+    }
+  }
+}
+
 // Authentication middleware for admin-only access
 const requireAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   
-  // @ts-ignore: User role property should exist
   if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
     return res.status(403).json({ error: 'Admin role required' });
   }
@@ -30,7 +43,7 @@ const requireAdmin = (req: express.Request, res: express.Response, next: express
 };
 
 // Apply admin authentication to all routes
-router.use(requireAdmin);
+router.use((req, res, next) => requireAdmin(req, res, next));
 
 // Mount all admin routes
 router.use('/', statsRoutes);

@@ -10,7 +10,16 @@ const __dirname = dirname(__filename);
 import { storage } from "./storage";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+// Import the setupAuth from our auth module
+import { setupAuth } from "./auth";
+
+// Create our own isAuthenticated middleware
+const isAuthenticated = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ error: 'Authentication required' });
+};
 import { nanoid } from 'nanoid';
 import { validate } from './middlewares/validationMiddleware';
 import { body } from 'express-validator'; // Add body to imports
