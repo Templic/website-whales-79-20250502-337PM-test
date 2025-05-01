@@ -1657,7 +1657,6 @@ export const patronsRelations = relations(patrons, ({ one }) => ({
     references: [users.id],
   }),
 }));
-*/
 
 // ===================================================================
 // Admin Utilities Relations

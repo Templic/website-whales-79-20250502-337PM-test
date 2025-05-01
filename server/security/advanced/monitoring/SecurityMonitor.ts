@@ -25,15 +25,59 @@ export class SecurityMonitor extends EventEmitter {
     this.on('anomaly', this.handleAnomaly.bind(this));
   }
 
-  private async detectAnomalies(): Promise<void> {
-    const metrics = await this.gatherSecurityMetrics();
-    const anomalies = this.analyzeMetrics(metrics);
+  // Implementation of the missing method
+  private async gatherSecurityMetrics(): Promise<any> {
+    try {
+      // Basic metrics gathering
+      return {
+        timestamp: new Date().toISOString(),
+        serverLoad: process.memoryUsage(),
+        cpuUsage: process.cpuUsage(),
+        activeConnections: 0, // Placeholder, implement actual connection tracking
+        recentRequests: [],   // Placeholder for request tracking
+        anomalyScore: 0       // Base score before analysis
+      };
+    } catch (error) {
+      console.error('Error gathering security metrics:', error);
+      return { error: true, timestamp: new Date().toISOString() };
+    }
+  }
+
+  // Implementation for analyze metrics
+  private analyzeMetrics(metrics: any): any[] {
+    if (!metrics || metrics.error) {
+      return [];
+    }
     
-    if (anomalies.length > 0) {
-      const encryptedAnomalies = await QuantumResistantEncryption.encrypt(
-        JSON.stringify(anomalies)
-      );
-      this.emit('anomaly', encryptedAnomalies);
+    // Simple analysis logic - can be expanded
+    const anomalies = [];
+    
+    // Example check: memory usage above threshold
+    if (metrics.serverLoad && metrics.serverLoad.heapUsed > 1000000000) {
+      anomalies.push({
+        type: 'RESOURCE_USAGE',
+        detail: 'High memory usage detected',
+        severity: 'medium',
+        timestamp: metrics.timestamp
+      });
+    }
+    
+    return anomalies;
+  }
+
+  private async detectAnomalies(): Promise<void> {
+    try {
+      const metrics = await this.gatherSecurityMetrics();
+      const anomalies = this.analyzeMetrics(metrics);
+      
+      if (anomalies.length > 0) {
+        const encryptedAnomalies = await QuantumResistantEncryption.encrypt(
+          JSON.stringify(anomalies)
+        );
+        this.emit('anomaly', encryptedAnomalies);
+      }
+    } catch (error) {
+      console.error('Error in anomaly detection:', error);
     }
   }
 

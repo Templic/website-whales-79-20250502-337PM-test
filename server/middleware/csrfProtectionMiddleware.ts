@@ -53,7 +53,7 @@ export function setupCSRFProtection(app: Express): void {
       }
     });
     
-    res.json({ token });
+    res.json({ csrfToken: token });
   });
 
   // Add CSRF token to all HTML responses

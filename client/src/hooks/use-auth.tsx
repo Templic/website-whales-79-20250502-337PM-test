@@ -142,6 +142,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     if (csrfToken) return csrfToken;
     
     try {
+      // Use correct endpoint for CSRF token
       const response = await axios.get('/api/csrf-token');
       const token = response.data.csrfToken;
       csrfToken = token;
@@ -191,7 +192,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
           setUser(userData);
           
           // Optional: you can still verify with the server if needed
-          // await api.get('/api/auth/user');
+          // await api.get('/api/user');
         } catch (error) {
           console.error('Failed to parse user data:', error);
           // Clear invalid data
@@ -220,8 +221,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         return false;
       }
       
-      // Request new tokens
-      const response = await axios.post<TokenResponse>('/api/auth/refresh', { refreshToken });
+      // Request new tokens - use the correct API endpoint
+      const response = await axios.post<TokenResponse>('/api/jwt/refresh', { refreshToken });
       
       // Store new tokens
       localStorage.setItem(ACCESS_TOKEN_KEY, response.data.accessToken);
@@ -240,8 +241,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       // First get a CSRF token
       await getCsrfToken();
       
-      // Attempt login
-      const response = await api.post<{user: User} & TokenResponse>('/auth/login', {
+      // Attempt login - use the correct JWT login API endpoint
+      const response = await api.post<{user: User} & TokenResponse>('/api/jwt/login', {
         username,
         password
       });
@@ -276,10 +277,10 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       // Get CSRF token for the request
       await getCsrfToken();
       
-      // Send logout request to revoke refresh token
+      // Send logout request to revoke refresh token - use the correct JWT API endpoint
       const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
       if (refreshToken) {
-        await api.post('/auth/logout', { refreshToken });
+        await api.post('/api/jwt/logout', { refreshToken });
       }
     } catch (error) {
       console.error('Logout error:', error);
