@@ -1208,6 +1208,126 @@ export type ThemeCategory = 'light' | 'dark' | 'colorful' | 'monochrome' | 'acce
 // Admin Utilities Schema
 // ===================================================================
 
+// System notifications tables
+export const systemNotifications = pgTable("system_notifications", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  category: text("category").notNull().default("general"),
+  priority: text("priority", { enum: ["low", "normal", "high", "critical"] }).notNull().default("normal"),
+  type: text("type", { enum: ["info", "warning", "error", "success"] }).notNull().default("info"),
+  actionUrl: text("action_url"),
+  startDate: timestamp("start_date").notNull().defaultNow(),
+  endDate: timestamp("end_date"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at"),
+  createdBy: varchar("created_by", { length: 255 }).references(() => users.id),
+  active: boolean("active").notNull().default(true)
+});
+
+export const userNotifications = pgTable("user_notifications", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id", { length: 255 }).references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  category: text("category").notNull().default("general"),
+  priority: text("priority", { enum: ["low", "normal", "high", "critical"] }).notNull().default("normal"),
+  type: text("type", { enum: ["info", "warning", "error", "success"] }).notNull().default("info"),
+  actionUrl: text("action_url"),
+  systemNotificationId: integer("system_notification_id").references(() => systemNotifications.id),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  readAt: timestamp("read_at")
+});
+
+// Security settings table
+export const securitySettings = pgTable("security_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  value: json("value").notNull(),
+  type: text("type", { enum: ["boolean", "number", "string", "json"] }).notNull(),
+  category: text("category").notNull(),
+  options: json("options"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at"),
+  updatedBy: varchar("updated_by", { length: 255 }).references(() => users.id)
+});
+
+// Security events table
+export const securityEvents = pgTable("security_events", {
+  id: serial("id").primaryKey(),
+  eventType: text("event_type").notNull(),
+  severity: text("severity", { enum: ["info", "low", "medium", "high", "critical"] }).notNull(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  userId: varchar("user_id", { length: 255 }).references(() => users.id),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  details: json("details"),
+  acknowledged: boolean("acknowledged").notNull().default(false),
+  acknowledgedBy: varchar("acknowledged_by", { length: 255 }).references(() => users.id),
+  acknowledgedAt: timestamp("acknowledged_at")
+});
+
+// Security scans table
+export const securityScans = pgTable("security_scans", {
+  id: serial("id").primaryKey(),
+  scanTypes: text("scan_types").array().notNull(),
+  startTime: timestamp("start_time").notNull().defaultNow(),
+  endTime: timestamp("end_time"),
+  status: text("status", { enum: ["pending", "in_progress", "completed", "failed"] }).notNull(),
+  results: json("results"),
+  error: text("error"),
+  initiatedBy: varchar("initiated_by", { length: 255 }).references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow()
+});
+
+// Media collections table
+export const mediaCollections = pgTable("media_collections", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  type: text("type", { enum: ["image", "video", "audio", "document", "mixed"] }).notNull().default("mixed"),
+  visibility: text("visibility", { enum: ["public", "private", "restricted"] }).notNull().default("private"),
+  createdBy: varchar("created_by", { length: 255 }).references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+});
+
+// Media files table
+export const mediaFiles = pgTable("media_files", {
+  id: serial("id").primaryKey(),
+  fileName: text("file_name").notNull(),
+  fileSize: integer("file_size").notNull(),
+  fileType: text("file_type", { enum: ["image", "video", "audio", "document", "other"] }).notNull(),
+  mimeType: text("mime_type").notNull(),
+  filePath: text("file_path").notNull(),
+  title: text("title"),
+  description: text("description"),
+  collectionId: integer("collection_id").references(() => mediaCollections.id),
+  tags: text("tags").array(),
+  altText: text("alt_text"),
+  dimensions: json("dimensions").$type<{ width: number; height: number }>(),
+  duration: numeric("duration"),
+  uploadedBy: varchar("uploaded_by", { length: 255 }).references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+});
+
+// Media galleries table
+export const mediaGalleries = pgTable("media_galleries", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  mediaFileIds: integer("media_file_ids").array().notNull(),
+  createdBy: varchar("created_by", { length: 255 }).references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+});
+
+// We already have contentItems and contentHistory defined elsewhere in the schema
+
 // Data Audit Action Types
 export const auditActionEnum = pgEnum('audit_action', [
   'create',
@@ -1416,6 +1536,8 @@ export type InsertDataAutoFix = z.infer<typeof insertDataAutoFixSchema>;
 // ===================================================================
 
 // Content Items Relations
+// Commenting out contentItemsRelations and other related relations until we fix all schema issues
+/*
 export const contentItemsRelations = relations(contentItems, ({ one, many }) => ({
   // User who created the content
   creator: one(users, {
@@ -1512,11 +1634,14 @@ export const contentRelationshipsRelations = relations(contentRelationships, ({ 
     references: [users.id],
   }),
 }));
+*/
 
 // ===================================================================
 // Music-related Relations
 // ===================================================================
 
+// Commenting out these relationships until we fix all schema issues
+/*
 // Add relation definitions after all tables are defined to avoid reference errors
 export const tourDatesRelations = relations(tourDates, ({ }) => ({
   // No relations yet, can be expanded as needed
@@ -1532,6 +1657,7 @@ export const patronsRelations = relations(patrons, ({ one }) => ({
     references: [users.id],
   }),
 }));
+*/
 
 // ===================================================================
 // Admin Utilities Relations
@@ -1593,6 +1719,8 @@ export const dataAutoFixesRelations = relations(dataAutoFixes, ({ one }) => ({
   }),
 }));
 
+// Commenting out music relations temporarily
+/*
 export const tracksRelations = relations(tracks, ({ one }) => ({
   album: one(albums, {
     fields: [tracks.albumId],
@@ -1603,6 +1731,7 @@ export const tracksRelations = relations(tracks, ({ one }) => ({
 export const albumsRelations = relations(albums, ({ many }) => ({
   tracks: many(tracks),
 }));
+*/
 
 // ===================================================================
 // Theme System Insert Schemas and Types

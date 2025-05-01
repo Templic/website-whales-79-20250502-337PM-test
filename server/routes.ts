@@ -39,6 +39,7 @@ import { enhancedCsrfProtection } from './security/middleware/enhancedCsrfProtec
 import typescriptErrorRoutes from './routes/typescript-error-routes';
 import typescriptErrorSimpleRoutes from './routes/typescript-error-simple-routes';
 import adminRoutes from './admin-routes';
+import adminApiRoutes from './routes/admin';
 import aiThemeGeneratorRoutes from './routes/ai-theme-generator';
 import themeRoutes from './routes/theme-routes';
 import {
@@ -300,6 +301,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use admin utilities routes
   app.use('/api/admin/utilities', isAuthenticated, adminRoutes);
+  
+  // Register our new admin API routes
+  app.use('/api/admin', isAuthenticated, adminApiRoutes);
   
   // Use our comprehensive theme management routes
   app.use('/api/themes', themeRoutes);
