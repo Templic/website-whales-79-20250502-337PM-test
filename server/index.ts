@@ -25,6 +25,9 @@ import crypto from 'crypto';
 import csurf from 'csurf';
 import setupResponseCompression from './middleware/compression';
 import http2OptimizationMiddleware from './lib/http2-optimization';
+import { AdvancedAPIValidation } from './security/advanced/apiValidation_new';
+import { RASPCore } from './security/advanced/rasp/RASPCore';
+import { SecurityMonitor } from './security/advanced/monitoring/SecurityMonitor';
 
 // Start time tracking
 const startTime = Date.now();
@@ -63,7 +66,7 @@ async function initializeServer() {
     await initializeDatabase();
     const dbConnectTime = Date.now() - dbStartTime;
     log(`Database connected in ${dbConnectTime}ms`, 'server');
-    
+
     // Run database migrations
     try {
       log('Running database migrations...', 'server');
@@ -78,6 +81,19 @@ async function initializeServer() {
     // Basic middleware
     app.use(express.json({ limit: config.security.maxPayloadSize }));
     app.use(express.urlencoded({ extended: true, limit: config.security.maxPayloadSize }));
+
+    // Apply advanced security middleware
+    app.use(AdvancedAPIValidation.validateRequest);
+    SecurityMonitor.getInstance();
+
+    // Enable secure headers
+    app.use((req, res, next) => {
+      res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
+      res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+      res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+      res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+      next();
+    });
 
 
     // Security middleware
@@ -191,7 +207,7 @@ async function initializeServer() {
             return compression.filter(req, res);
           }
         }));
-        
+
         // Enable full compression after delay
         setTimeout(() => {
           log('Upgrading to full compression settings', 'server');
@@ -206,7 +222,7 @@ async function initializeServer() {
             includeVaryHeader: true
           }));
         }, 120000); // After 2 minutes
-        
+
         // Defer HTTP/2 optimizations
         setTimeout(() => {
           log('Enabling HTTP/2 optimizations', 'server');
@@ -236,7 +252,7 @@ async function initializeServer() {
           useBrotli: true,
           includeVaryHeader: true
         }));
-        
+
         // Apply HTTP/2 optimizations if available
         app.use(http2OptimizationMiddleware({
           staticPath: 'public',
@@ -366,7 +382,7 @@ async function initializeAllServices() {
   // Initialize security scans
   if (config.features.enableSecurityScans) {
     log('Initializing security scans...', 'server');
-    
+
     // Check if maximum security mode is enabled
     if (config.security?.scanMode === 'maximum' || config.features.enableDeepSecurityScanning) {
       log('Activating MAXIMUM security scan mode', 'security');
@@ -386,11 +402,11 @@ function logStartupPerformance(initTime: number) {
   console.log(`Startup priority: ${config.startupPriority}`);
   console.log(`Database optimization: ${config.features.enableDatabaseOptimization ? 'enabled' : 'disabled'}`);
   console.log(`Background services: ${config.features.enableBackgroundTasks ? 'enabled' : 'disabled'}`);
-  
+
   // Check if maximum security mode is enabled
   const maximumSecurity = config.security?.scanMode === 'maximum' || 
                           config.features.enableDeepSecurityScanning === true;
-  
+
   console.log(`Security scans: ${config.features.enableSecurityScans ? 'enabled' : 'disabled'}`);
   if (config.features.enableSecurityScans && maximumSecurity) {
     console.log(`Security mode: MAXIMUM (All shields up)`);
