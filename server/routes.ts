@@ -2284,10 +2284,10 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
 
   // Database security routes
   // Main database security routes (authenticated)
-  app.use('/api/admin/database-security', (req, res, next) => {
-    // Check authentication and admin role
-    if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized: Admin access required" });
+  app.use('/api/admin/database-security', isAuthenticated, (req, res, next) => {
+    // Check for admin role after authentication
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
     next();
   }, databaseSecurityRoutes);
@@ -2415,9 +2415,10 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
   });
 
   // Get security settings (admin only)
-  app.get('/api/security/settings', (req, res) => {
-    if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.get('/api/security/settings', isAuthenticated, (req, res) => {
+    // Check for admin role after authentication
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -2430,9 +2431,10 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
   });
 
   // Update a security setting (admin only)
-  app.post('/api/security/settings', (req, res) => {
-    if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.post('/api/security/settings', isAuthenticated, (req, res) => {
+    // Check for admin role after authentication
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -2474,11 +2476,11 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
 
   // Get security logs (admin only)
   // Enhanced Admin Content Management API
-  app.get("/api/admin/content", async (req, res) => {
+  app.get("/api/admin/content", isAuthenticated, async (req, res) => {
     try {
-      // Check if user is authenticated and has admin privileges
-      if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-        return res.status(403).json({ message: "Unauthorized" });
+      // Check for admin role after authentication
+      if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Admin role required" });
       }
 
       // Get status filter from query parameter
@@ -2513,11 +2515,11 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
   });
 
   // Get workflow history for a content item
-  app.get("/api/admin/content/:id/history", async (req, res) => {
+  app.get("/api/admin/content/:id/history", isAuthenticated, async (req, res) => {
     try {
-      // Check if user is authenticated and has admin privileges
-      if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-        return res.status(403).json({ message: "Unauthorized" });
+      // Check for admin role after authentication
+      if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Admin role required" });
       }
 
       const contentId = parseInt(req.params.id);
@@ -2544,11 +2546,11 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
   });
 
   // Update content workflow status
-  app.patch("/api/admin/content/:id/status", async (req, res) => {
+  app.patch("/api/admin/content/:id/status", isAuthenticated, async (req, res) => {
     try {
-      // Check if user is authenticated and has admin privileges
-      if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-        return res.status(403).json({ message: "Unauthorized" });
+      // Check for admin role after authentication
+      if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Admin role required" });
       }
 
       const contentId = parseInt(req.params.id);
@@ -2579,9 +2581,10 @@ app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => 
     }
   });
 
-  app.get('/api/security/logs', (req, res) => {
-    if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.get('/api/security/logs', isAuthenticated, (req, res) => {
+    // Check for admin role after authentication
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {

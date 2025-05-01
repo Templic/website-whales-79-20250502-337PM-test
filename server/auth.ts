@@ -77,6 +77,18 @@ export async function comparePasswords(supplied: string, stored: string) {
   }
 }
 
+// Middleware to check if user is authenticated
+export function isAuthenticated(
+  req: Express.Request, 
+  res: Express.Response, 
+  next: Express.NextFunction
+) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  return res.status(401).json({ message: "Authentication required" });
+}
+
 export function setupAuth(app: Express) {
   // Generate a random session secret if one is not provided in environment
   const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
