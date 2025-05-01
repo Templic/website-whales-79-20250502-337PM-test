@@ -1,157 +1,169 @@
 /**
  * Threat Protection Routes
  * 
- * API endpoints for threat detection, monitoring, and management:
- * - Retrieving threat statistics and details
- * - Managing threat detection rules and responses
- * - Executing manual responses to threats
+ * Express routes for security threat management:
+ * - Threat monitoring & detection
+ * - Security dashboard API
+ * - Threat response operations
  */
 
 import express from 'express';
-import { threatDetectionService, ThreatType, ThreatSeverity } from './ThreatDetectionService';
+import { threatDetectionService } from './ThreatDetectionService';
+import { threatDbService } from './ThreatDatabaseService';
 import { threatMonitoringService } from './ThreatMonitoringService';
+import { z } from 'zod';
 
-const router = express.Router();
-
-/**
- * Middleware to ensure request is authenticated and from an admin
- */
-function ensureAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
-  // In a production environment, this would use a proper auth check
-  // For simplification in this demo, we'll assume all requests are from admins
-  next();
-}
-
-/**
- * Get all detected threats with pagination
- * 
- * GET /api/security/threat/detected
- */
-router.get('/detected', ensureAdmin, (req, res) => {
-  try {
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-    const offset = req.query.offset ? parseInt(req.query.offset as string) : undefined;
-    
-    const threats = threatDetectionService.getDetectedThreats(limit, offset);
-    
-    res.json({
-      success: true,
-      threats,
-      total: threatDetectionService.getDetectedThreats().length,
-      active: threatDetectionService.getActiveThreats().length
-    });
-  } catch (error) {
-    console.error('Error fetching threats:', error);
-    res.status(500).json({ 
+// Middleware for admin-only routes
+const ensureAdmin = (req: any, res: any, next: any) => {
+  if (!req.isAuthenticated || !req.isAuthenticated() || 
+      (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+    return res.status(403).json({ 
       success: false,
-      error: 'Error fetching threat data'
+      error: 'Unauthorized access'
     });
   }
-});
+  next();
+};
+
+const router = express.Router();
 
 /**
  * Get active threats
  * 
  * GET /api/security/threat/active
  */
-router.get('/active', ensureAdmin, (req, res) => {
+router.get('/active', ensureAdmin, async (req, res) => {
   try {
-    const activeThreats = threatDetectionService.getActiveThreats();
+    // Get active threats from the threat detection service
+    const activeThreats = await threatDetectionService.getActiveThreats();
     
     res.json({
       success: true,
-      threats: activeThreats,
-      count: activeThreats.length
+      threats: activeThreats
     });
   } catch (error) {
     console.error('Error fetching active threats:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Error fetching active threat data'
+      error: 'Error fetching active threats'
     });
   }
 });
 
 /**
- * Get all threat detection rules
+ * Get recent threats
  * 
- * GET /api/security/threat/rules
+ * GET /api/security/threat/recent
  */
-router.get('/rules', ensureAdmin, (req, res) => {
+router.get('/recent', ensureAdmin, async (req, res) => {
   try {
-    // Get active rules
-    const activeRules = threatDetectionService.getActiveRules();
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
+    const recentThreats = await threatDetectionService.getRecentThreats(limit);
     
     res.json({
       success: true,
-      rules: activeRules,
-      count: activeRules.length
+      threats: recentThreats
     });
   } catch (error) {
-    console.error('Error fetching threat rules:', error);
+    console.error('Error fetching recent threats:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Error fetching threat rules'
+      error: 'Error fetching recent threats'
     });
   }
 });
 
 /**
- * Update a threat detection rule
+ * Get threat details
  * 
- * PUT /api/security/threat/rules/:ruleId
+ * GET /api/security/threat/:id
  */
-router.put('/rules/:ruleId', ensureAdmin, (req, res) => {
+router.get('/:id', ensureAdmin, async (req, res) => {
   try {
-    const ruleId = req.params.ruleId;
-    const updates = req.body;
+    const threatId = req.params.id;
+    const threat = await threatDbService.getThreatById(threatId);
     
-    // Validate updates
-    if (updates.checkFn) {
-      return res.status(400).json({
+    if (!threat) {
+      return res.status(404).json({
         success: false,
-        error: 'Cannot update rule check function through API'
+        error: 'Threat not found'
       });
     }
     
-    const success = threatDetectionService.updateRule(ruleId, updates);
-    
-    if (success) {
-      // Log action
-      console.log(`Threat detection rule ${ruleId} updated by user ${req.user?.id || 'unknown'}`);
-      
-      res.json({
-        success: true,
-        message: `Rule ${ruleId} updated successfully`
-      });
-    } else {
-      res.status(404).json({
-        success: false,
-        error: `Rule ${ruleId} not found`
-      });
-    }
+    res.json({
+      success: true,
+      threat
+    });
   } catch (error) {
-    console.error('Error updating threat rule:', error);
+    console.error(`Error fetching threat ${req.params.id}:`, error);
     res.status(500).json({ 
       success: false,
-      error: 'Error updating threat rule'
+      error: 'Error fetching threat details'
     });
   }
 });
 
 /**
- * Get all blocked IPs
+ * Resolve a threat
+ * 
+ * POST /api/security/threat/:id/resolve
+ */
+router.post('/:id/resolve', ensureAdmin, async (req, res) => {
+  try {
+    const threatId = req.params.id;
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'User ID required to resolve threats'
+      });
+    }
+    
+    const resolved = await threatDetectionService.resolveThreat(threatId, userId);
+    
+    if (!resolved) {
+      return res.status(404).json({
+        success: false,
+        error: 'Threat not found or could not be resolved'
+      });
+    }
+    
+    // Record event
+    threatMonitoringService.recordEvent(
+      'threat_resolved',
+      { threatId },
+      threatId,
+      undefined,
+      userId
+    );
+    
+    res.json({
+      success: true,
+      message: 'Threat resolved successfully'
+    });
+  } catch (error) {
+    console.error(`Error resolving threat ${req.params.id}:`, error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Error resolving threat'
+    });
+  }
+});
+
+/**
+ * Get blocked IPs
  * 
  * GET /api/security/threat/blocked-ips
  */
-router.get('/blocked-ips', ensureAdmin, (req, res) => {
+router.get('/blocked-ips', ensureAdmin, async (req, res) => {
   try {
-    const blockedIps = threatDetectionService.getBlockedIps();
+    const activeOnly = req.query.activeOnly !== 'false';
+    const blockedIps = await threatDbService.getBlockedIps(activeOnly);
     
     res.json({
       success: true,
-      ips: blockedIps,
-      count: blockedIps.length
+      blockedIps
     });
   } catch (error) {
     console.error('Error fetching blocked IPs:', error);
@@ -163,25 +175,40 @@ router.get('/blocked-ips', ensureAdmin, (req, res) => {
 });
 
 /**
- * Block an IP address
+ * Block an IP
  * 
  * POST /api/security/threat/block-ip
  */
-router.post('/block-ip', ensureAdmin, (req, res) => {
+router.post('/block-ip', ensureAdmin, async (req, res) => {
   try {
-    const { ip } = req.body;
+    const blockIpSchema = z.object({
+      ip: z.string().min(7).max(45),
+      reason: z.string().min(3).max(200),
+      duration: z.number().optional()
+    });
     
-    if (!ip) {
+    const validation = blockIpSchema.safeParse(req.body);
+    if (!validation.success) {
       return res.status(400).json({
         success: false,
-        error: 'IP address is required'
+        error: 'Invalid request data',
+        details: validation.error.format()
       });
     }
     
-    threatDetectionService.blockIp(ip);
+    const { ip, reason, duration } = validation.data;
+    const userId = req.user?.id;
     
-    // Log action
-    console.log(`IP address ${ip} manually blocked by user ${req.user?.id || 'unknown'}`);
+    await threatDetectionService.blockIp(ip, reason, duration, userId);
+    
+    // Record event
+    threatMonitoringService.recordEvent(
+      'ip_blocked',
+      { ip, reason, duration },
+      undefined,
+      undefined,
+      userId
+    );
     
     res.json({
       success: true,
@@ -197,25 +224,45 @@ router.post('/block-ip', ensureAdmin, (req, res) => {
 });
 
 /**
- * Unblock an IP address
+ * Unblock an IP
  * 
  * POST /api/security/threat/unblock-ip
  */
-router.post('/unblock-ip', ensureAdmin, (req, res) => {
+router.post('/unblock-ip', ensureAdmin, async (req, res) => {
   try {
-    const { ip } = req.body;
+    const unblockIpSchema = z.object({
+      ip: z.string().min(7).max(45)
+    });
     
-    if (!ip) {
+    const validation = unblockIpSchema.safeParse(req.body);
+    if (!validation.success) {
       return res.status(400).json({
         success: false,
-        error: 'IP address is required'
+        error: 'Invalid request data',
+        details: validation.error.format()
       });
     }
     
-    threatDetectionService.unblockIp(ip);
+    const { ip } = validation.data;
+    const userId = req.user?.id;
     
-    // Log action
-    console.log(`IP address ${ip} manually unblocked by user ${req.user?.id || 'unknown'}`);
+    const success = await threatDetectionService.unblockIp(ip);
+    
+    if (!success) {
+      return res.status(404).json({
+        success: false,
+        error: 'IP not found or already unblocked'
+      });
+    }
+    
+    // Record event
+    threatMonitoringService.recordEvent(
+      'ip_unblocked',
+      { ip },
+      undefined,
+      undefined,
+      userId
+    );
     
     res.json({
       success: true,
@@ -231,33 +278,213 @@ router.post('/unblock-ip', ensureAdmin, (req, res) => {
 });
 
 /**
- * Resolve a threat
+ * Get detection rules
  * 
- * POST /api/security/threat/resolve
+ * GET /api/security/threat/rules
  */
-router.post('/resolve/:threatId', ensureAdmin, (req, res) => {
+router.get('/rules', ensureAdmin, async (req, res) => {
   try {
-    const threatId = req.params.threatId;
-    const resolvedBy = req.user?.id?.toString() || req.user?.username || 'unknown';
+    const enabledOnly = req.query.enabledOnly === 'true';
     
-    const success = threatDetectionService.resolveThreat(threatId, resolvedBy);
+    const rules = await threatDbService.getRules(enabledOnly);
     
-    if (success) {
-      res.json({
-        success: true,
-        message: `Threat ${threatId} resolved successfully`
-      });
-    } else {
-      res.status(404).json({
-        success: false,
-        error: `Threat ${threatId} not found`
-      });
-    }
+    res.json({
+      success: true,
+      rules
+    });
   } catch (error) {
-    console.error('Error resolving threat:', error);
+    console.error('Error fetching detection rules:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Error resolving threat'
+      error: 'Error fetching detection rules'
+    });
+  }
+});
+
+/**
+ * Add or update a detection rule
+ * 
+ * POST /api/security/threat/rules
+ */
+router.post('/rules', ensureAdmin, async (req, res) => {
+  try {
+    const ruleSchema = z.object({
+      name: z.string().min(3).max(100),
+      description: z.string().min(10).max(500),
+      threatType: z.string().min(3).max(50),
+      severity: z.enum(['low', 'medium', 'high', 'critical']),
+      pattern: z.string().optional(),
+      threshold: z.number().int().optional(),
+      timeWindow: z.number().int().optional(),
+      autoBlock: z.boolean().default(false),
+      autoNotify: z.boolean().default(false),
+      enabled: z.boolean().default(true)
+    });
+    
+    const validation = ruleSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid rule data',
+        details: validation.error.format()
+      });
+    }
+    
+    const ruleData = validation.data;
+    
+    // Convert pattern string to RegExp if provided
+    let pattern: RegExp | undefined = undefined;
+    if (ruleData.pattern) {
+      try {
+        // Check if the pattern is already a RegExp string (starts and ends with /)
+        if (ruleData.pattern.startsWith('/') && ruleData.pattern.lastIndexOf('/') > 0) {
+          const lastSlashIndex = ruleData.pattern.lastIndexOf('/');
+          const patternBody = ruleData.pattern.substring(1, lastSlashIndex);
+          const flags = ruleData.pattern.substring(lastSlashIndex + 1);
+          pattern = new RegExp(patternBody, flags);
+        } else {
+          // Treat as a plain string pattern
+          pattern = new RegExp(ruleData.pattern);
+        }
+      } catch (e) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid regular expression pattern',
+          details: (e as Error).message
+        });
+      }
+    }
+    
+    // Add rule with parsed RegExp
+    const rule = await threatDetectionService.addOrUpdateRule({
+      name: ruleData.name,
+      description: ruleData.description,
+      threatType: ruleData.threatType,
+      severity: ruleData.severity,
+      pattern,
+      threshold: ruleData.threshold,
+      timeWindow: ruleData.timeWindow,
+      autoBlock: ruleData.autoBlock,
+      autoNotify: ruleData.autoNotify,
+      enabled: ruleData.enabled
+    });
+    
+    // Record event
+    threatMonitoringService.recordEvent(
+      'rule_created',
+      { ruleName: rule.name, ruleId: rule.id },
+      undefined,
+      rule.id,
+      req.user?.id
+    );
+    
+    res.json({
+      success: true,
+      rule,
+      message: 'Detection rule added/updated successfully'
+    });
+  } catch (error) {
+    console.error('Error adding/updating detection rule:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Error adding/updating detection rule'
+    });
+  }
+});
+
+/**
+ * Enable/disable a rule
+ * 
+ * POST /api/security/threat/rules/:id/toggle
+ */
+router.post('/rules/:id/toggle', ensureAdmin, async (req, res) => {
+  try {
+    const ruleId = req.params.id;
+    const userId = req.user?.id;
+    
+    const toggleSchema = z.object({
+      enabled: z.boolean()
+    });
+    
+    const validation = toggleSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid request data',
+        details: validation.error.format()
+      });
+    }
+    
+    const { enabled } = validation.data;
+    
+    const success = await threatDetectionService.setRuleEnabled(ruleId, enabled);
+    
+    if (!success) {
+      return res.status(404).json({
+        success: false,
+        error: 'Rule not found'
+      });
+    }
+    
+    // Record event
+    threatMonitoringService.recordEvent(
+      'rule_updated',
+      { ruleId, enabled },
+      undefined,
+      ruleId,
+      userId
+    );
+    
+    res.json({
+      success: true,
+      message: `Rule ${enabled ? 'enabled' : 'disabled'} successfully`
+    });
+  } catch (error) {
+    console.error(`Error toggling rule ${req.params.id}:`, error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Error toggling rule'
+    });
+  }
+});
+
+/**
+ * Delete a rule
+ * 
+ * DELETE /api/security/threat/rules/:id
+ */
+router.delete('/rules/:id', ensureAdmin, async (req, res) => {
+  try {
+    const ruleId = req.params.id;
+    const userId = req.user?.id;
+    
+    const success = await threatDetectionService.deleteRule(ruleId);
+    
+    if (!success) {
+      return res.status(404).json({
+        success: false,
+        error: 'Rule not found'
+      });
+    }
+    
+    // Record event
+    threatMonitoringService.recordEvent(
+      'rule_deleted',
+      { ruleId },
+      undefined,
+      ruleId,
+      userId
+    );
+    
+    res.json({
+      success: true,
+      message: 'Rule deleted successfully'
+    });
+  } catch (error) {
+    console.error(`Error deleting rule ${req.params.id}:`, error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Error deleting rule'
     });
   }
 });
@@ -307,150 +534,47 @@ router.get('/security-score', ensureAdmin, (req, res) => {
 });
 
 /**
- * Execute a response action on a threat
+ * Get security trends
  * 
- * POST /api/security/threat/execute-action
+ * GET /api/security/threat/trends
  */
-router.post('/execute-action', ensureAdmin, async (req, res) => {
+router.get('/trends', ensureAdmin, async (req, res) => {
   try {
-    const { actionId, threatId } = req.body;
+    const days = req.query.days ? parseInt(req.query.days as string) : 7;
+    const trends = await threatMonitoringService.getThreatTrends(days);
     
-    if (!actionId || !threatId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Action ID and threat ID are required'
-      });
-    }
-    
-    const success = await threatMonitoringService.executeAction(actionId, threatId);
-    
-    if (success) {
-      res.json({
-        success: true,
-        message: `Action ${actionId} executed successfully on threat ${threatId}`
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        error: `Failed to execute action ${actionId} on threat ${threatId}`
-      });
-    }
+    res.json({
+      success: true,
+      ...trends
+    });
   } catch (error) {
-    console.error('Error executing action:', error);
+    console.error('Error fetching threat trends:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Error executing action'
+      error: 'Error fetching threat trends'
     });
   }
 });
 
 /**
- * Get recommended actions for a threat
+ * Get recent security events
  * 
- * GET /api/security/threat/recommended-actions/:threatId
+ * GET /api/security/threat/events
  */
-router.get('/recommended-actions/:threatId', ensureAdmin, (req, res) => {
+router.get('/events', ensureAdmin, (req, res) => {
   try {
-    const threatId = req.params.threatId;
-    
-    // Find the threat
-    const threat = threatDetectionService.getDetectedThreats().find(t => t.id === threatId);
-    
-    if (!threat) {
-      return res.status(404).json({
-        success: false,
-        error: `Threat ${threatId} not found`
-      });
-    }
-    
-    // Get recommended actions
-    const actions = threatMonitoringService.getRecommendedActions(threat);
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+    const events = threatMonitoringService.getRecentEvents(limit);
     
     res.json({
       success: true,
-      threatId,
-      actions: actions.map(a => ({
-        id: a.id,
-        name: a.name,
-        description: a.description,
-        automatic: a.automatic
-      }))
+      events
     });
   } catch (error) {
-    console.error('Error fetching recommended actions:', error);
+    console.error('Error fetching security events:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Error fetching recommended actions'
-    });
-  }
-});
-
-/**
- * Enable/disable threat detection
- * 
- * POST /api/security/threat/toggle
- */
-router.post('/toggle', ensureAdmin, (req, res) => {
-  try {
-    const { enabled } = req.body;
-    
-    if (enabled === undefined) {
-      return res.status(400).json({
-        success: false,
-        error: 'Enabled status is required'
-      });
-    }
-    
-    threatDetectionService.setEnabled(!!enabled);
-    
-    // Log action
-    console.log(`Threat detection ${enabled ? 'enabled' : 'disabled'} by user ${req.user?.id || 'unknown'}`);
-    
-    res.json({
-      success: true,
-      message: `Threat detection ${enabled ? 'enabled' : 'disabled'}`,
-      status: !!enabled
-    });
-  } catch (error) {
-    console.error('Error toggling threat detection:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Error toggling threat detection'
-    });
-  }
-});
-
-/**
- * Enable/disable ML-based anomaly detection
- * 
- * POST /api/security/threat/toggle-ml
- */
-router.post('/toggle-ml', ensureAdmin, (req, res) => {
-  try {
-    const { enabled } = req.body;
-    
-    if (enabled === undefined) {
-      return res.status(400).json({
-        success: false,
-        error: 'Enabled status is required'
-      });
-    }
-    
-    threatDetectionService.setMlDetectionEnabled(!!enabled);
-    
-    // Log action
-    console.log(`ML-based anomaly detection ${enabled ? 'enabled' : 'disabled'} by user ${req.user?.id || 'unknown'}`);
-    
-    res.json({
-      success: true,
-      message: `ML-based anomaly detection ${enabled ? 'enabled' : 'disabled'}`,
-      status: !!enabled
-    });
-  } catch (error) {
-    console.error('Error toggling ML detection:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Error toggling ML detection'
+      error: 'Error fetching security events'
     });
   }
 });

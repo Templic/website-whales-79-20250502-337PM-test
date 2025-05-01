@@ -1285,6 +1285,56 @@ export const securityScans = pgTable("security_scans", {
   createdAt: timestamp("created_at").notNull().defaultNow()
 });
 
+// Security threats table
+export const securityThreats = pgTable("security_threats", {
+  id: serial("id").primaryKey(),
+  threatId: text("threat_id").notNull().unique(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  threatType: text("threat_type").notNull(),
+  severity: text("severity", { enum: ["low", "medium", "high", "critical"] }).notNull(),
+  description: text("description").notNull(),
+  sourceIp: text("source_ip").notNull(),
+  userId: varchar("user_id", { length: 255 }).references(() => users.id),
+  requestPath: text("request_path"),
+  requestMethod: text("request_method"),
+  evidence: json("evidence"),
+  ruleId: text("rule_id").notNull(),
+  actionTaken: json("action_taken"),
+  resolved: boolean("resolved").default(false),
+  resolvedBy: varchar("resolved_by", { length: 255 }).references(() => users.id),
+  resolvedAt: timestamp("resolved_at"),
+  isArchived: boolean("is_archived").default(false)
+});
+
+// Detection rules table
+export const detectionRules = pgTable("detection_rules", {
+  id: serial("id").primaryKey(),
+  ruleId: text("rule_id").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  threatType: text("threat_type").notNull(),
+  severity: text("severity", { enum: ["low", "medium", "high", "critical"] }).notNull(),
+  pattern: text("pattern"),
+  threshold: integer("threshold"),
+  timeWindow: integer("time_window"),
+  autoBlock: boolean("auto_block").default(false),
+  autoNotify: boolean("auto_notify").default(false),
+  enabled: boolean("enabled").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
+// Blocked IPs table
+export const blockedIps = pgTable("blocked_ips", {
+  id: serial("id").primaryKey(),
+  ip: text("ip").notNull().unique(),
+  blockedAt: timestamp("blocked_at").notNull().defaultNow(),
+  blockedBy: varchar("blocked_by", { length: 255 }).references(() => users.id),
+  reason: text("reason"),
+  expiresAt: timestamp("expires_at"),
+  isActive: boolean("is_active").default(true)
+});
+
 // Media collections table
 export const mediaCollections = pgTable("media_collections", {
   id: serial("id").primaryKey(),
@@ -1533,6 +1583,37 @@ export type InsertSchemaMigration = z.infer<typeof insertSchemaMigrationSchema>;
 export type DataAutoFix = typeof dataAutoFixes.$inferSelect;
 export type InsertDataAutoFix = z.infer<typeof insertDataAutoFixSchema>;
 
+// Create insert schemas for security tables
+export const insertSecurityThreatSchema = createInsertSchema(securityThreats).omit({
+  id: true,
+  timestamp: true,
+  resolved: true,
+  resolvedBy: true,
+  resolvedAt: true,
+  isArchived: true
+});
+
+export const insertDetectionRuleSchema = createInsertSchema(detectionRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertBlockedIpSchema = createInsertSchema(blockedIps).omit({
+  id: true,
+  blockedAt: true
+});
+
+// Type definitions for security tables
+export type SecurityThreat = typeof securityThreats.$inferSelect;
+export type InsertSecurityThreat = z.infer<typeof insertSecurityThreatSchema>;
+
+export type DetectionRule = typeof detectionRules.$inferSelect;
+export type InsertDetectionRule = z.infer<typeof insertDetectionRuleSchema>;
+
+export type BlockedIp = typeof blockedIps.$inferSelect;
+export type InsertBlockedIp = z.infer<typeof insertBlockedIpSchema>;
+
 // ===================================================================
 // Content Management Relations
 // ===================================================================
@@ -1716,6 +1797,25 @@ export const schemaMigrationsRelations = relations(schemaMigrations, ({ one }) =
 export const dataAutoFixesRelations = relations(dataAutoFixes, ({ one }) => ({
   creator: one(users, {
     fields: [dataAutoFixes.createdBy],
+    references: [users.id],
+  }),
+}));
+
+// Security Relations
+export const securityThreatsRelations = relations(securityThreats, ({ one }) => ({
+  user: one(users, {
+    fields: [securityThreats.userId],
+    references: [users.id],
+  }),
+  resolver: one(users, {
+    fields: [securityThreats.resolvedBy],
+    references: [users.id],
+  }),
+}));
+
+export const blockedIpsRelations = relations(blockedIps, ({ one }) => ({
+  blocker: one(users, {
+    fields: [blockedIps.blockedBy],
     references: [users.id],
   }),
 }));
