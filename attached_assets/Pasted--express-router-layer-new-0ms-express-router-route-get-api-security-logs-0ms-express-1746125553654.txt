@@ -1,0 +1,95 @@
+  express:router:layer new '/' +0ms
+  express:router:route get '/api/security/logs' +0ms
+  express:router:layer new '/' +0ms
+6:51:39 PM [server] Setting up Vite in development mode...
+  express:router use '/' <anonymous> +48ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/quantum/generate-keys' +0ms
+  express:router:layer new '/quantum/generate-keys' +0ms
+  express:router:route post '/quantum/generate-keys' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/quantum/encrypt' +0ms
+  express:router:layer new '/quantum/encrypt' +0ms
+  express:router:route post '/quantum/encrypt' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/quantum/decrypt' +0ms
+  express:router:layer new '/quantum/decrypt' +0ms
+  express:router:route post '/quantum/decrypt' +0ms
+  express:router:layer new '/' +0ms
+[SECURITY] WARNING: Test API routes enabled - these bypass CSRF protection
+  express:router use '/api/test-only' <anonymous> +0ms
+  express:router:layer new '/api/test-only' +0ms
+  express:router use '/api/test-only' router +1ms
+  express:router:layer new '/api/test-only' +0ms
+  express:router use '/' app +7ms
+  express:router:layer new '/' +0ms
+  express:router use '*' <anonymous> +0ms
+  express:router:layer new '*' +0ms
+Server initialization complete in 2402ms
+=== Server Startup Performance ===
+Total startup time: 2402ms
+Startup priority: full
+Database optimization: enabled
+Background services: enabled
+Security scans: enabled
+Security mode: MAXIMUM (All shields up)
+Non-critical services deferred: no
+=================================
+6:51:39 PM [server] Initializing all services immediately (non-deferred mode)
+6:51:39 PM [server] Initializing database optimization...
+6:51:39 PM [db-maintenance] Initial database maintenance run scheduled
+6:51:39 PM [db-maintenance] Starting intelligent database maintenance...
+6:51:39 PM [server] Server successfully listening on port 5000
+6:51:39 PM [express] Server listening on port 5000
+6:51:40 PM [db-maintenance] Found 0 tables needing VACUUM
+6:51:40 PM [db-maintenance] Found 0 tables needing ANALYZE
+6:51:40 PM [db-maintenance] Database maintenance completed in 397ms
+6:51:40 PM [db-maintenance] No tables required maintenance at this time
+6:51:40 PM [db-maintenance] Scheduled regular database maintenance every 24 hours
+6:51:40 PM [server] Initializing background services...
+6:51:40 PM [background] Initializing background services...
+6:51:40 PM [background] Initializing database maintenance service...
+6:51:40 PM [db-maintenance] Scheduled regular database maintenance every 24 hours
+6:51:40 PM [background] Database maintenance service initialized successfully
+6:51:40 PM [background] Initializing security scanning service...
+6:51:40 PM [background] Security scanning service initialized with 12 hour interval
+6:51:40 PM [background] Initializing content scheduler service...
+[Background] Starting content scheduler (interval: 5 minute(s))
+[2025-05-01T18:51:40.245Z] [INFO] Running content scheduler
+[2025-05-01T18:51:40.245Z] [INFO] Processing recurring schedules
+6:51:40 PM [background] Content scheduler service initialized with 5 minute interval
+6:51:40 PM [background] Initializing data cleanup service...
+6:51:40 PM [background] Data cleanup service initialized successfully
+6:51:40 PM [background] Initializing metrics collection service...
+6:51:40 PM [background] Metrics collection service initialized successfully
+6:51:40 PM [background] Active background services: Database Maintenance, Security Scanning, Metrics Collection, Data Cleanup, Content Scheduler
+6:51:40 PM [server] Initializing security scans...
+6:51:40 PM [security] Activating MAXIMUM security scan mode
+[SECURITY] Enabling maximum security mode
+[2025-05-01T18:51:40.247Z] [INFO] [Security:system] Security features updated {"features":{"quantumResistance":true,"mlAnomalyDetection":true,"blockchainLogging":true,"mfa":true,"csrf":true,"inputValidation":true,"apiSecurity":true,"realTimeMonitoring":true,"bruteForceProtection":true,"rateLimiting":true,"deepScanning":true}}
+[IMMUTABLE-LOGS] Genesis block created
+[IMMUTABLE-LOGS] Immutable security logs initialized
+[2025-05-01T18:51:40.248Z] [INFO] [SECURITY-EVENT] system_startup {"eventId":"5527baed-89bb-4794-8c1b-94169fd0e1aa","type":"system_startup","source":"security_logger","severity":"low"}
+[2025-05-01T18:51:40.248Z] [INFO] [SECURITY-EVENT] system_startup {"eventId":"2c99ab70-86e3-4f5b-972e-bec1b2bc24c4","type":"system_startup","source":"security_logger","severity":"low"}
+[2025-05-01T18:51:40.248Z] [INFO] [Security:system] Security metrics collection started {"intervalMs":30000}
+[2025-05-01T18:51:40.248Z] [INFO] [SECURITY-EVENT] system_startup {"eventId":"3e3d43ca-e295-4c5f-8e64-67f2db83cd8f","type":"system_startup","source":"security_logger","severity":"low"}
+[2025-05-01T18:51:40.249Z] [INFO] [Security:system] Security events collector initialized {"initialEventsCount":8}
+[2025-05-01T18:51:40.249Z] [INFO] [SECURITY-EVENT] system_startup {"eventId":"f029f11d-f5de-4e72-aebc-34c709711d3a","type":"system_startup","source":"security_logger","severity":"low"}
+[2025-05-01T18:51:40.249Z] [INFO] [Security:system] Security fabric initialized in maximum security mode {}
+[2025-05-01T18:51:40.249Z] [INFO] [SECURITY-EVENT] system_startup {"eventId":"b63fcc6f-953d-4e46-8217-aa5d23f32be1","type":"system_startup","source":"security_logger","severity":"low"}
+[2025-05-01T18:51:40.249Z] [INFO] [Security:system] Maximum security mode activated {"features":{"quantumResistance":true,"mlAnomalyDetection":true,"blockchainLogging":true,"mfa":true,"csrf":true,"inputValidation":true,"apiSecurity":true,"realTimeMonitoring":true,"bruteForceProtection":true,"rateLimiting":true,"deepScanning":true}}
+[2025-05-01T18:51:40.249Z] [INFO] [SECURITY-EVENT] system_startup {"eventId":"3b764d6e-5d34-4601-9a17-7fe4152d6bcd","type":"system_startup","source":"security_logger","severity":"low"}
+[2025-05-01T18:51:40.307Z] [INFO] Found 12 items with recurring schedules to process
+[2025-05-01T18:51:40.307Z] [INFO] Processed 0 recurring schedules
+[2025-05-01T18:51:40.338Z] [INFO] Found 0 items to publish
+[2025-05-01T18:51:40.360Z] [INFO] Found 0 items to archive due to expiration
+[2025-05-01T18:51:40.381Z] [INFO] Found 0 items expiring soon
+[2025-05-01T18:51:40.382Z] [INFO] Content scheduler completed: Published 0, Failed 0, Archived 0, Archived Failed 0, Retry Attempts 0, Retry Successes 0
+[Background] Initial content scheduling run complete: 0 published, 0 archived
+  express:router dispatching GET / +17s
+  express:router query  : / +1ms
+  express:router expressInit  : / +1ms
+  express:router cookieParser  : / +0ms
+  express:router jsonParser  : / +0ms
+  express:router urlencodedParser  : / +1ms
+  express:router validateRequest  : / +0ms
