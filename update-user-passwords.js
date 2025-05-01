@@ -1,7 +1,8 @@
 // One-time script to update passwords for existing users
-const crypto = require('crypto');
-const { promisify } = require('util');
-const { Pool } = require('pg');
+import crypto from 'crypto';
+import { promisify } from 'util';
+import pg from 'pg';
+const { Pool } = pg;
 
 // Hash password utility
 async function hashPassword(password) {

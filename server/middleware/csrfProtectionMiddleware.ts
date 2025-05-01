@@ -31,7 +31,12 @@ export function setupCSRFProtection(app: Express): void {
       '/api/register',
       '/api/metrics',
       '/api/test/csrf-exempt',
-      '/api/webhook'
+      '/api/webhook',
+      // JWT authentication routes
+      '/api/jwt/login',
+      '/api/jwt/register',
+      '/api/jwt/refresh',
+      '/api/jwt/logout'
     ]
   });
 
@@ -128,7 +133,11 @@ export function setupCSRFProtection(app: Express): void {
         '/api/register',
         '/api/metrics',
         '/api/test/csrf-exempt',
-        '/api/webhook'
+        '/api/webhook',
+        '/api/jwt/login',
+        '/api/jwt/register',
+        '/api/jwt/refresh',
+        '/api/jwt/logout'
       ]
     }
   });

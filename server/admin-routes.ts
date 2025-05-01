@@ -14,14 +14,12 @@ import { adminStorage } from './DatabaseStorage';
 
 const router = express.Router();
 
-// Authentication middleware
+// Import centralized authentication utilities
+import { hasAdminPrivileges } from './utils/auth-utils';
+
+// Authentication middleware using centralized auth utilities
 const requireAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-  
-  // @ts-ignore: User role property should exist
-  if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+  if (!hasAdminPrivileges(req)) {
     return res.status(403).json({ error: 'Admin role required' });
   }
   
