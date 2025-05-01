@@ -798,12 +798,34 @@ export function SimpleOctagon({
   const formatParagraph = (paragraphElement: React.ReactElement) => {
     const textContent = (paragraphElement.props as any).children || '';
     
-    if (typeof textContent === 'string' && textContent.length > 20) {
-      const words = textContent.split(' ');
+    if (typeof textContent === 'string') {
+      // Truncate very long text to a reasonable abstract length with ellipsis
+      let processedText = textContent;
+      if (textContent.length > 180) {
+        // Find the last complete sentence end within first 180 chars
+        const cutoffPoint = Math.max(
+          processedText.lastIndexOf('.', 180),
+          processedText.lastIndexOf('!', 180),
+          processedText.lastIndexOf('?', 180)
+        );
+        
+        // If we found a proper sentence end, use it, otherwise just cut at 160 chars
+        if (cutoffPoint > 100) {
+          processedText = processedText.substring(0, cutoffPoint + 1) + '...';
+        } else {
+          // Find the last space within first 160 chars to avoid cutting words
+          const lastSpace = processedText.lastIndexOf(' ', 160);
+          processedText = processedText.substring(0, lastSpace) + '...';
+        }
+      }
+      
+      const words = processedText.split(' ');
       const totalWords = words.length;
       
-      // Aim for 3-4 lines of text for better visual appearance in octagon
-      const numLines = Math.min(4, Math.max(2, Math.ceil(totalWords / 4)));
+      // Adaptive line formatting based on content length
+      const numLines = Math.min(5, Math.max(2, Math.ceil(totalWords / 5)));
+      
+      // Distribute words more evenly between lines
       const wordsPerLine = Math.ceil(totalWords / numLines);
       
       const lines = [];
@@ -816,13 +838,13 @@ export function SimpleOctagon({
       }
       
       return (
-        <div key={`octagon-content-split`} className="text-center">
+        <div key={`octagon-content-split`} className="text-center w-full">
           {lines.map((line, lineIndex) => (
             <div 
               key={`line-${lineIndex}`}
               className={cn(
                 fontSize.content,
-                'leading-tight mx-auto',
+                'leading-tight mx-auto text-sm',
                 lineIndex < lines.length - 1 ? 'mb-0' : 'mb-1'
               )}
             >
@@ -833,9 +855,9 @@ export function SimpleOctagon({
       );
     }
     
-    // For short text, return as is with proper styling
+    // For non-string content, return as is with proper styling
     return React.cloneElement(paragraphElement, {
-      className: cn(fontSize.content, 'm-0 leading-tight text-center', (paragraphElement.props as any).className || '')
+      className: cn(fontSize.content, 'm-0 leading-tight text-center text-sm', (paragraphElement.props as any).className || '')
     });
   };
 
@@ -875,11 +897,11 @@ export function SimpleOctagon({
         </svg>
       </div>
       
-      {/* Content Container - improved responsiveness and adaptive spacing */}
-      <div className="absolute inset-0 flex flex-col justify-center items-center p-[10%] sm:p-[12%] md:p-[10%] lg:p-[8%]">
+      {/* Content Container - with clear separation for metadata and button */}
+      <div className="absolute inset-0 flex flex-col justify-start items-center pt-[8%] pb-[4%] px-[6%]">
         {/* Title with improved formatting and responsive sizing */}
         {heading && (
-          <div className="text-center w-full mb-1">
+          <div className="text-center w-full mb-1 mt-2">
             {React.isValidElement(heading) && 
              typeof heading.type === 'string' && 
              ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
@@ -888,15 +910,15 @@ export function SimpleOctagon({
           </div>
         )}
         
-        {/* Responsive divider with adaptive width */}
+        {/* Responsive divider */}
         <ShapeDivider 
-          width={containerRef.current?.offsetWidth < 200 ? "40%" : "60%"} 
+          width="50%" 
           opacity={30} 
           margin="0.1rem 0" 
         />
         
-        {/* Content with improved responsive scaling and adaptive constraints */}
-        <div className="w-full max-h-[50%] sm:max-h-[55%] md:max-h-[60%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center px-1 py-0.5 sm:px-2 md:px-3">
+        {/* Content area with fixed height and scrolling */}
+        <div className="w-full h-[35%] flex-shrink-0 flex flex-col justify-start items-center overflow-y-auto text-center px-2 py-1">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return formatParagraph(item as React.ReactElement);
@@ -905,43 +927,54 @@ export function SimpleOctagon({
           })}
         </div>
         
-        {/* Button with improved responsiveness and better mobile adaptation */}
-        {button && (
-          <div className="mt-auto mb-2 w-full flex justify-center items-center">
-            {React.isValidElement(button) && button.type === 'button' ? 
-              React.cloneElement(button as React.ReactElement, {
-                className: cn(
-                  fontSize.button, 
-                  'text-center whitespace-normal break-words hyphens-auto', 
-                  (button.props as any).className || ''
-                ),
-                style: {
-                  // Improved button styling for better visibility and responsiveness
-                  borderRadius: "0.4rem",
-                  padding: "0.25rem 0.75rem",
-                  background: (button.props as any).className?.includes('bg-') 
-                    ? undefined 
-                    : "rgba(0, 100, 255, 0.8)",
-                  border: "1px solid rgba(255, 255, 255, 0.5)",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  width: "fit-content",
-                  maxWidth: "85%",
-                  minWidth: containerRef.current?.offsetWidth < 200 ? "60%" : "4rem",
-                  minHeight: "1.8rem",
-                  boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
-                  fontSize: containerRef.current?.offsetWidth < 200 ? "0.7rem" : "0.75rem",
-                  fontWeight: "bold",
-                  wordBreak: "break-word",
-                  lineHeight: "1.1",
-                  // Custom transform to ensure button fits within octagon shape
-                  transform: `scale(${containerRef.current?.offsetWidth < 180 ? 0.9 : 1})`
-                }
-              }) : button
-            }
+        {/* Clear space for metadata */}
+        <div className="w-full py-3 flex-grow flex flex-col justify-end items-center">
+          {/* Semi-transparent background for metadata to ensure it's readable */}
+          <div className="w-full py-1 px-2 mb-2 bg-black bg-opacity-40 rounded">
+            {/* This area is for any metadata like publication date */}
+            {childArray.find(child => 
+              React.isValidElement(child) && 
+              (child.props as any)?.className?.includes('published')
+            )}
           </div>
-        )}
+          
+          {/* Button with improved positioning and visibility */}
+          {button && (
+            <div className="mt-1 mb-2 w-full flex justify-center items-center">
+              {React.isValidElement(button) && button.type === 'button' ? 
+                React.cloneElement(button as React.ReactElement, {
+                  className: cn(
+                    fontSize.button, 
+                    'text-center whitespace-normal', 
+                    (button.props as any).className || ''
+                  ),
+                  style: {
+                    borderRadius: "0.25rem",
+                    padding: "0.35rem 1rem",
+                    background: (button.props as any).className?.includes('bg-') 
+                      ? undefined 
+                      : "rgba(0, 150, 200, 0.8)",
+                    border: "1px solid rgba(255, 255, 255, 0.5)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    width: "auto",
+                    minWidth: "5rem",
+                    maxWidth: "80%", 
+                    minHeight: "2rem",
+                    boxShadow: "0 0 8px rgba(0, 150, 200, 0.5)",
+                    fontSize: "0.8rem",
+                    fontWeight: "bold",
+                    letterSpacing: "0.02em",
+                    // Position at bottom of card
+                    marginTop: "auto",
+                    zIndex: 5
+                  }
+                }) : button
+              }
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
