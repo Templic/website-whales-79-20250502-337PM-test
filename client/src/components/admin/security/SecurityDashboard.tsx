@@ -1,487 +1,850 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState, useEffect } from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription, 
+  CardFooter 
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  Shield, 
+  ShieldAlert, 
+  ShieldCheck, 
+  AlertTriangle, 
+  Activity, 
+  Clock, 
+  CheckCircle, 
+  XCircle,
+  RefreshCw,
+  BarChart3,
+  UserCog,
+  Settings,
+  Lock
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { Shield, AlertTriangle, Activity, Clock, Search, RefreshCcw, Database, Lock } from 'lucide-react';
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { apiRequest } from "@/lib/queryClient";
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Define security event interface based on backend structure
-interface SecurityEvent {
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  type: string;
-  details: string;
-  timestamp: string;
-  metadata?: Record<string, any>;
+// Define security metrics interface
+interface SecurityMetrics {
+  totalRequests: number;
+  blockedRequests: number;
+  threatDetections: number;
+  activeThreats: number;
+  vulnerabilitiesDetected: number;
+  securityScore: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
 }
 
-// Define block interface
-interface Block {
-  index: number;
-  timestamp: string;
-  data: SecurityEvent[];
-  hash: string;
-  previousHash: string;
+// Define security events interface
+interface SecurityEvents {
+  total: number;
+  byCategory: Record<string, number>;
+  bySeverity: Record<string, number>;
+  recentEvents: Array<{
+    id: string;
+    category: string;
+    severity: string;
+    message: string;
+    timestamp: number;
+  }>;
 }
 
-const SecurityDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>("overview");
-  const [severityFilter, setSeverityFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [timeRange, setTimeRange] = useState<string>("24h");
+// Define system health interface
+interface SystemHealth {
+  cpuUsage: number;
+  memoryUsage: {
+    rss: number;
+    heapTotal: number;
+    heapUsed: number;
+    external: number;
+  };
+  uptime: number;
+  activeSessions: number;
+  apiResponseTime: number;
+  databaseConnectionStatus: 'healthy' | 'degraded' | 'failed';
+}
 
-  const { data: securityEvents, isLoading, isError, refetch } = useQuery<Block[]>({ 
-    queryKey: ['/api/security/blockchain/blocks'],
-    retry: 1,
-    refetchInterval: 30000, // Refresh every 30 seconds
+// Define vulnerability assessment interface
+interface VulnerabilityAssessment {
+  lastScanTime: number;
+  vulnerabilitiesFound: number;
+  criticalVulnerabilities: number;
+  highVulnerabilities: number;
+  mediumVulnerabilities: number;
+  lowVulnerabilities: number;
+  categories: Record<string, number>;
+}
+
+// Define dashboard data interface
+interface DashboardData {
+  metrics: SecurityMetrics;
+  events: SecurityEvents;
+  systemHealth: SystemHealth;
+  vulnerabilities: VulnerabilityAssessment;
+  runtimeSecurity: any;
+  auditActivity: {
+    totalEvents: number;
+    authenticationEvents: number;
+    dataAccessEvents: number;
+    adminActionEvents: number;
+    byActionType: Record<string, number>;
+  };
+}
+
+export default function SecurityDashboard() {
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('overview');
+  
+  // Fetch security dashboard data
+  const { 
+    data: dashboardData,
+    isLoading,
+    isError,
+    error,
+    refetch 
+  } = useQuery<DashboardData>({
+    queryKey: ['/api/security/admin/dashboard'],
+    refetchInterval: 30000 // Refresh every 30 seconds
   });
-
-  // Extract all events from blocks for display
-  const allEvents = React.useMemo(() => {
-    if (!securityEvents) return [];
-    
-    return securityEvents.flatMap(block => 
-      block.data.map(event => ({
-        ...event,
-        blockIndex: block.index,
-        blockHash: block.hash
-      }))
-    ).sort((a, b) => 
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
-  }, [securityEvents]);
-
-  // Filter events based on current filters
-  const filteredEvents = React.useMemo(() => {
-    return allEvents.filter(event => {
-      // Filter by severity
-      if (severityFilter !== "all" && event.severity !== severityFilter) {
-        return false;
-      }
-      
-      // Filter by type
-      if (typeFilter !== "all" && !event.type.includes(typeFilter)) {
-        return false;
-      }
-      
-      // Filter by time range
-      if (timeRange !== "all") {
-        const eventTime = new Date(event.timestamp).getTime();
-        const now = new Date().getTime();
-        
-        switch (timeRange) {
-          case "1h":
-            return now - eventTime <= 3600000; // 1 hour
-          case "24h":
-            return now - eventTime <= 86400000; // 24 hours
-          case "7d":
-            return now - eventTime <= 604800000; // 7 days
-          case "30d":
-            return now - eventTime <= 2592000000; // 30 days
-          default:
-            return true;
-        }
-      }
-      
-      return true;
-    });
-  }, [allEvents, severityFilter, typeFilter, timeRange]);
-
-  // Get security stats
-  const getSecurityStats = () => {
-    if (!allEvents.length) return { critical: 0, high: 0, medium: 0, low: 0, total: 0 };
-    
-    return {
-      critical: allEvents.filter(e => e.severity === 'critical').length,
-      high: allEvents.filter(e => e.severity === 'high').length,
-      medium: allEvents.filter(e => e.severity === 'medium').length,
-      low: allEvents.filter(e => e.severity === 'low').length,
-      total: allEvents.length
-    };
+  
+  // Handle dashboard data fetch error
+  useEffect(() => {
+    if (isError) {
+      toast({
+        title: 'Error fetching security data',
+        description: `${error}`,
+        variant: 'destructive'
+      });
+    }
+  }, [isError, error, toast]);
+  
+  // Format timestamp
+  const formatTimestamp = (timestamp: number) => {
+    return new Date(timestamp).toLocaleString();
   };
-
-  const stats = getSecurityStats();
-
-  // Function to get severity badge color
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return 'bg-red-700 hover:bg-red-800';
-      case 'high':
-        return 'bg-orange-600 hover:bg-orange-700';
-      case 'medium':
-        return 'bg-yellow-500 hover:bg-yellow-600';
+  
+  // Format number in bytes to a human-readable format
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+  
+  // Format uptime to a human-readable format
+  const formatUptime = (seconds: number) => {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    return `${days}d ${hours}h ${minutes}m`;
+  };
+  
+  // Get risk level color
+  const getRiskLevelColor = (level: string) => {
+    switch (level) {
       case 'low':
-        return 'bg-blue-600 hover:bg-blue-700';
+        return 'text-green-500';
+      case 'medium':
+        return 'text-yellow-500';
+      case 'high':
+        return 'text-orange-500';
+      case 'critical':
+        return 'text-red-500';
       default:
-        return 'bg-gray-600 hover:bg-gray-700';
+        return 'text-gray-500';
     }
   };
-
-  const handleForceSecurityScan = async () => {
-    try {
-      await apiRequest('POST', '/api/security/scan/force', { level: 'deep' });
-      // Refresh the data after a short delay to allow scan to start
-      setTimeout(() => refetch(), 2000);
-    } catch (error) {
-      console.error('Failed to initiate security scan:', error);
+  
+  // Get severity icon
+  const getSeverityIcon = (severity: string) => {
+    switch (severity.toLowerCase()) {
+      case 'high':
+        return <AlertTriangle className="text-red-500" />;
+      case 'medium':
+        return <AlertTriangle className="text-yellow-500" />;
+      case 'low':
+        return <AlertTriangle className="text-green-500" />;
+      default:
+        return <AlertTriangle className="text-gray-500" />;
     }
   };
-
-  if (isError) {
+  
+  // Render loading skeleton
+  if (isLoading) {
     return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>
-          Failed to load security events. Please try again or contact system administrator.
-        </AlertDescription>
-        <Button onClick={() => refetch()} size="sm" className="mt-2">
-          <RefreshCcw className="mr-2 h-4 w-4" /> Retry
-        </Button>
-      </Alert>
-    );
-  }
-
-  return (
-    <div className="container mx-auto p-4 space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold flex items-center">
-          <Shield className="mr-2 h-6 w-6" /> Security Operations Dashboard
-        </h1>
-        
-        <div className="flex space-x-2">
-          <Button onClick={() => refetch()} variant="outline" size="sm">
-            <RefreshCcw className="mr-2 h-4 w-4" /> Refresh
-          </Button>
-          
-          <Button onClick={handleForceSecurityScan} variant="default" size="sm">
-            <Shield className="mr-2 h-4 w-4" /> Force Security Scan
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-bold">Security Dashboard</h2>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
           </Button>
         </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardHeader>
+                <CardTitle>
+                  <Skeleton className="h-4 w-1/2" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-4 w-2/3" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <Skeleton className="h-6 w-1/3" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i}>
+                  <Skeleton className="h-14 w-full" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
-
+    );
+  }
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold">Security Dashboard</h2>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+      
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="events">Security Events</TabsTrigger>
-          <TabsTrigger value="blockchain">Blockchain Logs</TabsTrigger>
+        <TabsList className="grid grid-cols-5 mb-4">
+          <TabsTrigger value="overview">
+            <Shield className="h-4 w-4 mr-2" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="events">
+            <Activity className="h-4 w-4 mr-2" />
+            Events
+          </TabsTrigger>
+          <TabsTrigger value="vulnerabilities">
+            <ShieldAlert className="h-4 w-4 mr-2" />
+            Vulnerabilities
+          </TabsTrigger>
+          <TabsTrigger value="system">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            System Health
+          </TabsTrigger>
+          <TabsTrigger value="audit">
+            <Clock className="h-4 w-4 mr-2" />
+            Audit Activity
+          </TabsTrigger>
         </TabsList>
         
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Events</CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-20" /> : stats.total}</div>
-                <p className="text-xs text-muted-foreground">Security events logged</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-red-50 dark:bg-red-900/20">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Critical Issues</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-red-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.critical}</div>
-                <p className="text-xs text-muted-foreground">Require immediate attention</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-orange-50 dark:bg-orange-900/20">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">High Severity</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-orange-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : stats.high}</div>
-                <p className="text-xs text-muted-foreground">Require prompt action</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-blue-50 dark:bg-blue-900/20">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Latest Block</CardTitle>
-                <Database className="h-4 w-4 text-blue-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {isLoading ? <Skeleton className="h-8 w-16" /> : (securityEvents && securityEvents.length > 0 ? securityEvents[securityEvents.length - 1]?.index || 0 : 0)}
-                </div>
-                <p className="text-xs text-muted-foreground">Blockchain ledger size</p>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="col-span-1">
-              <CardHeader>
-                <CardTitle>Recent Critical Events</CardTitle>
-                <CardDescription>Latest high-impact security events</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-2">
-                    {[...Array(3)].map((_, i) => (
-                      <Skeleton key={i} className="h-16 w-full" />
-                    ))}
-                  </div>
-                ) : (
-                  <ScrollArea className="h-[300px]">
-                    {allEvents
-                      .filter(event => ['critical', 'high'].includes(event.severity))
-                      .slice(0, 5)
-                      .map((event, index) => (
-                        <div key={index} className="mb-4 p-3 rounded border border-gray-200 dark:border-gray-800">
-                          <div className="flex justify-between items-start mb-1">
-                            <div className="font-medium truncate mr-2">{event.type}</div>
-                            <Badge className={getSeverityColor(event.severity)}>{event.severity}</Badge>
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{event.details}</p>
-                          <div className="flex items-center text-xs text-gray-500">
-                            <Clock className="mr-1 h-3 w-3" />
-                            {new Date(event.timestamp).toLocaleString()}
-                          </div>
-                        </div>
-                      ))}
-                    {allEvents.filter(event => ['critical', 'high'].includes(event.severity)).length === 0 && (
-                      <div className="text-center py-10 text-gray-500">
-                        <Lock className="mx-auto h-8 w-8 mb-2" />
-                        <p>No critical events detected</p>
-                        <p className="text-xs">The system is currently secure</p>
-                      </div>
-                    )}
-                  </ScrollArea>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card className="col-span-1">
-              <CardHeader>
-                <CardTitle>Security Health</CardTitle>
-                <CardDescription>System security posture status</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-8 w-full" />
-                    <Skeleton className="h-8 w-full" />
-                    <Skeleton className="h-8 w-full" />
-                    <Skeleton className="h-8 w-full" />
-                    <Skeleton className="h-8 w-full" />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span>CSRF Protection</span>
-                      <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Active</Badge>
+        {dashboardData && (
+          <>
+            {/* Overview Tab */}
+            <TabsContent value="overview">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Security Score */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Security Score
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{dashboardData.metrics.securityScore}/100</div>
+                    <Progress
+                      value={dashboardData.metrics.securityScore}
+                      className="h-2 mt-2"
+                    />
+                    <p className={`text-xs mt-1 ${getRiskLevelColor(dashboardData.metrics.riskLevel)}`}>
+                      {dashboardData.metrics.riskLevel.toUpperCase()} Risk Level
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                {/* Active Threats */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Active Threats
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold flex items-center">
+                      {dashboardData.metrics.activeThreats}
+                      {dashboardData.metrics.activeThreats > 0 ? (
+                        <AlertTriangle className="ml-2 h-5 w-5 text-orange-500" />
+                      ) : (
+                        <ShieldCheck className="ml-2 h-5 w-5 text-green-500" />
+                      )}
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span>Immutable Audit Logs</span>
-                      <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Active</Badge>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {dashboardData.metrics.threatDetections} Total Detections
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                {/* Request Blocking */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Request Blocking
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {dashboardData.metrics.blockedRequests}
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span>Quantum-Resistant Encryption</span>
-                      <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Active</Badge>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Out of {dashboardData.metrics.totalRequests} Total Requests
+                    </p>
+                    <Progress
+                      value={(dashboardData.metrics.blockedRequests / Math.max(1, dashboardData.metrics.totalRequests)) * 100}
+                      className="h-2 mt-2"
+                    />
+                  </CardContent>
+                </Card>
+                
+                {/* Vulnerabilities */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Vulnerabilities
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {dashboardData.vulnerabilities.vulnerabilitiesFound}
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span>ML Anomaly Detection</span>
-                      <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Active</Badge>
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span className="text-red-500">
+                        {dashboardData.vulnerabilities.criticalVulnerabilities} Critical
+                      </span>
+                      <span className="text-orange-500">
+                        {dashboardData.vulnerabilities.highVulnerabilities} High
+                      </span>
+                      <span className="text-yellow-500">
+                        {dashboardData.vulnerabilities.mediumVulnerabilities} Medium
+                      </span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span>RASP Protection</span>
-                      <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Active</Badge>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        {/* Events Tab */}
-        <TabsContent value="events">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Event Log</CardTitle>
-              <CardDescription>Comprehensive view of all security events</CardDescription>
+                  </CardContent>
+                </Card>
+              </div>
               
-              <div className="flex flex-wrap gap-2 mt-2">
-                <Select value={severityFilter} onValueChange={setSeverityFilter}>
-                  <SelectTrigger className="w-[130px]">
-                    <SelectValue placeholder="Severity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Severities</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Event Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="AUTHENTICATION">Authentication</SelectItem>
-                    <SelectItem value="AUTHORIZATION">Authorization</SelectItem>
-                    <SelectItem value="SECURITY_SETTING">Security Settings</SelectItem>
-                    <SelectItem value="CSRF">CSRF Protection</SelectItem>
-                    <SelectItem value="SCAN">Security Scan</SelectItem>
-                    <SelectItem value="QUANTUM">Quantum Crypto</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Select value={timeRange} onValueChange={setTimeRange}>
-                  <SelectTrigger className="w-[130px]">
-                    <SelectValue placeholder="Time Range" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1h">Last Hour</SelectItem>
-                    <SelectItem value="24h">Last 24 Hours</SelectItem>
-                    <SelectItem value="7d">Last 7 Days</SelectItem>
-                    <SelectItem value="30d">Last 30 Days</SelectItem>
-                    <SelectItem value="all">All Time</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto">
-                  <RefreshCcw className="mr-2 h-4 w-4" /> Refresh
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-20 w-full" />
-                  ))}
-                </div>
-              ) : (
-                <ScrollArea className="h-[500px]">
-                  {filteredEvents.length > 0 ? (
-                    filteredEvents.map((event, index) => (
-                      <div key={index} className="mb-4 p-4 rounded border border-gray-200 dark:border-gray-800">
-                        <div className="flex flex-wrap justify-between items-start mb-2">
-                          <div className="font-medium">{event.type}</div>
-                          <Badge className={getSeverityColor(event.severity)}>{event.severity}</Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{event.details}</p>
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <div className="flex items-center">
-                            <Clock className="mr-1 h-3 w-3" />
-                            {new Date(event.timestamp).toLocaleString()}
+              {/* Recent Events */}
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>Recent Security Events</CardTitle>
+                  <CardDescription>
+                    Last {dashboardData.events.recentEvents.length} security events detected by the system
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {dashboardData.events.recentEvents.length === 0 ? (
+                      <p className="text-center py-4 text-muted-foreground">
+                        No recent security events
+                      </p>
+                    ) : (
+                      dashboardData.events.recentEvents.map((event) => (
+                        <div
+                          key={event.id}
+                          className="flex items-start p-3 border rounded-md"
+                        >
+                          <div className="mr-4 mt-1">
+                            {getSeverityIcon(event.severity)}
                           </div>
-                          <div className="flex items-center">
-                            <Database className="mr-1 h-3 w-3" />
-                            Block #{event.blockIndex}
+                          <div className="flex-1">
+                            <h4 className="font-medium">
+                              {event.message}
+                            </h4>
+                            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                              <span>Category: {event.category}</span>
+                              <span>Severity: {event.severity}</span>
+                              <span>
+                                {formatTimestamp(event.timestamp)}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-10 text-gray-500">
-                      <Search className="mx-auto h-8 w-8 mb-2" />
-                      <p>No security events found</p>
-                      <p className="text-xs">Try adjusting your filters</p>
-                    </div>
-                  )}
-                </ScrollArea>
-              )}
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <div className="text-sm text-gray-500">
-                Showing {filteredEvents.length} of {allEvents.length} total events
-              </div>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        
-        {/* Blockchain Tab */}
-        <TabsContent value="blockchain">
-          <Card>
-            <CardHeader>
-              <CardTitle>Blockchain Ledger</CardTitle>
-              <CardDescription>Immutable security log blockchain records</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="space-y-3">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-32 w-full" />
-                  ))}
-                </div>
-              ) : (
-                <ScrollArea className="h-[600px]">
-                  {securityEvents && securityEvents.map((block, index) => (
-                    <div key={index} className="mb-6 p-4 rounded border border-gray-200 dark:border-gray-800">
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-lg font-medium">Block #{block.index}</h3>
-                        <Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                          {block.data.length} Events
-                        </Badge>
-                      </div>
-                      
-                      <div className="space-y-2 text-sm mb-3">
-                        <div className="flex flex-wrap md:flex-nowrap gap-1">
-                          <span className="font-medium min-w-[100px]">Timestamp:</span>
-                          <span className="text-gray-600 dark:text-gray-400">{new Date(block.timestamp).toLocaleString()}</span>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setActiveTab('events')}
+                  >
+                    View All Events
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+            
+            {/* Events Tab */}
+            <TabsContent value="events">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Security Events</CardTitle>
+                  <CardDescription>
+                    Detailed view of all security events captured by the system
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Total Events
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          {dashboardData.events.total}
                         </div>
-                        <div className="flex flex-wrap md:flex-nowrap gap-1">
-                          <span className="font-medium min-w-[100px]">Hash:</span>
-                          <code className="text-xs bg-gray-100 dark:bg-gray-800 p-1 rounded truncate max-w-xs md:max-w-md lg:max-w-lg">
-                            {block.hash}
-                          </code>
-                        </div>
-                        <div className="flex flex-wrap md:flex-nowrap gap-1">
-                          <span className="font-medium min-w-[100px]">Previous Hash:</span>
-                          <code className="text-xs bg-gray-100 dark:bg-gray-800 p-1 rounded truncate max-w-xs md:max-w-md lg:max-w-lg">
-                            {block.previousHash}
-                          </code>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-3">
-                        <h4 className="font-medium mb-2">Events:</h4>
-                        <ScrollArea className="h-[200px] border rounded p-2">
-                          {block.data.map((event, eventIndex) => (
-                            <div key={eventIndex} className="mb-2 p-2 text-sm border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-                              <div className="flex justify-between items-start mb-1">
-                                <div className="font-medium">{event.type}</div>
-                                <Badge className={getSeverityColor(event.severity)}>{event.severity}</Badge>
-                              </div>
-                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{event.details}</p>
-                              <div className="flex items-center text-xs text-gray-500">
-                                <Clock className="mr-1 h-3 w-3" />
-                                {new Date(event.timestamp).toLocaleString()}
-                              </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          By Severity
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-sm">
+                          {Object.entries(dashboardData.events.bySeverity).map(([severity, count]) => (
+                            <div key={severity} className="flex justify-between items-center">
+                              <span className={`${severity.toLowerCase() === 'high' ? 'text-red-500' : severity.toLowerCase() === 'medium' ? 'text-yellow-500' : 'text-green-500'}`}>
+                                {severity}
+                              </span>
+                              <span>{count}</span>
                             </div>
                           ))}
-                        </ScrollArea>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          By Category
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-sm">
+                          {Object.entries(dashboardData.events.byCategory).map(([category, count]) => (
+                            <div key={category} className="flex justify-between items-center">
+                              <span>{category}</span>
+                              <span>{count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {dashboardData.events.recentEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-start p-3 border rounded-md"
+                      >
+                        <div className="mr-4 mt-1">
+                          {getSeverityIcon(event.severity)}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium">
+                            {event.message}
+                          </h4>
+                          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                            <span>Category: {event.category}</span>
+                            <span>Severity: {event.severity}</span>
+                            <span>
+                              {formatTimestamp(event.timestamp)}
+                            </span>
+                          </div>
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* Vulnerabilities Tab */}
+            <TabsContent value="vulnerabilities">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Vulnerability Assessment</CardTitle>
+                  <CardDescription>
+                    Last scan: {formatTimestamp(dashboardData.vulnerabilities.lastScanTime)}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Total Vulnerabilities
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          {dashboardData.vulnerabilities.vulnerabilitiesFound}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Critical
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-red-500">
+                          {dashboardData.vulnerabilities.criticalVulnerabilities}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          High
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-orange-500">
+                          {dashboardData.vulnerabilities.highVulnerabilities}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Medium/Low
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-yellow-500">
+                          {dashboardData.vulnerabilities.mediumVulnerabilities + dashboardData.vulnerabilities.lowVulnerabilities}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <h3 className="text-lg font-medium mb-4">Vulnerability Categories</h3>
+                  <div className="space-y-4">
+                    {Object.entries(dashboardData.vulnerabilities.categories).map(([category, count]) => (
+                      <div key={category} className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <ShieldAlert className="h-5 w-5 mr-2 text-orange-500" />
+                          <span>{category}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="font-medium">{count}</span>
+                          <span className="text-xs text-muted-foreground ml-2">
+                            ({Math.round((count / dashboardData.vulnerabilities.vulnerabilitiesFound) * 100)}%)
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button className="w-full">
+                    Run New Vulnerability Scan
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+            
+            {/* System Health Tab */}
+            <TabsContent value="system">
+              <Card>
+                <CardHeader>
+                  <CardTitle>System Health</CardTitle>
+                  <CardDescription>
+                    Current health metrics for the application and infrastructure
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          CPU Usage
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          {dashboardData.systemHealth.cpuUsage.toFixed(1)}%
+                        </div>
+                        <Progress
+                          value={dashboardData.systemHealth.cpuUsage}
+                          className="h-2 mt-2"
+                        />
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Memory Usage
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          {formatBytes(dashboardData.systemHealth.memoryUsage.heapUsed)}
+                        </div>
+                        <Progress
+                          value={(dashboardData.systemHealth.memoryUsage.heapUsed / dashboardData.systemHealth.memoryUsage.heapTotal) * 100}
+                          className="h-2 mt-2"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {formatBytes(dashboardData.systemHealth.memoryUsage.heapUsed)} of {formatBytes(dashboardData.systemHealth.memoryUsage.heapTotal)}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Uptime
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          {formatUptime(dashboardData.systemHealth.uptime)}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Active Sessions
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          {dashboardData.systemHealth.activeSessions}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">API Performance</h3>
+                      <div className="flex justify-between items-center mb-2">
+                        <span>Average Response Time</span>
+                        <span className="font-medium">{dashboardData.systemHealth.apiResponseTime.toFixed(1)} ms</span>
+                      </div>
+                      <Progress
+                        value={Math.min(100, (dashboardData.systemHealth.apiResponseTime / 500) * 100)}
+                        className="h-2"
+                      />
                     </div>
-                  ))}
-                </ScrollArea>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Database Status</h3>
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <span>Connection Status</span>
+                            <div className="flex items-center">
+                              {dashboardData.systemHealth.databaseConnectionStatus === 'healthy' ? (
+                                <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                              ) : dashboardData.systemHealth.databaseConnectionStatus === 'degraded' ? (
+                                <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2" />
+                              ) : (
+                                <XCircle className="h-5 w-5 text-red-500 mr-2" />
+                              )}
+                              <span className={
+                                dashboardData.systemHealth.databaseConnectionStatus === 'healthy'
+                                  ? 'text-green-500'
+                                  : dashboardData.systemHealth.databaseConnectionStatus === 'degraded'
+                                    ? 'text-yellow-500'
+                                    : 'text-red-500'
+                              }>
+                                {dashboardData.systemHealth.databaseConnectionStatus.toUpperCase()}
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* Audit Activity Tab */}
+            <TabsContent value="audit">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Audit Activity</CardTitle>
+                  <CardDescription>
+                    Security and administrative activity logs
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Total Events (24h)
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          {dashboardData.auditActivity.totalEvents}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Authentication Events
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          {dashboardData.auditActivity.authenticationEvents}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {Math.round((dashboardData.auditActivity.authenticationEvents / Math.max(1, dashboardData.auditActivity.totalEvents)) * 100)}% of all events
+                        </p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Admin Actions
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          {dashboardData.auditActivity.adminActionEvents}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {Math.round((dashboardData.auditActivity.adminActionEvents / Math.max(1, dashboardData.auditActivity.totalEvents)) * 100)}% of all events
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <h3 className="text-lg font-medium mb-4">Activity by Action Type</h3>
+                  <div className="space-y-4">
+                    {Object.entries(dashboardData.auditActivity.byActionType).map(([actionType, count]) => (
+                      <div key={actionType} className="flex justify-between items-center">
+                        <span>{actionType}</span>
+                        <span>{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button variant="outline">
+                    Export Logs
+                  </Button>
+                  <Button variant="outline">
+                    View Full Audit Log
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+          </>
+        )}
       </Tabs>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Settings className="h-5 w-5 mr-2" />
+              Security Configuration
+            </CardTitle>
+            <CardDescription>
+              Adjust security settings and features
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Button className="w-full justify-start" variant="outline">
+                <Shield className="h-4 w-4 mr-2" />
+                Security Mode Configuration
+              </Button>
+              <Button className="w-full justify-start" variant="outline">
+                <ShieldCheck className="h-4 w-4 mr-2" />
+                Feature-Level Settings
+              </Button>
+              <Button className="w-full justify-start" variant="outline">
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                Threat Response Rules
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <UserCog className="h-5 w-5 mr-2" />
+              User Security Management
+            </CardTitle>
+            <CardDescription>
+              Manage user security settings
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Button className="w-full justify-start" variant="outline">
+                <Lock className="h-4 w-4 mr-2" />
+                Multi-Factor Authentication
+              </Button>
+              <Button className="w-full justify-start" variant="outline">
+                <UserCog className="h-4 w-4 mr-2" />
+                User Account Security
+              </Button>
+              <Button className="w-full justify-start" variant="outline">
+                <Activity className="h-4 w-4 mr-2" />
+                Session Management
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
-};
-
-export default SecurityDashboard;
+}

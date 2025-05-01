@@ -170,6 +170,7 @@ import csrfRoutes from './routes/csrf-routes';
 // Theme routes are imported above
 import deadlinksRoutes from './routes/deadlinks';
 import advancedSecurityRoutes from './routes/advanced-security-routes';
+import securityAdminRoutes from './security/admin/SecurityAdminRoutes';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 import { protectApiRoutes } from './security/apiRoutesProtector';
 
@@ -350,6 +351,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use our advanced security management routes (admin only)
   app.use('/api/security/advanced', isAuthenticated, advancedSecurityRoutes);
+  
+  // Use our security admin routes (admin only)
+  app.use('/api/security/admin', isAdmin, securityAdminRoutes);
 
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', isAdmin, async (req, res) => {

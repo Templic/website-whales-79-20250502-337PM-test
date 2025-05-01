@@ -22,7 +22,7 @@ import {
 import { 
   isAccountLocked, 
   unlockAccount, 
-  getAccountLockInfo 
+  getAccountLockout 
 } from '../advanced/account/AccountLockoutService';
 import { getRolePermissions, hasPermission } from '../advanced/rbac/EnhancedRoleManager';
 
@@ -161,7 +161,7 @@ export function getUserSecurityDetails(userId: string): {
   const mfaSetupDate = mfaEnabled ? mfaData?.createdAt : undefined;
   
   // Get account lock status
-  const lockInfo = getAccountLockInfo(userId);
+  const lockInfo = getAccountLockout(userId);
   const accountLocked = isAccountLocked(userId);
   
   // Get permissions
@@ -201,7 +201,7 @@ export function getUserSecurityDetails(userId: string): {
     },
     accountStatus: {
       locked: accountLocked,
-      failedLoginAttempts: lockInfo?.failedAttempts || 0,
+      failedLoginAttempts: lockInfo?.attempts?.length || 0,
       lockReason: lockInfo?.reason,
       lockTime: lockInfo?.lockedAt
     },
