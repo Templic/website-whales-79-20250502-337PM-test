@@ -1,20 +1,13 @@
 import express from 'express';
 import { db } from '../../db';
-import { posts, users } from '@shared/schema';
+import { posts, users, insertPostSchema, type InsertPost } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 const router = express.Router();
 
-// Post schema validation
-const postSchema = z.object({
-  title: z.string().min(3).max(100),
-  slug: z.string().min(3).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  content: z.string().min(10),
-  category: z.string().min(1),
-  cover_image: z.string().url().or(z.string().length(0)),
-  published: z.boolean().default(false),
-  approved: z.boolean().default(false),
+// Extend the insert post schema with additional validation for admin interface
+const postSchema = insertPostSchema.extend({
   meta_description: z.string().max(160).optional(),
   tags: z.array(z.string()).optional(),
   publish_date: z.string().nullable().optional(),
@@ -41,12 +34,10 @@ router.post('/', async (req, res) => {
     const postData = validationResult.data;
     
     // Add user and date info
-    const now = new Date().toISOString();
+    const now = new Date();
     const newPost = {
       ...postData,
-      author_id: req.user.id.toString(),
-      created_at: now,
-      updated_at: now
+      authorId: req.user.id.toString()
     };
 
     // Insert post into database
@@ -63,7 +54,7 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     // Fetch all posts from database
-    const allPosts = await db.select().from(posts).orderBy(posts.created_at, "desc");
+    const allPosts = await db.select().from(posts).orderBy(posts.createdAt, "desc");
     
     return res.status(200).json(allPosts);
   } catch (error) {
@@ -128,14 +119,13 @@ router.put('/:id', async (req, res) => {
     }
     
     // Check if user is authorized to update this post
-    if (existingPost.author_id !== req.user.id.toString() && req.user.role !== 'admin') {
+    if (existingPost.authorId !== req.user.id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Forbidden - You cannot update posts created by other users' });
     }
     
     // Update post
     const updatedPostData = {
-      ...postData,
-      updated_at: new Date().toISOString()
+      ...postData
     };
     
     const [updatedPost] = await db
@@ -192,7 +182,7 @@ router.patch('/:id', async (req, res) => {
     // Only admin can change approved status
     if (
       (statusData.published !== undefined && 
-        existingPost.author_id !== req.user.id.toString() && 
+        existingPost.authorId !== req.user.id.toString() && 
         req.user.role !== 'admin') ||
       (statusData.approved !== undefined && req.user.role !== 'admin')
     ) {
@@ -201,8 +191,7 @@ router.patch('/:id', async (req, res) => {
     
     // Update status fields
     const updateData = {
-      ...statusData,
-      updated_at: new Date().toISOString()
+      ...statusData
     };
     
     const [updatedPost] = await db
@@ -240,7 +229,7 @@ router.delete('/:id', async (req, res) => {
     }
     
     // Check if user is authorized to delete this post
-    if (existingPost.author_id !== req.user.id.toString() && req.user.role !== 'admin') {
+    if (existingPost.authorId !== req.user.id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Forbidden - You cannot delete posts created by other users' });
     }
     
