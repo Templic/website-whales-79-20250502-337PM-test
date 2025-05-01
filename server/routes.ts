@@ -20,6 +20,7 @@ import {
 } from './utils/auth-utils';
 import { setupCSRFProtection } from './middleware/csrfProtectionMiddleware';
 import { createAutoValidationMiddleware, initializeCommonValidationRules } from './middleware/apiValidationMiddleware';
+import { registerCommonValidationRules, registerCustomValidationRules } from './validation/apiValidationRules';
 
 // The isAuthenticated, isAdmin, and isSuperAdmin middleware are now imported from auth-utils.ts
 import { nanoid } from 'nanoid';
@@ -188,8 +189,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Set up our authentication system
   await setupAuth(app);
   
-  // Initialize common API validation rules
+  // Initialize API validation rules
   initializeCommonValidationRules();
+  
+  // Register common and custom validation rules
+  registerCommonValidationRules();
+  registerCustomValidationRules();
   
   // Apply the API validation middleware to all API routes
   // This will auto-validate requests based on registered rules
@@ -359,6 +364,47 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ 
         success: false, 
         message: 'Error running API security verification'
+      });
+    }
+  });
+  
+  // API Validation test endpoint
+  app.get('/api/validation/test', (req, res) => {
+    res.json({
+      success: true,
+      validation: "API validation middleware is working",
+      parameters: {
+        query: req.query,
+        validatedQuery: (req as any).validatedData?.query
+      },
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  // Add a validation endpoint that requires specific validation
+  app.post('/api/contact', async (req, res) => {
+    try {
+      // The validation middleware would have already validated the request body
+      // If we get here, the validation passed
+      
+      console.log("Contact form submission validated:", req.body);
+      
+      // In a real application, we would save this to the database
+      // and possibly send an email notification
+      
+      // For now, just acknowledge receipt
+      res.status(201).json({
+        success: true,
+        message: "Contact message received successfully",
+        contactId: nanoid(10),
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error processing contact form:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to process contact form submission",
+        error: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
