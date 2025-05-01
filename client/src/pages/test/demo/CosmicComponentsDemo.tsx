@@ -165,11 +165,11 @@ export default function CosmicComponentsDemo() {
             </CosmicHeading>
             <div className="space-y-4">
               <Button variant="default">Default Button</Button>
-              <Button variant="primary">Primary Button</Button>
+              <Button variant="primary" onClick={() => window.location.href = '/music-release'}>Primary Button</Button>
               <Button variant="secondary">Secondary Button</Button>
               <Button variant="outline">Outline Button</Button>
               <Button variant="ghost">Ghost Button</Button>
-              <Button variant="link">Link Button</Button>
+              <Button variant="link" onClick={() => window.open('/faq', '_blank')}>Link Button</Button>
               {/* @ts-ignore */}
               <Button variant="cosmic">Cosmic Button</Button>
               {/* @ts-ignore */}
