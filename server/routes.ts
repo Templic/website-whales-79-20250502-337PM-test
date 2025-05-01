@@ -1615,9 +1615,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Approve a comment
-  app.post("/api/admin/comments/:commentId/approve", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.post("/api/admin/comments/:commentId/approve", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -1631,9 +1632,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Reject a comment
-  app.post("/api/admin/comments/:commentId/reject", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.post("/api/admin/comments/:commentId/reject", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -1647,9 +1649,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Delete a track
-  app.delete("/api/admin/tracks/:trackId", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.delete("/api/admin/tracks/:trackId", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -1713,9 +1716,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  app.post("/api/posts/:id/approve", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.post("/api/posts/:id/approve", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
     try {
       const post = await storage.approvePost(Number(req.params.id));
@@ -1908,9 +1912,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  app.post("/api/posts/comments/:id/approve", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.post("/api/posts/comments/:id/approve", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
     try {
       const comment = await storage.approveComment(Number(req.params.id));
@@ -1948,9 +1953,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   }
 });
 
-app.post("/api/posts/comments/:id/reject", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+app.post("/api/posts/comments/:id/reject", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
     try {
       const comment = await storage.rejectComment(Number(req.params.id));
@@ -2024,9 +2030,10 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   });
 
   // Music upload route
-  app.post("/api/upload/music", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.post("/api/upload/music", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     if (!req.files || !req.files.file) {
@@ -2106,9 +2113,10 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   });
 
   // Delete music endpoint
-  app.delete("/api/tracks/:id", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.delete("/api/tracks/:id", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -2125,13 +2133,14 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   //This route was duplicated in the original code.  Removing the duplicate.
 
     // Admin analytics endpoint
-  app.get("/api/admin/analytics/detailed", async (req, res) => {
+  app.get("/api/admin/analytics/detailed", isAuthenticated, async (req, res) => {
     // Check for BYPASS_AUTHENTICATION variable from protected-route.tsx
     const bypassAuth = process.env.NODE_ENV !== 'production';
 
-    if (!bypassAuth && (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin'))) {
-      console.log('Authentication failed for analytics endpoint');
-      return res.status(403).json({ message: "Unauthorized" });
+    // Even when using isAuthenticated middleware, we still check admin role (bypassed in dev environment)
+    if (!bypassAuth && (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      console.log('Authorization failed for analytics endpoint - Admin role required');
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -2265,10 +2274,10 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   });
 
   // Database monitoring routes
-  app.use('/api/admin/db-monitor', (req, res, next) => {
-    // Check authentication and admin role
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized: Admin access required" });
+  app.use('/api/admin/db-monitor', isAuthenticated, (req, res, next) => {
+    // Check for admin role after authentication
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
     next();
   }, dbMonitorRoutes);
