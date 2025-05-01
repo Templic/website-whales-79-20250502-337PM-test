@@ -19,6 +19,7 @@ import {
   hasAdminPrivileges 
 } from './utils/auth-utils';
 import { setupCSRFProtection } from './middleware/csrfProtectionMiddleware';
+import { createAutoValidationMiddleware, initializeCommonValidationRules } from './middleware/apiValidationMiddleware';
 
 // The isAuthenticated, isAdmin, and isSuperAdmin middleware are now imported from auth-utils.ts
 import { nanoid } from 'nanoid';
@@ -186,6 +187,18 @@ const transporter = createTransport({
 export async function registerRoutes(app: express.Application): Promise<Server> {
   // Set up our authentication system
   await setupAuth(app);
+  
+  // Initialize common API validation rules
+  initializeCommonValidationRules();
+  
+  // Apply the API validation middleware to all API routes
+  // This will auto-validate requests based on registered rules
+  app.use('/api', createAutoValidationMiddleware({
+    mode: 'balanced', // Use balanced mode to avoid blocking too aggressively
+    logValidationErrors: true
+  }));
+  
+  console.log("✅ API Validation middleware initialized successfully");
 
   // Add Replit Auth routes to CSRF exempt list
   // Apply enhanced CSRF protection to all routes

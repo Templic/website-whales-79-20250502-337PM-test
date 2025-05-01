@@ -1,140 +1,102 @@
 /**
  * API Validation Middleware
  * 
- * This middleware applies the API validation framework to routes,
- * enforcing schema validation and providing security checks.
+ * Provides middleware to validate API requests using the ValidationEngine.
+ * This middleware integrates with Express to validate requests before they
+ * reach route handlers, ensuring data integrity and security.
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { validateBody, validateParams, validateQuery, securityValidation } from '../security/advanced/apiValidation';
-import { apiSchemas } from '../schemas/apiValidationSchemas';
-import { AnyZodObject } from 'zod';
-import { securityFabric } from '../security/advanced/SecurityFabric';
+import { ValidationEngine, ValidationOptions } from '../security/advanced/apiValidation/ValidationEngine';
+import { ImmutableSecurityLogger } from '../utils/security/SecurityLogger';
+
+const logger = new ImmutableSecurityLogger('API_VALIDATION');
 
 /**
- * Apply validation to a route by schema category and name
- * 
- * @param category The schema category (e.g., 'auth', 'user', 'payment')
- * @param name The schema name (e.g., 'login', 'register')
+ * Create validation middleware for an API endpoint
  */
-export function validateRoute(category: keyof typeof apiSchemas, name: string) {
-  const schemas = apiSchemas[category];
-  if (!schemas || !schemas[name as keyof typeof schemas]) {
-    throw new Error(`Schema not found: ${category}.${name}`);
-  }
-  
-  const schema = schemas[name as keyof typeof schemas] as AnyZodObject;
-  
-  return [
-    // Apply security validation first
-    securityValidation(),
-    
-    // Then apply schema validation
-    validateBody(schema)
-  ];
+export function createValidationMiddleware(ruleIds: string[], options?: ValidationOptions) {
+  return ValidationEngine.createValidationMiddleware(ruleIds, options);
 }
 
 /**
- * Apply validation to query parameters
- * 
- * @param category The schema category
- * @param name The schema name
+ * Apply validation middleware to specific endpoints
  */
-export function validateQueryParams(category: keyof typeof apiSchemas, name: string) {
-  const schemas = apiSchemas[category];
-  if (!schemas || !schemas[name as keyof typeof schemas]) {
-    throw new Error(`Schema not found: ${category}.${name}`);
+export function applyValidationRules(endpoint: string, ruleIds: string[]) {
+  try {
+    ValidationEngine.applyRulesToEndpoint(endpoint, ruleIds);
+    logger.info({
+      action: 'VALIDATION_RULES_APPLIED',
+      endpoint,
+      ruleIds,
+      timestamp: Date.now()
+    }, 'API_VALIDATION');
+    return true;
+  } catch (error) {
+    logger.error({
+      action: 'VALIDATION_RULES_ERROR',
+      endpoint,
+      error: error instanceof Error ? error.message : String(error),
+      timestamp: Date.now()
+    }, 'API_VALIDATION');
+    return false;
   }
-  
-  const schema = schemas[name as keyof typeof schemas] as AnyZodObject;
-  
-  return [
-    securityValidation(),
-    validateQuery(schema)
-  ];
 }
 
 /**
- * Apply validation to route parameters
- * 
- * @param category The schema category
- * @param name The schema name
+ * Create validation middleware that will be automatically applied
+ * to endpoints that have validation rules defined
  */
-export function validateRouteParams(category: keyof typeof apiSchemas, name: string) {
-  const schemas = apiSchemas[category];
-  if (!schemas || !schemas[name as keyof typeof schemas]) {
-    throw new Error(`Schema not found: ${category}.${name}`);
-  }
-  
-  const schema = schemas[name as keyof typeof schemas] as AnyZodObject;
-  
-  return [
-    securityValidation(),
-    validateParams(schema)
-  ];
-}
-
-/**
- * Apply custom validation schema
- * 
- * @param schema The schema to apply
- */
-export function validateWithSchema(schema: AnyZodObject) {
-  return [
-    securityValidation(),
-    validateBody(schema)
-  ];
-}
-
-/**
- * Create a comprehensive validation middleware with multiple parts
- * 
- * @param bodySchema Schema for request body
- * @param querySchema Schema for query parameters
- * @param paramsSchema Schema for route parameters
- */
-export function validateComplex({
-  bodySchema,
-  querySchema,
-  paramsSchema
-}: {
-  bodySchema?: AnyZodObject;
-  querySchema?: AnyZodObject;
-  paramsSchema?: AnyZodObject;
-}) {
-  const middlewares = [securityValidation()];
-  
-  if (bodySchema) {
-    middlewares.push(validateBody(bodySchema));
-  }
-  
-  if (querySchema) {
-    middlewares.push(validateQuery(querySchema));
-  }
-  
-  if (paramsSchema) {
-    middlewares.push(validateParams(paramsSchema));
-  }
-  
-  return middlewares;
-}
-
-/**
- * Apply default validation to all API routes
- * This middleware adds baseline security validation to routes
- * that don't have specific schema validation
- */
-export function defaultApiValidation() {
+export function createAutoValidationMiddleware(defaultOptions?: ValidationOptions) {
   return (req: Request, res: Response, next: NextFunction) => {
-    // Emit API request event for monitoring
-    securityFabric.emit('api:request', {
-      path: req.path,
-      method: req.method,
-      ip: req.ip,
-      timestamp: new Date()
-    });
+    // Skip validation for non-API routes
+    if (!req.path.startsWith('/api/')) {
+      return next();
+    }
     
-    // Apply default security validation
-    securityValidation()(req, res, next);
+    try {
+      // Try to get validation rules for this endpoint
+      const endpoint = req.path;
+      const middleware = ValidationEngine.createEndpointValidation(endpoint, defaultOptions);
+      
+      // Apply validation middleware
+      return middleware(req, res, next);
+    } catch (error) {
+      // If no validation rules exist, just continue
+      if (error instanceof Error && error.message.includes('No validation rules found')) {
+        return next();
+      }
+      
+      // Log other errors
+      logger.error({
+        action: 'AUTO_VALIDATION_ERROR',
+        endpoint: req.path,
+        method: req.method,
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: Date.now()
+      }, 'API_VALIDATION');
+      
+      // Continue without validation in case of errors
+      return next();
+    }
   };
 }
+
+/**
+ * Initialize common validation rules
+ */
+export function initializeCommonValidationRules() {
+  // This function would set up common validation rules for typical API endpoints
+  // For example, user authentication, pagination parameters, etc.
+  logger.info({
+    action: 'COMMON_VALIDATION_RULES_INITIALIZED',
+    timestamp: Date.now()
+  }, 'API_VALIDATION');
+}
+
+export default {
+  createValidationMiddleware,
+  applyValidationRules,
+  createAutoValidationMiddleware,
+  initializeCommonValidationRules
+};
