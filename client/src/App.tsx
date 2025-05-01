@@ -174,7 +174,7 @@ function AppRouter() {
 
           {/* Blog */}
           <Route path="/blog" component={BlogPage} />
-          <Route path="/blog/:id" component={BlogPostPage} />
+          <Route path="/blog/:slug" component={BlogPostPage} />
 
           {/* Shop Routes */}
           <Route path="/shop" component={ShopPage} />
@@ -209,6 +209,14 @@ function AppRouter() {
           <ProtectedRoute path="/admin/users/roles" component={RoleManagementPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/users/activity" component={UserActivityPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/posts" component={PostsPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/posts/new" component={() => import("./pages/admin/PostEditPage").then(module => {
+            const PostEditPage = module.default;
+            return <PostEditPage />;
+          })} requiredRole="admin" />
+          <ProtectedRoute path="/admin/posts/edit/:id" component={() => import("./pages/admin/PostEditPage").then(module => {
+            const PostEditPage = module.default;
+            return <PostEditPage />;
+          })} requiredRole="admin" />
           <ProtectedRoute path="/admin/music" component={MusicPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/content" component={ContentManagementPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/content-workflow" component={ContentWorkflowPage} requiredRole="admin" />

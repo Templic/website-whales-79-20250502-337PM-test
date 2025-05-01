@@ -11,6 +11,7 @@ import notificationsRoutes from './notifications';
 import shopManagementRoutes from './shop-management';
 import securitySettingsRoutes from './security-settings';
 import mediaManagementRoutes from './media-management';
+import postsRoutes from './posts-routes';
 
 const router = express.Router();
 
@@ -39,5 +40,6 @@ router.use('/notifications', notificationsRoutes);
 router.use('/shop', shopManagementRoutes);
 router.use('/security', securitySettingsRoutes);
 router.use('/media', mediaManagementRoutes);
+router.use('/posts', postsRoutes);
 
 export default router;
