@@ -301,7 +301,9 @@ const OceanicPortal: React.FC<OceanicPortalProps> = ({ isWidget = false, onClose
                   <Button
                     variant="outline"
                     className="flex flex-col items-center justify-center h-20 bg-blue-800/50 border-cyan-500/30 hover:bg-blue-700/50 text-cyan-300"
-                    onClick={() => {}}
+                    onClick={() => {
+                      alert("Voice input feature coming soon! This will enable voice communications with the Oceanic Portal.");
+                    }}
                   >
                     <Mic className="h-6 w-6 mb-1" />
                     <span className="text-xs">Voice</span>

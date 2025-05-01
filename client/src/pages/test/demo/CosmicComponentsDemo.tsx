@@ -424,9 +424,9 @@ export default function CosmicComponentsDemo() {
               <div>
                 <CosmicHeading as="h3" size="base" weight="medium" className="mb-2">Link Variations</CosmicHeading>
                 <div className="flex flex-col gap-3">
-                  <CosmicLink href="#" variant="default" underline>Underlined Link</CosmicLink>
+                  <CosmicLink href="/faq" variant="default" underline>Underlined Link</CosmicLink>
                   <CosmicLink href="https://replit.com" variant="glow" external>External Link</CosmicLink>
-                  <CosmicLink href="#" variant="default" onClick={() => alert('Clicked!')}>Link with Click Handler</CosmicLink>
+                  <CosmicLink href="/collaborative-shopping" variant="default" onClick={() => alert('Clicked!')}>Link with Click Handler</CosmicLink>
                 </div>
               </div>
             </div>
