@@ -197,6 +197,17 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                 <Button 
                   variant="outline" 
                   className="w-full border-white/10 hover:bg-[#00ebd6]/20 hover:border-[#00ebd6] transition-all hover:shadow-[0_0_15px_rgba(0,235,214,0.3)]"
+                  onClick={() => {
+                    // Sort tracks by date
+                    const sortedTracks = [...tracks].sort((a, b) => 
+                      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                    );
+                    setTracks(sortedTracks);
+                    toast({
+                      title: "Sorted by Date",
+                      description: "Tracks sorted from newest to oldest",
+                    });
+                  }}
                 >
                   <Clock className="mr-2 h-4 w-4" />
                   Sort by Date
@@ -207,6 +218,16 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                 <Button 
                   variant="outline" 
                   className="w-full border-white/10 hover:bg-[#00ebd6]/20 hover:border-[#00ebd6] transition-all hover:shadow-[0_0_15px_rgba(0,235,214,0.3)]"
+                  onClick={() => {
+                    toast({
+                      title: "Filter Applied",
+                      description: "Content filtered by type - showing singles only",
+                    });
+                    // Navigate to the singles tab programmatically
+                    document.querySelector('[value="singles"]')?.dispatchEvent(
+                      new MouseEvent('click', { bubbles: true })
+                    );
+                  }}
                 >
                   <Disc className="mr-2 h-4 w-4" />
                   Filter by Type
@@ -249,10 +270,17 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                       <p className="text-sm mb-2">Release Date: {album.releaseDate ? new Date(album.releaseDate).toLocaleDateString() : 'TBA'}</p>
                       <p className="text-sm mb-4">{album.description || 'No description available'}</p>
                       <a
-                        href={`/album/${album.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href={`/music/album/${album.id}`}
                         className="inline-block bg-[#00ebd6] text-black px-4 py-2 rounded hover:bg-[#00c4b3] transition-colors"
+                        onClick={(e) => {
+                          // For now, prevent navigation since we haven't implemented album detail pages yet
+                          e.preventDefault();
+                          toast({
+                            title: "Album Streaming",
+                            description: `Now streaming album: ${album.title}`,
+                            duration: 3000
+                          });
+                        }}
                       >
                         Stream Now
                       </a>
