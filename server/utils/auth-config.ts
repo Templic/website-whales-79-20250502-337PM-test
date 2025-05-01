@@ -7,15 +7,30 @@
 
 // Routes that should be exempt from CSRF protection
 export const csrfExemptRoutes = [
+  '/api/health',
+  '/api/webhooks',
+  '/api/external-callbacks',
+  '/api/stripe-webhook',
   '/api/login',
   '/api/register',
+  '/api/callback',
   '/api/logout',
+  '/api/auth/user',
+  '/api/auth', 
+  '/api/auth/*',  // Wildcard to exempt all auth routes
   '/api/auth/jwt/login',
   '/api/auth/jwt/register',
   '/api/auth/jwt/refresh',
   '/api/auth/jwt/verify',
   '/api/auth/jwt/logout',
-  // Add other exempt routes as needed
+  '/api/jwt/login',
+  '/api/jwt/refresh',
+  '/api/jwt/logout',
+  '/api/jwt/*',   // Wildcard to exempt all JWT routes
+  '/api/user',    // Current user endpoint
+  '/api/admin/*', // Admin API endpoints
+  '/api/search/*', // Search endpoints
+  '/api/secure/*'  // Secure API endpoints
 ];
 
 // Define the role hierarchy

@@ -15,21 +15,14 @@ import { adminStorage } from './DatabaseStorage';
 const router = express.Router();
 
 // Import centralized authentication utilities
-import { hasAdminPrivileges } from './utils/auth-utils';
-
-// Authentication middleware using centralized auth utilities
-const requireAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  if (!hasAdminPrivileges(req)) {
-    return res.status(403).json({ error: 'Admin role required' });
-  }
-  
-  next();
-};
+import { isAdmin, createAuthErrorResponse } from './utils/auth-utils';
+import { logSecurityEvent } from './security/advanced/SecurityLogger';
+import { SecurityEventCategory, SecurityEventSeverity } from './security/advanced/SecurityFabric';
 
 // ===============================
 // Data Audit Log Routes
 // ===============================
-router.get('/audit-logs', requireAdmin, async (req, res) => {
+router.get('/audit-logs', isAdmin, async (req, res) => {
   try {
     const filters: Record<string, any> = {};
     
@@ -48,7 +41,7 @@ router.get('/audit-logs', requireAdmin, async (req, res) => {
   }
 });
 
-router.get('/audit-logs/:id', requireAdmin, async (req, res) => {
+router.get('/audit-logs/:id', isAdmin, async (req, res) => {
   try {
     const log = await adminStorage.getAuditLogById(parseInt(req.params.id));
     
@@ -63,7 +56,7 @@ router.get('/audit-logs/:id', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/audit-logs', requireAdmin, async (req, res) => {
+router.post('/audit-logs', isAdmin, async (req, res) => {
   try {
     // @ts-ignore: User info should be available
     const userId = req.user.id;
@@ -87,7 +80,7 @@ router.post('/audit-logs', requireAdmin, async (req, res) => {
 // ===============================
 // Data Repair Task Routes
 // ===============================
-router.get('/repair-tasks', requireAdmin, async (req, res) => {
+router.get('/repair-tasks', isAdmin, async (req, res) => {
   try {
     const filters: Record<string, any> = {};
     
@@ -103,7 +96,7 @@ router.get('/repair-tasks', requireAdmin, async (req, res) => {
   }
 });
 
-router.get('/repair-tasks/:id', requireAdmin, async (req, res) => {
+router.get('/repair-tasks/:id', isAdmin, async (req, res) => {
   try {
     const task = await adminStorage.getRepairTaskById(parseInt(req.params.id));
     
@@ -118,7 +111,7 @@ router.get('/repair-tasks/:id', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/repair-tasks', requireAdmin, async (req, res) => {
+router.post('/repair-tasks', isAdmin, async (req, res) => {
   try {
     // @ts-ignore: User info should be available
     const userId = req.user.id;
@@ -138,7 +131,7 @@ router.post('/repair-tasks', requireAdmin, async (req, res) => {
   }
 });
 
-router.put('/repair-tasks/:id', requireAdmin, async (req, res) => {
+router.put('/repair-tasks/:id', isAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const result = await adminStorage.updateRepairTask(id, req.body);
@@ -149,7 +142,7 @@ router.put('/repair-tasks/:id', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/repair-tasks/:id/assign', requireAdmin, async (req, res) => {
+router.post('/repair-tasks/:id/assign', isAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { userId } = req.body;
@@ -166,7 +159,7 @@ router.post('/repair-tasks/:id/assign', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/repair-tasks/:id/status', requireAdmin, async (req, res) => {
+router.post('/repair-tasks/:id/status', isAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { status } = req.body;
@@ -192,7 +185,7 @@ router.post('/repair-tasks/:id/status', requireAdmin, async (req, res) => {
 // ===============================
 // Import/Export Job Routes
 // ===============================
-router.get('/import-export-jobs', requireAdmin, async (req, res) => {
+router.get('/import-export-jobs', isAdmin, async (req, res) => {
   try {
     const filters: Record<string, any> = {};
     
@@ -209,7 +202,7 @@ router.get('/import-export-jobs', requireAdmin, async (req, res) => {
   }
 });
 
-router.get('/import-export-jobs/:id', requireAdmin, async (req, res) => {
+router.get('/import-export-jobs/:id', isAdmin, async (req, res) => {
   try {
     const job = await adminStorage.getImportExportJobById(parseInt(req.params.id));
     
@@ -224,7 +217,7 @@ router.get('/import-export-jobs/:id', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/import-export-jobs', requireAdmin, async (req, res) => {
+router.post('/import-export-jobs', isAdmin, async (req, res) => {
   try {
     // @ts-ignore: User info should be available
     const userId = req.user.id;
@@ -245,7 +238,7 @@ router.post('/import-export-jobs', requireAdmin, async (req, res) => {
   }
 });
 
-router.put('/import-export-jobs/:id/status', requireAdmin, async (req, res) => {
+router.put('/import-export-jobs/:id/status', isAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { status, recordCount, validationErrors } = req.body;
@@ -271,7 +264,7 @@ router.put('/import-export-jobs/:id/status', requireAdmin, async (req, res) => {
 // ===============================
 // Batch Operation Routes
 // ===============================
-router.get('/batch-operations', requireAdmin, async (req, res) => {
+router.get('/batch-operations', isAdmin, async (req, res) => {
   try {
     const filters: Record<string, any> = {};
     
@@ -288,7 +281,7 @@ router.get('/batch-operations', requireAdmin, async (req, res) => {
   }
 });
 
-router.get('/batch-operations/:id', requireAdmin, async (req, res) => {
+router.get('/batch-operations/:id', isAdmin, async (req, res) => {
   try {
     const operation = await adminStorage.getBatchOperationById(parseInt(req.params.id));
     
@@ -303,7 +296,7 @@ router.get('/batch-operations/:id', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/batch-operations', requireAdmin, async (req, res) => {
+router.post('/batch-operations', isAdmin, async (req, res) => {
   try {
     // @ts-ignore: User info should be available
     const userId = req.user.id;
@@ -324,7 +317,7 @@ router.post('/batch-operations', requireAdmin, async (req, res) => {
   }
 });
 
-router.put('/batch-operations/:id/status', requireAdmin, async (req, res) => {
+router.put('/batch-operations/:id/status', isAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { status } = req.body;
@@ -350,7 +343,7 @@ router.put('/batch-operations/:id/status', requireAdmin, async (req, res) => {
 // ===============================
 // Schema Migration Routes
 // ===============================
-router.get('/schema-migrations', requireAdmin, async (req, res) => {
+router.get('/schema-migrations', isAdmin, async (req, res) => {
   try {
     const filters: Record<string, any> = {};
     
@@ -365,7 +358,7 @@ router.get('/schema-migrations', requireAdmin, async (req, res) => {
   }
 });
 
-router.get('/schema-migrations/:id', requireAdmin, async (req, res) => {
+router.get('/schema-migrations/:id', isAdmin, async (req, res) => {
   try {
     const migration = await adminStorage.getSchemaMigrationById(parseInt(req.params.id));
     
@@ -380,7 +373,7 @@ router.get('/schema-migrations/:id', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/schema-migrations', requireAdmin, async (req, res) => {
+router.post('/schema-migrations', isAdmin, async (req, res) => {
   try {
     // @ts-ignore: User info should be available
     const userId = req.user.id;
@@ -401,7 +394,7 @@ router.post('/schema-migrations', requireAdmin, async (req, res) => {
   }
 });
 
-router.put('/schema-migrations/:id', requireAdmin, async (req, res) => {
+router.put('/schema-migrations/:id', isAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const result = await adminStorage.updateSchemaMigration(id, req.body);
@@ -412,7 +405,7 @@ router.put('/schema-migrations/:id', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/schema-migrations/:id/apply', requireAdmin, async (req, res) => {
+router.post('/schema-migrations/:id/apply', isAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     // @ts-ignore: User info should be available
@@ -429,7 +422,7 @@ router.post('/schema-migrations/:id/apply', requireAdmin, async (req, res) => {
 // ===============================
 // Data Auto Fix Routes
 // ===============================
-router.get('/auto-fixes', requireAdmin, async (req, res) => {
+router.get('/auto-fixes', isAdmin, async (req, res) => {
   try {
     const filters: Record<string, any> = {};
     
@@ -447,7 +440,7 @@ router.get('/auto-fixes', requireAdmin, async (req, res) => {
   }
 });
 
-router.get('/auto-fixes/:id', requireAdmin, async (req, res) => {
+router.get('/auto-fixes/:id', isAdmin, async (req, res) => {
   try {
     const autoFix = await adminStorage.getAutoFixById(parseInt(req.params.id));
     
@@ -462,7 +455,7 @@ router.get('/auto-fixes/:id', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/auto-fixes', requireAdmin, async (req, res) => {
+router.post('/auto-fixes', isAdmin, async (req, res) => {
   try {
     // @ts-ignore: User info should be available
     const userId = req.user.id;
@@ -485,7 +478,7 @@ router.post('/auto-fixes', requireAdmin, async (req, res) => {
   }
 });
 
-router.put('/auto-fixes/:id', requireAdmin, async (req, res) => {
+router.put('/auto-fixes/:id', isAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const result = await adminStorage.updateAutoFix(id, req.body);
@@ -496,7 +489,7 @@ router.put('/auto-fixes/:id', requireAdmin, async (req, res) => {
   }
 });
 
-router.put('/auto-fixes/:id/toggle', requireAdmin, async (req, res) => {
+router.put('/auto-fixes/:id/toggle', isAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { isActive } = req.body;
@@ -513,7 +506,7 @@ router.put('/auto-fixes/:id/toggle', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/auto-fixes/:id/run-result', requireAdmin, async (req, res) => {
+router.post('/auto-fixes/:id/run-result', isAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { success } = req.body;

@@ -11,10 +11,16 @@ import { storage } from "./storage";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
 // Import the setupAuth from our auth module
-import { setupAuth, isAuthenticated, isAdmin, isSuperAdmin } from "./auth";
-import { hasAdminPrivileges, isUserAuthenticated } from './utils/auth-utils';
+import { setupAuth } from "./auth";
+import { 
+  isAuthenticated, 
+  isAdmin, 
+  isSuperAdmin, 
+  hasAdminPrivileges 
+} from './utils/auth-utils';
+import { setupCSRFProtection } from './middleware/csrfProtectionMiddleware';
 
-// The isAuthenticated, isAdmin, and isSuperAdmin middleware are now imported from auth.ts
+// The isAuthenticated, isAdmin, and isSuperAdmin middleware are now imported from auth-utils.ts
 import { nanoid } from 'nanoid';
 import { validate } from './middlewares/validationMiddleware';
 import { body } from 'express-validator'; // Add body to imports
@@ -159,8 +165,7 @@ import notificationsRoutes from './routes/notifications';
 import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search/index';
 import csrfRoutes from './routes/csrf-routes';
-// Use our newly created themes routes
-import themeRoutes from './routes/theme-routes';
+// Theme routes are imported above
 import deadlinksRoutes from './routes/deadlinks';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 import { protectApiRoutes } from './security/apiRoutesProtector';
@@ -199,12 +204,17 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/jwt/login',
     '/api/jwt/refresh',
     '/api/jwt/logout',
-    '/api/jwt/*'    // Wildcard to exempt all JWT routes
+    '/api/jwt/*',    // Wildcard to exempt all JWT routes
+    '/api/user',     // Current user endpoint
+    '/api/admin/*',  // Admin API endpoints
+    '/api/search/*', // Search endpoints
+    '/api/secure/*'  // Secure API endpoints
   ];
 
-  // Completely disable CSRF protection for now
-  // We'll re-enable it when the Replit Auth integration is working correctly
-  console.log("⚠️ CSRF Protection completely disabled for development");
+  // Set up CSRF protection
+  setupCSRFProtection(app);
+  
+  console.log("✓ CSRF Protection configured with exemptions for auth routes");
 
   // Simple health check endpoint
   app.get('/api/health', (req, res) => {

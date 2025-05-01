@@ -8,7 +8,8 @@
 
 import { randomBytes, createHash } from 'crypto';
 import { Request, Response, NextFunction } from 'express';
-import { QuantumResistantCrypto } from '../advanced/quantum/QuantumResistantCrypto';
+// Temporarily removed quantum crypto import that was causing errors
+// import { QuantumResistantCrypto } from '../advanced/quantum/QuantumResistantCrypto';
 import { logSecurityEvent } from '../advanced/SecurityLogger';
 import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/SecurityFabric';
 
@@ -78,7 +79,8 @@ export class CSRFProtection {
 
   private constructor(options?: Partial<CSRFProtectionOptions>) {
     this.options = { ...defaultOptions, ...options };
-    this.quantumCrypto = QuantumResistantCrypto.getInstance();
+    // Temporarily disabled quantum crypto
+    // this.quantumCrypto = QuantumResistantCrypto.getInstance();
     
     // Set up token cleanup interval to remove expired tokens
     this.tokenCleanupInterval = setInterval(() => {
@@ -306,18 +308,10 @@ export class CSRFProtection {
   /**
    * Generate a new CSRF token
    */
-  private async generateToken(req: Request): Promise<string> {
-    let tokenValue: string;
-
-    // Use quantum-resistant token generation if enabled
-    if (this.options.useQuantumResistance) {
-      // Generate a token using quantum-resistant algorithms
-      const qrandom = await this.quantumCrypto.generateRandomBytes(32);
-      tokenValue = qrandom.toString('hex');
-    } else {
-      // Generate a token using standard Node.js crypto
-      tokenValue = randomBytes(32).toString('hex');
-    }
+  private generateToken(req: Request): string {
+    // Generate a token using standard Node.js crypto
+    // Quantum-resistant token generation is temporarily disabled
+    const tokenValue = randomBytes(32).toString('hex');
 
     // Store token data
     const tokenData: CSRFToken = {

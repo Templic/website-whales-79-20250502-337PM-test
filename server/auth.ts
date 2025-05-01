@@ -77,53 +77,13 @@ export async function comparePasswords(supplied: string, stored: string) {
   }
 }
 
-import { isUserAuthenticated, hasAdminPrivileges, hasSuperAdminPrivileges } from './utils/auth-utils';
-
-// Middleware to check if user is authenticated
-export function isAuthenticated(
-  req: Express.Request, 
-  res: Express.Response, 
-  next: Express.NextFunction
-) {
-  if (isUserAuthenticated(req)) {
-    return next();
-  }
-  return res.status(401).json({ message: "Authentication required" });
-}
-
-// Middleware to check if user has admin role
-export function isAdmin(
-  req: Express.Request, 
-  res: Express.Response, 
-  next: Express.NextFunction
-) {
-  if (!isUserAuthenticated(req)) {
-    return res.status(401).json({ message: "Authentication required" });
-  }
-  
-  if (!hasAdminPrivileges(req)) {
-    return res.status(403).json({ message: "Admin access required" });
-  }
-  
-  return next();
-}
-
-// Middleware to check if user has super admin role
-export function isSuperAdmin(
-  req: Express.Request, 
-  res: Express.Response, 
-  next: Express.NextFunction
-) {
-  if (!isUserAuthenticated(req)) {
-    return res.status(401).json({ message: "Authentication required" });
-  }
-  
-  if (!hasSuperAdminPrivileges(req)) {
-    return res.status(403).json({ message: "Super admin access required" });
-  }
-  
-  return next();
-}
+// Import our centralized auth utilities and config
+import { 
+  isAuthenticated,
+  isAdmin,
+  isSuperAdmin
+} from './utils/auth-utils';
+import { UserRole, authErrorMessages } from './utils/auth-config';
 
 export function setupAuth(app: Express) {
   // Generate a random session secret if one is not provided in environment
@@ -293,23 +253,29 @@ export function setupAuth(app: Express) {
     });
   });
 
-  // Add role management endpoint
-  app.patch("/api/users/:userId/role", isAuthenticated, async (req, res) => {
+  // Add role management endpoint - using centralized isSuperAdmin middleware
+  app.patch("/api/users/:userId/role", isSuperAdmin, async (req, res) => {
     try {
-      // Check for super_admin role after authentication
-      if (req.user?.role !== 'super_admin') {
-        return res.status(403).json({ message: "Super admin role required" });
-      }
-
       const userId = parseInt(req.params.userId);
       const { role } = req.body;
 
-      // Validate role
-      if (!['user', 'admin', 'super_admin'].includes(role)) {
+      // Validate role against our centralized UserRole enum
+      if (!Object.values(UserRole).includes(role as UserRole)) {
         return res.status(400).json({ message: "Invalid role" });
       }
 
       const updatedUser = await storage.updateUserRole(userId, role);
+      
+      // Log role change event
+      logSecurityEvent({
+        type: 'USER_ROLE_CHANGE',
+        details: `User ID ${userId} role changed to ${role} by user ${req.user?.username}`,
+        severity: 'medium',
+        userId: req.user?.id,
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+      
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user role:", error);

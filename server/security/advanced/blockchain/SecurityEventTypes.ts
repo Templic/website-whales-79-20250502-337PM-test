@@ -48,7 +48,8 @@ export enum SecurityEventCategory {
   ADMIN = 'admin',
   ERROR = 'error',
   QUANTUM = 'quantum',
-  BLOCKCHAIN = 'blockchain'
+  BLOCKCHAIN = 'blockchain',
+  CSRF = 'csrf'  // Added CSRF category
 }
 
 /**
