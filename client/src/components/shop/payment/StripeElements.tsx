@@ -1,204 +1,109 @@
 /**
- * Stripe Elements Component
+ * Mock Stripe Elements Component
  * 
- * This component provides a PCI-compliant integration with Stripe
- * using Stripe Elements for secure payment processing.
- * 
- * Critical PCI DSS features:
- * - Card data never touches our servers
- * - Card data is securely tokenized by Stripe
- * - Elements are loaded from Stripe's secure domain
- * - Secure transport via TLS
+ * This component bypasses the actual Stripe integration for development.
+ * No Stripe API keys or libraries are required.
  */
 
-import React, { useState } from 'react';
-import {
-  Elements,
-  PaymentElement,
-  useStripe,
-  useElements
-} from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-import { Button } from '@/components/ui/button';
-import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useState } from 'react';
 
-// Initialize Stripe (outside component to avoid re-initialization)
-// Look for the environment variable directly
-const stripePublicKey = window.__ENV?.STRIPE_PUBLIC_KEY_20250416 || import.meta.env.VITE_STRIPE_PUBLIC_KEY_20250416;
-const stripePromise = loadStripe(stripePublicKey);
-if (!stripePublicKey) {
-  console.error('Stripe publishable key is missing');
-}
-
-// Define component props
 interface StripeElementsProps {
   clientSecret: string;
   onSubmit: (paymentMethodId: string) => Promise<void>;
 }
 
 /**
- * Stripe Elements wrapper component
+ * Simplified Stripe Elements replacement
  */
 export default function StripeElements({ clientSecret, onSubmit }: StripeElementsProps) {
-  // Theme for Stripe Elements
-  const appearance = {
-    theme: 'flat' as const,
-    variables: {
-      colorPrimary: '#6366f1', // Indigo-500
-      colorBackground: '#ffffff',
-      colorText: '#1f2937', // Gray-800
-      colorDanger: '#ef4444', // Red-500
-      fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, sans-serif',
-      spacingUnit: '4px',
-      borderRadius: '8px',
-    },
-  };
-
-  // Options for Elements
-  const options = {
-    clientSecret,
-    appearance,
-  };
-
-  return (
-    <div className="w-full">
-      {/* Only render Elements if clientSecret is available */}
-      {clientSecret ? (
-        <Elements stripe={stripePromise} options={options}>
-          <CheckoutForm onSubmit={onSubmit} />
-        </Elements>
-      ) : (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Payment Error</AlertTitle>
-          <AlertDescription>
-            Unable to initialize payment. Please try again later.
-          </AlertDescription>
-        </Alert>
-      )}
-    </div>
-  );
-}
-
-/**
- * Internal checkout form component
- * This must be wrapped by Elements
- */
-function CheckoutForm({ onSubmit }: { onSubmit: (paymentMethodId: string) => Promise<void> }) {
-  const stripe = useStripe();
-  const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'succeeded' | 'error'>('idle');
+  const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  /**
-   * Handle form submission
-   */
+  // Handle mock payment submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate stripe and elements are loaded
-    if (!stripe || !elements) {
-      setErrorMessage('Payment system is still loading. Please wait a moment and try again.');
-      return;
-    }
-
     setIsProcessing(true);
     setErrorMessage(null);
-    setPaymentStatus('processing');
 
     try {
-      // Confirm the payment with Stripe
-      const result = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: window.location.origin + '/payment-complete',
-        },
-        redirect: 'if_required',
-      });
-
-      // Handle errors
-      if (result.error) {
-        setErrorMessage(result.error.message || 'An unknown error occurred');
-        setPaymentStatus('error');
-        return;
-      }
-
-      // Get the payment method
-      if (!result.paymentIntent?.payment_method) {
-        setErrorMessage('Payment method information not available');
-        setPaymentStatus('error');
-        return;
-      }
-
-      // Payment succeeded
-      const paymentMethodId = result.paymentIntent.payment_method.toString();
-      setPaymentStatus('succeeded');
-
-      // Call the onSubmit callback
-      await onSubmit(paymentMethodId);
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Call onSubmit with a mock payment ID
+      await onSubmit('mock_payment_id_development');
+      setIsSuccess(true);
     } catch (error: any) {
-      // Handle unexpected errors
-      setErrorMessage(error.message || 'An unexpected error occurred');
-      setPaymentStatus('error');
+      setErrorMessage(error.message || 'Payment processing failed');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Show success message if payment was successful
-  if (paymentStatus === 'succeeded') {
+  // Success state
+  if (isSuccess) {
     return (
-      <Alert className="mb-4 bg-green-50 border-green-200">
-        <CheckCircle2 className="h-4 w-4 text-green-500" />
-        <AlertTitle className="text-green-700">Payment Successful</AlertTitle>
-        <AlertDescription className="text-green-600">
-          Your payment has been processed successfully.
-        </AlertDescription>
-      </Alert>
+      <div className="p-4 bg-green-50 border border-green-200 rounded-md text-green-700">
+        <h3 className="font-medium">Payment Successful (Development Mode)</h3>
+        <p className="text-sm text-green-600">Your mock payment has been processed successfully.</p>
+      </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Display error message if any */}
+    <div className="w-full">
+      {/* Development mode notice */}
+      <div className="p-4 mb-4 bg-yellow-50 border border-yellow-200 rounded-md">
+        <h3 className="font-medium text-yellow-700">Development Mode</h3>
+        <p className="text-sm text-yellow-600">
+          Stripe payment processing is disabled in development mode.
+        </p>
+      </div>
+      
+      {/* Error message */}
       {errorMessage && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Payment Error</AlertTitle>
-          <AlertDescription>{errorMessage}</AlertDescription>
-        </Alert>
+        <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-md">
+          <h3 className="font-medium text-red-700">Payment Error</h3>
+          <p className="text-sm text-red-600">{errorMessage}</p>
+        </div>
       )}
+      
+      {/* Mock payment form */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="p-4 border rounded-md space-y-4">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Card Information</label>
+            <div className="h-10 bg-gray-100 rounded-md border border-gray-300"></div>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Cardholder Name</label>
+            <div className="h-10 bg-gray-100 rounded-md border border-gray-300"></div>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Billing Address</label>
+            <div className="h-10 bg-gray-100 rounded-md border border-gray-300"></div>
+          </div>
+        </div>
 
-      {/* Stripe Payment Element - securely collects payment info */}
-      <PaymentElement 
-        className="mb-6"
-        options={{
-          layout: 'tabs',
-        }}
-      />
+        {/* Submit button */}
+        <button
+          type="submit"
+          disabled={isProcessing}
+          className={`w-full py-2 px-4 rounded-md text-white font-medium ${
+            isProcessing ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'
+          }`}
+        >
+          {isProcessing ? 'Processing...' : 'Pay Now (Development Mode)'}
+        </button>
 
-      {/* Submit button */}
-      <Button
-        type="submit"
-        disabled={!stripe || !elements || isProcessing}
-        className="w-full"
-      >
-        {isProcessing ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Processing...
-          </>
-        ) : (
-          'Pay Now'
-        )}
-      </Button>
-
-      {/* PCI compliance notice */}
-      <p className="text-xs text-gray-500 mt-4 text-center">
-        Payment processed securely by Stripe. Your card details are never stored on our servers.
-      </p>
-    </form>
+        {/* Development notice */}
+        <p className="text-xs text-gray-500 mt-4 text-center">
+          This is a development version. No actual payment will be processed.
+        </p>
+      </form>
+    </div>
   );
 }
+
