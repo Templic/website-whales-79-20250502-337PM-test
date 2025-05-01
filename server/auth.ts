@@ -77,13 +77,15 @@ export async function comparePasswords(supplied: string, stored: string) {
   }
 }
 
+import { isUserAuthenticated, hasAdminPrivileges, hasSuperAdminPrivileges } from './utils/auth-utils';
+
 // Middleware to check if user is authenticated
 export function isAuthenticated(
   req: Express.Request, 
   res: Express.Response, 
   next: Express.NextFunction
 ) {
-  if (req.isAuthenticated()) {
+  if (isUserAuthenticated(req)) {
     return next();
   }
   return res.status(401).json({ message: "Authentication required" });
@@ -95,11 +97,11 @@ export function isAdmin(
   res: Express.Response, 
   next: Express.NextFunction
 ) {
-  if (!req.isAuthenticated()) {
+  if (!isUserAuthenticated(req)) {
     return res.status(401).json({ message: "Authentication required" });
   }
   
-  if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+  if (!hasAdminPrivileges(req)) {
     return res.status(403).json({ message: "Admin access required" });
   }
   
@@ -112,11 +114,11 @@ export function isSuperAdmin(
   res: Express.Response, 
   next: Express.NextFunction
 ) {
-  if (!req.isAuthenticated()) {
+  if (!isUserAuthenticated(req)) {
     return res.status(401).json({ message: "Authentication required" });
   }
   
-  if (req.user?.role !== 'super_admin') {
+  if (!hasSuperAdminPrivileges(req)) {
     return res.status(403).json({ message: "Super admin access required" });
   }
   

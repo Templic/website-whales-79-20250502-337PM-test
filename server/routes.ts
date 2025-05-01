@@ -12,6 +12,7 @@ import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
 // Import the setupAuth from our auth module
 import { setupAuth, isAuthenticated, isAdmin, isSuperAdmin } from "./auth";
+import { hasAdminPrivileges, isUserAuthenticated } from './utils/auth-utils';
 
 // The isAuthenticated, isAdmin, and isSuperAdmin middleware are now imported from auth.ts
 import { nanoid } from 'nanoid';
@@ -1739,7 +1740,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Comment routes
-  // Helper function to check if a user has admin privileges
+  // Use standard utility for consistent admin status checks
   function checkAdminStatus(req): boolean {
     return req.isAuthenticated() && (req.user?.role === 'admin' || req.user?.role === 'super_admin');
   }
