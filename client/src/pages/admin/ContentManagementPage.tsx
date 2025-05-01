@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminEditor from '@/components/features/admin/AdminEditor';
+import EnhancedAdminEditor from '@/components/features/admin/EnhancedAdminEditor';
 import ContentHistoryView from '@/components/admin/ContentHistoryView';
 import ContentUsageReport from '@/components/admin/ContentUsageReport';
 import { EnhancedContentReview } from '@/components/admin/EnhancedContentReview';
@@ -398,7 +399,7 @@ const ContentManagementPage: React.FC = () => {
 
       {/* Editor Dialog */}
       <Dialog open={isEditorOpen} onOpenChange={setIsEditorOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-auto">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Edit Content' : 'Create New Content'}</DialogTitle>
             <DialogDescription>
@@ -407,8 +408,8 @@ const ContentManagementPage: React.FC = () => {
                 : 'Fill in the details to create a new content item'}
             </DialogDescription>
           </DialogHeader>
-          <AdminEditor
-            initialContent={selectedContent || undefined}
+          <EnhancedAdminEditor
+            initialContent={selectedContent}
             onSave={handleSaveContent}
             onCancel={() => setIsEditorOpen(false)}
             pages={pages.length > 0 ? pages : ['home', 'about', 'blog', 'contact']}
