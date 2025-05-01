@@ -25,6 +25,7 @@ export enum SecurityEventCategory {
   IP_WHITELIST = 'ip_whitelist',
   QUANTUM_ENCRYPTION = 'quantum_encryption',
   DATA_ENCRYPTION = 'data_encryption',
+  ENCRYPTION = 'encryption',
   RUNTIME_PROTECTION = 'runtime_protection',
   ANOMALY_DETECTION = 'anomaly_detection',
   USER_ACTION = 'user_action',
@@ -34,7 +35,8 @@ export enum SecurityEventCategory {
   SECURITY_INITIALIZATION = 'security_initialization',
   SECURITY_ERROR = 'security_error',
   REQUEST = 'request',
-  AUDIT = 'audit'
+  AUDIT = 'audit',
+  PRIVACY = 'privacy'
 }
 
 // Define severity levels for security events
@@ -174,6 +176,11 @@ export class SecurityFabric {
     }
     return SecurityFabric.instance;
   }
+  
+  // Initialize the security fabric with specific settings
+  public static initialize(mode: SecurityMode = SecurityMode.MAXIMUM): SecurityFabric {
+    return SecurityFabric.getInstance(mode);
+  }
 
   // Set security mode
   public setMode(mode: SecurityMode): void {
@@ -256,5 +263,6 @@ export default {
   SecurityMode,
   SecurityFabric,
   securityFabric,
-  logSecurityEvent
+  logSecurityEvent,
+  initialize: SecurityFabric.initialize
 };

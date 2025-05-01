@@ -1,51 +1,80 @@
 /**
- * Advanced Audit Logging Service
+ * Audit Log Service
  * 
- * Provides comprehensive audit logging functionality to track
- * user actions, system events, and security-related activities.
+ * Provides comprehensive, tamper-evident audit logging for
+ * all security-sensitive operations and system events.
  * 
  * Features:
- * - Detailed activity logging with user attribution
- * - Immutable audit trail for compliance requirements
- * - Categorized events for easy filtering and analysis
- * - Integration with security monitoring systems
- * - Support for export and report generation
+ * - Immutable audit trail with cryptographic verification
+ * - Categorized audit events
+ * - User action tracking
+ * - Detailed contextual information
+ * - Advanced filtering and search capabilities
+ * - Compliance reporting
  */
 
-import { Request } from 'express';
 import { createHash } from 'crypto';
+import { Request } from 'express';
 import { logSecurityEvent } from '../SecurityLogger';
 import { SecurityEventCategory, SecurityEventSeverity } from '../SecurityFabric';
 
-// Define types for better type safety
+// Audit action types
 export enum AuditAction {
+  LOGIN = 'login',
+  LOGOUT = 'logout',
+  ACCOUNT_CREATED = 'account_created',
+  ACCOUNT_UPDATED = 'account_updated',
+  ACCOUNT_DELETED = 'account_deleted',
+  ROLE_ASSIGNED = 'role_assigned',
+  PASSWORD_CHANGED = 'password_changed',
+  PASSWORD_RESET = 'password_reset',
+  MFA_ENABLED = 'mfa_enabled',
+  MFA_DISABLED = 'mfa_disabled',
+  MFA_VERIFIED = 'mfa_verified',
+  ACCESS_GRANTED = 'access_granted',
+  ACCESS_DENIED = 'access_denied',
+  SETTINGS_CHANGED = 'settings_changed',
+  DATA_EXPORTED = 'data_exported',
+  DATA_IMPORTED = 'data_imported',
+  DATA_VIEWED = 'data_viewed',
+  DATA_CREATED = 'data_created', 
+  DATA_UPDATED = 'data_updated',
+  DATA_DELETED = 'data_deleted',
+  SYSTEM_UPDATED = 'system_updated',
+  SYSTEM_ERROR = 'system_error',
+  SCHEDULED_TASK = 'scheduled_task',
+  API_ACCESSED = 'api_accessed',
+  ADMIN_ACTION = 'admin_action',
+  SECURITY_ALERT = 'security_alert',
+  SECURITY_BLOCKED = 'security_blocked',
+  SECURITY_CONFIG_CHANGED = 'security_config_changed',
+  
+  // Additional actions for CRUD operations
   CREATE = 'create',
   READ = 'read',
   UPDATE = 'update',
   DELETE = 'delete',
-  LOGIN = 'login',
-  LOGOUT = 'logout',
-  EXPORT = 'export',
-  IMPORT = 'import',
-  CONFIG_CHANGE = 'config_change',
-  PERMISSION_CHANGE = 'permission_change',
+  
+  // Additional actions for security configuration
   SECURITY_CHANGE = 'security_change',
-  ADMIN_ACTION = 'admin_action',
-  SYSTEM_EVENT = 'system_event'
+  PERMISSION_CHANGE = 'permission_change'
 }
 
+// Audit event categories
 export enum AuditCategory {
-  USER = 'user',
-  CONTENT = 'content',
-  SYSTEM = 'system',
-  SECURITY = 'security',
-  DATA = 'data',
-  CONFIGURATION = 'configuration',
   AUTHENTICATION = 'authentication',
   AUTHORIZATION = 'authorization',
-  API = 'api'
+  USER_MANAGEMENT = 'user_management',
+  DATA_ACCESS = 'data_access',
+  SYSTEM = 'system',
+  SECURITY = 'security',
+  CONFIGURATION = 'configuration',
+  API = 'api',
+  CONTENT = 'content',
+  ADMIN = 'admin'
 }
 
+// Audit log entry structure
 export interface AuditLogEntry {
   id: string;
   timestamp: number;
@@ -53,12 +82,12 @@ export interface AuditLogEntry {
   action: AuditAction;
   category: AuditCategory;
   resource: string;
-  resourceId?: string;
+  resourceId: string;
   details: any;
   clientInfo: {
     ip: string;
     userAgent: string;
-    referrer?: string;
+    deviceId?: string;
   };
   meta: {
     immutableHash: string;
@@ -66,198 +95,156 @@ export interface AuditLogEntry {
   };
 }
 
-// Store for audit logs - in production, use a database with proper indexing
-let auditLogs: AuditLogEntry[] = [];
-let lastEntryHash: string | null = null;
+// In-memory audit log storage (would use a database in production)
+const auditLogs: AuditLogEntry[] = [];
+let lastAuditHash: string | null = null;
 
 /**
- * Calculate a hash for an audit log entry to ensure immutability
+ * Create cryptographic hash for an audit entry
  */
-function calculateEntryHash(entry: Omit<AuditLogEntry, 'meta'>): string {
-  const content = JSON.stringify(entry);
-  return createHash('sha256').update(content).digest('hex');
+function createAuditHash(entry: Omit<AuditLogEntry, "meta">): string {
+  const entryWithoutMeta = JSON.stringify({
+    id: entry.id,
+    timestamp: entry.timestamp,
+    userId: entry.userId,
+    action: entry.action,
+    category: entry.category,
+    resource: entry.resource,
+    resourceId: entry.resourceId,
+    details: entry.details,
+    clientInfo: entry.clientInfo
+  });
+
+  return createHash('sha256')
+    .update(entryWithoutMeta)
+    .update(lastAuditHash || 'initial')
+    .digest('hex');
 }
 
 /**
- * Create a unique ID for an audit log entry
+ * Generate a unique ID
  */
-function generateEntryId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 15) + 
+         Math.random().toString(36).substring(2, 15) + 
+         Date.now().toString(36);
 }
 
 /**
- * Log an audit event
+ * Create a new audit log entry
+ */
+export function createAuditLog(
+  action: AuditAction,
+  category: AuditCategory,
+  resource: string,
+  details: any,
+  request?: Request,
+  resourceId?: string,
+  userId?: string | null
+): AuditLogEntry {
+  // Create the base audit entry
+  const entry: Omit<AuditLogEntry, "meta"> = {
+    id: generateId(),
+    timestamp: Date.now(),
+    userId: userId ?? (request?.user as any)?.id ?? null,
+    action,
+    category,
+    resource,
+    resourceId: resourceId ?? '',
+    details,
+    clientInfo: {
+      ip: request?.ip ?? '0.0.0.0',
+      userAgent: request?.headers['user-agent'] ?? 'Unknown',
+      deviceId: request?.headers['x-device-id'] as string | undefined
+    }
+  };
+
+  // Create cryptographic hash to ensure data integrity
+  const immutableHash = createAuditHash(entry);
+  
+  // Create the complete entry with metadata
+  const completeEntry: AuditLogEntry = {
+    ...entry,
+    meta: {
+      immutableHash,
+      previousEntryHash: lastAuditHash
+    }
+  };
+  
+  // Store the entry and update the last hash
+  auditLogs.push(completeEntry);
+  lastAuditHash = immutableHash;
+  
+  // Log a security event for critical audit actions
+  if (
+    category === AuditCategory.SECURITY || 
+    action === AuditAction.ACCESS_DENIED ||
+    action === AuditAction.SECURITY_ALERT
+  ) {
+    logSecurityEvent({
+      category: SecurityEventCategory.AUDIT,
+      severity: SecurityEventSeverity.INFO,
+      message: `Security audit: ${action} on ${resource}`,
+      data: {
+        auditId: entry.id,
+        action,
+        category,
+        resource,
+        userId: entry.userId
+      }
+    });
+  }
+  
+  return completeEntry;
+}
+
+/**
+ * Convenience function to log an audit event
  */
 export function logAuditEvent(
   action: AuditAction,
   category: AuditCategory,
   resource: string,
   details: any,
-  req: Request,
-  userId?: string,
-  resourceId?: string
+  request?: Request,
+  resourceId?: string,
+  userId?: string | null
 ): AuditLogEntry {
-  const timestamp = Date.now();
-  
-  // Extract client information
-  const clientInfo = {
-    ip: req.ip,
-    userAgent: req.headers['user-agent'] as string || 'Unknown',
-    referrer: req.headers.referer as string
-  };
-  
-  // Create the base entry without the meta field
-  const baseEntry = {
-    id: generateEntryId(),
-    timestamp,
-    userId: userId || (req.user?.id as string) || null,
-    action,
-    category,
-    resource,
-    resourceId,
-    details,
-    clientInfo
-  };
-  
-  // Calculate the hash for this entry
-  const immutableHash = calculateEntryHash(baseEntry);
-  
-  // Create the full entry with the meta field
-  const entry: AuditLogEntry = {
-    ...baseEntry,
-    meta: {
-      immutableHash,
-      previousEntryHash: lastEntryHash
-    }
-  };
-  
-  // Update the last entry hash
-  lastEntryHash = immutableHash;
-  
-  // Store the entry
-  auditLogs.push(entry);
-  
-  // If this is a security-related event, also log it in the security log
-  if (category === AuditCategory.SECURITY || 
-      category === AuditCategory.AUTHENTICATION || 
-      category === AuditCategory.AUTHORIZATION) {
-    
-    let severity = SecurityEventSeverity.INFO;
-    
-    // Determine severity based on action
-    if (action === AuditAction.SECURITY_CHANGE || 
-        action === AuditAction.PERMISSION_CHANGE) {
-      severity = SecurityEventSeverity.MEDIUM;
-    }
-    
-    logSecurityEvent({
-      category: SecurityEventCategory.AUDIT,
-      severity,
-      message: `Audit: ${action} on ${resource}`,
-      data: {
-        auditId: entry.id,
-        userId: entry.userId,
-        action,
-        category,
-        resource,
-        resourceId,
-        details
-      }
-    });
-  }
-  
-  return entry;
+  return createAuditLog(action, category, resource, details, request, resourceId, userId);
 }
 
 /**
- * Query audit logs with filtering
+ * Verify the integrity of the audit log
  */
-export function queryAuditLogs(options: {
-  userId?: string;
-  action?: AuditAction | AuditAction[];
-  category?: AuditCategory | AuditCategory[];
-  resource?: string;
-  resourceId?: string;
-  startTime?: number;
-  endTime?: number;
-  limit?: number;
-  offset?: number;
-}): AuditLogEntry[] {
-  let results = auditLogs;
-  
-  // Apply filters
-  if (options.userId) {
-    results = results.filter(entry => entry.userId === options.userId);
-  }
-  
-  if (options.action) {
-    const actions = Array.isArray(options.action) ? options.action : [options.action];
-    results = results.filter(entry => actions.includes(entry.action));
-  }
-  
-  if (options.category) {
-    const categories = Array.isArray(options.category) ? options.category : [options.category];
-    results = results.filter(entry => categories.includes(entry.category));
-  }
-  
-  if (options.resource) {
-    results = results.filter(entry => entry.resource === options.resource);
-  }
-  
-  if (options.resourceId) {
-    results = results.filter(entry => entry.resourceId === options.resourceId);
-  }
-  
-  if (options.startTime) {
-    results = results.filter(entry => entry.timestamp >= options.startTime);
-  }
-  
-  if (options.endTime) {
-    results = results.filter(entry => entry.timestamp <= options.endTime);
-  }
-  
-  // Sort by timestamp (newest first)
-  results = results.sort((a, b) => b.timestamp - a.timestamp);
-  
-  // Apply pagination
-  if (options.offset || options.limit) {
-    const offset = options.offset || 0;
-    const limit = options.limit || results.length;
-    results = results.slice(offset, offset + limit);
-  }
-  
-  return results;
-}
-
-/**
- * Verify the integrity of the audit log chain
- */
-export function verifyAuditLogIntegrity(): { valid: boolean; invalidEntries: string[] } {
-  if (auditLogs.length === 0) {
-    return { valid: true, invalidEntries: [] };
-  }
-  
+export function verifyAuditLogIntegrity(): {
+  valid: boolean;
+  invalidEntries: string[];
+} {
   const invalidEntries: string[] = [];
-  let expectedPreviousHash: string | null = null;
+  let prevHash: string | null = null;
   
-  // Iterate through the logs in reverse chronological order
-  for (let i = auditLogs.length - 1; i >= 0; i--) {
+  for (let i = 0; i < auditLogs.length; i++) {
     const entry = auditLogs[i];
     
-    // Verify that the previous hash matches
-    if (entry.meta.previousEntryHash !== expectedPreviousHash) {
+    // Check that previousEntryHash matches the previous entry's hash
+    if (entry.meta.previousEntryHash !== prevHash) {
       invalidEntries.push(entry.id);
     }
     
-    // Verify the hash of the current entry
-    const { meta, ...baseEntry } = entry;
-    const calculatedHash = calculateEntryHash(baseEntry);
+    // Check that the hash is correct for the entry's content
+    const entryWithoutMeta = { ...entry };
+    delete (entryWithoutMeta as any).meta;
     
+    const calculatedHash = createHash('sha256')
+      .update(JSON.stringify(entryWithoutMeta))
+      .update(prevHash || 'initial')
+      .digest('hex');
+      
     if (calculatedHash !== entry.meta.immutableHash) {
       invalidEntries.push(entry.id);
     }
     
-    expectedPreviousHash = entry.meta.immutableHash;
+    prevHash = entry.meta.immutableHash;
   }
   
   return {
@@ -267,101 +254,206 @@ export function verifyAuditLogIntegrity(): { valid: boolean; invalidEntries: str
 }
 
 /**
- * Clear audit logs - should only be used in development or with proper archiving
+ * Filter audit logs
  */
-export function clearAuditLogs(): void {
-  auditLogs = [];
-  lastEntryHash = null;
+export function filterAuditLogs(options: {
+  userId?: string;
+  action?: AuditAction;
+  category?: AuditCategory;
+  resource?: string;
+  resourceId?: string;
+  startTime?: number;
+  endTime?: number;
+  limit?: number;
+  offset?: number;
+}): AuditLogEntry[] {
+  let filtered = [...auditLogs];
   
-  logSecurityEvent({
-    category: SecurityEventCategory.AUDIT,
-    severity: SecurityEventSeverity.HIGH,
-    message: 'Audit logs cleared',
-    data: {}
-  });
-}
-
-/**
- * Export audit logs for archiving or reporting
- */
-export function exportAuditLogs(format: 'json' | 'csv' = 'json'): string {
-  if (format === 'json') {
-    return JSON.stringify(auditLogs);
-  } else if (format === 'csv') {
-    // Simple CSV export - in production, use a proper CSV library
-    const headers = ['id', 'timestamp', 'userId', 'action', 'category', 'resource', 'resourceId', 'details', 'ip', 'userAgent'];
-    const rows = auditLogs.map(entry => [
-      entry.id,
-      new Date(entry.timestamp).toISOString(),
-      entry.userId || '',
-      entry.action,
-      entry.category,
-      entry.resource,
-      entry.resourceId || '',
-      JSON.stringify(entry.details),
-      entry.clientInfo.ip,
-      entry.clientInfo.userAgent
-    ]);
-    
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-    
-    return csvContent;
+  // Apply filters
+  if (options.userId) {
+    filtered = filtered.filter(entry => entry.userId === options.userId);
   }
   
-  throw new Error(`Unsupported export format: ${format}`);
+  if (options.action) {
+    filtered = filtered.filter(entry => entry.action === options.action);
+  }
+  
+  if (options.category) {
+    filtered = filtered.filter(entry => entry.category === options.category);
+  }
+  
+  if (options.resource) {
+    filtered = filtered.filter(entry => entry.resource === options.resource);
+  }
+  
+  if (options.resourceId) {
+    filtered = filtered.filter(entry => entry.resourceId === options.resourceId);
+  }
+  
+  if (options.startTime) {
+    filtered = filtered.filter(entry => entry.timestamp >= options.startTime!);
+  }
+  
+  if (options.endTime) {
+    filtered = filtered.filter(entry => entry.timestamp <= options.endTime!);
+  }
+  
+  // Sort by timestamp (newest first)
+  filtered = filtered.sort((a, b) => b.timestamp - a.timestamp);
+  
+  // Apply pagination
+  if (options.offset || options.limit) {
+    const offset = options.offset || 0;
+    const limit = options.limit || filtered.length;
+    filtered = filtered.slice(offset, offset + limit);
+  }
+  
+  return filtered;
 }
 
 /**
- * Convenience function to log user actions
+ * Get a specific audit log entry by ID
  */
-export function logUserAction(
-  userId: string,
-  action: AuditAction,
-  resource: string,
-  details: any,
-  req: Request,
-  resourceId?: string
-): AuditLogEntry {
-  return logAuditEvent(action, AuditCategory.USER, resource, details, req, userId, resourceId);
+export function getAuditLogById(id: string): AuditLogEntry | undefined {
+  return auditLogs.find(entry => entry.id === id);
 }
 
 /**
- * Convenience function to log content changes
+ * Get audit activity by user
  */
-export function logContentChange(
-  action: AuditAction,
-  resource: string,
-  details: any,
-  req: Request,
-  resourceId?: string
-): AuditLogEntry {
-  return logAuditEvent(action, AuditCategory.CONTENT, resource, details, req, req.user?.id as string, resourceId);
+export function getUserActivity(userId: string, limit: number = 10): AuditLogEntry[] {
+  return filterAuditLogs({ userId, limit });
 }
 
 /**
- * Convenience function to log system events
+ * Generate a compliance report
  */
-export function logSystemEvent(
-  action: AuditAction,
-  resource: string,
-  details: any,
-  req: Request
-): AuditLogEntry {
-  return logAuditEvent(action, AuditCategory.SYSTEM, resource, details, req);
+export function generateComplianceReport(
+  category: AuditCategory,
+  startDate: Date,
+  endDate: Date
+): {
+  reportId: string;
+  generatedAt: number;
+  category: AuditCategory;
+  startDate: number;
+  endDate: number;
+  totalEvents: number;
+  eventsByAction: Record<string, number>;
+  eventsByResource: Record<string, number>;
+  eventsByUser: Record<string, number>;
+  data: AuditLogEntry[];
+} {
+  const startTime = startDate.getTime();
+  const endTime = endDate.getTime();
+  
+  const filteredLogs = filterAuditLogs({
+    category,
+    startTime,
+    endTime
+  });
+  
+  // Count events by type
+  const eventsByAction: Record<string, number> = {};
+  const eventsByResource: Record<string, number> = {};
+  const eventsByUser: Record<string, number> = {};
+  
+  for (const entry of filteredLogs) {
+    // Count by action
+    eventsByAction[entry.action] = (eventsByAction[entry.action] || 0) + 1;
+    
+    // Count by resource
+    eventsByResource[entry.resource] = (eventsByResource[entry.resource] || 0) + 1;
+    
+    // Count by user
+    const userKey = entry.userId || 'anonymous';
+    eventsByUser[userKey] = (eventsByUser[userKey] || 0) + 1;
+  }
+  
+  return {
+    reportId: generateId(),
+    generatedAt: Date.now(),
+    category,
+    startDate: startTime,
+    endDate: endTime,
+    totalEvents: filteredLogs.length,
+    eventsByAction,
+    eventsByResource,
+    eventsByUser,
+    data: filteredLogs
+  };
+}
+
+/**
+ * Query audit logs with filtering options
+ * This is an alias for filterAuditLogs to match the API used in routes
+ */
+export function queryAuditLogs(options: {
+  userId?: string;
+  action?: AuditAction;
+  category?: AuditCategory;
+  resource?: string;
+  resourceId?: string;
+  startTime?: number;
+  endTime?: number;
+  limit?: number;
+  offset?: number;
+}): AuditLogEntry[] {
+  return filterAuditLogs(options);
+}
+
+/**
+ * Export audit logs for compliance reporting
+ */
+export function exportAuditLogs(
+  category: AuditCategory,
+  startDate: Date,
+  endDate: Date,
+  format: 'json' | 'csv' = 'json'
+): { data: string; filename: string } {
+  const report = generateComplianceReport(category, startDate, endDate);
+  
+  if (format === 'csv') {
+    // Convert to CSV format
+    const headers = ['id', 'timestamp', 'userId', 'action', 'category', 'resource', 'resourceId'];
+    const rows = [headers];
+    
+    for (const entry of report.data) {
+      rows.push([
+        entry.id,
+        new Date(entry.timestamp).toISOString(),
+        entry.userId || 'anonymous',
+        entry.action,
+        entry.category,
+        entry.resource,
+        entry.resourceId
+      ]);
+    }
+    
+    const csvContent = rows.map(row => row.join(',')).join('\n');
+    return {
+      data: csvContent,
+      filename: `audit_${category}_${new Date().toISOString()}.csv`
+    };
+  }
+  
+  // Default to JSON format
+  return {
+    data: JSON.stringify(report, null, 2),
+    filename: `audit_${category}_${new Date().toISOString()}.json`
+  };
 }
 
 export default {
-  logAuditEvent,
-  queryAuditLogs,
-  verifyAuditLogIntegrity,
-  clearAuditLogs,
-  exportAuditLogs,
-  logUserAction,
-  logContentChange,
-  logSystemEvent,
   AuditAction,
-  AuditCategory
+  AuditCategory,
+  logAuditEvent,
+  createAuditLog,
+  verifyAuditLogIntegrity,
+  filterAuditLogs,
+  getAuditLogById,
+  getUserActivity,
+  generateComplianceReport,
+  queryAuditLogs,
+  exportAuditLogs
 };
