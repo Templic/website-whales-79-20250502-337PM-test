@@ -1570,7 +1570,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         ? req.isAuthenticated() 
         : false;
 
-      const isAdmin = isAuthenticated && req.user?.role && ['admin', 'super_admin'].includes(req.user.role);
+      const isAdmin = checkAdminStatus(req);
 
       // During development, return all posts
       const filteredPosts = process.env.NODE_ENV === 'production' && !isAdmin
@@ -1593,7 +1593,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       ? req.isAuthenticated() 
       : false;
 
-    const isAdmin = isAuthenticated && req.user?.role && ['admin', 'super_admin'].includes(req.user.role);
+    const isAdmin = checkAdminStatus(req);
 
     // During development, allow access to unapproved posts
     if (process.env.NODE_ENV === 'production' && (!isAuthenticated || !isAdmin)) {
@@ -1624,7 +1624,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         return res.status(404).json({ message: "Post not found" });
       }
       // Only allow viewing unapproved posts if user is admin
-      if (!post.approved && (!req.isAuthenticated() || req.user?.role === 'user')) {
+      if (!post.approved && !checkAdminStatus(req)) {
         return res.status(404).json({ message: "Post not found" });
       }
       res.json(post);
@@ -1665,7 +1665,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
       // Check if user is authorized to edit this post
       const isAuthor = existingPost.authorId === req.user.id;
-      const isAdmin = req.user?.role === 'admin' || req.user?.role === 'super_admin';
+      const isAdmin = checkAdminStatus(req);
 
       if (!isAuthor && !isAdmin) {
         return res.status(403).json({ message: "Unauthorized to edit this post" });
@@ -1697,7 +1697,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
       // Check if user is authorized to delete this post
       const isAuthor = existingPost.authorId === req.user.id;
-      const isAdmin = req.user?.role === 'admin' || req.user?.role === 'super_admin';
+      const isAdmin = checkAdminStatus(req);
 
       if (!isAuthor && !isAdmin) {
         return res.status(403).json({ message: "Unauthorized to delete this post" });
@@ -1739,10 +1739,15 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Comment routes
+  // Helper function to check if a user has admin privileges
+  function checkAdminStatus(req): boolean {
+    return req.isAuthenticated() && (req.user?.role === 'admin' || req.user?.role === 'super_admin');
+  }
+
   app.post("/api/posts/:postId/comments", commentValidation, validate, async (req, res) => {
     try {
       // Auto-approve comments from admin users
-      const isAdmin = req.isAuthenticated() && (req.user?.role === 'admin' || req.user?.role === 'super_admin');
+      const isAdmin = checkAdminStatus(req);
 
       // Input is already validated by express-validator middleware
       const data = insertCommentSchema.parse({
@@ -1772,7 +1777,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       const postId = Number(req.params.postId);
       // Only show approved comments to non-admin users
-      const onlyApproved = !req.isAuthenticated() || req.user?.role === 'user';
+      const onlyApproved = !checkAdminStatus(req);
       console.log(`Fetching comments for post ${postId}, onlyApproved: ${onlyApproved}, user: ${req.user?.username || 'guest'}`);
 
       const comments = await storage.getCommentsByPostId(postId, onlyApproved);
@@ -1784,11 +1789,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  app.get("/api/posts/comments/unapproved", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      console.log('Unauthorized access attempt to unapproved comments');
-      return res.status(403).json({ message: "Unauthorized" });
-    }
+  app.get("/api/posts/comments/unapproved", isAdmin, async (req, res) => {
     try {
       console.log("Fetching unapproved comments");
       const comments = await storage.getUnapprovedComments();
