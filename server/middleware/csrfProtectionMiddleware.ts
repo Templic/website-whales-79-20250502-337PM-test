@@ -9,6 +9,7 @@ import { Express, Request, Response, NextFunction } from 'express';
 import { createCSRFMiddleware, generateToken } from '../security/csrf/CSRFProtection';
 import { logSecurityEvent } from '../security/advanced/SecurityLogger';
 import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
+import { csrfExemptRoutes, authErrorMessages } from '../utils/auth-config';
 
 /**
  * Setup CSRF protection for Express application
@@ -23,20 +24,14 @@ export function setupCSRFProtection(app: Express): void {
       sameSite: 'strict',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     },
-    // Don't check CSRF for these endpoints 
+    // Don't check CSRF for endpoints specified in the centralized config
     ignorePaths: [
+      ...csrfExemptRoutes,
       '/api/public',
       '/api/health',
-      '/api/login',
-      '/api/register',
       '/api/metrics',
       '/api/test/csrf-exempt',
-      '/api/webhook',
-      // JWT authentication routes
-      '/api/jwt/login',
-      '/api/jwt/register',
-      '/api/jwt/refresh',
-      '/api/jwt/logout'
+      '/api/webhook'
     ]
   });
 
