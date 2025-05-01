@@ -78,7 +78,7 @@ const DynamicContentDemo = () => {
                   <p>HTML content allows for <strong>rich formatting</strong>, such as:</p>
                   <ul>
                     <li>Lists with <em>emphasis</em></li>
-                    <li>Links to <a href="#" class="text-blue-600 hover:underline">other pages</a></li>
+                    <li>Links to <a href="/about" class="text-blue-600 hover:underline">other pages</a></li>
                     <li>And other HTML elements</li>
                   </ul>
                   <p>Administrators can use the rich text editor to create and update this content.</p>

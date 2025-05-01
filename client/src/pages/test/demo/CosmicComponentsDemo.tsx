@@ -410,12 +410,12 @@ export default function CosmicComponentsDemo() {
               <div>
                 <CosmicHeading as="h3" size="base" weight="medium" className="mb-2">Standard Link Styles</CosmicHeading>
                 <div className="flex flex-col gap-3">
-                  <CosmicLink href="#" variant="default">Default Link</CosmicLink>
-                  <CosmicLink href="#" variant="subtle">Subtle Link</CosmicLink>
-                  <CosmicLink href="#" variant="glow">Glowing Link</CosmicLink>
-                  <CosmicLink href="#" variant="nav">Navigation Link</CosmicLink>
-                  <CosmicLink href="#" variant="nav-active">Active Navigation Link</CosmicLink>
-                  <CosmicLink href="#" variant="footer">Footer Link</CosmicLink>
+                  <CosmicLink href="/about" variant="default">Default Link</CosmicLink>
+                  <CosmicLink href="/music-release" variant="subtle">Subtle Link</CosmicLink>
+                  <CosmicLink href="/cosmic-experience" variant="glow">Glowing Link</CosmicLink>
+                  <CosmicLink href="/community" variant="nav">Navigation Link</CosmicLink>
+                  <CosmicLink href="/shop" variant="nav-active">Active Navigation Link</CosmicLink>
+                  <CosmicLink href="/contact" variant="footer">Footer Link</CosmicLink>
                 </div>
               </div>
             </div>

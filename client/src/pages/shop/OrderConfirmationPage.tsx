@@ -451,7 +451,7 @@ export default function OrderConfirmationPage() {
           
           <div className="text-center mb-8">
             <p className="text-muted-foreground mb-4">
-              Questions about your order? <a href="#" className="text-primary hover:underline">Contact our support team</a>
+              Questions about your order? <a href="/contact" className="text-primary hover:underline">Contact our support team</a>
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button onClick={() => setLocation('/shop')}>Continue Shopping</Button>

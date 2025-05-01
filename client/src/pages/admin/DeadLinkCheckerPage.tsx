@@ -62,7 +62,7 @@ const DeadLinkCheckerPage = () => {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink href="#">Dead Link Checker</BreadcrumbLink>
+              <BreadcrumbLink href="/admin/dead-link-checker">Dead Link Checker</BreadcrumbLink>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>

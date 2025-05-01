@@ -42,7 +42,7 @@ export default function Home() {
             <CardContent className="p-6">
               <h3 className="text-xl font-semibold mb-2">Feels So Good</h3>
               <p className="text-muted-foreground mb-4">Single • 2024</p>
-              <a href="#" className="text-primary hover:underline">Listen Now</a>
+              <a href="/music-release" className="text-primary hover:underline">Listen Now</a>
             </CardContent>
           </Card>
           {/* Add more cards for other releases */}
