@@ -1,7 +1,7 @@
 import express from 'express';
 import { db } from '../../db';
 import { posts, users, insertPostSchema, type InsertPost } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { z } from 'zod';
 
 const router = express.Router();

@@ -36,16 +36,16 @@ interface Post {
   id: number;
   title: string;
   content: string;
-  author_id: string;
+  authorId: string;
   category: string;
   slug: string;
-  cover_image: string;
+  coverImage: string;
   published: boolean;
   approved: boolean;
-  created_at: string;
-  updated_at: string;
-  publish_date?: string;
-  expiry_date?: string;
+  createdAt: string;
+  updatedAt: string;
+  publishDate?: string;
+  expiryDate?: string;
 }
 
 // Author type
@@ -454,7 +454,7 @@ const PostsPage: React.FC = () => {
                       <TableCell>
                         <div className="flex items-center">
                           <Calendar className="h-3 w-3 mr-1.5 text-muted-foreground" />
-                          <span className="text-sm">{formatDate(post.created_at)}</span>
+                          <span className="text-sm">{formatDate(post.createdAt)}</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
