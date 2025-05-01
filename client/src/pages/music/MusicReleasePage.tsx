@@ -127,13 +127,28 @@ export default function MusicReleasePage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {tracks.map((track) => (
-                <Card key={track.id} className="overflow-hidden transition-all hover:shadow-lg hover:shadow-cyan-500/10">
+                <Card 
+                  key={track.id} 
+                  className="overflow-hidden transition-all hover:shadow-lg hover:shadow-cyan-500/10 cursor-pointer"
+                  onClick={() => window.location.href = `/music/track/${track.id}`}
+                >
                   <CardContent className="p-4">
                     <h3 className="text-lg font-bold mb-2">{track.title}</h3>
                     <div className="text-sm text-muted-foreground space-y-1">
                       <p>Artist: {track.artist}</p>
                       {track.frequency && <p>Frequency: {track.frequency}</p>}
                       <p>Released: {new Date(track.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        className="text-sm text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.location.href = `/music/track/${track.id}`;
+                        }}
+                      >
+                        Listen Now ▶
+                      </button>
                     </div>
                   </CardContent>
                 </Card>
