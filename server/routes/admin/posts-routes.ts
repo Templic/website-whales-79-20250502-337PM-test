@@ -18,7 +18,7 @@ const postSchema = insertPostSchema.extend({
 router.post('/', async (req, res) => {
   try {
     // Authentication check
-    if (!req.isAuthenticated()) {
+    if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
@@ -54,7 +54,7 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     // Fetch all posts from database
-    const allPosts = await db.select().from(posts).orderBy(posts.createdAt, "desc");
+    const allPosts = await db.select().from(posts).orderBy(desc(posts.id));
     
     return res.status(200).json(allPosts);
   } catch (error) {
@@ -90,7 +90,7 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     // Authentication check
-    if (!req.isAuthenticated()) {
+    if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
     
@@ -145,7 +145,7 @@ router.put('/:id', async (req, res) => {
 router.patch('/:id', async (req, res) => {
   try {
     // Authentication check
-    if (!req.isAuthenticated()) {
+    if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
     
@@ -211,7 +211,7 @@ router.patch('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     // Authentication check
-    if (!req.isAuthenticated()) {
+    if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
     
