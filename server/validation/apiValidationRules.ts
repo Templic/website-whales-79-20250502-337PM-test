@@ -8,9 +8,19 @@
 import { z } from 'zod';
 import { ValidationEngine, createValidationRule } from '../security/advanced/apiValidation/ValidationEngine';
 import { applyValidationRules } from '../middleware/apiValidationMiddleware';
-import { ImmutableSecurityLogger } from '../utils/security/SecurityLogger';
 
-const logger = new ImmutableSecurityLogger('API_VALIDATION');
+// Use a simpler logger to avoid circular dependencies
+const logger = {
+  info: (data: any, domain?: string) => {
+    console.log(`[INFO] [${domain || 'API_VALIDATION'}]`, typeof data === 'string' ? data : JSON.stringify(data));
+  },
+  error: (data: any, domain?: string) => {
+    console.error(`[ERROR] [${domain || 'API_VALIDATION'}]`, typeof data === 'string' ? data : JSON.stringify(data));
+  },
+  warn: (data: any, domain?: string) => {
+    console.warn(`[WARN] [${domain || 'API_VALIDATION'}]`, typeof data === 'string' ? data : JSON.stringify(data));
+  }
+};
 
 /**
  * Register common validation rules

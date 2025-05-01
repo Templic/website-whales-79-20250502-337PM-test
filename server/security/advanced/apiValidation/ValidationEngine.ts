@@ -16,9 +16,15 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { createHash } from 'crypto';
-import { ImmutableSecurityLogger } from '../../../utils/security/SecurityLogger';
 import { QuantumResistantEncryption } from '../quantum/QuantumResistantEncryption';
 import { RASPCore } from '../rasp/RASPCore';
+
+// Use a simple logger to avoid circular dependencies
+const SimpleLogger = {
+  log: (data: any, level: string = 'info', domain: string = 'API_VALIDATION') => {
+    console.log(`[${level.toUpperCase()}] [${domain}]`, typeof data === 'string' ? data : JSON.stringify(data));
+  }
+};
 
 // Define types for better type safety
 export type ValidationMode = 'strict' | 'balanced' | 'permissive';
@@ -54,7 +60,7 @@ export interface ValidationRule<T = any> {
 }
 
 export class ValidationEngine {
-  private static readonly logger = new ImmutableSecurityLogger('API_VALIDATION');
+  private static readonly logger = SimpleLogger;
   private static rules = new Map<string, ValidationRule>();
   private static endpoints = new Map<string, string[]>();
   

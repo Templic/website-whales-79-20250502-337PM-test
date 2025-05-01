@@ -8,9 +8,19 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { ValidationEngine, ValidationOptions } from '../security/advanced/apiValidation/ValidationEngine';
-import { ImmutableSecurityLogger } from '../utils/security/SecurityLogger';
 
-const logger = new ImmutableSecurityLogger('API_VALIDATION');
+// Use a simpler logger to avoid circular dependencies
+const logger = {
+  info: (data: any, domain?: string) => {
+    console.log(`[INFO] [${domain || 'API_VALIDATION'}]`, typeof data === 'string' ? data : JSON.stringify(data));
+  },
+  error: (data: any, domain?: string) => {
+    console.error(`[ERROR] [${domain || 'API_VALIDATION'}]`, typeof data === 'string' ? data : JSON.stringify(data));
+  },
+  warn: (data: any, domain?: string) => {
+    console.warn(`[WARN] [${domain || 'API_VALIDATION'}]`, typeof data === 'string' ? data : JSON.stringify(data));
+  }
+};
 
 /**
  * Create validation middleware for an API endpoint
