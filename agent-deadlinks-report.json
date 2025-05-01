@@ -1,9 +1,9 @@
 {
   "meta": {
     "baseUrl": "http://localhost:5000",
-    "startTime": "2025-05-01T00:14:50.342Z",
-    "endTime": "2025-05-01T00:14:55.434Z",
-    "duration": 5.092,
+    "startTime": "2025-05-01T00:16:19.034Z",
+    "endTime": "2025-05-01T00:16:24.151Z",
+    "duration": 5.117,
     "maxDepth": 2
   },
   "summary": {
@@ -17,12 +17,21 @@
     "links": {
       "total": 1,
       "deadEnds": 0,
-      "items": []
+      "items": [],
+      "allLinks": [
+        {
+          "url": "/vite.svg",
+          "text": "[No Text]",
+          "empty": false,
+          "element": "link"
+        }
+      ]
     },
     "buttons": {
       "total": 0,
       "deadEnds": 0,
-      "items": []
+      "items": [],
+      "allButtons": []
     }
   },
   "brokenLinks": [],

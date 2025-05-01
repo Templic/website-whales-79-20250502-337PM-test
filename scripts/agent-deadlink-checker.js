@@ -18,14 +18,14 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configuration
+// Configuration with environment variable support
 const config = {
-  baseUrl: 'http://localhost:5000',
-  outputFile: path.join(process.cwd(), 'agent-deadlinks-report.json'),
-  maxDepth: 2, // Reduce depth to finish faster
-  timeout: 15000, // 15 seconds total timeout
-  requestTimeout: 5000, // 5 second timeout per request
-  maxPages: 20, // Limit the number of pages to scan
+  baseUrl: process.env.BASE_URL || 'http://localhost:5000',
+  outputFile: process.env.OUTPUT_FILE || path.join(process.cwd(), 'agent-deadlinks-report.json'),
+  maxDepth: parseInt(process.env.MAX_DEPTH || '2', 10), // Reduce depth to finish faster
+  timeout: parseInt(process.env.TIMEOUT || '15000', 10), // 15 seconds total timeout
+  requestTimeout: parseInt(process.env.REQUEST_TIMEOUT || '5000', 10), // 5 second timeout per request
+  maxPages: parseInt(process.env.MAX_PAGES || '20', 10), // Limit the number of pages to scan
 };
 
 // State variables
@@ -313,12 +313,14 @@ async function simpleCheck() {
       links: {
         total: links.length,
         deadEnds: deadEndLinks.length,
-        items: deadEndLinks
+        items: deadEndLinks,
+        allLinks: links // Include all found links
       },
       buttons: {
         total: buttons.length,
         deadEnds: deadEndButtons.length,
-        items: deadEndButtons
+        items: deadEndButtons,
+        allButtons: buttons // Include all found buttons
       }
     };
   } catch (error) {
