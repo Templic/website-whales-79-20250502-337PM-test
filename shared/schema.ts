@@ -58,6 +58,7 @@ export const users = pgTable("users", {
   id: varchar("id", { length: 255 }).primaryKey(),
   username: text("username").notNull().unique(),
   email: text("email").unique(),
+  password: text("password"), // Added password field for authentication
   role: text("role", { enum: ["user", "admin", "super_admin"] }).notNull().default("user"),
   isBanned: boolean("is_banned").notNull().default(false),
   firstName: text("first_name"),
@@ -65,6 +66,7 @@ export const users = pgTable("users", {
   bio: text("bio"),
   profileImageUrl: text("profile_image_url"),
   lastLogin: timestamp("last_login"),
+  lockedUntil: timestamp("locked_until"), // Added for account lockout functionality
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
 });

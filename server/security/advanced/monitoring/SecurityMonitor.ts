@@ -25,7 +25,10 @@ export class SecurityMonitor extends EventEmitter {
     this.on('anomaly', this.handleAnomaly.bind(this));
   }
 
-  // Implementation of the missing method
+  /**
+   * Gathers security metrics from various parts of the application
+   * This method collects system metrics, request patterns, and security events
+   */
   private async gatherSecurityMetrics(): Promise<any> {
     try {
       // Basic metrics gathering
@@ -81,8 +84,44 @@ export class SecurityMonitor extends EventEmitter {
     }
   }
 
+  /**
+   * Handles detected security anomalies
+   * Applies appropriate protection measures based on the anomaly type
+   */
   private async handleAnomaly(anomaly: any): Promise<void> {
-    // Implement automated response actions
-    await RASPCore.protect(anomaly.request, anomaly.response, () => {});
+    try {
+      console.log('Handling security anomaly:', 
+        typeof anomaly === 'string' ? 'Encrypted data' : JSON.stringify(anomaly)
+      );
+      
+      // If anomaly is encrypted, we may need to decrypt it
+      let anomalyData = anomaly;
+      if (typeof anomaly === 'string') {
+        try {
+          const decrypted = await QuantumResistantEncryption.decrypt(anomaly);
+          anomalyData = JSON.parse(decrypted);
+        } catch (error) {
+          console.error('Error decrypting anomaly data:', error);
+          return;
+        }
+      }
+      
+      // Safe handling with fallbacks
+      if (!anomalyData || !anomalyData.request) {
+        console.warn('Invalid anomaly data format');
+        return;
+      }
+      
+      // Apply protection measures
+      await RASPCore.protect(
+        anomalyData.request, 
+        anomalyData.response || {}, 
+        () => {
+          console.log('Applied protection for anomaly type:', anomalyData.type);
+        }
+      );
+    } catch (error) {
+      console.error('Error handling anomaly:', error);
+    }
   }
 }

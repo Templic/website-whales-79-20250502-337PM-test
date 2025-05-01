@@ -195,7 +195,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/logout',
     '/api/auth/user',
     '/api/auth', 
-    '/api/auth/*'  // Wildcard to exempt all auth routes
+    '/api/auth/*',  // Wildcard to exempt all auth routes
+    '/api/jwt/login',
+    '/api/jwt/refresh',
+    '/api/jwt/logout',
+    '/api/jwt/*'    // Wildcard to exempt all JWT routes
   ];
 
   // Completely disable CSRF protection for now

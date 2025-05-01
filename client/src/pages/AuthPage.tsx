@@ -100,13 +100,16 @@ export default function AuthPage() {
           rememberMe: data.rememberMe
         });
         
-        // Directly use fetch instead of apiRequest utility to rule out any middleware issues
-        const response = await fetch('/api/login', {
+        // Use JWT login endpoint instead of session-based login
+        const response = await fetch('/api/jwt/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+            username: data.username,
+            password: data.password
+          }),
           credentials: 'include' // Important: Include credentials for cookies
         });
         
@@ -116,7 +119,13 @@ export default function AuthPage() {
         }
         
         const result = await response.json();
-        console.log('Login response:', result);
+        console.log('JWT Login response:', result);
+        
+        // Check if login was successful based on the success flag
+        if (!result.success) {
+          throw new Error(result.message || 'Login failed');
+        }
+        
         return result;
       } catch (error) {
         console.error('Login failed:', error);
@@ -127,8 +136,16 @@ export default function AuthPage() {
       // Handle successful login
       console.log('Login successful, received data:', data);
       
-      // The server may return data.user (from auth route) or data directly (from direct /api/login)
-      const userData = data.user || data;
+      // JWT endpoints return { success: true, user: {...}, token: "..." }
+      // Extract the user data from response
+      const userData = data.user || null;
+      const token = data.token || null;
+      
+      if (!userData) {
+        console.error('Login response did not contain user data');
+        alert('Login was successful but the server response was missing user data. Please try again.');
+        return;
+      }
       
       // Check if 2FA is required
       if (data.requires2FA) {
@@ -147,6 +164,11 @@ export default function AuthPage() {
           // Store in both localStorage for persistent logins and sessionStorage for current session
           localStorage.setItem('cosmic_user_data', userJson);
           sessionStorage.setItem('currentUser', userJson);
+          
+          // If we have a JWT token, store it
+          if (token) {
+            localStorage.setItem('jwt_token', token);
+          }
           
           // Update the user in auth context if possible
           if (setUser) {
@@ -359,16 +381,28 @@ export default function AuthPage() {
           <Form {...registerForm}>
             <form onSubmit={registerForm.handleSubmit(async (data) => {
               try {
-                // Import the apiRequest function which handles CSRF automatically
-                const { apiRequest } = await import('@/lib/queryClient');
+                // Use JWT registration endpoint instead of apiRequest
+                const response = await fetch('/api/jwt/register', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    username: data.username,
+                    email: data.email,
+                    password: data.password,
+                    confirmPassword: data.confirmPassword
+                  }),
+                  credentials: 'include' // Important: Include credentials for cookies
+                });
                 
-                // Register the user
-                const result = await apiRequest('POST', '/api/auth/register', data);
+                if (!response.ok) {
+                  const errorData = await response.json();
+                  throw new Error(errorData.message || 'Registration failed');
+                }
                 
-                // Show success message
+                // Success - show message and reset form
                 alert('Registration successful! Please log in.');
-                
-                // Reset the form
                 registerForm.reset();
               } catch (error) {
                 console.error('Registration failed:', error);
