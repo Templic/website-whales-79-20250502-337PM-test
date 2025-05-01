@@ -89,6 +89,40 @@ export function isAuthenticated(
   return res.status(401).json({ message: "Authentication required" });
 }
 
+// Middleware to check if user has admin role
+export function isAdmin(
+  req: Express.Request, 
+  res: Express.Response, 
+  next: Express.NextFunction
+) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  
+  if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+  
+  return next();
+}
+
+// Middleware to check if user has super admin role
+export function isSuperAdmin(
+  req: Express.Request, 
+  res: Express.Response, 
+  next: Express.NextFunction
+) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  
+  if (req.user?.role !== 'super_admin') {
+    return res.status(403).json({ message: "Super admin access required" });
+  }
+  
+  return next();
+}
+
 export function setupAuth(app: Express) {
   // Generate a random session secret if one is not provided in environment
   const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
@@ -258,11 +292,11 @@ export function setupAuth(app: Express) {
   });
 
   // Add role management endpoint
-  app.patch("/api/users/:userId/role", async (req, res) => {
+  app.patch("/api/users/:userId/role", isAuthenticated, async (req, res) => {
     try {
-      // Check if user is authorized (must be super_admin)
-      if (!req.isAuthenticated() || req.user.role !== 'super_admin') {
-        return res.status(403).json({ message: "Unauthorized" });
+      // Check for super_admin role after authentication
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin role required" });
       }
 
       const userId = parseInt(req.params.userId);
@@ -282,19 +316,13 @@ export function setupAuth(app: Express) {
   });
 
   // Current user endpoint
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.sendStatus(401);
-    }
+  app.get("/api/user", isAuthenticated, (req, res) => {
     // Return the current authenticated user
     res.json(req.user);
   });
   
   // Password change endpoint with security logging
-  app.post("/api/user/change-password", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "You must be logged in to change your password" });
-    }
+  app.post("/api/user/change-password", isAuthenticated, async (req, res) => {
     
     try {
       const { currentPassword, newPassword } = req.body;
@@ -315,6 +343,10 @@ export function setupAuth(app: Express) {
       }
       
       // Get current user
+      if (!req.user?.id) {
+        return res.status(400).json({ message: "User ID not available" });
+      }
+      
       const user = await storage.getUser(req.user.id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -323,12 +355,12 @@ export function setupAuth(app: Express) {
       // Verify current password
       if (!(await comparePasswords(currentPassword, user.password))) {
         // Log failed password change attempt for security monitoring
-        if (typeof logSecurityEvent === 'function') {
+        if (typeof logSecurityEvent === 'function' && req.user?.id && req.user?.username) {
           logSecurityEvent({
             type: 'PASSWORD_CHANGE_FAILED',
             userId: req.user.id,
-            username: req.user.username,
-            reason: 'Current password verification failed',
+            details: `Failed password change attempt for user ${req.user.username}`,
+            severity: 'medium',
             ip: req.ip,
             userAgent: req.headers['user-agent']
           });
@@ -343,11 +375,12 @@ export function setupAuth(app: Express) {
       await storage.updateUserPassword(req.user.id, hashedPassword);
       
       // Log successful password change for security monitoring
-      if (typeof logSecurityEvent === 'function') {
+      if (typeof logSecurityEvent === 'function' && req.user?.id && req.user?.username) {
         logSecurityEvent({
           type: 'PASSWORD_CHANGE_SUCCESS',
           userId: req.user.id,
-          username: req.user.username,
+          details: `Password successfully changed for user ${req.user.username}`,
+          severity: 'low',
           ip: req.ip,
           userAgent: req.headers['user-agent']
         });
@@ -361,9 +394,7 @@ export function setupAuth(app: Express) {
   });
 
   // Session analytics endpoint
-  app.get("/api/session/status", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-
+  app.get("/api/session/status", isAuthenticated, (req, res) => {
     const sessionInfo = {
       id: req.sessionID,
       lastActivity: req.session?.lastActivity,
