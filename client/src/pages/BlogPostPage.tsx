@@ -1,272 +1,496 @@
 import React from 'react';
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useParams, useLocation } from "wouter";
-import { Post, Comment, insertCommentSchema } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Form } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { queryClient } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/use-auth";
-import { formatDisplayDate } from "@/lib/date-utils";
-import { useEffect } from "react";
-import { z } from "zod";
+import { useRoute, useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Edit,
+  Share2,
+  ThumbsUp,
+  MessageSquare,
+  Tag,
+  Check,
+  X,
+  Globe,
+  Clock8
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { queryClient } from '@/lib/queryClient';
 
-export default function BlogPostPage() {
-  const { id } = useParams<{ id: string }>();
-  const { toast } = useToast();
-  const postId = parseInt(id);
+// Interfaces
+interface Post {
+  id: number;
+  title: string;
+  content: string;
+  author_id: string;
+  category: string;
+  slug: string;
+  cover_image: string;
+  published: boolean;
+  approved: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Author {
+  id: string;
+  username: string;
+  name?: string;
+  avatar?: string;
+}
+
+const BlogPostPage = () => {
+  const [, params] = useRoute('/blog/:slug');
+  const slug = params?.slug;
+  const [location, setLocation] = useLocation();
   const { user } = useAuth();
-  const [_, navigate] = useLocation();
-
-  // Log query process for debugging
-  useEffect(() => {
-    console.log("Fetching blog post with ID:", postId);
-  }, [postId]);
-
-  const { data: post, isLoading: postLoading, error: postError } = useQuery<Post>({
-    queryKey: ['/api/posts', postId],
-    enabled: !isNaN(postId)
+  const isAdmin = user?.role === 'admin';
+  const { toast } = useToast();
+  
+  // Fetch the post
+  const { data: post, isLoading: isPostLoading, error: postError } = useQuery<Post>({
+    queryKey: ['/api/posts', slug],
+    enabled: !!slug,
   });
-
-  // Fetch comments - for admins, this will include unapproved comments
-  const { data: comments = [], isLoading: commentsLoading } = useQuery<Comment[]>({
-    queryKey: ['/api/posts', postId, 'comments'],
-    enabled: !isNaN(postId),
-    queryFn: async () => {
-      console.log(`Fetching comments for post ID: ${postId}`);
-      const response = await fetch(`/api/posts/${postId}/comments`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch comments');
-      }
-      const data = await response.json();
-      console.log(`Received ${data.length} comments:`, data);
-      return data;
+  
+  // Fetch author information
+  const { data: author, isLoading: isAuthorLoading } = useQuery<Author>({
+    queryKey: ['/api/users', post?.author_id],
+    enabled: !!post?.author_id,
+  });
+  
+  // Format date
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'MMMM d, yyyy');
+    } catch (e) {
+      return dateString;
     }
-  });
-
-  const form = useForm({
-    resolver: zodResolver(insertCommentSchema),
-    defaultValues: {
-      content: "",
-      postId,
-      authorId: user?.id || null,
-      approved: false
-    }
-  });
-
-  // Define the comment input type
-  type CommentInput = z.infer<typeof insertCommentSchema>;
-
-  const commentMutation = useMutation({
-    mutationFn: async (data: CommentInput) => {
-      const response = await fetch(`/api/posts/${postId}/comments`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' }
+  };
+  
+  // Format reading time
+  const calculateReadingTime = (content: string) => {
+    const plainText = content.replace(/<[^>]*>/g, '');
+    const words = plainText.trim().split(/\s+/).length;
+    const readingTime = Math.ceil(words / 200); // Assuming 200 words per minute
+    return readingTime === 1 ? '1 minute' : `${readingTime} minutes`;
+  };
+  
+  // Admin actions
+  const togglePostStatus = async (field: 'published' | 'approved', currentValue: boolean) => {
+    if (!post) return;
+    
+    try {
+      const response = await fetch(`/api/admin/posts/${post.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ [field]: !currentValue }),
       });
-      if (!response.ok) throw new Error('Failed to post comment');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/posts', postId, 'comments'] });
+      
+      if (!response.ok) throw new Error('Failed to update post status');
+      
+      // Update cache
+      queryClient.invalidateQueries({ queryKey: ['/api/posts', slug] });
+      queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
+      
       toast({
-        title: "Comment Submitted",
-        description: "Your comment has been submitted and will be visible after approval by a moderator."
+        title: 'Success',
+        description: `Post ${field === 'published' ? 'publication' : 'approval'} status updated`,
+        variant: 'default',
       });
-      form.reset();
-    },
-    onError: (error: Error) => {
-      console.error("Comment submission error:", error);
+    } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to post comment. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to update post',
+        variant: 'destructive',
       });
     }
-  });
-
-  if (postLoading) {
+  };
+  
+  const deletePost = async () => {
+    if (!post) return;
+    
+    try {
+      const response = await fetch(`/api/admin/posts/${post.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete post');
+      
+      // Update cache and redirect
+      queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
+      
+      toast({
+        title: 'Success',
+        description: 'Post has been deleted',
+        variant: 'default',
+      });
+      
+      setLocation('/blog');
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete post',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  // Navigate to edit post
+  const navigateToEditPost = () => {
+    if (!post) return;
+    setLocation(`/admin/posts/edit/${post.id}`);
+  };
+  
+  // Share post
+  const sharePost = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: post?.title,
+        text: 'Check out this blog post',
+        url: window.location.href,
+      }).catch((error) => {
+        console.error('Error sharing:', error);
+        copyToClipboard();
+      });
+    } else {
+      copyToClipboard();
+    }
+  };
+  
+  // Copy URL to clipboard
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => {
+        toast({
+          title: 'URL Copied',
+          description: 'Link has been copied to clipboard',
+          variant: 'default',
+        });
+      })
+      .catch((error) => {
+        toast({
+          title: 'Error',
+          description: 'Failed to copy link',
+          variant: 'destructive',
+        });
+      });
+  };
+  
+  // Check if a post is accessible to current user
+  const isPostAccessible = () => {
+    if (!post) return false;
+    
+    // Admins can see all posts
+    if (isAdmin) return true;
+    
+    // Regular users can only see published and approved posts
+    return post.published && post.approved;
+  };
+  
+  // Handle loading state
+  if (isPostLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8 animate-pulse" role="status">
-        <div className="h-8 bg-[rgba(10,50,92,0.6)] rounded w-3/4 mb-4"></div>
-        <div className="h-4 bg-[rgba(10,50,92,0.6)] rounded w-1/4 mb-8"></div>
-        <div className="space-y-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-4 bg-[rgba(10,50,92,0.6)] rounded w-full"></div>
-          ))}
-        </div>
-        <span className="sr-only">Loading blog post...</span>
-      </div>
-    );
-  }
-
-  if (postError || !post) {
-    toast({
-      title: "Error",
-      description: "Failed to load blog post",
-      variant: "destructive"
-    });
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">Error Loading Post</h1>
-        <p>We encountered an error while loading this post. Please try again later.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <Button 
-        variant="outline" 
-        className="mb-8" 
-        onClick={() => navigate('/blog')}
-      >
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          width="16" 
-          height="16" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-          className="mr-2"
+      <div className="container mx-auto px-4 py-8">
+        <Button 
+          variant="ghost" 
+          className="mb-6"
+          onClick={() => setLocation('/blog')}
         >
-          <path d="m15 18-6-6 6-6"/>
-        </svg>
-        Back to Blog
-      </Button>
-
-      <article className="prose prose-invert max-w-none">
-        <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">{post.title}</h1>
-        <div className="flex items-center text-sm text-gray-400 mb-8">
-          <time dateTime={post.createdAt ? post.createdAt.toString() : ''}>
-            {formatDisplayDate(post.createdAt ? post.createdAt.toString() : null)}
-          </time>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Blog
+        </Button>
+        
+        <div className="mb-6 aspect-[16/6] rounded-lg overflow-hidden">
+          <Skeleton className="h-full w-full" />
         </div>
-
-        {post.featuredImage && (
-          <img
-            src={post.featuredImage}
-            alt={`Featured image for ${post.title}`}
-            className="w-full h-[400px] object-cover rounded-xl mb-8"
-            loading="lazy"
-          />
-        )}
-
-        <div className="prose prose-invert max-w-none mt-8 text-lg">
-          {post.content ? (
-            post.content
-              .replace(/<p>/g, '')
-              .replace(/<\/p>/g, '\n\n')
-              .replace(/<br\s*\/?>/g, '\n')
-              .replace(/<div>/g, '')
-              .replace(/<\/div>/g, '\n\n')
-              .replace(/&nbsp;/g, ' ')
-              .replace(/<[^>]*>/g, '') // Remove any remaining HTML tags
-              .split('\n\n')
-              .filter(para => para.trim().length > 0) // Filter out empty paragraphs
-              .map((paragraph, index) => (
-                <p key={index} className="mb-4">{paragraph.trim()}</p>
-              ))
-          ) : (
-            <>
-              <p className="mb-4">
-                As I embarked on my cosmic journey through the universe of sound, I found myself drawn to the ethereal qualities of music that transcends traditional boundaries. Working with artists from across the galaxy has opened my mind to new dimensions of creativity.
-              </p>
-              <p className="mb-4">
-                The latest tracks I've been developing blend elements of astral jazz with quantum electronic pulses, creating a soundscape that hopefully transports listeners to unexplored regions of consciousness.
-              </p>
-              <p className="mb-4">
-                My collaboration with the Neptune Symphony Orchestra has been particularly enlightening. Their ability to capture the harmonic resonance of deep space in acoustic form complements my digital explorations perfectly.
-              </p>
-              <p className="mb-4">
-                Stay tuned for more sonic adventures as we continue to push the boundaries of what's possible in this musical universe. The journey has just begun, and I'm excited to share it with all of you.
-              </p>
-            </>
-          )}
+        
+        <div className="max-w-4xl mx-auto">
+          <Skeleton className="h-12 w-3/4 mb-4" />
+          <div className="flex gap-3 mb-8">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-6 w-36" />
+          </div>
+          
+          <div className="space-y-4">
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-5 w-5/6" />
+            <Skeleton className="h-5 w-full" />
+          </div>
         </div>
-      </article>
-
-      <section className="mt-16">
-        <h2 className="text-2xl font-bold text-[#00ebd6] mb-8">Comments</h2>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(data => commentMutation.mutate(data))} className="space-y-6 mb-12">
-            {!user && (
-              <div className="text-center mb-4 p-2 bg-[rgba(10,50,92,0.3)] rounded">
-                <p className="text-yellow-300 text-sm">You're commenting as a guest. Sign in for better comment management.</p>
-              </div>
-            )}
+      </div>
+    );
+  }
+  
+  // Handle error state
+  if (postError || !post) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Button 
+          variant="ghost" 
+          className="mb-6"
+          onClick={() => setLocation('/blog')}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Blog
+        </Button>
+        
+        <div className="text-center py-12 bg-red-50 rounded-lg">
+          <h2 className="text-2xl font-semibold text-red-800 mb-2">Post Not Found</h2>
+          <p className="text-red-600">The blog post you're looking for doesn't exist or may have been removed.</p>
+          <Button
+            variant="outline"
+            className="mt-6"
+            onClick={() => setLocation('/blog')}
+          >
+            Return to Blog
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
+  // Handle unauthorized access
+  if (!isPostAccessible()) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Button 
+          variant="ghost" 
+          className="mb-6"
+          onClick={() => setLocation('/blog')}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Blog
+        </Button>
+        
+        <div className="text-center py-12 bg-yellow-50 rounded-lg">
+          <h2 className="text-2xl font-semibold text-yellow-800 mb-2">Post Not Available</h2>
+          <p className="text-yellow-600">
+            This post is currently {!post.published ? 'unpublished' : 'pending approval'} and not available for viewing.
+          </p>
+          <Button
+            variant="outline"
+            className="mt-6"
+            onClick={() => setLocation('/blog')}
+          >
+            Return to Blog
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Back button and admin controls */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+        <Button 
+          variant="ghost" 
+          onClick={() => setLocation('/blog')}
+          className="flex items-center"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Blog
+        </Button>
+        
+        {isAdmin && (
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Status badges */}
+            <div className="flex items-center gap-2 mr-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant={post.published ? "default" : "outline"} className="capitalize">
+                      {post.published ? (
+                        <Check className="h-3 w-3 mr-1" />
+                      ) : (
+                        <Clock8 className="h-3 w-3 mr-1" />
+                      )}
+                      {post.published ? 'Published' : 'Draft'}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{post.published ? 'This post is published' : 'This post is still a draft'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant={post.approved ? "default" : "outline"} className="capitalize">
+                      {post.approved ? (
+                        <Check className="h-3 w-3 mr-1" />
+                      ) : (
+                        <Clock8 className="h-3 w-3 mr-1" />
+                      )}
+                      {post.approved ? 'Approved' : 'Pending'}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{post.approved ? 'This post is approved' : 'This post is pending approval'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             
-            {/* Hidden inputs for user ID and post ID */}
-            <input type="hidden" {...form.register("authorId")} value={user?.id || ""} />
-            <input type="hidden" {...form.register("postId")} value={postId} />
-
-            <div>
-              <label htmlFor="content" className="block text-sm font-medium mb-2">Comment</label>
-              <Textarea
-                id="content"
-                {...form.register("content")}
-                className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6] min-h-[100px]"
-                placeholder="Share your thoughts..."
-                aria-label="Your comment"
-              />
+            {/* Admin buttons */}
+            <div className="flex items-center gap-2">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => togglePostStatus('published', post.published)}
+              >
+                {post.published ? 'Unpublish' : 'Publish'}
+              </Button>
+              
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => togglePostStatus('approved', post.approved)}
+              >
+                {post.approved ? 'Unapprove' : 'Approve'}
+              </Button>
+              
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={navigateToEditPost}
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="destructive">Delete</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete this post
+                      and remove its data from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={deletePost}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
-
-            <Button 
-              type="submit"
-              className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
-              disabled={commentMutation.isPending}
-              aria-busy={commentMutation.isPending}
-            >
-              {commentMutation.isPending ? "Posting..." : "Post Comment"}
-            </Button>
-          </form>
-        </Form>
-
-        <div className="space-y-8">
-          {commentsLoading ? (
-            <div role="status" className="animate-pulse">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl mb-4">
-                  <div className="h-4 bg-[rgba(48,52,54,0.5)] rounded w-1/4 mb-4"></div>
-                  <div className="h-4 bg-[rgba(48,52,54,0.5)] rounded w-full"></div>
-                </div>
-              ))}
-              <span className="sr-only">Loading comments...</span>
+          </div>
+        )}
+      </div>
+      
+      {/* Featured image */}
+      <div 
+        className="w-full h-[40vh] bg-cover bg-center rounded-lg mb-8 relative"
+        style={{ backgroundImage: `url(${post.cover_image})` }}
+      >
+        <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
+        <div className="absolute bottom-4 left-4 right-4">
+          <Badge className="mb-2">{post.category}</Badge>
+          <h1 className="text-white text-3xl md:text-4xl font-bold drop-shadow-md">{post.title}</h1>
+        </div>
+      </div>
+      
+      {/* Post metadata */}
+      <div className="max-w-4xl mx-auto mb-8">
+        <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+          <div className="flex items-center">
+            <Calendar className="h-4 w-4 mr-1" />
+            <span>{formatDate(post.created_at)}</span>
+          </div>
+          
+          <div className="flex items-center">
+            <Clock className="h-4 w-4 mr-1" />
+            <span>{calculateReadingTime(post.content)} read</span>
+          </div>
+          
+          {author && (
+            <div className="flex items-center">
+              {author.avatar ? (
+                <img 
+                  src={author.avatar} 
+                  alt={author.name || author.username} 
+                  className="h-5 w-5 rounded-full mr-1"
+                />
+              ) : (
+                <div className="h-5 w-5 rounded-full bg-gray-200 mr-1"></div>
+              )}
+              <span>By {author.name || author.username}</span>
             </div>
-          ) : comments.length > 0 ? (
-            comments.map(comment => (
-              <div key={comment.id} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="font-medium">
-                    {comment.author ? 
-                      `${comment.author.username || 'User'}` : 
-                      'Anonymous User'}
-                  </span>
-                  <time dateTime={comment.createdAt ? comment.createdAt.toString() : ''}>
-                    {formatDisplayDate(comment.createdAt ? comment.createdAt.toString() : null)}
-                  </time>
-                </div>
-                <p>{comment.content}</p>
-                {comment.approved ? (
-                  <span className="text-green-500 text-xs">Approved</span>
-                ) : (
-                  <span className="text-red-500 text-xs">Pending Approval</span>
-                )}
-              </div>
-            ))
-          ) : (
-            <p className="text-center text-gray-400">No approved comments yet. Be the first to comment!</p>
           )}
         </div>
-      </section>
+        
+        <div className="flex justify-between items-center mt-4">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-gray-500"
+            onClick={sharePost}
+          >
+            <Share2 className="h-4 w-4 mr-1" />
+            Share
+          </Button>
+        </div>
+      </div>
+      
+      {/* Post content */}
+      <article className="prose prose-lg md:prose-xl dark:prose-invert mx-auto max-w-4xl mb-12">
+        <div dangerouslySetInnerHTML={{ __html: post.content }} />
+      </article>
+      
+      {/* Post footer */}
+      <div className="max-w-4xl mx-auto border-t pt-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <Badge variant="outline" className="mr-2">
+              <Tag className="h-3 w-3 mr-1" /> 
+              {post.category}
+            </Badge>
+          </div>
+          
+          <Button 
+            variant="outline" 
+            onClick={() => setLocation('/blog')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Blog
+          </Button>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default BlogPostPage;
