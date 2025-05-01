@@ -940,9 +940,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   // Newsletter management endpoints
   // Get all newsletters
-  app.get("/api/newsletters", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.get("/api/newsletters", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -1264,8 +1265,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // General security scan endpoint
-  app.get("/api/security/scan", async (req, res) => {
-    if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+  app.get("/api/security/scan", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
       logSecurityEvent({
         type: 'UNAUTHORIZED_ATTEMPT',
         setting: 'SECURITY_SCAN',
@@ -1275,7 +1277,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         path: '/api/security/scan',
         method: 'GET'
       });
-      return res.status(403).json({ message: "Unauthorized" });
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -1303,8 +1305,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Authentication security scan endpoint
-  app.get("/api/security/auth-scan", async (req, res) => {
-    if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+  app.get("/api/security/auth-scan", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
       logSecurityEvent({
         type: 'UNAUTHORIZED_ATTEMPT',
         setting: 'AUTH_SECURITY_SCAN',
@@ -1314,7 +1317,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         path: '/api/security/auth-scan',
         method: 'GET'
       });
-      return res.status(403).json({ message: "Unauthorized" });
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -1370,9 +1373,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Get a single newsletter by ID
-  app.get("/api/newsletters/:id", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.get("/api/newsletters/:id", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -1393,9 +1397,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Create a new newsletter with validation
   app.post("/api/newsletters", [
     // Authentication check
+    isAuthenticated,
     (req, res, next) => {
-      if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-        return res.status(403).json({ message: "Unauthorized" });
+      // Check for admin role
+      if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Admin role required" });
       }
       next();
     },
@@ -1422,9 +1428,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Update an existing newsletter
-  app.patch("/api/newsletters/:id", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.patch("/api/newsletters/:id", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -1454,9 +1461,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Send a newsletter
-  app.post("/api/newsletters/:id/send", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.post("/api/newsletters/:id/send", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -1506,9 +1514,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Get unapproved comments
-  app.get("/api/admin/comments/unapproved", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.get("/api/admin/comments/unapproved", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -1548,9 +1557,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Get recent tracks for review
-  app.get("/api/admin/tracks/recent", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.get("/api/admin/tracks/recent", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
@@ -1588,9 +1598,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Approve a post
-  app.post("/api/admin/posts/:postId/approve", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
+  app.post("/api/admin/posts/:postId/approve", isAuthenticated, async (req, res) => {
+    // Check for admin role
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      return res.status(403).json({ message: "Admin role required" });
     }
 
     try {
