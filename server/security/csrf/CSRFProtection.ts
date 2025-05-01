@@ -82,7 +82,7 @@ export class CSRFProtection {
   private static instance: CSRFProtection;
   private options: CSRFProtectionOptions;
   private tokens: Map<string, CSRFToken> = new Map();
-  private quantumCrypto: QuantumResistantCrypto;
+  // private quantumCrypto: QuantumResistantCrypto; // Disabled quantum crypto
   private tokenCleanupInterval: NodeJS.Timeout;
 
   private constructor(options?: Partial<CSRFProtectionOptions>) {
@@ -363,7 +363,7 @@ export class CSRFProtection {
     res.setHeader(this.options.header, token);
 
     // Attach the token to the request for use in views/templates
-    (req as unknown).csrfToken = token;
+    (req as any).csrfToken = token;
   }
 
   /**
