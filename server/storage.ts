@@ -1266,19 +1266,19 @@ export class PostgresStorage implements IStorage {
       // Use the patrons table from schema instead of creating a new one
       await initializeTable('patrons', patrons, [
         { 
-          userId: '76364a95-eb36-4b08-aaac-454e8bd66e9b', // admin user
+          userId: '78aec3eb-1ba9-4a4a-bd68-9381bffc1199', // admin user
           tier: 'Whale Guardian', 
           contribution: '50.00',
           status: 'active'
         },
         { 
-          userId: 'c8f6a8a2-bfa7-477b-8174-a10432f573bd', // superadmin user
+          userId: '147088fe-0b75-4d17-8354-63fc117c2987', // superadmin user
           tier: 'Ocean Protector',
           contribution: '25.00',
           status: 'active'
         },
         { 
-          userId: 'cc81a6e2-2309-4c38-827e-97e139530a14', // regular user
+          userId: '856b2579-c2a1-4a89-a070-129b970e3a7f', // regular user
           tier: 'Wave Rider',
           contribution: '10.00',
           status: 'active'

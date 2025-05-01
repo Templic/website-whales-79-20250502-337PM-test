@@ -208,8 +208,16 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       }
     };
     
-    // Get CSRF token first, then check auth
-    getCsrfToken().then(checkAuth);
+    // Get CSRF token first (could be disabled), then check auth 
+    getCsrfToken()
+      .then(token => {
+        console.log('CSRF token acquired for auth check (may be disabled):', token);
+        return checkAuth();
+      })
+      .catch(error => {
+        console.warn('Could not get CSRF token, attempting auth check anyway:', error);
+        return checkAuth();
+      });
   }, []);
   
   // Token refresh function
@@ -238,14 +246,46 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   // Login function
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      // First get a CSRF token
-      await getCsrfToken();
+      // Get CSRF token if needed (Note: CSRF is disabled for Replit Auth)
+      const token = await getCsrfToken();
+      console.log('CSRF token acquired (may be disabled for Replit Auth):', token);
       
       // Attempt login - use the correct JWT login API endpoint
-      const response = await api.post<{user: User} & TokenResponse>('/api/jwt/login', {
+      const response = await api.post<{
+        success: boolean;
+        accessToken: string;
+        refreshToken: string;
+        user: User;
+        message?: string;
+        requireTwoFactor?: boolean;
+      }>('/api/jwt/login', {
         username,
         password
       });
+      
+      console.log('Login response:', response.data);
+      
+      // Check if 2FA is required
+      if (response.data.requireTwoFactor) {
+        // Handle 2FA requirement
+        setRequires2FA(true);
+        sessionStorage.setItem('requires2FA', 'true');
+        toast({
+          title: "Two-factor authentication required",
+          description: "Please enter your verification code",
+        });
+        return false;
+      }
+      
+      // Check for success flag
+      if (!response.data.success) {
+        toast({
+          title: "Login failed",
+          description: response.data.message || "Authentication failed",
+          variant: "destructive",
+        });
+        return false;
+      }
       
       // Store tokens and user data
       localStorage.setItem(ACCESS_TOKEN_KEY, response.data.accessToken);
@@ -262,6 +302,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       
       return true;
     } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         title: "Login failed",
         description: error.response?.data?.message || "Authentication failed. Please check your credentials.",
@@ -274,8 +315,9 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   // Logout function
   const logout = async (): Promise<void> => {
     try {
-      // Get CSRF token for the request
-      await getCsrfToken();
+      // Get CSRF token if needed (Note: CSRF is disabled for Replit Auth)
+      const token = await getCsrfToken();
+      console.log('CSRF token acquired for logout (may be disabled):', token);
       
       // Send logout request to revoke refresh token - use the correct JWT API endpoint
       const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
