@@ -19,9 +19,10 @@
  *   node scripts/check-deadlinks.js --url http://localhost:3000 --depth 3
  */
 
-const fs = require('fs');
-const path = require('path');
-const { spawn } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -90,6 +91,10 @@ function runChecker(options) {
     REQUEST_TIMEOUT: options.timeout.toString(),
     OUTPUT_FILE: options.output
   };
+  
+  // Get directory name in ES modules
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
   
   // Spawn the checker process
   const checkerPath = path.join(__dirname, 'agent-deadlink-checker.js');

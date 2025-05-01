@@ -1,10 +1,10 @@
 {
   "meta": {
     "baseUrl": "http://localhost:5000",
-    "startTime": "2025-05-01T00:26:36.275Z",
-    "endTime": "2025-05-01T00:26:41.379Z",
-    "duration": 5.104,
-    "maxDepth": 2
+    "startTime": "2025-05-01T00:19:11.154Z",
+    "endTime": "2025-05-01T00:19:16.305Z",
+    "duration": 5.151,
+    "maxDepth": 1
   },
   "summary": {
     "pagesVisited": 1,
