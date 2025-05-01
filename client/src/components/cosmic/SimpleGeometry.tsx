@@ -875,11 +875,11 @@ export function SimpleOctagon({
         </svg>
       </div>
       
-      {/* Content Container - ensure content stays within octagon boundaries */}
-      <div className="absolute inset-[8%] flex flex-col justify-center items-center">
-        {/* Title with improved formatting */}
+      {/* Content Container - improved responsiveness and adaptive spacing */}
+      <div className="absolute inset-0 flex flex-col justify-center items-center p-[10%] sm:p-[12%] md:p-[10%] lg:p-[8%]">
+        {/* Title with improved formatting and responsive sizing */}
         {heading && (
-          <div className="text-center mb-1">
+          <div className="text-center w-full mb-1">
             {React.isValidElement(heading) && 
              typeof heading.type === 'string' && 
              ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
@@ -888,11 +888,15 @@ export function SimpleOctagon({
           </div>
         )}
         
-        {/* Divider */}
-        <ShapeDivider width="60%" opacity={30} margin="0.1rem 0" />
+        {/* Responsive divider with adaptive width */}
+        <ShapeDivider 
+          width={containerRef.current?.offsetWidth < 200 ? "40%" : "60%"} 
+          opacity={30} 
+          margin="0.1rem 0" 
+        />
         
-        {/* Content with improved line breaking */}
-        <div className="w-full max-w-[90%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
+        {/* Content with improved responsive scaling and adaptive constraints */}
+        <div className="w-full max-h-[50%] sm:max-h-[55%] md:max-h-[60%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center px-1 py-0.5 sm:px-2 md:px-3">
           {content.map((item, index) => {
             if (React.isValidElement(item) && item.type === 'p') {
               return formatParagraph(item as React.ReactElement);
@@ -901,16 +905,20 @@ export function SimpleOctagon({
           })}
         </div>
         
-        {/* Button with rounder corners to avoid clipping */}
+        {/* Button with improved responsiveness and better mobile adaptation */}
         {button && (
-          <div className="mt-1 mb-1 flex justify-center items-center">
+          <div className="mt-auto mb-2 w-full flex justify-center items-center">
             {React.isValidElement(button) && button.type === 'button' ? 
               React.cloneElement(button as React.ReactElement, {
-                className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
+                className: cn(
+                  fontSize.button, 
+                  'text-center whitespace-normal break-words hyphens-auto', 
+                  (button.props as any).className || ''
+                ),
                 style: {
-                  // Less aggressive clipping with more rounded corners
+                  // Improved button styling for better visibility and responsiveness
                   borderRadius: "0.4rem",
-                  padding: "0.3rem 1rem",
+                  padding: "0.25rem 0.75rem",
                   background: (button.props as any).className?.includes('bg-') 
                     ? undefined 
                     : "rgba(0, 100, 255, 0.8)",
@@ -918,11 +926,17 @@ export function SimpleOctagon({
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
-                  minWidth: "4rem",
+                  width: "fit-content",
+                  maxWidth: "85%",
+                  minWidth: containerRef.current?.offsetWidth < 200 ? "60%" : "4rem",
                   minHeight: "1.8rem",
                   boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
-                  fontSize: "0.75rem",
-                  fontWeight: "bold"
+                  fontSize: containerRef.current?.offsetWidth < 200 ? "0.7rem" : "0.75rem",
+                  fontWeight: "bold",
+                  wordBreak: "break-word",
+                  lineHeight: "1.1",
+                  // Custom transform to ensure button fits within octagon shape
+                  transform: `scale(${containerRef.current?.offsetWidth < 180 ? 0.9 : 1})`
                 }
               }) : button
             }
