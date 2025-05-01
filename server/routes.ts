@@ -2202,8 +2202,8 @@ app.post("/api/posts/comments/:id/reject", isAdmin, async (req, res) => {
     console.error('Failed to load test API routes:', error);
   });
 
-  // Quantum-resistant security API routes
-  app.use('/api/security/quantum', secureApiRoutes);
+  // Quantum-resistant security API routes - temporarily disabled
+  // app.use('/api/security/quantum', secureApiRoutes);
 
   // TODO: Fix API routes protection with missing modules
   // Temporarily commented out to fix build errors

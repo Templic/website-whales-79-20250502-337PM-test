@@ -17,7 +17,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { AnyZodObject, ZodError } from 'zod';
 import { SecurityEventCategory, SecurityEventSeverity } from './blockchain/SecurityEventTypes';
-import { securityBlockchain } from './blockchain/ImmutableSecurityLogs';
+import { immutableSecurityLogs } from './blockchain/ImmutableSecurityLogs';
 import { RASPCore } from './rasp/RASPCore';
 import { QuantumResistantEncryption } from './quantum/QuantumResistantEncryption';
 
@@ -25,7 +25,7 @@ import { QuantumResistantEncryption } from './quantum/QuantumResistantEncryption
  * Log a security event to the security blockchain
  */
 function logSecurityEvent(event): void {
-  securityBlockchain.addSecurityEvent({
+  immutableSecurityLogs.addSecurityEvent({
     severity: SecurityEventSeverity.MEDIUM,
     category: SecurityEventCategory.API,
     message: `API Security: ${event.type}`,
