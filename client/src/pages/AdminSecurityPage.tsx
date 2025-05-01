@@ -5,11 +5,13 @@ import {
   ShieldCheck, 
   UserCog, 
   Settings, 
-  LayoutDashboard 
+  LayoutDashboard,
+  Lock
 } from 'lucide-react';
 import SecurityDashboard from '@/components/admin/security/SecurityDashboard';
 import SecurityConfig from '@/components/admin/security/SecurityConfig';
 import UserSecurityManagement from '@/components/admin/security/UserSecurityManagement';
+import ZeroKnowledgeSecurity from '@/components/admin/security/ZeroKnowledgeSecurity';
 
 export default function AdminSecurityPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -36,6 +38,10 @@ export default function AdminSecurityPage() {
               <UserCog className="h-4 w-4 mr-2" />
               User Security
             </TabsTrigger>
+            <TabsTrigger value="zkp" className="flex items-center">
+              <Lock className="h-4 w-4 mr-2" />
+              Zero-Knowledge
+            </TabsTrigger>
           </TabsList>
         </div>
         
@@ -49,6 +55,10 @@ export default function AdminSecurityPage() {
         
         <TabsContent value="users">
           <UserSecurityManagement />
+        </TabsContent>
+        
+        <TabsContent value="zkp">
+          <ZeroKnowledgeSecurity />
         </TabsContent>
       </Tabs>
     </div>
