@@ -171,6 +171,7 @@ import csrfRoutes from './routes/csrf-routes';
 import deadlinksRoutes from './routes/deadlinks';
 import advancedSecurityRoutes from './routes/advanced-security-routes';
 import securityAdminRoutes from './security/admin/SecurityAdminRoutes';
+import zeroKnowledgeSecurityRoutes from './security/advanced/zkp/ZeroKnowledgeSecurityRoutes';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 import { protectApiRoutes } from './security/apiRoutesProtector';
 
@@ -354,6 +355,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use our security admin routes (admin only)
   app.use('/api/security/admin', isAdmin, securityAdminRoutes);
+  
+  // Use zero-knowledge security routes
+  app.use('/api/security/zkp', isAuthenticated, zeroKnowledgeSecurityRoutes);
 
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', isAdmin, async (req, res) => {
