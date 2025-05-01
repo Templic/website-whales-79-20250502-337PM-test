@@ -89,8 +89,8 @@ export interface IStorage {
   updatePost(id: number, post: Partial<InsertPost>): Promise<Post>;
 
   // Category methods
-  createCategory(category: InsertCategory): Promise<Category>;
-  getCategories(): Promise<Category[]>;
+  createCategory(category: InsertProductCategory): Promise<ProductCategory>;
+  getCategories(): Promise<ProductCategory[]>;
 
   // Comment methods
   createComment(comment: InsertComment): Promise<Comment>;
@@ -520,16 +520,23 @@ export class PostgresStorage implements IStorage {
   }
 
   // Category methods
-  async createCategory(category: any): Promise<unknown> {
-    // This is a stub - categories table needs to be defined in schema.ts
-    console.warn("Categories feature not fully implemented in schema");
-    return { id: 1, name: "Default Category" };
+  async createCategory(category: InsertProductCategory): Promise<ProductCategory> {
+    try {
+      const [newCategory] = await db.insert(productCategories).values(category).returning();
+      return newCategory;
+    } catch (error) {
+      console.error("Error creating product category:", error);
+      throw error;
+    }
   }
 
-  async getCategories(): Promise<any[]> {
-    // This is a stub - categories table needs to be defined in schema.ts
-    console.warn("Categories feature not fully implemented in schema");
-    return [{ id: 1, name: "Default Category" }];
+  async getCategories(): Promise<ProductCategory[]> {
+    try {
+      return await db.select().from(productCategories).orderBy(productCategories.name);
+    } catch (error) {
+      console.error("Error fetching product categories:", error);
+      return [];
+    }
   }
 
   // Comment methods
