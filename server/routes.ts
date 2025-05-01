@@ -11,15 +11,9 @@ import { storage } from "./storage";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
 // Import the setupAuth from our auth module
-import { setupAuth } from "./auth";
+import { setupAuth, isAuthenticated, isAdmin, isSuperAdmin } from "./auth";
 
-// Create our own isAuthenticated middleware
-const isAuthenticated = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ error: 'Authentication required' });
-};
+// The isAuthenticated, isAdmin, and isSuperAdmin middleware are now imported from auth.ts
 import { nanoid } from 'nanoid';
 import { validate } from './middlewares/validationMiddleware';
 import { body } from 'express-validator'; // Add body to imports
@@ -321,14 +315,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.use('/api/deadlinks', deadlinksRoutes);
 
   // Register API security verification endpoint (admin only)
-  app.get('/api/security/verify-api', isAuthenticated, async (req, res) => {
-    // Only allow admins to run the verification
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Admin role required' 
-      });
-    }
+  app.get('/api/security/verify-api', isAdmin, async (req, res) => {
 
     try {
       // Run the API security verification
@@ -579,11 +566,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.use('/images', express.static(path.join(process.cwd(), 'public/images')));
 
   // Get subscribers list
-  app.get("/api/subscribers", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.get("/api/subscribers", isAdmin, async (req, res) => {
     try {
       console.log("Fetching all subscribers...");
       const subscribers = await storage.getAllSubscribers();
@@ -596,15 +579,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Admin Stats API
-  app.get("/api/admin/stats", isAuthenticated, async (req, res) => {
+  app.get("/api/admin/stats", isAdmin, async (req, res) => {
     // Allow development bypass for testing
     const bypassAuth = process.env.NODE_ENV !== 'production';
-
-    // Check for admin role
-    if (!bypassAuth && (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      console.log('Admin role check failed for admin stats endpoint');
-      return res.status(403).json({ message: "Admin role required" });
-    }
 
     try {
       console.log('Fetching admin statistics...');
@@ -706,11 +683,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // User management routes
-  app.get("/api/users", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.get("/api/users", isAdmin, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
       // Map each user to a safe user object without sensitive fields
@@ -722,11 +695,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // User update endpoint
-  app.patch("/api/users/:userId", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.patch("/api/users/:userId", isAdmin, async (req, res) => {
 
     try {
       const userId = parseInt(req.params.userId);
@@ -906,11 +875,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Content management endpoints for Admin
 
   // Get unapproved posts
-  app.get("/api/admin/posts/unapproved", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.get("/api/admin/posts/unapproved", isAdmin, async (req, res) => {
 
     try {
       const posts = await storage.getUnapprovedPosts();
@@ -940,11 +905,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   // Newsletter management endpoints
   // Get all newsletters
-  app.get("/api/newsletters", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.get("/api/newsletters", isAdmin, async (req, res) => {
 
     try {
       const newsletters = await storage.getAllNewsletters();
@@ -1265,20 +1226,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // General security scan endpoint
-  app.get("/api/security/scan", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      logSecurityEvent({
-        type: 'UNAUTHORIZED_ATTEMPT',
-        setting: 'SECURITY_SCAN',
-        timestamp: new Date().toISOString(),
-        ip: req.ip || '0.0.0.0',
-        userAgent: req.headers['user-agent'] || 'Unknown',
-        path: '/api/security/scan',
-        method: 'GET'
-      });
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.get("/api/security/scan", isAdmin, async (req, res) => {
 
     try {
       const scanResults = await runSecurityScan();
@@ -1305,20 +1253,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Authentication security scan endpoint
-  app.get("/api/security/auth-scan", isAuthenticated, async (req, res) => {
-    // Check for admin role
-    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
-      logSecurityEvent({
-        type: 'UNAUTHORIZED_ATTEMPT',
-        setting: 'AUTH_SECURITY_SCAN',
-        timestamp: new Date().toISOString(),
-        ip: req.ip || '0.0.0.0',
-        userAgent: req.headers['user-agent'] || 'Unknown',
-        path: '/api/security/auth-scan',
-        method: 'GET'
-      });
-      return res.status(403).json({ message: "Admin role required" });
-    }
+  app.get("/api/security/auth-scan", isAdmin, async (req, res) => {
 
     try {
       const authScanResults = await runAuthSecurityScan();
