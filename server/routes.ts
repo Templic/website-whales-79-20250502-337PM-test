@@ -172,6 +172,7 @@ import deadlinksRoutes from './routes/deadlinks';
 import advancedSecurityRoutes from './routes/advanced-security-routes';
 import securityAdminRoutes from './security/admin/SecurityAdminRoutes';
 import zeroKnowledgeSecurityRoutes from './security/advanced/zkp/ZeroKnowledgeSecurityRoutes';
+import threatProtectionRoutes from './security/advanced/threat/ThreatProtectionRoutes';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 import { protectApiRoutes } from './security/apiRoutesProtector';
 
@@ -358,6 +359,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use zero-knowledge security routes
   app.use('/api/security/zkp', isAuthenticated, zeroKnowledgeSecurityRoutes);
+  
+  // Use threat protection routes
+  app.use('/api/security/threat', isAuthenticated, threatProtectionRoutes);
 
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', isAdmin, async (req, res) => {

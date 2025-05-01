@@ -6,12 +6,14 @@ import {
   UserCog, 
   Settings, 
   LayoutDashboard,
-  Lock
+  Lock,
+  AlertTriangle
 } from 'lucide-react';
 import SecurityDashboard from '@/components/admin/security/SecurityDashboard';
 import SecurityConfig from '@/components/admin/security/SecurityConfig';
 import UserSecurityManagement from '@/components/admin/security/UserSecurityManagement';
 import ZeroKnowledgeSecurity from '@/components/admin/security/ZeroKnowledgeSecurity';
+import ThreatProtection from '@/components/admin/security/ThreatProtection';
 
 export default function AdminSecurityPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -42,6 +44,10 @@ export default function AdminSecurityPage() {
               <Lock className="h-4 w-4 mr-2" />
               Zero-Knowledge
             </TabsTrigger>
+            <TabsTrigger value="threats" className="flex items-center">
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Threat Protection
+            </TabsTrigger>
           </TabsList>
         </div>
         
@@ -59,6 +65,10 @@ export default function AdminSecurityPage() {
         
         <TabsContent value="zkp">
           <ZeroKnowledgeSecurity />
+        </TabsContent>
+        
+        <TabsContent value="threats">
+          <ThreatProtection />
         </TabsContent>
       </Tabs>
     </div>
