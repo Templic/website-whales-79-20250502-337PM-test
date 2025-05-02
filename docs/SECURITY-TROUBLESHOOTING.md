@@ -1,78 +1,255 @@
-# Security Middleware Troubleshooting
+# Security Troubleshooting Guide
 
-## Issue Summary
-The security middleware was blocking legitimate requests, causing the application to show a blank white screen instead of loading properly. Two critical issues were identified:
+This document provides guidance for troubleshooting common security-related issues in the application.
 
-1. **IP Blocking Issue**: The IP blocking mechanism was incorrectly blocking Replit infrastructure IPs and user IPs.
-2. **Database Constraint Error**: The security_settings table had a constraint violation due to missing default values.
+## Common Issues and Solutions
 
-## Temporary Fix Applied
-To diagnose the issue, the following protections were temporarily disabled:
+### White Screen / Application Not Loading
 
-- IP blocking mechanism
-- Rate limiting functionality
-- Threat detection scanning
-- Response interception for monitoring
+**Symptoms:**
+- Application displays a white/blank page
+- Console shows numerous security alerts (rate limit abuse, IP blocking)
+- Application resources may be blocked by security measures
 
-## Root Causes
+**Potential Causes:**
+1. **Overly Aggressive Rate Limiting**: The rate limiting thresholds may be too low, causing legitimate traffic to be throttled
+2. **Infrastructure IP Blocking**: The security system may be blocking infrastructure IPs that are essential for the application
+3. **CSRF Token Issues**: CSRF protection may be blocking legitimate requests due to missing or invalid tokens
+4. **Security Level Too High**: The security level may be set too high for normal operation
 
-### 1. IP Blocking Issue
-The whitelist for infrastructure IPs was incomplete and not effectively allowing Replit's infrastructure addresses through.
+**Solutions:**
 
-**Original problematic code:**
+1. **Temporarily Lower Security Level**
 ```typescript
-// Skip blocking for localhost, internal IPs, and Replit infrastructure
-if (ip === '127.0.0.1' || ip === 'localhost' || 
-    ip.startsWith('10.') || ip.startsWith('172.') || ip.startsWith('192.168.') ||
-    // Replit specific infrastructure IPs
-    ip === '35.229.33.38') {
-  console.log(`[Security] Allowing infrastructure IP: ${ip}`);
-  return false;
-}
+// Set security to MONITOR mode (detection only, no blocking)
+securityConfig.setSecurityLevel('MONITOR');
+
+// Or if issues persist, disable specific features
+securityConfig.updateSecurityFeatures({
+  rateLimiting: false,
+  threatDetection: false,
+  csrfProtection: false
+});
 ```
 
-**Improved whitelist:**
+2. **Add Infrastructure IPs to Whitelist**
 ```typescript
-// Skip blocking for localhost, internal IPs, and Replit infrastructure
-if (ip === '127.0.0.1' || ip === 'localhost' || 
-    ip.startsWith('10.') || ip.startsWith('172.') || ip.startsWith('192.168.') ||
-    // Replit specific infrastructure IPs - never block these
-    ip === '35.229.33.38' || ip.startsWith('35.') || ip.startsWith('34.') || 
-    ip.startsWith('104.') || ip.startsWith('172.') || ip.startsWith('34.') ||
-    // Google Cloud infrastructure which Replit may use
-    ip.includes('googleusercontent') || ip.includes('compute.internal')) {
-  console.log(`[Security] Allowing infrastructure IP: ${ip}`);
-  return false;
-}
+// In server/security/advanced/threat/ThreatProtectionMiddleware.ts
+// Add your infrastructure IPs to the whitelist
+const infraWhitelist = [
+  '34.75.203.116', // Replit infrastructure
+  '68.230.197.31',  // Your IP address
+  '127.0.0.1'      // Local development
+];
 ```
 
-### 2. Database Constraint Error
-The security_settings table schema required non-null values for certain fields, but the code was not providing default values when inserting records.
+3. **Increase Rate Limiting Thresholds**
+```typescript
+// In server/security/advanced/threat/TokenBucketRateLimiter.ts
+// Increase tokens per interval
+const ipRateLimiter = new TokenBucketRateLimiter({
+  tokensPerInterval: 300,  // Increased from 100
+  interval: 60000,         // 1 minute
+  burstCapacity: 500       // Increased from 200
+});
+```
 
-## Permanent Fix Plan
+4. **Check CSRF Setup**
+Make sure your client-side code is correctly including CSRF tokens in all requests:
+```typescript
+// Check that API requests include CSRF token
+fetch('/api/endpoint', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': document.cookie.split('; ')
+      .find(row => row.startsWith('csrf-token='))
+      ?.split('=')[1]
+  },
+  body: JSON.stringify(data)
+});
+```
 
-1. **Improved IP Whitelist**:
-   - Maintain a comprehensive whitelist of Replit infrastructure IPs
-   - Add more specific patterns for cloud providers used by Replit
-   - Log but don't block when uncertainty exists about an IP's origin
+### Security Blocking Legitimate Requests
 
-2. **Rate Limiting Improvements**:
-   - Increase initial token bucket sizes for new clients
-   - Add configurable cooldown periods before blocking triggers
-   - Apply more path-specific rate limit configurations
+**Symptoms:**
+- Legitimate API requests are blocked with 403 or 429 status codes
+- Security logs show false positive threats
+- Certain user actions consistently fail
 
-3. **Database Schema Fixes**:
-   - Add proper default values to all schema tables
-   - Ensure foreign key constraints are properly enforced
-   - Add migration script to fix existing records
+**Solutions:**
 
-4. **Progressive Security Mode**:
-   - Implement tiered security levels (LOW, MEDIUM, HIGH, MAXIMUM)
-   - Start in monitoring-only mode before applying blocks
-   - Allow configuration of what features are active at each level
+1. **Enable Debug Mode**
+```typescript
+// Enable security debug mode to get more detailed logs
+securityConfig.setDebugMode(true);
+```
 
-## Next Steps
-1. Re-enable security features one by one with proper fixes
-2. Add comprehensive logging for security events
-3. Create a security dashboard to monitor and control protection levels
-4. Implement unit and integration tests for the security middleware
+2. **Adjust Detection Rules**
+Review and adjust threat detection rules to reduce false positives:
+```typescript
+// Example of relaxing SQL injection detection pattern
+const sqlInjectionPattern = /'\s*(?:or|and|union|select|insert|update|delete|drop)\s+/i;
+```
+
+3. **Create Route-Specific Security Rules**
+```typescript
+// Apply different security rules to different routes
+app.use('/api/public/*', publicSecurityMiddleware);
+app.use('/api/admin/*', strictSecurityMiddleware);
+app.use('/static/*', minimalSecurityMiddleware);
+```
+
+### MFA Issues
+
+**Symptoms:**
+- Users unable to access MFA-protected routes
+- MFA verification constantly fails
+- MFA setup process fails
+
+**Solutions:**
+
+1. **Check MFA Configuration**
+```typescript
+// Verify MFA is properly configured
+console.log(securityConfig.getSecurityFeatures().mfa); // Should be true
+```
+
+2. **Debug MFA Sessions**
+```typescript
+// Add logging to MFA verification process
+app.use((req, res, next) => {
+  console.log('Session MFA status:', req.session?.mfaVerified);
+  console.log('MFA verified at:', req.session?.mfaVerifiedAt);
+  next();
+});
+```
+
+3. **Verify TOTP Settings**
+```typescript
+// Check TOTP service configuration
+console.log(totpService.getOptions());
+```
+
+### CSRF Token Validation Failures
+
+**Symptoms:**
+- Form submissions fail with CSRF errors
+- API requests fail with 403 Forbidden
+- CSRF errors in browser console
+
+**Solutions:**
+
+1. **Inspect Cookies**
+Check that the CSRF cookie is being set correctly:
+```typescript
+// Add logging for CSRF cookie
+app.use((req, res, next) => {
+  console.log('CSRF cookie:', req.cookies['csrf-token']);
+  next();
+});
+```
+
+2. **Check Request Headers**
+Verify that requests include the correct CSRF header:
+```typescript
+app.use((req, res, next) => {
+  console.log('CSRF header:', req.headers['x-csrf-token']);
+  next();
+});
+```
+
+3. **Test CSRF Token Generation**
+```typescript
+// Test CSRF token generation
+const token = csrfProtectionService.generateToken('test-session');
+console.log('Generated token:', token);
+```
+
+## Emergency Procedures
+
+### Temporarily Disable Security
+
+If security features are causing major issues in production, you can temporarily disable them:
+
+```typescript
+// Completely disable security features in emergency
+securityConfig.updateSecurityFeatures({
+  threatDetection: false,
+  realTimeMonitoring: false,
+  ipReputation: false,
+  csrfProtection: false,
+  xssProtection: false,
+  sqlInjectionProtection: false,
+  rateLimiting: false,
+  twoFactorAuth: false,
+  mfa: false,
+  passwordPolicies: false,
+  bruteForceProtection: false,
+  zeroKnowledgeProofs: false,
+  aiThreatDetection: false
+});
+```
+
+⚠️ **WARNING**: This completely disables all security features and should only be used as a last resort in emergency situations. Re-enable security features as soon as possible.
+
+### Clearing Security Caches
+
+If there are issues with blocked IPs or security caches, you can clear them:
+
+```typescript
+// Clear all security caches
+blockedIpsCache.clear();
+usedTokensCache.clear();
+rateLimitCounters.clear();
+```
+
+### Reset Security to Default State
+
+To reset security to its default state:
+
+```typescript
+// Reset security configuration to defaults
+securityConfig.reset();
+```
+
+## Monitoring Security Status
+
+To monitor the current security status:
+
+```typescript
+// Get current security configuration
+const currentFeatures = securityConfig.getSecurityFeatures();
+const currentLevel = securityConfig.getSecurityLevel();
+
+console.log('Security Level:', currentLevel);
+console.log('Enabled Features:', currentFeatures);
+```
+
+## Logging and Debugging
+
+Enable additional logging for security components:
+
+```typescript
+// Enable verbose logging for security components
+process.env.SECURITY_LOG_LEVEL = 'debug';
+```
+
+Check security metrics:
+
+```typescript
+// Get security metrics
+threatMonitoringService.getMetrics().then(metrics => {
+  console.log('Security Metrics:', metrics);
+});
+```
+
+## Next Steps After Troubleshooting
+
+After resolving immediate issues:
+
+1. Review security logs to understand what caused the problem
+2. Adjust security configuration based on findings
+3. Add tests to prevent similar issues in the future
+4. Document any permanent changes to security settings
+5. Monitor the application to ensure the issue doesn't recur

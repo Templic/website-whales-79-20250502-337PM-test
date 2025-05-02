@@ -32,9 +32,9 @@ export interface DetectedThreat {
 
 // IP-based rate limiter
 const ipRateLimiter = new TokenBucketRateLimiter({
-  tokensPerInterval: 100,  // 100 requests per minute by default
+  tokensPerInterval: 300,  // 300 requests per minute by default (increased from 100)
   interval: 60000,         // 1 minute
-  burstCapacity: 200       // Allow bursts up to 200 requests
+  burstCapacity: 500       // Allow bursts up to 500 requests (increased from 200)
 });
 
 // Cache for storing temporarily banned IPs (for quick lookups without hitting DB)
@@ -44,10 +44,28 @@ const blockedIpsCache = new LRUCache<string, { reason: string, until: number }>(
 console.log("[Security] Clearing IP block cache on server startup");
 blockedIpsCache.clear(); // Explicitly clear the cache on server startup
 
+// Infrastructure IPs that should always be allowed
+const infraWhitelist = [
+  '34.75.203.116', // Replit infrastructure
+  '68.230.197.31',  // Detected in logs
+  '127.0.0.1',     // Local development
+  'localhost'      // Local development
+];
+
 // Configure paths that should be exempt from rate limiting (public resources, etc.)
 const rateLimitExemptPaths = [
   /^\/static\//,
   /^\/public\//,
+  /^\/assets\//,
+  /^\/js\//,
+  /^\/css\//,
+  /^\/img\//,
+  /^\/fonts\//,
+  /^\/api\/public\//,
+  /^\/favicon\.ico$/,
+  /^\/api\/health$/,
+  /^\/metrics$/,
+  /^\/api\/metrics$/,
   /^\/assets\//,
   /\.(css|js|jpg|jpeg|png|gif|svg|ico|woff|woff2|ttf|eot)$/i
 ];
@@ -300,6 +318,12 @@ export const threatProtectionMiddleware = (req: Request, res: Response, next: Ne
  * that uses both memory cache and asynchronous database checks.
  */
 function isIpBlocked(ip: string): boolean {
+  // Skip blocking for IPs in the infrastructure whitelist
+  if (infraWhitelist.includes(ip)) {
+    console.log(`[Security] Allowing whitelisted IP: ${ip}`);
+    return false;
+  }
+  
   // Skip blocking for localhost, internal IPs, and Replit infrastructure
   if (ip === '127.0.0.1' || ip === 'localhost' || 
       ip.startsWith('10.') || ip.startsWith('172.') || ip.startsWith('192.168.') ||
