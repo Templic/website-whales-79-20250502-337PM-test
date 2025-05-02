@@ -25,7 +25,7 @@ import { v4 as uuidv4 } from 'uuid';
 // Type for threat detection data
 export interface DetectedThreat extends Omit<InsertSecurityThreat, 'id'> {
   evidence?: Record<string, any>;
-  action_taken?: Record<string, any>;
+  actionTaken?: Record<string, any>;
 }
 
 // Threat type enum
@@ -96,16 +96,26 @@ class ThreatDatabaseService {
     const threatId = threat.threatId || uuidv4();
     
     try {
-      // Insert the threat into the database
-      await db.insert(securityThreats).values({
-        ...threat,
+      // Convert property names to match database schema
+      const threatData = {
+        ruleId: threat.ruleId,
         threatId,
+        description: threat.description,
+        threatType: threat.threatType,
+        severity: threat.severity,
+        sourceIp: threat.sourceIp,
+        userId: threat.userId || null,
         timestamp: new Date(),
+        requestPath: threat.requestPath || null,
+        requestMethod: threat.requestMethod || null,
         evidence: threat.evidence ? JSON.stringify(threat.evidence) : null,
-        action_taken: threat.action_taken ? JSON.stringify(threat.action_taken) : null,
+        actionTaken: threat.actionTaken ? JSON.stringify(threat.actionTaken) : null,
         resolved: false,
         isArchived: false
-      });
+      };
+      
+      // Insert the threat into the database
+      await db.insert(securityThreats).values(threatData);
       
       console.log(`[ThreatDB] Recorded threat ${threatId} (${threat.threatType}: ${threat.severity})`);
       return threatId;
@@ -197,11 +207,65 @@ class ThreatDatabaseService {
       const threats = await query;
       
       // Parse JSON fields
-      return threats.map(threat => ({
-        ...threat,
-        evidence: threat.evidence ? JSON.parse(threat.evidence as string) : null,
-        action_taken: threat.action_taken ? JSON.parse(threat.action_taken as string) : null
-      }));
+      return threats.map(threat => {
+        try {
+          // Safely parse JSON fields, handling null and undefined values
+          let evidence = {};
+          if (threat.evidence) {
+            if (typeof threat.evidence === 'string') {
+              try {
+                // Only attempt to parse if it looks like a JSON string
+                if (threat.evidence.trim().startsWith('{') || threat.evidence.trim().startsWith('[')) {
+                  evidence = JSON.parse(threat.evidence);
+                } else {
+                  evidence = { data: threat.evidence };
+                }
+              } catch (e) {
+                console.warn(`Failed to parse evidence JSON for threat ${threat.threatId}:`, e);
+                evidence = { data: threat.evidence };
+              }
+            } else {
+              // It's already an object
+              evidence = threat.evidence;
+            }
+          }
+          
+          // Same careful parsing for actionTaken
+          let actionTaken = {};
+          if (threat.actionTaken) {
+            if (typeof threat.actionTaken === 'string') {
+              try {
+                // Only attempt to parse if it looks like a JSON string
+                if (threat.actionTaken.trim().startsWith('{') || threat.actionTaken.trim().startsWith('[')) {
+                  actionTaken = JSON.parse(threat.actionTaken);
+                } else {
+                  actionTaken = { data: threat.actionTaken };
+                }
+              } catch (e) {
+                console.warn(`Failed to parse actionTaken JSON for threat ${threat.threatId}:`, e);
+                actionTaken = { data: threat.actionTaken };
+              }
+            } else {
+              // It's already an object
+              actionTaken = threat.actionTaken;
+            }
+          }
+          
+          return {
+            ...threat,
+            evidence,
+            actionTaken
+          };
+        } catch (jsonError) {
+          console.warn(`Failed to process threat ${threat.threatId}:`, jsonError);
+          // Return the threat with empty objects for parsed fields
+          return {
+            ...threat,
+            evidence: {},
+            actionTaken: {}
+          };
+        }
+      });
     } catch (error) {
       console.error('Error getting threats from database:', error);
       return [];
@@ -228,11 +292,63 @@ class ThreatDatabaseService {
       const threat = threats[0];
       
       // Parse JSON fields
-      return {
-        ...threat,
-        evidence: threat.evidence ? JSON.parse(threat.evidence as string) : null,
-        action_taken: threat.action_taken ? JSON.parse(threat.action_taken as string) : null
-      };
+      try {
+        // Safely parse JSON fields, handling null and undefined values
+        let evidence = {};
+        if (threat.evidence) {
+          if (typeof threat.evidence === 'string') {
+            try {
+              // Only attempt to parse if it looks like a JSON string
+              if (threat.evidence.trim().startsWith('{') || threat.evidence.trim().startsWith('[')) {
+                evidence = JSON.parse(threat.evidence);
+              } else {
+                evidence = { data: threat.evidence };
+              }
+            } catch (e) {
+              console.warn(`Failed to parse evidence JSON for threat ${threatId}:`, e);
+              evidence = { data: threat.evidence };
+            }
+          } else {
+            // It's already an object
+            evidence = threat.evidence;
+          }
+        }
+        
+        // Same careful parsing for actionTaken
+        let actionTaken = {};
+        if (threat.actionTaken) {
+          if (typeof threat.actionTaken === 'string') {
+            try {
+              // Only attempt to parse if it looks like a JSON string
+              if (threat.actionTaken.trim().startsWith('{') || threat.actionTaken.trim().startsWith('[')) {
+                actionTaken = JSON.parse(threat.actionTaken);
+              } else {
+                actionTaken = { data: threat.actionTaken };
+              }
+            } catch (e) {
+              console.warn(`Failed to parse actionTaken JSON for threat ${threatId}:`, e);
+              actionTaken = { data: threat.actionTaken };
+            }
+          } else {
+            // It's already an object
+            actionTaken = threat.actionTaken;
+          }
+        }
+        
+        return {
+          ...threat,
+          evidence,
+          actionTaken
+        };
+      } catch (jsonError) {
+        console.warn(`Failed to process threat ${threatId}:`, jsonError);
+        // Return the threat with empty objects for parsed fields
+        return {
+          ...threat,
+          evidence: {},
+          actionTaken: {}
+        };
+      }
     } catch (error) {
       console.error(`Error getting threat ${threatId} from database:`, error);
       return null;
@@ -260,7 +376,7 @@ class ThreatDatabaseService {
           resolved: true,
           resolvedBy,
           resolvedAt: new Date(),
-          action_taken: JSON.stringify(actionTaken)
+          actionTaken: JSON.stringify(actionTaken)
         })
         .where(eq(securityThreats.threatId, threatId));
       

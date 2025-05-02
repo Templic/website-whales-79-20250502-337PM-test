@@ -486,6 +486,7 @@ class ThreatDetectionService {
           
           return {
             threatId: uuidv4(),
+            ruleId: "directory-scan-rule",
             description: `Possible directory scanning detected`,
             threatType: "SUSPICIOUS_ACTIVITY",
             severity: "medium",
@@ -543,6 +544,7 @@ class ThreatDetectionService {
             
             return {
               threatId: uuidv4(),
+              ruleId: "auth-brute-force-rule",
               description: isSingleAccountAttack 
                 ? `Possible brute force attack against a single account`
                 : (isDistributedAttack 
