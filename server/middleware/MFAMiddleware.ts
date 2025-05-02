@@ -167,7 +167,7 @@ async function checkMFAVerified(req: Request, userId: string | number, config: M
   
   // Check for trusted device cookie
   if (config.allowTrustedDevices && req.cookies?.mfaTrustedDevice) {
-    const deviceId = req.cookies.mfaTrustedDevice;
+    const deviceId = req.cookies.mfaTrustedDevice.toString();
     const isVerified = await totpService.isDeviceVerified(String(userId), deviceId);
     
     if (isVerified) {

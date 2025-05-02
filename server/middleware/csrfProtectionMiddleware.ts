@@ -1,26 +1,35 @@
 /**
- * CSRF Protection Middleware Integration
+ * Enhanced CSRF Protection Middleware Integration
+ * 
+ * This middleware provides comprehensive Cross-Site Request Forgery protection:
+ * - Double Submit Cookie pattern
+ * - SameSite cookie attributes
+ * - Origin and Referer validation
+ * - Per-request token validation
+ * - Token rotation
  */
 import { Express, Request, Response, NextFunction } from 'express';
-import { createCSRFMiddleware, generateToken } from '../security/csrf/CSRFProtection';
-import { logSecurityEvent } from '../security/advanced/SecurityLogger';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
+import { 
+  csrfProtection, 
+  csrfTokenSetter, 
+  csrfProtectionService 
+} from '../security/advanced/csrf/CSRFProtectionService';
+import { securityConfig } from '../security/advanced/config/SecurityConfig';
+import { CSRFProtection, CSRFTokenSetter, csrfField } from './CSRFMiddleware';
 import { csrfExemptRoutes } from '../utils/auth-config';
 
 /**
  * Setup CSRF protection for Express application
  */
 export function setupCSRFProtection(app: Express): void {
-  // Create CSRF middleware with default options
-  const csrfMiddleware = createCSRFMiddleware({
-    cookie: {
-      key: 'X-CSRF-Token',
-      path: '/',
-      secure: process.env.NODE_ENV === 'production',
-      httpOnly: true,
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    },
+  // Skip setup if CSRF protection is disabled globally
+  if (!securityConfig.getSecurityFeatures().csrfProtection) {
+    console.log('[Security] CSRF protection is disabled globally');
+    return;
+  }
+
+  // Configure CSRF protection service with exempt routes
+  const csrfOptions = {
     ignorePaths: [
       ...csrfExemptRoutes,
       '/api/public',
@@ -28,16 +37,49 @@ export function setupCSRFProtection(app: Express): void {
       '/api/metrics',
       '/api/test/csrf-exempt',
       '/api/webhook'
-    ]
-  });
+    ],
+    cookie: {
+      key: 'csrf-token',
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  };
 
-  // Apply CSRF middleware globally to all routes
-  app.use(csrfMiddleware);
+  // Configure the CSRF protection service
+  Object.assign(csrfProtectionService.options, csrfOptions);
 
   // Add a convenience endpoint for SPAs to get a fresh CSRF token
-  app.get('/api/csrf-token', function(req: Request, res: Response) {
-    const token = generateToken(req);
+  app.get('/api/csrf-token', CSRFTokenSetter, function(req: Request, res: Response) {
+    const token = req.cookies['csrf-token'];
     res.json({ csrfToken: token });
+  });
+
+  // Apply CSRF token setter to all GET requests
+  app.get('*', CSRFTokenSetter);
+
+  // Apply CSRF protection to non-GET requests (except for exempt routes)
+  app.use(function(req: Request, res: Response, next: NextFunction) {
+    // Skip GET requests (already handled by CSRFTokenSetter)
+    if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+      return next();
+    }
+    
+    // Skip exempt routes
+    if (csrfOptions.ignorePaths.some(pattern => {
+      if (typeof pattern === 'string') {
+        return req.path === pattern || req.path.startsWith(pattern);
+      } else {
+        return pattern.test(req.path);
+      }
+    })) {
+      return next();
+    }
+    
+    // Apply CSRF protection
+    CSRFProtection(req, res, next);
   });
 
   // Add CSRF token to all HTML responses
@@ -53,8 +95,10 @@ export function setupCSRFProtection(app: Express): void {
     // Override render to include CSRF token in all templates
     res.render = function(view: string, options?: any, callback?: any): void {
       // Add CSRF token to template variables
-      const csrfToken = (req as any).csrfToken;
-      const templateVars = { ...options, csrfToken };
+      const token = req.cookies['csrf-token'];
+      const csrfToken = token;
+      const csrfHtml = csrfField(req);
+      const templateVars = { ...options, csrfToken, csrfHtml };
       
       // Call original render
       if (callback) {
@@ -70,17 +114,7 @@ export function setupCSRFProtection(app: Express): void {
   // Add CSRF error handler
   app.use(function(err: any, req: Request, res: Response, next: NextFunction) {
     if (err && err.code === 'EBADCSRFTOKEN') {
-      // Handle CSRF token validation errors
-      logSecurityEvent({
-        category: SecurityEventCategory.CSRF,
-        severity: SecurityEventSeverity.WARNING,
-        message: 'CSRF token validation failed',
-        data: {
-          path: req.path,
-          method: req.method,
-          ip: req.ip
-        }
-      });
+      console.error('[Security] CSRF token validation failed for path:', req.path);
       
       // Return a JSON error for API requests
       if (req.path.startsWith('/api/')) {
@@ -93,25 +127,28 @@ export function setupCSRFProtection(app: Express): void {
       // Redirect to error page for HTML requests
       return res.status(403).render('error', {
         message: 'Invalid security token',
-        description: 'Your session may have expired. Please refresh the page.'
+        description: 'Your session may have expired. Please refresh the page and try again.'
       });
     }
     
     // Pass to next error handler
     next(err);
   });
+  
+  console.log('[Security] Enhanced CSRF protection middleware configured');
 }
 
 /**
  * Helper function to add CSRF protection to specific routes
  */
 export function protectRoute(route: Express): Express {
-  const csrfMiddleware = createCSRFMiddleware();
-  route.use(csrfMiddleware);
+  route.use(CSRFProtection);
   return route;
 }
 
 /**
  * Helper function to get CSRF token for a request
  */
-export { generateToken as getCSRFToken };
+export function getCSRFToken(req: Request): string | undefined {
+  return req.cookies?.['csrf-token'] || undefined;
+}

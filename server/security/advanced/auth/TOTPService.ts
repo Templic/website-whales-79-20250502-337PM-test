@@ -18,6 +18,22 @@ import { db } from '../../../db';
 import { userMfaSettings, type UserMfaSettings, type InsertUserMfaSettings } from '../../../../shared/schema';
 import { eq } from 'drizzle-orm';
 
+// Define a custom interface to extend the authenticator type
+interface ExtendedAuthenticator {
+  generateSecret: () => string;
+  keyuri: (username: string, appName: string, secret: string) => string;
+  verify: (options: { token: string; secret: string }) => boolean;
+  
+  // Additional properties we're setting
+  digits?: number;
+  algorithm?: string;
+  period?: number;
+  window?: number;
+}
+
+// Cast the authenticator to our extended type
+const extendedAuthenticator = authenticator as unknown as ExtendedAuthenticator;
+
 /**
  * Interface for verified device
  */
@@ -59,12 +75,12 @@ export class TOTPService {
     // Configure authenticator
     // For newer versions of otplib, we would set options differently
     // but we'll work with what the current version supports
-    authenticator.options = {
-      digits: 6,
-      algorithm: 'sha1',
-      period: 30, // Time step in seconds
-      window: 1  // Allow 1 step before and after current step for clock skew
-    };
+    
+    // Set individual options instead of using the options object
+    extendedAuthenticator.digits = 6;
+    extendedAuthenticator.algorithm = 'sha1';
+    extendedAuthenticator.period = 30; // Time step in seconds
+    extendedAuthenticator.window = 1;  // Allow 1 step before and after current step for clock skew
   }
   
   /**
@@ -370,9 +386,9 @@ export class TOTPService {
     }
     
     return {
-      enabled: settings.enabled,
+      enabled: settings.enabled === null ? false : settings.enabled,
       verifiedDeviceCount: settings.verifiedDevices?.length || 0,
-      lastVerified: settings.lastVerified,
+      lastVerified: settings.lastVerified || undefined,
       backupCodesRemaining: settings.backupCodes?.length || 0
     };
   }
