@@ -1,150 +1,124 @@
-/**
- * Authentication Utilities
- * 
- * Centralized utilities for authentication and authorization.
- * These functions should be used across the application to ensure
- * consistent authentication behavior.
- */
-
 import { Request, Response, NextFunction } from 'express';
-import { 
-  UserRole, 
-  roleHierarchy, 
-  authErrorMessages 
-} from './auth-config';
-import { logSecurityEvent } from '../security/advanced/SecurityLogger';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
 
 /**
- * Middleware to check if user is authenticated
+ * Middleware to check if a user is authenticated
  */
-export function isAuthenticated(req: Request, res: Response, next: NextFunction): void {
-  if (!req.isAuthenticated() && !req.user) {
-    logSecurityEvent({
-      category: SecurityEventCategory.AUTHENTICATION,
-      severity: SecurityEventSeverity.WARNING,
-      message: 'Unauthenticated access attempt',
-      data: {
-        path: req.path,
-        method: req.method,
-        ip: req.ip
-      }
-    });
-    
-    res.status(401).json({ error: authErrorMessages.unauthorized });
-    return;
+export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+  // Check if user is authenticated through session
+  if (req.session && req.session.user) {
+    return next();
   }
-  
-  next();
+
+  // User is not authenticated
+  return res.status(401).json({
+    status: 'error',
+    message: 'Authentication required'
+  });
 }
 
 /**
- * Checks if the user has required role or higher
+ * Middleware to check if a user has admin role
  */
-export function hasRole(requiredRole: UserRole = UserRole.USER) {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    // First check if user is authenticated
-    if (!req.isAuthenticated() && !req.user) {
-      logSecurityEvent({
-        category: SecurityEventCategory.AUTHORIZATION,
-        severity: SecurityEventSeverity.WARNING,
-        message: 'Unauthenticated role access attempt',
-        data: {
-          requiredRole,
-          path: req.path,
-          method: req.method,
-          ip: req.ip
-        }
+export function isAdmin(req: Request, res: Response, next: NextFunction) {
+  // First check if the user is authenticated
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({
+      status: 'error',
+      message: 'Authentication required'
+    });
+  }
+
+  // Then check if user has admin role
+  if (req.session.user.role === 'admin' || req.session.user.role === 'super_admin') {
+    return next();
+  }
+
+  // User does not have admin privileges
+  return res.status(403).json({
+    status: 'error',
+    message: 'Admin privileges required'
+  });
+}
+
+/**
+ * Middleware to check if a user has super admin role
+ */
+export function isSuperAdmin(req: Request, res: Response, next: NextFunction) {
+  // First check if the user is authenticated
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({
+      status: 'error',
+      message: 'Authentication required'
+    });
+  }
+
+  // Then check if user has super admin role
+  if (req.session.user.role === 'super_admin') {
+    return next();
+  }
+
+  // User does not have super admin privileges
+  return res.status(403).json({
+    status: 'error',
+    message: 'Super admin privileges required'
+  });
+}
+
+/**
+ * Middleware to check if a user has a specific role
+ */
+export function hasRole(role: string | string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // First check if the user is authenticated
+    if (!req.session || !req.session.user) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
       });
-      
-      res.status(401).json({ error: authErrorMessages.unauthorized });
-      return;
     }
+
+    const userRole = req.session.user.role;
     
-    const userRole = req.user?.role as UserRole || UserRole.USER;
-    const userRoleLevel = roleHierarchy[userRole];
-    const requiredRoleLevel = roleHierarchy[requiredRole];
-    
-    if (userRoleLevel < requiredRoleLevel) {
-      logSecurityEvent({
-        category: SecurityEventCategory.AUTHORIZATION,
-        severity: SecurityEventSeverity.WARNING,
-        message: 'Insufficient privileges',
-        data: {
-          userRole,
-          requiredRole,
-          userId: req.user?.id,
-          path: req.path,
-          method: req.method,
-          ip: req.ip
-        }
-      });
+    // Check if user has one of the specified roles
+    if (Array.isArray(role)) {
+      if (role.includes(userRole)) {
+        return next();
+      }
+    } else {
+      // Check for a single role
+      if (userRole === role) {
+        return next();
+      }
       
-      res.status(403).json({ error: authErrorMessages.forbidden });
-      return;
+      // Special case: super_admin can access any role
+      if (userRole === 'super_admin') {
+        return next();
+      }
     }
-    
-    next();
+
+    // User does not have the required role
+    return res.status(403).json({
+      status: 'error',
+      message: 'Access denied: insufficient privileges'
+    });
   };
 }
 
 /**
- * Shorthand middlewares for common role checks
- */
-export const isUser = hasRole(UserRole.USER);
-export const isAdmin = hasRole(UserRole.ADMIN);
-export const isSuperAdmin = hasRole(UserRole.SUPER_ADMIN);
-
-/**
- * Helper function to check if user has admin privileges (admin or super_admin)
- */
-export function hasAdminPrivileges(req: Request): boolean {
-  if (!req.isAuthenticated() && !req.user) return false;
-  
-  const userRole = req.user?.role as UserRole || UserRole.USER;
-  return userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN;
-}
-
-/**
- * Helper function to check if user has super admin privileges
+ * Helper function to check if a user has super admin privileges
  */
 export function hasSuperAdminPrivileges(req: Request): boolean {
-  if (!req.isAuthenticated() && !req.user) return false;
-  
-  const userRole = req.user?.role as UserRole || UserRole.USER;
-  return userRole === UserRole.SUPER_ADMIN;
+  return !!(req.session && 
+           req.session.user && 
+           req.session.user.role === 'super_admin');
 }
 
 /**
- * Creates an appropriate error response based on authentication/authorization status
+ * Helper to get current authenticated user from request
  */
-export function createAuthErrorResponse(req: Request): { statusCode: number; message: string } {
-  if (!req.isAuthenticated() && !req.user) {
-    return {
-      statusCode: 401,
-      message: authErrorMessages.unauthorized
-    };
+export function getCurrentUser(req: Request) {
+  if (req.session && req.session.user) {
+    return req.session.user;
   }
-  
-  return {
-    statusCode: 403,
-    message: authErrorMessages.forbidden
-  };
-}
-
-/**
- * Helper function to validate JWT token
- */
-export function validateJwtToken(token: string): Promise<any> {
-  // Implement JWT validation logic here
-  // This would typically verify the token signature, expiry, etc.
-  return Promise.resolve(null); // Placeholder - replace with actual implementation
-}
-
-/**
- * Helper function to get user info from JWT token
- */
-export function getUserFromToken(token: string): Promise<any> {
-  // Extract user info from verified JWT token
-  return Promise.resolve(null); // Placeholder - replace with actual implementation
+  return null;
 }

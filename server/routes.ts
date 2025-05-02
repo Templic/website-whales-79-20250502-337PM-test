@@ -159,6 +159,7 @@ import { runAuthSecurityScan } from './security/authSecurityScan';
 import { getSecuritySettings, updateSecuritySetting, type SecuritySettings } from './settings';
 import { securityRouter, testSecurityRouter } from './securityRoutes';
 import { securityDashboardRoutes } from './routes/security/dashboard';
+import securityRoutes from './routes/security';
 import authRoutes from './routes/authRoutes';
 import jwtAuthRoutes from './routes/jwtAuthRoutes';
 import contentRoutes from './routes/content';
@@ -373,6 +374,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use threat protection routes
   app.use('/api/security/threat', isAuthenticated, threatProtectionRoutes);
+  
+  // Use our new security routes
+  app.use('/api/security', securityRoutes);
   
   // Apply MFA Middleware when the feature is enabled
   if (securityConfig.getSecurityFeatures().mfa) {

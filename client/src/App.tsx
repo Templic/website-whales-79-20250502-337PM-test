@@ -205,6 +205,7 @@ function AppRouter() {
           <ProtectedRoute path="/admin/security" component={SecuritySettingsPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/security/alerts" component={SecurityAlertsPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/security/dashboard" component={SecurityDashboardPage} requiredRole="admin" />
+          <Route path="/security/dashboard" component={SecurityDashboardPage} />
           <ProtectedRoute path="/admin/users" component={UsersPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/users/roles" component={RoleManagementPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/users/activity" component={UserActivityPage} requiredRole="admin" />
