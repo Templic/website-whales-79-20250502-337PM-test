@@ -29,6 +29,7 @@ export interface SecurityFeatures {
   
   // Authentication security
   twoFactorAuth: boolean;          // 2FA for admin accounts
+  mfa: boolean;                    // Multi-factor authentication (TOTP)
   passwordPolicies: boolean;       // Password strength requirements
   bruteForceProtection: boolean;   // Protection against brute force attacks
   
