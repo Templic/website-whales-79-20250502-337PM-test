@@ -1,0 +1,17 @@
+{
+  "features": {
+    "threatDetection": true,
+    "realTimeMonitoring": true,
+    "ipReputation": true,
+    "csrfProtection": true,
+    "xssProtection": true,
+    "sqlInjectionProtection": true,
+    "rateLimiting": true,
+    "twoFactorAuth": true,
+    "passwordPolicies": true,
+    "bruteForceProtection": true,
+    "zeroKnowledgeProofs": false,
+    "aiThreatDetection": false
+  },
+  "level": "medium"
+}
