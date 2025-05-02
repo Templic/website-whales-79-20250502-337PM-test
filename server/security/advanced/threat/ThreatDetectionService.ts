@@ -426,6 +426,7 @@ class ThreatDetectionService {
         // Create threat data
         return {
           threatId: uuidv4(),
+          ruleId: rule.id,
           description: `${rule.name} detected from IP ${context.ip}`,
           threatType: rule.threatType,
           severity: rule.severity,
@@ -672,6 +673,7 @@ class ThreatDetectionService {
     // Prepare threat object
     const threat: DetectedThreat = {
       threatId: threatId,
+      ruleId: "manual-report", // Default rule ID for manually reported threats
       description: threatData.description,
       threatType: threatData.threatType,
       severity: threatData.severity,
