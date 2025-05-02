@@ -57,8 +57,12 @@ export class TOTPService {
     this.issuer = issuer;
     
     // Configure authenticator
+    // For newer versions of otplib, we would set options differently
+    // but we'll work with what the current version supports
     authenticator.options = {
-      step: 30, // Time step in seconds
+      digits: 6,
+      algorithm: 'sha1',
+      period: 30, // Time step in seconds
       window: 1  // Allow 1 step before and after current step for clock skew
     };
   }

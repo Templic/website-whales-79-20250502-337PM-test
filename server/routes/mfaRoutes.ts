@@ -31,8 +31,8 @@ router.use((req, res, next) => {
 // Generate MFA setup for a user
 router.post('/setup', requireAuth, async (req, res) => {
   try {
-    const { username } = req.user;
-    const { secret, uri, qrCodeUrl } = await totpService.generateSecret(req.user.id, username);
+    const username = req.user?.username || req.user?.email || 'user';
+    const { secret, uri, qrCodeUrl } = await totpService.generateSecret(String(req.user.id), username);
     
     res.json({
       secret,
@@ -58,14 +58,14 @@ router.post('/verify', requireAuth, async (req, res) => {
     }
     
     const { token } = result.data;
-    const isValid = await totpService.verifyToken(req.user.id, token);
+    const isValid = await totpService.verifyToken(String(req.user.id), token);
     
     if (!isValid) {
       return res.status(400).json({ error: 'Invalid token' });
     }
     
     // Enable MFA for the user
-    await totpService.enableMFA(req.user.id);
+    await totpService.enableMFA(String(req.user.id));
     
     // Set session as verified with MFA
     req.session.mfaVerified = true;
@@ -91,7 +91,7 @@ router.post('/verify-backup', requireAuth, async (req, res) => {
     }
     
     const { code } = result.data;
-    const isValid = await totpService.verifyBackupCode(req.user.id, code);
+    const isValid = await totpService.verifyBackupCode(String(req.user.id), code);
     
     if (!isValid) {
       return res.status(400).json({ error: 'Invalid backup code' });
@@ -127,7 +127,7 @@ router.post('/trust-device', requireAuth, async (req, res) => {
     
     const { deviceName } = result.data;
     const deviceId = await totpService.registerVerifiedDevice(
-      req.user.id,
+      String(req.user.id),
       deviceName,
       req.headers['user-agent'],
       req.ip
@@ -152,10 +152,10 @@ router.post('/trust-device', requireAuth, async (req, res) => {
 // Get list of trusted devices
 router.get('/trusted-devices', requireAuth, async (req, res) => {
   try {
-    const status = await totpService.getMFAStatus(req.user.id);
+    const status = await totpService.getMFAStatus(String(req.user.id));
     
     // Get specific MFA settings to retrieve device list
-    const settings = await totpService.getUserSettings(req.user.id);
+    const settings = await totpService.getUserSettings(String(req.user.id));
     
     if (!settings || !settings.verifiedDevices) {
       return res.json({ devices: [] });
@@ -181,7 +181,7 @@ router.delete('/trusted-devices/:deviceId', requireAuth, async (req, res) => {
     const { deviceId } = req.params;
     
     // Only allow removing own devices
-    const success = await totpService.removeVerifiedDevice(req.user.id, deviceId);
+    const success = await totpService.removeVerifiedDevice(String(req.user.id), deviceId);
     
     if (!success) {
       return res.status(404).json({ error: 'Device not found' });
@@ -217,14 +217,14 @@ router.post('/disable', requireAuth, async (req, res) => {
     const { token } = result.data;
     
     // Verify token before disabling
-    const isValid = await totpService.verifyToken(req.user.id, token);
+    const isValid = await totpService.verifyToken(String(req.user.id), token);
     
     if (!isValid) {
       return res.status(400).json({ error: 'Invalid token' });
     }
     
     // Disable MFA
-    await totpService.disableMFA(req.user.id);
+    await totpService.disableMFA(String(req.user.id));
     
     // Clear MFA session
     req.session.mfaVerified = false;
@@ -243,7 +243,7 @@ router.post('/disable', requireAuth, async (req, res) => {
 // Get user's MFA status
 router.get('/status', requireAuth, async (req, res) => {
   try {
-    const status = await totpService.getMFAStatus(req.user.id);
+    const status = await totpService.getMFAStatus(String(req.user.id));
     res.json(status);
   } catch (error) {
     console.error('Error getting MFA status:', error);
@@ -266,14 +266,14 @@ router.post('/regenerate-backup-codes', requireAuth, async (req, res) => {
     const { token } = result.data;
     
     // Verify token before regenerating backup codes
-    const isValid = await totpService.verifyToken(req.user.id, token);
+    const isValid = await totpService.verifyToken(String(req.user.id), token);
     
     if (!isValid) {
       return res.status(400).json({ error: 'Invalid token' });
     }
     
     // Regenerate backup codes
-    const backupCodes = await totpService.regenerateBackupCodes(req.user.id);
+    const backupCodes = await totpService.regenerateBackupCodes(String(req.user.id));
     
     res.json({ success: true, backupCodes });
   } catch (error) {

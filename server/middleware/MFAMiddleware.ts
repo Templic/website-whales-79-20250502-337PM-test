@@ -135,7 +135,7 @@ function isProtectedRoute(req: Request, config: MFAConfig): boolean {
 /**
  * Check if MFA is required for the user
  */
-async function checkMFARequired(userId: string, userRole: string, config: MFAConfig): Promise<boolean> {
+async function checkMFARequired(userId: string | number, userRole: string, config: MFAConfig): Promise<boolean> {
   // Check if user is in a role that requires MFA
   if (config.enforceForRoles && config.enforceForRoles.includes(userRole)) {
     return true;
@@ -145,7 +145,7 @@ async function checkMFARequired(userId: string, userRole: string, config: MFACon
   const [mfaSettings] = await db
     .select()
     .from(userMfaSettings)
-    .where(eq(userMfaSettings.userId, userId));
+    .where(eq(userMfaSettings.userId, String(userId)));
   
   return mfaSettings?.enabled || false;
 }
@@ -153,14 +153,14 @@ async function checkMFARequired(userId: string, userRole: string, config: MFACon
 /**
  * Check if the current session has completed MFA verification
  */
-async function checkMFAVerified(req: Request, userId: string, config: MFAConfig): Promise<boolean> {
+async function checkMFAVerified(req: Request, userId: string | number, config: MFAConfig): Promise<boolean> {
   // Check MFA session in request
-  if (req.session?.mfaVerified && req.session?.mfaVerifiedAt) {
+  if (req.session && 'mfaVerified' in req.session && 'mfaVerifiedAt' in req.session) {
     const now = Date.now();
-    const verifiedAt = new Date(req.session.mfaVerifiedAt).getTime();
+    const verifiedAt = new Date(req.session.mfaVerifiedAt as string).getTime();
     
     // Check if the MFA session is still valid
-    if (now - verifiedAt < config.mfaSessionDuration) {
+    if (now - verifiedAt < (config.mfaSessionDuration || 28800000)) { // Use default of 8 hours if undefined
       return true;
     }
   }
@@ -168,12 +168,14 @@ async function checkMFAVerified(req: Request, userId: string, config: MFAConfig)
   // Check for trusted device cookie
   if (config.allowTrustedDevices && req.cookies?.mfaTrustedDevice) {
     const deviceId = req.cookies.mfaTrustedDevice;
-    const isVerified = await totpService.isDeviceVerified(userId, deviceId);
+    const isVerified = await totpService.isDeviceVerified(String(userId), deviceId);
     
     if (isVerified) {
       // Update MFA session
-      req.session.mfaVerified = true;
-      req.session.mfaVerifiedAt = new Date().toISOString();
+      if (req.session) {
+        (req.session as any).mfaVerified = true;
+        (req.session as any).mfaVerifiedAt = new Date().toISOString();
+      }
       return true;
     }
   }
