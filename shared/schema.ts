@@ -1335,6 +1335,25 @@ export const blockedIps = pgTable("blocked_ips", {
   isActive: boolean("is_active").default(true)
 });
 
+// User MFA settings table
+export const userMfaSettings = pgTable("user_mfa_settings", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id", { length: 255 }).references(() => users.id).notNull().unique(),
+  totpSecret: text("totp_secret"),
+  backupCodes: json("backup_codes").$type<string[]>(),
+  enabled: boolean("enabled").default(false),
+  lastVerified: timestamp("last_verified"),
+  verifiedDevices: json("verified_devices").$type<Array<{
+    id: string;
+    name: string;
+    lastUsed: number;
+    userAgent?: string;
+    ip?: string;
+  }>>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
 // Media collections table
 export const mediaCollections = pgTable("media_collections", {
   id: serial("id").primaryKey(),
@@ -1604,6 +1623,12 @@ export const insertBlockedIpSchema = createInsertSchema(blockedIps).omit({
   blockedAt: true
 });
 
+export const insertUserMfaSettingsSchema = createInsertSchema(userMfaSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Type definitions for security tables
 export type SecurityThreat = typeof securityThreats.$inferSelect;
 export type InsertSecurityThreat = z.infer<typeof insertSecurityThreatSchema>;
@@ -1613,6 +1638,9 @@ export type InsertDetectionRule = z.infer<typeof insertDetectionRuleSchema>;
 
 export type BlockedIp = typeof blockedIps.$inferSelect;
 export type InsertBlockedIp = z.infer<typeof insertBlockedIpSchema>;
+
+export type UserMfaSettings = typeof userMfaSettings.$inferSelect;
+export type InsertUserMfaSettings = z.infer<typeof insertUserMfaSettingsSchema>;
 
 // ===================================================================
 // Content Management Relations
@@ -1816,6 +1844,13 @@ export const securityThreatsRelations = relations(securityThreats, ({ one }) => 
 export const blockedIpsRelations = relations(blockedIps, ({ one }) => ({
   blocker: one(users, {
     fields: [blockedIps.blockedBy],
+    references: [users.id],
+  }),
+}));
+
+export const userMfaSettingsRelations = relations(userMfaSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [userMfaSettings.userId],
     references: [users.id],
   }),
 }));
