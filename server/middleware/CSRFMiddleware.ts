@@ -40,7 +40,9 @@ export function getCSRFToken(req: Request): string | undefined {
     return undefined;
   }
   
-  return req.cookies?.['csrf-token'] || undefined;
+  // Use type assertion to handle potential undefined
+  const cookieToken = req.cookies && req.cookies['csrf-token'];
+  return typeof cookieToken === 'string' ? cookieToken : undefined;
 }
 
 // Helper to create the hidden input field for forms

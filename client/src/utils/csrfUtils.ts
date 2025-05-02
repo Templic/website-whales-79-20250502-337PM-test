@@ -19,12 +19,19 @@ export function getCSRFToken(): string | null {
 }
 
 /**
+ * Interface for CSRF Token API response
+ */
+interface CSRFTokenResponse {
+  csrfToken: string;
+}
+
+/**
  * Fetch a fresh CSRF token from the server
  */
 export async function fetchCSRFToken(): Promise<string> {
   try {
     const response = await fetch('/api/csrf-token');
-    const data = await response.json();
+    const data = await response.json() as CSRFTokenResponse;
     return data.csrfToken;
   } catch (error) {
     console.error('Error fetching CSRF token:', error);
@@ -46,6 +53,14 @@ export function createCSRFHeaders(): HeadersInit {
   }
   
   return headers;
+}
+
+/**
+ * Interface for CSRF error response
+ */
+interface CSRFErrorResponse {
+  error: string;
+  code: string;
 }
 
 /**
@@ -76,7 +91,7 @@ export const csrfFetch = async (url: string, options: RequestInit = {}): Promise
   // Handle CSRF token errors (403 with special error code)
   if (response.status === 403) {
     try {
-      const errorData = await response.clone().json();
+      const errorData = await response.clone().json() as CSRFErrorResponse;
       
       if (errorData.code === 'CSRF_ERROR') {
         // Token is invalid or expired, fetch a new one and retry the request
