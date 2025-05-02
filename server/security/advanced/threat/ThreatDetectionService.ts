@@ -461,7 +461,7 @@ class ThreatDetectionService {
     // Special cases for common threats not caught by patterns:
     
     // 1. Check for consistent 404s (path scanning)
-    if (context.data.statusCode === 404) {
+    if (context.data && context.data.statusCode === 404) {
       const notFoundCounter = this.ipHitCache.get(`${context.ip}:404`) || {
         count: 0,
         firstRequest: Date.now(),
@@ -511,7 +511,7 @@ class ThreatDetectionService {
         context.path.includes('/auth')) {
       
       // If the context data indicates an auth failure
-      if (context.data.authFailure) {
+      if (context.data && context.data.authFailure) {
         const authFailCounter = this.ipHitCache.get(`${context.ip}:auth:fail`) || {
           count: 0,
           firstRequest: Date.now(),
@@ -677,12 +677,11 @@ class ThreatDetectionService {
       severity: threatData.severity,
       sourceIp: threatData.sourceIp,
       userId: threatData.userId || null,
-      isArchived: false,
       evidence: threatData.evidence
     };
     
     // Store in database
-    await threatDatabaseService.recordThreat(threat);
+    await threatDatabaseService.reportThreat(threat);
     
     // Log the incident
     console.warn(`Security threat detected: ${threatData.description} from ${threatData.sourceIp}`);
@@ -783,11 +782,29 @@ class ThreatDetectionService {
     // Convert RegExp to string if provided
     const patternStr = rule.pattern ? rule.pattern.toString() : undefined;
     
-    // Save to database
-    return await threatDatabaseService.addOrUpdateRule({
-      ...rule,
-      pattern: patternStr
+    // Check if rule exists
+    const ruleId = uuidv4();
+    const existingRules = await threatDatabaseService.getRules({
+      name: rule.name
     });
+    
+    if (existingRules.length > 0) {
+      // Update existing rule
+      return await threatDatabaseService.updateRule(
+        existingRules[0].ruleId,
+        {
+          ...rule,
+          pattern: patternStr
+        }
+      );
+    } else {
+      // Create new rule
+      return await threatDatabaseService.createRule({
+        ruleId,
+        ...rule,
+        pattern: patternStr
+      });
+    }
   }
   
   /**
@@ -798,7 +815,7 @@ class ThreatDetectionService {
    * @returns True if successful
    */
   async setRuleEnabled(ruleId: string, enabled: boolean): Promise<boolean> {
-    return await threatDatabaseService.updateRuleStatus(ruleId, enabled);
+    return await threatDatabaseService.updateRule(ruleId, { enabled });
   }
   
   /**

@@ -272,6 +272,93 @@ class ThreatDatabaseService {
   }
   
   /**
+   * Record a security event in the database
+   * 
+   * @param event The security event to record
+   * @returns The ID of the inserted event
+   */
+  async recordSecurityEvent(event: {
+    eventType: string;
+    details: string;
+    ipAddress: string | null;
+    userId: string | null;
+    adminId: string | null;
+    timestamp: Date;
+  }): Promise<number> {
+    try {
+      // Create security events table if it doesn't exist yet
+      // This is a temporary workaround until we add it to the schema
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS security_events (
+          id SERIAL PRIMARY KEY,
+          event_type VARCHAR(50) NOT NULL,
+          details TEXT NOT NULL,
+          ip_address VARCHAR(50),
+          user_id VARCHAR(50),
+          admin_id VARCHAR(50),
+          timestamp TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      
+      // Insert the event
+      const result = await db.execute(sql`
+        INSERT INTO security_events (event_type, details, ip_address, user_id, admin_id, timestamp)
+        VALUES (${event.eventType}, ${event.details}, ${event.ipAddress}, ${event.userId}, ${event.adminId}, ${event.timestamp})
+        RETURNING id
+      `);
+      
+      return result[0].id;
+    } catch (error) {
+      console.error('Error recording security event:', error);
+      return -1;
+    }
+  }
+  
+  /**
+   * Get recent security events
+   * 
+   * @param limit Maximum number of events to return
+   * @returns Array of security events
+   */
+  async getSecurityEvents(limit: number = 50): Promise<any[]> {
+    try {
+      // Query security events
+      const events = await db.execute(sql`
+        SELECT * FROM security_events
+        ORDER BY timestamp DESC
+        LIMIT ${limit}
+      `);
+      
+      return events;
+    } catch (error) {
+      console.error('Error getting security events:', error);
+      return [];
+    }
+  }
+  
+  /**
+   * Get threat count statistics by type
+   * 
+   * @param dateRange Optional date range for statistics
+   * @returns Threat statistics by type
+   */
+  async getThreatStatsByType(dateRange?: DateRange): Promise<Record<string, number>> {
+    const stats = await this.getThreatStats(dateRange);
+    return stats.byType;
+  }
+  
+  /**
+   * Get threat count statistics by severity
+   * 
+   * @param dateRange Optional date range for statistics
+   * @returns Threat statistics by severity
+   */
+  async getThreatStatsBySeverity(dateRange?: DateRange): Promise<Record<string, number>> {
+    const stats = await this.getThreatStats(dateRange);
+    return stats.bySeverity;
+  }
+  
+  /**
    * Get threat count statistics
    * 
    * @param dateRange Optional date range for statistics

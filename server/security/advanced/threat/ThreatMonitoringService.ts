@@ -192,8 +192,8 @@ class ThreatMonitoringService {
    * @param limit Maximum number of events to return
    * @returns Array of recent security events
    */
-  getRecentEvents(limit: number = 50): any[] {
-    return threatDatabaseService.getSecurityEvents(limit);
+  async getRecentEvents(limit: number = 50): Promise<any[]> {
+    return await threatDatabaseService.getSecurityEvents(limit);
   }
   
   /**
