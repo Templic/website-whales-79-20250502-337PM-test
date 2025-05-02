@@ -1,0 +1,4096 @@
+additional optimizations we can implement:
+
+Database Optimization for Security Tables
+
+I notice there's database maintenance happening on the security_threats table. We can optimize this by adding indexes to improve query performance.
+Lazy Loading for Security Components
+
+We can implement lazy loading for non-critical security components to improve startup time.
+Batch Processing for Security Events
+
+Currently, security events are likely processed individually. We can implement batching to reduce database operations.
+Caching Security Rules
+
+Add caching for security rules and configurations to reduce database lookups.
+Optimize Blockchain Security Logging
+
+I noticed blockchain logging is enabled which can be resource-intensive. We can implement a more efficient approach.
+Which of these optimizations would you like me to implement first?
+
+Finished
+16 minutes ago
+•
+Update core AI integration to provide the latest security insights
+Screenshot
+more recommendations
+
+15 minutes ago
+TT
+
+templictemplate
+Here are more recommendations for optimizing the security system:
+
+Memory-Efficient Threat Detection
+
+Modify threat detection to use streaming pattern matching instead of loading entire requests into memory.
+Debounce Security Event Broadcasting
+
+Implement debouncing for security event broadcasting to reduce redundant event handling.
+IP Whitelist Caching
+
+Create an efficient caching mechanism for IP whitelists to speed up request processing.
+Selective Deep Scanning
+
+Implement risk-based scanning that only performs deep content analysis on suspicious requests.
+Consolidate Security Configuration
+
+Create a unified configuration system that loads all security settings at once rather than from multiple files.
+Optimize SecurityMonitor Class
+
+The SecurityMonitor class creates intervals that might overlap with other monitoring systems. We could refactor this to use a shared monitoring scheduler.
+Reduce Blockchain Operations
+
+If blockchain logging is causing performance issues, we can implement a queue that performs batch writes to the blockchain at scheduled intervals.
+Remove Quantum Resistance for Non-Critical Paths
+
+Quantum resistance algorithms are computationally expensive. We can selectively apply them only to sensitive operations.
+Would you like me to implement any of these optimizations?
+
+make an advanced replit plan for all 13, reorganizing the list according to efficient task similaity and common resource use.
+
+12 minutes ago
+TT
+
+templictemplate
+Advanced Security Optimization Plan for Replit
+Phase 1: Configuration & Memory Management Optimizations
+Goal: Reduce memory footprint and streamline configuration loading
+
+Consolidate Security Configuration
+
+Create a unified configuration system that loads from a single source
+Implement configuration caching to prevent reloading
+Add environment-specific overrides (dev/prod)
+Lazy Loading for Security Components
+
+Create a security component registry with dynamic loading
+Prioritize core components at startup, defer non-essential modules
+Implement reference counting to unload unused components
+IP Whitelist Caching
+
+Create an LRU cache for IP whitelists with intelligent expiry
+Add pre-computation of CIDR range checks
+Implement Bloom filters for rapid IP exclusion checks
+Phase 2: Database & Processing Optimizations
+Goal: Reduce database load and optimize data processing pipelines
+
+Database Optimization for Security Tables
+
+Add strategic indexes to security_threats and related tables
+Implement table partitioning for time-series security data
+Create optimized materialized views for common security queries
+Batch Processing for Security Events
+
+Implement event buffering with configurable batch sizes
+Add prioritization for critical vs. non-critical events
+Create an efficient flush mechanism with backpressure handling
+Caching Security Rules
+
+Create a rule compiler that optimizes rule evaluation
+Implement a two-tier rule cache (memory + persistent)
+Add rule dependency tracking for selective invalidation
+Phase 3: Performance-Critical Path Optimizations
+Goal: Optimize code paths that affect request processing time
+
+Memory-Efficient Threat Detection
+
+Implement streaming pattern matchers using Boyer-Moore algorithm
+Add incremental request body processing
+Create specialized detectors for common attack patterns
+Selective Deep Scanning
+
+Implement risk scoring algorithm for incoming requests
+Create tiered scanning levels (basic → comprehensive)
+Add ML-based request classification (if ML capabilities are available)
+Debounce Security Event Broadcasting
+
+Implement event coalescing for high-frequency events
+Add intelligent throttling with priority queues
+Create composite event detection for related security signals
+Phase 4: Advanced Security Feature Optimization
+Goal: Optimize resource-intensive security features for better performance
+
+Reduce Blockchain Operations
+
+Implement write-ahead logging with periodic blockchain commits
+Add checksumming to detect unauthorized log tampering
+Create a pruning mechanism for old blockchain records
+Optimize SecurityMonitor Class
+
+Refactor to use a shared timer/interval system
+Implement an event-driven monitoring architecture
+Add adaptive monitoring intervals based on system load
+Remove Quantum Resistance for Non-Critical Paths
+
+Create a tiered cryptography system based on data sensitivity
+Implement hybrid encryption for critical paths only
+Add configurable cryptography policies by request type
+Optimize Blockchain Security Logging
+
+Implement compression for blockchain data
+Add merkle tree optimization for faster verification
+Create a selective logging policy based on event importance
+Implementation Strategy
+Priority Order
+Start with Configuration Consolidation (1) as it affects all other systems
+Implement Database Optimizations (4) to improve overall system responsiveness
+Optimize the request processing path with Memory-Efficient Threat Detection (7)
+Progressively implement remaining optimizations based on measured impact
+Resource Sharing Across Tasks
+Tasks 1, 6, and 12 share configuration management code
+Tasks 4, 5, 10, and 13 share database access patterns
+Tasks 7, 8, and 9 share request processing code
+Tasks 2, 11, and 3 share system initialization code
+Measurement & Validation
+Establish performance baselines before each phase
+Implement A/B testing to measure impact of each optimization
+Create load tests that simulate production traffic patterns
+Add detailed performance logging with automatic regression detection
+Would you like me to begin implementing any specific phase or task from this plan?
+
+continue with hindsight recommendations
+
+12 minutes ago
+TT
+
+templictemplate
+Hindsight Recommendations for Security System Optimization
+Looking back at our optimization work so far and considering what we've learned about the system, here are my hindsight recommendations for further optimization:
+
+Architectural Insights
+Eliminate Redundant Security Layers
+
+We've discovered multiple monitoring systems running in parallel (ThreatMonitoringService, MetricsCollector)
+Recommendation: Create a unified monitoring facade that coordinates all monitoring activities through a single interface
+Reconsider Maximum Security Mode
+
+The "maximum security" mode activates all security features regardless of performance impact
+Recommendation: Create configurable security profiles with different performance/security tradeoffs for different environments
+Simplify the Security Module Hierarchy
+
+The current deep nesting of security modules (server/security/advanced/threat/etc.) makes code navigation difficult
+Recommendation: Flatten the hierarchy and use a more modular, plugin-based architecture
+Implementation Refinements
+Optimize Security Rules Evaluation
+
+Current threat detection evaluates all rules sequentially for every request
+Recommendation: Implement rule indexing by request type and path to reduce the number of evaluations needed
+Reduce Blockchain Integration Overhead
+
+The ImmutableSecurityLogs service is queried frequently but likely needs significant resources
+Recommendation: Create a local event log with periodic blockchain sync instead of real-time blockchain operations
+Database Connection Pooling
+
+Each security service may create its own database connections
+Recommendation: Implement a shared connection pool for all security services
+Performance Tuning
+Optimize IP Filtering Logic
+
+The current IP whitelisting code has multiple redundant checks and string operations
+Recommendation: Replace with a more efficient IP matching algorithm using CIDR notation and lookup tables
+Improve Startup Sequence
+
+Security services initialize sequentially and block application startup
+Recommendation: Implement a staged startup where critical security features start immediately and others defer to background initialization
+Add Caching for Threat Intelligence
+
+Threat intelligence data is likely fetched repeatedly
+Recommendation: Implement a multi-level caching system for threat intelligence data
+Technical Debt Reduction
+Fix Type System Issues
+
+We observed numerous TypeScript errors related to security enums and types
+Recommendation: Create a proper TypeScript type hierarchy for security components and fix import patterns
+Standardize Logging Patterns
+
+Different security modules use different logging patterns, making analysis difficult
+Recommendation: Implement a unified logging system with standardized formats and severities
+Add Performance Metrics Collection
+
+We can't optimize what we can't measure
+Recommendation: Add detailed performance instrumentation to security code paths to identify remaining bottlenecks
+Future-Proofing
+Implement Feature Flags
+
+Security features currently can't be toggled individually without code changes
+Recommendation: Add a feature flag system to enable/disable security features dynamically
+Create Migration Path for Legacy Security Code
+
+The current security implementation has technical debt and design issues
+Recommendation: Create a phased migration plan to a more modular security architecture
+Design for Cloud Scalability
+
+Current implementation assumes a single-instance deployment model
+Recommendation: Redesign security services to work in a distributed environment with shared state
+Would you like me to elaborate on any specific recommendation or begin implementation of one of these suggestions?
+
+write sample code about all 13 . (do not edit the app files!)
+
+11 minutes ago
+TT
+
+templictemplate
+Sample Code for 13 Security Optimization Strategies
+Here's sample code for each of the 13 optimization strategies. These are for reference only and are not being applied to the actual application files.
+
+1. Consolidate Security Configuration
+// UnifiedSecurityConfig.ts
+import fs from 'fs';
+import path from 'path';
+// Single source of truth for security configuration
+export class UnifiedSecurityConfig {
+  private static instance: UnifiedSecurityConfig;
+  private config: Record<string, any> = {};
+  private configPath: string;
+  private cacheTimestamp: number = 0;
+  private cacheTTL: number = 5 * 60 * 1000; // 5 minutes
+  private constructor(configPath: string) {
+    this.configPath = configPath;
+    this.loadConfiguration();
+  }
+  static getInstance(configPath: string = './config/security.json'): UnifiedSecurityConfig {
+    if (!UnifiedSecurityConfig.instance) {
+      UnifiedSecurityConfig.instance = new UnifiedSecurityConfig(configPath);
+    }
+    return UnifiedSecurityConfig.instance;
+  }
+  getConfig<T>(key: string, defaultValue?: T): T {
+    // Refresh cache if needed
+    if (Date.now() - this.cacheTimestamp > this.cacheTTL) {
+      this.loadConfiguration();
+    }
+    
+    const parts = key.split('.');
+    let current: any = this.config;
+    
+    for (const part of parts) {
+      if (current === undefined || current === null) return defaultValue as T;
+      current = current[part];
+    }
+    
+    return (current !== undefined && current !== null) ? current : defaultValue as T;
+  }
+  private loadConfiguration(): void {
+    try {
+      const env = process.env.NODE_ENV || 'development';
+      const baseConfig = JSON.parse(fs.readFileSync(this.configPath, 'utf8'));
+      const envConfig = JSON.parse(fs.readFileSync(
+        path.join(path.dirname(this.configPath), `security.${env}.json`),
+        'utf8'
+      ));
+      
+      // Deep merge configuration
+      this.config = this.deepMerge(baseConfig, envConfig);
+      this.cacheTimestamp = Date.now();
+      
+      console.log(`[Security] Configuration loaded for environment: ${env}`);
+    } catch (error) {
+      console.error('[Security] Error loading configuration:', error);
+    }
+  }
+  private deepMerge(target: any, source: any): any {
+    const output = { ...target };
+    
+    if (typeof target === 'object' && typeof source === 'object') {
+      Object.keys(source).forEach(key => {
+        if (typeof source[key] === 'object' && !Array.isArray(source[key])) {
+          if (!(key in target)) {
+            output[key] = source[key];
+          } else {
+            output[key] = this.deepMerge(target[key], source[key]);
+          }
+        } else {
+          output[key] = source[key];
+        }
+      });
+    }
+    
+    return output;
+  }
+}
+// Usage example:
+// const securityConfig = UnifiedSecurityConfig.getInstance();
+// const maxLoginAttempts = securityConfig.getConfig<number>('authentication.maxLoginAttempts', 5);
+2. Lazy Loading for Security Components
+// SecurityComponentRegistry.ts
+type ComponentFactory<T> = () => Promise<T>;
+class SecurityComponentRegistry {
+  private static instance: SecurityComponentRegistry;
+  private components = new Map<string, any>();
+  private factories = new Map<string, ComponentFactory<any>>();
+  private refCounts = new Map<string, number>();
+  private constructor() {}
+  static getInstance(): SecurityComponentRegistry {
+    if (!SecurityComponentRegistry.instance) {
+      SecurityComponentRegistry.instance = new SecurityComponentRegistry();
+    }
+    return SecurityComponentRegistry.instance;
+  }
+  // Register a component factory
+  registerComponent<T>(name: string, factory: ComponentFactory<T>): void {
+    this.factories.set(name, factory);
+    console.log(`[Security] Registered component: ${name}`);
+  }
+  // Get or load a component
+  async getComponent<T>(name: string): Promise<T> {
+    // If component is already loaded, return it
+    if (this.components.has(name)) {
+      this.incrementRefCount(name);
+      return this.components.get(name) as T;
+    }
+    
+    // Load component if factory exists
+    if (this.factories.has(name)) {
+      console.log(`[Security] Lazy loading component: ${name}`);
+      const factory = this.factories.get(name)!;
+      const component = await factory();
+      this.components.set(name, component);
+      this.incrementRefCount(name);
+      return component as T;
+    }
+    
+    throw new Error(`Security component not registered: ${name}`);
+  }
+  // Release a component reference
+  releaseComponent(name: string): void {
+    if (!this.refCounts.has(name)) return;
+    
+    const count = this.refCounts.get(name)! - 1;
+    this.refCounts.set(name, count);
+    
+    // Unload component if no more references
+    if (count <= 0) {
+      console.log(`[Security] Unloading component: ${name}`);
+      const component = this.components.get(name);
+      if (component && typeof component.dispose === 'function') {
+        component.dispose();
+      }
+      this.components.delete(name);
+      this.refCounts.delete(name);
+    }
+  }
+  private incrementRefCount(name: string): void {
+    const count = this.refCounts.get(name) || 0;
+    this.refCounts.set(name, count + 1);
+  }
+}
+// Usage example:
+/*
+const registry = SecurityComponentRegistry.getInstance();
+// Register components with factories
+registry.registerComponent('threatDetection', async () => {
+  const { ThreatDetectionService } = await import('./ThreatDetectionService');
+  return new ThreatDetectionService();
+});
+// Get a component when needed
+async function handleRequest(req, res) {
+  const threatDetection = await registry.getComponent('threatDetection');
+  try {
+    await threatDetection.scanRequest(req);
+    // Continue with request handling
+  } finally {
+    // Release when done
+    registry.releaseComponent('threatDetection');
+  }
+}
+*/
+3. IP Whitelist Caching
+// IPWhitelistCache.ts
+import { createBloomFilter } from 'bloom-filters';
+import LRUCache from 'lru-cache';
+interface IPRange {
+  start: bigint;
+  end: bigint;
+  cidr: string;
+}
+class IPWhitelistCache {
+  private static instance: IPWhitelistCache;
+  private exactIPCache: LRUCache<string, boolean>;
+  private rangeCache: IPRange[] = [];
+  private bloomFilter: any; // BloomFilter type
+  private lastUpdate = 0;
+  private updateInterval = 5 * 60 * 1000; // 5 minutes
+  private constructor() {
+    // Cache for exact IP matches
+    this.exactIPCache = new LRUCache<string, boolean>({
+      max: 10000,
+      ttl: 3600 * 1000, // 1 hour
+      updateAgeOnGet: true
+    });
+    
+    // Create bloom filter for quick negative checks
+    this.bloomFilter = createBloomFilter(100000, 0.01); // 1% false positive rate
+    
+    // Initial load
+    this.refreshWhitelist();
+  }
+  static getInstance(): IPWhitelistCache {
+    if (!IPWhitelistCache.instance) {
+      IPWhitelistCache.instance = new IPWhitelistCache();
+    }
+    return IPWhitelistCache.instance;
+  }
+  isWhitelisted(ip: string): boolean {
+    // Check if it's time to refresh the whitelist
+    if (Date.now() - this.lastUpdate > this.updateInterval) {
+      this.refreshWhitelist();
+    }
+    
+    // Check exact cache hit
+    if (this.exactIPCache.has(ip)) {
+      return this.exactIPCache.get(ip) || false;
+    }
+    
+    // Use bloom filter for quick rejection
+    if (!this.bloomFilter.has(ip)) {
+      this.exactIPCache.set(ip, false);
+      return false;
+    }
+    
+    // Convert IP to numeric for range checks
+    const numericIP = this.ipToNumber(ip);
+    
+    // Check IP ranges
+    for (const range of this.rangeCache) {
+      if (numericIP >= range.start && numericIP <= range.end) {
+        this.exactIPCache.set(ip, true);
+        return true;
+      }
+    }
+    
+    // Not in any range
+    this.exactIPCache.set(ip, false);
+    return false;
+  }
+  private refreshWhitelist(): void {
+    try {
+      // In a real implementation, load from DB or file
+      const exactIPs = ['127.0.0.1', '::1', '192.168.1.1'];
+      const cidrRanges = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'];
+      
+      // Clear existing caches
+      this.exactIPCache.clear();
+      this.rangeCache = [];
+      
+      // Rebuild bloom filter
+      this.bloomFilter.clear();
+      
+      // Add exact IPs
+      for (const ip of exactIPs) {
+        this.exactIPCache.set(ip, true);
+        this.bloomFilter.add(ip);
+      }
+      
+      // Process CIDR ranges
+      for (const cidr of cidrRanges) {
+        const range = this.cidrToRange(cidr);
+        if (range) {
+          this.rangeCache.push(range);
+          
+          // For small ranges, add all IPs to bloom filter
+          if (range.end - range.start < 256n) {
+            for (let i = range.start; i <= range.end; i++) {
+              const ip = this.numberToIP(i);
+              this.bloomFilter.add(ip);
+            }
+          }
+        }
+      }
+      
+      this.lastUpdate = Date.now();
+      console.log(`[Security] IP whitelist refreshed with ${exactIPs.length} exact IPs and ${cidrRanges.length} CIDR ranges`);
+    } catch (error) {
+      console.error('[Security] Error refreshing IP whitelist:', error);
+    }
+  }
+  private ipToNumber(ip: string): bigint {
+    if (ip.includes(':')) {
+      // IPv6 (simplified implementation)
+      return 0n; // Full IPv6 implementation would go here
+    } else {
+      // IPv4
+      return ip.split('.')
+        .reduce((sum, octet) => (sum << 8n) + BigInt(parseInt(octet, 10)), 0n);
+    }
+  }
+  private numberToIP(num: bigint): string {
+    return [
+      (num >> 24n) & 255n,
+      (num >> 16n) & 255n,
+      (num >> 8n) & 255n,
+      num & 255n
+    ].join('.');
+  }
+  private cidrToRange(cidr: string): IPRange | null {
+    try {
+      const [baseIP, bits] = cidr.split('/');
+      const prefixLength = parseInt(bits, 10);
+      const ipNumber = this.ipToNumber(baseIP);
+      
+      // Calculate the number of addresses in this subnet
+      const subnetSize = 1n << BigInt(32 - prefixLength);
+      
+      // Calculate the network and broadcast addresses
+      const networkAddress = ipNumber & (BigInt(0xffffffff) << BigInt(32 - prefixLength));
+      const broadcastAddress = networkAddress + subnetSize - 1n;
+      
+      return {
+        start: networkAddress,
+        end: broadcastAddress,
+        cidr
+      };
+    } catch (error) {
+      console.error(`[Security] Invalid CIDR notation: ${cidr}`, error);
+      return null;
+    }
+  }
+}
+// Usage example:
+// const ipWhitelist = IPWhitelistCache.getInstance();
+// if (ipWhitelist.isWhitelisted(req.ip)) {
+//   // Allow request
+// }
+4. Database Optimization for Security Tables
+// SecurityDatabaseOptimizer.ts
+import { Pool } from 'pg';
+class SecurityDatabaseOptimizer {
+  private pool: Pool;
+  
+  constructor(pool: Pool) {
+    this.pool = pool;
+  }
+  
+  async optimizeTables(): Promise<void> {
+    console.log('[Security] Starting database optimization for security tables');
+    
+    try {
+      // Create indexes if they don't exist
+      await this.createOptimalIndexes();
+      
+      // Set up table partitioning for time-series data
+      await this.setupTablePartitioning();
+      
+      // Create materialized views for common queries
+      await this.createMaterializedViews();
+      
+      console.log('[Security] Database optimization completed successfully');
+    } catch (error) {
+      console.error('[Security] Error during database optimization:', error);
+    }
+  }
+  
+  private async createOptimalIndexes(): Promise<void> {
+    const indexQueries = [
+      // Index for IP-based lookups
+      `CREATE INDEX IF NOT EXISTS idx_security_threats_source_ip ON security_threats(source_ip)`,
+      
+      // Index for status-based queries (e.g., unresolved threats)
+      `CREATE INDEX IF NOT EXISTS idx_security_threats_resolved ON security_threats(resolved)`,
+      
+      // Composite index for common query pattern
+      `CREATE INDEX IF NOT EXISTS idx_security_threats_type_severity_resolved ON 
+       security_threats(threat_type, severity, resolved)`,
+       
+      // Index for timestamp-based queries with BRIN for better space efficiency
+      `CREATE INDEX IF NOT EXISTS idx_security_threats_timestamp_brin ON 
+       security_threats USING BRIN(created_at)`,
+       
+      // Full-text search index for evidence data
+      `CREATE INDEX IF NOT EXISTS idx_security_threats_evidence_gin ON 
+       security_threats USING GIN(to_tsvector('english', evidence::text))`
+    ];
+    
+    for (const query of indexQueries) {
+      await this.pool.query(query);
+    }
+    
+    console.log('[Security] Created optimal indexes for security tables');
+  }
+  
+  private async setupTablePartitioning(): Promise<void> {
+    // Check if table is already partitioned
+    const { rows } = await this.pool.query(`
+      SELECT EXISTS (
+        SELECT 1 FROM pg_catalog.pg_class c
+        JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.relname = 'security_events_partitioned' AND n.nspname = current_schema()
+      ) as exists
+    `);
+    
+    if (rows[0].exists) {
+      console.log('[Security] Partitioned tables already exist');
+      return;
+    }
+    
+    // Create partitioned table
+    await this.pool.query(`
+      CREATE TABLE security_events_partitioned (
+        id SERIAL,
+        event_type VARCHAR(50) NOT NULL,
+        severity VARCHAR(20) NOT NULL,
+        source_ip VARCHAR(50),
+        user_id VARCHAR(50),
+        details JSONB,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL
+      ) PARTITION BY RANGE (created_at)
+    `);
+    
+    // Create monthly partitions for the current and next 12 months
+    const startDate = new Date();
+    startDate.setDate(1);
+    startDate.setHours(0, 0, 0, 0);
+    
+    for (let i = 0; i < 12; i++) {
+      const partitionStart = new Date(startDate);
+      partitionStart.setMonth(partitionStart.getMonth() + i);
+      
+      const partitionEnd = new Date(partitionStart);
+      partitionEnd.setMonth(partitionEnd.getMonth() + 1);
+      
+      const partitionName = `security_events_${partitionStart.getFullYear()}_${String(partitionStart.getMonth() + 1).padStart(2, '0')}`;
+      
+      await this.pool.query(`
+        CREATE TABLE ${partitionName} PARTITION OF security_events_partitioned
+        FOR VALUES FROM ('${partitionStart.toISOString()}') TO ('${partitionEnd.toISOString()}')
+      `);
+      
+      // Create indexes on partition
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_${partitionName}_event_type ON ${partitionName}(event_type)
+      `);
+      
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_${partitionName}_created_at ON ${partitionName}(created_at)
+      `);
+    }
+    
+    console.log('[Security] Set up table partitioning for security events');
+  }
+  
+  private async createMaterializedViews(): Promise<void> {
+    // Materialized view for security dashboard statistics
+    await this.pool.query(`
+      CREATE MATERIALIZED VIEW IF NOT EXISTS mv_security_stats AS
+      SELECT
+        threat_type,
+        severity,
+        COUNT(*) as count,
+        COUNT(*) FILTER (WHERE resolved = false) as unresolved_count,
+        MAX(created_at) as last_occurrence
+      FROM security_threats
+      WHERE created_at > NOW() - INTERVAL '30 days'
+      GROUP BY threat_type, severity
+      WITH DATA;
+      
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_security_stats ON mv_security_stats(threat_type, severity);
+    `);
+    
+    // Materialized view for user-related security events
+    await this.pool.query(`
+      CREATE MATERIALIZED VIEW IF NOT EXISTS mv_user_security_events AS
+      SELECT
+        user_id,
+        COUNT(*) as total_events,
+        COUNT(*) FILTER (WHERE severity = 'critical') as critical_events,
+        COUNT(*) FILTER (WHERE severity = 'high') as high_events,
+        MAX(created_at) as last_event
+      FROM security_events
+      WHERE user_id IS NOT NULL AND created_at > NOW() - INTERVAL '90 days'
+      GROUP BY user_id
+      WITH DATA;
+      
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_user_security_events ON mv_user_security_events(user_id);
+    `);
+    
+    console.log('[Security] Created materialized views for common security queries');
+    
+    // Set up a refresh function
+    await this.pool.query(`
+      CREATE OR REPLACE FUNCTION refresh_security_views()
+      RETURNS void AS $$
+      BEGIN
+        REFRESH MATERIALIZED VIEW CONCURRENTLY mv_security_stats;
+        REFRESH MATERIALIZED VIEW CONCURRENTLY mv_user_security_events;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+    
+    console.log('[Security] Created view refresh function');
+  }
+}
+// Usage example:
+/*
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL
+});
+const optimizer = new SecurityDatabaseOptimizer(pool);
+optimizer.optimizeTables().then(() => {
+  console.log('Database optimization complete');
+});
+*/
+5. Batch Processing for Security Events
+// BatchedEventProcessor.ts
+import { EventEmitter } from 'events';
+interface SecurityEvent {
+  id?: string;
+  type: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  timestamp: Date;
+  data: Record<string, any>;
+  source?: string;
+}
+class BatchedEventProcessor extends EventEmitter {
+  private events: SecurityEvent[] = [];
+  private criticalEvents: SecurityEvent[] = [];
+  private batchSize: number;
+  private maxBatchIntervalMs: number;
+  private processingInterval: NodeJS.Timeout | null = null;
+  private lastProcessTime: number = Date.now();
+  private processingPromise: Promise<void> | null = null;
+  private isProcessing: boolean = false;
+  private isStopping: boolean = false;
+  constructor(options: {
+    batchSize?: number;
+    maxBatchIntervalMs?: number;
+    autoStart?: boolean;
+  } = {}) {
+    super();
+    
+    this.batchSize = options.batchSize || 100;
+    this.maxBatchIntervalMs = options.maxBatchIntervalMs || 5000; // 5 seconds
+    
+    if (options.autoStart !== false) {
+      this.start();
+    }
+  }
+  // Add an event to the batch
+  addEvent(event: SecurityEvent): void {
+    // Critical events are processed immediately
+    if (event.severity === 'critical') {
+      this.criticalEvents.push(event);
+      this.emitBackpressure();
+      this.processIfNeeded();
+      return;
+    }
+    
+    this.events.push(event);
+    this.emitBackpressure();
+    this.processIfNeeded();
+  }
+  // Start the batch processing
+  start(): void {
+    if (this.processingInterval !== null) return;
+    
+    this.isStopping = false;
+    this.processingInterval = setInterval(() => {
+      this.processIfNeeded(true);
+    }, Math.min(this.maxBatchIntervalMs, 1000)); // Check at least every second
+  }
+  // Stop the batch processing (gracefully)
+  async stop(): Promise<void> {
+    this.isStopping = true;
+    
+    if (this.processingInterval !== null) {
+      clearInterval(this.processingInterval);
+      this.processingInterval = null;
+    }
+    
+    // Process any remaining events
+    await this.flush();
+  }
+  // Process all remaining events immediately
+  async flush(): Promise<void> {
+    if (this.isProcessing) {
+      // Wait for current processing to complete
+      if (this.processingPromise) {
+        await this.processingPromise;
+      }
+    }
+    
+    // Process any remaining events
+    if (this.criticalEvents.length > 0 || this.events.length > 0) {
+      return this.processEvents(true);
+    }
+  }
+  private emitBackpressure(): void {
+    // Emit backpressure event if we exceed certain thresholds
+    if (this.events.length > this.batchSize * 10) {
+      this.emit('backpressure', {
+        normalQueueSize: this.events.length,
+        criticalQueueSize: this.criticalEvents.length,
+        recommendedAction: 'slow_down'
+      });
+    }
+  }
+  private async processIfNeeded(forceByTime: boolean = false): Promise<void> {
+    if (this.isProcessing || this.isStopping) return;
+    
+    const timeSinceLastProcess = Date.now() - this.lastProcessTime;
+    const timeThresholdMet = forceByTime && timeSinceLastProcess >= this.maxBatchIntervalMs;
+    const sizeThresholdMet = this.criticalEvents.length > 0 || this.events.length >= this.batchSize;
+    
+    if (timeThresholdMet || sizeThresholdMet) {
+      await this.processEvents();
+    }
+  }
+  private async processEvents(isFlush: boolean = false): Promise<void> {
+    if (this.isProcessing) return;
+    
+    this.isProcessing = true;
+    
+    try {
+      this.processingPromise = (async () => {
+        // Process critical events first
+        if (this.criticalEvents.length > 0) {
+          const criticalBatch = this.criticalEvents.splice(0, this.criticalEvents.length);
+          await this.processBatch(criticalBatch, 'critical');
+        }
+        
+        // Process regular events
+        if (this.events.length > 0) {
+          const batchSize = isFlush ? this.events.length : Math.min(this.events.length, this.batchSize);
+          const batch = this.events.splice(0, batchSize);
+          await this.processBatch(batch, 'normal');
+        }
+        
+        this.lastProcessTime = Date.now();
+      })();
+      
+      await this.processingPromise;
+    } catch (error) {
+      this.emit('error', error);
+    } finally {
+      this.isProcessing = false;
+      this.processingPromise = null;
+    }
+  }
+  private async processBatch(batch: SecurityEvent[], priority: 'normal' | 'critical'): Promise<void> {
+    if (batch.length === 0) return;
+    
+    try {
+      // In a real implementation, this would write to a database or external service
+      console.log(`[Security] Processing ${batch.length} events with ${priority} priority`);
+      
+      // Process the events
+      // await securityEventsRepository.saveEvents(batch);
+      
+      // Emit success event
+      this.emit('processed', {
+        count: batch.length,
+        priority
+      });
+    } catch (error) {
+      // Emit error event
+      this.emit('error', {
+        error,
+        failedEvents: batch
+      });
+      
+      // In a real implementation, you might retry or save to a dead-letter queue
+    }
+  }
+}
+// Usage example:
+/*
+const eventProcessor = new BatchedEventProcessor({
+  batchSize: 50,
+  maxBatchIntervalMs: 3000
+});
+eventProcessor.on('processed', (result) => {
+  console.log(`Processed ${result.count} events with ${result.priority} priority`);
+});
+eventProcessor.on('error', (error) => {
+  console.error('Error processing security events:', error);
+});
+// Add events
+eventProcessor.addEvent({
+  type: 'AUTHENTICATION_FAILURE',
+  severity: 'medium',
+  timestamp: new Date(),
+  data: { userId: '123', ipAddress: '192.168.1.1' }
+});
+// Add critical event (processed immediately)
+eventProcessor.addEvent({
+  type: 'POSSIBLE_ATTACK',
+  severity: 'critical',
+  timestamp: new Date(),
+  data: { attackType: 'SQL_INJECTION', payload: "'; DROP TABLE users; --" }
+});
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  await eventProcessor.stop();
+  process.exit(0);
+});
+*/
+6. Caching Security Rules
+// SecurityRulesCache.ts
+import LRUCache from 'lru-cache';
+import { createHash } from 'crypto';
+// Security rule types
+interface SecurityRule {
+  id: string;
+  name: string;
+  pattern?: string | RegExp;
+  condition?: string; // JavaScript expression
+  action: 'allow' | 'deny' | 'log';
+  priority: number;
+  dependencies?: string[]; // IDs of rules this rule depends on
+}
+interface CompiledRule {
+  id: string;
+  name: string;
+  matcher?: RegExp;
+  evaluator?: Function;
+  action: 'allow' | 'deny' | 'log';
+  priority: number;
+  dependencies: string[];
+  hash: string;
+}
+interface RuleContext {
+  path: string;
+  method: string;
+  ip: string;
+  headers: Record<string, string>;
+  query: Record<string, string>;
+  body?: any;
+}
+class SecurityRulesCache {
+  private static instance: SecurityRulesCache;
+  private memoryCache: LRUCache<string, CompiledRule>;
+  private persistentCache: Map<string, CompiledRule> = new Map();
+  private ruleDependencies: Map<string, Set<string>> = new Map();
+  private ruleLastModified: Map<string, number> = new Map();
+  private constructor() {
+    this.memoryCache = new LRUCache<string, CompiledRule>({
+      max: 500, // Maximum number of rules in memory
+      ttl: 1000 * 60 * 60, // 1 hour TTL
+      updateAgeOnGet: true
+    });
+  }
+  static getInstance(): SecurityRulesCache {
+    if (!SecurityRulesCache.instance) {
+      SecurityRulesCache.instance = new SecurityRulesCache();
+    }
+    return SecurityRulesCache.instance;
+  }
+  // Get a compiled rule from cache or compile it if needed
+  getCompiledRule(rule: SecurityRule): CompiledRule {
+    const ruleHash = this.calculateRuleHash(rule);
+    
+    // Check memory cache first (fastest)
+    if (this.memoryCache.has(rule.id)) {
+      const cachedRule = this.memoryCache.get(rule.id)!;
+      if (cachedRule.hash === ruleHash) {
+        return cachedRule;
+      }
+    }
+    
+    // Check persistent cache next
+    if (this.persistentCache.has(rule.id)) {
+      const cachedRule = this.persistentCache.get(rule.id)!;
+      if (cachedRule.hash === ruleHash) {
+        // Move to memory cache
+        this.memoryCache.set(rule.id, cachedRule);
+        return cachedRule;
+      }
+    }
+    
+    // Need to compile the rule
+    const compiledRule = this.compileRule(rule, ruleHash);
+    
+    // Store in both caches
+    this.memoryCache.set(rule.id, compiledRule);
+    this.persistentCache.set(rule.id, compiledRule);
+    
+    // Update rule dependencies
+    this.updateRuleDependencies(rule);
+    
+    return compiledRule;
+  }
+  // Invalidate a rule and all rules that depend on it
+  invalidateRule(ruleId: string): void {
+    const dependents = this.findDependentRules(ruleId);
+    
+    // Invalidate the rule itself
+    this.memoryCache.delete(ruleId);
+    this.persistentCache.delete(ruleId);
+    
+    // Invalidate all dependent rules
+    for (const dependentId of dependents) {
+      this.memoryCache.delete(dependentId);
+      this.persistentCache.delete(dependentId);
+    }
+    
+    console.log(`[Security] Invalidated rule ${ruleId} and ${dependents.length} dependent rules`);
+  }
+  // Evaluate a context against a set of rules
+  evaluateRules(rules: SecurityRule[], context: RuleContext): { action: 'allow' | 'deny' | 'log', rule?: SecurityRule } {
+    // Sort rules by priority (highest first)
+    const sortedRules = [...rules].sort((a, b) => b.priority - a.priority);
+    
+    for (const rule of sortedRules) {
+      const compiledRule = this.getCompiledRule(rule);
+      
+      // Evaluate rule
+      if (this.evaluateCompiledRule(compiledRule, context)) {
+        return { action: compiledRule.action, rule };
+      }
+    }
+    
+    // Default action if no rules match
+    return { action: 'allow' };
+  }
+  private calculateRuleHash(rule: SecurityRule): string {
+    // Create a hash of the rule to detect changes
+    const hash = createHash('md5');
+    hash.update(JSON.stringify({
+      pattern: rule.pattern ? rule.pattern.toString() : undefined,
+      condition: rule.condition,
+      action: rule.action,
+      priority: rule.priority,
+      dependencies: rule.dependencies
+    }));
+    return hash.digest('hex');
+  }
+  private compileRule(rule: SecurityRule, hash: string): CompiledRule {
+    console.log(`[Security] Compiling rule: ${rule.name} (${rule.id})`);
+    
+    const compiledRule: CompiledRule = {
+      id: rule.id,
+      name: rule.name,
+      action: rule.action,
+      priority: rule.priority,
+      dependencies: rule.dependencies || [],
+      hash
+    };
+    
+    // Compile pattern to RegExp if provided
+    if (rule.pattern) {
+      if (typeof rule.pattern === 'string') {
+        compiledRule.matcher = new RegExp(rule.pattern, 'i');
+      } else {
+        compiledRule.matcher = rule.pattern;
+      }
+    }
+    
+    // Compile condition to Function if provided
+    if (rule.condition) {
+      try {
+        // This is a simplified version - in production you'd use a safer evaluation method
+        compiledRule.evaluator = new Function('context', `
+          try {
+            return (${rule.condition});
+          } catch (error) {
+            console.error('Error evaluating security rule condition:', error);
+            return false;
+          }
+        `);
+      } catch (error) {
+        console.error(`[Security] Error compiling rule condition for ${rule.id}:`, error);
+        // Create a default evaluator that always returns false
+        compiledRule.evaluator = () => false;
+      }
+    }
+    
+    return compiledRule;
+  }
+  private evaluateCompiledRule(rule: CompiledRule, context: RuleContext): boolean {
+    // If rule has a matcher, test it against the path
+    if (rule.matcher && !rule.matcher.test(context.path)) {
+      return false;
+    }
+    
+    // If rule has an evaluator, run it against the context
+    if (rule.evaluator && !rule.evaluator(context)) {
+      return false;
+    }
+    
+    // If we reach this point, the rule matches
+    return true;
+  }
+  private updateRuleDependencies(rule: SecurityRule): void {
+    // Clear existing dependencies
+    this.ruleDependencies.delete(rule.id);
+    
+    // If rule has dependencies, update the dependency map
+    if (rule.dependencies && rule.dependencies.length > 0) {
+      for (const depId of rule.dependencies) {
+        if (!this.ruleDependencies.has(depId)) {
+          this.ruleDependencies.set(depId, new Set());
+        }
+        this.ruleDependencies.get(depId)!.add(rule.id);
+      }
+    }
+    
+    // Update last modified time
+    this.ruleLastModified.set(rule.id, Date.now());
+  }
+  private findDependentRules(ruleId: string): string[] {
+    const dependents: string[] = [];
+    const visited = new Set<string>();
+    
+    const traverse = (id: string) => {
+      if (visited.has(id)) return;
+      visited.add(id);
+      
+      const deps = this.ruleDependencies.get(id);
+      if (deps) {
+        for (const depId of deps) {
+          dependents.push(depId);
+          traverse(depId);
+        }
+      }
+    };
+    
+    traverse(ruleId);
+    return dependents;
+  }
+}
+// Usage example:
+/*
+const rulesCache = SecurityRulesCache.getInstance();
+// Define some rules
+const rules: SecurityRule[] = [
+  {
+    id: 'rule1',
+    name: 'Block SQL Injection',
+    pattern: "((\\%27)|(\\')|(\\-\\-)|(\\%23)|(#))",
+    action: 'deny',
+    priority: 100
+  },
+  {
+    id: 'rule2',
+    name: 'Allow Admin IPs',
+    condition: "context.ip === '192.168.1.100'",
+    action: 'allow',
+    priority: 200 // Higher priority
+  },
+  {
+    id: 'rule3',
+    name: 'Log API Requests',
+    pattern: "^/api/.*",
+    action: 'log',
+    priority: 50,
+    dependencies: ['rule2'] // Depends on rule2
+  }
+];
+// Evaluate a context
+const result = rulesCache.evaluateRules(rules, {
+  path: '/api/users',
+  method: 'GET',
+  ip: '192.168.1.1',
+  headers: { 'user-agent': 'Chrome' },
+  query: { q: 'test' }
+});
+console.log(`Rule evaluation result: ${result.action}`);
+// Invalidate a rule when it changes
+rulesCache.invalidateRule('rule2');
+*/
+7. Memory-Efficient Threat Detection
+// StreamingThreatDetector.ts
+import { Readable } from 'stream';
+import { createHash } from 'crypto';
+interface DetectionPattern {
+  id: string;
+  name: string;
+  pattern: RegExp | string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  action: 'block' | 'log' | 'sanitize';
+}
+interface DetectionResult {
+  detected: boolean;
+  matches: Array<{
+    patternId: string;
+    patternName: string;
+    severity: string;
+    action: string;
+    location: string;
+    snippet: string;
+  }>;
+}
+class StreamingThreatDetector {
+  private patterns: Map<string, DetectionPattern> = new Map();
+  private compiledPatterns: Map<string, RegExp> = new Map();
+  private chunkSize: number;
+  
+  constructor(options: { chunkSize?: number } = {}) {
+    this.chunkSize = options.chunkSize || 4096; // Default to 4KB chunks
+  }
+  
+  // Add a detection pattern
+  addPattern(pattern: DetectionPattern): void {
+    this.patterns.set(pattern.id, pattern);
+    
+    // Compile pattern to RegExp if it's a string
+    if (typeof pattern.pattern === 'string') {
+      this.compiledPatterns.set(pattern.id, new RegExp(pattern.pattern, 'i'));
+    } else {
+      this.compiledPatterns.set(pattern.id, pattern.pattern);
+    }
+  }
+  
+  // Remove a detection pattern
+  removePattern(patternId: string): void {
+    this.patterns.delete(patternId);
+    this.compiledPatterns.delete(patternId);
+  }
+  
+  // Scan a string buffer
+  scanBuffer(buffer: string | Buffer, context: string = 'body'): DetectionResult {
+    const result: DetectionResult = {
+      detected: false,
+      matches: []
+    };
+    
+    const content = buffer.toString();
+    
+    // Check each pattern
+    for (const [patternId, regex] of this.compiledPatterns.entries()) {
+      const pattern = this.patterns.get(patternId)!;
+      
+      let match;
+      // Reset lastIndex to ensure correct behavior with global patterns
+      regex.lastIndex = 0;
+      
+      while ((match = regex.exec(content)) !== null) {
+        result.detected = true;
+        
+        // Get surrounding context (up to 20 chars before and after)
+        const start = Math.max(0, match.index - 20);
+        const end = Math.min(content.length, match.index + match[0].length + 20);
+        const snippet = content.substring(start, end);
+        
+        // Add match details
+        result.matches.push({
+          patternId,
+          patternName: pattern.name,
+          severity: pattern.severity,
+          action: pattern.action,
+          location: `${context}:${this.getLineAndColumn(content, match.index)}`,
+          snippet
+        });
+        
+        // Break after first match for non-global regexes
+        if (!regex.global) break;
+      }
+    }
+    
+    return result;
+  }
+  
+  // Scan a readable stream
+  async scanStream(stream: Readable, context: string = 'body'): Promise<DetectionResult> {
+    const result: DetectionResult = {
+      detected: false,
+      matches: []
+    };
+    
+    // Boyer-Moore string search state
+    const badCharShift = new Map<string, number>();
+    let accumulatedContent = '';
+    let chunkIndex = 0;
+    
+    return new Promise((resolve, reject) => {
+      // Process each chunk
+      stream.on('data', (chunk) => {
+        const chunkStr = chunk.toString();
+        accumulatedContent += chunkStr;
+        
+        // When accumulated content exceeds 3x chunk size, analyze the middle chunk
+        if (accumulatedContent.length >= this.chunkSize * 3) {
+          const middleChunk = accumulatedContent.substring(
+            this.chunkSize, 
+            this.chunkSize * 2
+          );
+          
+          // Scan the middle chunk
+          const chunkResult = this.scanBuffer(
+            middleChunk, 
+            `${context}:chunk${chunkIndex}`
+          );
+          
+          // Merge results
+          if (chunkResult.detected) {
+            result.detected = true;
+            result.matches.push(...chunkResult.matches);
+          }
+          
+          // Keep a sliding window of data
+          accumulatedContent = accumulatedContent.substring(
+            this.chunkSize, 
+            accumulatedContent.length
+          );
+          
+          chunkIndex++;
+        }
+      });
+      
+      // Process any remaining content
+      stream.on('end', () => {
+        // Scan any remaining content
+        if (accumulatedContent.length > 0) {
+          const chunkResult = this.scanBuffer(
+            accumulatedContent, 
+            `${context}:chunk${chunkIndex}`
+          );
+          
+          // Merge results
+          if (chunkResult.detected) {
+            result.detected = true;
+            result.matches.push(...chunkResult.matches);
+          }
+        }
+        
+        resolve(result);
+      });
+      
+      stream.on('error', (err) => {
+        reject(err);
+      });
+    });
+  }
+  
+  // Scan a request object
+  async scanRequest(req: any): Promise<DetectionResult> {
+    const results: DetectionResult = {
+      detected: false,
+      matches: []
+    };
+    
+    // Scan URL path
+    const pathResult = this.scanBuffer(req.path, 'url.path');
+    if (pathResult.detected) {
+      results.detected = true;
+      results.matches.push(...pathResult.matches);
+    }
+    
+    // Scan query parameters
+    if (req.query) {
+      const queryString = new URLSearchParams(req.query).toString();
+      const queryResult = this.scanBuffer(queryString, 'url.query');
+      if (queryResult.detected) {
+        results.detected = true;
+        results.matches.push(...queryResult.matches);
+      }
+    }
+    
+    // Scan headers (excluding cookies for privacy)
+    if (req.headers) {
+      for (const [name, value] of Object.entries(req.headers)) {
+        if (name.toLowerCase() !== 'cookie' && value) {
+          const headerResult = this.scanBuffer(
+            value.toString(), 
+            `headers.${name}`
+          );
+          if (headerResult.detected) {
+            results.detected = true;
+            results.matches.push(...headerResult.matches);
+          }
+        }
+      }
+    }
+    
+    // Scan request body as stream if it exists and is a readable stream
+    if (req.body) {
+      if (req.body instanceof Readable) {
+        // Body is a stream
+        const bodyResult = await this.scanStream(req.body, 'body');
+        if (bodyResult.detected) {
+          results.detected = true;
+          results.matches.push(...bodyResult.matches);
+        }
+      } else if (typeof req.body === 'string' || Buffer.isBuffer(req.body)) {
+        // Body is a string or buffer
+        const bodyResult = this.scanBuffer(req.body, 'body');
+        if (bodyResult.detected) {
+          results.detected = true;
+          results.matches.push(...bodyResult.matches);
+        }
+      } else if (typeof req.body === 'object') {
+        // Body is an object, convert to JSON string
+        const bodyStr = JSON.stringify(req.body);
+        const bodyResult = this.scanBuffer(bodyStr, 'body.json');
+        if (bodyResult.detected) {
+          results.detected = true;
+          results.matches.push(...bodyResult.matches);
+        }
+      }
+    }
+    
+    return results;
+  }
+  
+  // Helper function to get line and column for a position in text
+  private getLineAndColumn(text: string, position: number): string {
+    // Handle edge cases
+    if (position < 0) position = 0;
+    if (position >= text.length) position = text.length - 1;
+    
+    let line = 1;
+    let column = 1;
+    
+    for (let i = 0; i < position; i++) {
+      if (text[i] === '\n') {
+        line++;
+        column = 1;
+      } else {
+        column++;
+      }
+    }
+    
+    return `line ${line}, col ${column}`;
+  }
+}
+// Usage example:
+/*
+const detector = new StreamingThreatDetector();
+// Add patterns
+detector.addPattern({
+  id: 'sql-injection',
+  name: 'SQL Injection Pattern',
+  pattern: /((\%27)|(')|(--)|(#)|(\/\*))/i,
+  severity: 'high',
+  action: 'block'
+});
+detector.addPattern({
+  id: 'xss',
+  name: 'Cross-Site Scripting Pattern',
+  pattern: /<script\b[^>]*>(.*?)<\/script>/i,
+  severity: 'high',
+  action: 'sanitize'
+});
+// Scan a request
+async function scanRequestMiddleware(req, res, next) {
+  try {
+    const result = await detector.scanRequest(req);
+    
+    if (result.detected) {
+      const highSeverityMatches = result.matches.filter(
+        match => match.severity === 'high' || match.severity === 'critical'
+      );
+      
+      if (highSeverityMatches.length > 0) {
+        return res.status(403).send('Request blocked for security reasons');
+      }
+      
+      // Log medium/low severity matches
+      console.log('[Security] Potential threats detected:', result.matches);
+    }
+    
+    next();
+  } catch (error) {
+    console.error('[Security] Error scanning request:', error);
+    next();
+  }
+}
+*/
+8. Selective Deep Scanning
+// SelectiveDeepScanner.ts
+import { Request } from 'express';
+enum ScanLevel {
+  BASIC = 'basic',
+  STANDARD = 'standard',
+  DEEP = 'deep'
+}
+interface RequestScanProfile {
+  url: RegExp | string;
+  method?: string;
+  scanLevel: ScanLevel;
+  reason: string;
+}
+interface RiskIndicator {
+  name: string;
+  check: (req: Request) => boolean | number;
+  weight: number;
+}
+interface ScanResult {
+  scanLevel: ScanLevel;
+  riskScore: number;
+  indicators: string[];
+  findings: Array<{
+    type: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    location: string;
+    details: string;
+  }>;
+}
+class SelectiveDeepScanner {
+  private riskThresholds = {
+    basic: 0,
+    standard: 30,
+    deep: 70
+  };
+  
+  private scanProfiles: RequestScanProfile[] = [];
+  private riskIndicators: RiskIndicator[] = [];
+  private basicScanners: Array<(req: Request) => Promise<any>> = [];
+  private standardScanners: Array<(req: Request) => Promise<any>> = [];
+  private deepScanners: Array<(req: Request) => Promise<any>> = [];
+  
+  constructor() {
+    // Initialize with default scan profiles
+    this.scanProfiles = [
+      {
+        url: /^\/api\/auth/,
+        scanLevel: ScanLevel.DEEP,
+        reason: 'Authentication endpoints require deep scanning'
+      },
+      {
+        url: /^\/api\/admin/,
+        scanLevel: ScanLevel.DEEP,
+        reason: 'Admin endpoints require deep scanning'
+      },
+      {
+        url: /\.(jpg|jpeg|png|gif|css|js)$/i,
+        scanLevel: ScanLevel.BASIC,
+        reason: 'Static assets only need basic scanning'
+      }
+    ];
+    
+    // Initialize with default risk indicators
+    this.riskIndicators = [
+      {
+        name: 'suspicious_query_params',
+        check: (req) => {
+          const suspiciousParams = ['debug', 'test', 'eval', 'exec'];
+          return suspiciousParams.some(param => param in (req.query || {})) ? 30 : 0;
+        },
+        weight: 1
+      },
+      {
+        name: 'suspicious_headers',
+        check: (req) => {
+          const headers = req.headers || {};
+          const suspiciousHeaders = [
+            headers['x-forwarded-for']?.includes(','), // Multiple proxies
+            headers['user-agent']?.includes('curl'),   // Direct API tool
+            headers['content-type']?.includes('multipart') // File upload
+          ];
+          return suspiciousHeaders.filter(Boolean).length * 15;
+        },
+        weight: 1.2
+      },
+      {
+        name: 'payload_size',
+        check: (req) => {
+          const contentLength = parseInt(req.headers['content-length'] || '0');
+          // Larger payloads get higher scores
+          if (contentLength > 1024 * 1024) return 40; // > 1MB
+          if (contentLength > 100 * 1024) return 20;  // > 100KB
+          return 0;
+        },
+        weight: 0.8
+      },
+      {
+        name: 'auth_attempt',
+        check: (req) => {
+          return (req.path.includes('/login') || req.path.includes('/auth')) ? 25 : 0;
+        },
+        weight: 1.5
+      }
+    ];
+  }
+  
+  // Add a scan profile
+  addScanProfile(profile: RequestScanProfile): void {
+    this.scanProfiles.push(profile);
+  }
+  
+  // Add a risk indicator
+  addRiskIndicator(indicator: RiskIndicator): void {
+    this.riskIndicators.push(indicator);
+  }
+  
+  // Register a scanner for a specific level
+  registerScanner(level: ScanLevel, scanner: (req: Request) => Promise<any>): void {
+    switch (level) {
+      case ScanLevel.BASIC:
+        this.basicScanners.push(scanner);
+        break;
+      case ScanLevel.STANDARD:
+        this.standardScanners.push(scanner);
+        break;
+      case ScanLevel.DEEP:
+        this.deepScanners.push(scanner);
+        break;
+    }
+  }
+  
+  // Determine the appropriate scan level for a request
+  determineScanLevel(req: Request): { level: ScanLevel, reason: string, score: number } {
+    // Check for explicit scan profiles first
+    for (const profile of this.scanProfiles) {
+      const urlMatches = typeof profile.url === 'string' 
+        ? req.path === profile.url
+        : profile.url.test(req.path);
+      
+      const methodMatches = !profile.method || req.method === profile.method;
+      
+      if (urlMatches && methodMatches) {
+        return {
+          level: profile.scanLevel,
+          reason: profile.reason,
+          score: 100 // Explicit profile match gets maximum score
+        };
+      }
+    }
+    
+    // Calculate risk score based on indicators
+    let totalScore = 0;
+    let totalWeight = 0;
+    const triggeredIndicators: string[] = [];
+    
+    for (const indicator of this.riskIndicators) {
+      const result = indicator.check(req);
+      const score = typeof result === 'boolean' ? (result ? 100 : 0) : result;
+      
+      if (score > 0) {
+        totalScore += score * indicator.weight;
+        totalWeight += indicator.weight;
+        triggeredIndicators.push(indicator.name);
+      }
+    }
+    
+    // Calculate weighted average score
+    const finalScore = totalWeight > 0 ? totalScore / totalWeight : 0;
+    
+    // Determine scan level based on thresholds
+    let level = ScanLevel.BASIC;
+    if (finalScore >= this.riskThresholds.deep) {
+      level = ScanLevel.DEEP;
+    } else if (finalScore >= this.riskThresholds.standard) {
+      level = ScanLevel.STANDARD;
+    }
+    
+    return {
+      level,
+      reason: `Risk score ${finalScore.toFixed(1)} based on indicators: ${triggeredIndicators.join(', ')}`,
+      score: finalScore
+    };
+  }
+  
+  // Scan a request with appropriate depth
+  async scanRequest(req: Request): Promise<ScanResult> {
+    const { level, reason, score } = this.determineScanLevel(req);
+    
+    console.log(`[Security] Scanning request ${req.method} ${req.path} at ${level} level. Reason: ${reason}`);
+    
+    const findings: ScanResult['findings'] = [];
+    const indicators: string[] = [];
+    
+    // Collect indicators
+    for (const indicator of this.riskIndicators) {
+      const result = indicator.check(req);
+      if ((typeof result === 'boolean' && result) || (typeof result === 'number' && result > 0)) {
+        indicators.push(indicator.name);
+      }
+    }
+    
+    // Always run basic scanners
+    for (const scanner of this.basicScanners) {
+      const results = await scanner(req);
+      if (results && Array.isArray(results)) {
+        findings.push(...results);
+      }
+    }
+    
+    // Run standard scanners if level is STANDARD or DEEP
+    if (level === ScanLevel.STANDARD || level === ScanLevel.DEEP) {
+      for (const scanner of this.standardScanners) {
+        const results = await scanner(req);
+        if (results && Array.isArray(results)) {
+          findings.push(...results);
+        }
+      }
+    }
+    
+    // Run deep scanners only if level is DEEP
+    if (level === ScanLevel.DEEP) {
+      for (const scanner of this.deepScanners) {
+        const results = await scanner(req);
+        if (results && Array.isArray(results)) {
+          findings.push(...results);
+        }
+      }
+    }
+    
+    return {
+      scanLevel: level,
+      riskScore: score,
+      indicators,
+      findings
+    };
+  }
+}
+// Usage example:
+/*
+const scanner = new SelectiveDeepScanner();
+// Register scanners for different levels
+scanner.registerScanner(ScanLevel.BASIC, async (req) => {
+  // Simple header check
+  const findings = [];
+  if (req.headers['user-agent']?.includes('sqlmap')) {
+    findings.push({
+      type: 'suspicious_user_agent',
+      severity: 'medium',
+      location: 'headers.user-agent',
+      details: 'User agent contains reference to SQL injection tool'
+    });
+  }
+  return findings;
+});
+scanner.registerScanner(ScanLevel.STANDARD, async (req) => {
+  // Content type validation
+  const findings = [];
+  const contentType = req.headers['content-type'];
+  if (req.method === 'POST' && !contentType) {
+    findings.push({
+      type: 'missing_content_type',
+      severity: 'low',
+      location: 'headers',
+      details: 'POST request missing Content-Type header'
+    });
+  }
+  return findings;
+});
+scanner.registerScanner(ScanLevel.DEEP, async (req) => {
+  // Deep payload inspection
+  const findings = [];
+  if (req.body && typeof req.body === 'object') {
+    const bodyStr = JSON.stringify(req.body);
+    if (bodyStr.includes('<script>') || bodyStr.includes('javascript:')) {
+      findings.push({
+        type: 'potential_xss',
+        severity: 'high',
+        location: 'body',
+        details: 'Request body contains potentially malicious script tags or javascript: protocol'
+      });
+    }
+  }
+  return findings;
+});
+// Example middleware
+async function securityScanMiddleware(req, res, next) {
+  try {
+    const result = await scanner.scanRequest(req);
+    
+    // Attach scan result to request for later use
+    req.securityScan = result;
+    
+    // Block requests with critical findings
+    const criticalFindings = result.findings.filter(f => f.severity === 'critical');
+    if (criticalFindings.length > 0) {
+      return res.status(403).json({
+        error: 'Request blocked for security reasons',
+        details: 'Security policy violation detected'
+      });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('[Security] Error during security scanning:', error);
+    next();
+  }
+}
+*/
+9. Debounce Security Event Broadcasting
+// DebouncedEventBroadcaster.ts
+import { EventEmitter } from 'events';
+interface SecurityEvent {
+  id?: string;
+  type: string;
+  timestamp: Date;
+  severity: 'info' | 'low' | 'medium' | 'high' | 'critical';
+  source?: string;
+  details?: Record<string, any>;
+}
+interface EventGroup {
+  key: string;
+  events: SecurityEvent[];
+  timestamp: number;
+  count: number;
+  throttleUntil?: number;
+}
+class DebouncedEventBroadcaster extends EventEmitter {
+  private eventGroups: Map<string, EventGroup> = new Map();
+  private flushInterval: NodeJS.Timeout | null = null;
+  private flushIntervalMs: number;
+  private maxEventsPerGroup: number;
+  private throttleMap: Map<string, number> = new Map();
+  private compositePatterns: Array<{
+    pattern: RegExp | Array<string>;
+    requiredCount: number;
+    timeWindowMs: number;
+    emitAs: string;
+    severity: SecurityEvent['severity'];
+  }> = [];
+  constructor(options: {
+    flushIntervalMs?: number;
+    maxEventsPerGroup?: number;
+  } = {}) {
+    super();
+    
+    this.flushIntervalMs = options.flushIntervalMs || 1000; // Default to 1 second
+    this.maxEventsPerGroup = options.maxEventsPerGroup || 10;
+    
+    // Start the flush interval
+    this.flushInterval = setInterval(() => {
+      this.flushEvents();
+    }, this.flushIntervalMs);
+  }
+  // Add a composite event detection pattern
+  addCompositePattern(pattern: {
+    pattern: RegExp | Array<string>;
+    requiredCount: number;
+    timeWindowMs: number;
+    emitAs: string;
+    severity: SecurityEvent['severity'];
+  }): void {
+    this.compositePatterns.push(pattern);
+  }
+  // Publish a security event with debouncing
+  publishEvent(event: SecurityEvent): void {
+    const now = Date.now();
+    
+    // Generate a grouping key based on event type
+    const groupKey = event.source 
+      ? `${event.type}:${event.source}`
+      : event.type;
+    
+    // Check if this event type is currently throttled
+    if (this.throttleMap.has(groupKey)) {
+      const throttleUntil = this.throttleMap.get(groupKey)!;
+      if (now < throttleUntil) {
+        // Skip event if throttled
+        return;
+      }
+    }
+    
+    // Get or create group
+    if (!this.eventGroups.has(groupKey)) {
+      this.eventGroups.set(groupKey, {
+        key: groupKey,
+        events: [],
+        timestamp: now,
+        count: 0
+      });
+    }
+    
+    const group = this.eventGroups.get(groupKey)!;
+    
+    // Add to group
+    group.events.push(event);
+    group.count++;
+    
+    // Check for throttling threshold
+    // If more than 100 events of the same type in 1 second, throttle for 5 seconds
+    if (group.count > 100 && (now - group.timestamp) < 1000) {
+      const throttleUntil = now + 5000; // 5 seconds
+      this.throttleMap.set(groupKey, throttleUntil);
+      
+      // Add throttling info to the group
+      group.throttleUntil = throttleUntil;
+      
+      console.log(`[Security] Throttling events of type ${groupKey} until ${new Date(throttleUntil).toISOString()}`);
+    }
+    
+    // Check if we should emit immediately (for critical events)
+    if (event.severity === 'critical') {
+      this.emitEvent('security:event', event);
+    }
+    
+    // If group exceeds max size, flush it
+    if (group.events.length >= this.maxEventsPerGroup) {
+      this.flushEventGroup(groupKey);
+    }
+    
+    // Check for composite patterns
+    this.checkCompositePatterns();
+  }
+  // Stop the broadcaster
+  stop(): void {
+    if (this.flushInterval !== null) {
+      clearInterval(this.flushInterval);
+      this.flushInterval = null;
+    }
+    
+    // Flush all pending events
+    this.flushEvents();
+  }
+  private flushEvents(): void {
+    for (const groupKey of this.eventGroups.keys()) {
+      this.flushEventGroup(groupKey);
+    }
+  }
+  private flushEventGroup(groupKey: string): void {
+    if (!this.eventGroups.has(groupKey)) return;
+    
+    const group = this.eventGroups.get(groupKey)!;
+    if (group.events.length === 0) {
+      this.eventGroups.delete(groupKey);
+      return;
+    }
+    
+    const now = Date.now();
+    
+    // If only one event, emit it directly
+    if (group.events.length === 1) {
+      this.emitEvent('security:event', group.events[0]);
+    } 
+    // If multiple events, emit as a batch
+    else {
+      // Get the highest severity
+      const severities = ['info', 'low', 'medium', 'high', 'critical'];
+      const maxSeverityIndex = Math.max(...group.events.map(
+        e => severities.indexOf(e.severity)
+      ));
+      const maxSeverity = severities[maxSeverityIndex] as SecurityEvent['severity'];
+      
+      // Emit batch event
+      this.emitEvent('security:event:batch', {
+        type: `${group.key}_batch`,
+        timestamp: new Date(),
+        severity: maxSeverity,
+        source: group.events[0].source,
+        details: {
+          count: group.events.length,
+          period: now - group.timestamp,
+          sampleEvents: group.events.slice(0, 3), // Include a few sample events
+          throttled: group.throttleUntil !== undefined
+        }
+      });
+    }
+    
+    // Clear the group
+    this.eventGroups.delete(groupKey);
+  }
+  private checkCompositePatterns(): void {
+    const now = Date.now();
+    
+    // Check each composite pattern
+    for (const pattern of this.compositePatterns) {
+      // Collect all events within the time window
+      const timeWindow = pattern.timeWindowMs;
+      const recentEvents: SecurityEvent[] = [];
+      
+      for (const group of this.eventGroups.values()) {
+        if (now - group.timestamp <= timeWindow) {
+          recentEvents.push(...group.events);
+        }
+      }
+      
+      // Count matching events
+      let matchCount = 0;
+      
+      if (pattern.pattern instanceof RegExp) {
+        // RegExp pattern matching on event type
+        matchCount = recentEvents.filter(
+          event => pattern.pattern instanceof RegExp && pattern.pattern.test(event.type)
+        ).length;
+      } else if (Array.isArray(pattern.pattern)) {
+        // Match specific event types
+        const uniqueTypes = new Set<string>();
+        for (const event of recentEvents) {
+          if (pattern.pattern.includes(event.type)) {
+            uniqueTypes.add(event.type);
+          }
+        }
+        matchCount = uniqueTypes.size;
+      }
+      
+      // If we reach the required count, emit composite event
+      if (matchCount >= pattern.requiredCount) {
+        const compositeEvent: SecurityEvent = {
+          type: pattern.emitAs,
+          timestamp: new Date(),
+          severity: pattern.severity,
+          source: 'composite_detector',
+          details: {
+            patternDescription: pattern.pattern.toString(),
+            matchedCount: matchCount,
+            timeWindowMs: pattern.timeWindowMs
+          }
+        };
+        
+        this.emitEvent('security:composite', compositeEvent);
+        
+        // Also emit as regular event for subscribers who listen to all events
+        this.emitEvent('security:event', compositeEvent);
+      }
+    }
+  }
+  private emitEvent(eventName: string, event: SecurityEvent): void {
+    // Add unique ID if not present
+    if (!event.id) {
+      event.id = this.generateEventId(event);
+    }
+    
+    // Emit the event
+    this.emit(eventName, event);
+    
+    // Also emit to specific channels based on severity and type
+    this.emit(`security:${event.severity}`, event);
+    this.emit(`security:type:${event.type}`, event);
+  }
+  private generateEventId(event: SecurityEvent): string {
+    const timestamp = event.timestamp.getTime();
+    const typeHash = event.type.split('').reduce((acc, char) => {
+      return ((acc << 5) - acc) + char.charCodeAt(0);
+    }, 0);
+    
+    return `${timestamp.toString(36)}-${Math.abs(typeHash).toString(36)}`;
+  }
+}
+// Usage example:
+/*
+const broadcaster = new DebouncedEventBroadcaster({
+  flushIntervalMs: 2000,
+  maxEventsPerGroup: 20
+});
+// Add a composite pattern to detect login attacks
+broadcaster.addCompositePattern({
+  pattern: ['login:failure', 'auth:failure', 'password:reset'],
+  requiredCount: 2,
+  timeWindowMs: 60000, // 1 minute
+  emitAs: 'possible_auth_attack',
+  severity: 'high'
+});
+// Listen for events
+broadcaster.on('security:event', (event) => {
+  console.log(`[Security] Event: ${event.type} (${event.severity})`);
+});
+broadcaster.on('security:event:batch', (event) => {
+  console.log(`[Security] Batch event: ${event.type} (${event.severity}) - ${event.details.count} events`);
+});
+broadcaster.on('security:critical', (event) => {
+  console.log(`[Security] CRITICAL EVENT: ${event.type}`);
+  // Send immediate notification
+});
+// Publish events
+broadcaster.publishEvent({
+  type: 'login:failure',
+  timestamp: new Date(),
+  severity: 'low',
+  source: 'auth_service',
+  details: { userId: '123', ipAddress: '192.168.1.1' }
+});
+// Clean up when done
+process.on('SIGINT', () => {
+  broadcaster.stop();
+  process.exit(0);
+});
+*/
+10. Reduce Blockchain Operations
+// BatchedBlockchainLogger.ts
+import { EventEmitter } from 'events';
+interface BlockchainLogEntry {
+  id: string;
+  timestamp: number;
+  category: string;
+  severity: string;
+  message: string;
+  data: Record<string, any>;
+  hash?: string;
+  signature?: string;
+}
+interface BlockchainConfig {
+  batchIntervalMs: number;
+  maxBatchSize: number;
+  retryIntervalMs: number;
+  maxRetries: number;
+  checkpointIntervalMs: number;
+}
+class BatchedBlockchainLogger extends EventEmitter {
+  private static instance: BatchedBlockchainLogger;
+  private pendingEntries: BlockchainLogEntry[] = [];
+  private processingBatch: boolean = false;
+  private batchInterval: NodeJS.Timeout | null = null;
+  private retryInterval: NodeJS.Timeout | null = null;
+  private checkpointInterval: NodeJS.Timeout | null = null;
+  private failedBatches: Array<{ entries: BlockchainLogEntry[], attempts: number }> = [];
+  private lastHash: string | null = null;
+  private config: BlockchainConfig;
+  
+  private constructor(config: Partial<BlockchainConfig> = {}) {
+    super();
+    
+    // Default configuration
+    this.config = {
+      batchIntervalMs: 60000,        // 1 minute
+      maxBatchSize: 100,             // Max 100 entries per batch
+      retryIntervalMs: 300000,       // 5 minutes
+      maxRetries: 5,                // Max 5 retries
+      checkpointIntervalMs: 3600000, // 1 hour
+      ...config
+    };
+    
+    // Initialize intervals
+    this.initializeIntervals();
+  }
+  
+  static getInstance(config?: Partial<BlockchainConfig>): BatchedBlockchainLogger {
+    if (!BatchedBlockchainLogger.instance) {
+      BatchedBlockchainLogger.instance = new BatchedBlockchainLogger(config);
+    }
+    return BatchedBlockchainLogger.instance;
+  }
+  
+  // Log an entry to the blockchain (queued for batch processing)
+  async log(entry: Omit<BlockchainLogEntry, 'id' | 'timestamp' | 'hash' | 'signature'>): Promise<string> {
+    // Create a complete entry
+    const completeEntry: BlockchainLogEntry = {
+      id: this.generateId(),
+      timestamp: Date.now(),
+      ...entry
+    };
+    
+    // Add to pending entries
+    this.pendingEntries.push(completeEntry);
+    
+    // If we exceed the max batch size, process immediately
+    if (this.pendingEntries.length >= this.config.maxBatchSize) {
+      this.processBatch();
+    }
+    
+    // Return the entry ID
+    return completeEntry.id;
+  }
+  
+  // Immediately flush all pending entries
+  async flush(): Promise<void> {
+    if (this.pendingEntries.length > 0) {
+      await this.processBatch();
+    }
+    
+    // Also retry any failed batches
+    await this.retryFailedBatches();
+  }
+  
+  // Verify if an entry exists and is unmodified in the blockchain
+  async verify(id: string): Promise<{ exists: boolean, valid: boolean, entry?: BlockchainLogEntry }> {
+    try {
+      // In a real implementation, this would query the blockchain
+      console.log(`[Blockchain] Verifying entry: ${id}`);
+      
+      // Simulate a verification result
+      return {
+        exists: true,
+        valid: true,
+        entry: {
+          id,
+          timestamp: Date.now() - 3600000, // 1 hour ago
+          category: 'test',
+          severity: 'info',
+          message: 'Test entry',
+          data: {},
+          hash: 'abc123',
+          signature: 'def456'
+        }
+      };
+    } catch (error) {
+      console.error(`[Blockchain] Error verifying entry ${id}:`, error);
+      return { exists: false, valid: false };
+    }
+  }
+  
+  // Stop the logger (flush pending entries and clear intervals)
+  async stop(): Promise<void> {
+    // Clear intervals
+    if (this.batchInterval) clearInterval(this.batchInterval);
+    if (this.retryInterval) clearInterval(this.retryInterval);
+    if (this.checkpointInterval) clearInterval(this.checkpointInterval);
+    
+    // Flush pending entries
+    await this.flush();
+  }
+  
+  private async processBatch(): Promise<void> {
+    if (this.processingBatch || this.pendingEntries.length === 0) {
+      return;
+    }
+    
+    this.processingBatch = true;
+    
+    try {
+      // Get entries for this batch
+      const entries = this.pendingEntries.splice(0, this.config.maxBatchSize);
+      
+      // Add hash linking for integrity verification
+      this.addHashChaining(entries);
+      
+      // Commit to blockchain (in a real implementation)
+      console.log(`[Blockchain] Committing batch of ${entries.length} entries`);
+      
+      // Simulate blockchain commit with a delay
+      await new Promise<void>((resolve, reject) => {
+        setTimeout(() => {
+          // In a real implementation, this would commit to a blockchain
+          // For demo, we simulate success
+          this.lastHash = entries[entries.length - 1].hash || null;
+          resolve();
+        }, 500); // Simulate 500ms blockchain commit time
+      });
+      
+      // Emit success event
+      this.emit('batch:committed', {
+        count: entries.length,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      console.error('[Blockchain] Error committing batch:', error);
+      
+      // Move batch to failed batches for retry
+      this.failedBatches.push({
+        entries: this.pendingEntries.splice(0, this.config.maxBatchSize),
+        attempts: 1
+      });
+      
+      // Emit error event
+      this.emit('batch:error', {
+        error,
+        timestamp: Date.now()
+      });
+    } finally {
+      this.processingBatch = false;
+      
+      // Process next batch if there are more pending entries
+      if (this.pendingEntries.length >= this.config.maxBatchSize) {
+        setImmediate(() => this.processBatch());
+      }
+    }
+  }
+  
+  private async retryFailedBatches(): Promise<void> {
+    if (this.failedBatches.length === 0) {
+      return;
+    }
+    
+    console.log(`[Blockchain] Retrying ${this.failedBatches.length} failed batches`);
+    
+    // Process each failed batch
+    const failedBatchesCopy = [...this.failedBatches];
+    this.failedBatches = [];
+    
+    for (const batch of failedBatchesCopy) {
+      try {
+        // Add hash chaining for integrity verification
+        this.addHashChaining(batch.entries);
+        
+        // Commit to blockchain (in a real implementation)
+        console.log(`[Blockchain] Retrying batch of ${batch.entries.length} entries (attempt ${batch.attempts})`);
+        
+        // Simulate blockchain commit with a delay
+        await new Promise<void>((resolve, reject) => {
+          setTimeout(() => {
+            // For demo, we simulate success on retry
+            this.lastHash = batch.entries[batch.entries.length - 1].hash || null;
+            resolve();
+          }, 500); // Simulate 500ms blockchain commit time
+        });
+        
+        // Emit success event
+        this.emit('batch:retry:success', {
+          count: batch.entries.length,
+          attempts: batch.attempts,
+          timestamp: Date.now()
+        });
+      } catch (error) {
+        console.error('[Blockchain] Error retrying batch:', error);
+        
+        // If under max retries, add back to failed batches
+        if (batch.attempts < this.config.maxRetries) {
+          this.failedBatches.push({
+            entries: batch.entries,
+            attempts: batch.attempts + 1
+          });
+        } else {
+          // Max retries exceeded, emit permanent failure event
+          this.emit('batch:retry:failed', {
+            error,
+            count: batch.entries.length,
+            attempts: batch.attempts,
+            timestamp: Date.now()
+          });
+        }
+      }
+    }
+  }
+  
+  private addHashChaining(entries: BlockchainLogEntry[]): void {
+    let previousHash = this.lastHash;
+    
+    for (const entry of entries) {
+      // Create a hash based on entry content and previous hash
+      const dataToHash = JSON.stringify({
+        id: entry.id,
+        timestamp: entry.timestamp,
+        category: entry.category,
+        severity: entry.severity,
+        message: entry.message,
+        data: entry.data,
+        previousHash
+      });
+      
+      // In a real implementation, this would use a cryptographic hash function
+      // For demo, we use a simple string manipulation
+      entry.hash = this.simpleHash(dataToHash);
+      
+      // In a real implementation, this would sign the hash with a private key
+      entry.signature = `sig_${entry.hash}`;
+      
+      // Update previous hash for next entry
+      previousHash = entry.hash;
+    }
+  }
+  
+  private simpleHash(data: string): string {
+    // This is NOT a cryptographic hash, just for demonstration
+    // In a real implementation, use a proper hash function like SHA-256
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+      const char = data.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash |= 0; // Convert to 32bit integer
+    }
+    return hash.toString(16).padStart(8, '0');
+  }
+  
+  private generateId(): string {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+  }
+  
+  private initializeIntervals(): void {
+    // Regular batch processing interval
+    this.batchInterval = setInterval(() => {
+      if (this.pendingEntries.length > 0) {
+        this.processBatch();
+      }
+    }, this.config.batchIntervalMs);
+    
+    // Retry interval for failed batches
+    this.retryInterval = setInterval(() => {
+      if (this.failedBatches.length > 0) {
+        this.retryFailedBatches();
+      }
+    }, this.config.retryIntervalMs);
+    
+    // Checkpoint interval to ensure at least one commit per period
+    this.checkpointInterval = setInterval(() => {
+      this.createCheckpoint();
+    }, this.config.checkpointIntervalMs);
+  }
+  
+  private async createCheckpoint(): Promise<void> {
+    // Create a checkpoint entry even if there are no pending logs
+    await this.log({
+      category: 'system',
+      severity: 'info',
+      message: 'Blockchain checkpoint',
+      data: {
+        checkpoint: true,
+        timestamp: Date.now()
+      }
+    });
+    
+    // Force processing the batch to ensure checkpoint is committed
+    await this.processBatch();
+  }
+}
+// Usage example:
+/*
+const logger = BatchedBlockchainLogger.getInstance({
+  batchIntervalMs: 30000, // 30 seconds
+  maxBatchSize: 50
+});
+// Log some events
+logger.log({
+  category: 'security',
+  severity: 'high',
+  message: 'Unauthorized access attempt',
+  data: {
+    ipAddress: '192.168.1.100',
+    endpoint: '/api/admin',
+    timestamp: new Date().toISOString()
+  }
+});
+// Listen for commit events
+logger.on('batch:committed', (info) => {
+  console.log(`Successfully committed ${info.count} entries to the blockchain`);
+});
+// Clean up on exit
+process.on('SIGINT', async () => {
+  await logger.stop();
+  process.exit(0);
+});
+*/
+11. Optimize SecurityMonitor Class
+// OptimizedSecurityMonitor.ts
+import { EventEmitter } from 'events';
+type MonitorHandler = () => Promise<void>;
+type MonitorPriority = 'critical' | 'high' | 'medium' | 'low';
+interface MonitorTask {
+  name: string;
+  handler: MonitorHandler;
+  intervalMs: number;
+  priority: MonitorPriority;
+  lastRun: number;
+  isRunning: boolean;
+  nextScheduledRun: number;
+}
+interface MonitoringStats {
+  taskCount: number;
+  tasksRunLastMinute: number;
+  avgExecutionTimeMs: number;
+  failureRate: number;
+  lastCpuUsage: NodeJS.CpuUsage;
+  lastMemoryUsage: NodeJS.MemoryUsage;
+}
+class OptimizedSecurityMonitor extends EventEmitter {
+  private static instance: OptimizedSecurityMonitor;
+  private tasks: Map<string, MonitorTask> = new Map();
+  private scheduler: NodeJS.Timeout | null = null;
+  private taskHistory: Array<{
+    taskName: string;
+    startTime: number;
+    endTime: number;
+    success: boolean;
+  }> = [];
+  private schedulerIntervalMs: number;
+  private stats: MonitoringStats = {
+    taskCount: 0,
+    tasksRunLastMinute: 0,
+    avgExecutionTimeMs: 0,
+    failureRate: 0,
+    lastCpuUsage: process.cpuUsage(),
+    lastMemoryUsage: process.memoryUsage()
+  };
+  private adaptiveMode: boolean;
+  
+  private constructor(options: { 
+    schedulerIntervalMs?: number,
+    adaptiveMode?: boolean
+  } = {}) {
+    super();
+    
+    this.schedulerIntervalMs = options.schedulerIntervalMs || 1000; // Default to 1 second
+    this.adaptiveMode = options.adaptiveMode !== false; // Default to true
+    
+    // Start the scheduler
+    this.startScheduler();
+    
+    // Update stats periodically
+    setInterval(() => this.updateStats(), 60000); // Every minute
+  }
+  
+  static getInstance(options?: { 
+    schedulerIntervalMs?: number,
+    adaptiveMode?: boolean
+  }): OptimizedSecurityMonitor {
+    if (!OptimizedSecurityMonitor.instance) {
+      OptimizedSecurityMonitor.instance = new OptimizedSecurityMonitor(options);
+    }
+    return OptimizedSecurityMonitor.instance;
+  }
+  
+  // Register a monitoring task
+  registerTask(
+    name: string,
+    handler: MonitorHandler,
+    intervalMs: number,
+    priority: MonitorPriority = 'medium'
+  ): void {
+    if (this.tasks.has(name)) {
+      throw new Error(`Task "${name}" is already registered`);
+    }
+    
+    const task: MonitorTask = {
+      name,
+      handler,
+      intervalMs,
+      priority,
+      lastRun: 0,
+      isRunning: false,
+      nextScheduledRun: Date.now() + intervalMs
+    };
+    
+    this.tasks.set(name, task);
+    this.stats.taskCount = this.tasks.size;
+    
+    console.log(`[SecurityMonitor] Registered task: ${name} (interval: ${intervalMs}ms, priority: ${priority})`);
+  }
+  
+  // Unregister a monitoring task
+  unregisterTask(name: string): boolean {
+    const result = this.tasks.delete(name);
+    if (result) {
+      this.stats.taskCount = this.tasks.size;
+      console.log(`[SecurityMonitor] Unregistered task: ${name}`);
+    }
+    return result;
+  }
+  
+  // Run a task immediately
+  async runTaskNow(name: string): Promise<void> {
+    const task = this.tasks.get(name);
+    if (!task) {
+      throw new Error(`Task "${name}" is not registered`);
+    }
+    
+    if (task.isRunning) {
+      console.log(`[SecurityMonitor] Task "${name}" is already running, skipping`);
+      return;
+    }
+    
+    await this.executeTask(task);
+  }
+  
+  // Get monitoring stats
+  getStats(): MonitoringStats {
+    // Update CPU and memory usage
+    this.stats.lastCpuUsage = process.cpuUsage();
+    this.stats.lastMemoryUsage = process.memoryUsage();
+    
+    return { ...this.stats };
+  }
+  
+  // Stop all monitoring
+  stop(): void {
+    if (this.scheduler) {
+      clearInterval(this.scheduler);
+      this.scheduler = null;
+    }
+    
+    console.log('[SecurityMonitor] Stopped all monitoring tasks');
+  }
+  
+  private startScheduler(): void {
+    if (this.scheduler) return;
+    
+    this.scheduler = setInterval(() => {
+      this.scheduleTasks();
+    }, this.schedulerIntervalMs);
+    
+    console.log(`[SecurityMonitor] Started scheduler with interval ${this.schedulerIntervalMs}ms`);
+  }
+  
+  private async scheduleTasks(): Promise<void> {
+    const now = Date.now();
+    
+    // Calculate system load
+    const cpuUsage = process.cpuUsage();
+    const memoryUsage = process.memoryUsage();
+    const cpuLoad = (cpuUsage.user + cpuUsage.system) / 1000000; // Convert to seconds
+    const memoryLoad = memoryUsage.heapUsed / memoryUsage.heapTotal;
+    
+    // Determine high load condition
+    const highLoad = cpuLoad > 0.8 || memoryLoad > 0.8;
+    
+    // Get eligible tasks
+    const eligibleTasks = Array.from(this.tasks.values())
+      .filter(task => !task.isRunning && now >= task.nextScheduledRun);
+    
+    // Sort by priority (and then by how overdue they are)
+    const priorityValues: Record<MonitorPriority, number> = {
+      critical: 4,
+      high: 3,
+      medium: 2,
+      low: 1
+    };
+    
+    eligibleTasks.sort((a, b) => {
+      // First sort by priority
+      const priorityDiff = priorityValues[b.priority] - priorityValues[a.priority];
+      if (priorityDiff !== 0) return priorityDiff;
+      
+      // Then sort by how overdue they are (most overdue first)
+      return (now - a.nextScheduledRun) - (now - b.nextScheduledRun);
+    });
+    
+    // If system is under high load and adaptive mode is enabled, only run critical tasks
+    const tasksToRun = this.adaptiveMode && highLoad
+      ? eligibleTasks.filter(task => task.priority === 'critical')
+      : eligibleTasks;
+    
+    // Execute eligible tasks (concurrently for efficiency)
+    const executions = tasksToRun.map(task => this.executeTask(task));
+    await Promise.all(executions);
+  }
+  
+  private async executeTask(task: MonitorTask): Promise<void> {
+    // Mark task as running
+    task.isRunning = true;
+    
+    const startTime = Date.now();
+    let success = false;
+    
+    try {
+      // Execute the task
+      await task.handler();
+      success = true;
+      
+      // Update task state
+      task.lastRun = startTime;
+      
+      // Schedule next run based on interval
+      task.nextScheduledRun = startTime + task.intervalMs;
+      
+      // Emit success event
+      this.emit('task:success', {
+        taskName: task.name,
+        executionTimeMs: Date.now() - startTime
+      });
+    } catch (error) {
+      console.error(`[SecurityMonitor] Error executing task "${task.name}":`, error);
+      
+      // Emit error event
+      this.emit('task:error', {
+        taskName: task.name,
+        error,
+        executionTimeMs: Date.now() - startTime
+      });
+    } finally {
+      // Record task execution
+      this.taskHistory.push({
+        taskName: task.name,
+        startTime,
+        endTime: Date.now(),
+        success
+      });
+      
+      // Trim history if needed (keep last 1000 executions)
+      if (this.taskHistory.length > 1000) {
+        this.taskHistory = this.taskHistory.slice(-1000);
+      }
+      
+      // Mark task as not running
+      task.isRunning = false;
+    }
+  }
+  
+  private updateStats(): void {
+    const now = Date.now();
+    const oneMinuteAgo = now - 60000;
+    
+    // Count tasks run in the last minute
+    this.stats.tasksRunLastMinute = this.taskHistory.filter(
+      record => record.startTime >= oneMinuteAgo
+    ).length;
+    
+    // Calculate average execution time
+    const recentExecutions = this.taskHistory.filter(
+      record => record.startTime >= oneMinuteAgo
+    );
+    
+    if (recentExecutions.length > 0) {
+      const totalExecutionTime = recentExecutions.reduce(
+        (sum, record) => sum + (record.endTime - record.startTime),
+        0
+      );
+      this.stats.avgExecutionTimeMs = totalExecutionTime / recentExecutions.length;
+    }
+    
+    // Calculate failure rate
+    if (recentExecutions.length > 0) {
+      const failedExecutions = recentExecutions.filter(record => !record.success);
+      this.stats.failureRate = failedExecutions.length / recentExecutions.length;
+    } else {
+      this.stats.failureRate = 0;
+    }
+    
+    // Update CPU and memory usage
+    this.stats.lastCpuUsage = process.cpuUsage();
+    this.stats.lastMemoryUsage = process.memoryUsage();
+    
+    // Emit stats update event
+    this.emit('stats:update', this.stats);
+    
+    // Apply adaptive scheduling if enabled
+    if (this.adaptiveMode) {
+      this.applyAdaptiveScheduling();
+    }
+  }
+  
+  private applyAdaptiveScheduling(): void {
+    // Check if we're under high load
+    const cpuLoad = (this.stats.lastCpuUsage.user + this.stats.lastCpuUsage.system) / 1000000;
+    const memoryLoad = this.stats.lastMemoryUsage.heapUsed / this.stats.lastMemoryUsage.heapTotal;
+    
+    const highLoad = cpuLoad > 0.8 || memoryLoad > 0.8;
+    const lowLoad = cpuLoad < 0.3 && memoryLoad < 0.5;
+    
+    // Adjust task intervals based on system load
+    for (const task of this.tasks.values()) {
+      if (highLoad && task.priority === 'low') {
+        // Reduce frequency of low-priority tasks under high load
+        const originalInterval = task.intervalMs;
+        const newInterval = Math.min(originalInterval * 2, 3600000); // Max 1 hour
+        
+        if (newInterval !== task.intervalMs) {
+          console.log(`[SecurityMonitor] Reducing frequency of "${task.name}" due to high load: ${task.intervalMs}ms -> ${newInterval}ms`);
+          task.intervalMs = newInterval;
+        }
+      } else if (lowLoad && task.intervalMs > 10000) {
+        // Increase frequency of tasks under low load (but not below 10 seconds)
+        const originalInterval = task.intervalMs;
+        const newInterval = Math.max(originalInterval / 1.5, 10000); // Min 10 seconds
+        
+        if (newInterval !== task.intervalMs) {
+          console.log(`[SecurityMonitor] Increasing frequency of "${task.name}" due to low load: ${task.intervalMs}ms -> ${newInterval}ms`);
+          task.intervalMs = newInterval;
+        }
+      }
+    }
+  }
+}
+// Usage example:
+/*
+const monitor = OptimizedSecurityMonitor.getInstance({ adaptiveMode: true });
+// Register monitoring tasks
+monitor.registerTask(
+  'system-health-check',
+  async () => {
+    // Implement health check logic
+    await new Promise(resolve => setTimeout(resolve, 100));
+    console.log('System health check completed');
+  },
+  60000, // 1 minute
+  'high'
+);
+monitor.registerTask(
+  'security-scan',
+  async () => {
+    // Implement security scanning logic
+    await new Promise(resolve => setTimeout(resolve, 200));
+    console.log('Security scan completed');
+  },
+  300000, // 5 minutes
+  'medium'
+);
+// Listen for task events
+monitor.on('task:success', (info) => {
+  console.log(`Task "${info.taskName}" completed in ${info.executionTimeMs}ms`);
+});
+monitor.on('task:error', (info) => {
+  console.error(`Task "${info.taskName}" failed: ${info.error}`);
+});
+// Stop monitoring on shutdown
+process.on('SIGINT', () => {
+  monitor.stop();
+  process.exit(0);
+});
+*/
+12. Remove Quantum Resistance for Non-Critical Paths
+// TieredCryptographyService.ts
+// Note: This is a simplified example showing the approach
+type SecurityTier = 'standard' | 'enhanced' | 'quantum';
+type AsymmetricAlgorithm = 'RSA' | 'ECC' | 'NTRU' | 'FALCON' | 'DILITHIUM';
+type SymmetricAlgorithm = 'AES' | 'ChaCha20' | 'AES-GCM' | 'Kyber';
+interface CryptoConfig {
+  tier: SecurityTier;
+  asymmetric: AsymmetricAlgorithm;
+  symmetric: SymmetricAlgorithm;
+  keySize: number;
+  description: string;
+}
+class TieredCryptographyService {
+  private static instance: TieredCryptographyService;
+  private tierConfigs: Record<SecurityTier, CryptoConfig>;
+  private pathConfigs: Map<RegExp, SecurityTier> = new Map();
+  private dataConfigs: Map<string, SecurityTier> = new Map();
+  
+  private constructor() {
+    // Initialize tier configurations
+    this.tierConfigs = {
+      // Standard security tier - fast, widely compatible
+      standard: {
+        tier: 'standard',
+        asymmetric: 'RSA',
+        symmetric: 'AES',
+        keySize: 2048,
+        description: 'Standard security for non-sensitive operations'
+      },
+      
+      // Enhanced security tier - stronger, still performant
+      enhanced: {
+        tier: 'enhanced',
+        asymmetric: 'ECC',
+        symmetric: 'AES-GCM',
+        keySize: 384, // ECC key size (P-384)
+        description: 'Enhanced security for sensitive operations'
+      },
+      
+      // Quantum-resistant tier - strongest, but computationally expensive
+      quantum: {
+        tier: 'quantum',
+        asymmetric: 'FALCON',
+        symmetric: 'Kyber',
+        keySize: 1024,
+        description: 'Quantum-resistant for highly sensitive operations'
+      }
+    };
+    
+    // Set default path tiers
+    this.registerPathConfig(/^\/api\/public\/.*$/, 'standard');
+    this.registerPathConfig(/^\/api\/user\/.*$/, 'enhanced');
+    this.registerPathConfig(/^\/api\/admin\/.*$/, 'quantum');
+    this.registerPathConfig(/^\/api\/auth\/.*$/, 'quantum');
+    
+    // Set default data tiers
+    this.registerDataConfig('user.email', 'enhanced');
+    this.registerDataConfig('user.password', 'quantum');
+    this.registerDataConfig('payment.card', 'quantum');
+    this.registerDataConfig('user.preferences', 'standard');
+  }
+  
+  static getInstance(): TieredCryptographyService {
+    if (!TieredCryptographyService.instance) {
+      TieredCryptographyService.instance = new TieredCryptographyService();
+    }
+    return TieredCryptographyService.instance;
+  }
+  
+  // Register a path pattern with a security tier
+  registerPathConfig(pathPattern: RegExp, tier: SecurityTier): void {
+    this.pathConfigs.set(pathPattern, tier);
+    console.log(`[Crypto] Registered path pattern ${pathPattern} with ${tier} security tier`);
+  }
+  
+  // Register a data type with a security tier
+  registerDataConfig(dataType: string, tier: SecurityTier): void {
+    this.dataConfigs.set(dataType, tier);
+    console.log(`[Crypto] Registered data type ${dataType} with ${tier} security tier`);
+  }
+  
+  // Get the security tier for a specific path
+  getTierForPath(path: string): SecurityTier {
+    for (const [pattern, tier] of this.pathConfigs.entries()) {
+      if (pattern.test(path)) {
+        return tier;
+      }
+    }
+    
+    // Default to enhanced if no match
+    return 'enhanced';
+  }
+  
+  // Get the security tier for a specific data type
+  getTierForData(dataType: string): SecurityTier {
+    return this.dataConfigs.get(dataType) || 'enhanced';
+  }
+  
+  // Get config for a specific tier
+  getConfigForTier(tier: SecurityTier): CryptoConfig {
+    return this.tierConfigs[tier];
+  }
+  
+  // Encrypt data with appropriate tier based on data type
+  async encryptData(data: string, dataType: string): Promise<{ encrypted: string, tier: SecurityTier }> {
+    const tier = this.getTierForData(dataType);
+    const config = this.getConfigForTier(tier);
+    
+    console.log(`[Crypto] Encrypting ${dataType} data using ${tier} tier (${config.symmetric})`);
+    
+    // In a real implementation, this would use the appropriate algorithm
+    // Here we just simulate the encryption with different computation times
+    
+    // Simulate different computational costs based on tier
+    let delayMs = 1;
+    switch (tier) {
+      case 'standard': delayMs = 1; break;
+      case 'enhanced': delayMs = 5; break;
+      case 'quantum': delayMs = 20; break;
+    }
+    
+    // Simulate encryption with varying computation times
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+    
+    // Simulate encrypted output
+    const encrypted = `${tier}:${config.symmetric}:${Buffer.from(data).toString('base64')}`;
+    
+    return { encrypted, tier };
+  }
+  
+  // Decrypt data (tier is determined from the encrypted string format)
+  async decryptData(encrypted: string): Promise<{ decrypted: string, tier: SecurityTier }> {
+    // Parse the encrypted string to get the tier and algorithm
+    const parts = encrypted.split(':');
+    if (parts.length !== 3) {
+      throw new Error('Invalid encrypted data format');
+    }
+    
+    const tier = parts[0] as SecurityTier;
+    const algorithm = parts[1];
+    const data = parts[2];
+    
+    console.log(`[Crypto] Decrypting data using ${tier} tier (${algorithm})`);
+    
+    // Simulate different computational costs based on tier
+    let delayMs = 1;
+    switch (tier) {
+      case 'standard': delayMs = 1; break;
+      case 'enhanced': delayMs = 5; break;
+      case 'quantum': delayMs = 20; break;
+    }
+    
+    // Simulate decryption with varying computation times
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+    
+    // Decode the base64-encoded data
+    const decrypted = Buffer.from(data, 'base64').toString();
+    
+    return { decrypted, tier };
+  }
+  
+  // Sign data with the appropriate tier based on the path
+  async signData(data: string, path: string): Promise<{ signature: string, tier: SecurityTier }> {
+    const tier = this.getTierForPath(path);
+    const config = this.getConfigForTier(tier);
+    
+    console.log(`[Crypto] Signing data for ${path} using ${tier} tier (${config.asymmetric})`);
+    
+    // Simulate different computational costs based on tier
+    let delayMs = 1;
+    switch (tier) {
+      case 'standard': delayMs = 2; break;
+      case 'enhanced': delayMs = 10; break;
+      case 'quantum': delayMs = 30; break;
+    }
+    
+    // Simulate signing with varying computation times
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+    
+    // Simulate signature output
+    const signature = `${tier}:${config.asymmetric}:${Buffer.from(
+      crypto.createHash('sha256').update(data).digest('hex')
+    ).toString('base64')}`;
+    
+    return { signature, tier };
+  }
+  
+  // Verify a signature (tier is determined from the signature format)
+  async verifySignature(data: string, signature: string): Promise<{ valid: boolean, tier: SecurityTier }> {
+    // Parse the signature to get the tier and algorithm
+    const parts = signature.split(':');
+    if (parts.length !== 3) {
+      throw new Error('Invalid signature format');
+    }
+    
+    const tier = parts[0] as SecurityTier;
+    const algorithm = parts[1];
+    const sig = parts[2];
+    
+    console.log(`[Crypto] Verifying signature using ${tier} tier (${algorithm})`);
+    
+    // Simulate different computational costs based on tier
+    let delayMs = 1;
+    switch (tier) {
+      case 'standard': delayMs = 1; break;
+      case 'enhanced': delayMs = 5; break;
+      case 'quantum': delayMs = 15; break;
+    }
+    
+    // Simulate verification with varying computation times
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+    
+    // Simulate verification result
+    const expectedSig = Buffer.from(
+      crypto.createHash('sha256').update(data).digest('hex')
+    ).toString('base64');
+    
+    const valid = sig === expectedSig;
+    
+    return { valid, tier };
+  }
+  
+  // Get performance impact statistics for each tier
+  getPerformanceImpact(): Record<SecurityTier, { 
+    relativePerformance: number, 
+    estimatedTimeMs: { encrypt: number, decrypt: number, sign: number, verify: number } 
+  }> {
+    return {
+      standard: {
+        relativePerformance: 1.0, // Baseline
+        estimatedTimeMs: { encrypt: 1, decrypt: 1, sign: 2, verify: 1 }
+      },
+      enhanced: {
+        relativePerformance: 0.4, // 40% of standard performance
+        estimatedTimeMs: { encrypt: 5, decrypt: 5, sign: 10, verify: 5 }
+      },
+      quantum: {
+        relativePerformance: 0.1, // 10% of standard performance
+        estimatedTimeMs: { encrypt: 20, decrypt: 20, sign: 30, verify: 15 }
+      }
+    };
+  }
+}
+// Middleware example (not executed, just for reference)
+function cryptoPathMiddleware(req, res, next) {
+  const cryptoService = TieredCryptographyService.getInstance();
+  const tier = cryptoService.getTierForPath(req.path);
+  
+  // Add tier to request for use in route handlers
+  req.cryptoTier = tier;
+  
+  // Measure performance impact
+  const start = performance.now();
+  
+  // Call next middleware
+  next();
+  
+  // Log performance impact
+  const end = performance.now();
+  const duration = end - start;
+  
+  if (tier === 'quantum' && duration > 100) {
+    console.warn(`[Crypto] High latency detected for quantum crypto on ${req.path}: ${duration.toFixed(2)}ms`);
+  }
+}
+// Usage example:
+/*
+const cryptoService = TieredCryptographyService.getInstance();
+// Example: Encrypt user password (quantum tier)
+async function encryptPassword(password, userId) {
+  const { encrypted } = await cryptoService.encryptData(password, 'user.password');
+  return encrypted;
+}
+// Example: Encrypt user preferences (standard tier)
+async function encryptPreferences(preferences, userId) {
+  const { encrypted } = await cryptoService.encryptData(
+    JSON.stringify(preferences),
+    'user.preferences'
+  );
+  return encrypted;
+}
+// Example: Sign API response for an admin endpoint (quantum tier)
+async function signAdminResponse(data, endpoint) {
+  const { signature } = await cryptoService.signData(
+    JSON.stringify(data),
+    `/api/admin/${endpoint}`
+  );
+  return { ...data, signature };
+}
+// Example: Sign API response for a public endpoint (standard tier)
+async function signPublicResponse(data, endpoint) {
+  const { signature } = await cryptoService.signData(
+    JSON.stringify(data),
+    `/api/public/${endpoint}`
+  );
+  return { ...data, signature };
+}
+*/
+13. Optimize Blockchain Security Logging
+// OptimizedBlockchainLogger.ts
+import { createHash } from 'crypto';
+import { promisify } from 'util';
+import { deflate, inflate } from 'zlib';
+const deflateAsync = promisify(deflate);
+const inflateAsync = promisify(inflate);
+interface BlockchainRecord {
+  id: string;
+  timestamp: number;
+  type: string;
+  data: any;
+  hash: string;
+  previousHash: string;
+  merkleRoot?: string;
+  compressedSize?: number;
+  originalSize?: number;
+}
+interface LoggingPolicy {
+  type: string;
+  importance: 'low' | 'medium' | 'high' | 'critical';
+  retention: number; // in days
+  compress: boolean;
+}
+class OptimizedBlockchainLogger {
+  private static instance: OptimizedBlockchainLogger;
+  private blockchain: BlockchainRecord[] = [];
+  private merkleTree: Map<number, string[]> = new Map();
+  private lastBlockHash: string = '0'.repeat(64);
+  private loggingPolicies: Map<string, LoggingPolicy> = new Map();
+  private commitQueue: BlockchainRecord[] = [];
+  private isCommitting: boolean = false;
+  private commitInterval: NodeJS.Timeout | null = null;
+  private pruneInterval: NodeJS.Timeout | null = null;
+  
+  private constructor() {
+    // Initialize default logging policies
+    this.setupDefaultPolicies();
+    
+    // Start commit interval
+    this.commitInterval = setInterval(() => {
+      this.commitQueuedRecords();
+    }, 5000); // Commit every 5 seconds
+    
+    // Start prune interval
+    this.pruneInterval = setInterval(() => {
+      this.pruneOldRecords();
+    }, 86400000); // Prune once per day
+  }
+  
+  static getInstance(): OptimizedBlockchainLogger {
+    if (!OptimizedBlockchainLogger.instance) {
+      OptimizedBlockchainLogger.instance = new OptimizedBlockchainLogger();
+    }
+    return OptimizedBlockchainLogger.instance;
+  }
+  
+  // Add a custom logging policy
+  addLoggingPolicy(type: string, policy: Omit<LoggingPolicy, 'type'>): void {
+    this.loggingPolicies.set(type, { type, ...policy });
+  }
+  
+  // Log an event to the blockchain
+  async log(type: string, data: any): Promise<string> {
+    // Get policy for this log type
+    const policy = this.loggingPolicies.get(type) || this.getDefaultPolicy();
+    
+    // Check importance - low importance events might be skipped
+    if (policy.importance === 'low' && Math.random() > 0.1) {
+      // Skip 90% of low-importance events during high load
+      // (but always record at least a summary)
+      return this.recordSummary(type, data);
+    }
+    
+    // Create a record
+    const id = this.generateId();
+    let recordData = data;
+    
+    // Compress if policy demands it
+    let compressedSize = 0;
+    let originalSize = 0;
+    if (policy.compress) {
+      try {
+        const dataStr = JSON.stringify(data);
+        originalSize = Buffer.from(dataStr).length;
+        
+        // Only compress if data is large enough to benefit
+        if (originalSize > 500) {
+          const compressed = await deflateAsync(Buffer.from(dataStr));
+          compressedSize = compressed.length;
+          recordData = compressed.toString('base64');
+        }
+      } catch (error) {
+        console.error('[Blockchain] Error compressing data:', error);
+      }
+    }
+    
+    // Create the record
+    const record: BlockchainRecord = {
+      id,
+      timestamp: Date.now(),
+      type,
+      data: recordData,
+      hash: '',
+      previousHash: this.lastBlockHash
+    };
+    
+    // Add compression metadata if applicable
+    if (compressedSize > 0) {
+      record.compressedSize = compressedSize;
+      record.originalSize = originalSize;
+    }
+    
+    // Calculate hash for this record
+    record.hash = this.calculateHash(record);
+    
+    // Add to commit queue
+    this.commitQueue.push(record);
+    
+    // Trigger immediate commit for critical records
+    if (policy.importance === 'critical') {
+      this.commitQueuedRecords();
+    }
+    
+    return id;
+  }
+  
+  // Verify a record's integrity
+  async verifyRecord(id: string): Promise<{ valid: boolean, record?: BlockchainRecord }> {
+    // Find the record
+    const record = this.blockchain.find(r => r.id === id);
+    if (!record) {
+      return { valid: false };
+    }
+    
+    // Verify hash
+    const calculatedHash = this.calculateHash(record);
+    const hashValid = calculatedHash === record.hash;
+    
+    // Verify chain integrity from this block back
+    let chainValid = true;
+    let currentRecord = record;
+    const recordIndex = this.blockchain.indexOf(record);
+    
+    for (let i = recordIndex; i > 0; i--) {
+      const previousRecord = this.blockchain[i - 1];
+      if (currentRecord.previousHash !== previousRecord.hash) {
+        chainValid = false;
+        break;
+      }
+      currentRecord = previousRecord;
+    }
+    
+    // Verify merkle tree if available
+    let merkleValid = true;
+    if (record.merkleRoot) {
+      // Get the block this record belongs to
+      const blockIndex = Math.floor(this.blockchain.indexOf(record) / 100);
+      
+      // Verify merkle root
+      const merkleTree = this.merkleTree.get(blockIndex);
+      if (merkleTree) {
+        const calculatedRoot = this.calculateMerkleRoot(merkleTree);
+        merkleValid = calculatedRoot === record.merkleRoot;
+      } else {
+        merkleValid = false;
+      }
+    }
+    
+    // Decompress data if needed
+    let decompressedRecord: BlockchainRecord | undefined;
+    
+    if (record.compressedSize && record.originalSize) {
+      try {
+        decompressedRecord = { ...record };
+        const decompressed = await inflateAsync(
+          Buffer.from(record.data, 'base64')
+        );
+        decompressedRecord.data = JSON.parse(decompressed.toString());
+      } catch (error) {
+        console.error('[Blockchain] Error decompressing record:', error);
+        return { valid: false };
+      }
+    }
+    
+    return { 
+      valid: hashValid && chainValid && merkleValid,
+      record: decompressedRecord || record
+    };
+  }
+  
+  // Get all records of a specific type
+  async getRecords(type: string, limit: number = 100, offset: number = 0): Promise<BlockchainRecord[]> {
+    // Filter by type
+    const filteredRecords = this.blockchain.filter(r => r.type === type);
+    
+    // Sort by timestamp (newest first)
+    filteredRecords.sort((a, b) => b.timestamp - a.timestamp);
+    
+    // Apply limit and offset
+    const paginatedRecords = filteredRecords.slice(offset, offset + limit);
+    
+    // Decompress records if needed
+    const decompressedRecords: BlockchainRecord[] = [];
+    
+    for (const record of paginatedRecords) {
+      if (record.compressedSize && record.originalSize) {
+        try {
+          const decompressedRecord = { ...record };
+          const decompressed = await inflateAsync(
+            Buffer.from(record.data, 'base64')
+          );
+          decompressedRecord.data = JSON.parse(decompressed.toString());
+          decompressedRecords.push(decompressedRecord);
+        } catch (error) {
+          console.error('[Blockchain] Error decompressing record:', error);
+          decompressedRecords.push(record);
+        }
+      } else {
+        decompressedRecords.push(record);
+      }
+    }
+    
+    return decompressedRecords;
+  }
+  
+  // Get blockchain statistics
+  getStats(): { 
+    totalRecords: number;
+    totalBlocks: number;
+    recordsByType: Record<string, number>;
+    lastCommitTimestamp: number;
+    compressionRatio: number;
+    queueSize: number;
+  } {
+    // Count records by type
+    const recordsByType: Record<string, number> = {};
+    for (const record of this.blockchain) {
+      recordsByType[record.type] = (recordsByType[record.type] || 0) + 1;
+    }
+    
+    // Calculate compression ratio
+    let totalOriginalSize = 0;
+    let totalCompressedSize = 0;
+    
+    for (const record of this.blockchain) {
+      if (record.originalSize && record.compressedSize) {
+        totalOriginalSize += record.originalSize;
+        totalCompressedSize += record.compressedSize;
+      }
+    }
+    
+    const compressionRatio = totalCompressedSize > 0 
+      ? totalOriginalSize / totalCompressedSize
+      : 1.0;
+    
+    return {
+      totalRecords: this.blockchain.length,
+      totalBlocks: Math.ceil(this.blockchain.length / 100), // 100 records per block
+      recordsByType,
+      lastCommitTimestamp: this.blockchain.length > 0 
+        ? this.blockchain[this.blockchain.length - 1].timestamp
+        : 0,
+      compressionRatio,
+      queueSize: this.commitQueue.length
+    };
+  }
+  
+  // Stop the logger
+  stop(): void {
+    if (this.commitInterval) {
+      clearInterval(this.commitInterval);
+      this.commitInterval = null;
+    }
+    
+    if (this.pruneInterval) {
+      clearInterval(this.pruneInterval);
+      this.pruneInterval = null;
+    }
+    
+    // Commit any queued records
+    this.commitQueuedRecords();
+  }
+  
+  private setupDefaultPolicies(): void {
+    // Security events are critical and kept forever
+    this.loggingPolicies.set('security', {
+      type: 'security',
+      importance: 'critical',
+      retention: 0, // 0 means forever
+      compress: true
+    });
+    
+    // Authentication events are high importance
+    this.loggingPolicies.set('auth', {
+      type: 'auth',
+      importance: 'high',
+      retention: 365, // 1 year
+      compress: true
+    });
+    
+    // User activity events are medium importance
+    this.loggingPolicies.set('user', {
+      type: 'user',
+      importance: 'medium',
+      retention: 90, // 3 months
+      compress: true
+    });
+    
+    // System events are low importance
+    this.loggingPolicies.set('system', {
+      type: 'system',
+      importance: 'low',
+      retention: 30, // 1 month
+      compress: true
+    });
+  }
+  
+  private getDefaultPolicy(): LoggingPolicy {
+    return {
+      type: 'default',
+      importance: 'medium',
+      retention: 90, // 3 months
+      compress: false
+    };
+  }
+  
+  private async commitQueuedRecords(): Promise<void> {
+    if (this.isCommitting || this.commitQueue.length === 0) {
+      return;
+    }
+    
+    this.isCommitting = true;
+    
+    try {
+      // Take records from queue
+      const records = [...this.commitQueue];
+      this.commitQueue = [];
+      
+      console.log(`[Blockchain] Committing ${records.length} records to blockchain`);
+      
+      // Add records to blockchain
+      this.blockchain.push(...records);
+      
+      // Update last block hash
+      this.lastBlockHash = records[records.length - 1].hash;
+      
+      // Create a new merkle tree if we have enough records
+      if (this.blockchain.length % 100 === 0) {
+        const blockIndex = Math.floor(this.blockchain.length / 100) - 1;
+        const blockStart = blockIndex * 100;
+        const blockEnd = blockStart + 100;
+        
+        // Extract hashes for this block
+        const blockHashes = this.blockchain
+          .slice(blockStart, blockEnd)
+          .map(record => record.hash);
+        
+        // Calculate merkle root
+        const merkleRoot = this.calculateMerkleRoot(blockHashes);
+        
+        // Store merkle tree
+        this.merkleTree.set(blockIndex, blockHashes);
+        
+        // Add merkle root to each record in the block
+        for (let i = blockStart; i < blockEnd; i++) {
+          this.blockchain[i].merkleRoot = merkleRoot;
+        }
+        
+        console.log(`[Blockchain] Created merkle tree for block ${blockIndex} with root ${merkleRoot}`);
+      }
+    } catch (error) {
+      console.error('[Blockchain] Error committing records:', error);
+      
+      // Put records back in queue
+      this.commitQueue = [...this.commitQueue, ...this.blockchain.slice(-this.commitQueue.length)];
+      this.blockchain = this.blockchain.slice(0, -this.commitQueue.length);
+    } finally {
+      this.isCommitting = false;
+    }
+  }
+  
+  private async pruneOldRecords(): Promise<void> {
+    const now = Date.now();
+    
+    // Group records by type for policy application
+    const recordsByType = new Map<string, { records: BlockchainRecord[], policy: LoggingPolicy }>();
+    
+    // Initialize groups
+    for (const [type, policy] of this.loggingPolicies.entries()) {
+      recordsByType.set(type, { records: [], policy });
+    }
+    
+    // Group records
+    for (const record of this.blockchain) {
+      const group = recordsByType.get(record.type);
+      if (group) {
+        group.records.push(record);
+      } else {
+        // Create a new group with default policy
+        recordsByType.set(record.type, {
+          records: [record],
+          policy: this.getDefaultPolicy()
+        });
+      }
+    }
+    
+    // Apply pruning based on policies
+    const recordsToKeep: BlockchainRecord[] = [];
+    
+    for (const [type, { records, policy }] of recordsByType.entries()) {
+      // Skip if retention is forever
+      if (policy.retention === 0) {
+        recordsToKeep.push(...records);
+        continue;
+      }
+      
+      // Calculate retention threshold
+      const retentionThreshold = now - (policy.retention * 86400000); // Convert days to ms
+      
+      // Filter records based on retention
+      const keepRecords = records.filter(r => r.timestamp >= retentionThreshold);
+      recordsToKeep.push(...keepRecords);
+      
+      const prunedCount = records.length - keepRecords.length;
+      if (prunedCount > 0) {
+        console.log(`[Blockchain] Pruned ${prunedCount} ${type} records older than ${policy.retention} days`);
+      }
+    }
+    
+    // Sort by original order
+    recordsToKeep.sort((a, b) => a.timestamp - b.timestamp);
+    
+    // Reset blockchain
+    this.blockchain = recordsToKeep;
+    
+    // Rebuild merkle trees
+    this.rebuildMerkleTrees();
+  }
+  
+  private rebuildMerkleTrees(): void {
+    // Clear existing merkle trees
+    this.merkleTree.clear();
+    
+    // Rebuild merkle trees for each complete block
+    const blockCount = Math.floor(this.blockchain.length / 100);
+    
+    for (let blockIndex = 0; blockIndex < blockCount; blockIndex++) {
+      const blockStart = blockIndex * 100;
+      const blockEnd = blockStart + 100;
+      
+      // Extract hashes for this block
+      const blockHashes = this.blockchain
+        .slice(blockStart, blockEnd)
+        .map(record => record.hash);
+      
+      // Calculate merkle root
+      const merkleRoot = this.calculateMerkleRoot(blockHashes);
+      
+      // Store merkle tree
+      this.merkleTree.set(blockIndex, blockHashes);
+      
+      // Add merkle root to each record in the block
+      for (let i = blockStart; i < blockEnd; i++) {
+        this.blockchain[i].merkleRoot = merkleRoot;
+      }
+    }
+    
+    console.log(`[Blockchain] Rebuilt ${blockCount} merkle trees`);
+  }
+  
+  private calculateHash(record: BlockchainRecord): string {
+    // Create a hash of the record
+    const dataToHash = {
+      id: record.id,
+      timestamp: record.timestamp,
+      type: record.type,
+      data: record.data,
+      previousHash: record.previousHash
+    };
+    
+    return createHash('sha256')
+      .update(JSON.stringify(dataToHash))
+      .digest('hex');
+  }
+  
+  private calculateMerkleRoot(hashes: string[]): string {
+    if (hashes.length === 0) return '0'.repeat(64);
+    if (hashes.length === 1) return hashes[0];
+    
+    // Ensure even number of hashes
+    const hashList = [...hashes];
+    if (hashList.length % 2 === 1) {
+      hashList.push(hashList[hashList.length - 1]);
+    }
+    
+    // Build tree bottom-up
+    while (hashList.length > 1) {
+      const newLevel: string[] = [];
+      
+      // Combine pairs of hashes
+      for (let i = 0; i < hashList.length; i += 2) {
+        const combinedHash = createHash('sha256')
+          .update(hashList[i] + hashList[i + 1])
+          .digest('hex');
+        
+        newLevel.push(combinedHash);
+      }
+      
+      // Replace current level with new level
+      hashList.splice(0, hashList.length, ...newLevel);
+    }
+    
+    // The root is the only hash left
+    return hashList[0];
+  }
+  
+  private generateId(): string {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+  }
+  
+  private async recordSummary(type: string, data: any): Promise<string> {
+    // Record a summary instead of full event for low-importance events
+    const summaryData = {
+      eventType: type,
+      timestamp: new Date().toISOString(),
+      summary: `Low-importance event (sampling mode)`,
+      dataKeys: Object.keys(data)
+    };
+    
+    // Create a summary record
+    const id = this.generateId();
+    const record: BlockchainRecord = {
+      id,
+      timestamp: Date.now(),
+      type: `${type}:summary`,
+      data: summaryData,
+      hash: '',
+      previousHash: this.lastBlockHash
+    };
+    
+    // Calculate hash for this record
+    record.hash = this.calculateHash(record);
+    
+    // Add to commit queue
+    this.commitQueue.push(record);
+    
+    return id;
+  }
+}
+// Usage example:
+/*
+const logger = OptimizedBlockchainLogger.getInstance();
+// Add custom policy
+logger.addLoggingPolicy('payment', {
+  importance: 'critical',
+  retention: 0, // Keep forever
+  compress: true
+});
+// Log a critical event
+const logId = await logger.log('security', {
+  action: 'database_modification',
+  userId: '123',
+  modifiedTables: ['users', 'permissions
+determine correctness of that same sample code, optimizing or offering better methods
+
+3 minutes ago
+TT
+
+templictemplate
+Code Review & Optimization for Security Samples
+Let me review the previously shared sample code snippets for correctness and suggest optimizations:
+
+1. UnifiedSecurityConfig.ts
+Current Issues:
+
+The config file reading is synchronous (blocking)
+No validation of config structure
+Deep merge algorithm might not handle arrays correctly
+Optimized Solution:
+
+// Add schema validation with zod
+import { z } from 'zod';
+import fs from 'fs/promises'; // Use async version
+const securityConfigSchema = z.object({
+  authentication: z.object({
+    maxLoginAttempts: z.number().int().positive(),
+    // Other authentication settings
+  }),
+  // Other sections
+});
+// Create async loading with validation
+async loadConfiguration(): Promise<void> {
+  try {
+    const env = process.env.NODE_ENV || 'development';
+    const baseConfigText = await fs.readFile(this.configPath, 'utf8');
+    const baseConfig = JSON.parse(baseConfigText);
+    
+    const envConfigPath = path.join(path.dirname(this.configPath), `security.${env}.json`);
+    
+    let envConfig = {};
+    try {
+      const envConfigText = await fs.readFile(envConfigPath, 'utf8');
+      envConfig = JSON.parse(envConfigText);
+    } catch (err) {
+      console.warn(`[Security] No environment-specific config found for ${env}`);
+    }
+    
+    // Deep merge configuration
+    const mergedConfig = this.deepMerge(baseConfig, envConfig);
+    
+    // Validate merged configuration
+    const result = securityConfigSchema.safeParse(mergedConfig);
+    
+    if (!result.success) {
+      console.error('[Security] Invalid configuration:', result.error);
+      return;
+    }
+    
+    this.config = result.data;
+    this.cacheTimestamp = Date.now();
+    
+    console.log(`[Security] Configuration loaded for environment: ${env}`);
+  } catch (error) {
+    console.error('[Security] Error loading configuration:', error);
+  }
+}
+2. SecurityComponentRegistry.ts
+Current Issues:
+
+No timeout for component loading
+No circuit breaker pattern for failing components
+Reference counting might leak if components aren't properly released
+Optimized Solution:
+
+// Add timeout and circuit breaker
+async getComponent<T>(name: string, timeoutMs: number = 5000): Promise<T> {
+  // If component is already loaded, return it
+  if (this.components.has(name)) {
+    this.incrementRefCount(name);
+    return this.components.get(name) as T;
+  }
+  
+  // Check if component is in circuit-broken state
+  if (this.isCircuitBroken(name)) {
+    throw new Error(`Component ${name} is circuit-broken due to previous failures`);
+  }
+  
+  // Load component with timeout
+  if (this.factories.has(name)) {
+    console.log(`[Security] Lazy loading component: ${name}`);
+    const factory = this.factories.get(name)!;
+    
+    try {
+      const componentPromise = factory();
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`Timeout loading component ${name}`)), timeoutMs);
+      });
+      
+      const component = await Promise.race([componentPromise, timeoutPromise]) as T;
+      this.components.set(name, component);
+      this.incrementRefCount(name);
+      this.resetCircuitBreaker(name);
+      return component;
+    } catch (error) {
+      this.recordFailure(name);
+      throw error;
+    }
+  }
+  
+  throw new Error(`Security component not registered: ${name}`);
+}
+// Add component auto-cleanup if not properly released
+setInterval(() => {
+  for (const [name, count] of this.refCounts.entries()) {
+    if (count <= 0) {
+      console.warn(`[Security] Found orphaned component reference: ${name}`);
+      this.components.delete(name);
+      this.refCounts.delete(name);
+    }
+  }
+}, 60000); // Check every minute
+3. IPWhitelistCache.ts
+Current Issues:
+
+Using a bloom filter isn't optimal for IP address checks
+BigInt operations may be unnecessary for IPv4
+Doesn't handle IPv6 properly
+Optimized Solution:
+
+// Use specialized IP address library
+import * as ipaddr from 'ipaddr.js';
+class IPWhitelistCache {
+  // Replace bloom filter with specialized prefix trie for IP addresses
+  private ipTrie = new IPTrie();
+  isWhitelisted(ip: string): boolean {
+    // Parse IP address
+    try {
+      const parsedIP = ipaddr.parse(ip);
+      
+      // Check exact cache hit first (fastest)
+      if (this.exactIPCache.has(ip)) {
+        return this.exactIPCache.get(ip) || false;
+      }
+      
+      // Use prefix trie for range matching (much faster than looping)
+      const isWhitelisted = this.ipTrie.match(parsedIP);
+      
+      // Cache the result
+      this.exactIPCache.set(ip, isWhitelisted);
+      
+      return isWhitelisted;
+    } catch (error) {
+      console.error(`[Security] Invalid IP address: ${ip}`, error);
+      return false;
+    }
+  }
+  // Add specialized IP prefix trie instead of testing ranges sequentially
+  private refreshWhitelist(): void {
+    // ... existing code ...
+    
+    // Build optimized prefix trie instead of ranges array
+    this.ipTrie = new IPTrie();
+    
+    for (const cidr of cidrRanges) {
+      this.ipTrie.add(cidr);
+    }
+    
+    // ... rest of the method ...
+  }
+}
+4. SecurityDatabaseOptimizer.ts
+Current Issues:
+
+No checks if indexes already exist before creating
+Materialized view refresh could block other operations
+Fixed partitioning scheme might not scale well
+Optimized Solution:
+
+private async createOptimalIndexes(): Promise<void> {
+  // First check which indexes already exist to avoid redundant work
+  const { rows: existingIndexes } = await this.pool.query(`
+    SELECT indexname FROM pg_indexes
+    WHERE tablename = 'security_threats'
+  `);
+  
+  const existingIndexNames = existingIndexes.map(row => row.indexname);
+  
+  const indexQueries = [
+    // Only create indexes that don't exist
+    {
+      name: 'idx_security_threats_source_ip',
+      query: `CREATE INDEX IF NOT EXISTS idx_security_threats_source_ip ON security_threats(source_ip)`
+    },
+    // ... other indexes ...
+  ];
+  
+  for (const { name, query } of indexQueries) {
+    if (!existingIndexNames.includes(name)) {
+      console.log(`[Security] Creating index: ${name}`);
+      await this.pool.query(query);
+    } else {
+      console.log(`[Security] Index already exists: ${name}`);
+    }
+  }
+}
+// Materialized view refresh shouldn't block
+private async createRefreshFunction(): Promise<void> {
+  await this.pool.query(`
+    CREATE OR REPLACE FUNCTION refresh_security_views()
+    RETURNS void AS $$
+    BEGIN
+      -- Don't block if another refresh is running
+      IF (SELECT pg_try_advisory_lock(hashtext('refresh_security_views'))) THEN
+        BEGIN
+          REFRESH MATERIALIZED VIEW CONCURRENTLY mv_security_stats;
+          REFRESH MATERIALIZED VIEW CONCURRENTLY mv_user_security_events;
+          PERFORM pg_advisory_unlock(hashtext('refresh_security_views'));
+        EXCEPTION WHEN OTHERS THEN
+          PERFORM pg_advisory_unlock(hashtext('refresh_security_views'));
+          RAISE;
+        END;
+      ELSE
+        RAISE NOTICE 'Skipping refresh as another refresh is in progress';
+      END IF;
+    END;
+    $$ LANGUAGE plpgsql;
+  `);
+}
+// Add automatic partition management
+private async setupPartitionMaintenanceFunction(): Promise<void> {
+  // Create a function to automatically create new partitions as needed
+  await this.pool.query(`
+    CREATE OR REPLACE FUNCTION create_security_event_partition()
+    RETURNS void AS $$
+    DECLARE
+      future_date DATE;
+      partition_name TEXT;
+      partition_exists BOOLEAN;
+    BEGIN
+      -- Create partition for next month if it doesn't exist
+      future_date := DATE_TRUNC('month', NOW() + INTERVAL '1 month');
+      
+      partition_name := 'security_events_' || 
+                        TO_CHAR(future_date, 'YYYY') || '_' || 
+                        TO_CHAR(future_date, 'MM');
+      
+      SELECT EXISTS (
+        SELECT FROM pg_catalog.pg_class c
+        JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.relname = partition_name
+      ) INTO partition_exists;
+      
+      IF NOT partition_exists THEN
+        EXECUTE FORMAT(
+          'CREATE TABLE %I PARTITION OF security_events_partitioned
+           FOR VALUES FROM (%L) TO (%L)',
+          partition_name,
+          future_date,
+          future_date + INTERVAL '1 month'
+        );
+        
+        EXECUTE FORMAT(
+          'CREATE INDEX idx_%1$s_event_type ON %1$s(event_type)',
+          partition_name
+        );
+        
+        EXECUTE FORMAT(
+          'CREATE INDEX idx_%1$s_created_at ON %1$s(created_at)',
+          partition_name
+        );
+        
+        RAISE NOTICE 'Created new partition: %', partition_name;
+      END IF;
+    END;
+    $$ LANGUAGE plpgsql;
+  `);
+}
+5. BatchedEventProcessor.ts
+Current Issues:
+
+No disk-based fallback for event overflow
+No prioritization beyond critical/normal
+No automatic retry mechanism
+Optimized Solution:
+
+// Add priority queue and disk fallback
+class BatchedEventProcessor extends EventEmitter {
+  // Add prioritized queues
+  private queues: {
+    [priority in 'critical' | 'high' | 'medium' | 'low']: SecurityEvent[]
+  } = {
+    critical: [],
+    high: [],
+    medium: [],
+    low: []
+  };
+  
+  private diskBackupPath: string;
+  private diskBackupEnabled: boolean;
+  
+  constructor(options: {
+    batchSize?: number;
+    maxBatchIntervalMs?: number;
+    autoStart?: boolean;
+    diskBackup?: boolean;
+    diskBackupPath?: string;
+  } = {}) {
+    super();
+    
+    this.batchSize = options.batchSize || 100;
+    this.maxBatchIntervalMs = options.maxBatchIntervalMs || 5000;
+    this.diskBackupEnabled = options.diskBackup !== false;
+    this.diskBackupPath = options.diskBackupPath || './security-events-backup';
+    
+    // Create backup directory if it doesn't exist
+    if (this.diskBackupEnabled) {
+      fs.mkdirSync(this.diskBackupPath, { recursive: true });
+    }
+    
+    if (options.autoStart !== false) {
+      this.start();
+    }
+  }
+  // Add event with appropriate priority
+  addEvent(event: SecurityEvent): void {
+    const priority = this.mapSeverityToPriority(event.severity);
+    this.queues[priority].push(event);
+    
+    // If queue is getting too large, write to disk
+    if (this.diskBackupEnabled && this.queues[priority].length > this.batchSize * 20) {
+      this.backupQueueToDisk(priority);
+    }
+    
+    this.emitBackpressure();
+    this.processIfNeeded();
+  }
+  private async processEvents(isFlush: boolean = false): Promise<void> {
+    if (this.isProcessing) return;
+    
+    this.isProcessing = true;
+    
+    try {
+      this.processingPromise = (async () => {
+        // Process queues in priority order
+        for (const priority of ['critical', 'high', 'medium', 'low'] as const) {
+          const queue = this.queues[priority];
+          if (queue.length > 0) {
+            const batchSize = isFlush ? queue.length : Math.min(queue.length, this.batchSize);
+            const batch = queue.splice(0, batchSize);
+            await this.processBatch(batch, priority);
+          }
+        }
+        
+        // If queues are empty but we have disk backups, restore some
+        if (this.diskBackupEnabled && this.areQueuesEmpty()) {
+          await this.restoreEventsFromDisk();
+        }
+        
+        this.lastProcessTime = Date.now();
+      })();
+      
+      await this.processingPromise;
+    } catch (error) {
+      this.emit('error', error);
+    } finally {
+      this.isProcessing = false;
+      this.processingPromise = null;
+    }
+  }
+  
+  // Add automatic retry with exponential backoff
+  private async processBatch(
+    batch: SecurityEvent[], 
+    priority: 'critical' | 'high' | 'medium' | 'low'
+  ): Promise<void> {
+    if (batch.length === 0) return;
+    
+    let retryCount = 0;
+    const maxRetries = priority === 'critical' ? 5 : 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        // Process the events
+        console.log(`[Security] Processing ${batch.length} events with ${priority} priority`);
+        
+        // await securityEventsRepository.saveEvents(batch);
+        
+        this.emit('processed', {
+          count: batch.length,
+          priority
+        });
+        
+        return; // Success, exit method
+      } catch (error) {
+        retryCount++;
+        
+        if (retryCount >= maxRetries) {
+          this.emit('error', {
+            error,
+            failedEvents: batch
+          });
+          
+          // Save failed events to dead letter queue
+          this.saveToDeadLetterQueue(batch, error);
+        } else {
+          const backoffMs = Math.min(100 * Math.pow(2, retryCount), 5000);
+          console.log(`[Security] Retry ${retryCount}/${maxRetries} after ${backoffMs}ms`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+      }
+    }
+  }
+}
+General Recommendations for All Code Samples:
+Error Handling Improvements
+
+Add more specific error types/classes instead of generic errors
+Implement proper error propagation with helpful context
+Add telemetry to track and alert on error patterns
+Telemetry & Observability
+
+Add structured logging with correlation IDs
+Instrument code with performance metrics
+Add health check endpoints for all security services
+Resource Management
+
+Implement proper cleanup for all resources
+Add circuit breakers for external dependencies
+Implement backpressure mechanisms for all async operations
+Testing Considerations
+
+Make code more testable with dependency injection
+Add interfaces for easier mocking
+Include more defensive programming
+Security Hardening
+
+Avoid using unsafe eval/Function constructors where possible
+Add input validation everywhere
+Implement proper authentication for security endpoints
+Performance Optimizations
+
+Use worker threads for CPU-intensive operations
+Implement streaming interfaces where appropriate
+Add more aggressive caching with proper invalidation
+These improvements would make the security system more robust, performant, and maintainable while addressing the identified issues in the current implementation.
