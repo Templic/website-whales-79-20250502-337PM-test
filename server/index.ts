@@ -14,6 +14,7 @@ import { runDeferredSecurityScan } from './securityScan';
 import { enableMaximumSecurity } from './security/enableMaximumSecurity';
 import { scheduleIntelligentMaintenance } from './db-maintenance';
 import { loadConfig, getEnabledFeatures, config } from './config';
+import securityInitConfig from './security-init';
 import { runMigrations } from './run-migrations.js';
 import { initBackgroundServices, stopBackgroundServices } from './background-services';
 import expressSession from 'express-session';
