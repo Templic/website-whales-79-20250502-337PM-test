@@ -38,7 +38,7 @@ export interface SecurityFeatures {
 }
 
 // Security level options
-export type SecurityLevel = 'low' | 'medium' | 'high' | 'custom';
+export type SecurityLevel = 'MONITOR' | 'LOW' | 'MEDIUM' | 'HIGH' | 'MAXIMUM' | 'custom';
 
 // Type for security configuration listeners
 type ConfigChangeListener = (features: SecurityFeatures, level: SecurityLevel) => void;
@@ -57,9 +57,9 @@ class SecurityConfig {
     this.configPath = path.join(process.cwd(), 'config', 'security-config.json');
     this.defaultConfigPath = path.join(process.cwd(), 'config', 'security-config.default.json');
     
-    // Set default configuration
-    this.features = this.getDefaultFeatures('medium');
-    this.level = 'medium';
+    // Set default configuration - start in MONITOR mode for safety
+    this.features = this.getDefaultFeatures('MONITOR');
+    this.level = 'MONITOR';
     
     // Load configuration
     this.loadConfig();
@@ -212,9 +212,9 @@ class SecurityConfig {
     } catch (error) {
       console.error('Error loading security configuration:', error);
       
-      // Fallback to defaults
-      this.features = this.getDefaultFeatures('medium');
-      this.level = 'medium';
+      // Fallback to defaults - use MONITOR mode for safety
+      this.features = this.getDefaultFeatures('MONITOR');
+      this.level = 'MONITOR';
     }
   }
   
@@ -281,11 +281,46 @@ class SecurityConfig {
    */
   private getDefaultFeatures(level: SecurityLevel): SecurityFeatures {
     switch (level) {
-      case 'low':
+      case 'MONITOR':
+        // Monitor-only mode: collect data but don't block anything
         return {
           threatDetection: true,
           realTimeMonitoring: true,
           ipReputation: false,
+          csrfProtection: false,
+          xssProtection: false,
+          sqlInjectionProtection: false,
+          rateLimiting: false,
+          twoFactorAuth: false,
+          passwordPolicies: false,
+          bruteForceProtection: false,
+          zeroKnowledgeProofs: false,
+          aiThreatDetection: false
+        };
+        
+      case 'LOW':
+        // Basic protection for non-critical systems
+        return {
+          threatDetection: true,
+          realTimeMonitoring: true,
+          ipReputation: false,
+          csrfProtection: true,
+          xssProtection: true,
+          sqlInjectionProtection: true,
+          rateLimiting: false,
+          twoFactorAuth: false,
+          passwordPolicies: true,
+          bruteForceProtection: false,
+          zeroKnowledgeProofs: false,
+          aiThreatDetection: false
+        };
+        
+      case 'MEDIUM':
+        // Standard protection for production systems
+        return {
+          threatDetection: true,
+          realTimeMonitoring: true,
+          ipReputation: true,
           csrfProtection: true,
           xssProtection: true,
           sqlInjectionProtection: true,
@@ -297,7 +332,8 @@ class SecurityConfig {
           aiThreatDetection: false
         };
         
-      case 'medium':
+      case 'HIGH':
+        // Enhanced protection for sensitive systems
         return {
           threatDetection: true,
           realTimeMonitoring: true,
@@ -309,11 +345,12 @@ class SecurityConfig {
           twoFactorAuth: true,
           passwordPolicies: true,
           bruteForceProtection: true,
-          zeroKnowledgeProofs: false,
-          aiThreatDetection: false
+          zeroKnowledgeProofs: true,
+          aiThreatDetection: true
         };
         
-      case 'high':
+      case 'MAXIMUM':
+        // Maximum protection for critical systems
         return {
           threatDetection: true,
           realTimeMonitoring: true,

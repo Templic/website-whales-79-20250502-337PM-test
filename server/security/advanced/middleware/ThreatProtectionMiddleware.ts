@@ -13,6 +13,7 @@ import { threatDetectionService } from '../threat/ThreatDetectionService';
 import { threatMonitoringService } from '../threat/ThreatMonitoringService';
 import { TokenBucketRateLimiter } from '../threat/TokenBucketRateLimiter';
 import LRUCache from '../threat/SecurityCache';
+import { securityConfig, SecurityLevel } from '../config/SecurityConfig';
 
 // IP-based rate limiter
 const ipRateLimiter = new TokenBucketRateLimiter({
