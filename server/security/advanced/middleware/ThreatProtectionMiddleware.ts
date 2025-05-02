@@ -320,7 +320,10 @@ export const threatProtectionMiddleware = (req: Request, res: Response, next: Ne
 function isIpBlocked(ip: string): boolean {
   // Skip blocking for IPs in the infrastructure whitelist
   if (infraWhitelist.includes(ip)) {
-    console.log(`[Security] Allowing whitelisted IP: ${ip}`);
+    // Only log in debug mode
+    if (process.env.DEBUG_SECURITY === 'true') {
+      console.log(`[Security] Allowing whitelisted IP: ${ip}`);
+    }
     return false;
   }
   
@@ -332,7 +335,10 @@ function isIpBlocked(ip: string): boolean {
       ip.startsWith('104.') || ip.startsWith('172.') || ip.startsWith('34.') ||
       // Google Cloud infrastructure which Replit may use
       ip.includes('googleusercontent') || ip.includes('compute.internal')) {
-    console.log(`[Security] Allowing infrastructure IP: ${ip}`);
+    // Only log in debug mode
+    if (process.env.DEBUG_SECURITY === 'true') {
+      console.log(`[Security] Allowing infrastructure IP: ${ip}`);
+    }
     return false;
   }
   
