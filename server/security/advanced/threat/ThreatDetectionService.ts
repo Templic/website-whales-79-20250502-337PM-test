@@ -15,8 +15,8 @@ import { TokenBucketRateLimiter } from './TokenBucketRateLimiter';
 import { securityConfig } from '../config/SecurityConfig';
 import { v4 as uuidv4 } from 'uuid';
 
-// Specialized detection contexts
-interface DetectionContext {
+// Specialized detection contexts - exported for use in middleware
+export interface DetectionContext {
   ip: string;
   userId?: string;
   path: string;

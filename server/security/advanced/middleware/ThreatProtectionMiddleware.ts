@@ -9,7 +9,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { threatDetectionService } from '../threat/ThreatDetectionService';
+import { threatDetectionService, type DetectionContext } from '../threat/ThreatDetectionService';
 import { threatMonitoringService } from '../threat/ThreatMonitoringService';
 import { TokenBucketRateLimiter } from '../threat/TokenBucketRateLimiter';
 import LRUCache from '../threat/SecurityCache';
@@ -400,17 +400,20 @@ function inspectRequest(req: Request): DetectedThreat | null {
     // Apply all active detection rules
     const clientIp = (req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '').split(',')[0].trim();
     
-    const scanResult = threatDetectionService.scanRequest({
+    // Create a context object that exactly matches the DetectionContext interface
+    const context: DetectionContext = {
+      ip: clientIp,
       path: req.path,
       method: req.method,
       params: req.params || {},
       headers: req.headers as Record<string, string>,
-      body: req.body,
+      body: req.body, 
       data: {
         query: req.query
-      },
-      ip: clientIp
-    });
+      }
+    };
+    
+    const scanResult = threatDetectionService.scanRequest(context);
     
     // Check if any threats were detected
     if (scanResult && Array.isArray(scanResult) && scanResult.length > 0) {
