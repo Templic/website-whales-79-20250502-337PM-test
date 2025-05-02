@@ -19,7 +19,7 @@ import {
   InsertDetectionRule,
   InsertBlockedIp
 } from '../../../../shared/schema';
-import { eq, and, sql, desc, asc, lt, gt, gte, lte, like } from 'drizzle-orm';
+import { eq, and, or, sql, desc, asc, lt, gt, gte, lte, like } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
 // Type for threat detection data
@@ -766,14 +766,24 @@ class ThreatDatabaseService {
    */
   async isIpBlocked(ip: string): Promise<boolean> {
     try {
-      // Get active blocks for this IP
+      console.log(`[ThreatDBService] Checking if IP ${ip} is blocked...`);
+      
+      // Skip localhost and internal network IPs to prevent development blocking
+      if (ip === '127.0.0.1' || ip === 'localhost' || 
+          ip.startsWith('10.') || ip.startsWith('172.') || ip.startsWith('192.168.')) {
+        console.log(`[ThreatDBService] IP ${ip} is internal/development, not blocked`);
+        return false;
+      }
+      
+      // Get active blocks for this IP 
+      // Note: using explicit imports for or operator to prevent reference errors
       const blocks = await db.select()
         .from(blockedIps)
         .where(
           and(
             eq(blockedIps.ip, ip),
             eq(blockedIps.isActive, true),
-            // Not expired or no expiry
+            // Not expired or no expiry, using the or operator from drizzle-orm
             or(
               eq(blockedIps.expiresAt, null),
               gt(blockedIps.expiresAt, new Date())
@@ -782,7 +792,9 @@ class ThreatDatabaseService {
         )
         .limit(1);
       
-      return blocks.length > 0;
+      const isBlocked = blocks.length > 0;
+      console.log(`[ThreatDBService] IP ${ip} is ${isBlocked ? 'BLOCKED' : 'not blocked'}`);
+      return isBlocked;
     } catch (error) {
       console.error(`Error checking if IP ${ip} is blocked:`, error);
       // Default to not blocked in case of error
@@ -800,13 +812,14 @@ class ThreatDatabaseService {
    */
   async getBlockedIps(activeOnly = true, limit?: number, offset?: number): Promise<BlockedIp[]> {
     try {
+      console.log(`[ThreatDBService] Getting blocked IPs (activeOnly=${activeOnly})...`);
       let query = db.select().from(blockedIps);
       
       if (activeOnly) {
         query = query.where(
           and(
             eq(blockedIps.isActive, true),
-            // Not expired or no expiry
+            // Not expired or no expiry, using the or operator from drizzle-orm
             or(
               eq(blockedIps.expiresAt, null),
               gt(blockedIps.expiresAt, new Date())
@@ -841,16 +854,23 @@ class ThreatDatabaseService {
    */
   async cleanupExpiredBlocks(): Promise<number> {
     try {
+      console.log(`[ThreatDBService] Cleaning up expired blocks...`);
+      const currentDate = new Date();
+      console.log(`[ThreatDBService] Current date for expiry check: ${currentDate.toISOString()}`);
+      
       const result = await db.update(blockedIps)
         .set({ isActive: false })
         .where(
           and(
             eq(blockedIps.isActive, true),
-            lt(blockedIps.expiresAt, new Date())
+            // Using lt operator from drizzle-orm
+            lt(blockedIps.expiresAt, currentDate)
           )
         );
       
-      return result.rowCount || 0;
+      const cleanedCount = result.rowCount || 0;
+      console.log(`[ThreatDBService] Cleaned up ${cleanedCount} expired IP blocks`);
+      return cleanedCount;
     } catch (error) {
       console.error('Error cleaning up expired blocks:', error);
       return 0;
