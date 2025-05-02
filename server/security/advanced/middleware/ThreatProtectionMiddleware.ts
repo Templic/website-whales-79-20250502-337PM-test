@@ -15,28 +15,10 @@ import { TokenBucketRateLimiter } from '../threat/TokenBucketRateLimiter';
 import LRUCache from '../threat/SecurityCache';
 import { securityConfig, SecurityLevel } from '../config/SecurityConfig';
 
-// Define valid threat types for type safety
-export type ThreatType = 
-  | 'SQL_INJECTION' 
-  | 'XSS' 
-  | 'COMMAND_INJECTION' 
-  | 'PATH_TRAVERSAL' 
-  | 'CSRF' 
-  | 'OPEN_REDIRECT' 
-  | 'SERVER_SIDE_REQUEST_FORGERY' 
-  | 'XML_EXTERNAL_ENTITY' 
-  | 'DENIAL_OF_SERVICE' 
-  | 'BRUTE_FORCE' 
-  | 'SUSPICIOUS_IP' 
-  | 'RATE_LIMIT_ABUSE' 
-  | 'SUSPICIOUS_BEHAVIOR' 
-  | 'SUSPICIOUS_RESPONSE' 
-  | 'DATA_LEAKAGE' 
-  | 'INSECURE_DIRECT_OBJECT_REFERENCE'
-  | 'GENERAL_SECURITY_VIOLATION';
+// Import threat types from database service
+import { ThreatType, ThreatSeverity } from '../threat/ThreatDatabaseService';
 
-// Define threat severity levels
-export type ThreatSeverity = 'low' | 'medium' | 'high' | 'critical';
+// ThreatSeverity imported from ThreatDatabaseService
 
 // Interface for detected threats
 export interface DetectedThreat {
@@ -208,7 +190,7 @@ export const threatProtectionMiddleware = (req: Request, res: Response, next: Ne
   if (threatInfo) {
     // Always report the threat regardless of security level
     const threatId = threatDetectionService.reportThreat({
-      threatType: threatInfo.type,
+      threatType: threatInfo.type as ThreatType,
       severity: threatInfo.severity,
       sourceIp: clientIp,
       description: threatInfo.description,
@@ -237,7 +219,9 @@ export const threatProtectionMiddleware = (req: Request, res: Response, next: Ne
         60 * 60 // 1 hour
       );
       
-      if (securityLevel !== 'MONITOR') {
+      // Block based on security level - use string comparison for proper TypeScript type checking
+      const blockingLevels: SecurityLevel[] = ['MEDIUM', 'HIGH', 'MAXIMUM'];
+      if (blockingLevels.includes(securityLevel)) {
         return res.status(403).json({ 
           error: 'Access denied',
           code: 'SECURITY_VIOLATION'
@@ -249,12 +233,13 @@ export const threatProtectionMiddleware = (req: Request, res: Response, next: Ne
     if (threatInfo.severity === 'low') {
       // Allow the request but mark it
       req.threatDetected = true;
-      req.threatId = threatId;
+      req.threatId = typeof threatId === 'string' ? threatId : 'unknown-threat';
       return next();
     }
     
-    // Block medium+ severity in MEDIUM/HIGH/MAXIMUM modes
-    if (securityLevel !== 'MONITOR' && securityLevel !== 'LOW') {
+    // Block medium+ severity in appropriate security levels
+    const blockingLevels: SecurityLevel[] = ['MEDIUM', 'HIGH', 'MAXIMUM'];
+    if (blockingLevels.includes(securityLevel)) {
       return res.status(403).json({ 
         error: 'Access denied',
         code: 'SECURITY_VIOLATION'
@@ -275,7 +260,7 @@ export const threatProtectionMiddleware = (req: Request, res: Response, next: Ne
         if (responseThreat) {
           // Report the threat
           threatDetectionService.reportThreat({
-            threatType: responseThreat.type,
+            threatType: responseThreat.type as ThreatType,
             severity: responseThreat.severity,
             sourceIp: clientIp,
             description: responseThreat.description,
@@ -413,26 +398,36 @@ function getAttemptsCache(): LRUCache<string, number> {
 function inspectRequest(req: Request): DetectedThreat | null {
   try {
     // Apply all active detection rules
+    const clientIp = (req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '').split(',')[0].trim();
+    
     const scanResult = threatDetectionService.scanRequest({
       path: req.path,
       method: req.method,
-      query: req.query,
+      params: req.params || {},
       headers: req.headers as Record<string, string>,
       body: req.body,
-      ip: (req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '').split(',')[0].trim()
+      data: {
+        query: req.query
+      },
+      ip: clientIp
     });
     
     // Check if any threats were detected
     if (scanResult && Array.isArray(scanResult) && scanResult.length > 0) {
       // Use the highest severity threat
       const highestThreat = scanResult.reduce((highest, current) => {
-        const severityRank = {
+        // Safely compare severity levels
+        const severityRank: Record<ThreatSeverity, number> = {
           'low': 1,
           'medium': 2,
           'high': 3,
           'critical': 4
         };
-        return (severityRank[current.severity] > severityRank[highest.severity]) ? current : highest;
+        
+        const currentRank = severityRank[current.severity as ThreatSeverity] || 0;
+        const highestRank = severityRank[highest.severity as ThreatSeverity] || 0;
+        
+        return (currentRank > highestRank) ? current : highest;
       }, scanResult[0]);
       
       return {
