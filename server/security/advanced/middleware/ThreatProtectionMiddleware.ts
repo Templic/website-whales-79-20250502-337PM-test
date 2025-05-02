@@ -46,9 +46,10 @@ export const threatProtectionMiddleware = (req: Request, res: Response, next: Ne
     return next();
   }
   
-  // Check if IP is blocked
+  // Check if IP is already blocked in memory cache
   if (isIpBlocked(clientIp)) {
     threatMonitoringService.recordApiRequest(true);
+    console.log(`[Security] Blocked request from ${clientIp} - IP is in block list`);
     return res.status(403).json({ 
       error: 'Access denied',
       code: 'IP_BLOCKED'
@@ -201,6 +202,8 @@ export const threatProtectionMiddleware = (req: Request, res: Response, next: Ne
 
 /**
  * Check if an IP is currently blocked
+ * Note: This is a synchronous function for blocking decisions 
+ * that uses both memory cache and asynchronous database checks.
  */
 function isIpBlocked(ip: string): boolean {
   // First check in-memory cache for performance
@@ -215,19 +218,26 @@ function isIpBlocked(ip: string): boolean {
     }
   }
   
-  // Then check the database (async, but cache the result)
-  threatDetectionService.isIpBlocked(ip).then(blocked => {
-    if (blocked) {
-      // Update cache
-      blockedIpsCache.set(ip, { 
-        reason: 'Database block', 
-        until: Date.now() + 24 * 60 * 60 * 1000 // 24 hours cache
+  // Trigger database check asynchronously to update cache for future requests
+  // but still return the current cache state for this request
+  setTimeout(() => {
+    threatDetectionService.isIpBlocked(ip)
+      .then(blocked => {
+        if (blocked) {
+          // Update cache for future requests
+          blockedIpsCache.set(ip, { 
+            reason: 'Database block', 
+            until: Date.now() + 24 * 60 * 60 * 1000 // 24 hours cache
+          });
+          console.log(`[Security] IP ${ip} confirmed blocked from database`);
+        }
+      })
+      .catch(err => {
+        console.error('Error checking IP block status:', err);
       });
-    }
-  }).catch(err => {
-    console.error('Error checking IP block status:', err);
-  });
+  }, 0);
   
+  // For this request, we rely on cache only for performance
   return false;
 }
 
