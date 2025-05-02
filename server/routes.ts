@@ -21,6 +21,8 @@ import {
 import { setupCSRFProtection } from './middleware/csrfProtectionMiddleware';
 import { createAutoValidationMiddleware, initializeCommonValidationRules } from './middleware/apiValidationMiddleware';
 import { registerCommonValidationRules, registerCustomValidationRules } from './validation/apiValidationRules';
+import { threatProtectionMiddleware } from './security/advanced/middleware/ThreatProtectionMiddleware';
+import { securityConfig } from './security/advanced/config/SecurityConfig';
 
 // The isAuthenticated, isAdmin, and isSuperAdmin middleware are now imported from auth-utils.ts
 import { nanoid } from 'nanoid';
@@ -199,6 +201,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Register common and custom validation rules
   registerCommonValidationRules();
   registerCustomValidationRules();
+  
+  // Apply threat protection middleware based on security configuration
+  if (securityConfig.getSecurityFeatures().realTimeMonitoring) {
+    console.log("[SECURITY] Applying threat protection middleware...");
+    app.use(threatProtectionMiddleware);
+    console.log("✅ Threat protection middleware initialized successfully");
+  }
   
   // Apply the API validation middleware to all API routes
   // This will auto-validate requests based on registered rules

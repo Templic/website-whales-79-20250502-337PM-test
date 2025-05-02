@@ -1,155 +1,177 @@
 /**
- * LRU Cache Implementation for Security Services
+ * LRU Cache for security-related data
  * 
- * A memory-efficient cache implementation with time-based expiration
- * and least-recently-used eviction policy.
+ * A simple LRU (Least Recently Used) cache implementation 
+ * for security data with TTL (Time To Live) support
  */
 
-export default class LRUCache<K, V> {
-  private cache = new Map<K, V>();
+/**
+ * LRU Cache entry
+ */
+interface CacheEntry<T> {
+  value: T;
+  expiry: number; // Timestamp when entry expires
+  lastAccessed: number; // Timestamp of last access
+}
+
+/**
+ * LRU Cache with time-based expiry
+ */
+class LRUCache<K, V> {
+  private cache: Map<K, CacheEntry<V>> = new Map();
   private maxSize: number;
-  private ttl: number;
-  private timestamps = new Map<K, number>();
-  private accessOrder = new Map<K, number>();
-  private accessCounter = 0;
+  private defaultTtl: number;
   
   /**
-   * Create a new LRU Cache
-   * @param maxSize Maximum number of items in the cache (default: 1000)
-   * @param ttlMs Time-to-live in milliseconds (default: 5 minutes)
+   * Create a new LRU cache
+   * 
+   * @param maxSize Maximum number of items to keep in cache
+   * @param defaultTtl Default time-to-live in milliseconds
    */
-  constructor(maxSize: number = 1000, ttlMs: number = 5 * 60 * 1000) {
+  constructor(maxSize: number = 1000, defaultTtl: number = 3600000) {
     this.maxSize = maxSize;
-    this.ttl = ttlMs;
-  }
-  
-  /**
-   * Set a value in the cache
-   * @param key Cache key
-   * @param value Value to store
-   */
-  set(key: K, value: V): void {
-    // Check if cache is full and this is a new key
-    if (!this.cache.has(key) && this.cache.size >= this.maxSize) {
-      // Evict least recently used entry
-      this.evictLRU();
-    }
-    
-    // Store the value
-    this.cache.set(key, value);
-    
-    // Update timestamps and access order
-    this.timestamps.set(key, Date.now());
-    this.accessOrder.set(key, ++this.accessCounter);
+    this.defaultTtl = defaultTtl;
   }
   
   /**
    * Get a value from the cache
-   * @param key Cache key
-   * @returns The cached value or undefined if not found or expired
+   * 
+   * @param key The key to look up
+   * @returns The cached value or undefined if not found
    */
   get(key: K): V | undefined {
-    const value = this.cache.get(key);
+    const entry = this.cache.get(key);
     
-    if (value !== undefined) {
-      // Check if entry has expired
-      const timestamp = this.timestamps.get(key) || 0;
-      if (Date.now() - timestamp > this.ttl) {
-        // Remove expired entry
-        this.delete(key);
-        return undefined;
-      }
-      
-      // Update access order to mark as recently used
-      this.accessOrder.set(key, ++this.accessCounter);
-      return value;
+    if (!entry) {
+      return undefined;
     }
     
-    return undefined;
+    // Check if entry has expired
+    if (Date.now() > entry.expiry) {
+      this.cache.delete(key);
+      return undefined;
+    }
+    
+    // Update last accessed time
+    entry.lastAccessed = Date.now();
+    
+    return entry.value;
   }
   
   /**
-   * Remove an item from the cache
-   * @param key Cache key
+   * Set a value in the cache
+   * 
+   * @param key The key to store
+   * @param value The value to store
+   * @param ttl TTL in milliseconds (optional, uses default if not specified)
+   */
+  set(key: K, value: V, ttl?: number): void {
+    // If we're at capacity, remove the least recently used item
+    if (this.cache.size >= this.maxSize) {
+      const lruKey = this.findLeastRecentlyUsed();
+      if (lruKey) {
+        this.cache.delete(lruKey);
+      }
+    }
+    
+    // Set the new value with expiry
+    const expiry = Date.now() + (ttl || this.defaultTtl);
+    this.cache.set(key, {
+      value,
+      expiry,
+      lastAccessed: Date.now()
+    });
+  }
+  
+  /**
+   * Check if a key exists and hasn't expired
+   * 
+   * @param key The key to check
+   * @returns Whether the key exists
+   */
+  has(key: K): boolean {
+    const entry = this.cache.get(key);
+    
+    if (!entry) {
+      return false;
+    }
+    
+    // Check if entry has expired
+    if (Date.now() > entry.expiry) {
+      this.cache.delete(key);
+      return false;
+    }
+    
+    return true;
+  }
+  
+  /**
+   * Delete a key from the cache
+   * 
+   * @param key The key to delete
    */
   delete(key: K): void {
     this.cache.delete(key);
-    this.timestamps.delete(key);
-    this.accessOrder.delete(key);
   }
   
   /**
-   * Clear the entire cache
+   * Clear all items from the cache
    */
   clear(): void {
     this.cache.clear();
-    this.timestamps.clear();
-    this.accessOrder.clear();
-    this.accessCounter = 0;
   }
   
   /**
-   * Get the number of items in the cache
+   * Get the current size of the cache
+   * 
+   * @returns Number of items in the cache
    */
   size(): number {
     return this.cache.size;
   }
   
   /**
-   * Return all keys in the cache
+   * Find all keys in the cache
+   * 
+   * @returns Array of keys
    */
   keys(): K[] {
     return Array.from(this.cache.keys());
   }
   
   /**
-   * Return all values in the cache
+   * Get all values in the cache
+   * 
+   * @returns Array of values
    */
   values(): V[] {
-    return Array.from(this.cache.values());
-  }
-  
-  /**
-   * Return all entries in the cache
-   */
-  entries(): [K, V][] {
-    return Array.from(this.cache.entries());
-  }
-  
-  /**
-   * Evict the least recently used entry
-   */
-  private evictLRU(): void {
-    if (this.cache.size === 0) return;
+    const now = Date.now();
+    const result: V[] = [];
     
-    let lruKey: K | null = null;
-    let lowestAccess = Infinity;
-    
-    // Find the entry with the lowest access count
-    for (const [key, accessCount] of this.accessOrder.entries()) {
-      if (accessCount < lowestAccess) {
-        lowestAccess = accessCount;
-        lruKey = key;
+    for (const [key, entry] of this.cache.entries()) {
+      if (now <= entry.expiry) {
+        result.push(entry.value);
+      } else {
+        // Clean up expired entries as we go
+        this.cache.delete(key);
       }
     }
     
-    // Remove the LRU entry
-    if (lruKey !== null) {
-      this.delete(lruKey);
-    }
+    return result;
   }
   
   /**
-   * Remove all expired entries
+   * Clean up expired entries
+   * 
    * @returns Number of entries removed
    */
-  purgeExpired(): number {
+  cleanup(): number {
     const now = Date.now();
     let count = 0;
     
-    for (const [key, timestamp] of this.timestamps.entries()) {
-      if (now - timestamp > this.ttl) {
-        this.delete(key);
+    for (const [key, entry] of this.cache.entries()) {
+      if (now > entry.expiry) {
+        this.cache.delete(key);
         count++;
       }
     }
@@ -158,39 +180,23 @@ export default class LRUCache<K, V> {
   }
   
   /**
-   * Check if key exists and is not expired
-   * @param key Cache key
-   * @returns true if key exists and is not expired
+   * Find the least recently used key
+   * 
+   * @returns The least recently used key or undefined if cache is empty
    */
-  has(key: K): boolean {
-    if (!this.cache.has(key)) {
-      return false;
+  private findLeastRecentlyUsed(): K | undefined {
+    let lruKey: K | undefined = undefined;
+    let lruTime = Number.MAX_SAFE_INTEGER;
+    
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.lastAccessed < lruTime) {
+        lruKey = key;
+        lruTime = entry.lastAccessed;
+      }
     }
     
-    // Check if entry has expired
-    const timestamp = this.timestamps.get(key) || 0;
-    if (Date.now() - timestamp > this.ttl) {
-      // Remove expired entry
-      this.delete(key);
-      return false;
-    }
-    
-    return true;
-  }
-  
-  /**
-   * Update TTL for a specific key
-   * @param key Cache key
-   * @param ttlMs New TTL in milliseconds
-   * @returns true if key exists and TTL was updated
-   */
-  updateTTL(key: K, ttlMs: number): boolean {
-    if (!this.cache.has(key)) {
-      return false;
-    }
-    
-    // Reset the timestamp with the new TTL in mind
-    this.timestamps.set(key, Date.now());
-    return true;
+    return lruKey;
   }
 }
+
+export default LRUCache;
