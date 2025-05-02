@@ -1,280 +1,76 @@
 /**
  * Security System
  * 
- * This is the main entry point for the security system, providing all security components
- * and middleware for use in the application.
+ * This module exports and initializes the security system.
  */
 
-import * as express from 'express';
-import { securityFabric } from './advanced/SecurityFabric';
-import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventSeverity, SecurityEventCategory } from './advanced/blockchain/ImmutableSecurityLogs';
-// Import RASP components directly from the RASP manager
-import { 
-  raspMiddleware as raspMw, 
-  createRASPMiddleware, 
-  RASPProtectionLevel, 
-  RASPProtectionCategory,
-  RASPManager,
-  raspManager
-} from './advanced/rasp/RASPManager';
-// Import CSRF protection components
-import { csrfProtection, csrfMiddleware, csrfTokenMiddleware } from './advanced/csrf';
-import { csrfValidator } from './advanced/rasp/CSRFValidator';
+import chalk from 'chalk';
 
-// Create middleware instances with different protection levels
-const raspMiddleware = raspMw;
-const raspMonitoringMiddleware = createRASPMiddleware({ protectionLevel: RASPProtectionLevel.MONITORING });
-const raspDetectionMiddleware = createRASPMiddleware({ protectionLevel: RASPProtectionLevel.DETECTION });
-const secureRequestMiddleware = [raspMiddleware];
+// Export components
+export * from './rules';
+export * from './services';
+export * from './middleware';
 
-/**
- * Security system initialization options
- */
-export interface SecurityInitializationOptions {
-  /**
-   * Whether to enable advanced security features
-   */
-  advanced?: boolean;
-  
-  /**
-   * Security mode ('standard', 'elevated', 'high', 'maximum')
-   */
-  mode?: 'standard' | 'elevated' | 'high' | 'maximum';
-  
-  /**
-   * API routes to secure
-   */
-  apiRoutes?: string[];
-  
-  /**
-   * Admin routes to secure
-   */
-  adminRoutes?: string[];
-  
-  /**
-   * Public routes (no authentication required)
-   */
-  publicRoutes?: string[];
-  
-  /**
-   * Whether to log all requests
-   */
-  logAllRequests?: boolean;
-  
-  /**
-   * Whether to enable RASP
-   */
-  enableRASP?: boolean;
-  
-  /**
-   * RASP protection level
-   */
-  raspProtectionLevel?: RASPProtectionLevel;
-}
-
-/**
- * Default security initialization options
- */
-const DEFAULT_SECURITY_OPTIONS: SecurityInitializationOptions = {
-  advanced: true,
-  mode: 'standard',
-  apiRoutes: ['/api'],
-  adminRoutes: ['/api/admin'],
-  publicRoutes: ['/', '/login', '/register', '/public'],
-  logAllRequests: true,
-  enableRASP: true,
-  raspProtectionLevel: RASPProtectionLevel.PREVENTION
-};
+// Export types
+export { RuleType, RuleStatus } from './rules/RuleCache';
+export { ContextPreparationType } from './services/RuleEvaluationService';
 
 /**
  * Initialize the security system
+ * 
+ * @param options Initialization options
  */
-export async function initializeSecurity(app: express.Application, options?: SecurityInitializationOptions): Promise<void> {
-  const config = { ...DEFAULT_SECURITY_OPTIONS, ...options };
+export async function initializeSecuritySystem(
+  options: {
+    enableRuleCache?: boolean;
+    enableRuleCompilation?: boolean;
+    refreshCacheOnStart?: boolean;
+  } = {}
+) {
+  // Default options
+  const initOptions = {
+    enableRuleCache: true,
+    enableRuleCompilation: true,
+    refreshCacheOnStart: true,
+    ...options
+  };
   
-  console.log(`[Security] Initializing security system in ${config.mode} mode with advanced features ${config.advanced ? 'enabled' : 'disabled'}`);
+  console.log(chalk.blue('[Security] Initializing security system...'));
   
   try {
-    // Initialize security blockchain
-    await securityBlockchain.initialize();
+    // Import rule cache and service
+    const { ruleCache } = await import('./rules');
+    const { ruleEvaluationService } = await import('./services');
     
-    // Register RASP as a security component
-    securityFabric.registerComponent({
-      name: 'RASP',
-      description: 'Runtime Application Self-Protection',
-      async processEvent(event) {
-        console.log(`[RASP] Processing security event: ${event.message}`);
-      },
-      async getStatus() {
-        return {
-          enabled: true,
-          protectionLevel: config.raspProtectionLevel,
-          rules: 'Multiple protection rules active'
-        };
-      }
-    });
-    
-    // Log initialization
-    await securityBlockchain.addSecurityEvent({
-      severity: SecurityEventSeverity.INFO,
-      category: SecurityEventCategory.SYSTEM,
-      message: `Security system initialized in ${config.mode} mode`,
-      metadata: {
-        mode: config.mode,
-        advanced: config.advanced,
-        rasp: config.enableRASP
-      }
-    });
-    
-    // Initialize components through security fabric
-    await securityFabric.initializeComponents();
-    
-    // Apply RASP middleware if enabled
-    if (config.enableRASP) {
-      console.log('[Security] Applying RASP middleware...');
+    // Initialize rule cache if enabled
+    if (initOptions.enableRuleCache) {
+      console.log(chalk.blue('[Security] Initializing rule cache...'));
       
-      // Apply RASP middleware based on protection level
-      switch (config.raspProtectionLevel) {
-        case RASPProtectionLevel.MONITORING:
-          // Only monitor, don't block
-          app.use(raspMonitoringMiddleware);
-          break;
-        case RASPProtectionLevel.DETECTION:
-          // Detect and log, but don't block
-          app.use(raspDetectionMiddleware);
-          break;
-        case RASPProtectionLevel.PREVENTION:
-        default:
-          // Full protection
-          app.use(raspMiddleware);
-          break;
+      // Start auto refresh
+      if (initOptions.refreshCacheOnStart) {
+        try {
+          await ruleCache.refresh({ full: true });
+          console.log(chalk.green('[Security] Rule cache refreshed'));
+        } catch (error) {
+          console.error(chalk.yellow('[Security] Error refreshing rule cache:'), error);
+          console.log(chalk.yellow('[Security] Continuing with empty cache, will populate as needed'));
+        }
       }
     }
     
-    // Apply CSRF protection middleware on all non-API routes
-    if (config.advanced && config.mode === 'maximum') {
-      console.log('[Security] Applying CSRF protection middleware...');
-      
-      // Set CSRF token on all routes
-      app.use(csrfTokenMiddleware);
-      
-      // Apply CSRF validation on non-API routes
-      app.use((req, res, next) => {
-        // Skip CSRF protection for API routes with token authentication
-        if (req.path.startsWith('/api/') && req.headers.authorization) {
-          return next();
-        }
-        
-        // Skip for non-state-changing methods
-        if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-          return next();
-        }
-        
-        // Skip for auth routes
-        if (req.path.includes('/auth/') || req.path.includes('/login') || req.path.includes('/register')) {
-          return next();
-        }
-        
-        // Apply CSRF middleware
-        csrfMiddleware(req, res, next);
-      });
-      
-      // Log initialization
-      securityBlockchain.addSecurityEvent({
-        severity: SecurityEventSeverity.INFO,
-        category: SecurityEventCategory.SYSTEM,
-        message: 'CSRF protection enabled',
-        metadata: {
-          protection: 'maximum',
-          type: 'double-submit-cookie'
-        }
-      }).catch(error => {
-        console.error('[Security] Error logging CSRF initialization:', error);
-      });
-    }
+    console.log(chalk.green('[Security] Security system initialized successfully'));
     
-    // Log all requests if enabled
-    if (config.logAllRequests) {
-      app.use((req, res, next) => {
-        securityBlockchain.addSecurityEvent({
-          severity: SecurityEventSeverity.INFO,
-          category: SecurityEventCategory.API,
-          message: `Request: ${req.method} ${req.originalUrl}`,
-          ipAddress: req.ip,
-          metadata: {
-            method: req.method,
-            url: req.originalUrl,
-            userAgent: req.headers['user-agent']
-          }
-        }).catch(error => {
-          console.error('[Security] Error logging request:', error);
-        });
-        
-        next();
-      });
-    }
-    
-    console.log('[Security] Security system initialized successfully');
+    return {
+      ruleCache,
+      ruleEvaluationService
+    };
   } catch (error) {
-    console.error('[Security] Error initializing security system:', error);
-    
-    // Log initialization error
-    await securityBlockchain.addSecurityEvent({
-      severity: SecurityEventSeverity.CRITICAL,
-      category: SecurityEventCategory.SYSTEM,
-      message: 'Security system initialization failed',
-      metadata: { error: error instanceof Error ? error.message : String(error) }
-    });
-    
-    throw error;
+    console.error(chalk.red('[Security] Error initializing security system:'), error);
+    throw new Error(`Failed to initialize security system: ${error.message}`);
   }
 }
 
-/**
- * Shutdown the security system
- */
-export async function shutdownSecurity(): Promise<void> {
-  console.log('[Security] Shutting down security system...');
-  
-  try {
-    // Log shutdown
-    await securityBlockchain.addSecurityEvent({
-      severity: SecurityEventSeverity.INFO,
-      category: SecurityEventCategory.SYSTEM,
-      message: 'Security system shutdown initiated'
-    });
-    
-    // Shut down components through security fabric
-    await securityFabric.shutdownComponents();
-    
-    // Shut down blockchain
-    await securityBlockchain.shutdown();
-    
-    console.log('[Security] Security system shut down successfully');
-  } catch (error) {
-    console.error('[Security] Error shutting down security system:', error);
-    throw error;
-  }
-}
-
-// Export security components
-export {
-  securityFabric,
-  securityBlockchain,
-  SecurityEventSeverity,
-  SecurityEventCategory,
-  raspMiddleware,
-  raspMonitoringMiddleware,
-  raspDetectionMiddleware,
-  secureRequestMiddleware,
-  raspManager,
-  RASPManager,
-  RASPProtectionLevel,
-  RASPProtectionCategory,
-  // CSRF components
-  csrfProtection,
-  csrfMiddleware,
-  csrfTokenMiddleware,
-  csrfValidator
+// Export default for convenience
+export default {
+  initializeSecuritySystem
 };
