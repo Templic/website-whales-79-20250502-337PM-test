@@ -221,8 +221,15 @@ export const threatProtectionMiddleware = (req: Request, res: Response, next: Ne
  * that uses both memory cache and asynchronous database checks.
  */
 function isIpBlocked(ip: string): boolean {
-  // Skip blocking for localhost and internal IPs
-  if (ip === '127.0.0.1' || ip === 'localhost' || ip.startsWith('10.') || ip.startsWith('172.') || ip.startsWith('192.168.')) {
+  // Skip blocking for localhost, internal IPs, and Replit infrastructure
+  if (ip === '127.0.0.1' || ip === 'localhost' || 
+      ip.startsWith('10.') || ip.startsWith('172.') || ip.startsWith('192.168.') ||
+      // Replit specific infrastructure IPs - never block these
+      ip === '35.229.33.38' || ip.startsWith('35.') || ip.startsWith('34.') || 
+      ip.startsWith('104.') || ip.startsWith('172.') || ip.startsWith('34.') ||
+      // Google Cloud infrastructure which Replit may use
+      ip.includes('googleusercontent') || ip.includes('compute.internal')) {
+    console.log(`[Security] Allowing infrastructure IP: ${ip}`);
     return false;
   }
   

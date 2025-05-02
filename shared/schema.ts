@@ -1246,12 +1246,12 @@ export const userNotifications = pgTable("user_notifications", {
 export const securitySettings = pgTable("security_settings", {
   id: serial("id").primaryKey(),
   key: text("key").notNull().unique(),
-  name: text("name").notNull(),
-  description: text("description").notNull(),
-  value: json("value").notNull(),
-  type: text("type", { enum: ["boolean", "number", "string", "json"] }).notNull(),
-  category: text("category").notNull(),
-  options: json("options"),
+  name: text("name").notNull().default('Default Setting Name'),
+  description: text("description").notNull().default('Default description for this security setting'),
+  value: json("value").notNull().default('{}'),
+  type: text("type", { enum: ["boolean", "number", "string", "json"] }).notNull().default("boolean"),
+  category: text("category").notNull().default("general"),
+  options: json("options").default('{}'),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at"),
   updatedBy: varchar("updated_by", { length: 255 }).references(() => users.id)
