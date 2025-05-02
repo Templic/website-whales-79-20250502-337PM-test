@@ -177,6 +177,8 @@ import zeroKnowledgeSecurityRoutes from './security/advanced/zkp/ZeroKnowledgeSe
 import threatProtectionRoutes from './security/advanced/threat/ThreatProtectionRoutes';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 import { protectApiRoutes } from './security/apiRoutesProtector';
+import { MFAMiddleware } from './middleware/MFAMiddleware';
+import mfaRoutes from './routes/mfaRoutes';
 
 // Email transporter for nodemailer
 const transporter = createTransport({
@@ -371,6 +373,18 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use threat protection routes
   app.use('/api/security/threat', isAuthenticated, threatProtectionRoutes);
+  
+  // Apply MFA Middleware when the feature is enabled
+  if (securityConfig.getSecurityFeatures().mfa) {
+    console.log("[SECURITY] Applying MFA middleware to protected routes...");
+    // Apply to specific routes that need MFA protection
+    app.use('/api/admin', MFAMiddleware);
+    app.use('/api/security/admin', MFAMiddleware);
+    console.log("✅ MFA middleware initialized successfully");
+  }
+  
+  // Use MFA routes for managing Multi-Factor Authentication
+  app.use('/api/mfa', mfaRoutes);
 
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', isAdmin, async (req, res) => {

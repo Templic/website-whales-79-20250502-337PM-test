@@ -183,3 +183,4 @@ async function checkMFAVerified(req: Request, userId: string, config: MFAConfig)
 
 // Export the middleware with default config
 export const mfaMiddleware = createMFAMiddleware();
+export const MFAMiddleware = mfaMiddleware;

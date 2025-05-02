@@ -11,7 +11,7 @@
  * - Remember trusted devices
  */
 
-import { authenticator } from '@otplib/preset-default';
+import { authenticator } from 'otplib';  // Use the main otplib package
 import { nanoid } from 'nanoid';
 import * as QRCode from 'qrcode';
 import { db } from '../../../db';
