@@ -71,6 +71,9 @@ class ThreatMonitoringService {
   private metricListeners: Array<(metrics: SecurityMetrics) => void> = [];
   
   constructor() {
+    // Reset metrics on initialization to avoid unrealistic values
+    this.resetMetrics();
+    
     // Start metrics collection if configured to do so
     if (securityConfig.getSecurityFeatures().realTimeMonitoring) {
       this.startMetricsCollection();
@@ -84,6 +87,25 @@ class ThreatMonitoringService {
         this.stopMetricsCollection();
       }
     });
+  }
+  
+  /**
+   * Reset metrics to initial state
+   * Useful for clearing counters that may have accumulated unrealistically
+   */
+  resetMetrics(): void {
+    this.metrics = {
+      apiRequests: 0,
+      blockedRequests: 0,
+      activeThreats: 0,
+      timestamp: Date.now()
+    };
+    
+    this.history.requestHistory = [];
+    
+    if (process.env.DEBUG_SECURITY === 'true') {
+      console.log('[debug] [system] Security metrics reset to initial values');
+    }
   }
   
   /**
@@ -474,9 +496,9 @@ class ThreatMonitoringService {
   /**
    * Start collecting metrics on an interval
    * 
-   * @param intervalMs Collection interval in milliseconds (default: 30 seconds)
+   * @param intervalMs Collection interval in milliseconds (default: 5 minutes)
    */
-  startMetricsCollection(intervalMs: number = 30 * 1000): void {
+  startMetricsCollection(intervalMs: number = 5 * 60 * 1000): void {
     // Don't start if already running
     if (this.collectionInterval !== null) {
       return;
@@ -484,8 +506,13 @@ class ThreatMonitoringService {
     
     this.collectionIntervalMs = intervalMs;
     
-    // Log initial start
-    console.log(`[info] [system] Security metrics collection started { intervalMs: ${intervalMs} }`);
+    // Reset metrics when starting collection to prevent accumulation
+    this.resetMetrics();
+    
+    // Log initial start (only in debug mode)
+    if (process.env.DEBUG_SECURITY === 'true') {
+      console.log(`[info] [system] Security metrics collection started { intervalMs: ${intervalMs} }`);
+    }
     
     // Immediately collect metrics
     this.collectMetrics();
@@ -532,12 +559,14 @@ class ThreatMonitoringService {
       // Notify listeners
       this.notifyListeners();
       
-      // Debug log metrics in development environment
-      console.log(`[debug] [system] Security metrics collected ${JSON.stringify({
-        apiRequests: this.metrics.apiRequests,
-        blockedRequests: this.metrics.blockedRequests,
-        activeThreats: this.metrics.activeThreats
-      })}`);
+      // Debug log metrics in development environment - only in debug mode
+      if (process.env.DEBUG_SECURITY === 'true') {
+        console.log(`[debug] [system] Security metrics collected ${JSON.stringify({
+          apiRequests: this.metrics.apiRequests,
+          blockedRequests: this.metrics.blockedRequests,
+          activeThreats: this.metrics.activeThreats
+        })}`);
+      }
     } catch (error) {
       console.error('Error collecting security metrics:', error);
     }

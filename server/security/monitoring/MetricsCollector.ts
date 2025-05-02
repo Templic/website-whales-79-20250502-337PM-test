@@ -103,6 +103,30 @@ let latestMetrics: SecurityMetrics = {
 let metricsCollectionInterval: NodeJS.Timeout | null = null;
 
 /**
+ * Reset security metrics to prevent unrealistic accumulation
+ */
+export function resetSecurityMetrics(): void {
+  // Reset activity metrics
+  latestMetrics.activity.apiRequests = 0;
+  latestMetrics.activity.blockedRequests = 0;
+  latestMetrics.activity.loginAttempts = 0;
+  latestMetrics.activity.successfulLogins = 0;
+  latestMetrics.activity.failedLogins = 0;
+  
+  // Set reasonable values for threats
+  latestMetrics.threats.active = 3; 
+  latestMetrics.threats.critical = 0;
+  latestMetrics.threats.blockedAttempts = 0;
+  
+  // Update timestamp
+  latestMetrics.activity.lastUpdated = new Date();
+  
+  if (process.env.DEBUG_SECURITY === 'true') {
+    console.log('[debug] [system] Security metrics collector reset to initial values');
+  }
+}
+
+/**
  * Start collecting security metrics
  */
 export function startMetricsCollection(intervalMs: number = 60000): void {
@@ -110,18 +134,24 @@ export function startMetricsCollection(intervalMs: number = 60000): void {
     clearInterval(metricsCollectionInterval);
   }
   
+  // Reset metrics first to prevent accumulation
+  resetSecurityMetrics();
+  
   // Collect metrics immediately
   collectSecurityMetrics();
   
   // Schedule regular collection
   metricsCollectionInterval = setInterval(collectSecurityMetrics, intervalMs);
   
-  logSecurityEvent({
-    category: SecurityEventCategory.SYSTEM,
-    severity: SecurityEventSeverity.INFO,
-    message: 'Security metrics collection started',
-    data: { intervalMs }
-  });
+  // Only log in debug mode
+  if (process.env.DEBUG_SECURITY === 'true') {
+    logSecurityEvent({
+      category: SecurityEventCategory.SYSTEM,
+      severity: SecurityEventSeverity.INFO,
+      message: 'Security metrics collection started',
+      data: { intervalMs }
+    });
+  }
 }
 
 /**
@@ -132,11 +162,14 @@ export function stopMetricsCollection(): void {
     clearInterval(metricsCollectionInterval);
     metricsCollectionInterval = null;
     
-    logSecurityEvent({
-      category: SecurityEventCategory.SYSTEM,
-      severity: SecurityEventSeverity.INFO,
-      message: 'Security metrics collection stopped'
-    });
+    // Only log in debug mode
+    if (process.env.DEBUG_SECURITY === 'true') {
+      logSecurityEvent({
+        category: SecurityEventCategory.SYSTEM,
+        severity: SecurityEventSeverity.INFO,
+        message: 'Security metrics collection stopped'
+      });
+    }
   }
 }
 
@@ -145,44 +178,13 @@ export function stopMetricsCollection(): void {
  */
 async function collectSecurityMetrics(): Promise<void> {
   try {
-    // In a real application, these metrics would be collected from actual security systems
-    // For this example, we'll generate simulated metrics
-    
-    // Update API request count (simulate API activity)
-    latestMetrics.activity.apiRequests += Math.floor(Math.random() * 5);
-    
-    // Occasionally add blocked requests
-    if (Math.random() > 0.7) {
-      const blockedRequests = Math.floor(Math.random() * 3);
-      latestMetrics.activity.blockedRequests += blockedRequests;
-      latestMetrics.threats.blockedAttempts += blockedRequests;
-    }
-    
-    // Occasionally add login attempts
-    if (Math.random() > 0.6) {
-      const loginAttempts = Math.floor(Math.random() * 2) + 1;
-      latestMetrics.activity.loginAttempts += loginAttempts;
-      
-      // Most login attempts are successful
-      const successfulLogins = Math.random() > 0.2 ? loginAttempts : loginAttempts - 1;
-      latestMetrics.activity.successfulLogins += successfulLogins;
-      
-      // The rest are failed
-      latestMetrics.activity.failedLogins += (loginAttempts - successfulLogins);
-    }
-    
-    // Update the last updated timestamp
+    // Update the last updated timestamp only - don't simulate traffic
+    // This improves performance by not generating fake requests
     latestMetrics.activity.lastUpdated = new Date();
     
-    // Occasionally adjust threat levels
-    if (Math.random() > 0.9) {
-      // Simulate changing threat levels
-      const threatChange = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
-      latestMetrics.threats.active = Math.max(0, latestMetrics.threats.active + threatChange);
-      
-      // Critical threats are rare
-      latestMetrics.threats.critical = Math.random() > 0.95 ? 1 : 0;
-    }
+    // Don't artificially increase metrics - only update with actual activity
+    // This prevents metrics from growing out of control
+    // In a production system, these would be collected from actual security events
     
     // Get security score from blockchain logs (dummy for now)
     try {
@@ -195,16 +197,19 @@ async function collectSecurityMetrics(): Promise<void> {
       // Ignore blockchain errors
     }
     
-    logSecurityEvent({
-      category: SecurityEventCategory.SYSTEM,
-      severity: SecurityEventSeverity.DEBUG,
-      message: 'Security metrics collected',
-      data: {
-        apiRequests: latestMetrics.activity.apiRequests,
-        blockedRequests: latestMetrics.activity.blockedRequests,
-        activeThreats: latestMetrics.threats.active
-      }
-    });
+    // Only log metrics in debug mode
+    if (process.env.DEBUG_SECURITY === 'true') {
+      logSecurityEvent({
+        category: SecurityEventCategory.SYSTEM,
+        severity: SecurityEventSeverity.DEBUG,
+        message: 'Security metrics collected',
+        data: {
+          apiRequests: latestMetrics.activity.apiRequests,
+          blockedRequests: latestMetrics.activity.blockedRequests,
+          activeThreats: latestMetrics.threats.active
+        }
+      });
+    }
   } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,

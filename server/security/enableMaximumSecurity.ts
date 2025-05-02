@@ -95,8 +95,8 @@ export function enableMaximumSecurity(): void {
     // Set all security features to maximum
     setSecurityFeatures(MAXIMUM_SECURITY_FEATURES);
     
-    // Start collecting security metrics
-    startMetricsCollection(30000); // Collect metrics every 30 seconds
+    // Start collecting security metrics (at a reduced frequency to improve performance)
+    startMetricsCollection(5 * 60 * 1000); // Collect metrics every 5 minutes
     
     // Initialize events collector
     initializeEventsCollector();
