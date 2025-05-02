@@ -56,30 +56,30 @@ interface RequestCounter {
 
 // Default detection patterns
 const SQL_INJECTION_PATTERNS = [
-  "(?i)\\b(union|select|insert|delete|update|drop|alter)\\b.*(\\bfrom\\b|\\binto\\b|\\bwhere\\b)",
-  "(?i)'\\s*(--|#|\\/\\*|;)",
-  "(?i)(\\b|\\A)select(\\b|\\s.*\\b)(from|into|case|when|then|else)\\b",
-  "(?i)(\\b|\\A)insert(\\b|\\s.*\\b)(into|values|select)\\b",
-  "(?i)(\\b|\\A)update(\\b|\\s.*\\b)(set)\\b",
-  "(?i)(\\b|\\A)delete(\\b|\\s.*\\b)(from)\\b",
+  "\\b(union|select|insert|delete|update|drop|alter)\\b.*(\\bfrom\\b|\\binto\\b|\\bwhere\\b)",
+  "'\\s*(--|#|\\/\\*|;)",
+  "(\\b|\\A)select(\\b|\\s.*\\b)(from|into|case|when|then|else)\\b",
+  "(\\b|\\A)insert(\\b|\\s.*\\b)(into|values|select)\\b",
+  "(\\b|\\A)update(\\b|\\s.*\\b)(set)\\b",
+  "(\\b|\\A)delete(\\b|\\s.*\\b)(from)\\b",
 ];
 
 const XSS_PATTERNS = [
-  "(?i)<[^\\w<>]*(?:[^<>\"'\\s]*:)?[^\\w<>]*(?:script|alert|svg|iframe|x|on\\w+|action|data)",
-  "(?i)\\b(javascript|data|vbscript):",
-  "(?i)<script[^>]*>[\\s\\S]*?<\\/script>",
-  "(?i)<\\s*img[^>]*\\s+src\\s*=\\s*['\\\"](?:javascript|data):[^'\\\"]*['\\\"]",
-  "(?i)<\\s*object[^>]*>",
-  "(?i)(alert|confirm|prompt)\\s*\\("
+  "<[^\\w<>]*(?:[^<>\"'\\s]*:)?[^\\w<>]*(?:script|alert|svg|iframe|x|on\\w+|action|data)",
+  "\\b(javascript|data|vbscript):",
+  "<script[^>]*>[\\s\\S]*?<\\/script>",
+  "<\\s*img[^>]*\\s+src\\s*=\\s*['\\\"](?:javascript|data):[^'\\\"]*['\\\"]",
+  "<\\s*object[^>]*>",
+  "(alert|confirm|prompt)\\s*\\("
 ];
 
 const PATH_TRAVERSAL_PATTERNS = [
-  "(?i)\\.\\.(\/|\\\\)",
-  "(?i)(%2e%2e|\\.\\.)(\\\\|\\/|%2f|%5c)",
-  "(?i)etc\/passwd",
-  "(?i)\\\/etc\\\/shadow",
-  "(?i)\\\/proc\\\/self\\\/",
-  "(?i)\\\/dev\\\/urandom"
+  "\\.\\.(\/|\\\\)",
+  "(%2e%2e|\\.\\.)(\\\\|\\/|%2f|%5c)",
+  "etc\/passwd",
+  "\\\/etc\\\/shadow",
+  "\\\/proc\\\/self\\\/",
+  "\\\/dev\\\/urandom"
 ];
 
 // Detection service class
@@ -640,6 +640,175 @@ class ThreatDetectionService {
    */
   isRateLimited(ip: string): boolean {
     return !this.rateLimiter.consume(ip);
+  }
+  
+  /**
+   * Check if an IP is blocked in the database
+   * 
+   * @param ip IP address to check
+   * @returns Promise resolving to true if IP is blocked
+   */
+  async isIpBlocked(ip: string): Promise<boolean> {
+    return await threatDatabaseService.isIpBlocked(ip);
+  }
+  
+  /**
+   * Report a security threat from any source
+   * 
+   * @param threatData Threat details
+   * @returns The recorded threat
+   */
+  async reportThreat(threatData: {
+    threatType: ThreatType;
+    severity: ThreatSeverity;
+    sourceIp: string;
+    description: string;
+    userId?: string | null;
+    evidence: Record<string, any>;
+  }): Promise<DetectedThreat> {
+    // Create unique ID for this threat
+    const threatId = uuidv4();
+    
+    // Prepare threat object
+    const threat: DetectedThreat = {
+      threatId: threatId,
+      description: threatData.description,
+      threatType: threatData.threatType,
+      severity: threatData.severity,
+      sourceIp: threatData.sourceIp,
+      userId: threatData.userId || null,
+      isArchived: false,
+      evidence: threatData.evidence
+    };
+    
+    // Store in database
+    await threatDatabaseService.recordThreat(threat);
+    
+    // Log the incident
+    console.warn(`Security threat detected: ${threatData.description} from ${threatData.sourceIp}`);
+    
+    // Report to monitoring service
+    threatMonitoringService.recordThreat(threatData.threatType, threatData.severity);
+    
+    return threat;
+  }
+  
+  /**
+   * Block an IP address
+   * 
+   * @param ip IP address to block
+   * @param reason Reason for blocking
+   * @param duration Duration in seconds (optional)
+   * @param userId User who initiated the block (optional)
+   */
+  async blockIp(ip: string, reason: string, duration?: number, userId?: string): Promise<void> {
+    // Add to database blocklist
+    await threatDatabaseService.blockIp(ip, reason, duration, userId);
+    
+    // Log the block
+    console.warn(`IP Address ${ip} blocked: ${reason}`);
+  }
+  
+  /**
+   * Unblock an IP address
+   * 
+   * @param ip IP address to unblock
+   * @returns True if successful
+   */
+  async unblockIp(ip: string): Promise<boolean> {
+    const result = await threatDatabaseService.unblockIp(ip);
+    
+    if (result) {
+      console.log(`IP Address ${ip} unblocked`);
+    }
+    
+    return result;
+  }
+  
+  /**
+   * Resolve a threat (mark as handled)
+   * 
+   * @param threatId ID of the threat to resolve
+   * @param resolvedBy User who resolved the threat
+   * @returns True if successful
+   */
+  async resolveThreat(threatId: string, resolvedBy: string): Promise<boolean> {
+    return await threatDatabaseService.resolveThreat(threatId, resolvedBy);
+  }
+  
+  /**
+   * Get active threats
+   * 
+   * @returns Promise resolving to active threats
+   */
+  async getActiveThreats(): Promise<DetectedThreat[]> {
+    return await threatDatabaseService.getThreats({
+      resolved: false,
+      isArchived: false
+    });
+  }
+  
+  /**
+   * Get recent threats
+   * 
+   * @param limit Maximum number of threats to return
+   * @returns Promise resolving to recent threats
+   */
+  async getRecentThreats(limit: number = 100): Promise<DetectedThreat[]> {
+    return await threatDatabaseService.getThreats({
+      limit,
+      sortBy: 'timestamp',
+      sortDirection: 'desc'
+    });
+  }
+  
+  /**
+   * Add or update a detection rule
+   * 
+   * @param rule Rule to add or update
+   * @returns The added/updated rule
+   */
+  async addOrUpdateRule(rule: {
+    name: string;
+    description: string;
+    threatType: ThreatType;
+    severity: ThreatSeverity;
+    pattern?: RegExp;
+    threshold?: number;
+    timeWindow?: number;
+    autoBlock: boolean;
+    autoNotify: boolean;
+    enabled: boolean;
+  }): Promise<any> {
+    // Convert RegExp to string if provided
+    const patternStr = rule.pattern ? rule.pattern.toString() : undefined;
+    
+    // Save to database
+    return await threatDatabaseService.addOrUpdateRule({
+      ...rule,
+      pattern: patternStr
+    });
+  }
+  
+  /**
+   * Set a rule's enabled status
+   * 
+   * @param ruleId ID of the rule to update
+   * @param enabled Whether the rule should be enabled
+   * @returns True if successful
+   */
+  async setRuleEnabled(ruleId: string, enabled: boolean): Promise<boolean> {
+    return await threatDatabaseService.updateRuleStatus(ruleId, enabled);
+  }
+  
+  /**
+   * Delete a detection rule
+   * 
+   * @param ruleId ID of the rule to delete
+   * @returns True if successful
+   */
+  async deleteRule(ruleId: string): Promise<boolean> {
+    return await threatDatabaseService.deleteRule(ruleId);
   }
   
   /**

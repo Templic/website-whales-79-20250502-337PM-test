@@ -1,215 +1,205 @@
 /**
  * Token Bucket Rate Limiter
  * 
- * Implements token bucket algorithm for efficient rate limiting:
- * - Allows for short bursts of traffic
- * - Provides smooth rate limiting with configurable rates
- * - Per-client (IP) bucket tracking
- */
-
-import LRUCache from './SecurityCache';
-
-// Bucket configuration type
-interface TokenBucketConfig {
-  tokensPerInterval: number;
-  interval: number;          // in milliseconds
-  burstCapacity: number;     // max tokens that can be stored
-}
-
-// Bucket state for a client
-interface BucketState {
-  tokens: number;
-  lastRefill: number;
-  customConfig?: TokenBucketConfig;
-}
-
-/**
- * Token Bucket Rate Limiter
+ * Implements rate limiting using a token bucket algorithm:
+ * - Each bucket has a maximum capacity
+ * - Tokens are added at a fixed rate
+ * - Each request consumes a token
+ * - Requests are rejected when the bucket is empty
  * 
- * The token bucket algorithm works by adding tokens to a bucket at a fixed rate.
- * Each request consumes a token. If there are no tokens, the request is rejected.
- * This allows for short bursts of traffic while maintaining a long-term rate limit.
+ * This implementation supports:
+ * - Individual rate limits per IP/user
+ * - Burst capacity (allowing occasional bursts of traffic)
+ * - Custom rate limit configurations for different paths
  */
+
+interface RateLimitConfig {
+  tokensPerInterval: number;  // Number of tokens added per interval
+  interval: number;           // Interval in milliseconds
+  burstCapacity?: number;     // Maximum tokens the bucket can hold (defaults to tokensPerInterval)
+}
+
+interface TokenBucket {
+  tokens: number;             // Current token count
+  lastRefilled: number;       // Timestamp of last refill
+  config: RateLimitConfig;    // Configuration for this bucket
+}
+
 export class TokenBucketRateLimiter {
-  private buckets: LRUCache<string, BucketState>;
-  private defaultConfig: TokenBucketConfig;
-  
+  private buckets: Map<string, TokenBucket> = new Map();
+  private defaultConfig: RateLimitConfig;
+  private customConfigs: Map<string, RateLimitConfig> = new Map();
+
   /**
-   * Create a new token bucket rate limiter
+   * Create a new rate limiter
    * 
-   * @param config Default configuration for all buckets
+   * @param config Default rate limiting configuration
    */
-  constructor(config: TokenBucketConfig) {
-    this.defaultConfig = config;
-    this.buckets = new LRUCache<string, BucketState>(
-      10000,                 // Up to 10k clients
-      60 * 60 * 1000,        // 1 hour TTL
-      5 * 60 * 1000          // Clean expired entries every 5 minutes
-    );
+  constructor(config: RateLimitConfig) {
+    this.defaultConfig = {
+      tokensPerInterval: config.tokensPerInterval,
+      interval: config.interval,
+      burstCapacity: config.burstCapacity || config.tokensPerInterval
+    };
   }
-  
+
   /**
-   * Set a custom configuration for a specific client
+   * Set a custom rate limit configuration for a specific key (IP, user, etc.)
    * 
-   * @param clientKey The client identifier (usually IP)
-   * @param config The custom configuration
+   * @param key The key to set a custom config for
+   * @param config The custom rate limit configuration
    */
-  setCustomConfig(clientKey: string, config: TokenBucketConfig): void {
-    const bucket = this.getBucket(clientKey);
-    bucket.customConfig = config;
+  setCustomConfig(key: string, config: RateLimitConfig): void {
+    // Ensure burst capacity is set
+    const fullConfig = {
+      ...config,
+      burstCapacity: config.burstCapacity || config.tokensPerInterval
+    };
     
-    // If the new burst capacity is higher, add tokens up to the new capacity
-    const effectiveConfig = bucket.customConfig || this.defaultConfig;
-    if (bucket.tokens < effectiveConfig.burstCapacity) {
-      this.refillTokens(clientKey, bucket);
+    this.customConfigs.set(key, fullConfig);
+    
+    // If bucket already exists, update its config
+    const bucket = this.buckets.get(key);
+    if (bucket) {
+      bucket.config = fullConfig;
+      
+      // Ensure tokens don't exceed the new burst capacity
+      if (bucket.tokens > fullConfig.burstCapacity!) {
+        bucket.tokens = fullConfig.burstCapacity!;
+      }
     }
   }
-  
+
   /**
-   * Remove custom configuration for a client
+   * Get the configuration for a key
    * 
-   * @param clientKey The client identifier (usually IP)
+   * @param key The key to get configuration for
+   * @returns The rate limit configuration
    */
-  removeCustomConfig(clientKey: string): void {
-    const bucket = this.getBucket(clientKey);
-    delete bucket.customConfig;
-    
-    // Adjust tokens to not exceed default burst capacity
-    if (bucket.tokens > this.defaultConfig.burstCapacity) {
-      bucket.tokens = this.defaultConfig.burstCapacity;
-    }
+  private getConfigForKey(key: string): RateLimitConfig {
+    return this.customConfigs.get(key) || this.defaultConfig;
   }
-  
+
   /**
-   * Attempt to consume a token
+   * Get or create a bucket for a key
    * 
-   * @param clientKey The client identifier (usually IP)
-   * @param tokens Number of tokens to consume (default: 1)
-   * @returns True if successful, false if rate limit exceeded
+   * @param key The key (IP, user, etc.)
+   * @returns The token bucket
    */
-  consume(clientKey: string, tokens: number = 1): boolean {
-    const bucket = this.getBucket(clientKey);
-    
-    // Refill tokens based on time elapsed
-    this.refillTokens(clientKey, bucket);
-    
-    // Check if enough tokens are available
-    if (bucket.tokens >= tokens) {
-      bucket.tokens -= tokens;
-      return true;
-    }
-    
-    return false;
-  }
-  
-  /**
-   * Get the time (in ms) until the next token is available
-   * 
-   * @param clientKey The client identifier (usually IP)
-   * @returns Time in milliseconds until next token
-   */
-  getTimeToNextToken(clientKey: string): number {
-    const bucket = this.getBucket(clientKey);
-    const config = bucket.customConfig || this.defaultConfig;
-    
-    // If there are tokens available, return 0
-    if (bucket.tokens > 0) {
-      return 0;
-    }
-    
-    // Calculate time until next token
-    const timePerToken = config.interval / config.tokensPerInterval;
-    const elapsedTime = Date.now() - bucket.lastRefill;
-    const timeToNextToken = timePerToken - (elapsedTime % timePerToken);
-    
-    return Math.max(0, timeToNextToken);
-  }
-  
-  /**
-   * Get the number of tokens available for a client
-   * 
-   * @param clientKey The client identifier (usually IP)
-   * @returns Number of tokens available
-   */
-  getAvailableTokens(clientKey: string): number {
-    const bucket = this.getBucket(clientKey);
-    
-    // Refill tokens based on time elapsed
-    this.refillTokens(clientKey, bucket);
-    
-    return bucket.tokens;
-  }
-  
-  /**
-   * Clear rate limiting data for a client
-   * 
-   * @param clientKey The client identifier (usually IP)
-   */
-  reset(clientKey: string): void {
-    this.buckets.delete(clientKey);
-  }
-  
-  /**
-   * Reset all rate limiting data
-   */
-  resetAll(): void {
-    this.buckets.clear();
-  }
-  
-  /**
-   * Get all client keys currently being tracked
-   * 
-   * @returns Array of client keys
-   */
-  getActiveClients(): string[] {
-    return this.buckets.keys();
-  }
-  
-  /**
-   * Get a bucket for a client, creating it if it doesn't exist
-   */
-  private getBucket(clientKey: string): BucketState {
-    let bucket = this.buckets.get(clientKey);
+  private getBucket(key: string): TokenBucket {
+    let bucket = this.buckets.get(key);
     
     if (!bucket) {
-      const config = this.defaultConfig;
+      const config = this.getConfigForKey(key);
       bucket = {
-        tokens: config.burstCapacity,
-        lastRefill: Date.now(),
+        tokens: config.burstCapacity!,  // Start with a full bucket
+        lastRefilled: Date.now(),
+        config
       };
-      this.buckets.set(clientKey, bucket);
+      this.buckets.set(key, bucket);
     }
     
     return bucket;
   }
-  
+
   /**
-   * Refill tokens in a bucket based on time elapsed
+   * Refill tokens in a bucket based on elapsed time
+   * 
+   * @param bucket The token bucket to refill
    */
-  private refillTokens(clientKey: string, bucket: BucketState): void {
+  private refillBucket(bucket: TokenBucket): void {
     const now = Date.now();
-    const config = bucket.customConfig || this.defaultConfig;
-    const elapsedTime = now - bucket.lastRefill;
+    const elapsed = now - bucket.lastRefilled;
     
-    // Skip if no time has elapsed
-    if (elapsedTime <= 0) {
+    if (elapsed < 0) {
+      // Clock was adjusted backward, reset lastRefilled
+      bucket.lastRefilled = now;
       return;
     }
     
-    // Calculate tokens to add
-    const tokensToAdd = Math.floor(
-      (elapsedTime * config.tokensPerInterval) / config.interval
-    );
+    // Calculate number of tokens to add
+    const tokensToAdd = (elapsed / bucket.config.interval) * bucket.config.tokensPerInterval;
     
-    if (tokensToAdd > 0) {
-      bucket.tokens = Math.min(
-        bucket.tokens + tokensToAdd,
-        config.burstCapacity
-      );
-      bucket.lastRefill = now;
-      
-      // Update the bucket in cache
-      this.buckets.set(clientKey, bucket);
+    if (tokensToAdd >= 1) {
+      // Add tokens and update last refill time
+      bucket.tokens = Math.min(bucket.config.burstCapacity!, bucket.tokens + tokensToAdd);
+      bucket.lastRefilled = now;
     }
+  }
+
+  /**
+   * Try to consume a token
+   * 
+   * @param key The key (IP, user, etc.)
+   * @param cost Number of tokens to consume (default: 1)
+   * @returns true if token was consumed, false if rate limit exceeded
+   */
+  consume(key: string, cost: number = 1): boolean {
+    const bucket = this.getBucket(key);
+    
+    // Refill tokens based on elapsed time
+    this.refillBucket(bucket);
+    
+    // Check if enough tokens are available
+    if (bucket.tokens >= cost) {
+      // Consume tokens
+      bucket.tokens -= cost;
+      return true;
+    }
+    
+    // Rate limit exceeded
+    return false;
+  }
+
+  /**
+   * Get the time until next token is available (in milliseconds)
+   * 
+   * @param key The key (IP, user, etc.)
+   * @returns Time in milliseconds until next token
+   */
+  getTimeToNextToken(key: string): number {
+    const bucket = this.getBucket(key);
+    
+    // If tokens are available, return 0
+    if (bucket.tokens >= 1) {
+      return 0;
+    }
+    
+    // Calculate time to next token
+    const tokensNeeded = 1 - bucket.tokens;
+    const refillRate = bucket.config.tokensPerInterval / bucket.config.interval;
+    const timeToNextToken = tokensNeeded / refillRate;
+    
+    return Math.ceil(timeToNextToken);
+  }
+
+  /**
+   * Get the number of tokens available for a key
+   * 
+   * @param key The key (IP, user, etc.)
+   * @returns Number of available tokens
+   */
+  getAvailableTokens(key: string): number {
+    const bucket = this.getBucket(key);
+    this.refillBucket(bucket);
+    return bucket.tokens;
+  }
+
+  /**
+   * Reset rate limit for a key
+   * 
+   * @param key The key to reset
+   */
+  reset(key: string): void {
+    const bucket = this.getBucket(key);
+    bucket.tokens = bucket.config.burstCapacity!;
+    bucket.lastRefilled = Date.now();
+  }
+
+  /**
+   * Clear all rate limits
+   */
+  resetAll(): void {
+    this.buckets.clear();
   }
 }

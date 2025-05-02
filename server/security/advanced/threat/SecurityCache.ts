@@ -1,43 +1,57 @@
 /**
- * LRU Cache for security-related data
+ * LRU Cache Implementation
  * 
- * A simple LRU (Least Recently Used) cache implementation 
- * for security data with TTL (Time To Live) support
+ * A simple Least Recently Used (LRU) cache for storing frequently accessed data:
+ * - Limited size to prevent memory leaks
+ * - TTL-based expiration for stale data
+ * - Automatic cleanup of expired entries
+ * - Thread-safe operations
+ * 
+ * Used for caching IP blocks, rate limit data, and other security-related information
+ * that needs fast access without hitting the database for every check.
  */
 
-/**
- * LRU Cache entry
- */
 interface CacheEntry<T> {
   value: T;
-  expiry: number; // Timestamp when entry expires
-  lastAccessed: number; // Timestamp of last access
+  lastAccessed: number;
+  expiry: number | null; // null means no expiration
 }
 
-/**
- * LRU Cache with time-based expiry
- */
-class LRUCache<K, V> {
+export default class LRUCache<K, V> {
   private cache: Map<K, CacheEntry<V>> = new Map();
-  private maxSize: number;
-  private defaultTtl: number;
-  
+  private readonly maxSize: number;
+  private readonly defaultTtl: number | null;
+  private cleanupInterval: NodeJS.Timeout | null = null;
+
   /**
    * Create a new LRU cache
    * 
-   * @param maxSize Maximum number of items to keep in cache
-   * @param defaultTtl Default time-to-live in milliseconds
+   * @param maxSize Maximum number of entries in the cache
+   * @param defaultTtl Default time-to-live in milliseconds for entries (null for no expiration)
+   * @param cleanupIntervalMs Interval in milliseconds to cleanup expired entries (default: 60s)
    */
-  constructor(maxSize: number = 1000, defaultTtl: number = 3600000) {
+  constructor(maxSize: number, defaultTtl: number | null = null, cleanupIntervalMs: number = 60000) {
     this.maxSize = maxSize;
     this.defaultTtl = defaultTtl;
+    
+    // Set up periodic cleanup of expired entries
+    if (cleanupIntervalMs > 0) {
+      this.cleanupInterval = setInterval(() => {
+        this.removeExpiredEntries();
+      }, cleanupIntervalMs);
+      
+      // Make sure the interval doesn't prevent Node from exiting
+      if (this.cleanupInterval.unref) {
+        this.cleanupInterval.unref();
+      }
+    }
   }
-  
+
   /**
    * Get a value from the cache
    * 
    * @param key The key to look up
-   * @returns The cached value or undefined if not found
+   * @returns The value or undefined if not found or expired
    */
   get(key: K): V | undefined {
     const entry = this.cache.get(key);
@@ -46,48 +60,50 @@ class LRUCache<K, V> {
       return undefined;
     }
     
-    // Check if entry has expired
-    if (Date.now() > entry.expiry) {
+    // Check if expired
+    if (entry.expiry !== null && entry.expiry < Date.now()) {
       this.cache.delete(key);
       return undefined;
     }
     
-    // Update last accessed time
+    // Update last accessed time and move to the end (most recently used)
     entry.lastAccessed = Date.now();
+    this.cache.delete(key);
+    this.cache.set(key, entry);
     
     return entry.value;
   }
-  
+
   /**
    * Set a value in the cache
    * 
-   * @param key The key to store
+   * @param key The key to set
    * @param value The value to store
-   * @param ttl TTL in milliseconds (optional, uses default if not specified)
+   * @param ttl Time-to-live in milliseconds, overrides the default
    */
-  set(key: K, value: V, ttl?: number): void {
-    // If we're at capacity, remove the least recently used item
-    if (this.cache.size >= this.maxSize) {
-      const lruKey = this.findLeastRecentlyUsed();
-      if (lruKey) {
-        this.cache.delete(lruKey);
-      }
+  set(key: K, value: V, ttl?: number | null): void {
+    // Remove oldest entry if cache is full and this is a new entry
+    if (this.cache.size >= this.maxSize && !this.cache.has(key)) {
+      this.removeOldestEntry();
     }
     
-    // Set the new value with expiry
-    const expiry = Date.now() + (ttl || this.defaultTtl);
+    // Calculate expiration time
+    const ttlValue = ttl !== undefined ? ttl : this.defaultTtl;
+    const expiry = ttlValue !== null ? Date.now() + ttlValue : null;
+    
+    // Set the entry
     this.cache.set(key, {
       value,
-      expiry,
-      lastAccessed: Date.now()
+      lastAccessed: Date.now(),
+      expiry
     });
   }
-  
+
   /**
-   * Check if a key exists and hasn't expired
+   * Check if a key exists in the cache (and is not expired)
    * 
    * @param key The key to check
-   * @returns Whether the key exists
+   * @returns True if the key exists and is not expired
    */
   has(key: K): boolean {
     const entry = this.cache.get(key);
@@ -96,107 +112,108 @@ class LRUCache<K, V> {
       return false;
     }
     
-    // Check if entry has expired
-    if (Date.now() > entry.expiry) {
+    // Check if expired
+    if (entry.expiry !== null && entry.expiry < Date.now()) {
       this.cache.delete(key);
       return false;
     }
     
     return true;
   }
-  
+
   /**
    * Delete a key from the cache
    * 
    * @param key The key to delete
+   * @returns True if an entry was deleted
    */
-  delete(key: K): void {
-    this.cache.delete(key);
+  delete(key: K): boolean {
+    return this.cache.delete(key);
   }
-  
+
   /**
-   * Clear all items from the cache
+   * Clear all entries from the cache
    */
   clear(): void {
     this.cache.clear();
   }
-  
+
   /**
-   * Get the current size of the cache
-   * 
-   * @returns Number of items in the cache
+   * Get the number of entries in the cache
    */
-  size(): number {
+  get size(): number {
+    this.removeExpiredEntries();
     return this.cache.size;
   }
-  
+
   /**
-   * Find all keys in the cache
+   * Get all keys in the cache
    * 
    * @returns Array of keys
    */
   keys(): K[] {
     return Array.from(this.cache.keys());
   }
-  
+
   /**
-   * Get all values in the cache
+   * Get all entries in the cache
    * 
-   * @returns Array of values
+   * @returns Array of [key, value] tuples
    */
-  values(): V[] {
-    const now = Date.now();
-    const result: V[] = [];
+  entries(): [K, V][] {
+    const result: [K, V][] = [];
     
-    for (const [key, entry] of this.cache.entries()) {
-      if (now <= entry.expiry) {
-        result.push(entry.value);
-      } else {
-        // Clean up expired entries as we go
-        this.cache.delete(key);
+    this.cache.forEach((entry, key) => {
+      // Skip expired entries
+      if (entry.expiry === null || entry.expiry >= Date.now()) {
+        result.push([key, entry.value]);
       }
-    }
+    });
     
     return result;
   }
-  
+
   /**
-   * Clean up expired entries
-   * 
-   * @returns Number of entries removed
+   * Remove expired entries from the cache
    */
-  cleanup(): number {
+  private removeExpiredEntries(): void {
     const now = Date.now();
-    let count = 0;
     
-    for (const [key, entry] of this.cache.entries()) {
-      if (now > entry.expiry) {
+    this.cache.forEach((entry, key) => {
+      if (entry.expiry !== null && entry.expiry < now) {
         this.cache.delete(key);
-        count++;
       }
-    }
-    
-    return count;
+    });
   }
-  
+
   /**
-   * Find the least recently used key
-   * 
-   * @returns The least recently used key or undefined if cache is empty
+   * Remove the oldest (least recently used) entry
    */
-  private findLeastRecentlyUsed(): K | undefined {
-    let lruKey: K | undefined = undefined;
-    let lruTime = Number.MAX_SAFE_INTEGER;
+  private removeOldestEntry(): void {
+    let oldestKey: K | null = null;
+    let oldestTime = Infinity;
     
-    for (const [key, entry] of this.cache.entries()) {
-      if (entry.lastAccessed < lruTime) {
-        lruKey = key;
-        lruTime = entry.lastAccessed;
+    this.cache.forEach((entry, key) => {
+      if (entry.lastAccessed < oldestTime) {
+        oldestKey = key;
+        oldestTime = entry.lastAccessed;
       }
+    });
+    
+    if (oldestKey !== null) {
+      this.cache.delete(oldestKey);
+    }
+  }
+
+  /**
+   * Clean up resources when the cache is no longer needed
+   */
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
     }
     
-    return lruKey;
+    this.cache.clear();
   }
 }
-
-export default LRUCache;

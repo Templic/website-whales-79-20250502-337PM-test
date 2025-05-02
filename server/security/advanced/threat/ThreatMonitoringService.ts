@@ -139,6 +139,272 @@ class ThreatMonitoringService {
   }
   
   /**
+   * Record a threat of a specific type
+   *
+   * @param threatType The type of threat detected
+   * @param severity The severity of the threat
+   */
+  recordThreat(threatType: string, severity: string): void {
+    // Record the threat in metrics
+    // This is separate from database recording and serves for
+    // real-time monitoring purposes
+    
+    // We don't need to increment a counter here since
+    // activeThreats is fetched directly from the database
+    
+    // Log for monitoring purposes
+    console.warn(`[Security] Threat detected: ${threatType} (${severity})`);
+  }
+  
+  /**
+   * Record a security event
+   *
+   * @param eventType Type of security event
+   * @param details Event details
+   * @param ipAddress Related IP address
+   * @param userId Related user ID
+   * @param adminId Admin who triggered the event (for admin actions)
+   */
+  recordEvent(
+    eventType: string,
+    details: Record<string, any>,
+    ipAddress?: string,
+    userId?: string,
+    adminId?: string
+  ): void {
+    // Store security event in database
+    threatDatabaseService.recordSecurityEvent({
+      eventType,
+      details: JSON.stringify(details),
+      ipAddress: ipAddress || null,
+      userId: userId || null,
+      adminId: adminId || null,
+      timestamp: new Date()
+    });
+    
+    // Log for monitoring
+    console.info(`[Security Event] ${eventType}${adminId ? ' by admin '+adminId : ''}`);
+  }
+  
+  /**
+   * Get recent security events
+   *
+   * @param limit Maximum number of events to return
+   * @returns Array of recent security events
+   */
+  getRecentEvents(limit: number = 50): any[] {
+    return threatDatabaseService.getSecurityEvents(limit);
+  }
+  
+  /**
+   * Get security statistics
+   *
+   * @returns Security statistics object
+   */
+  getStatistics(): Record<string, any> {
+    return {
+      requestRate: this.getRequestRate(),
+      blockedRate: this.getBlockedRate(),
+      activeThreats: this.metrics.activeThreats,
+      apiRequests: this.metrics.apiRequests,
+      blockedRequests: this.metrics.blockedRequests,
+      rateLimitedRequests: this.metrics.rateLimitedRequests || 0,
+      failedLogins: this.metrics.failedLogins || 0,
+      successfulLogins: this.metrics.successfulLogins || 0,
+      threatsByType: threatDatabaseService.getThreatStatsByType(),
+      threatsBySeverity: threatDatabaseService.getThreatStatsBySeverity(),
+      recentEvents: this.getRecentEvents(5)
+    };
+  }
+  
+  /**
+   * Get security score
+   *
+   * @returns Security score object with component scores
+   */
+  getSecurityScore(): {
+    overall: number;
+    components: Record<string, number>;
+    recommendations: string[];
+  } {
+    // Calculate component scores (0-100)
+    const threatMitigation = this.calculateThreatMitigationScore();
+    const configSecurity = this.calculateConfigSecurityScore();
+    const userSecurity = this.calculateUserSecurityScore();
+    const dataProtection = this.calculateDataProtectionScore();
+    const monitoringCoverage = this.calculateMonitoringCoverageScore();
+    
+    // Calculate overall score (weighted average)
+    const overall = Math.round(
+      (threatMitigation * 0.3) +
+      (configSecurity * 0.2) +
+      (userSecurity * 0.2) +
+      (dataProtection * 0.2) +
+      (monitoringCoverage * 0.1)
+    );
+    
+    // Generate recommendations based on scores
+    const recommendations = this.generateSecurityRecommendations({
+      threatMitigation,
+      configSecurity,
+      userSecurity,
+      dataProtection,
+      monitoringCoverage
+    });
+    
+    return {
+      overall,
+      components: {
+        threatMitigation,
+        configSecurity,
+        userSecurity,
+        dataProtection,
+        monitoringCoverage
+      },
+      recommendations
+    };
+  }
+  
+  /**
+   * Calculate threat mitigation score
+   * 
+   * @returns Score from 0-100
+   */
+  private calculateThreatMitigationScore(): number {
+    // For now, use a simple placeholder calculation
+    // This would normally be based on threat response time, etc.
+    return 85;
+  }
+  
+  /**
+   * Calculate configuration security score
+   * 
+   * @returns Score from 0-100
+   */
+  private calculateConfigSecurityScore(): number {
+    // Based on enabled security features
+    const features = securityConfig.getSecurityFeatures();
+    let score = 0;
+    
+    // Count enabled features
+    const enabledCount = Object.values(features).filter(Boolean).length;
+    const totalFeatures = Object.keys(features).length;
+    
+    score = Math.round((enabledCount / totalFeatures) * 100);
+    
+    return score;
+  }
+  
+  /**
+   * Calculate user security score
+   * 
+   * @returns Score from 0-100
+   */
+  private calculateUserSecurityScore(): number {
+    // Would normally be based on password strength, MFA adoption, etc.
+    return 80;
+  }
+  
+  /**
+   * Calculate data protection score
+   * 
+   * @returns Score from 0-100
+   */
+  private calculateDataProtectionScore(): number {
+    // Would normally be based on encryption usage, etc.
+    return 90;
+  }
+  
+  /**
+   * Calculate monitoring coverage score
+   * 
+   * @returns Score from 0-100
+   */
+  private calculateMonitoringCoverageScore(): number {
+    // Based on whether monitoring is enabled
+    return securityConfig.getSecurityFeatures().realTimeMonitoring ? 100 : 0;
+  }
+  
+  /**
+   * Generate security recommendations based on component scores
+   * 
+   * @param scores Component scores
+   * @returns Array of recommendation strings
+   */
+  private generateSecurityRecommendations(scores: Record<string, number>): string[] {
+    const recommendations: string[] = [];
+    
+    // Add recommendations based on low scores
+    if (scores.threatMitigation < 70) {
+      recommendations.push('Configure automatic blocking for high-severity threats');
+    }
+    
+    if (scores.configSecurity < 70) {
+      recommendations.push('Enable additional security features in the security configuration');
+    }
+    
+    if (scores.userSecurity < 70) {
+      recommendations.push('Enforce stronger password policies and encourage MFA adoption');
+    }
+    
+    if (scores.dataProtection < 70) {
+      recommendations.push('Enable additional data encryption features');
+    }
+    
+    if (scores.monitoringCoverage < 70) {
+      recommendations.push('Enable real-time security monitoring');
+    }
+    
+    return recommendations;
+  }
+  
+  /**
+   * Get threat trends over time
+   */
+  getThreatTrends(): any {
+    return {
+      timeSeries: this.history.historicalMetrics.map(metrics => ({
+        timestamp: metrics.timestamp,
+        apiRequests: metrics.apiRequests,
+        blockedRequests: metrics.blockedRequests,
+        activeThreats: metrics.activeThreats,
+        failedLogins: metrics.failedLogins || 0
+      })),
+      summary: {
+        apiRequestsGrowth: this.calculateMetricGrowth('apiRequests'),
+        blockedRequestsGrowth: this.calculateMetricGrowth('blockedRequests'),
+        activeThreatsGrowth: this.calculateMetricGrowth('activeThreats'),
+      }
+    };
+  }
+  
+  /**
+   * Calculate growth rate for a metric
+   * 
+   * @param metricName Name of the metric to calculate growth for
+   * @returns Growth percentage (positive or negative)
+   */
+  private calculateMetricGrowth(metricName: keyof SecurityMetrics): number {
+    const history = this.history.historicalMetrics;
+    
+    if (history.length < 2) {
+      return 0;
+    }
+    
+    // Get oldest and newest values
+    const oldValue = history[0][metricName] as number || 0;
+    const newValue = history[history.length - 1][metricName] as number || 0;
+    
+    // Avoid division by zero
+    if (oldValue === 0) {
+      return newValue > 0 ? 100 : 0;
+    }
+    
+    // Calculate growth percentage
+    return Math.round(((newValue - oldValue) / oldValue) * 100);
+  }
+  
+  /**
    * Set the active threat count
    * 
    * @param count Number of active threats

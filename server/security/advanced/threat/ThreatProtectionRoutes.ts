@@ -9,7 +9,7 @@
 
 import express from 'express';
 import { threatDetectionService } from './ThreatDetectionService';
-import { threatDbService } from './ThreatDatabaseService';
+import { threatDatabaseService as threatDbService } from './ThreatDatabaseService';
 import { threatMonitoringService } from './ThreatMonitoringService';
 import { z } from 'zod';
 
