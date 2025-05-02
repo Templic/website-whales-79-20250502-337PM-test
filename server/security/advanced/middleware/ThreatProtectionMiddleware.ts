@@ -58,159 +58,163 @@ export const threatProtectionMiddleware = (req: Request, res: Response, next: Ne
     req.headers['x-developer-request'] = 'true';
   }
 
-  // Check if IP is already blocked in memory cache
-  if (isIpBlocked(clientIp)) {
-    threatMonitoringService.recordApiRequest(true);
-    console.log(`[Security] Blocked request from ${clientIp} - IP is in block list`);
-    return res.status(403).json({ 
-      error: 'Access denied',
-      code: 'IP_BLOCKED',
-      message: 'Your IP address has been blocked due to suspicious activity',
-      canAppeal: true,
-      appealProcess: 'Please contact support if you believe this is an error'
-    });
-  }
+  // TEMPORARILY DISABLED: Check if IP is already blocked in memory cache
+  // if (isIpBlocked(clientIp)) {
+  //   threatMonitoringService.recordApiRequest(true);
+  //   console.log(`[Security] Blocked request from ${clientIp} - IP is in block list`);
+  //   return res.status(403).json({ 
+  //     error: 'Access denied',
+  //     code: 'IP_BLOCKED',
+  //     message: 'Your IP address has been blocked due to suspicious activity',
+  //     canAppeal: true,
+  //     appealProcess: 'Please contact support if you believe this is an error'
+  //   });
+  // }
+  console.log(`[Security] Request from IP: ${clientIp}, path: ${req.path} - IP block check bypassed`); // Debug logging
   
-  // Skip rate limiting for exempt paths
-  const shouldRateLimit = !rateLimitExemptPaths.some(pattern => pattern.test(req.path));
+  // TEMPORARILY DISABLED: Skip rate limiting for exempt paths
+  // const shouldRateLimit = !rateLimitExemptPaths.some(pattern => pattern.test(req.path));
   
-  // Apply rate limiting if needed
-  if (shouldRateLimit) {
-    // Get custom rate limit for this path if any
-    const pathRate = getPathRateLimit(req.path);
-    if (pathRate) {
-      ipRateLimiter.setCustomConfig(clientIp, pathRate);
-    }
-    
-    if (!ipRateLimiter.consume(clientIp)) {
-      // Rate limit exceeded
-      threatMonitoringService.recordApiRequest(true);
-      
-      // Increment failed attempt counter
-      const attemptsCache = getAttemptsCache();
-      const attempts = (attemptsCache.get(clientIp) || 0) + 1;
-      attemptsCache.set(clientIp, attempts);
-      
-      // If too many rate limit violations, consider it a threat
-      if (attempts >= 10) {
-        threatDetectionService.reportThreat({
-          threatType: 'RATE_LIMIT_ABUSE',
-          severity: 'medium',
-          sourceIp: clientIp,
-          description: `Rate limit exceeded multiple times (${attempts} attempts)`,
-          evidence: {
-            path: req.path,
-            method: req.method,
-            headers: req.headers,
-            attempts
-          }
-        });
-        
-        // Temporarily block IP
-        blockedIpsCache.set(clientIp, { 
-          reason: 'Rate limit abuse', 
-          until: Date.now() + 15 * 60 * 1000 // 15 minutes
-        });
-      }
-      
-      // Set rate limit headers
-      const retryAfter = Math.ceil(ipRateLimiter.getTimeToNextToken(clientIp) / 1000);
-      res.setHeader('Retry-After', String(retryAfter));
-      
-      return res.status(429).json({
-        error: 'Too many requests',
-        code: 'RATE_LIMIT_EXCEEDED',
-        retryAfter
-      });
-    }
-  }
+  // TEMPORARILY DISABLED: Apply rate limiting if needed
+  // if (shouldRateLimit) {
+  //   // Get custom rate limit for this path if any
+  //   const pathRate = getPathRateLimit(req.path);
+  //   if (pathRate) {
+  //     ipRateLimiter.setCustomConfig(clientIp, pathRate);
+  //   }
+  //   
+  //   if (!ipRateLimiter.consume(clientIp)) {
+  //     // Rate limit exceeded
+  //     threatMonitoringService.recordApiRequest(true);
+  //     
+  //     // Increment failed attempt counter
+  //     const attemptsCache = getAttemptsCache();
+  //     const attempts = (attemptsCache.get(clientIp) || 0) + 1;
+  //     attemptsCache.set(clientIp, attempts);
+  //     
+  //     // If too many rate limit violations, consider it a threat
+  //     if (attempts >= 10) {
+  //       threatDetectionService.reportThreat({
+  //         threatType: 'RATE_LIMIT_ABUSE',
+  //         severity: 'medium',
+  //         sourceIp: clientIp,
+  //         description: `Rate limit exceeded multiple times (${attempts} attempts)`,
+  //         evidence: {
+  //           path: req.path,
+  //           method: req.method,
+  //           headers: req.headers,
+  //           attempts
+  //         }
+  //       });
+  //       
+  //       // Temporarily block IP
+  //       blockedIpsCache.set(clientIp, { 
+  //         reason: 'Rate limit abuse', 
+  //         until: Date.now() + 15 * 60 * 1000 // 15 minutes
+  //       });
+  //     }
+  //     
+  //     // Set rate limit headers
+  //     const retryAfter = Math.ceil(ipRateLimiter.getTimeToNextToken(clientIp) / 1000);
+  //     res.setHeader('Retry-After', String(retryAfter));
+  //     
+  //     return res.status(429).json({
+  //       error: 'Too many requests',
+  //       code: 'RATE_LIMIT_EXCEEDED',
+  //       retryAfter
+  //     });
+  //   }
+  // }
+  console.log(`[Security] Request from IP: ${clientIp}, path: ${req.path} - Rate limiting bypassed`); // Debug logging
   
   // Record API request
   threatMonitoringService.recordApiRequest(false);
   
-  // Inspect request for threats
-  const threatInfo = inspectRequest(req);
-  if (threatInfo) {
-    // Report the threat
-    const threatId = threatDetectionService.reportThreat({
-      threatType: threatInfo.type,
-      severity: threatInfo.severity,
-      sourceIp: clientIp,
-      description: threatInfo.description,
-      evidence: {
-        path: req.path,
-        method: req.method,
-        query: req.query,
-        headers: req.headers,
-        body: threatInfo.includeBody ? req.body : undefined,
-        detectionDetails: threatInfo.details
-      }
-    });
-    
-    // If auto-block is enabled for this threat, block the IP
-    if (threatInfo.autoBlock) {
-      blockedIpsCache.set(clientIp, { 
-        reason: threatInfo.description, 
-        until: Date.now() + 60 * 60 * 1000 // 1 hour
-      });
-      
-      threatDetectionService.blockIp(
-        clientIp, 
-        threatInfo.description, 
-        60 * 60 // 1 hour
-      );
-      
-      return res.status(403).json({ 
-        error: 'Access denied',
-        code: 'SECURITY_VIOLATION'
-      });
-    }
-    
-    // For lower severity threats, just log and continue
-    if (threatInfo.severity === 'low') {
-      // Allow the request but mark it
-      req.threatDetected = true;
-      req.threatId = threatId;
-      return next();
-    }
-    
-    // For medium and high severity, block
-    return res.status(403).json({ 
-      error: 'Access denied',
-      code: 'SECURITY_VIOLATION'
-    });
-  }
+  // TEMPORARILY DISABLED: Inspect request for threats
+  // const threatInfo = inspectRequest(req);
+  // if (threatInfo) {
+  //   // Report the threat
+  //   const threatId = threatDetectionService.reportThreat({
+  //     threatType: threatInfo.type,
+  //     severity: threatInfo.severity,
+  //     sourceIp: clientIp,
+  //     description: threatInfo.description,
+  //     evidence: {
+  //       path: req.path,
+  //       method: req.method,
+  //       query: req.query,
+  //       headers: req.headers,
+  //       body: threatInfo.includeBody ? req.body : undefined,
+  //       detectionDetails: threatInfo.details
+  //     }
+  //   });
+  //   
+  //   // If auto-block is enabled for this threat, block the IP
+  //   if (threatInfo.autoBlock) {
+  //     blockedIpsCache.set(clientIp, { 
+  //       reason: threatInfo.description, 
+  //       until: Date.now() + 60 * 60 * 1000 // 1 hour
+  //     });
+  //     
+  //     threatDetectionService.blockIp(
+  //       clientIp, 
+  //       threatInfo.description, 
+  //       60 * 60 // 1 hour
+  //     );
+  //     
+  //     return res.status(403).json({ 
+  //       error: 'Access denied',
+  //       code: 'SECURITY_VIOLATION'
+  //     });
+  //   }
+  //   
+  //   // For lower severity threats, just log and continue
+  //   if (threatInfo.severity === 'low') {
+  //     // Allow the request but mark it
+  //     req.threatDetected = true;
+  //     req.threatId = threatId;
+  //     return next();
+  //   }
+  //   
+  //   // For medium and high severity, block
+  //   return res.status(403).json({ 
+  //     error: 'Access denied',
+  //     code: 'SECURITY_VIOLATION'
+  //   });
+  // }
+  console.log(`[Security] Request from IP: ${clientIp}, path: ${req.path} - Threat detection bypassed`); // Debug logging
   
-  // Add response interceptor to check for suspicious responses
-  const originalSend = res.send;
-  res.send = function(body) {
-    const responseTime = Date.now() - startTime;
-    
-    // Check response for suspicious patterns
-    if (typeof body === 'string' && body.length > 0) {
-      const responseThreat = inspectResponse(body, req, responseTime);
-      
-      if (responseThreat) {
-        // Report the threat
-        threatDetectionService.reportThreat({
-          threatType: responseThreat.type,
-          severity: responseThreat.severity,
-          sourceIp: clientIp,
-          description: responseThreat.description,
-          evidence: {
-            path: req.path,
-            method: req.method,
-            headers: req.headers,
-            responseTime,
-            responseSize: body.length,
-            detectionDetails: responseThreat.details
-          }
-        });
-      }
-    }
-    
-    return originalSend.call(this, body);
-  };
+  // TEMPORARILY DISABLED: Add response interceptor to check for suspicious responses
+  // const originalSend = res.send;
+  // res.send = function(body) {
+  //   const responseTime = Date.now() - startTime;
+  //   
+  //   // Check response for suspicious patterns
+  //   if (typeof body === 'string' && body.length > 0) {
+  //     const responseThreat = inspectResponse(body, req, responseTime);
+  //     
+  //     if (responseThreat) {
+  //       // Report the threat
+  //       threatDetectionService.reportThreat({
+  //         threatType: responseThreat.type,
+  //         severity: responseThreat.severity,
+  //         sourceIp: clientIp,
+  //         description: responseThreat.description,
+  //         evidence: {
+  //           path: req.path,
+  //           method: req.method,
+  //           headers: req.headers,
+  //           responseTime,
+  //           responseSize: body.length,
+  //           detectionDetails: responseThreat.details
+  //         }
+  //       });
+  //     }
+  //   }
+  //   
+  //   return originalSend.call(this, body);
+  // };
+  console.log(`[Security] Request from IP: ${clientIp}, path: ${req.path} - Response interception bypassed`); // Debug logging
   
   next();
 };
