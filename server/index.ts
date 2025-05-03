@@ -299,8 +299,8 @@ async function initializeServer() {
     }
 
     // Start listening for connections
-    // Use port 5001 to avoid conflicts
-    const PORT = 5001;
+    // Use port 5000 to match the workflow waitForPort configuration
+    const PORT = 5000;
     httpServer.listen(PORT, config.host, () => {
       log(`Server successfully listening on port ${PORT}`, 'server');
       console.log(`${new Date().toLocaleTimeString()} [express] Server listening on port ${PORT}`);
