@@ -1,6 +1,6 @@
 {
   "features": {
-    "enableExtraLogging": true
+    "enableExtraLogging": false
   },
   "database": {
     "enableOptimization": true,
