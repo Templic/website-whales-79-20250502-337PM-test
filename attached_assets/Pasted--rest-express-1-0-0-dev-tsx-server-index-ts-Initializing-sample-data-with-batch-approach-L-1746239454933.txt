@@ -1,0 +1,350 @@
+ rest-express@1.0.0 dev
+> tsx server/index.ts
+
+Initializing sample data with batch approach...
+Loaded 5 default detection rules
+[Security] Clearing IP block cache on server startup
+[SECURITY] Security fabric initialized in maximum mode
+[SQLInjectionPrevention] Initialized with 15 detection patterns and 0 whitelist patterns
+[SECURITY] express-rate-limit is not installed. Rate limiting disabled.
+[SECURITY] express-rate-limit is not installed. Rate limiting disabled.
+[SECURITY] express-rate-limit is not installed. Rate limiting disabled.
+[SECURITY] express-rate-limit is not installed. Rate limiting disabled.
+[SECURITY] express-rate-limit is not installed. Rate limiting disabled.
+[SECURITY] express-rate-limit is not installed. Rate limiting disabled.
+[SECURITY] express-rate-limit is not installed. Rate limiting disabled.
+Loaded environment-specific configuration for: development
+[SQLInjectionPrevention] Initialized with 15 detection patterns and 0 whitelist patterns
+[SECURITY-SCANNER] Initialized with options: {
+  realtimeValidation: true,
+  deepInspection: true,
+  quantumResistantAlgorithms: true,
+  mlAnomalyDetection: true,
+  blockchainLogging: true,
+  performanceImpactWarnings: true,
+  excludePaths: []
+}
+2:27:07 AM [security] File upload security module initialized
+2:27:07 AM [server] ⚠️ CSRF protection completely disabled for Replit Auth integration
+=======================================
+STARTING SERVER IN FULL MODE
+=======================================
+2:27:07 AM [server] Server startup priority: full
+Successfully connected to PostgreSQL database
+2:27:07 AM [server] Database connected in 71ms
+2:27:07 AM [server] Running database migrations...
+[2025-05-03T02:27:07.620Z] [INFO] Starting database migrations...
+[2025-05-03T02:27:07.620Z] [INFO] Starting migration: Adding recurring schedule fields to content_items table
+Loaded security configuration from file (level: medium)
+Loaded 5 detection rules from database
+subscribers already contains data, skipping initialization
+newsletters already contains data, skipping initialization
+[2025-05-03T02:27:07.662Z] [INFO] timezone column already exists in content_items table
+collaboration_proposals already contains data, skipping initialization
+[2025-05-03T02:27:07.685Z] [INFO] recurring_schedule column already exists in content_items table
+Initializing patrons...
+[2025-05-03T02:27:07.708Z] [INFO] last_schedule_run column already exists in content_items table
+[2025-05-03T02:27:07.708Z] [INFO] Migration completed successfully: Added recurring schedule fields to content_items table
+[2025-05-03T02:27:07.708Z] [INFO] All migrations completed successfully
+2:27:07 AM [server] Database migrations completed successfully
+⚠️ Advanced API validation temporarily disabled to resolve Invalid request errors
+2:27:07 AM [server] Generated dynamic session secret for this instance
+[INFO] [API_VALIDATION] {"action":"COMMON_VALIDATION_RULES_INITIALIZED","timestamp":1746239227714}
+[INFO] [API_VALIDATION] {"action":"RULE_REGISTERED","ruleId":"pagination","ruleName":"Pagination Parameters","targets":["query"],"timestamp":1746239227714}
+[INFO] [API_VALIDATION] {"action":"RULE_REGISTERED","ruleId":"id-param","ruleName":"ID Parameter","targets":["params"],"timestamp":1746239227715}
+[INFO] [API_VALIDATION] {"action":"RULE_REGISTERED","ruleId":"uuid-param","ruleName":"UUID Parameter","targets":["params"],"timestamp":1746239227715}
+[INFO] [API_VALIDATION] {"action":"RULE_REGISTERED","ruleId":"search-query","ruleName":"Search Query Parameters","targets":["query"],"timestamp":1746239227715}
+[INFO] [API_VALIDATION] {"action":"RULE_REGISTERED","ruleId":"user-data","ruleName":"User Data Validation","targets":["body"],"timestamp":1746239227715}
+[INFO] [API_VALIDATION] {"action":"RULE_REGISTERED","ruleId":"api-key","ruleName":"API Key Validation","targets":["headers"],"timestamp":1746239227715}
+[INFO] [API_VALIDATION] {"action":"RULES_APPLIED","endpoint":"/api/search","ruleIds":["search-query","pagination"],"timestamp":1746239227715}
+[INFO] [API_VALIDATION] {"action":"VALIDATION_RULES_APPLIED","endpoint":"/api/search","ruleIds":["search-query","pagination"],"timestamp":1746239227715}
+[INFO] [API_VALIDATION] {"action":"RULES_APPLIED","endpoint":"/api/users","ruleIds":["pagination"],"timestamp":1746239227715}
+[INFO] [API_VALIDATION] {"action":"VALIDATION_RULES_APPLIED","endpoint":"/api/users","ruleIds":["pagination"],"timestamp":1746239227715}
+[INFO] [API_VALIDATION] {"action":"RULES_APPLIED","endpoint":"/api/users/:id","ruleIds":["id-param"],"timestamp":1746239227715}
+[INFO] [API_VALIDATION] {"action":"VALIDATION_RULES_APPLIED","endpoint":"/api/users/:id","ruleIds":["id-param"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"RULES_APPLIED","endpoint":"/api/register","ruleIds":["user-data"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"VALIDATION_RULES_APPLIED","endpoint":"/api/register","ruleIds":["user-data"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"RULES_APPLIED","endpoint":"/api/login","ruleIds":["user-data"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"VALIDATION_RULES_APPLIED","endpoint":"/api/login","ruleIds":["user-data"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"RULES_APPLIED","endpoint":"/api/secure/public","ruleIds":["pagination"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"VALIDATION_RULES_APPLIED","endpoint":"/api/secure/public","ruleIds":["pagination"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"RULES_APPLIED","endpoint":"/api/admin","ruleIds":["api-key"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"VALIDATION_RULES_APPLIED","endpoint":"/api/admin","ruleIds":["api-key"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"RULE_REGISTERED","ruleId":"contact-form","ruleName":"Contact Form Validation","targets":["body"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"RULES_APPLIED","endpoint":"/api/contact","ruleIds":["contact-form"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"VALIDATION_RULES_APPLIED","endpoint":"/api/contact","ruleIds":["contact-form"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"RULE_REGISTERED","ruleId":"comment","ruleName":"Comment Validation","targets":["body"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"RULES_APPLIED","endpoint":"/api/comments","ruleIds":["comment"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"VALIDATION_RULES_APPLIED","endpoint":"/api/comments","ruleIds":["comment"],"timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"COMMON_VALIDATION_RULES_REGISTERED","timestamp":1746239227716}
+[INFO] [API_VALIDATION] {"action":"RULE_REGISTERED","ruleId":"product","ruleName":"Product Validation","targets":["body"],"timestamp":1746239227717}
+[INFO] [API_VALIDATION] {"action":"RULES_APPLIED","endpoint":"/api/products","ruleIds":["product","pagination"],"timestamp":1746239227717}
+[INFO] [API_VALIDATION] {"action":"VALIDATION_RULES_APPLIED","endpoint":"/api/products","ruleIds":["product","pagination"],"timestamp":1746239227717}
+[INFO] [API_VALIDATION] {"action":"RULES_APPLIED","endpoint":"/api/products/:id","ruleIds":["id-param"],"timestamp":1746239227717}
+[INFO] [API_VALIDATION] {"action":"VALIDATION_RULES_APPLIED","endpoint":"/api/products/:id","ruleIds":["id-param"],"timestamp":1746239227717}
+[INFO] [API_VALIDATION] {"action":"RULE_REGISTERED","ruleId":"order","ruleName":"Order Validation","targets":["body"],"timestamp":1746239227717}
+[INFO] [API_VALIDATION] {"action":"RULES_APPLIED","endpoint":"/api/orders","ruleIds":["order"],"timestamp":1746239227717}
+[INFO] [API_VALIDATION] {"action":"VALIDATION_RULES_APPLIED","endpoint":"/api/orders","ruleIds":["order"],"timestamp":1746239227717}
+[INFO] [API_VALIDATION] {"action":"RULES_APPLIED","endpoint":"/api/orders/:id","ruleIds":["id-param"],"timestamp":1746239227717}
+[INFO] [API_VALIDATION] {"action":"VALIDATION_RULES_APPLIED","endpoint":"/api/orders/:id","ruleIds":["id-param"],"timestamp":1746239227717}
+[INFO] [API_VALIDATION] {"action":"CUSTOM_VALIDATION_RULES_REGISTERED","timestamp":1746239227717}
+[SECURITY] Applying threat protection middleware...
+✅ Threat protection middleware initialized successfully
+✅ API Validation middleware initialized successfully
+⚠️ CSRF Protection temporarily disabled to fix routing issues
+[API-PROTECTION] Advanced API protection temporarily disabled due to missing modules
+2:27:07 AM [server] Setting up Vite in development mode...
+[SECURITY] WARNING: Test API routes enabled - these bypass CSRF protection
+Error initializing patrons: error: insert or update on table "patrons" violates foreign key constraint "patrons_user_id_users_id_fk"
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async initializeTable (/home/runner/workspace/server/storage.ts:1015:11)
+    at async PostgresStorage.initializeSampleData (/home/runner/workspace/server/storage.ts:1267:7) {
+  length: 299,
+  severity: 'ERROR',
+  code: '23503',
+  detail: 'Key (user_id)=(78aec3eb-1ba9-4a4a-bd68-9381bffc1199) is not present in table "users".',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'patrons',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'patrons_user_id_users_id_fk',
+  file: 'ri_triggers.c',
+  line: '2608',
+  routine: 'ri_ReportViolation'
+}
+tour_dates already contains data, skipping initialization
+Re-optimizing dependencies because lockfile has changed
+Server initialization complete in 352ms
+=== Server Startup Performance ===
+Total startup time: 352ms
+Startup priority: full
+Database optimization: enabled
+Background services: enabled
+Security scans: enabled
+Non-critical services deferred: no
+=================================
+2:27:07 AM [server] Initializing all services immediately (non-deferred mode)
+2:27:07 AM [server] Initializing database optimization...
+2:27:07 AM [db-maintenance] Initial database maintenance run scheduled
+2:27:07 AM [db-maintenance] Starting intelligent database maintenance...
+2:27:07 AM [server] Server successfully listening on port 5000
+2:27:07 AM [express] Server listening on port 5000
+2:27:07 AM [db-maintenance] Found 0 tables needing VACUUM
+2:27:07 AM [db-maintenance] Found 0 tables needing ANALYZE
+2:27:07 AM [db-maintenance] Database maintenance completed in 51ms
+2:27:07 AM [db-maintenance] No tables required maintenance at this time
+2:27:07 AM [db-maintenance] Scheduled regular database maintenance every 24 hours
+2:27:07 AM [server] Initializing background services...
+2:27:07 AM [background] Initializing background services...
+2:27:07 AM [background] Initializing database maintenance service...
+2:27:07 AM [db-maintenance] Scheduled regular database maintenance every 24 hours
+2:27:07 AM [background] Database maintenance service initialized successfully
+2:27:07 AM [background] Initializing security scanning service...
+2:27:07 AM [background] Security scanning service initialized with 12 hour interval
+2:27:07 AM [background] Initializing content scheduler service...
+[Background] Starting content scheduler (interval: 5 minute(s))
+[2025-05-03T02:27:07.952Z] [INFO] Running content scheduler
+[2025-05-03T02:27:07.953Z] [INFO] Processing recurring schedules
+2:27:07 AM [background] Content scheduler service initialized with 5 minute interval
+2:27:07 AM [background] Initializing data cleanup service...
+2:27:07 AM [background] Data cleanup service initialized successfully
+2:27:07 AM [background] Initializing metrics collection service...
+2:27:07 AM [background] Metrics collection service initialized successfully
+2:27:07 AM [background] Active background services: Database Maintenance, Security Scanning, Metrics Collection, Data Cleanup, Content Scheduler
+2:27:07 AM [server] Initializing security scans...
+2:27:07 AM [security] Running deferred security scan...
+2:27:07 AM [security] Starting security scan...
+2:27:07 AM [security] Scanning dependencies for known vulnerabilities...
+2:27:07 AM [security] Scanning for expired certificates...
+2:27:07 AM [security] Scanning for outdated dependencies...
+2:27:07 AM [security] Scanning for common vulnerabilities...
+2:27:07 AM [security] Scanning imports for known vulnerabilities, exploits, and malware...
+2:27:07 AM [security] Scanning for payment security issues...
+2:27:07 AM [security] Running payment security scan...
+2:27:07 AM [security] Running PCI DSS compliance scan...
+2:27:07 AM [performance] Network Security check completed in 0ms
+2:27:07 AM [security] Network Security results: 2/2 checks passed
+2:27:07 AM [performance] Data Protection check completed in 0ms
+2:27:07 AM [security] Data Protection results: 3/3 checks passed
+2:27:07 AM [performance] Vulnerability Management check completed in 0ms
+2:27:07 AM [security] Vulnerability Management results: 3/3 checks passed
+2:27:07 AM [performance] Access Control check completed in 0ms
+2:27:07 AM [security] Access Control results: 3/3 checks passed
+2:27:07 AM [performance] Secure Implementation check completed in 0ms
+2:27:07 AM [security] Secure Implementation results: 3/3 checks passed
+2:27:07 AM [performance] Logging and Monitoring check completed in 1ms
+2:27:07 AM [security] Logging and Monitoring results: 3/5 checks passed
+2:27:07 AM [security] PCI DSS compliance scan completed in 3ms
+2:27:07 AM [security] Results: 17/19 checks passed (2 failed)
+2:27:07 AM [security] Critical issues: 0, High issues: 2
+2:27:07 AM [security] PCI DSS compliance report generated: /home/runner/workspace/reports/compliance/pci-compliance-2025-05-03T02-27-07.961Z.md
+2:27:07 AM [security] Payment security scan completed. Found 23 checks.
+2:27:08 AM [security] Scanning 165 installed packages...
+2:27:08 AM [security] Security scan completed in 462ms
+2:27:08 AM [security] Results: 0 errors, 3 warnings, 25 passed
+2:27:08 AM [security] [WARNING] OutdatedDependencyScanner: Some dependencies are outdated but not critical
+2:27:08 AM [security] [WARNING] PCI-DSS Compliance: Requirement 10.5: Secure audit trails so they cannot be altered
+2:27:08 AM [security] [WARNING] PCI-DSS Compliance: Requirement 10.6: Review logs and security events for all system components
+[2025-05-03T02:27:08.419Z] [INFO] Found 0 items with recurring schedules to process
+[2025-05-03T02:27:08.419Z] [INFO] Processed 0 recurring schedules
+[2025-05-03T02:27:08.482Z] [INFO] Found 0 items to publish
+[2025-05-03T02:27:08.567Z] [INFO] Found 0 items to archive due to expiration
+[2025-05-03T02:27:08.599Z] [INFO] Found 0 items expiring soon
+[2025-05-03T02:27:08.600Z] [INFO] Content scheduler completed: Published 0, Failed 0, Archived 0, Archived Failed 0, Retry Attempts 0, Retry Successes 0
+[Background] Initial content scheduling run complete: 0 published, 0 archived
+Error getting tracks: ReferenceError: boolean is not defined
+    at PostgresStorage.getTracks (/home/runner/workspace/server/storage.ts:780:51)
+    at <anonymous> (/home/runner/workspace/server/routes.ts:2085:36)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/workspace/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/home/runner/workspace/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:265:14)
+    at Function.handle (/home/runner/workspace/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:265:14)
+    at /home/runner/workspace/node_modules/express-fileupload/lib/index.js:37:14
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/home/runner/workspace/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at <anonymous> (/home/runner/workspace/server/middleware/apiValidationMiddleware.ts:64:14)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at threatProtectionMiddleware (/home/runner/workspace/server/security/advanced/middleware/ThreatProtectionMiddleware.ts:312:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at <anonymous> (/home/runner/workspace/server/auth.ts:168:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+Error getting albums: error: column "cover_art" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async PostgresStorage.getAlbums (/home/runner/workspace/server/storage.ts:833:14)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:2098:22) {
+  length: 109,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '33',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3722',
+  routine: 'errorMissingColumn'
+}
+Error getting tracks: ReferenceError: boolean is not defined
+    at PostgresStorage.getTracks (/home/runner/workspace/server/storage.ts:780:51)
+    at <anonymous> (/home/runner/workspace/server/routes.ts:2085:36)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/workspace/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/home/runner/workspace/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:265:14)
+    at Function.handle (/home/runner/workspace/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:265:14)
+    at /home/runner/workspace/node_modules/express-fileupload/lib/index.js:37:14
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/home/runner/workspace/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at <anonymous> (/home/runner/workspace/server/middleware/apiValidationMiddleware.ts:64:14)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at threatProtectionMiddleware (/home/runner/workspace/server/security/advanced/middleware/ThreatProtectionMiddleware.ts:312:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at <anonymous> (/home/runner/workspace/server/auth.ts:168:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+Error getting albums: error: column "cover_art" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async PostgresStorage.getAlbums (/home/runner/workspace/server/storage.ts:833:14)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:2098:22) {
+  length: 109,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '33',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3722',
+  routine: 'errorMissingColumn'
+}

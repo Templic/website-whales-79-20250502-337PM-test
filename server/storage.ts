@@ -818,21 +818,10 @@ export class PostgresStorage implements IStorage {
 
   async getAlbums(): Promise<Album[]> {
     try {
-      // Define albums table schema if not imported from schema.ts
-      const albumsTable = pgTable('albums', {
-        id: serial('id').primaryKey(),
-        title: text('title').notNull(),
-        artist: text('artist').notNull(),
-        coverArt: text('cover_art'),
-        releaseDate: timestamp('release_date').notNull(),
-        createdAt: timestamp('created_at').notNull().defaultNow(),
-        updatedAt: timestamp('updated_at').notNull().defaultNow()
-      });
-
-      // Use parameterized queries with ORM methods
+      // Use the albums table from schema.ts instead of defining a new one
       return await db.select()
-        .from(albumsTable)
-        .orderBy(desc(albumsTable.releaseDate));
+        .from(albums)
+        .orderBy(desc(albums.releaseDate));
     } catch (error) {
       console.error("Error getting albums:", error);
       return [];
@@ -841,24 +830,13 @@ export class PostgresStorage implements IStorage {
 
   async deleteMusic(trackId: number, userId: number, userRole: 'admin' | 'super_admin'): Promise<void> {
     try {
-      // Define tracks table schema if not imported from schema.ts
-      const tracksTable = pgTable('tracks', {
-        id: serial('id').primaryKey(),
-        title: text('title').notNull(),
-        artist: text('artist').notNull(),
-        audioUrl: text('audio_url').notNull(),
-        published: boolean('published').notNull().default(true),
-        createdAt: timestamp('created_at').notNull().defaultNow(),
-        updatedAt: timestamp('updated_at').notNull().defaultNow()
-      });
-
       // Verify user has required role
       if (userRole !== 'admin' && userRole !== 'super_admin') {
         throw new Error('Unauthorized - requires admin privileges');
       }
 
       // Get track info before deletion
-      const [track] = await db.select().from(tracksTable).where(eq(tracksTable.id, trackId));
+      const [track] = await db.select().from(tracks).where(eq(tracks.id, trackId));
       if (!track) {
         throw new Error('Track not found');
       }
@@ -873,7 +851,7 @@ export class PostgresStorage implements IStorage {
       }
 
       // Delete from database
-      await db.delete(tracksTable).where(eq(tracksTable.id, trackId));
+      await db.delete(tracks).where(eq(tracks.id, trackId));
     } catch (error) {
       console.error("Error deleting music:", error);
       throw error;
@@ -913,17 +891,6 @@ export class PostgresStorage implements IStorage {
     userRole: 'admin' | 'super_admin'
   }): Promise<Track> {
     try {
-      // Define tracks table schema if not imported from schema.ts
-      const tracksTable = pgTable('tracks', {
-        id: serial('id').primaryKey(),
-        title: text('title').notNull(),
-        artist: text('artist').notNull(),
-        audioUrl: text('audio_url').notNull(),
-        published: boolean('published').notNull().default(true),
-        createdAt: timestamp('created_at').notNull().defaultNow(),
-        updatedAt: timestamp('updated_at').notNull().defaultNow()
-      });
-
       // Verify user has required role
       if (userRole !== 'admin' && userRole !== 'super_admin') {
         throw new Error('Unauthorized - requires admin privileges');
@@ -936,8 +903,8 @@ export class PostgresStorage implements IStorage {
       const filePath = path.join(uploadDir, fileName);
       await fs.writeFile(filePath, file.data);
 
-      // Create database record
-      const [track] = await db.insert(tracksTable).values({
+      // Create database record using the tracks table from schema.ts
+      const [track] = await db.insert(tracks).values({
         title: file.name,
         artist: "Dale the Whale", // Could be made dynamic
         audioUrl: fileName, //Store relative path
