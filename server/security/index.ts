@@ -1,76 +1,68 @@
 /**
- * Security System
+ * Security Module Entry Point
  * 
- * This module exports and initializes the security system.
+ * This file serves as the main entry point for all security-related functionality.
+ * It exports components and functionality from the various security submodules.
  */
 
-import chalk from 'chalk';
+// Export from enhanced security module
+export { 
+  initializeEnhancedSecurity,
+  runAllSecurityChecks,
+  updateSecurityDependencies
+} from './enhancedSecurityModule';
 
-// Export components
-export * from './rules';
-export * from './services';
-export * from './middleware';
+// Export from security scan queue
+export {
+  initializeSecurityScanQueue,
+  scheduleAllSecurityScans,
+  enqueueSecurityScan,
+  getQueueStatus,
+  cancelScan,
+  clearQueue,
+  createScheduledScan,
+  getScheduledScans,
+  updateScheduledScan,
+  deleteScheduledScan,
+  ScanType,
+  ScanFrequency,
+  ScanSource,
+  ScanStatus
+} from './securityScanQueue';
 
-// Export types
-export { RuleType, RuleStatus } from './rules/RuleCache';
-export { ContextPreparationType } from './services/RuleEvaluationService';
+// Export from secure audit trail
+export {
+  initializeAuditTrail,
+  recordAuditEvent,
+  getAuditLogs,
+  generateAuditReport
+} from './secureAuditTrail';
+
+// Export from log reviewer
+export {
+  initializeLogReviewer,
+  reviewSecurityLogs,
+  stopLogReviewer
+} from './logReviewer';
+
+// Re-export dependency updater
+export {
+  scanDependencies,
+  generateUpdatePlan,
+  applySafeUpdates,
+  applySecurityUpdates
+} from '../utils/dependencyUpdater';
 
 /**
- * Initialize the security system
- * 
- * @param options Initialization options
+ * Initialize all security components
+ * This is the main function to initialize all security-related functionality
  */
-export async function initializeSecuritySystem(
-  options: {
-    enableRuleCache?: boolean;
-    enableRuleCompilation?: boolean;
-    refreshCacheOnStart?: boolean;
-  } = {}
-) {
-  // Default options
-  const initOptions = {
-    enableRuleCache: true,
-    enableRuleCompilation: true,
-    refreshCacheOnStart: true,
-    ...options
-  };
-  
-  console.log(chalk.blue('[Security] Initializing security system...'));
-  
-  try {
-    // Import rule cache and service
-    const { ruleCache } = await import('./rules');
-    const { ruleEvaluationService } = await import('./services');
-    
-    // Initialize rule cache if enabled
-    if (initOptions.enableRuleCache) {
-      console.log(chalk.blue('[Security] Initializing rule cache...'));
-      
-      // Start auto refresh
-      if (initOptions.refreshCacheOnStart) {
-        try {
-          await ruleCache.refresh({ full: true });
-          console.log(chalk.green('[Security] Rule cache refreshed'));
-        } catch (error) {
-          console.error(chalk.yellow('[Security] Error refreshing rule cache:'), error);
-          console.log(chalk.yellow('[Security] Continuing with empty cache, will populate as needed'));
-        }
-      }
-    }
-    
-    console.log(chalk.green('[Security] Security system initialized successfully'));
-    
-    return {
-      ruleCache,
-      ruleEvaluationService
-    };
-  } catch (error) {
-    console.error(chalk.red('[Security] Error initializing security system:'), error);
-    throw new Error(`Failed to initialize security system: ${error.message}`);
-  }
+export function initializeSecurity(): void {
+  // Use the enhanced security module which initializes all components
+  // Import directly from the enhancedSecurityModule to avoid circular dependencies
+  import('./enhancedSecurityModule').then(({ initializeEnhancedSecurity }) => {
+    initializeEnhancedSecurity();
+  }).catch(error => {
+    console.error('Failed to initialize enhanced security:', error);
+  });
 }
-
-// Export default for convenience
-export default {
-  initializeSecuritySystem
-};

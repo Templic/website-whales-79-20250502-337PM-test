@@ -299,7 +299,8 @@ async function initializeServer() {
     }
 
     // Start listening for connections
-    const PORT = config.port;
+    // Use port 5001 to avoid conflicts
+    const PORT = 5001;
     httpServer.listen(PORT, config.host, () => {
       log(`Server successfully listening on port ${PORT}`, 'server');
       console.log(`${new Date().toLocaleTimeString()} [express] Server listening on port ${PORT}`);
@@ -351,15 +352,25 @@ function initializeNonCriticalServices() {
   // Initialize security scans (if enabled)
   if (config.features.enableSecurityScans) {
     setTimeout(() => {
-      // Check if full security mode is enabled
-      // Look for either security.scanMode or features.enableDeepSecurityScanning
-      if ((config.security as unknown)?.scanMode === 'maximum' || 
-          (config.features as unknown)?.enableDeepSecurityScanning) {
-        log('Activating MAXIMUM security scan mode', 'security');
-        enableMaximumSecurity(app); // Pass the app parameter
-      } else {
-        log('Running standard security scan', 'security');
-        runDeferredSecurityScan();
+      // Initialize the enhanced security system
+      log('Initializing enhanced security system...', 'security');
+      
+      try {
+        const { initializeSecurity } = require('./security');
+        initializeSecurity();
+        log('Enhanced security system initialized successfully', 'security');
+      } catch (error) {
+        log(`Failed to initialize enhanced security: ${error}`, 'security');
+        
+        // Fall back to legacy security if enhanced fails
+        if ((config.security as any)?.scanMode === 'maximum' || 
+            (config.features as any)?.enableDeepSecurityScanning) {
+          log('Falling back to MAXIMUM security scan mode', 'security');
+          enableMaximumSecurity(app);
+        } else {
+          log('Falling back to standard security scan', 'security');
+          runDeferredSecurityScan();
+        }
       }
     }, config.securityScanDelay);
   }
@@ -385,12 +396,44 @@ async function initializeAllServices() {
   if (config.features.enableSecurityScans) {
     log('Initializing security scans...', 'server');
 
-    // Check if maximum security mode is enabled
-    if (config.security?.scanMode === 'maximum' || config.features.enableDeepSecurityScanning) {
-      log('Activating MAXIMUM security scan mode', 'security');
-      enableMaximumSecurity(app); // Pass the app parameter
-    } else {
-      runDeferredSecurityScan();
+    // Initialize the enhanced security system
+    try {
+      // Use direct imports instead - avoid dynamic imports
+      try {
+        // First initialize the secure audit trail
+        import('./security/secureAuditTrail').then(({ initializeAuditTrail }) => {
+          initializeAuditTrail();
+          log('Secure audit trail initialized successfully', 'security');
+          
+          // Then initialize the log reviewer
+          import('./security/logReviewer').then(({ initializeLogReviewer }) => {
+            initializeLogReviewer(12); // Review logs every 12 hours
+            log('Log reviewer initialized successfully', 'security');
+            
+            // Finally initialize the security scan queue if needed
+            import('./security/securityScanQueue').then(({ initializeSecurityScanQueue }) => {
+              initializeSecurityScanQueue();
+              log('Security scan queue initialized successfully', 'security');
+            });
+          });
+        });
+        
+        log('Enhanced security components initialized', 'security');
+      } catch (err) {
+        throw err;
+      }
+    } catch (error) {
+      log(`Failed to initialize enhanced security: ${error}`, 'security');
+      
+      // Fall back to legacy security if enhanced fails
+      if ((config.security as any)?.scanMode === 'maximum' || 
+          (config.features as any)?.enableDeepSecurityScanning) {
+        log('Falling back to MAXIMUM security scan mode', 'security');
+        enableMaximumSecurity(app); 
+      } else {
+        log('Falling back to standard security scan', 'security');
+        runDeferredSecurityScan();
+      }
     }
   }
 }

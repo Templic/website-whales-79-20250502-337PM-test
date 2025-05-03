@@ -1,0 +1,33 @@
+Core Security Scanning Framework
+Security Scan Service: A comprehensive scanning system in server/securityScan.ts that integrates multiple specialized scanners
+Vulnerability Management: Tracks and categorizes security vulnerabilities with severity levels (low, medium, high, critical)
+2. Specialized Security Scanners
+Dependency Scanner: Scans dependencies for known vulnerabilities
+Certificate Scanner: Checks for expired certificates
+Outdated Dependencies Scanner: Identifies outdated dependencies that might have security implications
+Common Vulnerabilities Scanner: Scans for known common vulnerabilities
+Malware Import Scanner: Scans imports for potential malware
+Payment Security Scanner: Checks payment-related security configurations
+3. Authentication Security
+Authentication Security Scanner: Located in server/security/authSecurityScan.ts, analyzes authentication-related vulnerabilities
+Multi-Factor Authentication Analysis: Evaluates MFA implementation
+4. Machine Learning-Based Security
+ML-based Anomaly Detection: Uses machine learning algorithms to detect abnormal patterns
+Behavioral Analysis: Evaluates user and system behavior for suspicious patterns
+Statistical Analysis: Performs statistical analysis on security events
+Data Exfiltration Detection: Detects potential data leakage attempts
+5. API Security
+API Security Service: Comprehensive API security analysis in server/security/advanced/api/APISecurityService.ts
+Semantic Analysis: Examines API requests for potential security issues
+Attack Pattern Recognition: Identifies known attack patterns in API requests
+6. Input Validation
+Input Validation Checker: Verifies that proper input validation is implemented
+Schema Validation: Uses Zod for security-focused schema validation
+7. Security Compliance and Monitoring
+Security Audit Framework: Tracks compliance with security standards
+Security Dashboard: Provides visualizations and metrics of security status
+Security Event Monitoring: Logs and analyzes security events
+8. Advanced Features
+Quantum-Resistant Security: Implementation of forward-looking security measures
+Runtime Protection: Monitors application runtime for security issues
+Blockchain-based Security Logging: Immutable logging of security events

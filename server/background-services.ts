@@ -10,6 +10,13 @@ import { config } from './config';
 import { runDeferredSecurityScan } from './securityScan';
 import { scheduleIntelligentMaintenance } from './db-maintenance';
 import { startContentScheduler, stopContentScheduler } from './services/backgroundServices';
+import { 
+  initializeSecurityScanQueue, 
+  scheduleAllSecurityScans,
+  enqueueSecurityScan,
+  getQueueStatus
+} from './security/securityScanQueue';
+import { initializeSystemMonitor } from './lib/systemMonitor';
 
 // Track active background services
 interface ServiceStatus {
@@ -108,13 +115,33 @@ async function initDatabaseMaintenance(): Promise<void> {
  */
 async function initSecurityScanning(): Promise<void> {
   try {
-    log('Initializing security scanning service...', 'background');
+    log('Initializing enhanced security scanning service...', 'background');
     
-    // Schedule security scans
+    // Initialize the system monitor for resource tracking
+    initializeSystemMonitor();
+    
+    // Initialize the security scan queue
+    initializeSecurityScanQueue();
+    
+    // Schedule periodic security scans using our queue system
     const scanInterval = config.security.scanInterval;
-    setInterval(() => {
-      runDeferredSecurityScan();
+    
+    // Initial scan after 5 minutes of server startup (allowing for initial load to stabilize)
+    setTimeout(() => {
+      log('Running initial complete security scan...', 'security');
+      scheduleAllSecurityScans(true); // true = deep scan
       backgroundServices.securityScans.lastRunTime = Date.now();
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    // Then schedule regular scans based on config interval
+    setInterval(() => {
+      log('Scheduling periodic complete security scan...', 'security');
+      scheduleAllSecurityScans(true); // true = deep scan
+      backgroundServices.securityScans.lastRunTime = Date.now();
+      
+      // Log the current scan queue status
+      const queueStatus = getQueueStatus();
+      log(`Security scan queue status: ${queueStatus.queued.length} scans in queue, ${queueStatus.running ? 'running scan: ' + queueStatus.running.type : 'no scan running'}`, 'security');
     }, scanInterval);
     
     // Update service status
@@ -125,7 +152,9 @@ async function initSecurityScanning(): Promise<void> {
       interval: scanInterval,
     };
     
-    log(`Security scanning service initialized with ${scanInterval / (1000 * 60 * 60)} hour interval`, 'background');
+    log(`Enhanced security scanning service initialized with ${scanInterval / (1000 * 60 * 60)} hour interval`, 'background');
+    log('Security scans will run sequentially without overlapping', 'background');
+    log('Deferring initial scan by 5 minutes to allow system to stabilize', 'background');
   } catch (error) {
     log(`Failed to initialize security scanning: ${error}`, 'background');
     backgroundServices.securityScans = {

@@ -5,13 +5,17 @@
  */
 
 import { Router } from 'express';
-import dashboardRoutes from './dashboard';
+import { securityDashboardRoutes } from './dashboard';
+import scanManagerRoutes from './scanManager';
 
 // Create a router for all security routes
 const securityRouter = Router();
 
 // Use dashboard routes
-securityRouter.use('/dashboard', dashboardRoutes);
+securityRouter.use('/dashboard', securityDashboardRoutes);
+
+// Use scan manager routes
+securityRouter.use('/scan', scanManagerRoutes);
 
 // Export the security router
 export default securityRouter;
