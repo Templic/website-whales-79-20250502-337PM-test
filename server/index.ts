@@ -41,12 +41,39 @@ const httpServer = createServer(app);
 // Initialize essential middleware based on startup mode
 app.use(cookieParser());
 
-// CSRF protection completely disabled for Replit Auth integration
-// This is necessary to allow proper authentication flow
-log('⚠️ CSRF protection completely disabled for Replit Auth integration', 'server');
-app.get('/api/csrf-token', (req, res) => {
-  res.json({ csrfToken: 'csrf-disabled-for-replit-auth' });
-});
+// Set up CSRF protection with exempt paths for Replit Auth
+import { createCSRFMiddleware, csrfErrorHandler, setupCSRFTokenEndpoint } from './middleware/csrfProtection';
+
+// Apply CSRF middleware with auth paths exempted
+if (config.security.csrfProtection) {
+  log('Setting up CSRF protection with exemptions for Replit Auth paths', 'server');
+  
+  // Create and apply the CSRF middleware
+  const csrfMiddleware = createCSRFMiddleware({
+    // Additional exempted paths can be specified here
+    exemptPaths: [
+      // Additional exempt paths (auth paths already included in defaults)
+      '/api/webhook',
+      '/api/metrics'
+    ]
+  });
+  
+  // Apply the middleware globally
+  app.use(csrfMiddleware);
+  
+  // Set up CSRF token endpoint for client usage
+  setupCSRFTokenEndpoint(app);
+  
+  // Set up the error handler for CSRF validation failures
+  app.use(csrfErrorHandler);
+} else {
+  // CSRF protection disabled in config
+  log('⚠️ CSRF protection disabled in configuration', 'server');
+  // Set up dummy endpoint for compatibility
+  app.get('/api/csrf-token', (req, res) => {
+    res.json({ csrfToken: 'csrf-disabled-in-config' });
+  });
+}
 
 /**
  * Initialize the server in stages
