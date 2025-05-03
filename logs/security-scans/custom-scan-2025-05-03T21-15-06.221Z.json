@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-05-03T21:15:06.221Z",
+  "scanDuration": 26,
+  "scanType": "custom-quick",
+  "totalIssues": 0,
+  "criticalIssues": 0,
+  "highIssues": 0,
+  "mediumIssues": 0,
+  "lowIssues": 0,
+  "vulnerabilities": []
+}
