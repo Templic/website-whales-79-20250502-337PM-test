@@ -1,96 +1,222 @@
-# CSRF Protection Implementation Guide
+# Advanced CSRF Protection Architecture
 
-This guide explains how Cross-Site Request Forgery (CSRF) protection is implemented in the application.
+This guide provides detailed documentation for our enhanced Cross-Site Request Forgery (CSRF) protection system.
 
-## Overview
+## Architecture Overview
 
-CSRF protection helps prevent attackers from tricking authenticated users into performing unintended actions. Our implementation uses a token-based approach with exemptions for authentication routes (particularly Replit Auth integration).
+Our CSRF protection implements a comprehensive defense mechanism based on double-submit cookies with path exemptions, providing maximum security while maintaining compatibility with authentication flows, particularly Replit Auth.
 
-## Implementation Details
+### Design Principles
 
-### Server-Side Implementation
+The implementation follows these key principles:
 
-The CSRF protection is implemented in the following files:
+1. **Defense in Depth**: Multiple layers of protection, both server and client side
+2. **Progressive Enhancement**: Graceful degradation in development environments
+3. **Performance Optimization**: Efficient token generation and validation
+4. **Usability**: Automatic token refresh and intuitive error handling
+5. **Transparency**: Comprehensive logging for security monitoring
 
-1. `server/middleware/csrfProtection.ts`: Contains the core CSRF middleware with path exemptions
-2. `server/index.ts`: Sets up the CSRF middleware at the application level
-3. `server/middleware/index.ts`: Acknowledges the CSRF configuration
+## Server-Side Implementation
 
-#### Key Features
+### Class-Based Architecture
 
-- **Path-based Exemptions**: Authentication routes and specific API endpoints are exempt from CSRF protection
-- **Token Endpoint**: A dedicated endpoint (`/api/csrf-token`) provides tokens to clients
-- **Error Handling**: Specific error handling for CSRF validation failures
-
-### Client-Side Implementation
-
-The client-side implementation includes:
-
-1. `client/src/utils/csrfUtils.ts`: Core CSRF token utilities
-2. `client/src/utils/csrfFetch.ts`: Enhanced fetch function that automatically includes CSRF tokens
-
-#### Usage in Frontend
-
-To make CSRF-protected requests:
+We use a class-based approach for better organization, state management, and flexibility:
 
 ```typescript
-import { csrfFetch } from '@/utils/csrfFetch';
-
-// The CSRF token is automatically included
-const response = await csrfFetch('/api/data', {
-  method: 'POST',
-  body: JSON.stringify({ key: 'value' })
-});
+// server/middleware/csrfProtection.ts
+export class CSRFProtection {
+  // Class properties store configuration state
+  private options: CSRFProtectionOptions;
+  private csrfInstance: any;
+  
+  // Constructor configures protection with secure defaults
+  constructor(options: CSRFProtectionOptions = {}) {
+    // Implementation details...
+  }
+  
+  // Public middleware method for Express integration
+  public middleware = (req: Request, res: Response, next: NextFunction): void => {
+    // Implementation details...
+  }
+  
+  // Other methods...
+}
 ```
 
-## Exempted Routes
+### Configuration Options
 
-The following routes are exempt from CSRF protection:
+The CSRF protection is highly configurable through the `CSRFProtectionOptions` interface:
 
-- `/api/login`
-- `/api/callback`
-- `/api/auth` and `/api/auth/*`
-- `/api/logout`
-- `/api/csrf-token` (the token endpoint itself)
-- `/api/public/*`
-- `/api/health`
-- `/api/webhook`
-- `/api/metrics`
+```typescript
+interface CSRFProtectionOptions {
+  // Cookie configuration
+  cookie?: {
+    secure?: boolean;
+    httpOnly?: boolean;
+    sameSite?: boolean | 'lax' | 'strict' | 'none';
+    maxAge?: number;
+    path?: string;
+    domain?: string;
+  };
+  
+  // Path & method configuration
+  exemptPaths?: string[];
+  ignoreMethods?: string[];
+  
+  // Security features
+  enableSecurityLogging?: boolean;
+  tokenLength?: number;
+  refreshTokenAutomatically?: boolean;
+}
+```
 
-## How It Works with Replit Auth
+### Integration in Server Index
 
-Replit Auth is integrated with our CSRF protection by:
+The protection is initialized early in the server startup process:
 
-1. Exempting all authentication-related routes from CSRF checking
-2. Ensuring the session management is properly integrated with token generation
-3. Providing compatibility with Replit's authentication flow
+```typescript
+// server/index.ts
+const csrfProtection = new CSRFProtection({
+  // Configuration options
+});
 
-## Troubleshooting
+// Apply middleware to all routes
+app.use(csrfProtection.middleware);
 
-If you encounter CSRF-related issues:
+// Set up token endpoint
+csrfProtection.setupTokenEndpoint(app);
+```
 
-1. **403 Errors with "CSRF token validation failed"**: 
-   - Check that your client-side code is correctly fetching and including the token
-   - Verify that cookies are being properly sent with requests
+### Exempt Paths
 
-2. **Issues with Authentication Flow**:
-   - Ensure the authentication routes are properly exempted
-   - Check that the CSRF token cookie is being properly set
+The following paths are exempt from CSRF protection by default:
 
-3. **Token Refresh Issues**:
-   - The client automatically refreshes invalid tokens, but you can manually fetch a new token using:
-   ```typescript
-   import { fetchCSRFToken } from '@/utils/csrfUtils';
-   await fetchCSRFToken();
-   ```
+- Authentication endpoints: `/api/login`, `/api/callback`, `/api/auth/*`, `/api/logout`
+- Public API endpoints: `/api/public/*`, `/api/health`, `/api/metrics/*`
+- External webhooks: `/api/webhook/*`
+- The CSRF token endpoint itself: `/api/csrf-token`
 
-## Best Practices
+Additional exemptions can be configured as needed.
 
-- Always use the `csrfFetch` utility instead of plain `fetch` for API requests
-- Keep the list of exempted paths minimal
-- Monitor for CSRF validation failures in server logs as they may indicate attack attempts
+## Client-Side Implementation
+
+### Singleton Token Manager
+
+The client-side implementation uses a singleton token manager for efficient token handling:
+
+```typescript
+// client/src/utils/csrf.ts
+class CSRFTokenManager {
+  private token: string | null = null;
+  private refreshPromise: Promise<string> | null = null;
+  private tokenExpiryTime: number = 0;
+  
+  // Methods for token management...
+}
+
+// Create singleton instance
+const tokenManager = new CSRFTokenManager();
+```
+
+### Enhanced Fetch Function
+
+The `csrfFetch` function provides enhanced fetch capabilities with automatic token inclusion:
+
+```typescript
+export async function csrfFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  // Refresh token if needed
+  if (tokenManager.needsRefresh()) {
+    await tokenManager.fetchToken();
+  }
+  
+  // Add token to headers and make request
+  // Implementation details...
+}
+```
+
+### Usage in Frontend Components
+
+To use CSRF protection in front-end components:
+
+```typescript
+import { csrfFetch, initializeCSRFProtection } from '@/utils/csrf';
+
+// Initialize protection early in your app (e.g., in App.tsx)
+useEffect(() => {
+  initializeCSRFProtection();
+}, []);
+
+// Use enhanced fetch for API requests
+async function submitForm(data) {
+  const response = await csrfFetch('/api/some-endpoint', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+  
+  // Process response...
+}
+```
+
+## Error Handling & User Experience
+
+### Server-Side Error Responses
+
+For API requests that fail CSRF validation, a JSON response is returned:
+
+```json
+{
+  "error": "CSRF token validation failed",
+  "code": "CSRF_ERROR",
+  "message": "Invalid security token. Please refresh the page and try again."
+}
+```
+
+For web page requests, a user-friendly HTML page is returned with:
+- Clear explanation of the issue
+- Automatic token refresh
+- Button to refresh the page
+
+### Client-Side Error Handling
+
+The client-side implementation includes intelligent error handling:
+- Automatic token refresh on 403 CSRF errors
+- Request retry with the new token
+- Graceful degradation in development environments
+
+## Security Logging
+
+The implementation includes detailed security logging:
+
+```typescript
+private logSecurityEvent(event: CSRFSecurityEvent, data: Record<string, any> = {}): void {
+  // Log different events with appropriate details...
+}
+```
+
+Events logged include:
+- Token generation
+- Token validation failures
+- IP addresses and user agents for potential attacks
+
+## Compatibility with Replit Auth
+
+The CSRF protection is fully compatible with Replit Auth through:
+
+1. Path-based exemptions for authentication endpoints
+2. Proper cookie configuration (SameSite, HttpOnly, etc.)
+3. Intelligent token refresh mechanism
+
+## Performance Considerations
+
+The implementation includes several performance optimizations:
+
+1. Single token refresh promise to prevent duplicate requests
+2. Token caching with controlled expiry
+3. Minimal middleware overhead with path-based checks
+4. Efficient validation logic
 
 ## References
 
 - [OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
 - [Express CSRF Protection (csurf)](https://github.com/expressjs/csurf)
+- [SameSite Cookie Attribute](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite)

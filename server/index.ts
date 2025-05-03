@@ -42,35 +42,51 @@ const httpServer = createServer(app);
 app.use(cookieParser());
 
 // Set up CSRF protection with exempt paths for Replit Auth
-import { createCSRFMiddleware, csrfErrorHandler, setupCSRFTokenEndpoint } from './middleware/csrfProtection';
+import { CSRFProtection } from './middleware/csrfProtection';
 
-// Apply CSRF middleware with auth paths exempted
+// Initialize CSRF protection
 if (config.security.csrfProtection) {
-  log('Setting up CSRF protection with exemptions for Replit Auth paths', 'server');
+  log('Setting up enhanced CSRF protection with Replit Auth compatibility', 'server');
   
-  // Create and apply the CSRF middleware
-  const csrfMiddleware = createCSRFMiddleware({
-    // Additional exempted paths can be specified here
+  // Create a CSRF protection instance with additional configuration
+  const csrfProtection = new CSRFProtection({
+    // Configure cookie properties
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    },
+    
+    // Additional exempted paths (beyond the defaults)
     exemptPaths: [
-      // Additional exempt paths (auth paths already included in defaults)
-      '/api/webhook',
-      '/api/metrics'
-    ]
+      // API specific exemptions
+      '/api/webhook/stripe',
+      '/api/metrics/public',
+      '/api/health-check'
+    ],
+    
+    // Enable detailed security logging
+    enableSecurityLogging: true,
+    
+    // Automatically refresh tokens when they expire
+    refreshTokenAutomatically: true
   });
   
-  // Apply the middleware globally - use function call to avoid TS errors
-  app.use((req, res, next) => csrfMiddleware(req, res, next));
+  // Apply CSRF middleware
+  app.use(csrfProtection.middleware);
   
-  // Set up CSRF token endpoint for client usage
-  setupCSRFTokenEndpoint(app);
+  // Set up CSRF token endpoint
+  csrfProtection.setupTokenEndpoint(app);
   
-  // Set up the error handler for CSRF validation failures - wrap in middleware style
-  app.use((err, req, res, next) => csrfErrorHandler(err, req, res, next));
+  // No separate error handler needed - it's integrated into the middleware
 } else {
   // CSRF protection disabled in config
   log('⚠️ CSRF protection disabled in configuration', 'server');
+  
   // Set up dummy endpoint for compatibility
   app.get('/api/csrf-token', (req, res) => {
+    log('CSRF protection is disabled - returning placeholder token', 'security');
     res.json({ csrfToken: 'csrf-disabled-in-config' });
   });
 }
