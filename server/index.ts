@@ -58,14 +58,14 @@ if (config.security.csrfProtection) {
     ]
   });
   
-  // Apply the middleware globally
-  app.use(csrfMiddleware);
+  // Apply the middleware globally - use function call to avoid TS errors
+  app.use((req, res, next) => csrfMiddleware(req, res, next));
   
   // Set up CSRF token endpoint for client usage
   setupCSRFTokenEndpoint(app);
   
-  // Set up the error handler for CSRF validation failures
-  app.use(csrfErrorHandler);
+  // Set up the error handler for CSRF validation failures - wrap in middleware style
+  app.use((err, req, res, next) => csrfErrorHandler(err, req, res, next));
 } else {
   // CSRF protection disabled in config
   log('⚠️ CSRF protection disabled in configuration', 'server');

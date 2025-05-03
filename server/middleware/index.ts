@@ -90,8 +90,8 @@ export function setupMiddleware(app: express.Application, sessionSecret: string)
     app.use(defaultLimiter);
   }
 
-  // CSRF protection disabled for Replit Auth integration
-  console.log("⚠️ CSRF Protection disabled for Replit Auth integration in middleware/index.ts");
+  // CSRF protection is handled in server/index.ts with proper exemptions for Replit Auth
+  console.log("ℹ️ CSRF Protection with Replit Auth exemptions configured in server/index.ts");
 
   // Auth middleware
   app.use(checkAuth);

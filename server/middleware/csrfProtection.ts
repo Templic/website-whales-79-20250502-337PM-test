@@ -120,14 +120,26 @@ export function csrfErrorHandler(err: any, req: Request, res: Response, next: Ne
  * Creates an endpoint to get a CSRF token
  */
 export function setupCSRFTokenEndpoint(app: any) {
-  app.get('/api/csrf-token', (req: Request, res: Response) => {
-    // Generate a new token if there's already a middleware
-    if (typeof req.csrfToken === 'function') {
-      const token = req.csrfToken();
-      return res.json({ csrfToken: token });
+  // Use the csurf middleware directly for the token endpoint
+  // This ensures we always get a valid token
+  const csrfProtect = csurf({
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'strict'
     }
-    
-    // If CSRF is disabled, provide a placeholder token
-    res.json({ csrfToken: 'csrf-token-placeholder' });
+  });
+  
+  app.get('/api/csrf-token', csrfProtect, (req: Request, res: Response) => {
+    // Generate a token using the middleware-provided function
+    try {
+      const token = req.csrfToken();
+      log('CSRF token generated: ' + token.substring(0, 8) + '...', 'security');
+      return res.json({ csrfToken: token });
+    } catch (err) {
+      log('Failed to generate CSRF token: ' + err, 'security');
+      // If token generation fails, send a placeholder but log the error
+      res.json({ csrfToken: 'csrf-token-placeholder' });
+    }
   });
 }
