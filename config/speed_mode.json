@@ -1,0 +1,41 @@
+{
+  "environment": "speed_mode",
+  "startupPriority": "quickstart",
+  "deferBackgroundServices": true,
+  "enableCompression": false,
+  "csrfProtection": false,
+  "features": {
+    "enableDatabaseOptimization": false,
+    "enableSecurityScans": false,
+    "enableBackgroundTasks": false,
+    "enableBackgroundServices": false,
+    "enableRateLimiting": false,
+    "enableContentFiltering": false,
+    "enableCodeAnalysis": false,
+    "enableInputSanitization": false,
+    "enableTrustedTypes": false,
+    "enableCSRF": false,
+    "enableHSTS": false,
+    "enableCSP": false,
+    "enableXSS": false,
+    "enableFrameOptions": false,
+    "enableContentTypeOptions": false,
+    "enableReferrerPolicy": false,
+    "enableDNSPrefetch": false,
+    "enablePermissionsPolicy": false,
+    "enableCaching": false,
+    "enableDeepSecurityScanning": false,
+    "enableContinuousMonitoring": false,
+    "enableThreatIntelligence": false,
+    "enableAnomalyDetection": false,
+    "enableWebSockets": true,
+    "enableExtraLogging": false,
+    "enableContentScheduling": false
+  },
+  "security": {
+    "scanMode": "none"
+  },
+  "maintenanceDelay": 300000,
+  "backgroundServicesDelay": 120000,
+  "securityScanDelay": 900000
+}

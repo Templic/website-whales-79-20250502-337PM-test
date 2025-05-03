@@ -198,14 +198,25 @@ export function loadConfig(): ServerConfig {
     // Try to load environment-specific config
     const envConfigPath = path.join(__dirname, '..', 'config', `${config.environment}.json`);
     
-    // Try to load full security config (takes precedence)
+    // Check for speed mode configuration (highest priority)
+    const speedModePath = path.join(__dirname, '..', 'config', 'speed_mode.json');
+    
+    // Try to load full security config
     const fullSecurityPath = path.join(__dirname, '..', 'config', 'full_security.json');
     
-    if (fs.existsSync(fullSecurityPath)) {
+    // Speed mode has highest priority
+    if (process.env.ENABLE_SPEED_MODE === 'true' && fs.existsSync(speedModePath)) {
+      const speedConfig = JSON.parse(fs.readFileSync(speedModePath, 'utf8'));
+      config = mergeConfigs(config, speedConfig);
+      console.log('⚡ SPEED MODE ACTIVATED: Server starting with minimal features for fastest performance');
+    }
+    // Full security has second priority
+    else if (process.env.ENABLE_FULL_SECURITY === 'true' && fs.existsSync(fullSecurityPath)) {
       const securityConfig = JSON.parse(fs.readFileSync(fullSecurityPath, 'utf8'));
       config = mergeConfigs(config, securityConfig);
       console.log('Loaded full security configuration with enhanced protection');
     }
+    // Environment config has lowest priority
     else if (fs.existsSync(envConfigPath)) {
       const envConfig = JSON.parse(fs.readFileSync(envConfigPath, 'utf8'));
       config = mergeConfigs(config, envConfig);
@@ -238,21 +249,66 @@ export function loadConfig(): ServerConfig {
  * Merge configuration objects with proper deep merging
  */
 function mergeConfigs(baseConfig: ServerConfig, overrideConfig: Partial<ServerConfig>): ServerConfig {
-  const result = { ...baseConfig };
+  // Create a copy of the base config
+  const result = { ...baseConfig } as ServerConfig;
   
+  // Apply overrides
   for (const [key, value] of Object.entries(overrideConfig)) {
     if (value === null || value === undefined) {
       continue;
     }
     
+    // Handle nested objects with specific types
     if (key === 'features' && baseConfig.features && typeof value === 'object') {
-      result.features = { ...baseConfig.features, ...value };
-    } else if (key === 'database' && baseConfig.database && typeof value === 'object') {
-      result.database = { ...baseConfig.database, ...value };
-    } else if (key === 'security' && baseConfig.security && typeof value === 'object') {
-      result.security = { ...baseConfig.security, ...value };
-    } else {
-      (result as unknown)[key] = value;
+      result.features = { ...baseConfig.features, ...(value as FeatureFlags) };
+    } 
+    else if (key === 'database' && baseConfig.database && typeof value === 'object') {
+      result.database = { ...baseConfig.database, ...(value as DatabaseConfig) };
+    } 
+    else if (key === 'security' && baseConfig.security && typeof value === 'object') {
+      result.security = { ...baseConfig.security, ...(value as SecurityConfig) };
+    } 
+    else {
+      // For other properties, use type assertion with key-specific typing
+      switch(key) {
+        case 'port':
+          result.port = value as number;
+          break;
+        case 'host':
+          result.host = value as string;
+          break;
+        case 'startupPriority':
+          result.startupPriority = value as StartupPriority;
+          break;
+        case 'deferBackgroundServices':
+          result.deferBackgroundServices = value as boolean;
+          break;
+        case 'enableHttps':
+          result.enableHttps = value as boolean;
+          break;
+        case 'environment':
+          result.environment = value as string;
+          break;
+        case 'enableCompression':
+          result.enableCompression = value as boolean;
+          break;
+        case 'csrfProtection':
+          result.csrfProtection = value as boolean;
+          break;
+        case 'maintenanceDelay':
+          result.maintenanceDelay = value as number;
+          break;
+        case 'backgroundServicesDelay':
+          result.backgroundServicesDelay = value as number;
+          break;
+        case 'securityScanDelay':
+          result.securityScanDelay = value as number;
+          break;
+        default:
+          // For any other properties (from potentially extended config),
+          // safely add them to the result
+          (result as any)[key] = value;
+      }
     }
   }
   
