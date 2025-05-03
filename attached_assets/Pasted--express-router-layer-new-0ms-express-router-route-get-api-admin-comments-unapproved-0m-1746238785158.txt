@@ -1,0 +1,457 @@
+  express:router:layer new '/' +0ms
+  express:router:route get '/api/admin/comments/unapproved' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/admin/tracks/recent' +0ms
+  express:router:layer new '/api/admin/tracks/recent' +1ms
+  express:router:route get '/api/admin/tracks/recent' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route get '/api/admin/tracks/recent' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/admin/posts/:postId/approve' +0ms
+  express:router:layer new '/api/admin/posts/:postId/approve' +0ms
+  express:router:route post '/api/admin/posts/:postId/approve' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/admin/posts/:postId/approve' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/admin/comments/:commentId/approve' +0ms
+  express:router:layer new '/api/admin/comments/:commentId/approve' +0ms
+  express:router:route post '/api/admin/comments/:commentId/approve' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/admin/comments/:commentId/approve' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/admin/comments/:commentId/reject' +0ms
+  express:router:layer new '/api/admin/comments/:commentId/reject' +0ms
+  express:router:route post '/api/admin/comments/:commentId/reject' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/admin/comments/:commentId/reject' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/admin/tracks/:trackId' +0ms
+  express:router:layer new '/api/admin/tracks/:trackId' +0ms
+  express:router:route delete '/api/admin/tracks/:trackId' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route delete '/api/admin/tracks/:trackId' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/posts' +0ms
+  express:router:layer new '/api/posts' +0ms
+  express:router:route get '/api/posts' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/posts/unapproved' +0ms
+  express:router:layer new '/api/posts/unapproved' +0ms
+  express:router:route get '/api/posts/unapproved' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/posts/:id/approve' +0ms
+  express:router:layer new '/api/posts/:id/approve' +0ms
+  express:router:route post '/api/posts/:id/approve' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/posts/:id/approve' +0ms
+  express:router:layer new '/' +1ms
+  express:router:route new '/api/posts/:id' +0ms
+  express:router:layer new '/api/posts/:id' +0ms
+  express:router:route get '/api/posts/:id' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/posts' +0ms
+  express:router:layer new '/api/posts' +0ms
+  express:router:route post '/api/posts' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/posts' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/posts' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/posts' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/posts' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/posts' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/posts/:id' +0ms
+  express:router:layer new '/api/posts/:id' +0ms
+  express:router:route patch '/api/posts/:id' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/posts/:id' +0ms
+  express:router:layer new '/api/posts/:id' +0ms
+  express:router:route delete '/api/posts/:id' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/categories' +0ms
+  express:router:layer new '/api/categories' +0ms
+  express:router:route get '/api/categories' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/categories' +0ms
+  express:router:layer new '/api/categories' +0ms
+  express:router:route post '/api/categories' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/categories' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/categories' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/categories' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/posts/:postId/comments' +0ms
+  express:router:layer new '/api/posts/:postId/comments' +1ms
+  express:router:route post '/api/posts/:postId/comments' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/posts/:postId/comments' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/posts/:postId/comments' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/posts/:postId/comments' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/posts/:postId/comments' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/posts/:postId/comments' +0ms
+  express:router:layer new '/api/posts/:postId/comments' +0ms
+  express:router:route get '/api/posts/:postId/comments' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/posts/comments/unapproved' +0ms
+  express:router:layer new '/api/posts/comments/unapproved' +0ms
+  express:router:route get '/api/posts/comments/unapproved' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route get '/api/posts/comments/unapproved' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/posts/comments/:id/approve' +0ms
+  express:router:layer new '/api/posts/comments/:id/approve' +0ms
+  express:router:route post '/api/posts/comments/:id/approve' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/posts/comments/:id/approve' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/contact' +0ms
+  express:router:layer new '/api/contact' +0ms
+  express:router:route post '/api/contact' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/contact' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/contact' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/contact' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/contact' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/posts/comments/:id/reject' +0ms
+  express:router:layer new '/api/posts/comments/:id/reject' +0ms
+  express:router:route post '/api/posts/comments/:id/reject' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/posts/comments/:id/reject' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/recover-password' +0ms
+  express:router:layer new '/api/recover-password' +0ms
+  express:router:route post '/api/recover-password' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/recover-password' +1ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/recover-password' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/reset-password' +0ms
+  express:router:layer new '/api/reset-password' +0ms
+  express:router:route post '/api/reset-password' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/reset-password' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/reset-password' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/reset-password' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/upload/music' +0ms
+  express:router:layer new '/api/upload/music' +0ms
+  express:router:route post '/api/upload/music' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/upload/music' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/tracks' +0ms
+  express:router:layer new '/api/tracks' +0ms
+  express:router:route get '/api/tracks' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/albums' +0ms
+  express:router:layer new '/api/albums' +0ms
+  express:router:route get '/api/albums' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/tracks/:id' +0ms
+  express:router:layer new '/api/tracks/:id' +0ms
+  express:router:route delete '/api/tracks/:id' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route delete '/api/tracks/:id' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/admin/analytics/detailed' +0ms
+  express:router:layer new '/api/admin/analytics/detailed' +0ms
+  express:router:route get '/api/admin/analytics/detailed' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route get '/api/admin/analytics/detailed' +0ms
+  express:router:layer new '/' +0ms
+  express:router use '/api/admin/db-monitor' isAdmin +1ms
+  express:router:layer new '/api/admin/db-monitor' +0ms
+  express:router use '/api/admin/db-monitor' router +0ms
+  express:router:layer new '/api/admin/db-monitor' +0ms
+  express:router use '/api/admin/database-security' isAdmin +0ms
+  express:router:layer new '/api/admin/database-security' +0ms
+  express:router use '/api/admin/database-security' router +0ms
+  express:router:layer new '/api/admin/database-security' +0ms
+  express:router use '/api/test/database-security' router +0ms
+  express:router:layer new '/api/test/database-security' +0ms
+  express:router use '/' validateDatabaseQuery +0ms
+  express:router:layer new '/' +0ms
+  express:router use '/' sanitizeDatabaseParams +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/products' +0ms
+  express:router:layer new '/api/products' +0ms
+  express:router:route get '/api/products' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/test-shop' +0ms
+  express:router:layer new '/test-shop' +0ms
+  express:router:route get '/test-shop' +0ms
+  express:router:layer new '/' +0ms
+  express:router use '/api/shop' router +0ms
+  express:router:layer new '/api/shop' +0ms
+  express:router use '/api/payments' router +0ms
+  express:router:layer new '/api/payments' +0ms
+  express:router use '/api/content' router +0ms
+  express:router:layer new '/api/content' +0ms
+  express:router use '/api/content/workflow' router +0ms
+  express:router:layer new '/api/content/workflow' +0ms
+  express:router use '/api/content-ai' router +0ms
+  express:router:layer new '/api/content-ai' +0ms
+  express:router use '/api/notifications' router +0ms
+  express:router:layer new '/api/notifications' +0ms
+  express:router use '/api/typescript/public' router +0ms
+  express:router:layer new '/api/typescript/public' +0ms
+  express:router use '/' router +0ms
+  express:router:layer new '/' +0ms
+  express:router use '/api/security' router +0ms
+  express:router:layer new '/api/security' +0ms
+  express:router use '/api/security/audit' router +0ms
+  express:router:layer new '/api/security/audit' +0ms
+  express:router use '/api/security/dashboard' router +0ms
+  express:router:layer new '/api/security/dashboard' +0ms
+  express:router use '/api/test' router +0ms
+  express:router:layer new '/api/test' +0ms
+[API-PROTECTION] Advanced API protection temporarily disabled due to missing modules
+  express:router:route new '/api/contact/submit' +1ms
+  express:router:layer new '/api/contact/submit' +0ms
+  express:router:route post '/api/contact/submit' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/contact/submit' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/contact/submit' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/contact/submit' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/contact/submit' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/security/log' +0ms
+  express:router:layer new '/api/security/log' +0ms
+  express:router:route post '/api/security/log' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/security/settings' +0ms
+  express:router:layer new '/api/security/settings' +0ms
+  express:router:route get '/api/security/settings' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route get '/api/security/settings' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/security/settings' +0ms
+  express:router:layer new '/api/security/settings' +0ms
+  express:router:route post '/api/security/settings' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route post '/api/security/settings' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/admin/content' +0ms
+  express:router:layer new '/api/admin/content' +0ms
+  express:router:route get '/api/admin/content' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route get '/api/admin/content' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/admin/content/:id/history' +0ms
+  express:router:layer new '/api/admin/content/:id/history' +0ms
+  express:router:route get '/api/admin/content/:id/history' +1ms
+  express:router:layer new '/' +0ms
+  express:router:route get '/api/admin/content/:id/history' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/admin/content/:id/status' +0ms
+  express:router:layer new '/api/admin/content/:id/status' +0ms
+  express:router:route patch '/api/admin/content/:id/status' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route patch '/api/admin/content/:id/status' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/api/security/logs' +0ms
+  express:router:layer new '/api/security/logs' +0ms
+  express:router:route get '/api/security/logs' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route get '/api/security/logs' +0ms
+  express:router:layer new '/' +0ms
+2:15:27 AM [server] Setting up Vite in development mode...
+Error initializing patrons: error: insert or update on table "patrons" violates foreign key constraint "patrons_user_id_users_id_fk"
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async initializeTable (/home/runner/workspace/server/storage.ts:1015:11)
+    at async PostgresStorage.initializeSampleData (/home/runner/workspace/server/storage.ts:1267:7) {
+  length: 299,
+  severity: 'ERROR',
+  code: '23503',
+  detail: 'Key (user_id)=(78aec3eb-1ba9-4a4a-bd68-9381bffc1199) is not present in table "users".',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'patrons',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'patrons_user_id_users_id_fk',
+  file: 'ri_triggers.c',
+  line: '2608',
+  routine: 'ri_ReportViolation'
+}
+  express:router use '/' <anonymous> +38ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/quantum/generate-keys' +0ms
+  express:router:layer new '/quantum/generate-keys' +0ms
+  express:router:route post '/quantum/generate-keys' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/quantum/encrypt' +0ms
+  express:router:layer new '/quantum/encrypt' +0ms
+  express:router:route post '/quantum/encrypt' +0ms
+  express:router:layer new '/' +0ms
+  express:router:route new '/quantum/decrypt' +0ms
+  express:router:layer new '/quantum/decrypt' +0ms
+  express:router:route post '/quantum/decrypt' +0ms
+  express:router:layer new '/' +1ms
+[SECURITY] WARNING: Test API routes enabled - these bypass CSRF protection
+  express:router use '/api/test-only' <anonymous> +0ms
+  express:router:layer new '/api/test-only' +0ms
+  express:router use '/api/test-only' router +0ms
+  express:router:layer new '/api/test-only' +0ms
+tour_dates already contains data, skipping initialization
+  express:router use '/' app +36ms
+  express:router:layer new '/' +0ms
+  express:router use '*' <anonymous> +0ms
+  express:router:layer new '*' +0ms
+Server initialization complete in 1313ms
+=== Server Startup Performance ===
+Total startup time: 1313ms
+Startup priority: full
+Database optimization: enabled
+Background services: enabled
+Security scans: enabled
+Non-critical services deferred: no
+=================================
+2:15:27 AM [server] Initializing all services immediately (non-deferred mode)
+2:15:27 AM [server] Initializing database optimization...
+2:15:27 AM [db-maintenance] Initial database maintenance run scheduled
+2:15:27 AM [db-maintenance] Starting intelligent database maintenance...
+2:15:27 AM [server] Server successfully listening on port 5000
+2:15:27 AM [express] Server listening on port 5000
+2:15:27 AM [db-maintenance] Found 1 tables needing VACUUM
+2:15:27 AM [db-maintenance] Found 1 tables needing ANALYZE
+2:15:27 AM [db-maintenance] Running VACUUM on table 'security_threats'...
+  express:router dispatching GET / +870ms
+  express:router query  : / +1ms
+  express:router expressInit  : / +0ms
+  express:router cookieParser  : / +0ms
+  express:router jsonParser  : / +1ms
+  express:router urlencodedParser  : / +0ms
+  express:router <anonymous>  : / +0ms
+  express:router helmetMiddleware  : / +0ms
+  express:router corsMiddleware  : / +1ms
+  express:router <anonymous>  : / +0ms
+  express:router <anonymous>  : / +0ms
+  express:router session  : / +1ms
+  express:router session  : / +2ms
+  express:router initialize  : / +0ms
+  express:router authenticate  : / +0ms
+  express:router sessionMonitor  : / +0ms
+  express:router <anonymous>  : / +0ms
+  express:router threatProtectionMiddleware  : / +0ms
+  express:router router  : / +2ms
+  express:router dispatching GET / +0ms
+  express:router <anonymous>  : / +0ms
+  express:router validateDatabaseQuery  : / +3ms
+  express:router sanitizeDatabaseParams  : / +0ms
+  express:router router  : / +0ms
+  express:router dispatching GET / +0ms
+  express:router <anonymous>  : / +0ms
+  express:router app  : / +0ms
+  express:router trim prefix (/) from url / +5ms
+  express:router <anonymous> / : / +0ms
+2:15:28 AM [db-maintenance] VACUUM on 'security_threats' completed in 838ms
+2:15:28 AM [db-maintenance] Running ANALYZE on table 'security_threats'...
+2:15:28 AM [db-maintenance] ANALYZE on 'security_threats' completed in 72ms
+2:15:28 AM [db-maintenance] Database maintenance completed in 969ms
+2:15:28 AM [db-maintenance] Maintenance summary:
+2:15:28 AM [db-maintenance] - VACUUM performed on 1 tables
+2:15:28 AM [db-maintenance] - ANALYZE performed on 1 tables
+2:15:28 AM [db-maintenance] Scheduled regular database maintenance every 24 hours
+2:15:28 AM [server] Initializing background services...
+2:15:28 AM [background] Initializing background services...
+2:15:28 AM [background] Initializing database maintenance service...
+2:15:28 AM [db-maintenance] Scheduled regular database maintenance every 24 hours
+2:15:28 AM [background] Database maintenance service initialized successfully
+2:15:28 AM [background] Initializing security scanning service...
+2:15:28 AM [background] Security scanning service initialized with 12 hour interval
+2:15:28 AM [background] Initializing content scheduler service...
+[Background] Starting content scheduler (interval: 5 minute(s))
+[2025-05-03T02:15:28.418Z] [INFO] Running content scheduler
+[2025-05-03T02:15:28.418Z] [INFO] Processing recurring schedules
+2:15:28 AM [background] Content scheduler service initialized with 5 minute interval
+2:15:28 AM [background] Initializing data cleanup service...
+2:15:28 AM [background] Data cleanup service initialized successfully
+2:15:28 AM [background] Initializing metrics collection service...
+2:15:28 AM [background] Metrics collection service initialized successfully
+2:15:28 AM [background] Active background services: Database Maintenance, Security Scanning, Metrics Collection, Data Cleanup, Content Scheduler
+2:15:28 AM [server] Initializing security scans...
+2:15:28 AM [security] Running deferred security scan...
+2:15:28 AM [security] Starting security scan...
+2:15:28 AM [security] Scanning dependencies for known vulnerabilities...
+2:15:28 AM [security] Scanning for expired certificates...
+2:15:28 AM [security] Scanning for outdated dependencies...
+2:15:28 AM [security] Scanning for common vulnerabilities...
+2:15:28 AM [security] Scanning imports for known vulnerabilities, exploits, and malware...
+2:15:28 AM [security] Scanning for payment security issues...
+2:15:28 AM [security] Running payment security scan...
+2:15:28 AM [security] Running PCI DSS compliance scan...
+2:15:28 AM [performance] Network Security check completed in 0ms
+2:15:28 AM [security] Network Security results: 2/2 checks passed
+2:15:28 AM [performance] Data Protection check completed in 0ms
+2:15:28 AM [security] Data Protection results: 3/3 checks passed
+2:15:28 AM [performance] Vulnerability Management check completed in 0ms
+2:15:28 AM [security] Vulnerability Management results: 3/3 checks passed
+2:15:28 AM [performance] Access Control check completed in 0ms
+2:15:28 AM [security] Access Control results: 3/3 checks passed
+2:15:28 AM [performance] Secure Implementation check completed in 0ms
+2:15:28 AM [security] Secure Implementation results: 3/3 checks passed
+2:15:28 AM [performance] Logging and Monitoring check completed in 6ms
+2:15:28 AM [security] Logging and Monitoring results: 3/5 checks passed
+2:15:28 AM [security] PCI DSS compliance scan completed in 8ms
+2:15:28 AM [security] Results: 17/19 checks passed (2 failed)
+2:15:28 AM [security] Critical issues: 0, High issues: 2
+2:15:28 AM [security] PCI DSS compliance report generated: /home/runner/workspace/reports/compliance/pci-compliance-2025-05-03T02-15-28.437Z.md
+2:15:28 AM [security] Payment security scan completed. Found 23 checks.
+[2025-05-03T02:15:28.468Z] [ERROR] Error processing recurring schedules: - {"length":109,"name":"error","severity":"ERROR","code":"42703","position":"196","file":"parse_relation.c","line":"3722","routine":"errorMissingColumn"}
+2:15:28 AM [security] Scanning 166 installed packages...
+2:15:28 AM [security] Security scan completed in 63ms
+2:15:28 AM [security] Results: 2 errors, 3 warnings, 24 passed
+2:15:28 AM [security] [WARNING] OutdatedDependencyScanner: Some dependencies are outdated but not critical
+2:15:28 AM [security] [WARNING] PCI-DSS Compliance: Requirement 10.5: Secure audit trails so they cannot be altered
+2:15:28 AM [security] [WARNING] PCI-DSS Compliance: Requirement 10.6: Review logs and security events for all system components
+2:15:28 AM [security] [ERROR] Import Security Scanner: Malicious import detected: colors
+2:15:28 AM [security] [ERROR] Import Security Scanner: Known vulnerability in package: colors
+[2025-05-03T02:15:29.073Z] [ERROR] Error running content scheduler: - {"length":109,"name":"error","severity":"ERROR","code":"42703","position":"196","file":"parse_relation.c","line":"3722","routine":"errorMissingColumn"}
+[Background] Error during initial content scheduling run: error: column "timezone" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async runContentScheduler (/home/runner/workspace/server/services/contentScheduler.ts:117:30) {
+  length: 109,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '196',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3722',
+  routine: 'errorMissingColumn'
+}

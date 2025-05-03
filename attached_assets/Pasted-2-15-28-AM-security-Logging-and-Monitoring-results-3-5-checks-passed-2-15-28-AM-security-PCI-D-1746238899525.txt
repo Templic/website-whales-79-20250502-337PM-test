@@ -1,0 +1,39 @@
+2:15:28 AM [security] Logging and Monitoring results: 3/5 checks passed
+2:15:28 AM [security] PCI DSS compliance scan completed in 8ms
+2:15:28 AM [security] Results: 17/19 checks passed (2 failed)
+2:15:28 AM [security] Critical issues: 0, High issues: 2
+2:15:28 AM [security] PCI DSS compliance report generated: /home/runner/workspace/reports/compliance/pci-compliance-2025-05-03T02-15-28.437Z.md
+2:15:28 AM [security] Payment security scan completed. Found 23 checks.
+[2025-05-03T02:15:28.468Z] [ERROR] Error processing recurring schedules: - {"length":109,"name":"error","severity":"ERROR","code":"42703","position":"196","file":"parse_relation.c","line":"3722","routine":"errorMissingColumn"}
+2:15:28 AM [security] Scanning 166 installed packages...
+2:15:28 AM [security] Security scan completed in 63ms
+2:15:28 AM [security] Results: 2 errors, 3 warnings, 24 passed
+2:15:28 AM [security] [WARNING] OutdatedDependencyScanner: Some dependencies are outdated but not critical
+2:15:28 AM [security] [WARNING] PCI-DSS Compliance: Requirement 10.5: Secure audit trails so they cannot be altered
+2:15:28 AM [security] [WARNING] PCI-DSS Compliance: Requirement 10.6: Review logs and security events for all system components
+2:15:28 AM [security] [ERROR] Import Security Scanner: Malicious import detected: colors
+2:15:28 AM [security] [ERROR] Import Security Scanner: Known vulnerability in package: colors
+[2025-05-03T02:15:29.073Z] [ERROR] Error running content scheduler: - {"length":109,"name":"error","severity":"ERROR","code":"42703","position":"196","file":"parse_relation.c","line":"3722","routine":"errorMissingColumn"}
+[Background] Error during initial content scheduling run: error: column "timezone" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async runContentScheduler (/home/runner/workspace/server/services/contentScheduler.ts:117:30) {
+  length: 109,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '196',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3722',
+  routine: 'errorMissingColumn'
+}
