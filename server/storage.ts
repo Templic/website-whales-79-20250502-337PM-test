@@ -40,7 +40,7 @@ import {
   // Theme system tables
   themes, themeAnalytics, themeEvents,
   // New tables
-  collaborationProposals, patrons, tourDates
+  collaborationProposals, patrons, tourDates, albums, tracks
 } from "../shared/schema";
 import { sql, eq, and, desc, gt, count, max } from "drizzle-orm";
 import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";
@@ -1230,27 +1230,40 @@ export class PostgresStorage implements IStorage {
       ]);
 
       // 7. Initialize patrons
-      // Use the patrons table from schema instead of creating a new one
-      await initializeTable('patrons', patrons, [
-        { 
-          userId: '78aec3eb-1ba9-4a4a-bd68-9381bffc1199', // admin user
-          tier: 'Whale Guardian', 
-          contribution: '50.00',
-          status: 'active'
-        },
-        { 
-          userId: '147088fe-0b75-4d17-8354-63fc117c2987', // superadmin user
-          tier: 'Ocean Protector',
-          contribution: '25.00',
-          status: 'active'
-        },
-        { 
-          userId: '856b2579-c2a1-4a89-a070-129b970e3a7f', // regular user
-          tier: 'Wave Rider',
-          contribution: '10.00',
-          status: 'active'
+      // First, get actual user IDs from database
+      try {
+        console.log("Initializing patrons...");
+        const [adminUser] = await db.select().from(users).where(eq(users.username, 'admin'));
+        const [superAdminUser] = await db.select().from(users).where(eq(users.username, 'superadmin'));
+        const [regularUser] = await db.select().from(users).where(eq(users.username, 'user'));
+        
+        if (adminUser && superAdminUser && regularUser) {
+          await initializeTable('patrons', patrons, [
+            { 
+              userId: adminUser.id, // admin user
+              tier: 'Whale Guardian', 
+              contribution: '50.00',
+              status: 'active'
+            },
+            { 
+              userId: superAdminUser.id, // superadmin user
+              tier: 'Ocean Protector',
+              contribution: '25.00',
+              status: 'active'
+            },
+            { 
+              userId: regularUser.id, // regular user
+              tier: 'Wave Rider',
+              contribution: '10.00',
+              status: 'active'
+            }
+          ]);
+        } else {
+          console.log("Skipping patrons initialization: One or more required users not found");
         }
-      ]);
+      } catch (error) {
+        console.error("Error initializing patrons:", error);
+      }
       
       // 8. Initialize tour dates
       // Use the tour_dates table from schema instead of creating a new one
