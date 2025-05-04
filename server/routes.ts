@@ -283,6 +283,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/no-security/basic', // Explicit exemption for basic test endpoint
     '/api/no-security/ai-security', // Explicit exemption for AI security test endpoint
     '/api/no-security/status', // Explicit exemption for status endpoint
+    '/api/validation-bypass/*', // Validation bypass routes
     '/api/csrf-token'  // CSRF token endpoint (needed for tests)
   ];
 
