@@ -93,6 +93,9 @@ if (config.security.csrfProtection) {
       // CSRF bypass for rate limit testing
       '/no-csrf/rate-limit-test',
       '/no-csrf/rate-limit-test/*',
+      // API validation testing
+      '/api-validation-test',
+      '/api/validation-test/*',
       // Flask app routes
       '/',
       '/index.html',
