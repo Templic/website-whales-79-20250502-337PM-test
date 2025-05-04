@@ -12,8 +12,11 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({ chatOnly = false, className
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [loading, setLoading] = useState(true);
   
-  // The Taskade AI Agent URL from your embed code
-  const taskadeUrl = 'https://www.taskade.com/a/01JRV02MYWJW6VJS9XGR1VB5J4';
+  // The Taskade ID - this is what we pass to our custom embed page
+  const taskadeId = '01JRV02MYWJW6VJS9XGR1VB5J4';
+  
+  // Use our custom embed page instead of direct Taskade URL
+  const embedUrl = `/taskade-embed?id=${taskadeId}`;
   
   // Handle iframe load event
   const handleIframeLoad = () => {
@@ -51,7 +54,7 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({ chatOnly = false, className
       
       <iframe
         ref={iframeRef}
-        src={taskadeUrl}
+        src={embedUrl}
         title="Taskade AI Embed"
         className="w-full h-full border-0"
         onLoad={handleIframeLoad}
