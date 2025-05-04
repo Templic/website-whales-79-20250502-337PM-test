@@ -1,178 +1,312 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>API Validation Test</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    h1 {
+      color: #1a6ea0;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
     }
     button {
-      background-color: #4CAF50;
-      border: none;
+      background-color: #1a6ea0;
       color: white;
+      border: none;
       padding: 10px 15px;
-      text-align: center;
-      text-decoration: none;
-      display: inline-block;
-      font-size: 16px;
-      margin: 4px 2px;
-      cursor: pointer;
       border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
     }
-    pre {
-      background-color: #f5f5f5;
-      padding: 10px;
-      border-radius: 5px;
+    button:hover {
+      background-color: #135e8a;
+    }
+    .result {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      font-family: monospace;
       overflow-x: auto;
     }
-    .test-section {
+    .success {
+      background-color: #e7f7e7;
+      border: 1px solid #c3e6c3;
+    }
+    .error {
+      background-color: #f8e7e7;
+      border: 1px solid #e6c3c3;
+    }
+    .tabs {
+      display: flex;
       margin-bottom: 20px;
-      padding: 15px;
+    }
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
       border: 1px solid #ddd;
-      border-radius: 5px;
+      background-color: #f1f1f1;
+      margin-right: 5px;
+      border-radius: 4px 4px 0 0;
+    }
+    .tab.active {
+      background-color: white;
+      border-bottom: 1px solid white;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .security-score {
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .score-high {
+      color: #4caf50;
+    }
+    .score-low {
+      color: #f44336;
     }
   </style>
 </head>
 <body>
   <h1>API Validation Test</h1>
   
-  <div class="test-section">
-    <h2>CSRF Token</h2>
-    <button id="getToken">Get CSRF Token</button>
-    <pre id="tokenResult">Results will appear here...</pre>
+  <div class="tabs">
+    <div class="tab active" data-tab="basic">Basic Validation</div>
+    <div class="tab" data-tab="security">Security Validation</div>
+    <div class="tab" data-tab="health">Health Check</div>
   </div>
-
-  <div class="test-section">
-    <h2>Validation Rules Test</h2>
-    <button id="testRules">Test Validation Rules</button>
-    <pre id="rulesResult">Results will appear here...</pre>
-  </div>
-
-  <div class="test-section">
-    <h2>Validation Mappings Test</h2>
-    <button id="testMappings">Test Validation Mappings</button>
-    <pre id="mappingsResult">Results will appear here...</pre>
-  </div>
-
-  <div class="test-section">
-    <h2>Security Validation Test</h2>
-    <button id="testSecurity">Test Security Validation</button>
-    <pre id="securityResult">Results will appear here...</pre>
-  </div>
-
-  <div class="test-section">
-    <h2>Security Validation with Suspicious Payload</h2>
-    <button id="testSuspicious">Test with Suspicious Payload</button>
-    <pre id="suspiciousResult">Results will appear here...</pre>
-  </div>
-
-  <script>
-    let csrfToken = '';
+  
+  <!-- Basic Validation -->
+  <div id="basic-validation" class="tab-content active card">
+    <h2>Basic Validation</h2>
+    <p>Test the schema validation using Zod</p>
     
-    document.getElementById('getToken').addEventListener('click', async () => {
-      try {
-        const response = await fetch('/api/csrf-token');
-        const data = await response.json();
-        csrfToken = data.csrfToken;
-        document.getElementById('tokenResult').textContent = 'CSRF Token: ' + csrfToken;
-      } catch (error) {
-        document.getElementById('tokenResult').textContent = 'Error: ' + error.message;
-      }
-    });
-
-    document.getElementById('testRules').addEventListener('click', async () => {
-      try {
-        if (!csrfToken) {
-          document.getElementById('rulesResult').textContent = 'Please get a CSRF token first';
-          return;
-        }
-        
-        const response = await fetch('/api/validation-test/rules', {
-          headers: {
-            'X-CSRF-Token': csrfToken
-          }
+    <form id="basic-form">
+      <div class="form-group">
+        <label for="name">Name (min 2 characters):</label>
+        <input type="text" id="name" name="name">
+      </div>
+      
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email">
+      </div>
+      
+      <div class="form-group">
+        <label for="age">Age (positive number):</label>
+        <input type="number" id="age" name="age">
+      </div>
+      
+      <button type="submit">Validate</button>
+    </form>
+    
+    <div id="basic-result" class="result"></div>
+  </div>
+  
+  <!-- Security Validation -->
+  <div id="security-validation" class="tab-content card">
+    <h2>Security Validation</h2>
+    <p>Test the security validation for SQL injection detection</p>
+    
+    <form id="security-form">
+      <div class="form-group">
+        <label for="query">Query:</label>
+        <textarea id="query" name="query" rows="3"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label>Try these examples:</label>
+        <button type="button" class="example-btn" data-example="normal user input">Safe Example</button>
+        <button type="button" class="example-btn" data-example="' OR 1=1; DROP TABLE users; --">SQL Injection Example</button>
+      </div>
+      
+      <button type="submit">Validate</button>
+    </form>
+    
+    <div id="security-result" class="result"></div>
+    <div id="security-score" class="security-score"></div>
+  </div>
+  
+  <!-- Health Check -->
+  <div id="health-check" class="tab-content card">
+    <h2>Health Check</h2>
+    <p>Test the API server health</p>
+    
+    <button id="health-btn">Check Health</button>
+    
+    <div id="health-result" class="result"></div>
+  </div>
+  
+  <script>
+    // API URL (change this to match your environment)
+    const API_URL = 'http://localhost:4000';
+    
+    // Tab functionality
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
         });
         
-        const data = await response.json();
-        document.getElementById('rulesResult').textContent = JSON.stringify(data, null, 2);
-      } catch (error) {
-        document.getElementById('rulesResult').textContent = 'Error: ' + error.message;
-      }
-    });
-
-    document.getElementById('testMappings').addEventListener('click', async () => {
-      try {
-        if (!csrfToken) {
-          document.getElementById('mappingsResult').textContent = 'Please get a CSRF token first';
-          return;
-        }
-        
-        const response = await fetch('/api/validation-test/mappings', {
-          headers: {
-            'X-CSRF-Token': csrfToken
-          }
+        // Deactivate all tabs
+        document.querySelectorAll('.tab').forEach(t => {
+          t.classList.remove('active');
         });
         
-        const data = await response.json();
-        document.getElementById('mappingsResult').textContent = JSON.stringify(data, null, 2);
-      } catch (error) {
-        document.getElementById('mappingsResult').textContent = 'Error: ' + error.message;
-      }
-    });
-
-    document.getElementById('testSecurity').addEventListener('click', async () => {
-      try {
-        if (!csrfToken) {
-          document.getElementById('securityResult').textContent = 'Please get a CSRF token first';
-          return;
-        }
+        // Activate current tab
+        tab.classList.add('active');
         
-        const response = await fetch('/api/validation-test/security-test', {
+        // Show current tab content
+        const tabId = tab.getAttribute('data-tab');
+        document.getElementById(`${tabId}-validation`).classList.add('active');
+        if (tabId === 'health') {
+          document.getElementById(`health-check`).classList.add('active');
+        }
+      });
+    });
+    
+    // Basic Validation Form
+    document.getElementById('basic-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const age = document.getElementById('age').value ? parseInt(document.getElementById('age').value) : '';
+      
+      const data = { name, email };
+      if (age !== '') {
+        data.age = age;
+      }
+      
+      try {
+        const response = await fetch(`${API_URL}/api/validate/basic`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-Token': csrfToken
           },
-          body: JSON.stringify({
-            query: 'How is the weather today?',
-            userId: '1234'
-          })
+          body: JSON.stringify(data)
         });
         
-        const data = await response.json();
-        document.getElementById('securityResult').textContent = JSON.stringify(data, null, 2);
-      } catch (error) {
-        document.getElementById('securityResult').textContent = 'Error: ' + error.message;
+        const result = await response.json();
+        const resultDiv = document.getElementById('basic-result');
+        
+        if (result.success && result.validation.passed) {
+          resultDiv.className = 'result success';
+          resultDiv.innerHTML = 'Validation Passed!\n\n' + JSON.stringify(result, null, 2);
+        } else {
+          resultDiv.className = 'result error';
+          resultDiv.innerHTML = 'Validation Failed:\n\n' + JSON.stringify(result, null, 2);
+        }
+      } catch (err) {
+        document.getElementById('basic-result').className = 'result error';
+        document.getElementById('basic-result').textContent = 'Error: ' + err.message;
       }
     });
-
-    document.getElementById('testSuspicious').addEventListener('click', async () => {
+    
+    // Security Validation Form
+    document.getElementById('security-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const query = document.getElementById('query').value;
+      
       try {
-        if (!csrfToken) {
-          document.getElementById('suspiciousResult').textContent = 'Please get a CSRF token first';
-          return;
-        }
-        
-        const response = await fetch('/api/validation-test/security-test', {
+        const response = await fetch(`${API_URL}/api/validate/security`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-Token': csrfToken
           },
-          body: JSON.stringify({
-            query: 'SELECT * FROM users; DROP TABLE users;',
-            userId: '1234; DROP TABLE users;',
-            adminOverride: 'true'
-          })
+          body: JSON.stringify({ query })
         });
         
-        const data = await response.json();
-        document.getElementById('suspiciousResult').textContent = JSON.stringify(data, null, 2);
-      } catch (error) {
-        document.getElementById('suspiciousResult').textContent = 'Error: ' + error.message;
+        const result = await response.json();
+        const resultDiv = document.getElementById('security-result');
+        const scoreDiv = document.getElementById('security-score');
+        
+        if (result.success) {
+          if (result.validation.passed) {
+            resultDiv.className = 'result success';
+            resultDiv.innerHTML = 'Security Validation Passed!\n\n' + JSON.stringify(result, null, 2);
+            
+            if (result.validation.securityScore) {
+              scoreDiv.textContent = `Security Score: ${result.validation.securityScore.toFixed(1)}`;
+              scoreDiv.className = 'security-score score-high';
+            }
+          } else {
+            resultDiv.className = 'result error';
+            resultDiv.innerHTML = 'Security Validation Failed:\n\n' + JSON.stringify(result, null, 2);
+            
+            if (result.validation.securityScore) {
+              scoreDiv.textContent = `Security Score: ${result.validation.securityScore.toFixed(1)}`;
+              scoreDiv.className = 'security-score score-low';
+            }
+          }
+        } else {
+          resultDiv.className = 'result error';
+          resultDiv.innerHTML = 'Error:\n\n' + JSON.stringify(result, null, 2);
+          scoreDiv.textContent = '';
+        }
+      } catch (err) {
+        document.getElementById('security-result').className = 'result error';
+        document.getElementById('security-result').textContent = 'Error: ' + err.message;
+        document.getElementById('security-score').textContent = '';
+      }
+    });
+    
+    // Example buttons
+    document.querySelectorAll('.example-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const example = btn.getAttribute('data-example');
+        document.getElementById('query').value = example;
+      });
+    });
+    
+    // Health Check
+    document.getElementById('health-btn').addEventListener('click', async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/health`);
+        const result = await response.json();
+        
+        document.getElementById('health-result').className = 'result success';
+        document.getElementById('health-result').innerHTML = JSON.stringify(result, null, 2);
+      } catch (err) {
+        document.getElementById('health-result').className = 'result error';
+        document.getElementById('health-result').textContent = 'Error: ' + err.message;
       }
     });
   </script>

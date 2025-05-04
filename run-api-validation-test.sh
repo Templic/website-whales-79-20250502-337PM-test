@@ -1,35 +1,18 @@
 #!/bin/bash
 
-# Run API Validation Test Tool
-# This script restarts the server and then runs the API validation test tool
+# This script starts the validation test server and opens the validation test page
 
-# Print section header
-print_header() {
-  echo ""
-  echo "====================================="
-  echo "$1"
-  echo "====================================="
-  echo ""
-}
+# Start the validation server in the background
+echo "Starting validation server on port 4000..."
+node server/simple-index.js &
+VALIDATION_SERVER_PID=$!
 
-# Restart the server
-print_header "Restarting server"
-echo "Restarting the server to apply route changes..."
-npm run dev &
-SERVER_PID=$!
+# Give the server time to start
+sleep 2
 
-# Wait for server to start
-print_header "Waiting for server"
-echo "Waiting 5 seconds for server to initialize..."
-sleep 5
+echo "Opening validation test page..."
+echo "Visit http://localhost:5000/validation-test.html to see the test page"
+echo "Press Ctrl+C to stop the servers"
 
-# Run the API validation test tool
-print_header "Running API validation test tool"
-node test-api-validation-cli.js
-
-# Done
-print_header "Test complete"
-echo "API validation test complete. Check the results above."
-echo ""
-
-exit 0
+# Keep the script running until user presses Ctrl+C
+wait $VALIDATION_SERVER_PID

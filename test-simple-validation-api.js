@@ -1,162 +1,144 @@
 /**
- * Test script for the simple API validation server
+ * Simple API Validation Test
+ * 
+ * This script tests the validation API endpoints without browser dependencies
  */
-import fetch from 'node-fetch';
 
+import http from 'http';
+
+// Configuration
 const API_URL = 'http://localhost:4000';
 
-async function testBasicValidation() {
-  console.log('\n===== Testing Basic Validation =====');
-  
-  // Test valid data
-  try {
-    const validData = {
-      name: "John Doe",
-      email: "john@example.com",
-      age: 30
+console.log('Starting Simple API Validation Test\n');
+
+// Function to make an HTTP request
+function makeRequest(url, method = 'GET', data = null) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      method: method
     };
     
-    const validResponse = await fetch(`${API_URL}/api/validate/basic`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(validData)
+    const req = http.request(url, options, (res) => {
+      let responseData = '';
+      
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+      
+      res.on('end', () => {
+        resolve({
+          status: res.statusCode,
+          headers: res.headers,
+          data: responseData
+        });
+      });
     });
-    
-    const validContentType = validResponse.headers.get('content-type');
-    console.log(`Valid Data - Status: ${validResponse.status}`);
-    console.log(`Valid Data - Content-Type: ${validContentType}`);
-    
-    if (validContentType && validContentType.includes('application/json')) {
-      const data = await validResponse.json();
-      console.log('Valid Data - Response:', JSON.stringify(data, null, 2));
-    } else {
-      const text = await validResponse.text();
-      console.log('Valid Data - Response starts with:', text.substring(0, 100) + '...');
+
+    req.on('error', (error) => {
+      reject(error);
+    });
+
+    if (data) {
+      req.setHeader('Content-Type', 'application/json');
+      req.write(JSON.stringify(data));
     }
-  } catch (err) {
-    console.error('Valid Data - Error:', err.message);
-  }
+    
+    req.end();
+  });
+}
+
+// Test health check endpoint
+async function testHealthCheck() {
+  console.log('\n===== Testing Health Check =====');
   
-  // Test invalid data
   try {
-    const invalidData = {
-      name: "J",
-      email: "not-an-email",
-      age: -5
-    };
-    
-    const invalidResponse = await fetch(`${API_URL}/api/validate/basic`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(invalidData)
-    });
-    
-    const invalidContentType = invalidResponse.headers.get('content-type');
-    console.log(`Invalid Data - Status: ${invalidResponse.status}`);
-    console.log(`Invalid Data - Content-Type: ${invalidContentType}`);
-    
-    if (invalidContentType && invalidContentType.includes('application/json')) {
-      const data = await invalidResponse.json();
-      console.log('Invalid Data - Response:', JSON.stringify(data, null, 2));
-    } else {
-      const text = await invalidResponse.text();
-      console.log('Invalid Data - Response starts with:', text.substring(0, 100) + '...');
-    }
-  } catch (err) {
-    console.error('Invalid Data - Error:', err.message);
+    const response = await makeRequest(`${API_URL}/api/health`);
+    console.log(`Status: ${response.status}`);
+    console.log(`Content-Type: ${response.headers['content-type']}`);
+    console.log(`Response: ${response.data}`);
+  } catch (error) {
+    console.error('Error testing health check:', error.message);
   }
 }
 
+// Test basic validation endpoint
+async function testBasicValidation() {
+  console.log('\n===== Testing Basic Validation =====');
+  
+  // Test with valid data
+  try {
+    const validData = {
+      name: 'John Doe',
+      email: 'john@example.com',
+      age: 30
+    };
+    
+    const response = await makeRequest(`${API_URL}/api/validate/basic`, 'POST', validData);
+    console.log(`Valid Data - Status: ${response.status}`);
+    console.log(`Valid Data - Content-Type: ${response.headers['content-type']}`);
+    console.log(`Valid Data - Response: ${response.data}`);
+  } catch (error) {
+    console.error('Error testing basic validation with valid data:', error.message);
+  }
+  
+  // Test with invalid data
+  try {
+    const invalidData = {
+      name: 'J',
+      email: 'not-an-email',
+      age: -5
+    };
+    
+    const response = await makeRequest(`${API_URL}/api/validate/basic`, 'POST', invalidData);
+    console.log(`Invalid Data - Status: ${response.status}`);
+    console.log(`Invalid Data - Content-Type: ${response.headers['content-type']}`);
+    console.log(`Invalid Data - Response: ${response.data}`);
+  } catch (error) {
+    console.error('Error testing basic validation with invalid data:', error.message);
+  }
+}
+
+// Test security validation endpoint
 async function testSecurityValidation() {
   console.log('\n===== Testing Security Validation =====');
   
   // Test with safe input
   try {
-    const safeData = { query: 'normal user input' };
-    const safeResponse = await fetch(`${API_URL}/api/validate/security`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(safeData)
-    });
+    const safeData = {
+      query: 'normal user input'
+    };
     
-    const safeContentType = safeResponse.headers.get('content-type');
-    console.log(`Safe Input - Status: ${safeResponse.status}`);
-    console.log(`Safe Input - Content-Type: ${safeContentType}`);
-    
-    if (safeContentType && safeContentType.includes('application/json')) {
-      const data = await safeResponse.json();
-      console.log('Safe Input - Response:', JSON.stringify(data, null, 2));
-    } else {
-      const text = await safeResponse.text();
-      console.log('Safe Input - Response starts with:', text.substring(0, 100) + '...');
-    }
-  } catch (err) {
-    console.error('Safe Input - Error:', err.message);
+    const response = await makeRequest(`${API_URL}/api/validate/security`, 'POST', safeData);
+    console.log(`Safe Input - Status: ${response.status}`);
+    console.log(`Safe Input - Content-Type: ${response.headers['content-type']}`);
+    console.log(`Safe Input - Response: ${response.data}`);
+  } catch (error) {
+    console.error('Error testing security validation with safe input:', error.message);
   }
   
-  // Test with malicious input (SQL injection)
+  // Test with malicious input
   try {
-    const maliciousData = { query: "' OR 1=1; DROP TABLE users; --" };
-    const maliciousResponse = await fetch(`${API_URL}/api/validate/security`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(maliciousData)
-    });
+    const maliciousData = {
+      query: "' OR 1=1; DROP TABLE users; --"
+    };
     
-    const maliciousContentType = maliciousResponse.headers.get('content-type');
-    console.log(`Malicious Input - Status: ${maliciousResponse.status}`);
-    console.log(`Malicious Input - Content-Type: ${maliciousContentType}`);
-    
-    if (maliciousContentType && maliciousContentType.includes('application/json')) {
-      const data = await maliciousResponse.json();
-      console.log('Malicious Input - Response:', JSON.stringify(data, null, 2));
-    } else {
-      const text = await maliciousResponse.text();
-      console.log('Malicious Input - Response starts with:', text.substring(0, 100) + '...');
-    }
-  } catch (err) {
-    console.error('Malicious Input - Error:', err.message);
+    const response = await makeRequest(`${API_URL}/api/validate/security`, 'POST', maliciousData);
+    console.log(`Malicious Input - Status: ${response.status}`);
+    console.log(`Malicious Input - Content-Type: ${response.headers['content-type']}`);
+    console.log(`Malicious Input - Response: ${response.data}`);
+  } catch (error) {
+    console.error('Error testing security validation with malicious input:', error.message);
   }
 }
 
-async function testHealthCheck() {
-  console.log('\n===== Testing Health Check =====');
-  
-  try {
-    const response = await fetch(`${API_URL}/api/health`);
-    const contentType = response.headers.get('content-type');
-    
-    console.log(`Status: ${response.status}`);
-    console.log(`Content-Type: ${contentType}`);
-    
-    if (contentType && contentType.includes('application/json')) {
-      const data = await response.json();
-      console.log('Response:', JSON.stringify(data, null, 2));
-    } else {
-      const text = await response.text();
-      console.log('Response starts with:', text.substring(0, 100) + '...');
-    }
-  } catch (err) {
-    console.error('Error:', err.message);
-  }
-}
-
-async function main() {
-  console.log('Starting Simple API Validation Test');
+// Run all tests
+async function runTests() {
   await testHealthCheck();
   await testBasicValidation();
   await testSecurityValidation();
+  
   console.log('\nSimple API Validation Test Complete');
 }
 
-main().catch(err => {
-  console.error('Unhandled error:', err);
-});
+// Start tests
+runTests();
