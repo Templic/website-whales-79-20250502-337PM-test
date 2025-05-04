@@ -186,7 +186,7 @@ Return your analysis in the following JSON format:
         model,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Please analyze the following ${contentType}:\n\n${content}\n\nAdditional context: ${context}` }
+          { role: 'user', content: `Please analyze the following ${contentType} and return the results in JSON format:\n\n${content}\n\nAdditional context: ${context}` }
         ],
         max_tokens: maxTokens,
         temperature,

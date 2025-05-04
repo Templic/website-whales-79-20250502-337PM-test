@@ -136,7 +136,9 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // Special bypass for testing with X-Test-Auth header and correct secret
   // IMPORTANT: This should only be used for testing, never in production
   const testAuthSecret = process.env.TEST_AUTH_SECRET || 'test-security-analysis-secret-key';
-  if (process.env.NODE_ENV !== 'production' && 
+  console.log(`[AUTH DEBUG] Test auth header: ${req.headers['x-test-auth']}, expected: ${testAuthSecret}`);
+  console.log(`[AUTH DEBUG] NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`);
+  if ((process.env.NODE_ENV !== 'production' || !process.env.NODE_ENV) && 
       req.headers['x-test-auth'] === testAuthSecret) {
     console.log('[AUTH] Test authentication bypass activated');
     // Mock minimal user object for testing
