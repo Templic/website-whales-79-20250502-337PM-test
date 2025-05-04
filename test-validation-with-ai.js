@@ -166,7 +166,7 @@ const getApiUrl = () => {
   }
   
   // Fallback to localhost (for local development)
-  return 'http://localhost:3000';
+  return 'http://localhost:5000';
 };
 
 // Authentication function - get a token from the auth endpoint
@@ -211,6 +211,11 @@ async function runTests() {
   console.log(`Starting API Validation with AI Security Analysis Tests on ${apiUrl}...\n`);
   
   try {
+    // Get authentication token first
+    console.log('Obtaining authentication token...');
+    const auth = await getAuthToken();
+    console.log('Successfully obtained auth token');
+    
     // Replace the URLs in the test functions with the correct API URL
     const originalTestSecureCode = testSecureCode;
     const originalTestVulnerableCode = testVulnerableCode;
@@ -219,11 +224,17 @@ async function runTests() {
       try {
         console.log('Testing AI Security Analysis with Secure Code...\n');
         
-        const response = await axios.post(`${apiUrl}/api/openai/security-analysis`, {
-          content: secureCode,
-          contentType: 'code',
-          context: 'This is a secure Node.js Express API handler that should have minimal security issues.'
-        });
+        const response = await axios.post(`${apiUrl}/api/openai/security-analysis`, 
+          {
+            content: secureCode,
+            contentType: 'code',
+            context: 'This is a secure Node.js Express API handler that should have minimal security issues.'
+          },
+          { 
+            headers: auth.headers,
+            withCredentials: true
+          }
+        );
         
         displayResults(response.data.analysis, 'Secure Code Analysis');
       } catch (error) {
@@ -235,11 +246,17 @@ async function runTests() {
       try {
         console.log('\nTesting AI Security Analysis with Vulnerable Code...\n');
         
-        const response = await axios.post(`${apiUrl}/api/openai/security-analysis`, {
-          content: vulnerableCode,
-          contentType: 'code',
-          context: 'This is a vulnerable Node.js Express API handler that should have multiple security issues.'
-        });
+        const response = await axios.post(`${apiUrl}/api/openai/security-analysis`, 
+          {
+            content: vulnerableCode,
+            contentType: 'code',
+            context: 'This is a vulnerable Node.js Express API handler that should have multiple security issues.'
+          },
+          { 
+            headers: auth.headers,
+            withCredentials: true
+          }
+        );
         
         displayResults(response.data.analysis, 'Vulnerable Code Analysis');
       } catch (error) {

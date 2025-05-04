@@ -65,7 +65,7 @@ const getApiUrl = () => {
   }
   
   // Fallback to localhost (for local development)
-  return 'http://localhost:3000';
+  return 'http://localhost:5000';
 };
 
 // Authentication function - get a token from the auth endpoint
