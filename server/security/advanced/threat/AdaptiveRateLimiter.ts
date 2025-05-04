@@ -1,8 +1,8 @@
 /**
  * Adaptive Rate Limiter
  *
- * This class dynamically adjusts rate limit parameters based on
- * system load, threat levels, and other factors.
+ * This class provides adaptive rate limiting capabilities.
+ * It adjusts rate limits based on system load, threat levels, and other factors.
  */
 
 import { log } from '../../../utils/logger';
@@ -10,65 +10,150 @@ import { RateLimitContext } from './RateLimitContextBuilder';
 import { RateLimitAnalytics } from './RateLimitAnalytics';
 import { threatDetectionService } from './ThreatDetectionService';
 
-// Interface for configuration
-export interface AdaptiveRateLimiterConfig {
-  minBurstMultiplier: number;
-  maxBurstMultiplier: number;
-  systemLoadThreshold: number;
-  threatLevelImpact: number;
-  errorRateThreshold: number;
-  adjustmentInterval: number; // in ms
+/**
+ * Configuration options for the adaptive rate limiter
+ */
+export interface AdaptiveRateLimiterOptions {
+  /**
+   * Minimum multiplier to apply during bursts (0.1-1.0)
+   * Lower values = more restrictive during bursts
+   */
+  minBurstMultiplier?: number;
+  
+  /**
+   * Maximum multiplier to apply during quiet periods (1.0-10.0)
+   * Higher values = more relaxed during quiet periods
+   */
+  maxBurstMultiplier?: number;
+  
+  /**
+   * Threshold for system load (0.0-1.0)
+   * When system load exceeds this threshold, rate limits become more restrictive
+   */
+  systemLoadThreshold?: number;
+  
+  /**
+   * Impact of threat level on rate limits (0.0-1.0)
+   * Higher values = more impact from threat level
+   */
+  threatLevelImpact?: number;
+  
+  /**
+   * Threshold for error rate (0.0-1.0)
+   * When error rate exceeds this threshold, rate limits become more restrictive
+   */
+  errorRateThreshold?: number;
+  
+  /**
+   * Interval between adjustments in ms
+   */
+  adjustmentInterval?: number;
+  
+  /**
+   * Analytics instance for error rate calculation
+   */
   analytics?: RateLimitAnalytics;
 }
 
+/**
+ * Provides adaptive rate limiting capabilities
+ */
 export class AdaptiveRateLimiter {
-  private config: AdaptiveRateLimiterConfig;
-  private systemLoadFactor: number = 1.0;
-  private threatFactor: number = 1.0;
-  private errorRateFactor: number = 1.0;
+  private options: AdaptiveRateLimiterOptions;
+  private resourceTypeMultipliers: Map<string, number> = new Map();
   private lastAdjustment: number = Date.now();
-  private adaptiveMultiplierCache: Map<string, number> = new Map();
-  private analytics?: RateLimitAnalytics;
+  private globalMultiplier: number = 1.0;
+  private errorRates: Map<string, number> = new Map();
+  private lastSystemLoad: number = 0;
   
-  constructor(config: AdaptiveRateLimiterConfig) {
-    this.config = {
-      minBurstMultiplier: config.minBurstMultiplier || 0.5,
-      maxBurstMultiplier: config.maxBurstMultiplier || 2.0,
-      systemLoadThreshold: config.systemLoadThreshold || 0.7,
-      threatLevelImpact: config.threatLevelImpact || 0.5,
-      errorRateThreshold: config.errorRateThreshold || 0.05,
-      adjustmentInterval: config.adjustmentInterval || 60000 // 1 minute
+  constructor(options: AdaptiveRateLimiterOptions = {}) {
+    // Set options with defaults
+    this.options = {
+      minBurstMultiplier: options.minBurstMultiplier || 0.5,
+      maxBurstMultiplier: options.maxBurstMultiplier || 2.0,
+      systemLoadThreshold: options.systemLoadThreshold || 0.7,
+      threatLevelImpact: options.threatLevelImpact || 0.5,
+      errorRateThreshold: options.errorRateThreshold || 0.05,
+      adjustmentInterval: options.adjustmentInterval || 60 * 1000, // 1 minute
+      analytics: options.analytics
     };
     
-    this.analytics = config.analytics;
+    // Initialize resource type multipliers
+    this.resourceTypeMultipliers.set('auth', 1.0);
+    this.resourceTypeMultipliers.set('admin', 1.0);
+    this.resourceTypeMultipliers.set('security', 1.0);
+    this.resourceTypeMultipliers.set('user', 1.0);
+    this.resourceTypeMultipliers.set('api', 1.0);
+    this.resourceTypeMultipliers.set('static', 1.0);
+    this.resourceTypeMultipliers.set('public', 1.0);
     
-    // Set up periodic adjustment
-    setInterval(() => this.recalculateFactors(), this.config.adjustmentInterval);
+    // Set up adjustment interval
+    setInterval(() => this.adjustRateLimits(), this.options.adjustmentInterval);
+    
+    // Log initialization
+    log('Adaptive rate limiter initialized', 'security');
   }
   
   /**
-   * Get adaptive multiplier for a context
+   * Get adaptive multiplier based on context
    * 
    * @param context Rate limit context
    * @returns Adaptive multiplier
    */
   public getAdaptiveMultiplier(context: RateLimitContext): number {
     try {
-      // Check if we have a cached multiplier for this resource type
-      const resourceType = context.resourceType;
-      if (this.adaptiveMultiplierCache.has(resourceType)) {
-        return this.adaptiveMultiplierCache.get(resourceType) || 1.0;
+      // Start with global multiplier
+      let multiplier = this.globalMultiplier;
+      
+      // Apply resource type multiplier
+      const resourceTypeMultiplier = this.resourceTypeMultipliers.get(context.resourceType) || 1.0;
+      multiplier *= resourceTypeMultiplier;
+      
+      // Adjust for authenticated users
+      if (context.authenticated) {
+        multiplier *= 1.2; // 20% boost for authenticated users
       }
       
-      // Calculate and cache the multiplier
-      const multiplier = this.calculateAdaptiveMultiplier(context);
-      this.adaptiveMultiplierCache.set(resourceType, multiplier);
+      // Reduce for blacklisted IPs
+      if (context.isBlacklisted) {
+        multiplier *= 0.1; // 90% reduction for blacklisted
+      }
+      
+      // Reduce based on threat level
+      if (context.threatLevel > 0) {
+        const threatAdjustment = 1.0 - (context.threatLevel * this.options.threatLevelImpact!);
+        multiplier *= threatAdjustment;
+      }
+      
+      // Boost for good bots
+      if (context.isGoodBot) {
+        multiplier *= 1.5; // 50% boost for good bots
+      }
+      
+      // Severe restriction for bad bots
+      if (context.isBadBot) {
+        multiplier *= 0.2; // 80% reduction for bad bots
+      }
+      
+      // Apply privilege-based multiplier based on role weight
+      // Lower weight = higher privilege = higher multiplier
+      if (context.roleWeight < 10) {
+        // Calculate privilege multiplier (e.g., admins get higher multiplier)
+        const privilegeMultiplier = 1.0 + ((10 - context.roleWeight) / 10.0);
+        multiplier *= privilegeMultiplier;
+      }
+      
+      // Clamp multiplier between min and max
+      multiplier = Math.max(
+        this.options.minBurstMultiplier!, 
+        Math.min(this.options.maxBurstMultiplier!, multiplier)
+      );
       
       return multiplier;
     } catch (error) {
-      log(`Error getting adaptive multiplier: ${error}`, 'security');
+      log(`Error calculating adaptive multiplier: ${error}`, 'security');
       
-      // Return a neutral multiplier on error
+      // Return neutral multiplier on error
       return 1.0;
     }
   }
@@ -77,13 +162,12 @@ export class AdaptiveRateLimiter {
    * Force recalculation of adaptive factors
    */
   public forceRecalculation(): void {
-    // Clear the cache
-    this.adaptiveMultiplierCache.clear();
-    
-    // Recalculate the factors
-    this.recalculateFactors();
-    
-    log('Adaptive rate limiter factors recalculated', 'security');
+    try {
+      this.adjustRateLimits();
+      log('Forced recalculation of adaptive rate limits', 'security');
+    } catch (error) {
+      log(`Error forcing recalculation: ${error}`, 'security');
+    }
   }
   
   /**
@@ -92,237 +176,189 @@ export class AdaptiveRateLimiter {
    * @returns Adjustment metrics
    */
   public getAdjustmentMetrics(): any {
-    return {
-      timestamp: new Date().toISOString(),
-      systemLoadFactor: this.systemLoadFactor,
-      threatFactor: this.threatFactor,
-      errorRateFactor: this.errorRateFactor,
-      effectiveMultiplierRange: {
-        min: this.config.minBurstMultiplier,
-        max: this.config.maxBurstMultiplier
-      },
-      resourceTypeMultipliers: Object.fromEntries(this.adaptiveMultiplierCache)
-    };
+    try {
+      return {
+        globalMultiplier: this.globalMultiplier,
+        resourceTypeMultipliers: Object.fromEntries(this.resourceTypeMultipliers),
+        errorRates: Object.fromEntries(this.errorRates),
+        systemLoad: this.lastSystemLoad,
+        globalThreatLevel: threatDetectionService.getGlobalThreatLevel(),
+        threatCategory: threatDetectionService.getThreatCategory(),
+        lastAdjustment: new Date(this.lastAdjustment).toISOString()
+      };
+    } catch (error) {
+      log(`Error getting adjustment metrics: ${error}`, 'security');
+      
+      return {
+        error: 'Failed to get adjustment metrics',
+        timestamp: new Date().toISOString()
+      };
+    }
   }
   
   /**
-   * Recalculate adaptive factors
+   * Adjust rate limits based on system conditions
    */
-  private recalculateFactors(): void {
+  private adjustRateLimits(): void {
     try {
       // Get current time
       const now = Date.now();
       
-      // Check if it's time to recalculate
-      if (now - this.lastAdjustment < this.config.adjustmentInterval) {
+      // Check if it's time to adjust
+      if (now - this.lastAdjustment < this.options.adjustmentInterval!) {
         return;
       }
       
-      // Update system load factor
-      this.systemLoadFactor = this.calculateSystemLoadFactor();
+      // Get system load (approximated for Replit)
+      const systemLoad = this.estimateSystemLoad();
+      this.lastSystemLoad = systemLoad;
       
-      // Update threat factor
-      this.threatFactor = this.calculateThreatFactor();
+      // Get global threat level
+      const threatLevel = threatDetectionService.getGlobalThreatLevel();
       
-      // Update error rate factor
-      this.errorRateFactor = this.calculateErrorRateFactor();
+      // Calculate global multiplier
+      let newGlobalMultiplier = 1.0;
       
-      // Clear the cache
-      this.adaptiveMultiplierCache.clear();
+      // Adjust for system load
+      if (systemLoad > this.options.systemLoadThreshold!) {
+        // Reduce capacity when system load is high
+        const loadFactor = 1.0 - ((systemLoad - this.options.systemLoadThreshold!) / (1.0 - this.options.systemLoadThreshold!));
+        newGlobalMultiplier *= Math.max(0.5, loadFactor);
+      } else {
+        // Increase capacity when system load is low
+        const loadBoost = 1.0 + ((this.options.systemLoadThreshold! - systemLoad) / this.options.systemLoadThreshold!);
+        newGlobalMultiplier *= Math.min(1.5, loadBoost);
+      }
+      
+      // Adjust for threat level
+      if (threatLevel > 0) {
+        const threatFactor = 1.0 - (threatLevel * this.options.threatLevelImpact!);
+        newGlobalMultiplier *= threatFactor;
+      }
+      
+      // Get error rates if analytics are available
+      if (this.options.analytics) {
+        const report = this.options.analytics.generateReport();
+        
+        if (report && report.summary) {
+          // Get global error rate
+          const globalErrorRate = report.summary.violationRate || 0;
+          
+          // Store global error rate
+          this.errorRates.set('global', globalErrorRate);
+          
+          // Adjust global multiplier based on error rate
+          if (globalErrorRate > this.options.errorRateThreshold!) {
+            const errorFactor = 1.0 - ((globalErrorRate - this.options.errorRateThreshold!) / (1.0 - this.options.errorRateThreshold!));
+            newGlobalMultiplier *= Math.max(0.5, errorFactor);
+          }
+          
+          // Adjust resource type multipliers based on error rates
+          if (report.requestsByResourceType) {
+            for (const { resourceType, count } of report.requestsByResourceType) {
+              // Get violations for this resource type
+              const violations = report.topEndpoints?.find(e => e.endpoint.includes(`/${resourceType}/`))?.count || 0;
+              
+              // Calculate error rate
+              const typeErrorRate = count > 0 ? violations / count : 0;
+              
+              // Store error rate
+              this.errorRates.set(resourceType, typeErrorRate);
+              
+              // Get current multiplier
+              const currentMultiplier = this.resourceTypeMultipliers.get(resourceType) || 1.0;
+              
+              // Calculate new multiplier
+              let newMultiplier = currentMultiplier;
+              
+              if (typeErrorRate > this.options.errorRateThreshold!) {
+                // Reduce multiplier when error rate is high
+                const typeFactor = 1.0 - ((typeErrorRate - this.options.errorRateThreshold!) / (1.0 - this.options.errorRateThreshold!));
+                newMultiplier *= Math.max(0.5, typeFactor);
+              } else {
+                // Increase multiplier when error rate is low
+                const typeBoost = 1.0 + ((this.options.errorRateThreshold! - typeErrorRate) / this.options.errorRateThreshold!);
+                newMultiplier *= Math.min(1.5, typeBoost);
+              }
+              
+              // Clamp multiplier
+              newMultiplier = Math.max(
+                this.options.minBurstMultiplier!, 
+                Math.min(this.options.maxBurstMultiplier!, newMultiplier)
+              );
+              
+              // Update multiplier (with dampening to avoid oscillation)
+              this.resourceTypeMultipliers.set(
+                resourceType, 
+                currentMultiplier * 0.7 + newMultiplier * 0.3
+              );
+            }
+          }
+        }
+      }
+      
+      // Clamp global multiplier
+      newGlobalMultiplier = Math.max(
+        this.options.minBurstMultiplier!, 
+        Math.min(this.options.maxBurstMultiplier!, newGlobalMultiplier)
+      );
+      
+      // Update global multiplier (with dampening to avoid oscillation)
+      this.globalMultiplier = this.globalMultiplier * 0.7 + newGlobalMultiplier * 0.3;
       
       // Update last adjustment time
       this.lastAdjustment = now;
-    } catch (error) {
-      log(`Error recalculating adaptive factors: ${error}`, 'security');
-    }
-  }
-  
-  /**
-   * Calculate adaptive multiplier for a context
-   * 
-   * @param context Rate limit context
-   * @returns Adaptive multiplier
-   */
-  private calculateAdaptiveMultiplier(context: RateLimitContext): number {
-    // Start with the system load factor
-    let multiplier = this.systemLoadFactor;
-    
-    // Adjust for threat factor
-    multiplier *= this.threatFactor;
-    
-    // Adjust for error rate factor
-    multiplier *= this.errorRateFactor;
-    
-    // Adjust for resource sensitivity
-    multiplier *= Math.pow(0.9, context.resourceSensitivity - 1);
-    
-    // Adjust for user role
-    multiplier *= Math.pow(1.1, context.roleWeight);
-    
-    // Adjust for threat level of the request
-    const threatAdjustment = 1 - (context.threatLevel * this.config.threatLevelImpact);
-    multiplier *= threatAdjustment;
-    
-    // Clamp to allowed range
-    return Math.max(
-      this.config.minBurstMultiplier,
-      Math.min(this.config.maxBurstMultiplier, multiplier)
-    );
-  }
-  
-  /**
-   * Calculate system load factor
-   * 
-   * @returns System load factor
-   */
-  private calculateSystemLoadFactor(): number {
-    try {
-      // Calculate CPU load (simplified)
-      const cpuLoad = this.getCpuLoad();
       
-      // Calculate memory load (simplified)
-      const memoryLoad = this.getMemoryLoad();
-      
-      // Combine loads (weighted average)
-      const systemLoad = (cpuLoad * 0.7) + (memoryLoad * 0.3);
-      
-      // Below threshold: increase capacity, above threshold: decrease capacity
-      if (systemLoad < this.config.systemLoadThreshold) {
-        // System load is good, increase capacity
-        const loadRatio = systemLoad / this.config.systemLoadThreshold;
-        return Math.min(this.config.maxBurstMultiplier, 1 + (1 - loadRatio) * 0.5);
-      } else {
-        // System load is high, decrease capacity
-        const overloadRatio = (systemLoad - this.config.systemLoadThreshold) / 
-                              (1 - this.config.systemLoadThreshold);
-        return Math.max(this.config.minBurstMultiplier, 1 - overloadRatio * 0.5);
+      // Log adjustment
+      if (Math.abs(this.globalMultiplier - 1.0) > 0.1) {
+        log(`Adaptive rate limits adjusted: global multiplier = ${this.globalMultiplier.toFixed(2)}`, 'security');
       }
     } catch (error) {
-      log(`Error calculating system load factor: ${error}`, 'security');
-      
-      // Return a neutral factor on error
-      return 1.0;
+      log(`Error adjusting rate limits: ${error}`, 'security');
     }
   }
   
   /**
-   * Calculate threat factor
+   * Estimate system load
    * 
-   * @returns Threat factor
+   * @returns Estimated system load (0-1)
    */
-  private calculateThreatFactor(): number {
+  private estimateSystemLoad(): number {
     try {
-      // Get global threat level
-      const globalThreatLevel = threatDetectionService.getGlobalThreatLevel();
+      // On Replit, we don't have direct access to system metrics
+      // We'll use a simple heuristic based on response times
       
-      // Calculate factor (higher threat = lower capacity)
-      return Math.max(
-        this.config.minBurstMultiplier,
-        1 - (globalThreatLevel * this.config.threatLevelImpact)
-      );
-    } catch (error) {
-      log(`Error calculating threat factor: ${error}`, 'security');
+      // Start with a base load of 0.2 (Replit VMs usually have some baseline load)
+      let estimatedLoad = 0.2;
       
-      // Return a neutral factor on error
-      return 1.0;
-    }
-  }
-  
-  /**
-   * Calculate error rate factor
-   * 
-   * @returns Error rate factor
-   */
-  private calculateErrorRateFactor(): number {
-    try {
-      // Calculate error rate (if analytics is available)
-      if (this.analytics) {
-        const report = this.analytics.generateReport();
-        const globalErrorRate = report.summary?.globalErrorRate || 0;
-        
-        // Calculate factor (higher error rate = lower capacity)
-        if (globalErrorRate > this.config.errorRateThreshold) {
-          const overErrorRatio = (globalErrorRate - this.config.errorRateThreshold) / 
-                                 (0.5 - this.config.errorRateThreshold); // Cap at 50% error rate
-          return Math.max(
-            this.config.minBurstMultiplier,
-            1 - overErrorRatio * 0.3
-          );
-        } else {
-          // Error rate is acceptable, slight increase in capacity
-          return Math.min(
-            this.config.maxBurstMultiplier,
-            1 + (this.config.errorRateThreshold - globalErrorRate) * 0.1
-          );
+      // If the global threat level is high, assume higher load
+      const threatLevel = threatDetectionService.getGlobalThreatLevel();
+      if (threatLevel > 0.5) {
+        estimatedLoad += 0.2;
+      }
+      
+      // If we have analytics, estimate load based on request volume
+      if (this.options.analytics) {
+        const report = this.options.analytics.generateReport();
+        if (report && report.summary) {
+          // Use request count as a proxy for load
+          // Assume a high load after 10,000 requests since last adjustment
+          const requestCount = report.summary.totalRequests || 0;
+          const requestsPerSecond = requestCount / (this.options.adjustmentInterval! / 1000);
+          
+          // Add load based on requests per second
+          // Assuming 100 req/s is high load for a Replit app
+          const requestLoad = Math.min(0.5, requestsPerSecond / 100);
+          estimatedLoad += requestLoad;
         }
       }
       
-      // No analytics available
-      return 1.0;
+      // Clamp load between 0 and 1
+      return Math.max(0, Math.min(1, estimatedLoad));
     } catch (error) {
-      log(`Error calculating error rate factor: ${error}`, 'security');
+      log(`Error estimating system load: ${error}`, 'security');
       
-      // Return a neutral factor on error
-      return 1.0;
-    }
-  }
-  
-  /**
-   * Get CPU load
-   * 
-   * @returns CPU load (0-1)
-   */
-  private getCpuLoad(): number {
-    try {
-      // Try to get from global metrics if available
-      // @ts-ignore
-      if (globalThis.__metrics && globalThis.__metrics.cpu) {
-        // @ts-ignore
-        return globalThis.__metrics.cpu.load / 100;
-      }
-      
-      // Fallback: return a moderate value
-      return 0.5;
-    } catch (error) {
-      // Return a moderate value on error
-      return 0.5;
-    }
-  }
-  
-  /**
-   * Get memory load
-   * 
-   * @returns Memory load (0-1)
-   */
-  private getMemoryLoad(): number {
-    try {
-      // Try to get from global metrics if available
-      // @ts-ignore
-      if (globalThis.__metrics && globalThis.__metrics.memory) {
-        // @ts-ignore
-        return globalThis.__metrics.memory.usedPercent / 100;
-      }
-      
-      // Fallback: get from Node process
-      if (process && process.memoryUsage) {
-        const usage = process.memoryUsage();
-        // Calculate as used / (used + free)
-        // @ts-ignore
-        if (globalThis.__metrics && globalThis.__metrics.memory && globalThis.__metrics.memory.free !== undefined) {
-          // @ts-ignore
-          const free = globalThis.__metrics.memory.free;
-          const used = usage.heapUsed + usage.external;
-          return used / (used + free);
-        }
-        
-        // Approximate based on heap usage
-        return usage.heapUsed / usage.heapTotal;
-      }
-      
-      // Fallback: return a moderate value
-      return 0.5;
-    } catch (error) {
-      // Return a moderate value on error
+      // Return moderate load on error
       return 0.5;
     }
   }

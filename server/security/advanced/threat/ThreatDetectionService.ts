@@ -1,496 +1,306 @@
 /**
  * Threat Detection Service
  *
- * This service identifies and tracks suspicious activity
- * to inform rate limiting decisions.
+ * This service tracks security violations and detects threats.
  */
 
 import { Request } from 'express';
 import { log } from '../../../utils/logger';
-import { getClientIp, getIpSubnet } from '../../../utils/ip-utils';
 import { recordAuditEvent } from '../../secureAuditTrail';
 
-// Threat level thresholds
-const THREAT_LEVEL_LOW = 0.3;
-const THREAT_LEVEL_MEDIUM = 0.6;
-const THREAT_LEVEL_HIGH = 0.8;
-
-// Violation decay time (ms)
-const VIOLATION_DECAY_TIME = 1 * 60 * 60 * 1000; // 1 hour
+interface ThreatInfo {
+  ip: string;
+  identifier: string;
+  timestamp: number;
+  score: number;
+  violations: number;
+}
 
 class ThreatDetectionService {
-  private ipViolations: Map<string, { count: number, timestamp: number }> = new Map();
-  private identifierViolations: Map<string, { count: number, timestamp: number }> = new Map();
-  private subnets: Map<string, { count: number, timestamp: number }> = new Map();
-  private recentThreats: string[] = [];
+  private threats: Map<string, ThreatInfo> = new Map();
+  private ipThreats: Map<string, number> = new Map();
+  private identifierThreats: Map<string, number> = new Map();
   private lastCleanup: number = Date.now();
-  private systemStartTime: number = Date.now();
+  private globalThreatLevel: number = 0;
+  private threatCategory: string = 'low';
   
   constructor() {
     // Set up cleanup interval
-    setInterval(() => this.cleanupOldThreats(), 15 * 60 * 1000); // Every 15 minutes
+    setInterval(() => this.clearOldThreats(), 60 * 60 * 1000); // Every hour
   }
   
   /**
-   * Record a violation by an IP address
+   * Record a security violation
    * 
-   * @param ip IP address
+   * @param ip Client IP
    * @param identifier User identifier
-   * @param severity Violation severity
+   * @param score Threat score (0-1)
    */
-  public recordViolation(ip: string, identifier: string, severity: number = 1): void {
+  public recordViolation(ip: string, identifier: string, score: number = 1.0): void {
     try {
-      // Record IP violation
-      this.recordIpViolation(ip, severity);
+      // Get current time
+      const now = Date.now();
       
-      // Record identifier violation
-      this.recordIdentifierViolation(identifier, severity);
+      // Get or create threat info
+      const key = `${ip}:${identifier}`;
+      let threatInfo = this.threats.get(key);
       
-      // Record subnet violation
-      const subnet = getIpSubnet(ip);
-      this.recordSubnetViolation(subnet, severity);
-      
-      // Add to recent threats if severe enough
-      if (severity >= 1.5) {
-        this.addRecentThreat(ip);
+      if (!threatInfo) {
+        threatInfo = {
+          ip,
+          identifier,
+          timestamp: now,
+          score: 0,
+          violations: 0
+        };
+        this.threats.set(key, threatInfo);
       }
       
-      // Log significant violations
-      if (severity >= 2) {
-        log(`Significant security violation by ${ip} (${identifier}), severity ${severity}`, 'security');
-        
+      // Update threat info
+      threatInfo.timestamp = now;
+      threatInfo.score += score;
+      threatInfo.violations++;
+      
+      // Update IP threats
+      const ipScore = this.ipThreats.get(ip) || 0;
+      this.ipThreats.set(ip, ipScore + score);
+      
+      // Update identifier threats
+      const identifierScore = this.identifierThreats.get(identifier) || 0;
+      this.identifierThreats.set(identifier, identifierScore + score);
+      
+      // Recalculate global threat level
+      this.recalculateGlobalThreatLevel();
+      
+      // Log high threats
+      if (threatInfo.score > 5.0) {
         // Record in audit trail
         recordAuditEvent({
           timestamp: new Date().toISOString(),
           action: 'THREAT_DETECTED',
-          resource: identifier,
-          result: 'blocked',
+          resource: 'system',
+          result: 'warning',
           severity: 'warning',
           details: {
             ip,
             identifier,
-            threatLevel: this.calculateThreatLevel(ip, identifier),
-            violationCount: this.getIpViolationCount(ip),
-            severity
+            score: threatInfo.score,
+            violations: threatInfo.violations
           }
         });
+        
+        log(`High threat detected: ${ip} (${identifier}) with score ${threatInfo.score.toFixed(2)}`, 'security');
       }
     } catch (error) {
-      log(`Error recording violation: ${error}`, 'security');
+      log(`Error recording threat: ${error}`, 'security');
     }
   }
   
   /**
-   * Get the threat level for a request
+   * Get threat level for a specific request/IP/user
    * 
    * @param req Express request
-   * @param ip IP address
-   * @param userId User ID
+   * @param ip Client IP
+   * @param userId User ID (optional)
    * @returns Threat level (0-1)
    */
-  public getThreatLevel(req: Request, ip?: string, userId?: string | number): number {
+  public getThreatLevel(req: Request, ip: string, userId?: string | number): number {
     try {
-      // Get IP from request if not provided
-      const clientIp = ip || getClientIp(req);
+      // Calculate identifier
+      const identifier = userId ? `user:${userId}` : `ip:${ip}`;
       
-      // Get identifier from user ID or IP
-      const identifier = userId ? `user:${userId}` : `ip:${clientIp}`;
+      // Get threat scores
+      const ipScore = this.ipThreats.get(ip) || 0;
+      const identifierScore = this.identifierThreats.get(identifier) || 0;
       
-      // Calculate threat level
-      return this.calculateThreatLevel(clientIp, identifier);
+      // Calculate combined score (max of the two)
+      const combinedScore = Math.max(ipScore, identifierScore);
+      
+      // Convert to threat level (0-1)
+      const threatLevel = Math.min(1.0, combinedScore / 10.0);
+      
+      return threatLevel;
     } catch (error) {
       log(`Error getting threat level: ${error}`, 'security');
       
-      // Return low threat level on error
+      // Default to low threat level on error
       return 0.1;
     }
   }
   
   /**
-   * Calculate the threat level for an IP and identifier
-   * 
-   * @param ip IP address
-   * @param identifier User identifier
-   * @returns Threat level (0-1)
-   */
-  public calculateThreatLevel(ip: string, identifier: string): number {
-    try {
-      // Get violation counts
-      const ipViolations = this.getIpViolationCount(ip);
-      const identifierViolations = this.getIdentifierViolationCount(identifier);
-      const subnet = getIpSubnet(ip);
-      const subnetViolations = this.getSubnetViolationCount(subnet);
-      
-      // Calculate age factors (newer violations are more significant)
-      const ipAge = this.getViolationAge(ip, true);
-      const identifierAge = this.getViolationAge(identifier, false);
-      
-      // Age factor reduces the impact of old violations
-      const ipAgeFactor = Math.max(0.1, 1 - ipAge / VIOLATION_DECAY_TIME);
-      const identifierAgeFactor = Math.max(0.1, 1 - identifierAge / VIOLATION_DECAY_TIME);
-      
-      // Calculate individual threat scores
-      const ipThreat = Math.min(1, ipViolations * 0.1) * ipAgeFactor;
-      const identifierThreat = Math.min(1, identifierViolations * 0.1) * identifierAgeFactor;
-      const subnetThreat = Math.min(0.5, subnetViolations * 0.02);
-      
-      // Combine the scores (IP has most weight, subnet has least)
-      let threatLevel = ipThreat * 0.6 + identifierThreat * 0.3 + subnetThreat * 0.1;
-      
-      // Recent threats get a boost
-      if (this.isRecentThreat(ip)) {
-        threatLevel = Math.min(1, threatLevel + 0.2);
-      }
-      
-      // Cap and return
-      return Math.min(1, Math.max(0, threatLevel));
-    } catch (error) {
-      log(`Error calculating threat level: ${error}`, 'security');
-      
-      // Return moderate threat level on error
-      return 0.5;
-    }
-  }
-  
-  /**
-   * Get the global threat level for the system
+   * Get global threat level
    * 
    * @returns Global threat level (0-1)
    */
   public getGlobalThreatLevel(): number {
-    try {
-      // Calculate total violations in the last hour
-      const now = Date.now();
-      const oneHourAgo = now - 60 * 60 * 1000;
-      
-      let recentViolations = 0;
-      let totalIps = 0;
-      
-      // Count recent IP violations
-      for (const [, data] of this.ipViolations) {
-        if (data.timestamp >= oneHourAgo) {
-          recentViolations += data.count;
-          totalIps++;
-        }
-      }
-      
-      // Calculate threat density (violations per IP)
-      const threatDensity = totalIps > 0 ? recentViolations / totalIps : 0;
-      
-      // Calculate system uptime in hours
-      const uptimeHours = (now - this.systemStartTime) / (60 * 60 * 1000);
-      
-      // Adjust for system uptime (newer systems are more sensitive)
-      const uptimeFactor = Math.min(1, Math.max(0.1, uptimeHours / 24));
-      
-      // Calculate global threat level
-      let globalThreat = Math.min(1, threatDensity * 0.1) * uptimeFactor;
-      
-      // Boost if there are many high-threat IPs
-      const highThreatCount = this.countHighThreatIps();
-      if (highThreatCount > 3) {
-        globalThreat = Math.min(1, globalThreat + (highThreatCount - 3) * 0.05);
-      }
-      
-      return Math.min(1, Math.max(0, globalThreat));
-    } catch (error) {
-      log(`Error calculating global threat level: ${error}`, 'security');
-      
-      // Return low threat level on error
-      return 0.1;
-    }
+    return this.globalThreatLevel;
   }
   
   /**
-   * Clean up old threat data
+   * Get threat category
+   * 
+   * @returns Threat category (low, medium, high, critical)
+   */
+  public getThreatCategory(): string {
+    return this.threatCategory;
+  }
+  
+  /**
+   * Clear old threats
    */
   public clearOldThreats(): void {
     try {
+      // Get current time
       const now = Date.now();
-      const cutoff = now - VIOLATION_DECAY_TIME;
       
-      // Clean up IP violations
-      for (const [ip, data] of this.ipViolations.entries()) {
-        if (data.timestamp < cutoff) {
-          this.ipViolations.delete(ip);
+      // Check if it's time to clean up
+      if (now - this.lastCleanup < 60 * 60 * 1000) { // Every hour
+        return;
+      }
+      
+      // Calculate cutoff time (24 hours ago)
+      const cutoff = now - 24 * 60 * 60 * 1000;
+      
+      // Count before
+      const countBefore = this.threats.size;
+      
+      // Clear IP and identifier threats
+      this.ipThreats.clear();
+      this.identifierThreats.clear();
+      
+      // Remove old threats and rebuild maps
+      const keysToRemove: string[] = [];
+      
+      for (const [key, threat] of this.threats.entries()) {
+        if (threat.timestamp < cutoff) {
+          keysToRemove.push(key);
+        } else {
+          // Update IP threats
+          const ipScore = this.ipThreats.get(threat.ip) || 0;
+          this.ipThreats.set(threat.ip, ipScore + threat.score);
+          
+          // Update identifier threats
+          const identifierScore = this.identifierThreats.get(threat.identifier) || 0;
+          this.identifierThreats.set(threat.identifier, identifierScore + threat.score);
         }
       }
       
-      // Clean up identifier violations
-      for (const [identifier, data] of this.identifierViolations.entries()) {
-        if (data.timestamp < cutoff) {
-          this.identifierViolations.delete(identifier);
-        }
+      // Remove old threats
+      for (const key of keysToRemove) {
+        this.threats.delete(key);
       }
       
-      // Clean up subnet violations
-      for (const [subnet, data] of this.subnets.entries()) {
-        if (data.timestamp < cutoff) {
-          this.subnets.delete(subnet);
-        }
-      }
+      // Recalculate global threat level
+      this.recalculateGlobalThreatLevel();
       
-      // Clean up recent threats (keep only the most recent 100)
-      if (this.recentThreats.length > 100) {
-        this.recentThreats = this.recentThreats.slice(-100);
+      // Log if we cleaned up a significant number of threats
+      if (countBefore - this.threats.size > 10) {
+        log(`Threat cleanup: ${countBefore - this.threats.size} threats removed`, 'security');
       }
       
       // Update last cleanup time
       this.lastCleanup = now;
-      
-      log(`Threat detection cleanup: ${this.ipViolations.size} IPs, ${this.identifierViolations.size} identifiers, ${this.subnets.size} subnets`, 'security');
     } catch (error) {
       log(`Error cleaning up threats: ${error}`, 'security');
     }
   }
   
   /**
-   * Get statistics about threat detection
+   * Get threat statistics
    * 
-   * @returns Threat detection statistics
+   * @returns Threat statistics
    */
   public getStats(): any {
     try {
-      // Calculate global threat level
-      const globalThreatLevel = this.getGlobalThreatLevel();
-      
-      // Get threat level category
-      let threatCategory = 'low';
-      if (globalThreatLevel >= THREAT_LEVEL_HIGH) {
-        threatCategory = 'high';
-      } else if (globalThreatLevel >= THREAT_LEVEL_MEDIUM) {
-        threatCategory = 'medium';
-      } else if (globalThreatLevel >= THREAT_LEVEL_LOW) {
-        threatCategory = 'low';
-      } else {
-        threatCategory = 'minimal';
-      }
-      
-      // Calculate total violations
+      // Calculate total threat score
+      let totalScore = 0;
       let totalViolations = 0;
-      for (const [, data] of this.ipViolations) {
-        totalViolations += data.count;
+      
+      for (const [, threat] of this.threats) {
+        totalScore += threat.score;
+        totalViolations += threat.violations;
       }
       
-      // Get high threat IPs
-      const highThreatIps = this.getHighThreatIps();
-      
-      // Get top threats
-      const topThreats = Array.from(this.ipViolations.entries())
-        .sort((a, b) => b[1].count - a[1].count)
+      // Get top IPs
+      const topIps = Array.from(this.ipThreats.entries())
+        .sort((a, b) => b[1] - a[1])
         .slice(0, 10)
-        .map(([ip, data]) => ({
-          ip,
-          violationCount: data.count,
-          lastViolation: new Date(data.timestamp).toISOString(),
-          threatLevel: this.calculateThreatLevel(ip, `ip:${ip}`)
-        }));
+        .map(([ip, score]) => ({ ip, score }));
       
-      // Return the stats
+      // Get top identifiers
+      const topIdentifiers = Array.from(this.identifierThreats.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([identifier, score]) => ({ identifier, score }));
+      
+      // Return stats
       return {
         timestamp: new Date().toISOString(),
-        globalThreatLevel,
-        threatCategory,
+        totalThreats: this.threats.size,
+        uniqueIps: this.ipThreats.size,
+        uniqueIdentifiers: this.identifierThreats.size,
+        totalScore,
         totalViolations,
-        uniqueIps: this.ipViolations.size,
-        uniqueIdentifiers: this.identifierViolations.size,
-        uniqueSubnets: this.subnets.size,
-        recentThreats: this.recentThreats.length,
-        highThreats: highThreatIps.length,
-        topThreats,
-        lastCleanup: new Date(this.lastCleanup).toISOString()
+        averageScore: this.threats.size > 0 ? totalScore / this.threats.size : 0,
+        globalThreatLevel: this.globalThreatLevel,
+        threatCategory: this.threatCategory,
+        topIps,
+        topIdentifiers
       };
     } catch (error) {
-      log(`Error getting threat detection stats: ${error}`, 'security');
+      log(`Error getting threat stats: ${error}`, 'security');
       
       return {
         timestamp: new Date().toISOString(),
-        error: 'Failed to get threat detection stats'
+        error: 'Failed to get threat stats'
       };
     }
   }
   
   /**
-   * Record an IP violation
-   * 
-   * @param ip IP address
-   * @param severity Violation severity
+   * Recalculate global threat level
    */
-  private recordIpViolation(ip: string, severity: number): void {
-    const now = Date.now();
-    const existingViolation = this.ipViolations.get(ip);
-    
-    if (existingViolation) {
-      // Update existing record
-      this.ipViolations.set(ip, {
-        count: existingViolation.count + (severity || 1),
-        timestamp: now
-      });
-    } else {
-      // Create new record
-      this.ipViolations.set(ip, {
-        count: severity || 1,
-        timestamp: now
-      });
-    }
-  }
-  
-  /**
-   * Record an identifier violation
-   * 
-   * @param identifier User identifier
-   * @param severity Violation severity
-   */
-  private recordIdentifierViolation(identifier: string, severity: number): void {
-    const now = Date.now();
-    const existingViolation = this.identifierViolations.get(identifier);
-    
-    if (existingViolation) {
-      // Update existing record
-      this.identifierViolations.set(identifier, {
-        count: existingViolation.count + (severity || 1),
-        timestamp: now
-      });
-    } else {
-      // Create new record
-      this.identifierViolations.set(identifier, {
-        count: severity || 1,
-        timestamp: now
-      });
-    }
-  }
-  
-  /**
-   * Record a subnet violation
-   * 
-   * @param subnet IP subnet
-   * @param severity Violation severity
-   */
-  private recordSubnetViolation(subnet: string, severity: number): void {
-    const now = Date.now();
-    const existingViolation = this.subnets.get(subnet);
-    
-    if (existingViolation) {
-      // Update existing record
-      this.subnets.set(subnet, {
-        count: existingViolation.count + (severity || 1),
-        timestamp: now
-      });
-    } else {
-      // Create new record
-      this.subnets.set(subnet, {
-        count: severity || 1,
-        timestamp: now
-      });
-    }
-  }
-  
-  /**
-   * Add an IP to recent threats
-   * 
-   * @param ip IP address
-   */
-  private addRecentThreat(ip: string): void {
-    // Add to recent threats if not already there
-    if (!this.recentThreats.includes(ip)) {
-      this.recentThreats.push(ip);
-      
-      // Trim if too many
-      if (this.recentThreats.length > 100) {
-        this.recentThreats.shift();
+  private recalculateGlobalThreatLevel(): void {
+    try {
+      if (this.threats.size === 0) {
+        this.globalThreatLevel = 0;
+        this.threatCategory = 'low';
+        return;
       }
-    }
-  }
-  
-  /**
-   * Check if an IP is a recent threat
-   * 
-   * @param ip IP address
-   * @returns Whether the IP is a recent threat
-   */
-  private isRecentThreat(ip: string): boolean {
-    return this.recentThreats.includes(ip);
-  }
-  
-  /**
-   * Get IP violation count
-   * 
-   * @param ip IP address
-   * @returns Violation count
-   */
-  private getIpViolationCount(ip: string): number {
-    const violation = this.ipViolations.get(ip);
-    return violation ? violation.count : 0;
-  }
-  
-  /**
-   * Get identifier violation count
-   * 
-   * @param identifier User identifier
-   * @returns Violation count
-   */
-  private getIdentifierViolationCount(identifier: string): number {
-    const violation = this.identifierViolations.get(identifier);
-    return violation ? violation.count : 0;
-  }
-  
-  /**
-   * Get subnet violation count
-   * 
-   * @param subnet IP subnet
-   * @returns Violation count
-   */
-  private getSubnetViolationCount(subnet: string): number {
-    const violation = this.subnets.get(subnet);
-    return violation ? violation.count : 0;
-  }
-  
-  /**
-   * Get age of a violation
-   * 
-   * @param key IP or identifier
-   * @param isIp Whether this is an IP (true) or identifier (false)
-   * @returns Age in milliseconds
-   */
-  private getViolationAge(key: string, isIp: boolean): number {
-    const map = isIp ? this.ipViolations : this.identifierViolations;
-    const violation = map.get(key);
-    
-    if (violation) {
-      return Date.now() - violation.timestamp;
-    }
-    
-    return VIOLATION_DECAY_TIME; // Max age if not found
-  }
-  
-  /**
-   * Count how many IPs have a high threat level
-   * 
-   * @returns Count of high threat IPs
-   */
-  private countHighThreatIps(): number {
-    return this.getHighThreatIps().length;
-  }
-  
-  /**
-   * Get IPs with a high threat level
-   * 
-   * @returns Array of high threat IPs
-   */
-  private getHighThreatIps(): string[] {
-    const highThreatIps: string[] = [];
-    
-    for (const [ip] of this.ipViolations) {
-      const threatLevel = this.calculateThreatLevel(ip, `ip:${ip}`);
       
-      if (threatLevel >= THREAT_LEVEL_HIGH) {
-        highThreatIps.push(ip);
+      // Calculate total score
+      let totalScore = 0;
+      
+      for (const [, threat] of this.threats) {
+        totalScore += threat.score;
       }
+      
+      // Calculate average score
+      const averageScore = totalScore / this.threats.size;
+      
+      // Calculate global threat level (0-1)
+      this.globalThreatLevel = Math.min(1.0, averageScore / 10.0);
+      
+      // Determine threat category
+      if (this.globalThreatLevel < 0.25) {
+        this.threatCategory = 'low';
+      } else if (this.globalThreatLevel < 0.5) {
+        this.threatCategory = 'medium';
+      } else if (this.globalThreatLevel < 0.75) {
+        this.threatCategory = 'high';
+      } else {
+        this.threatCategory = 'critical';
+      }
+    } catch (error) {
+      log(`Error recalculating global threat level: ${error}`, 'security');
+      
+      // Reset to low on error
+      this.globalThreatLevel = 0;
+      this.threatCategory = 'low';
     }
-    
-    return highThreatIps;
   }
 }
 
-// Create and export a singleton instance
+// Export singleton instance
 export const threatDetectionService = new ThreatDetectionService();

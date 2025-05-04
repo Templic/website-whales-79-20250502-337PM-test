@@ -1,264 +1,249 @@
 /**
- * IP Utility Functions
- *
- * This module provides utility functions for working with IP addresses,
- * including extraction from requests and validation.
+ * IP Utilities
+ * 
+ * This module provides utilities for working with IP addresses,
+ * including extracting client IPs from requests, checking IP ranges,
+ * and working with subnets.
  */
 
 import { Request } from 'express';
 import { log } from './logger';
 
 /**
- * Get the client IP address from a request
+ * Get client IP address from a request
  * 
  * @param req Express request
  * @returns Client IP address
  */
 export function getClientIp(req: Request): string {
   try {
-    // Try to get from X-Forwarded-For header (trusted proxies)
-    // Format: X-Forwarded-For: client, proxy1, proxy2, ...
+    // Try Replit proxied IP first (for Replit deployments)
+    if (req.headers['x-replit-user-ip']) {
+      return req.headers['x-replit-user-ip'] as string;
+    }
+
+    // Try common proxy headers in order of reliability
     const forwardedFor = req.headers['x-forwarded-for'];
-    
     if (forwardedFor) {
-      // If it's a string, split it and get the first (client) IP
-      if (typeof forwardedFor === 'string') {
-        const ips = forwardedFor.split(',').map(ip => ip.trim());
-        if (ips.length > 0 && ips[0]) {
-          return ips[0];
-        }
-      }
-      // If it's an array, get the first element
-      else if (Array.isArray(forwardedFor) && forwardedFor.length > 0 && forwardedFor[0]) {
-        return forwardedFor[0];
+      // Extract first IP in case of multiple hops
+      const ips = (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor).split(',');
+      const clientIp = ips[0].trim();
+      
+      // Validate IP
+      if (isValidIp(clientIp)) {
+        return clientIp;
       }
     }
     
-    // Try to get from other common headers
-    const realIp = req.headers['x-real-ip'];
-    if (realIp && typeof realIp === 'string') {
-      return realIp;
+    // Try other common headers
+    if (req.headers['cf-connecting-ip']) {
+      return req.headers['cf-connecting-ip'] as string;
     }
     
-    // Fall back to remoteAddress from the request
-    const ip = req.ip || req.connection?.remoteAddress || '0.0.0.0';
-    
-    // If IPv6 localhost, convert to IPv4 localhost
-    if (ip === '::1' || ip === '::ffff:127.0.0.1') {
-      return '127.0.0.1';
+    if (req.headers['true-client-ip']) {
+      return req.headers['true-client-ip'] as string;
     }
     
-    // If IPv6 with embedded IPv4, extract the IPv4 part
-    if (ip.startsWith('::ffff:') && ip.includes('.')) {
-      return ip.substring(7);
+    if (req.headers['x-real-ip']) {
+      return req.headers['x-real-ip'] as string;
     }
     
-    return ip;
+    // Fall back to Express's remote address
+    const remoteAddress = req.socket.remoteAddress;
+    if (remoteAddress) {
+      return remoteAddress;
+    }
+    
+    // Ultimate fallback
+    return req.ip || '0.0.0.0';
   } catch (error) {
     log(`Error getting client IP: ${error}`, 'security');
     
-    // Return a safe default
+    // Fallback
     return '0.0.0.0';
-  }
-}
-
-/**
- * Normalize an IP address (handle IPv6 mapped IPv4 addresses)
- * 
- * @param ip IP address to normalize
- * @returns Normalized IP address
- */
-export function normalizeIp(ip: string): string {
-  try {
-    // If IPv6 localhost, convert to IPv4 localhost
-    if (ip === '::1') {
-      return '127.0.0.1';
-    }
-    
-    // If IPv6 with embedded IPv4, extract the IPv4 part
-    if (ip.startsWith('::ffff:') && ip.includes('.')) {
-      return ip.substring(7);
-    }
-    
-    return ip;
-  } catch (error) {
-    log(`Error normalizing IP: ${error}`, 'security');
-    
-    // Return the original IP
-    return ip;
-  }
-}
-
-/**
- * Check if an IP address is private
- * 
- * @param ip IP address to check
- * @returns True if the IP is private
- */
-export function isPrivateIp(ip: string): boolean {
-  try {
-    // Normalize the IP first
-    const normalizedIp = normalizeIp(ip);
-    
-    // Check for localhost
-    if (normalizedIp === '127.0.0.1' || normalizedIp === 'localhost') {
-      return true;
-    }
-    
-    // Check for private IPv4 ranges
-    if (normalizedIp.match(/^10\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/)) {
-      return true;
-    }
-    
-    if (normalizedIp.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/)) {
-      return true;
-    }
-    
-    if (normalizedIp.match(/^192\.168\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/)) {
-      return true;
-    }
-    
-    // Check for link-local addresses
-    if (normalizedIp.match(/^169\.254\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/)) {
-      return true;
-    }
-    
-    // Check for IPv6 loopback
-    if (normalizedIp === '::1') {
-      return true;
-    }
-    
-    // Check for IPv6 unique local addresses (ULA)
-    if (normalizedIp.match(/^f[cd][0-9a-f]{2}:/i)) {
-      return true;
-    }
-    
-    // Not a private IP
-    return false;
-  } catch (error) {
-    log(`Error checking if IP is private: ${error}`, 'security');
-    
-    // Assume it's not private
-    return false;
-  }
-}
-
-/**
- * Extract IP subnet (for partial matching)
- * 
- * @param ip IP address
- * @param cidr CIDR prefix length (defaults to 24 for IPv4)
- * @returns Subnet portion of the IP
- */
-export function getIpSubnet(ip: string, cidr: number = 24): string {
-  try {
-    // Normalize the IP first
-    const normalizedIp = normalizeIp(ip);
-    
-    // Handle IPv4
-    if (normalizedIp.includes('.')) {
-      // Split into octets
-      const octets = normalizedIp.split('.');
-      
-      // Default to /24 subnet (first three octets)
-      if (cidr === 24) {
-        return `${octets[0]}.${octets[1]}.${octets[2]}`;
-      }
-      
-      // Handle different prefix lengths
-      if (cidr === 8) {
-        return octets[0];
-      } else if (cidr === 16) {
-        return `${octets[0]}.${octets[1]}`;
-      } else if (cidr === 32) {
-        return normalizedIp;
-      }
-      
-      // Default to /24 for any other CIDR value
-      return `${octets[0]}.${octets[1]}.${octets[2]}`;
-    }
-    
-    // Handle IPv6 (simplified)
-    if (normalizedIp.includes(':')) {
-      // Get the first four segments of the IPv6 address
-      const segments = normalizedIp.split(':').slice(0, 4);
-      return segments.join(':');
-    }
-    
-    // Return the original IP if we can't parse it
-    return normalizedIp;
-  } catch (error) {
-    log(`Error getting IP subnet: ${error}`, 'security');
-    
-    // Return the original IP
-    return ip;
   }
 }
 
 /**
  * Validate an IP address
  * 
- * @param ip IP address to validate
- * @returns True if the IP is valid
+ * @param ip IP address
+ * @returns Whether the IP is valid
  */
 export function isValidIp(ip: string): boolean {
   try {
-    // Check for IPv4
-    if (/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.test(ip)) {
-      const parts = ip.split('.').map(part => parseInt(part, 10));
+    // IPv4 pattern
+    const ipv4Pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    
+    // IPv6 pattern (simplified)
+    const ipv6Pattern = /^([0-9a-fA-F]{1,4}:){7}([0-9a-fA-F]{1,4})$|^([0-9a-fA-F]{1,4}:){1,7}:|^::([0-9a-fA-F]{1,4}:){0,6}|^([0-9a-fA-F]{1,4}:){1,6}:|^([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|^([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|^([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|^([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|^([0-9a-fA-F]{1,4}:)(:[0-9a-fA-F]{1,4}){1,6}$/;
+    
+    // Check if IPv4
+    if (ipv4Pattern.test(ip)) {
+      const parts = ip.split('.').map(Number);
+      
+      // Check each part is in range 0-255
       return parts.every(part => part >= 0 && part <= 255);
     }
     
-    // Check for IPv6
-    if (/^([0-9a-f]{1,4}:){7}([0-9a-f]{1,4})$/i.test(ip)) {
+    // Check if IPv6
+    if (ipv6Pattern.test(ip)) {
       return true;
     }
     
-    // Check for compressed IPv6
-    if (/^([0-9a-f]{1,4}:){0,6}:[0-9a-f]{1,4}$/i.test(ip)) {
-      return true;
-    }
-    
-    // Check for IPv6 with double colon
-    if (/^([0-9a-f]{1,4}:){0,6}::([0-9a-f]{1,4}:){0,6}[0-9a-f]{1,4}$/i.test(ip)) {
-      return true;
-    }
-    
-    // Check for IPv6 with embedded IPv4
-    if (/^([0-9a-f]{1,4}:){0,6}:(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/i.test(ip)) {
-      const parts = ip.split(':').pop()?.split('.').map(part => parseInt(part, 10)) || [];
-      return parts.every(part => part >= 0 && part <= 255);
-    }
-    
-    // Not a valid IP
     return false;
   } catch (error) {
     log(`Error validating IP: ${error}`, 'security');
     
-    // Assume it's not valid
     return false;
   }
 }
 
 /**
- * Compare two IPs for equality (accounting for different representations)
+ * Get IP subnet (first three octets for IPv4)
  * 
- * @param ip1 First IP address
- * @param ip2 Second IP address
- * @returns True if the IPs are equivalent
+ * @param ip IP address
+ * @returns Subnet
  */
-export function isSameIp(ip1: string, ip2: string): boolean {
+export function getIpSubnet(ip: string): string {
   try {
-    // Normalize both IPs
-    const normalizedIp1 = normalizeIp(ip1);
-    const normalizedIp2 = normalizeIp(ip2);
+    // Special case for localhost and unknown
+    if (ip === '::1' || ip === '127.0.0.1' || ip === '0.0.0.0') {
+      return ip;
+    }
     
-    // Compare the normalized IPs
-    return normalizedIp1 === normalizedIp2;
+    // Handle IPv4
+    const ipv4Pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    if (ipv4Pattern.test(ip)) {
+      const parts = ip.split('.');
+      return `${parts[0]}.${parts[1]}.${parts[2]}.*`;
+    }
+    
+    // Handle IPv6 (simplified - keep first 4 segments)
+    if (ip.includes(':')) {
+      const parts = ip.split(':');
+      return `${parts.slice(0, 4).join(':')}:*`;
+    }
+    
+    // Fallback
+    return ip;
   } catch (error) {
-    log(`Error comparing IPs: ${error}`, 'security');
+    log(`Error getting IP subnet: ${error}`, 'security');
     
-    // Assume they're not the same
+    return ip;
+  }
+}
+
+/**
+ * Check if an IP is in a CIDR range
+ * 
+ * @param ip IP address
+ * @param cidr CIDR range (e.g., "192.168.1.0/24")
+ * @returns Whether the IP is in the range
+ */
+export function isIpInCidrRange(ip: string, cidr: string): boolean {
+  try {
+    // Only support IPv4 for now
+    const ipv4Pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    if (!ipv4Pattern.test(ip)) {
+      return false;
+    }
+    
+    // Split CIDR into IP and prefix
+    const [rangeIp, prefixStr] = cidr.split('/');
+    const prefix = parseInt(prefixStr, 10);
+    
+    // Check if valid prefix
+    if (isNaN(prefix) || prefix < 0 || prefix > 32) {
+      return false;
+    }
+    
+    // Convert IP to long
+    const ipLong = ipToLong(ip);
+    const rangeIpLong = ipToLong(rangeIp);
+    
+    // Create mask
+    const mask = -1 << (32 - prefix);
+    
+    // Check if IPs match within the mask
+    return (ipLong & mask) === (rangeIpLong & mask);
+  } catch (error) {
+    log(`Error checking CIDR range: ${error}`, 'security');
+    
     return false;
+  }
+}
+
+/**
+ * Convert IPv4 to long
+ * 
+ * @param ip IPv4 address
+ * @returns Long representation
+ */
+function ipToLong(ip: string): number {
+  try {
+    const parts = ip.split('.').map(Number);
+    
+    return (parts[0] << 24) |
+           (parts[1] << 16) |
+           (parts[2] << 8) |
+           parts[3];
+  } catch (error) {
+    log(`Error converting IP to long: ${error}`, 'security');
+    
+    return 0;
+  }
+}
+
+/**
+ * Convert long to IPv4
+ * 
+ * @param long Long representation
+ * @returns IPv4 address
+ */
+export function longToIp(long: number): string {
+  try {
+    const a = (long >>> 24) & 0xff;
+    const b = (long >>> 16) & 0xff;
+    const c = (long >>> 8) & 0xff;
+    const d = long & 0xff;
+    
+    return `${a}.${b}.${c}.${d}`;
+  } catch (error) {
+    log(`Error converting long to IP: ${error}`, 'security');
+    
+    return '0.0.0.0';
+  }
+}
+
+/**
+ * Anonymize an IP for logging (removes last octet for IPv4)
+ * 
+ * @param ip IP address
+ * @returns Anonymized IP
+ */
+export function anonymizeIp(ip: string): string {
+  try {
+    // Handle IPv4
+    const ipv4Pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    if (ipv4Pattern.test(ip)) {
+      const parts = ip.split('.');
+      return `${parts[0]}.${parts[1]}.${parts[2]}.xxx`;
+    }
+    
+    // Handle IPv6 (simplified)
+    if (ip.includes(':')) {
+      // Keep first half of address
+      const parts = ip.split(':');
+      const halfLength = Math.ceil(parts.length / 2);
+      
+      return `${parts.slice(0, halfLength).join(':')}:xxxx:xxxx`;
+    }
+    
+    return ip;
+  } catch (error) {
+    log(`Error anonymizing IP: ${error}`, 'security');
+    
+    return ip;
   }
 }

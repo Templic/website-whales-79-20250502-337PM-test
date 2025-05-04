@@ -1,15 +1,15 @@
 /**
  * Rate Limit Analytics
  *
- * This class provides analytics for the rate limiting system.
- * It tracks request patterns, violations, and generates reports.
+ * This class tracks rate limit violations and generates reports.
  */
 
 import { log } from '../../../utils/logger';
+import { RateLimitContext } from './RateLimitContextBuilder';
 import { recordAuditEvent } from '../../secureAuditTrail';
 
-// Interface for a rate limit violation
-interface RateLimitViolation {
+// Violation interface
+export interface RateLimitViolation {
   timestamp: string;
   ip: string;
   identifier: string;
@@ -17,65 +17,69 @@ interface RateLimitViolation {
   method: string;
   tier: string;
   cost: number;
-  context: any;
+  context: RateLimitContext;
   adaptiveMultiplier: number;
 }
 
+// Analytics storage
 export class RateLimitAnalytics {
   private violations: RateLimitViolation[] = [];
-  private requestCounts: Map<string, number> = new Map();
-  private resourceTypeCounts: Map<string, number> = new Map();
+  private violationsByIp: Map<string, number> = new Map();
+  private violationsByIdentifier: Map<string, number> = new Map();
+  private violationsByEndpoint: Map<string, number> = new Map();
+  private requestsByResourceType: Map<string, number> = new Map();
+  private totalRequests: number = 0;
   private lastCleanup: number = Date.now();
-  private maxViolations: number = 1000; // Max violations to store in memory
-  private maxAge: number = 24 * 60 * 60 * 1000; // 24 hours
+  private logStream: any = null;
   
   constructor() {
-    // Set up cleanup interval
-    setInterval(() => this.cleanup(), 60 * 60 * 1000); // Every hour
+    // Set up clean up interval
+    setInterval(() => this.cleanup(), 24 * 60 * 60 * 1000); // Every 24 hours
   }
   
   /**
    * Record a rate limit violation
    * 
-   * @param violation Violation details
+   * @param violation Rate limit violation
    */
   public recordViolation(violation: RateLimitViolation): void {
     try {
       // Add to violations array
       this.violations.push(violation);
       
-      // Increment violation count for this endpoint
-      const endpoint = violation.endpoint;
-      this.incrementEndpointViolation(endpoint);
+      // Update violation counts
+      this.incrementViolation(this.violationsByIp, violation.ip);
+      this.incrementViolation(this.violationsByIdentifier, violation.identifier);
+      this.incrementViolation(this.violationsByEndpoint, violation.endpoint);
       
-      // Increment violation count for this resource type
-      const resourceType = violation.context?.resourceType || 'unknown';
-      this.incrementResourceTypeViolation(resourceType);
+      // Log the violation
+      if (this.logStream) {
+        this.logStream.write(`Violation: ${violation.ip} (${violation.identifier}) exceeded rate limit for ${violation.endpoint} (${violation.method})\n`);
+      }
       
-      // Record significant violations in audit log
-      if (violation.context?.riskLevel > 0.7 || violation.context?.threatLevel > 0.7) {
+      // Record in audit trail if first violation for this IP/endpoint combo
+      const violationKey = `${violation.ip}:${violation.endpoint}`;
+      if (!this.violationsByIp.has(violationKey) || this.violationsByIp.get(violationKey) === 1) {
         recordAuditEvent({
-          timestamp: new Date().toISOString(),
-          action: 'RATE_LIMIT_VIOLATION',
+          timestamp: violation.timestamp,
+          action: 'RATE_LIMIT_EXCEEDED',
           resource: violation.endpoint,
           result: 'blocked',
-          severity: 'info',
+          severity: 'warning',
           details: {
             ip: violation.ip,
             identifier: violation.identifier,
+            endpoint: violation.endpoint,
             method: violation.method,
-            tier: violation.tier,
-            cost: violation.cost,
-            resourceType: resourceType,
-            riskLevel: violation.context?.riskLevel,
-            threatLevel: violation.context?.threatLevel
+            tier: violation.tier
           }
         });
       }
       
-      // Check if we need to clean up
-      if (this.violations.length > this.maxViolations) {
-        this.cleanup();
+      // Log if this IP is showing a pattern of violations
+      const ipViolations = this.violationsByIp.get(violation.ip) || 0;
+      if (ipViolations >= 10) {
+        log(`High violation count from IP ${violation.ip}: ${ipViolations} violations`, 'security');
       }
     } catch (error) {
       log(`Error recording rate limit violation: ${error}`, 'security');
@@ -89,80 +93,96 @@ export class RateLimitAnalytics {
    */
   public trackRequest(resourceType: string): void {
     try {
-      // Increment request count for this resource type
-      const count = this.resourceTypeCounts.get(resourceType) || 0;
-      this.resourceTypeCounts.set(resourceType, count + 1);
+      // Increment request count
+      this.totalRequests++;
+      
+      // Increment resource type count
+      this.incrementViolation(this.requestsByResourceType, resourceType);
     } catch (error) {
       log(`Error tracking request: ${error}`, 'security');
     }
   }
   
   /**
-   * Generate a report of rate limit analytics
+   * Set log stream
    * 
-   * @returns Report of rate limit analytics
+   * @param stream Log stream
+   */
+  public setLogStream(stream: any): void {
+    this.logStream = stream;
+  }
+  
+  /**
+   * Generate an analytics report
+   * 
+   * @returns Analytics report
    */
   public generateReport(): any {
     try {
-      // Get recent violations (last hour)
-      const now = Date.now();
-      const oneHourAgo = now - 60 * 60 * 1000;
-      const recentViolations = this.violations.filter(v => new Date(v.timestamp).getTime() >= oneHourAgo);
+      // Calculate violation rate
+      const violationRate = this.totalRequests > 0 
+        ? this.violations.length / this.totalRequests 
+        : 0;
       
-      // Calculate total request count
-      let totalRequests = 0;
-      for (const count of this.resourceTypeCounts.values()) {
-        totalRequests += count;
-      }
+      // Get top violating IPs
+      const topViolatingIps = Array.from(this.violationsByIp.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([ip, count]) => ({ ip, count }));
       
-      // Calculate total violations
-      const totalViolations = this.violations.length;
-      
-      // Calculate global error rate
-      const globalErrorRate = totalRequests > 0 ? totalViolations / (totalRequests + totalViolations) : 0;
+      // Get top violating identifiers
+      const topViolatingIdentifiers = Array.from(this.violationsByIdentifier.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([identifier, count]) => ({ identifier, count }));
       
       // Get top violated endpoints
-      const endpointViolations: Record<string, number> = {};
-      for (const v of recentViolations) {
-        endpointViolations[v.endpoint] = (endpointViolations[v.endpoint] || 0) + 1;
-      }
-      
-      // Sort endpoints by violation count
-      const topEndpoints = Object.entries(endpointViolations)
+      const topViolatedEndpoints = Array.from(this.violationsByEndpoint.entries())
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10)
         .map(([endpoint, count]) => ({ endpoint, count }));
       
-      // Calculate per-resource type statistics
-      const resourceTypes = Array.from(this.resourceTypeCounts.entries())
-        .map(([type, count]) => {
-          const violationCount = this.getResourceTypeViolationCount(type);
-          const errorRate = count > 0 ? violationCount / (count + violationCount) : 0;
-          
-          return {
-            type,
-            requests: count,
-            violations: violationCount,
-            errorRate
-          };
-        })
-        .sort((a, b) => b.violations - a.violations);
+      // Get request breakdown by resource type
+      const requestsByResourceType = Array.from(this.requestsByResourceType.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(([resourceType, count]) => ({ 
+          resourceType, 
+          count,
+          percentage: this.totalRequests > 0 
+            ? (count / this.totalRequests) * 100 
+            : 0
+        }));
       
-      // Return the report
+      // Calculate global error rate
+      const globalErrorRate = this.totalRequests > 0 
+        ? this.violations.length / this.totalRequests 
+        : 0;
+      
+      // Create return object
       return {
         timestamp: new Date().toISOString(),
         summary: {
-          totalRequests,
-          totalViolations,
-          recentViolations: recentViolations.length,
-          globalErrorRate
+          totalViolations: this.violations.length,
+          totalRequests: this.totalRequests,
+          violationRate,
+          globalErrorRate,
+          uniqueIps: this.violationsByIp.size,
+          uniqueEndpoints: this.violationsByEndpoint.size
         },
-        topEndpoints,
-        resourceTypes,
-        lastCleanup: new Date(this.lastCleanup).toISOString()
+        topViolators: topViolatingIps,
+        topIdentifiers: topViolatingIdentifiers,
+        topEndpoints: topViolatedEndpoints,
+        requestsByResourceType,
+        recentViolations: this.violations.slice(-10).map(v => ({
+          timestamp: v.timestamp,
+          ip: v.ip,
+          endpoint: v.endpoint,
+          method: v.method,
+          tier: v.tier
+        }))
       };
     } catch (error) {
-      log(`Error generating analytics report: ${error}`, 'security');
+      log(`Error generating rate limit analytics report: ${error}`, 'security');
       
       return {
         timestamp: new Date().toISOString(),
@@ -172,65 +192,57 @@ export class RateLimitAnalytics {
   }
   
   /**
-   * Clean up old violations
+   * Clean up old data
    */
   private cleanup(): void {
     try {
-      const now = Date.now();
-      const cutoff = now - this.maxAge;
+      // Calculate cut-off time (7 days)
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 7);
+      const cutoffTime = cutoff.toISOString();
       
-      // Remove old violations
-      this.violations = this.violations.filter(v => {
-        const timestamp = new Date(v.timestamp).getTime();
-        return timestamp >= cutoff;
-      });
+      // Track number of violations before cleanup
+      const beforeCount = this.violations.length;
+      
+      // Filter out old violations
+      this.violations = this.violations.filter(v => v.timestamp >= cutoffTime);
+      
+      // Rebuild violation counts
+      this.violationsByIp.clear();
+      this.violationsByIdentifier.clear();
+      this.violationsByEndpoint.clear();
+      
+      for (const violation of this.violations) {
+        this.incrementViolation(this.violationsByIp, violation.ip);
+        this.incrementViolation(this.violationsByIdentifier, violation.identifier);
+        this.incrementViolation(this.violationsByEndpoint, violation.endpoint);
+      }
+      
+      // Reset total requests if cleanup is substantial
+      if (beforeCount - this.violations.length > 1000) {
+        // If we cleared a lot of violations, also reset request counts for accuracy
+        this.requestsByResourceType.clear();
+        this.totalRequests = 0;
+      }
+      
+      // Log cleanup
+      log(`Rate limit analytics cleanup: Removed ${beforeCount - this.violations.length} old violations`, 'security');
       
       // Update last cleanup time
-      this.lastCleanup = now;
-      
-      log(`Rate limit analytics cleanup: ${this.violations.length} violations remaining`, 'security');
+      this.lastCleanup = Date.now();
     } catch (error) {
-      log(`Error cleaning up rate limit violations: ${error}`, 'security');
+      log(`Error cleaning up rate limit analytics: ${error}`, 'security');
     }
   }
   
   /**
-   * Increment violation count for an endpoint
+   * Increment a violation counter
    * 
-   * @param endpoint Endpoint that was violated
+   * @param map Map to update
+   * @param key Key to increment
    */
-  private incrementEndpointViolation(endpoint: string): void {
-    // Track most specific endpoint first
-    const count = this.requestCounts.get(endpoint) || 0;
-    this.requestCounts.set(endpoint, count + 1);
-    
-    // Also track the API path more generally if it's an API
-    if (endpoint.startsWith('/api/')) {
-      const apiPath = endpoint.split('/').slice(0, 3).join('/');
-      const apiCount = this.requestCounts.get(apiPath) || 0;
-      this.requestCounts.set(apiPath, apiCount + 1);
-    }
-  }
-  
-  /**
-   * Increment violation count for a resource type
-   * 
-   * @param resourceType Resource type that was violated
-   */
-  private incrementResourceTypeViolation(resourceType: string): void {
-    const key = `violation:${resourceType}`;
-    const count = this.resourceTypeCounts.get(key) || 0;
-    this.resourceTypeCounts.set(key, count + 1);
-  }
-  
-  /**
-   * Get violation count for a resource type
-   * 
-   * @param resourceType Resource type
-   * @returns Violation count
-   */
-  private getResourceTypeViolationCount(resourceType: string): number {
-    const key = `violation:${resourceType}`;
-    return this.resourceTypeCounts.get(key) || 0;
+  private incrementViolation(map: Map<string, number>, key: string): void {
+    const count = map.get(key) || 0;
+    map.set(key, count + 1);
   }
 }

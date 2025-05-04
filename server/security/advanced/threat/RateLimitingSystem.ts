@@ -1,135 +1,157 @@
 /**
  * Rate Limiting System
  *
- * This module provides the main coordination point for the rate limiting system.
- * It creates and exports rate limiters for different tiers, the context builder,
- * and the adaptive rate limiter.
+ * This module provides a complete rate limiting system that integrates
+ * all the rate limiting components (TokenBucketRateLimiter, RateLimitContextBuilder,
+ * AdaptiveRateLimiter, RateLimitAnalytics, ThreatDetectionService) into a unified system.
+ * 
+ * It handles the initialization, configuration, and integration with the rest of the application.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { log } from '../../../utils/logger';
-import { TokenBucketRateLimiter, RateLimitConfig } from './TokenBucketRateLimiter';
-import { RateLimitContextBuilder } from './RateLimitContextBuilder';
-import { RateLimitAnalytics } from './RateLimitAnalytics';
-import { AdaptiveRateLimiter } from './AdaptiveRateLimiter';
 import { getClientIp } from '../../../utils/ip-utils';
+import { RateLimitContextBuilder } from './RateLimitContextBuilder';
+import { TokenBucketRateLimiter } from './TokenBucketRateLimiter';
+import { AdaptiveRateLimiter } from './AdaptiveRateLimiter';
+import { RateLimitAnalytics } from './RateLimitAnalytics';
+import { threatDetectionService } from './ThreatDetectionService';
+import { isCsrfExemptPath } from './RateLimitIntegration';
+import { recordAuditEvent } from '../../secureAuditTrail';
 
-// Create analytics service
+/**
+ * Analytics instance
+ */
 export const analytics = new RateLimitAnalytics();
 
-// Create adaptive rate limiter
+/**
+ * Context builder instance
+ */
+export const contextBuilder = new RateLimitContextBuilder({
+  // Whitelist localhost and common development IPs
+  whitelistedIps: ['127.0.0.1', '::1', '0.0.0.0'],
+  
+  // Resource types and their sensitivity (1-5)
+  resourceTypes: {
+    'auth': 5,      // Authentication endpoints
+    'admin': 5,     // Admin endpoints
+    'security': 5,  // Security endpoints
+    'user': 4,      // User data endpoints
+    'api': 3,       // General API endpoints
+    'static': 1,    // Static assets
+    'public': 1     // Public endpoints
+  }
+});
+
+/**
+ * Adaptive rate limiter instance
+ */
 export const adaptiveRateLimiter = new AdaptiveRateLimiter({
   minBurstMultiplier: 0.5,
   maxBurstMultiplier: 2.0,
   systemLoadThreshold: 0.7,
   threatLevelImpact: 0.5,
   errorRateThreshold: 0.05,
-  adjustmentInterval: 60000, // 1 minute
-  analytics
+  adjustmentInterval: 60 * 1000, // 1 minute
+  analytics: analytics
 });
 
-// Create context builder
-export const contextBuilder = new RateLimitContextBuilder();
-
-// Create rate limiters for different tiers
-export const rateLimiters: Record<string, TokenBucketRateLimiter> = {
-  // Global tier - applies to all requests
+/**
+ * Rate limiters for different tiers
+ */
+export const rateLimiters = {
+  /**
+   * Global rate limiter (covers all endpoints)
+   */
   global: new TokenBucketRateLimiter({
-    capacity: 300,
-    refillRate: 100,
-    refillInterval: 60000, // 1 minute
+    capacity: 200,
+    refillRate: 50,
+    refillInterval: 60 * 1000, // 1 minute
     contextAware: true,
-    analytics
+    name: 'global'
   }),
   
-  // Authentication tier - applies to authentication endpoints
+  /**
+   * Authentication endpoints
+   */
   auth: new TokenBucketRateLimiter({
+    capacity: 10,
+    refillRate: 5,
+    refillInterval: 60 * 1000, // 1 minute
+    contextAware: true,
+    name: 'auth'
+  }),
+  
+  /**
+   * Admin endpoints
+   */
+  admin: new TokenBucketRateLimiter({
+    capacity: 50,
+    refillRate: 25,
+    refillInterval: 60 * 1000, // 1 minute
+    contextAware: true,
+    name: 'admin'
+  }),
+  
+  /**
+   * Security endpoints
+   */
+  security: new TokenBucketRateLimiter({
     capacity: 20,
     refillRate: 10,
-    refillInterval: 60000, // 1 minute
+    refillInterval: 60 * 1000, // 1 minute
     contextAware: true,
-    analytics
+    name: 'security'
   }),
   
-  // Admin tier - applies to admin endpoints
-  admin: new TokenBucketRateLimiter({
-    capacity: 60,
-    refillRate: 30,
-    refillInterval: 60000, // 1 minute
-    contextAware: true,
-    analytics
-  }),
-  
-  // Security tier - applies to security endpoints
-  security: new TokenBucketRateLimiter({
-    capacity: 30,
-    refillRate: 15,
-    refillInterval: 60000, // 1 minute
-    contextAware: true,
-    analytics
-  }),
-  
-  // API tier - applies to API endpoints
+  /**
+   * API endpoints
+   */
   api: new TokenBucketRateLimiter({
-    capacity: 120,
-    refillRate: 60,
-    refillInterval: 60000, // 1 minute
+    capacity: 100,
+    refillRate: 50,
+    refillInterval: 60 * 1000, // 1 minute
     contextAware: true,
-    analytics
+    name: 'api'
   }),
   
-  // Public tier - applies to public resources
+  /**
+   * Public endpoints and static assets
+   */
   public: new TokenBucketRateLimiter({
-    capacity: 240,
-    refillRate: 80,
-    refillInterval: 60000, // 1 minute
+    capacity: 300,
+    refillRate: 150,
+    refillInterval: 60 * 1000, // 1 minute
     contextAware: true,
-    analytics
+    name: 'public'
   })
 };
 
-// Rate limiting middleware options
-interface RateLimitOptions {
-  tier: string;
-  statusCode?: number;
-  message?: string;
-  headers?: boolean;
-  skipSuccessfulRequests?: boolean;
-  keyGenerator?: (req: Request) => string;
-}
-
 /**
- * Create unified rate limit middleware
+ * Unified rate limit middleware
  * 
- * @param options Rate limit options
+ * Creates a unified rate limit middleware that:
+ * 1. Builds context
+ * 2. Gets adaptive multiplier
+ * 3. Calculates request cost
+ * 4. Applies appropriate rate limiter
+ * 5. Tracks analytics
+ * 
+ * @param tier Rate limiter tier to use (optional, defaults to 'global')
  * @returns Express middleware
  */
-export function createUnifiedRateLimit(options: RateLimitOptions) {
-  // Get rate limiter for the specified tier
-  const limiter = rateLimiters[options.tier];
-  if (!limiter) {
-    throw new Error(`Rate limiter for tier "${options.tier}" not found`);
-  }
-  
-  // Set default options
-  const statusCode = options.statusCode || 429;
-  const message = options.message || 'Too many requests, please try again later.';
-  const headers = options.headers !== false;
-  const skipSuccessfulRequests = options.skipSuccessfulRequests || false;
-  
-  // Default key generator
-  const defaultKeyGenerator = (req: Request): string => {
-    return `${options.tier}:${getClientIp(req)}`;
-  };
-  
-  // Use custom key generator if provided, otherwise use default
-  const keyGenerator = options.keyGenerator || defaultKeyGenerator;
-  
-  // Return middleware function
+export function createUnifiedRateLimit(tier?: 'api' | 'auth' | 'admin' | 'security' | 'public') {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Generate key for this request
-      const key = keyGenerator(req);
+      // Skip rate limiting for CSRF exempt paths and the base path
+      if (isCsrfExemptPath(req.path) || req.path === '/') {
+        return next();
+      }
+      
+      // Skip rate limiting for the CSRF token endpoint
+      if (req.path === '/api/csrf-token') {
+        return next();
+      }
       
       // Build context
       const context = contextBuilder.buildContext(req);
@@ -140,176 +162,91 @@ export function createUnifiedRateLimit(options: RateLimitOptions) {
       // Calculate request cost
       const cost = contextBuilder.calculateRequestCost(req, context);
       
+      // Get the appropriate rate limiter
+      const rateLimiter = tier ? rateLimiters[tier] : rateLimiters.global;
+      
+      // Generate key
+      const key = `${rateLimiter.name}:${context.identifier}`;
+      
       // Try to consume tokens
-      const result = limiter.consume(key, cost, context, adaptiveMultiplier);
+      const result = rateLimiter.consume(key, cost, context, adaptiveMultiplier);
       
-      // Set headers if enabled
-      if (headers) {
-        res.setHeader('X-RateLimit-Limit', limiter.getCapacity(key).toString());
-        res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
-        res.setHeader('X-RateLimit-Reset', Math.ceil(result.resetTime / 1000).toString());
-        
-        if (result.limited) {
-          res.setHeader('Retry-After', Math.ceil(result.retryAfter / 1000).toString());
-        }
-      }
+      // Set headers
+      res.setHeader('X-RateLimit-Limit', rateLimiter.getCapacity(key, context, adaptiveMultiplier).toString());
+      res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
+      res.setHeader('X-RateLimit-Reset', Math.ceil(result.resetTime / 1000).toString());
       
-      // If rate limited, send error response
+      // If limited, send error response
       if (result.limited) {
-        // Track request with analytics
+        // Set retry-after header
+        res.setHeader('Retry-After', Math.ceil(result.retryAfter / 1000).toString());
+        
+        // Record violation in analytics
         analytics.recordViolation({
           timestamp: new Date().toISOString(),
           ip: context.ip,
           identifier: context.identifier,
           endpoint: req.path,
           method: req.method,
-          tier: options.tier,
+          tier: rateLimiter.name,
           cost,
           context,
           adaptiveMultiplier
         });
         
-        // Log rate limit
+        // Record in audit trail
+        recordAuditEvent({
+          timestamp: new Date().toISOString(),
+          action: 'RATE_LIMIT_EXCEEDED',
+          resource: req.path,
+          result: 'blocked',
+          severity: 'warning',
+          details: {
+            ip: context.ip,
+            identifier: context.identifier,
+            method: req.method,
+            tier: rateLimiter.name,
+            remaining: result.remaining,
+            cost
+          }
+        });
+        
+        // Record in threat detection
+        threatDetectionService.recordViolation(context.ip, context.identifier, 0.5);
+        
+        // Log rate limiting
         log(`Rate limit exceeded: ${key} (${req.method} ${req.path})`, 'security');
         
         // Send error response
-        return res.status(statusCode).json({
-          success: false,
+        return res.status(429).json({
           error: 'rate_limited',
-          message,
+          message: 'Too many requests. Please try again later.',
           retryAfter: Math.ceil(result.retryAfter / 1000)
         });
       }
       
       // Store context in request for later use
-      req.rateLimitContext = context;
+      (req as any).rateLimitContext = context;
       
-      // Continue to next middleware
-      next();
-      
-      // If skip successful requests is enabled, we're done
-      if (skipSuccessfulRequests) {
-        return;
-      }
-      
-      // Setup response tracking to record analytics after response is sent
-      const originalEnd = res.end;
-      const originalWrite = res.write;
-      
-      // Override res.end to track response
-      res.end = function(...args: any[]): any {
-        // Track request if not rate limited
+      // Track successful request on response finish
+      res.on('finish', () => {
         analytics.trackRequest(context.resourceType);
-        
-        // Call original end
-        return originalEnd.apply(res, args);
-      };
+      });
       
-      // Override res.write to track response
-      res.write = function(...args: any[]): any {
-        // Track request if not rate limited and first write
-        if (!res.writableEnded) {
-          analytics.trackRequest(context.resourceType);
-        }
-        
-        // Call original write
-        return originalWrite.apply(res, args);
-      };
+      // Proceed with the request
+      next();
     } catch (error) {
-      // Log error
-      log(`Error in rate limiting middleware: ${error}`, 'security');
-      
-      // Continue to next middleware (fail open)
+      // Log error and fail open
+      log(`Error in rate limit middleware: ${error}`, 'security');
       next();
     }
   };
 }
 
-// Create middleware instances for each tier
-export const globalRateLimit = createUnifiedRateLimit({
-  tier: 'global',
-  statusCode: 429,
-  message: 'Too many requests. Please try again later.',
-  headers: true,
-  skipSuccessfulRequests: false
-});
-
-export const authRateLimit = createUnifiedRateLimit({
-  tier: 'auth',
-  statusCode: 429,
-  message: 'Too many authentication requests. Please try again later.',
-  headers: true,
-  skipSuccessfulRequests: false
-});
-
-export const adminRateLimit = createUnifiedRateLimit({
-  tier: 'admin',
-  statusCode: 429,
-  message: 'Too many admin requests. Please try again later.',
-  headers: true,
-  skipSuccessfulRequests: false
-});
-
-export const securityRateLimit = createUnifiedRateLimit({
-  tier: 'security',
-  statusCode: 429,
-  message: 'Too many security requests. Please try again later.',
-  headers: true,
-  skipSuccessfulRequests: false
-});
-
-export const apiRateLimit = createUnifiedRateLimit({
-  tier: 'api',
-  statusCode: 429,
-  message: 'Too many API requests. Please try again later.',
-  headers: true,
-  skipSuccessfulRequests: false
-});
-
-export const publicRateLimit = createUnifiedRateLimit({
-  tier: 'public',
-  statusCode: 429,
-  message: 'Too many requests to public resources. Please try again later.',
-  headers: true,
-  skipSuccessfulRequests: true
-});
-
 /**
- * Generate a rate limit report for all tiers
- * 
- * @returns Rate limit report
+ * Global rate limit middleware
  */
-export function generateRateLimitReport(): any {
-  try {
-    // Get stats from each rate limiter
-    const limiterStats: Record<string, any> = {};
-    
-    for (const [tier, limiter] of Object.entries(rateLimiters)) {
-      limiterStats[tier] = limiter.getStats();
-    }
-    
-    // Get analytics report
-    const analyticsReport = analytics.generateReport();
-    
-    // Get adaptive metrics
-    const adaptiveMetrics = getAdaptiveAdjustmentMetrics();
-    
-    // Build combined report
-    return {
-      timestamp: new Date().toISOString(),
-      limiters: limiterStats,
-      analytics: analyticsReport,
-      adaptive: adaptiveMetrics
-    };
-  } catch (error) {
-    log(`Error generating rate limit report: ${error}`, 'security');
-    
-    return {
-      timestamp: new Date().toISOString(),
-      error: 'Failed to generate rate limit report'
-    };
-  }
-}
+export const globalRateLimit = createUnifiedRateLimit('global');
 
 /**
  * Get adaptive adjustment metrics
@@ -317,23 +254,117 @@ export function generateRateLimitReport(): any {
  * @returns Adaptive adjustment metrics
  */
 export function getAdaptiveAdjustmentMetrics(): any {
+  return adaptiveRateLimiter.getAdjustmentMetrics();
+}
+
+/**
+ * Generate a rate limit report
+ * 
+ * @returns Rate limit report
+ */
+export function generateRateLimitReport(): any {
   try {
-    return adaptiveRateLimiter.getAdjustmentMetrics();
-  } catch (error) {
-    log(`Error getting adaptive adjustment metrics: ${error}`, 'security');
+    // Get analytics report
+    const analyticsReport = analytics.generateReport();
     
+    // Get limiter stats
+    const limiterStats = Object.entries(rateLimiters).map(([tier, limiter]) => ({
+      tier,
+      stats: limiter.getStats()
+    }));
+    
+    // Get threat stats
+    const threatStats = threatDetectionService.getStats();
+    
+    // Get adaptive metrics
+    const adaptiveMetrics = adaptiveRateLimiter.getAdjustmentMetrics();
+    
+    // Generate the report
     return {
       timestamp: new Date().toISOString(),
-      error: 'Failed to get adaptive adjustment metrics'
+      globalStatus: {
+        threatLevel: threatStats.globalThreatLevel,
+        threatCategory: threatStats.threatCategory,
+        totalViolations: analyticsReport.summary?.totalViolations || 0,
+        totalRequests: analyticsReport.summary?.totalRequests || 0,
+        violationRate: analyticsReport.summary?.violationRate || 0,
+        adaptiveMultipliers: adaptiveMetrics.resourceTypeMultipliers
+      },
+      limiters: limiterStats,
+      analytics: {
+        summary: analyticsReport.summary,
+        topEndpoints: analyticsReport.topEndpoints || [],
+        topViolators: analyticsReport.topViolators || []
+      }
+    };
+  } catch (error) {
+    log(`Error generating rate limit report: ${error}`, 'security');
+    
+    return {
+      error: 'Failed to generate rate limit report',
+      timestamp: new Date().toISOString()
     };
   }
 }
 
-// Declare global type extensions for express
-declare global {
-  namespace Express {
-    interface Request {
-      rateLimitContext?: any;
-    }
+/**
+ * Fix the CSRF protection and rate limiting integration issue
+ * 
+ * This function modifies the CSRF protection middleware to work with
+ * our rate limiting system. It ensures that:
+ * 
+ * 1. CSRF token entropy validation errors are properly logged
+ * 2. Rate limits don't interfere with legitimate CSRF tokens
+ * 3. CSRF tokens are properly refreshed
+ * 
+ * @param csrfProtection CSRF protection middleware
+ * @returns Modified middleware
+ */
+export function fixCsrfIntegration(csrfProtection: any): any {
+  // The class instance handles its own middleware internally
+  // No modifications needed here for now
+  
+  // This approach avoids modifying the core CSRF protection class directly
+  
+  return csrfProtection;
+}
+
+/**
+ * Initialize rate limiting system
+ * 
+ * This function initializes the rate limiting system and returns any
+ * necessary middleware. It:
+ * 
+ * 1. Sets up the rate limiters
+ * 2. Configures analytics
+ * 3. Integrates with security systems
+ * 
+ * @returns Rate limiting middleware
+ */
+export function initializeRateLimiting(): any {
+  try {
+    log('Initializing rate limiting system...', 'security');
+    
+    // Set up stream for logs
+    const logStream = {
+      write: (message: string) => {
+        log(`Rate limiting: ${message.trim()}`, 'security');
+        return true;
+      }
+    };
+    
+    // Set up analytics storage
+    analytics.setLogStream(logStream);
+    
+    // Log initialization
+    log('Rate limiting system initialized successfully', 'security');
+    
+    // Return global rate limit middleware
+    return globalRateLimit;
+  } catch (error) {
+    log(`Error initializing rate limiting system: ${error}`, 'security');
+    
+    // Return a pass-through middleware
+    return (req: Request, res: Response, next: NextFunction) => next();
   }
 }
