@@ -1,206 +1,225 @@
 /**
  * Direct Validation Test Routes
  * 
- * These routes are completely unsecured and bypass ALL security measures including:
- * - CSRF protection
- * - Rate limiting
- * - Authentication
- * - Any other security middleware
+ * This file contains routes for testing validation by completely bypassing all security checks.
+ * These routes are intended ONLY for development and testing purposes.
  * 
- * They are ONLY for testing the API validation functionality and should never be 
- * enabled in a production environment.
- * 
- * WARNING: These routes represent a security risk if exposed in production.
+ * WARNING: These endpoints have NO security protection and should never be exposed in production.
  */
 
-import { Router, Request, Response } from 'express';
-import { noSecurityMiddleware } from '../middleware/noSecurityMiddleware';
+import express from 'express';
 import { z } from 'zod';
+import { noSecurityMiddleware } from '../middleware/noSecurityMiddleware';
+import { ValidationEngine } from '../validation/ValidationEngine';
 
-const router = Router();
+// Create router
+const router = express.Router();
 
-// Apply the no-security middleware to all routes in this router
+// Apply noSecurityMiddleware to all routes in this router
 router.use(noSecurityMiddleware);
 
-/**
- * Direct status endpoint
- * GET /api/direct-validation/status
- */
-router.get('/status', (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    active: true,
-    securityMode: 'COMPLETELY_BYPASSED',
-    message: 'Direct validation test API is active'
-  });
-});
+// Make sure JSON body parsing is enabled for these routes
+router.use(express.json());
 
-/**
- * Direct basic validation endpoint
- * POST /api/direct-validation/basic
- */
-router.post('/basic', (req: Request, res: Response) => {
-  // Basic validation schema for contact form
-  const schema = z.object({
-    name: z.string().min(2, { message: 'Name must be between 2 and 100 characters' }).max(100),
-    email: z.string().email({ message: 'Invalid email address' }),
-    message: z.string().min(10, { message: 'Message must be between 10 and 2000 characters' }).max(2000)
-  });
-
+// Basic validation endpoint
+router.post('/basic', (req, res) => {
+  console.log("Direct validation test - basic endpoint called", req.body);
+  
   try {
-    // Attempt to validate the request body
+    // Define validation schema
+    const schema = z.object({
+      name: z.string().min(2).max(100),
+      email: z.string().email(),
+      message: z.string().min(10).max(2000)
+    });
+    
+    // Validate input
     const result = schema.safeParse(req.body);
-
-    if (result.success) {
-      return res.json({
-        success: true,
-        validation: {
-          passed: true,
-          securityMode: 'COMPLETELY_BYPASSED'
-        },
-        data: result.data
-      });
-    } else {
-      // Extract validation errors
-      const errors = result.error.errors.map(err => ({
-        field: err.path[0],
-        error: err.message
-      }));
-
-      return res.json({
+    
+    if (!result.success) {
+      return res.status(400).json({
         success: false,
         validation: {
           passed: false,
-          errors,
-          securityMode: 'COMPLETELY_BYPASSED'
+          errors: result.error.errors.map(e => ({
+            field: e.path.join('.'),
+            error: e.message
+          }))
         }
       });
     }
-  } catch (error) {
-    console.error('Error in direct validation endpoint:', error);
-    return res.status(500).json({
-      success: false,
+    
+    // Validation passed
+    const data = result.data;
+    
+    res.json({
+      success: true,
       validation: {
-        passed: false,
-        errors: [{ field: 'server', error: 'Server error during validation' }],
-        securityMode: 'COMPLETELY_BYPASSED'
+        passed: true
       },
+      data
+    });
+  } catch (error) {
+    console.error('Error in basic validation endpoint:', error);
+    res.status(500).json({
+      success: false,
       error: 'Internal server error'
     });
   }
 });
 
-/**
- * Direct security validation endpoint
- * POST /api/direct-validation/security
- */
-router.post('/security', (req: Request, res: Response) => {
+// Security validation endpoint
+router.post('/security', (req, res) => {
+  console.log("Direct validation test - security endpoint called", req.body);
+  
   try {
-    // Extract query and userId from the request body
-    const { query, userId } = req.body;
-
-    // Define potential security issues to check for
-    const potentialSqlInjection = /\b(SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|UNION|JOIN|WHERE|FROM|INTO|VALUES)\b/i;
+    // Validate input structure
+    const schema = z.object({
+      query: z.string().min(1).max(1000)
+    });
     
-    // Check for SQL injection in the query
-    const hasSqlInjection = potentialSqlInjection.test(query);
+    // Parse the input
+    const result = schema.safeParse(req.body);
     
-    // Calculate a security score (0-1, where 1 is perfectly secure)
-    let securityScore = 1.0;
-    const warnings: string[] = [];
-
-    if (hasSqlInjection) {
-      securityScore = 0.2; // Low security score for SQL injection
-      warnings.push('Potential SQL injection detected in query');
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        validation: {
+          passed: false,
+          errors: result.error.errors.map(e => ({
+            field: e.path.join('.'),
+            error: e.message
+          }))
+        }
+      });
     }
-
-    return res.json({
+    
+    const { query } = result.data;
+    
+    // Simple heuristic to detect SQL injection
+    const hasSqlInjection = 
+      query.toLowerCase().includes('select') ||
+      query.toLowerCase().includes('from') ||
+      query.toLowerCase().includes('drop') ||
+      query.toLowerCase().includes('table') ||
+      query.toLowerCase().includes(';') ||
+      query.toLowerCase().includes('--');
+    
+    if (hasSqlInjection) {
+      return res.json({
+        success: true, // API call was successful
+        validation: {
+          passed: false, // But validation failed
+          securityScore: 0.2,
+          warnings: ['Potential SQL injection detected']
+        }
+      });
+    }
+    
+    // No security issues detected
+    res.json({
       success: true,
       validation: {
-        passed: securityScore > 0.5, // Pass if score is above 0.5
-        securityScore,
-        securityMode: 'COMPLETELY_BYPASSED',
-        ...(warnings.length > 0 && { warnings })
+        passed: true,
+        securityScore: 0.9
       }
     });
   } catch (error) {
     console.error('Error in security validation endpoint:', error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      validation: {
-        passed: false,
-        securityScore: 0,
-        securityMode: 'COMPLETELY_BYPASSED',
-        errors: [{ field: 'server', error: 'Server error during security validation' }]
-      },
       error: 'Internal server error'
     });
   }
 });
 
-/**
- * Direct validation rules endpoint
- * GET /api/direct-validation/rules
- */
-router.get('/rules', (req: Request, res: Response) => {
-  // Sample validation rules
-  const rules = [
-    {
-      id: 'direct-basic-validation',
-      name: 'Direct Basic Validation',
-      description: 'Validates basic form input without security checks',
-      target: 'body',
-      priority: 10,
-      isActive: true,
-      tags: ['form', 'direct', 'no-security']
-    },
-    {
-      id: 'direct-security-validation',
-      name: 'Direct Security Validation',
-      description: 'Validates security-related input without security checks',
-      target: 'body',
-      priority: 20,
-      isActive: true,
-      tags: ['security', 'direct', 'no-security']
-    }
-  ];
-
-  res.json({
-    success: true,
-    count: rules.length,
-    securityMode: 'COMPLETELY_BYPASSED',
-    rules
-  });
+// System status endpoint
+router.get('/status', (req, res) => {
+  console.log("Direct validation test - status endpoint called");
+  
+  try {
+    res.json({
+      success: true,
+      status: {
+        environment: process.env.NODE_ENV || 'development',
+        securityMode: 'COMPLETELY_BYPASSED',
+        cacheStats: {
+          hits: 128,
+          misses: 37,
+          size: 45
+        },
+        activeBatches: 2,
+        aiValidation: {
+          enabled: true,
+          lastProcessed: new Date().toISOString(),
+          averageResponseTime: 230 // ms
+        },
+        performance: {
+          avgProcessingTime: 18, // ms
+          p95ProcessingTime: 47, // ms
+          p99ProcessingTime: 102 // ms
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error in status endpoint:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
 });
 
-/**
- * Direct validation mappings endpoint
- * GET /api/direct-validation/mappings
- */
-router.get('/mappings', (req: Request, res: Response) => {
-  // Sample validation mappings
-  const mappings = [
-    {
-      route: '/api/direct-validation/basic',
-      method: 'POST',
-      rules: ['direct-basic-validation'],
-      priority: 10,
-      securityLevel: 'none'
-    },
-    {
-      route: '/api/direct-validation/security',
-      method: 'POST',
-      rules: ['direct-security-validation'],
-      priority: 20,
-      securityLevel: 'none'
-    }
-  ];
+// Rules endpoint
+router.get('/rules', (req, res) => {
+  console.log("Direct validation test - rules endpoint called");
+  
+  try {
+    // Get validation rules from the validation engine
+    const rules = ValidationEngine.getInstance().getRules();
+    
+    res.json({
+      success: true,
+      rules: Object.entries(rules).map(([id, rule]) => ({
+        id,
+        name: rule.name,
+        description: rule.description,
+        type: rule.type,
+        metadata: rule.metadata || {}
+      }))
+    });
+  } catch (error) {
+    console.error('Error in rules endpoint:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
 
-  res.json({
-    success: true,
-    securityMode: 'COMPLETELY_BYPASSED',
-    mappings
-  });
+// Mappings endpoint
+router.get('/mappings', (req, res) => {
+  console.log("Direct validation test - mappings endpoint called");
+  
+  try {
+    // Get API mappings from the validation engine
+    const mappings = ValidationEngine.getInstance().getMappings();
+    
+    res.json({
+      success: true,
+      mappings: Object.entries(mappings).map(([endpoint, mapping]) => ({
+        endpoint,
+        rules: mapping.rules,
+        metadata: mapping.metadata || {}
+      }))
+    });
+  } catch (error) {
+    console.error('Error in mappings endpoint:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
 });
 
 export default router;
