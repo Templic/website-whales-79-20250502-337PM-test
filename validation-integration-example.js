@@ -1,118 +1,145 @@
 /**
  * API Validation Integration Example
  * 
- * This file demonstrates how to integrate the API validation framework
- * with your main application routes.
+ * This example demonstrates how to integrate the API validation system
+ * with a standard Express application.
  */
 
-// Import the validation middleware
-const { validationMiddleware } = require('./server/validation/ValidationEngine');
 const express = require('express');
-const app = express();
+const { validationMiddleware } = require('./server/validation/ValidationEngine');
+const { z } = require('zod');
+const { registerValidationRule } = require('./server/validation/apiValidationRules');
 
-// Example schema validation rule
-// In a real application, these would be defined in apiValidationRules.ts
-const userSchemaValidationRule = {
+// Create Express app
+const app = express();
+app.use(express.json());
+
+// Define validation schemas
+const userSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Valid email is required"),
+  age: z.number().int().min(18, "Must be at least 18 years old").optional()
+});
+
+// Register custom validation rules
+registerValidationRule({
   id: 'schema:user',
   type: 'schema',
-  schema: {
-    name: { type: 'string', required: true, minLength: 2, maxLength: 100 },
-    email: { type: 'string', required: true, format: 'email' },
-    age: { type: 'number', required: true, min: 18, max: 120 }
-  }
-};
+  schema: userSchema
+});
 
-// Example security validation rule
-const highSecurityValidationRule = {
-  id: 'security:high',
-  type: 'security',
-  level: 'high',
-  checkInjection: true,
-  checkXSS: true
-};
+registerValidationRule({
+  id: 'schema:product',
+  type: 'schema',
+  schema: z.object({
+    name: z.string().min(3),
+    price: z.number().positive(),
+    description: z.string().optional()
+  })
+});
 
-// Register validation rules
-require('./server/validation/apiValidationRules').registerValidationRule(userSchemaValidationRule);
-require('./server/validation/apiValidationRules').registerValidationRule(highSecurityValidationRule);
-
-// Example 1: Basic route with schema validation
+// Basic route with schema validation
 app.post('/api/users', 
-  validationMiddleware({ rules: ['schema:user'] }), 
+  validationMiddleware({ rules: ['schema:user', 'security:medium'] }), 
   (req, res) => {
-    // At this point, req.body has been validated against the user schema
-    // If validation failed, the middleware would have sent an error response
-    res.json({ success: true, user: req.body });
+    // At this point, the request body is guaranteed to be valid
+    // and has passed both schema and security validation
+    console.log('Creating user:', req.body);
+    res.json({ 
+      success: true, 
+      message: 'User created successfully',
+      user: req.body
+    });
   }
 );
 
-// Example 2: Route with both schema and security validation
-app.post('/api/sensitive-data', 
-  validationMiddleware({ 
-    rules: ['schema:user', 'security:high'],
-    failFast: true  // Stop validation on first failure
-  }), 
-  (req, res) => {
-    // Input has now passed both schema and security validation
-    res.json({ success: true, data: req.body });
-  }
-);
-
-// Example 3: API endpoint with custom validation options
-app.post('/api/custom-validation', 
-  validationMiddleware({
-    rules: ['schema:user'],
-    customOptions: {
-      stripUnknown: true,     // Remove unknown properties
-      abortEarly: false,      // Return all errors
-      addValidatedData: true  // Add validated data to req.validatedData
+// Route with different validation based on HTTP method
+app.route('/api/products')
+  .get(
+    // Light validation for read operations
+    validationMiddleware({ rules: ['security:low'] }),
+    (req, res) => {
+      console.log('Getting products');
+      res.json({ products: [
+        { id: 1, name: 'Product 1', price: 29.99 },
+        { id: 2, name: 'Product 2', price: 49.99 }
+      ]});
     }
-  }),
-  (req, res) => {
-    // Access the validated and sanitized data
-    const validatedData = req.validatedData;
-    res.json({ success: true, data: validatedData });
-  }
-);
+  )
+  .post(
+    // Strict validation for write operations
+    validationMiddleware({ rules: ['schema:product', 'security:high'] }),
+    (req, res) => {
+      console.log('Creating product:', req.body);
+      res.json({ 
+        success: true, 
+        message: 'Product created successfully',
+        product: { id: 3, ...req.body }
+      });
+    }
+  );
 
-// Example 4: Applying validation rules by HTTP method
+// Advanced: Method-specific validation with a single middleware
 app.use('/api/resources',
   validationMiddleware({
     byMethod: {
       GET: ['security:low'],
-      POST: ['schema:resource', 'security:high'],
-      PUT: ['schema:resourceUpdate', 'security:high'],
+      POST: ['schema:product', 'security:high'],
+      PUT: ['schema:product', 'security:high'],
       DELETE: ['security:high']
     }
   }),
   (req, res) => {
-    // Different validation rules have been applied based on HTTP method
-    res.json({ success: true });
+    console.log(`${req.method} request for resources`);
+    res.json({ success: true, message: `${req.method} operation succeeded` });
   }
 );
 
-// Example 5: Conditional validation
-app.post('/api/conditional-endpoint',
-  (req, res, next) => {
-    // Set a flag for conditional validation
-    req.needsStrictValidation = req.body.sensitive === true;
-    next();
-  },
+// Advanced: Conditional validation based on request properties
+app.post('/api/payments',
   validationMiddleware({
     getRules: (req) => {
-      // Apply different rules based on request properties
-      if (req.needsStrictValidation) {
-        return ['schema:user', 'security:high'];
+      // Apply different validation rules based on payment type
+      const paymentType = req.body.type || 'standard';
+      if (paymentType === 'premium') {
+        return ['schema:premiumPayment', 'security:high'];
       }
-      return ['schema:user', 'security:low'];
+      return ['schema:standardPayment', 'security:medium'];
     }
   }),
   (req, res) => {
-    res.json({ success: true });
+    console.log('Processing payment:', req.body);
+    res.json({ success: true, message: 'Payment processed' });
   }
 );
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('API error:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'An unexpected error occurred',
+    errors: err.errors || []
+  });
+});
 
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`API validation example server running on port ${PORT}`);
+  console.log('Try these example requests:');
+  console.log('  - Valid user: curl -X POST http://localhost:3000/api/users -H "Content-Type: application/json" -d \'{"name":"John Doe","email":"john@example.com","age":30}\'');
+  console.log('  - Invalid user: curl -X POST http://localhost:3000/api/users -H "Content-Type: application/json" -d \'{"name":"J","email":"invalid-email"}\'');
+  console.log('  - Malicious input: curl -X POST http://localhost:3000/api/users -H "Content-Type: application/json" -d \'{"name":"DROP TABLE users;","email":"attack@evil.com"}\'');
 });
+
+/**
+ * Important Note:
+ * 
+ * This example assumes you have the following files already set up:
+ * 1. server/validation/ValidationEngine.js - Contains the validation middleware
+ * 2. server/validation/apiValidationRules.js - Contains the rule registry
+ * 
+ * In a real application, you would have proper error handling, database connections,
+ * authentication middleware, and more complex validation logic.
+ */
