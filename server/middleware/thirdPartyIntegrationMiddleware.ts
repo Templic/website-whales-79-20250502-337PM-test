@@ -1,120 +1,91 @@
 /**
  * Third-Party Integration Middleware
  * 
- * This middleware facilitates seamless integration with third-party services by:
- * 1. Adding appropriate CORS headers for trusted domains
- * 2. Providing special handling for embedded content
- * 3. Supporting cross-origin requests for specific services
+ * This middleware facilitates integration with third-party services by:
+ * 1. Modifying security headers to allow embedding of third-party content
+ * 2. Setting CORS headers appropriately for third-party services
+ * 3. Handling preflight requests for third-party integrations
  */
 
 import { Request, Response, NextFunction } from 'express';
 
-// List of trusted third-party domains that we integrate with
-const TRUSTED_DOMAINS = [
-  'taskade.com',
-  'app.taskade.com',
-  'www.taskade.com',
-  'youtube.com',
-  'www.youtube.com',
-  'youtube-nocookie.com',
-  'youtu.be',
-  'ytimg.com',
-  'maps.google.com',
-  'maps.googleapis.com',
-  'googleapis.com',
-  'googleusercontent.com',
-  'openai.com',
-  'api.openai.com',
-  'stripe.com',
-  'js.stripe.com',
-  'checkout.stripe.com',
-  'doubleclick.net',
-  'googletagmanager.com'
-];
+/**
+ * Check if the request is for a third-party resource
+ */
+function isThirdPartyIntegration(path: string): boolean {
+  return path.includes('/integrations/') || 
+         path.includes('/api/external/') || 
+         path.includes('/api/taskade/') ||
+         path.includes('/api/youtube/') ||
+         path.includes('/api/maps/') ||
+         path.includes('/api/openai/');
+}
 
 /**
- * Middleware to enable CORS for cross-origin embedding scenarios
+ * Check if the request is specifically for Taskade integration
+ */
+function isTaskadeIntegration(path: string): boolean {
+  return path.includes('/taskade/') || 
+         path.includes('/api/taskade/') ||
+         path.includes('taskade.com');
+}
+
+/**
+ * Middleware to support third-party integrations
+ * This sets appropriate headers for all third-party integrations
  */
 export function thirdPartyIntegrationMiddleware(req: Request, res: Response, next: NextFunction) {
-  const origin = req.headers.origin;
-  
-  // For preflight requests
-  if (req.method === 'OPTIONS') {
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token');
-    res.header('Access-Control-Max-Age', '86400'); // 24 hours
-  }
-  
-  // For Taskade-specific paths
-  if (
-    req.path.includes('taskade') || 
-    req.path.includes('/widget/') || 
-    req.path.includes('/embed/')
-  ) {
-    console.log(`[Third-Party] Allowing embedding for Taskade integration: ${req.path}`);
+  if (isThirdPartyIntegration(req.path)) {
+    console.log(`[Integration] Setting third-party integration headers for: ${req.path}`);
     
-    // Enable content embedding across origins
+    // Remove restrictive headers
+    res.removeHeader('X-Frame-Options');
+    res.removeHeader('Content-Security-Policy');
+    
+    // Set permissive CORS headers
     res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
     res.header('Access-Control-Allow-Credentials', 'true');
     
-    // X-Frame-Options for embedding
-    res.removeHeader('X-Frame-Options');
-    res.header('X-Frame-Options', 'ALLOWALL');
-    
-    // Content Security Policy for embedding
-    res.removeHeader('Content-Security-Policy');
-    res.header(
-      'Content-Security-Policy',
-      "default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *;"
-    );
-  }
-  
-  // For trusted domains
-  else if (origin && TRUSTED_DOMAINS.some(domain => origin.includes(domain))) {
-    console.log(`[Third-Party] Allowing cross-origin request from trusted domain: ${origin}`);
-    
-    // Set permissive headers for trusted domains
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-    
-    // Allow embedding in iframes from trusted domains
-    res.removeHeader('X-Frame-Options');
-    
-    // Adjust CSP for trusted domains
-    const csp = `default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors ${origin};`;
-    res.removeHeader('Content-Security-Policy');
-    res.header('Content-Security-Policy', csp);
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
   }
   
   next();
 }
 
 /**
- * Special handling for Taskade widget and embedded content
+ * Specific middleware for Taskade integration
+ * Sets headers required specifically for Taskade embedding
  */
 export function taskadeIntegrationMiddleware(req: Request, res: Response, next: NextFunction) {
-  if (
-    req.path === '/taskade-widget.js' ||
-    req.path.startsWith('/taskade/') ||
-    req.path.startsWith('/taskade-embed/')
-  ) {
-    console.log(`[Taskade] Special handling for Taskade content: ${req.path}`);
+  if (isTaskadeIntegration(req.path)) {
+    console.log(`[Taskade] Setting Taskade-specific headers for: ${req.path}`);
     
-    // Maximum permissive headers for Taskade content
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', '*');
-    
-    // Allow in iframe
+    // Remove frame restrictions
     res.removeHeader('X-Frame-Options');
     
-    // Clear CSP to allow all content
-    res.removeHeader('Content-Security-Policy');
+    // Set a permissive Content-Security-Policy specifically for Taskade
     res.header(
       'Content-Security-Policy',
-      "default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *; connect-src *;"
+      "default-src 'self'; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.taskade.com https://assets.taskade.com; " +
+      "style-src 'self' 'unsafe-inline' https://*.taskade.com; " +
+      "img-src 'self' data: blob: https://*.taskade.com; " +
+      "connect-src 'self' https://*.taskade.com wss://*.taskade.com; " +
+      "font-src 'self' data: https://*.taskade.com; " +
+      "frame-src 'self' https://*.taskade.com https://www.taskade.com; " +
+      "worker-src 'self' blob: https://*.taskade.com; " +
+      "frame-ancestors 'self' *;"
     );
+    
+    // Set additional headers to help with Taskade embedding
+    res.header('Cross-Origin-Embedder-Policy', 'credentialless');
+    res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.header('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   }
   
   next();

@@ -38,6 +38,8 @@ import { initializeSecurityIntegration } from './security/advanced/SecurityInteg
 import viteExemptMiddleware, { viteSkipCSRFMiddleware } from './middleware/viteExemptMiddleware';
 import { CSRFProtection } from './middleware/csrfProtection';
 import { rateLimitTestBypassRouter } from './routes/rate-limit-test-bypass.routes';
+import { contentApiCsrfBypass } from './middleware/contentApiCsrfBypass';
+import { thirdPartyIntegrationMiddleware, taskadeIntegrationMiddleware } from './middleware/thirdPartyIntegrationMiddleware';
 
 // Start time tracking
 const startTime = Date.now();
@@ -174,12 +176,28 @@ if (config.security.csrfProtection) {
   // Apply Vite CSRF-skipping middleware first
   app.use(viteSkipCSRFMiddleware);
   
+  // Apply third-party integration middlewares
+  app.use(thirdPartyIntegrationMiddleware);
+  app.use(taskadeIntegrationMiddleware);
+  log('✅ Third-party integration middleware initialized successfully', 'server');
+  
+  // Apply Content API CSRF bypass middleware
+  app.use(contentApiCsrfBypass);
+  log('✅ Content API CSRF bypass middleware initialized successfully', 'server');
+  
   // Then apply CSRF middleware for non-Vite requests
   app.use((req, res, next) => {
     // Skip CSRF protection for Vite resources 
     if ((req as any).__isViteResource) {
       return next();
     }
+    
+    // Skip CSRF protection for content API routes
+    if ((req as any).__skipCSRF) {
+      log(`CSRF protection bypassed for ${req.path}`, 'security');
+      return next();
+    }
+    
     // Otherwise apply CSRF protection
     csrfProtection.middleware(req, res, next);
   });
