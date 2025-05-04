@@ -150,29 +150,28 @@ export class ValidationEngine {
     try {
       const connector = await this.getAIConnector();
       
-      // Create validation context from request
-      const context = {
-        path: req.path,
-        method: req.method,
-        userId: (req as any).user?.id || (req as any).user?.claims?.sub,
-        ip: req.ip,
-        isAuthenticated: !!(req as any).user,
-        roles: (req as any).user?.roles || [],
-        permissions: (req as any).user?.permissions || [],
-        sessionId: (req as any).sessionID,
-        timestamp: Date.now(),
-        additionalContext: {
-          userAgent: req.headers['user-agent'],
-          referrer: req.headers.referer || req.headers.referrer,
-          host: req.headers.host
-        }
-      };
+      // Create a description context for the AI analysis
+      const contextDescription = `
+        Request to ${req.method} ${req.path}
+        From IP: ${req.ip}
+        User Agent: ${req.headers['user-agent'] || 'Not provided'}
+        Referrer: ${req.headers.referer || req.headers.referrer || 'Not provided'}
+        User ID: ${(req as any).user?.id || (req as any).user?.claims?.sub || 'Not authenticated'}
+      `;
       
-      // Run AI validation
-      return await connector.validateWithAI(content, context, {
+      // Get user ID for tracking
+      const userId = (req as any).user?.id || (req as any).user?.claims?.sub;
+      
+      // Run AI validation using the connector
+      return await connector.validateRequest(
+        content,
         contentType,
-        ...aiOptions
-      });
+        contextDescription,
+        {
+          ...aiOptions,
+          userId
+        }
+      );
     } catch (error) {
       console.error('[VALIDATION_ENGINE] AI validation error:', error);
       throw error;
@@ -319,7 +318,7 @@ export class ValidationEngine {
               );
               
               // If AI validation fails, return error
-              if (!aiResult.success) {
+              if (!aiResult.valid) {
                 console.warn(`[VALIDATION_ENGINE] AI validation failed for ${req.path}:`, aiResult.errors);
                 
                 return ValidationErrorHandler.handleCustomError(
