@@ -204,18 +204,43 @@
 
         log(`Making request to ${url}`, 'info');
         const response = await fetch(url, mergedOptions);
-        const data = await response.json();
         
-        if (response.ok) {
-          log(`Request to ${url} successful`, 'success');
+        // Check if the response is JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const data = await response.json();
+            
+            if (response.ok) {
+              log(`Request to ${url} successful`, 'success');
+            } else {
+              log(`Request to ${url} failed: ${response.status} ${response.statusText}`, 'error');
+            }
+            
+            return { status: response.status, data };
+          } catch (jsonError) {
+            log(`Error parsing JSON response: ${jsonError.message}`, 'error');
+            const text = await response.text();
+            return { 
+              status: response.status, 
+              error: 'JSON parse error',
+              text: text.substring(0, 150) + '...'
+            };
+          }
         } else {
-          log(`Request to ${url} failed: ${response.status} ${response.statusText}`, 'error');
+          // Handle non-JSON response
+          const text = await response.text();
+          log(`Non-JSON response received (${contentType})`, 'warning');
+          return { 
+            status: response.status, 
+            error: 'Non-JSON response',
+            contentType: contentType || 'unknown',
+            text: text.substring(0, 150) + '...'
+          };
         }
-        
-        return { status: response.status, data };
       } catch (error) {
         log(`Error making request to ${url}: ${error.message}`, 'error');
-        return { error: error.message };
+        return { status: 0, error: error.message };
       }
     }
 
@@ -225,8 +250,22 @@
       tokenResult.textContent = 'Getting CSRF token...';
       
       try {
+        log('Requesting CSRF token from /api/csrf-token', 'info');
         const response = await fetch('/api/csrf-token');
+        
+        // Check the content type before trying to parse as JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          throw new Error(`Server returned non-JSON response (${contentType}): ${text.substring(0, 100)}...`);
+        }
+        
         const data = await response.json();
+        
+        if (!data.csrfToken) {
+          throw new Error('Response does not contain csrfToken field');
+        }
+        
         csrfToken = data.csrfToken;
         
         log(`CSRF token obtained: ${csrfToken.substring(0, 8)}...`, 'success');
@@ -236,6 +275,9 @@
         const errorMsg = `Error getting CSRF token: ${error.message}`;
         log(errorMsg, 'error');
         tokenResult.textContent = errorMsg;
+        
+        // Log details about error for debugging
+        console.error('CSRF token fetch error:', error);
       }
     });
 
