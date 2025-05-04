@@ -20,8 +20,20 @@ export function ThemeSelector() {
 
   // Avoid flash of incorrect theme while loading
   if (!mounted) {
-    return <div className="w-full h-12" />;
+    return <div className="w-12 h-12" />;
   }
+
+  return (
+    <div className="fixed top-4 right-4 z-50">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      >
+        {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      </Button>
+    </div>
+  );
 
   // Function to change theme
   const setThemeMode = (newTheme: string) => {

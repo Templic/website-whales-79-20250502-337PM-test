@@ -676,3 +676,23 @@
   right: 20px;
   bottom: 80px;
 }
+
+.cosmic-card {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 20px rgba(0, 230, 230, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .cosmic-card {
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 20px rgba(0, 230, 230, 0.15);
+}
+
+.geometric-text-container {
+  padding: 1rem;
+  margin: 0.5rem;
+  max-height: calc(100% - 2rem);
+  overflow-y: auto;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%);
+}

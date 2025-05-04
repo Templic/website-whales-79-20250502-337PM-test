@@ -134,7 +134,7 @@
   .mobile-portrait .shape-contour-active::before {
     opacity: 0.12;
   }
-  
+
   /* Adjust starburst gradient for mobile */
   .mobile-portrait [data-shape="starburst"].shape-contour-active::before {
     background: radial-gradient(
@@ -144,18 +144,18 @@
       transparent 60%
     );
   }
-  
+
   /* Improve mobile pentagon visualization */
   .mobile-portrait [data-shape="starburst"].shape-contour-active::after {
     opacity: 0.15;
     border: 1px dashed rgba(255, 255, 255, 0.25);
   }
-  
+
   /* Mobile landscape mode adjustments */
   .mobile-landscape [data-shape="starburst"].shape-contour-active::before {
     opacity: 0.15;
   }
-  
+
   .mobile-landscape [data-shape="starburst"].shape-contour-active::after {
     opacity: 0.12;
   }
@@ -185,7 +185,7 @@
     width: 60% !important;
     max-width: 60% !important;
   }
-  
+
   /* Adjust starburst content for mobile portrait */
   .mobile-portrait [data-shape="starburst"] .shape-content-center {
     width: 75% !important;
@@ -200,4 +200,28 @@
     width: 65% !important;
     max-width: 65% !important;
   }
+}
+
+/* New styles for improved text container fitting */
+.shape-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+}
+
+.shape-container .learn-more-text {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 0.25rem;
+  white-space: nowrap;
 }
