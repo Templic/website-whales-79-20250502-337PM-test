@@ -470,36 +470,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   console.log("✅ Direct validation test routes added with complete security bypass");
   
   // Special route to serve direct-validation-test.html only for testing
-  // This route has higher precedence than the catch-all route in vite.ts
-  // It's added with a comment to make it easy to disable in production
+  // This is now explicitly disabled to return to showing the main application
+  // Uncomment and set ENABLE_VALIDATION_TEST_ROUTES=true to re-enable
   app.get('/direct-validation-test.html', (req, res, next) => {
-    // Check if the environment allows test pages
-    const allowTestPages = process.env.NODE_ENV !== 'production' || process.env.ALLOW_TEST_PAGES === 'true';
-    
-    if (allowTestPages) {
-      // Import fs and path modules using ES modules
-      import('fs').then(fs => {
-        import('path').then(path => {
-          const publicPath = path.resolve(__dirname, '../public');
-          const filePath = path.join(publicPath, 'direct-validation-test.html');
-          
-          if (fs.existsSync(filePath)) {
-            console.log("Serving direct validation test HTML file");
-            res.sendFile(filePath);
-          } else {
-            console.error("Could not find direct-validation-test.html in public directory");
-            res.status(404).send("File not found");
-          }
-        });
-      }).catch(err => {
-        console.error("Error importing modules:", err);
-        res.status(500).send("Internal server error");
-      });
-    } else {
-      // Skip this middleware and continue to the next one
-      // This will allow the normal routing to handle the request
-      next();
-    }
+    // Always skip to next middleware to allow the main application to be served
+    next();
   });
   
   // Direct test API endpoints

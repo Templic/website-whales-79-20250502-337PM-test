@@ -1,0 +1,27 @@
+{
+  "id": "INC-20250504-SYS-M2449",
+  "title": "File integrity changes detected in critical files",
+  "description": "Detected 1 modified and 0 missing critical security files",
+  "severity": "medium",
+  "status": "new",
+  "category": "system",
+  "source": "security_scan",
+  "timestamp": "2025-05-04T22:38:59.429Z",
+  "lastUpdated": "2025-05-04T22:38:59.429Z",
+  "affectedComponents": [
+    "file-integrity",
+    "security-configuration"
+  ],
+  "relatedEvents": [],
+  "actions": [
+    {
+      "id": "INC-20250504-SYS-M2449-det-maa8haw5a7",
+      "description": "Incident detected: File integrity changes detected in critical files",
+      "type": "detection",
+      "timestamp": "2025-05-04T22:38:59.429Z",
+      "automaticAction": true
+    }
+  ],
+  "evidenceReferences": [],
+  "integrityHash": "b65bcb28ff0b3c4864a4efc2c5e475fd89747c02147069c9c435ff9efeada33b"
+}

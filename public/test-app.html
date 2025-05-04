@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            background: #f5f5f5;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        #response {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Application Test Page</h1>
+        
+        <div class="test-section">
+            <h2>Basic API Test</h2>
+            <button class="button" onclick="testBasicApi()">Test Basic API</button>
+            <div id="response"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Navigation Links</h2>
+            <a href="/" class="button">Home</a>
+            <a href="/direct-validation-test.html" class="button">API Validation Test</a>
+        </div>
+    </div>
+
+    <script>
+        async function testBasicApi() {
+            const responseEl = document.getElementById('response');
+            responseEl.textContent = 'Fetching...';
+            
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                responseEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseEl.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
