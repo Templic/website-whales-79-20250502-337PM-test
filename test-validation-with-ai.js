@@ -169,6 +169,42 @@ const getApiUrl = () => {
   return 'http://localhost:3000';
 };
 
+// Authentication function - get a token from the auth endpoint
+// Note: For testing purposes only. In a real application, this would use your actual auth system
+async function getAuthToken() {
+  try {
+    const apiUrl = getApiUrl();
+    console.log(`Getting auth token from ${apiUrl}/api/csrf-token`);
+    
+    // First get a CSRF token
+    const csrfResponse = await axios.get(`${apiUrl}/api/csrf-token`);
+    const csrfToken = csrfResponse.data.csrfToken;
+    
+    console.log(`Got CSRF token: ${csrfToken.substring(0, 10)}...`);
+    
+    // Create cookies jar to maintain session
+    const cookies = csrfResponse.headers['set-cookie'] || [];
+    
+    // Use the CSRF token to make authenticated requests
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken
+    };
+    
+    // For our test, we'll use the CSRF token as auth
+    return { csrfToken, cookies, headers };
+  } catch (error) {
+    console.error('Error getting auth token:');
+    if (error.response) {
+      console.error(`Status: ${error.response.status}`);
+      console.error('Response:', error.response.data);
+    } else {
+      console.error(error.message);
+    }
+    throw error;
+  }
+}
+
 // Run the tests
 async function runTests() {
   const apiUrl = getApiUrl();

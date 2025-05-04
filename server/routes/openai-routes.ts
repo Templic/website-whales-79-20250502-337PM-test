@@ -209,9 +209,7 @@ router.post('/secured', isAuthenticated, async (req: Request, res: Response) => 
  * @body contentType - The type of content ('code', 'logs', 'network', 'config')
  * @body context - Additional context about the environment
  */
-router.post('/security-analysis', async (req: Request, res: Response) => {
-  // For testing purposes only - in production, this endpoint should require authentication
-  // const userId = (req.user as any)?.claims?.sub || 'test-user';
+router.post('/security-analysis', isAuthenticated, async (req: Request, res: Response) => {
   try {
     const { content, contentType = 'code', context = '' } = req.body;
     
