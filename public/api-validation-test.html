@@ -335,13 +335,11 @@
         return;
       }
       
-      // Add test auth header (this is what we found in the code)
-      // The testAuth middleware uses a default of 'test-secret-key' if TEST_AUTH_SECRET env var is not set
-      const result = await makeRequest('/api/validation-test/security-test', {
+      // Use the no-security endpoint for testing as it bypasses authentication
+      const result = await makeRequest('/api/no-security/ai-security', {
         method: 'POST',
         headers: {
-          'X-CSRF-Token': csrfToken,
-          'X-Test-Auth': 'test-secret-key'
+          'X-CSRF-Token': csrfToken
         },
         body: JSON.stringify({
           query: 'How is the weather today?',
@@ -364,12 +362,11 @@
         return;
       }
       
-      // Add test auth header
-      const result = await makeRequest('/api/validation-test/security-test', {
+      // Use the no-security endpoint for testing as it bypasses authentication
+      const result = await makeRequest('/api/no-security/ai-security', {
         method: 'POST',
         headers: {
-          'X-CSRF-Token': csrfToken,
-          'X-Test-Auth': 'test-secret-key'
+          'X-CSRF-Token': csrfToken
         },
         body: JSON.stringify({
           query: 'SELECT * FROM users; DROP TABLE users;',
