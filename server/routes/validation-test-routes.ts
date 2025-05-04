@@ -10,7 +10,7 @@ import express from 'express';
 import { z } from 'zod';
 import { validateRequest, validateRequestWithAI } from '../middleware/apiValidationMiddleware';
 import { ValidationEngine } from '../security/advanced/apiValidation/ValidationEngine';
-import secureLogger from '../security/utils/secureLogger';
+import { secureLogger } from '../security/utils/secureLogger';
 import { 
   createValidationMiddleware, 
   createAIValidationMiddleware,
@@ -413,9 +413,11 @@ router.post('/pipeline/db-operation', testAuth, createDatabaseValidationMiddlewa
 }), (req, res) => {
   const validationMetadata = req.validationResult;
   
-  logger.log('Database operation validated', 'info', {
-    validationId: validationMetadata.validationId,
-    timeTaken: validationMetadata.timeTaken
+  secureLogger('info', logComponent, 'Database operation validated', {
+    metadata: {
+      validationId: validationMetadata.validationId, 
+      timeTaken: validationMetadata.timeTaken
+    }
   });
   
   res.json({
@@ -440,7 +442,11 @@ router.get('/pipeline/status', async (req, res) => {
       ...status
     });
   } catch (error) {
-    logger.log('Error getting pipeline status', 'error', { error });
+    secureLogger('error', logComponent, 'Error getting pipeline status', {
+      metadata: {
+        error: error instanceof Error ? error.message : String(error)
+      }
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to get validation pipeline status',
@@ -455,7 +461,7 @@ router.post('/pipeline/cache', testAuth, (req, res) => {
   
   if (action === 'clear') {
     validationPipeline.clearCache();
-    logger.log('Validation cache cleared', 'info');
+    secureLogger('info', logComponent, 'Validation cache cleared');
     
     res.json({
       success: true,

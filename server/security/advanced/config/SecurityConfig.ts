@@ -145,7 +145,8 @@ class SecurityConfig {
    */
   public enableFeature(feature: keyof SecurityFeatures): void {
     if (typeof this.features[feature] === 'boolean') {
-      this.features[feature] = true as any; // Type cast to fix TS error
+      // Use type assertion with unknown as intermediate step to satisfy TypeScript
+      this.features[feature] = true as unknown as typeof this.features[typeof feature];
       this.notifyChangeListeners();
     }
   }
@@ -155,7 +156,8 @@ class SecurityConfig {
    */
   public disableFeature(feature: keyof SecurityFeatures): void {
     if (typeof this.features[feature] === 'boolean') {
-      this.features[feature] = false as any; // Type cast to fix TS error
+      // Use type assertion with unknown as intermediate step to satisfy TypeScript
+      this.features[feature] = false as unknown as typeof this.features[typeof feature];
       this.notifyChangeListeners();
     }
   }
