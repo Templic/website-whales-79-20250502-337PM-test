@@ -683,14 +683,14 @@ async function initializeAllServices() {
               initializeSecurityScanQueue();
               log('Security scan queue initialized successfully', 'security');
               
-              // Initialize Phase 3 monitoring system
-              import('./security/monitoring').then(({ initializeSecurityMonitoring }) => {
-                initializeSecurityMonitoring()
+              // Initialize unified security service (combines all three PCI phases)
+              import('./security/unifiedSecurityService').then(({ initializeUnifiedSecurity }) => {
+                initializeUnifiedSecurity()
                   .then(() => {
-                    log('PCI Phase 3 security monitoring system initialized successfully', 'security');
+                    log('Unified PCI security service initialized successfully', 'security');
                   })
                   .catch(error => {
-                    log(`Failed to initialize PCI Phase 3 monitoring: ${error}`, 'error');
+                    log(`Failed to initialize unified PCI security service: ${error}`, 'error');
                   });
               });
             });
@@ -751,15 +751,15 @@ function setupGracefulShutdown() {
       console.log(`\nReceived ${signal} signal, shutting down gracefully...`);
 
       try {
-        // Shutdown security monitoring system if it's running
+        // Shutdown unified security service if it's running
         if (config.features.enableSecurityScans) {
           try {
-            // Dynamically import the monitoring module to avoid circular dependencies
-            const monitoringModule = await import('./security/monitoring');
-            monitoringModule.shutdownSecurityMonitoring();
-            console.log('Security monitoring system shutdown complete');
+            // Dynamically import the unified security service to avoid circular dependencies
+            const { unifiedSecurity } = await import('./security/unifiedSecurityService');
+            await unifiedSecurity.shutdown();
+            console.log('Unified security service shutdown complete');
           } catch (err) {
-            console.error('Error shutting down security monitoring:', err);
+            console.error('Error shutting down unified security service:', err);
           }
         }
 
