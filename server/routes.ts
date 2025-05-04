@@ -23,6 +23,8 @@ import { createAutoValidationMiddleware, initializeCommonValidationRules } from 
 import { registerCommonValidationRules, registerCustomValidationRules } from './validation/apiValidationRules';
 import { threatProtectionMiddleware } from './security/advanced/middleware/ThreatProtectionMiddleware';
 import { securityConfig } from './security/advanced/config/SecurityConfig';
+import { rateLimitTestRouter } from './routes/rate-limit-test.routes';
+import { rateLimitTestBypassRouter } from './routes/rate-limit-test-bypass.routes';
 
 // The isAuthenticated, isAdmin, and isSuperAdmin middleware are now imported from auth-utils.ts
 import { nanoid } from 'nanoid';
@@ -212,6 +214,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     console.log("✅ Threat protection middleware initialized successfully");
   }
   
+  // Register rate limit test bypass routes BEFORE CSRF protection
+  // This allows us to test rate limiting without dealing with CSRF tokens
+  console.log("Registering rate limit test bypass routes...");
+  app.use(rateLimitTestBypassRouter);
+  console.log("✅ Rate limit test bypass routes registered");
+  
   // Apply the API validation middleware to all API routes
   // This will auto-validate requests based on registered rules
   app.use('/api', createAutoValidationMiddleware({
@@ -242,7 +250,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/user',     // Current user endpoint
     '/api/admin/*',  // Admin API endpoints
     '/api/search/*', // Search endpoints
-    '/api/secure/*'  // Secure API endpoints
+    '/api/secure/*', // Secure API endpoints
+    '/api/test/rate-limit/*' // Rate limiting test bypass endpoints
   ];
 
   // Re-enable enhanced CSRF protection with rate limiting integration
@@ -389,6 +398,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use MFA routes for managing Multi-Factor Authentication
   app.use('/api/mfa', mfaRoutes);
+  
+  // Add rate limiting test routes (disabled in production)
+  app.use(rateLimitTestRouter);
+  console.log("✅ Rate limiting test routes added");
 
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', isAdmin, async (req, res) => {

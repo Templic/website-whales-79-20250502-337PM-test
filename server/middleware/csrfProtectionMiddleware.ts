@@ -62,6 +62,13 @@ export function setupCSRFProtection(app: Express): void {
       '/api/metrics',
       '/api/test/csrf-exempt',
       '/api/webhook',
+      // Rate limiting test routes
+      '/rate-limit-test',
+      '/rate-limit-test/basic',
+      '/rate-limit-test/high-cost',
+      '/rate-limit-test/stats',
+      '/rate-limit-test/simulate-security-failure',
+      '/rate-limit-test/simulate-security-success',
       // Exempting the Dale Loves Whales Flask app routes from CSRF protection
       '/',
       '/index.html',
@@ -195,9 +202,10 @@ export function setupCSRFProtection(app: Express): void {
         });
       }
       
-      // For Flask app routes that fail CSRF, always allow access
-      // This ensures the Dale Loves Whales app functions normally
+      // For Flask app routes and rate limit test routes that fail CSRF, always allow access
+      // This ensures the app functions normally for testing
       if (
+        // Flask app routes
         req.path === '/' || 
         req.path === '/index.html' || 
         req.path === '/about' || 
@@ -209,7 +217,9 @@ export function setupCSRFProtection(app: Express): void {
         req.path === '/blog' || 
         req.path === '/collaboration' || 
         req.path === '/contact' || 
-        req.path === '/test'
+        req.path === '/test' ||
+        // Rate limit test routes
+        req.path.startsWith('/rate-limit-test')
       ) {
         console.log('[Security] Allowing Flask app access despite CSRF error for path:', req.path);
         // Set a fresh CSRF token to recover and allow the request to proceed

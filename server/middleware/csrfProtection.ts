@@ -248,8 +248,17 @@ export class CSRFProtection {
    * Implements deep protection features when enabled
    */
   public middleware = (req: Request, res: Response, next: NextFunction): void => {
-    // Check if the path is exempt from CSRF protection
+    // Check if the path is exempt from CSRF protection or has explicit bypass flag
     if (this.isPathExempt(req.path)) {
+      return next();
+    }
+    
+    // Check for explicit CSRF bypass flag (used for testing routes)
+    if ((req as any).__skipCSRF === true) {
+      // Log that CSRF protection is being bypassed for this request
+      if (this.options.enableSecurityLogging) {
+        log(`CSRF protection bypassed for ${req.method} ${req.path} (explicit __skipCSRF flag)`, 'security');
+      }
       return next();
     }
     
