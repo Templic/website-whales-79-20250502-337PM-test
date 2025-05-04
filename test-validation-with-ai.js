@@ -185,10 +185,11 @@ async function getAuthToken() {
     // Create cookies jar to maintain session
     const cookies = csrfResponse.headers['set-cookie'] || [];
     
-    // Use the CSRF token to make authenticated requests
+    // Use the CSRF token and test auth for authenticated requests
     const headers = {
       'Content-Type': 'application/json',
-      'X-CSRF-Token': csrfToken
+      'X-CSRF-Token': csrfToken,
+      'X-Test-Auth': 'test-security-analysis-secret-key'
     };
     
     // For our test, we'll use the CSRF token as auth

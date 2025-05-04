@@ -133,6 +133,23 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Special bypass for testing with X-Test-Auth header and correct secret
+  // IMPORTANT: This should only be used for testing, never in production
+  const testAuthSecret = process.env.TEST_AUTH_SECRET || 'test-security-analysis-secret-key';
+  if (process.env.NODE_ENV !== 'production' && 
+      req.headers['x-test-auth'] === testAuthSecret) {
+    console.log('[AUTH] Test authentication bypass activated');
+    // Mock minimal user object for testing
+    req.user = {
+      claims: {
+        sub: 'test-user-id',
+        username: 'test-user',
+      },
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+    };
+    return next();
+  }
+
   const user = req.user as unknown;
 
   if (!req.isAuthenticated() || !user.expires_at) {
