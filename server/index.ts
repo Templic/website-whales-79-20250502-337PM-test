@@ -291,7 +291,7 @@ async function initializeServer() {
       }
     }
     
-    // Security middleware
+    // Security middleware with enhanced Taskade embedding support
     app.use(
       helmet({
         contentSecurityPolicy: {
@@ -364,8 +364,17 @@ async function initializeServer() {
               "https://maps.googleapis.com",
               "https://*.taskade.com",
               "https://www.taskade.com",
+              "https://taskade.com",
               "https://js.stripe.com",
-              "https://*.stripe.com"
+              "https://*.stripe.com",
+              "*"
+            ],
+            frameAncestors: [
+              "'self'",
+              "https://*.taskade.com",
+              "https://www.taskade.com",
+              "https://taskade.com",
+              "*"
             ],
             workerSrc: [
               "'self'",
@@ -374,14 +383,37 @@ async function initializeServer() {
             ]
           },
         },
+        // Disable X-Frame-Options to allow embedding
+        xFrameOptions: false
       })
     );
 
-    // Enable CORS
+    // Enable CORS with advanced options
     app.use(cors({
-      origin: '*',
-      credentials: true
+      origin: ['*', 'https://*.taskade.com', 'https://www.taskade.com', 'https://taskade.com'],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
+      exposedHeaders: ['X-Frame-Options', 'Content-Security-Policy']
     }));
+    
+    // Special middleware to completely disable security restrictions for Taskade
+    app.use((req, res, next) => {
+      const url = req.url.toLowerCase();
+      
+      // Check if this is a request related to Taskade
+      if (url.includes('taskade')) {
+        // Remove all frame-related restrictions
+        res.removeHeader('X-Frame-Options');
+        res.removeHeader('Content-Security-Policy');
+        
+        // Set extremely permissive CSP
+        res.setHeader('Content-Security-Policy', "frame-ancestors *;");
+        res.setHeader('Access-Control-Allow-Origin', '*');
+      }
+      
+      next();
+    });
 
     // Handle compression based on startup priority
     if (config.enableCompression) {
