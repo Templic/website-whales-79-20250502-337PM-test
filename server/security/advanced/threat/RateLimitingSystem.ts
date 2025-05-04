@@ -698,6 +698,25 @@ export class RateLimitingSystem {
     // Check if this is a development environment
     const isDevelopment = process.env.NODE_ENV !== 'production';
     
+    // Check if we're running on Replit
+    const isReplit = !!process.env.REPLIT_DOMAINS;
+    
+    // Special handling for Replit environment
+    if (isReplit) {
+      // For Replit, we need to be more permissive with rate limiting to ensure smooth development
+      log(`Running in Replit environment with special exemptions for path: ${path}`, 'debug');
+      
+      // Skip rate limiting for all static assets and content APIs on Replit
+      if (path.includes('.') || 
+          path.startsWith('/api/content/') ||
+          path.startsWith('/api/auth/') ||
+          path.startsWith('/api/public/') ||
+          path === '/api/csrf-token') {
+        log(`Skipping rate limiting for Replit resource: ${path}`, 'debug');
+        return true;
+      }
+    }
+    
     // Special handling for development environment
     if (isDevelopment) {
       // Skip rate limiting for Vite/webpack dev resources

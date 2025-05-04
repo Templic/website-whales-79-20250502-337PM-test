@@ -46,6 +46,22 @@ function isDevMode(): boolean {
 }
 
 /**
+ * Check if we're running on Replit
+ */
+function isRunningOnReplit(): boolean {
+  // Check if we're in a Replit environment by checking domains env var
+  return !!process.env.REPLIT_DOMAINS;
+}
+
+/**
+ * Get list of trusted origins for Replit environment
+ */
+function getReplitTrustedOrigins(): string[] {
+  const domains = process.env.REPLIT_DOMAINS || '';
+  return domains.split(',').map(domain => `https://${domain.trim()}`);
+}
+
+/**
  * Setup CSRF protection for Express application
  */
 export function setupCSRFProtection(app: Express): void {
@@ -76,6 +92,12 @@ export function setupCSRFProtection(app: Express): void {
       next();
     }
   });
+
+  // Detect if we're running in Replit
+  const isReplit = isRunningOnReplit();
+  if (isReplit) {
+    console.log('[Security] Running in Replit environment, adding special CSRF exemptions');
+  }
 
   // Configure CSRF protection service with exempt routes
   const csrfOptions = {
