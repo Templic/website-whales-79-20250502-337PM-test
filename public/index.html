@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Test Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      line-height: 1.6;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    h1 {
+      color: #0066cc;
+    }
+    .success {
+      padding: 15px;
+      background-color: #d4edda;
+      border-radius: 4px;
+      color: #155724;
+      margin-bottom: 20px;
+    }
+    code {
+      background-color: #f8f9fa;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="success">
+      <h2>Basic Server Test Page</h2>
+      <p>If you can see this page, the server is working for basic static files.</p>
+    </div>
+    
+    <h1>API Validation System</h1>
+    <p>This page is a simple test to verify the server is handling static files correctly.</p>
+    
+    <h2>System Status:</h2>
+    <ul>
+      <li>Server running: ✅</li>
+      <li>Static file serving: ✅</li>
+      <li>Basic HTML response: ✅</li>
+    </ul>
+    
+    <h2>Next Steps:</h2>
+    <p>Now that we've verified basic static file serving, we can debug any issues with the API validation routes.</p>
+    
+    <p>Test API health check: <a href="/api/health" target="_blank">/api/health</a></p>
+  </div>
+</body>
+</html>
