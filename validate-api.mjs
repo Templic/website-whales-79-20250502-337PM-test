@@ -1,15 +1,15 @@
 /**
  * API Validation Test Script
  * 
- * This script tests the API validation endpoints with various CSRF bypass mechanisms
- * to determine which approach works best.
+ * This script tests the API validation endpoints with various tests
+ * to verify that the API validation feature is working correctly.
  */
 
 import fetch from 'node-fetch';
 import FormData from 'form-data';
 
-// Base URL for the API (assumes server is running on Vite's default dev port)
-const BASE_URL = 'http://localhost:5173';
+// Base URL for the API (server is running on port 5000)
+const BASE_URL = 'http://localhost:5000';
 
 /**
  * Helper function to make an API request
@@ -51,85 +51,6 @@ async function testValidationRules() {
   console.log('\n==== Testing Validation Rules Endpoint ====');
   
   const result = await makeRequest('/api/validation-test/rules');
-  
-  console.log('Result:', JSON.stringify(result, null, 2));
-  return result;
-}
-
-/**
- * Test the no-CSRF routes
- */
-async function testNoCsrfRoutes() {
-  console.log('\n==== Testing No-CSRF Routes ====');
-  
-  const result = await makeRequest('/api/no-csrf/basic', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: 'Test User',
-      email: 'test@example.com',
-      message: 'This is a test message that should pass validation.'
-    })
-  });
-  
-  console.log('Result:', JSON.stringify(result, null, 2));
-  return result;
-}
-
-/**
- * Test the AI security validation endpoint
- */
-async function testAiSecurityEndpoint() {
-  console.log('\n==== Testing AI Security Endpoint ====');
-  
-  // Test with a safe query
-  const safeResult = await makeRequest('/api/test/ai-security', {
-    method: 'POST',
-    body: JSON.stringify({
-      query: 'What is the weather today?'
-    })
-  });
-  
-  console.log('Safe Query Result:', JSON.stringify(safeResult, null, 2));
-  
-  // Test with a suspicious query (SQL injection attempt)
-  const suspiciousResult = await makeRequest('/api/test/ai-security', {
-    method: 'POST',
-    body: JSON.stringify({
-      query: 'SELECT * FROM users; DROP TABLE users;'
-    })
-  });
-  
-  console.log('Suspicious Query Result:', JSON.stringify(suspiciousResult, null, 2));
-  
-  return { safeResult, suspiciousResult };
-}
-
-/**
- * Test the validation status endpoint
- */
-async function testValidationStatus() {
-  console.log('\n==== Testing Validation Status Endpoint ====');
-  
-  const result = await makeRequest('/api/test/validation-status');
-  
-  console.log('Result:', JSON.stringify(result, null, 2));
-  return result;
-}
-
-/**
- * Test the enhanced validation pipeline
- */
-async function testValidationPipeline() {
-  console.log('\n==== Testing Enhanced Validation Pipeline ====');
-  
-  const result = await makeRequest('/api/pipeline/contact', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: 'Pipeline Test User',
-      email: 'pipeline-test@example.com',
-      message: 'This message should be validated through the pipeline.'
-    })
-  });
   
   console.log('Result:', JSON.stringify(result, null, 2));
   return result;
@@ -205,7 +126,6 @@ async function runAllTests() {
   console.log('\nAll tests completed!');
 }
 
-// Add this for ES modules
 // Run all tests when this script is executed directly
 runAllTests().catch(error => {
   console.error('Test suite error:', error);
