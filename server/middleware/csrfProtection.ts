@@ -17,6 +17,7 @@ import { Request, Response, NextFunction, Application } from 'express';
 import csurf from 'csurf';
 import crypto from 'crypto';
 import { log } from '../vite';
+import { recordCsrfVerification, recordCsrfError } from '../security/advanced/threat/RateLimitIntegration';
 
 // Enhanced security event types for comprehensive monitoring
 enum CSRFSecurityEvent {
@@ -46,6 +47,27 @@ const DEFAULT_EXEMPT_PATHS = [
   '/api/public',
   '/api/health',
   '/api/metrics',
+  
+  // React app public routes (exempt from CSRF protection)
+  '/',
+  '/index.html',
+  '/about',
+  '/cosmic',
+  '/community',
+  '/shop',
+  '/tour',
+  '/contact',
+  '/blog',
+  
+  // Static assets - these are read-only and don't modify state
+  '/static',
+  '/assets',
+  '/public',
+  '/assets',
+  '/images',
+  '/css',
+  '/js',
+  '/favicon.ico',
   
   // External webhooks (typically have their own auth mechanisms)
   '/api/webhook',
@@ -284,8 +306,13 @@ export class CSRFProtection {
         if (this.options.deepProtection?.enableRateLimiting) {
           this.trackFailure(req);
         }
+        // Record CSRF error for rate limiting system
+        recordCsrfError(req, err.code || 'EBADCSRFTOKEN');
         return this.handleError(err, req, res, next);
       }
+      
+      // Record successful CSRF verification
+      recordCsrfVerification(req);
       
       // For deep protection, verify token using additional methods
       if (deepProtection) {
@@ -303,6 +330,8 @@ export class CSRFProtection {
               ip: this.getClientIp(req),
               path: req.path
             });
+            // Record CSRF error for rate limiting
+            recordCsrfError(req, 'ENTROPY_CHECK_FAILED');
             return this.handleError({ 
               code: 'EBADCSRFTOKEN',
               message: 'Token entropy validation failed'
@@ -316,6 +345,8 @@ export class CSRFProtection {
               path: req.path,
               reason: 'Token binding mismatch'
             });
+            // Record CSRF error for rate limiting
+            recordCsrfError(req, 'TOKEN_BINDING_FAILED');
             return this.handleError({ 
               code: 'EBADCSRFTOKEN',
               message: 'Token binding validation failed'
@@ -328,6 +359,8 @@ export class CSRFProtection {
               ip: this.getClientIp(req),
               path: req.path
             });
+            // Record CSRF error for rate limiting
+            recordCsrfError(req, 'TOKEN_SIGNATURE_INVALID');
             return this.handleError({ 
               code: 'EBADCSRFTOKEN',
               message: 'Token signature validation failed'
@@ -347,6 +380,9 @@ export class CSRFProtection {
               ? validationError.message 
               : String(validationError)
           });
+          
+          // Record CSRF error for rate limiting
+          recordCsrfError(req, 'TOKEN_VALIDATION_FAILED');
           
           return this.handleError({ 
             code: 'EBADCSRFTOKEN',
@@ -390,6 +426,9 @@ export class CSRFProtection {
       ip: this.getClientIp(req),
       userAgent: req.headers['user-agent'] || 'unknown'
     });
+    
+    // Record CSRF error for rate limiting
+    recordCsrfError(req, err.code || 'EBADCSRFTOKEN');
     
     // Return appropriate error response based on request type
     if (req.path.startsWith('/api/')) {

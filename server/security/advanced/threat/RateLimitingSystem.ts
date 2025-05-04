@@ -15,20 +15,20 @@ import { RateLimitAnalytics } from './RateLimitAnalytics';
 import { threatDetectionService } from './ThreatDetectionService';
 import { recordCsrfVerification, recordCsrfError, getRateLimitingComponents } from './RateLimitIntegration';
 
-// Flask app routes that should be exempt from rate limiting
-const FLASK_APP_ROUTES = [
+// Routes that should be exempt from rate limiting
+// This includes static content routes and public pages
+const EXEMPT_ROUTES = [
   '/',
   '/index.html',
   '/about',
-  '/new-music',
-  '/archived-music',
+  '/cosmic',
+  '/community',
+  '/shop',
   '/tour',
-  '/engage',
-  '/newsletter',
-  '/blog',
-  '/collaboration',
   '/contact',
-  '/test'
+  '/blog',
+  // Static assets
+  /\.(css|js|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot)$/
 ];
 
 /**
@@ -527,14 +527,22 @@ export class RateLimitingSystem {
    * @returns Whether to skip
    */
   private shouldSkipPath(path: string): boolean {
-    // First check if this is a Flask app route that should always be exempt
-    if (FLASK_APP_ROUTES.includes(path)) {
-      // Log exempt path for debugging
-      log(`Skipping rate limiting for Flask app route: ${path}`, 'debug');
-      return true;
+    // First check if this is an exempt route that should always be skipped
+    for (const exemptRoute of EXEMPT_ROUTES) {
+      if (typeof exemptRoute === 'string') {
+        if (path === exemptRoute) {
+          log(`Skipping rate limiting for exempt route: ${path}`, 'debug');
+          return true;
+        }
+      } else if (exemptRoute instanceof RegExp) {
+        if (exemptRoute.test(path)) {
+          log(`Skipping rate limiting for exempt route pattern: ${path}`, 'debug');
+          return true;
+        }
+      }
     }
     
-    // Check against skip paths
+    // Check against configured skip paths
     for (const skipPath of this.config.skipPaths) {
       if (typeof skipPath === 'string') {
         if (path === skipPath) {

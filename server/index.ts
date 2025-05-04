@@ -30,7 +30,8 @@ import { AdvancedAPIValidation } from './security/advanced/apiValidation_new';
 import { RASPCore } from './security/advanced/rasp/RASPCore';
 import { SecurityMonitor } from './security/advanced/monitoring/SecurityMonitor';
 
-// Import Flask proxy and starter
+// Import security components
+import { rateLimitingSystem } from './security/advanced/threat/RateLimitingSystem';
 import { setupFlaskProxy } from './middleware/flaskProxyMiddleware';
 import { startFlaskApp } from './utils/startFlaskApp';
 
@@ -72,6 +73,26 @@ if (config.security.csrfProtection) {
       '/api/metrics/public',
       '/api/health-check',
       '/api/status',
+      // Flask app routes
+      '/',
+      '/index.html',
+      '/about',
+      '/new-music',
+      '/archived-music',
+      '/tour',
+      '/engage',
+      '/newsletter',
+      '/blog',
+      '/collaboration',
+      '/contact',
+      '/test',
+      // Static files for Flask app
+      '/static',
+      '/assets',
+      '/images',
+      '/css',
+      '/js',
+      '/favicon.ico',
       // Development endpoints (if applicable)
       ...(process.env.NODE_ENV === 'development' ? ['/api/dev'] : [])
     ],
@@ -394,6 +415,15 @@ async function initializeServer() {
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       }
     }));
+
+    // Apply rate limiting middleware
+    if (config.security.enableRateLimiting !== false) {
+      log('Setting up advanced context-aware rate limiting system...', 'security');
+      app.use(rateLimitingSystem.createMiddleware());
+      log('Rate limiting system enabled with context-aware protection', 'security');
+    } else {
+      log('⚠️ Rate limiting is disabled in configuration', 'server');
+    }
 
     // Set up routes
     await registerRoutes(app);
