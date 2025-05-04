@@ -246,6 +246,24 @@ The application uses an Express backend that connects to a PostgreSQL database. 
 - **server/utils/ts-error-fixer.ts:** TypeScript error fixing utilities
 - **server/utils/openai-integration.ts:** AI-powered error analysis integration
 
+## Third-Party Integrations
+
+### Taskade AI Integration
+
+The application features a comprehensive integration with Taskade AI assistants that support multiple embedding styles and view modes:
+
+- **Components:** TaskadeEmbed and TaskadeWidget components in `client/src/components/chat/`
+- **Server Support:** Custom embedding page at `/taskade-embed` with enhanced security
+- **Styling Options:** Three distinct styling modes (basic, taskade, oceanic)
+- **Security:** Specialized CSRF protection exemptions for Taskade domains
+
+Documentation for the Taskade integration:
+- [Taskade Integration Overview](docs/TASKADE-INTEGRATION.md) - General overview of the integration
+- [Taskade Technical Documentation](docs/TASKADE-TECHNICAL.md) - Technical implementation details
+- [Taskade Embed Guide](docs/TASKADE-EMBED-GUIDE.md) - Implementation guide for developers
+- [Taskade Styling Guide](docs/TASKADE-STYLING-GUIDE.md) - Details on the three styling options
+- [Example Implementation](examples/TaskadeStylesExample.tsx) - Reference implementation
+
 ### Server-Side Performance Optimizations
 
 The backend includes several performance optimizations:
@@ -322,6 +340,8 @@ The application includes comprehensive security measures to protect users and da
 - [Vulnerability Remediation Plan](reports/vulnerability_remediation_plan.md) - Details on vulnerability fixes
 - [Security Implementation Report](reports/security_implementation_report.md) - Overview of security features
 - [Backup and Restore Guide](docs/backup_restore_guide.md) - Backup procedures and disaster recovery
+- [CSRF Protection System](docs/CSRF-PROTECTION-SYSTEM.md) - Comprehensive documentation of the CSRF protection implementation
+- [Rate Limiting System](docs/RATE-LIMITING-SYSTEM.md) - Context-aware rate limiting architecture and implementation
 
 ### Security Implementation
 
