@@ -22,7 +22,7 @@ function requireAuth(req: express.Request, res: express.Response, next: express.
 
 // Check if MFA is enabled globally
 router.use((req, res, next) => {
-  if (!securityConfig.getSecurityFeatures().mfa) {
+  if (!securityConfig.isFeatureEnabled('mfa')) {
     return res.status(404).json({ error: 'MFA is not enabled' });
   }
   next();

@@ -70,7 +70,7 @@ export function createMFAMiddleware(config?: Partial<MFAConfig>) {
   
   return async function mfaMiddleware(req: Request, res: Response, next: NextFunction) {
     // Skip if MFA is disabled globally
-    if (!securityConfig.getSecurityFeatures().mfa) {
+    if (!securityConfig.isFeatureEnabled('mfa')) {
       return next();
     }
     

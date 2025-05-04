@@ -14,7 +14,7 @@ import { securityConfig } from '../security/advanced/config/SecurityConfig';
  */
 export function CSRFProtection(req: Request, res: Response, next: NextFunction) {
   // Skip if CSRF protection is globally disabled
-  if (!securityConfig.getSecurityFeatures().csrfProtection) {
+  if (!securityConfig.isFeatureEnabled('csrfProtection')) {
     return next();
   }
   

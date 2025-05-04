@@ -5,9 +5,10 @@
  * transforming security analysis results into validation results based on configurable thresholds.
  */
 
-import { securityAnalysisService, SecurityAnalysisOptions, SecurityAnalysisResult } from './SecurityAnalysisService';
+import { securityAnalysisService, SecurityAnalysisOptions, SecurityAnalysisResult, PotentialThreat } from './SecurityAnalysisService';
 import { securityConfig } from '../config/SecurityConfig';
 import secureLog from '../../utils/secureLogger';
+import { ValidationErrorCategory, ValidationErrorSeverity } from '../error/ValidationErrorCategory';
 
 export interface ValidationAIResult {
   passed: boolean;
@@ -67,14 +68,24 @@ export class ValidationAIConnector {
       
       // Set up security analysis options
       const analysisOptions: SecurityAnalysisOptions = {
-        contentType: options.contentType,
-        detailedAnalysis: options.detailedAnalysis,
-        includeRecommendations: options.includeRecommendations,
-        maxResponseTime: this.performancePriority ? 1000 : options.maxResponseTime // 1-second limit in performance mode
+        sensitivityLevel: options.detailedAnalysis ? 'high' : 'medium',
+        timeoutMs: this.performancePriority ? 1000 : options.maxResponseTime, // 1-second limit in performance mode
+        includeContext: true,
+        maxTokens: 1000
+      };
+      
+      // Create context for data analysis
+      const context = {
+        path: `/api/validation/${options.contentType}`,
+        method: 'POST',
+        metadata: {
+          contentType: options.contentType,
+          timestamp: new Date().toISOString()
+        }
       };
       
       // Run the security analysis
-      const analysisResult = await securityAnalysisService.analyzeContent(content, analysisOptions);
+      const analysisResult = await securityAnalysisService.analyzeData(content, context, analysisOptions);
       
       // Map the security analysis result to a validation result
       const validationResult = this.mapToValidationResult(analysisResult, options);
@@ -113,35 +124,39 @@ export class ValidationAIConnector {
       ? options.threshold 
       : this.defaultThreshold;
     
-    // Extract warnings from detected threats
-    const warnings = analysisResult.detectedThreats.map(threat => 
+    // Extract warnings from potential threats
+    const warnings = analysisResult.potentialThreats.map(threat => 
       `[${threat.severity.toUpperCase()}] ${threat.description} (${Math.round(threat.confidence * 100)}% confidence)`
     );
     
-    // Extract recommendations if available and requested
-    const recommendations = options.includeRecommendations && analysisResult.recommendations
-      ? analysisResult.recommendations.map(rec => `[${rec.priority.toUpperCase()}] ${rec.description}`)
+    // Extract recommendations based on potential threats
+    const recommendations = options.includeRecommendations
+      ? analysisResult.potentialThreats
+          .filter(threat => threat.suggestedAction)
+          .map(threat => `[${threat.severity.toUpperCase()}] ${threat.suggestedAction}`)
       : undefined;
     
     // Determine if the validation passed
     // In strict mode, any detected threats will fail validation
-    // Otherwise, use the security score compared to the threshold
+    // Otherwise, use the risk score compared to the threshold (convert 0-100 scale to 0-1)
+    const normalizedScore = analysisResult.riskScore / 100;
+    const inverted = 1 - normalizedScore; // Invert because high risk means low security
     const passed = options.strictMode 
-      ? analysisResult.detectedThreats.length === 0
-      : analysisResult.securityScore >= threshold;
+      ? analysisResult.potentialThreats.length === 0
+      : inverted >= threshold;
     
     // Create the validation result
     return {
       passed,
-      validationId: analysisResult.analysisId,
-      securityScore: analysisResult.securityScore,
+      validationId: `vai_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`,
+      securityScore: inverted, // Use the inverted risk score as security score (0-1)
       warnings,
       recommendations,
-      timestamp: analysisResult.timestamp,
-      metadata: analysisResult.metadata ? {
-        processingTime: analysisResult.metadata.processingTime,
-        aiModel: analysisResult.metadata.model
-      } : undefined
+      timestamp: new Date().toISOString(),
+      metadata: {
+        processingTime: analysisResult.processingTimeMs,
+        aiModel: "gpt-4o" // the newest OpenAI model used
+      }
     };
   }
   
