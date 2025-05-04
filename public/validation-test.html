@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Validation Test Page</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1, h2, h3 {
+      color: #333;
+    }
+    .response-container {
+      background-color: #f4f4f4;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      margin: 10px 0;
+      overflow: auto;
+      max-height: 400px;
+    }
+    pre {
+      margin: 0;
+    }
+    .btn {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 14px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .btn-danger {
+      background-color: #f44336;
+    }
+    .btn-primary {
+      background-color: #2196F3;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 10px 15px;
+      cursor: pointer;
+      background-color: #f1f1f1;
+      margin-right: 5px;
+      border-radius: 4px 4px 0 0;
+    }
+    .tab.active {
+      background-color: #ddd;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>API Validation Test Page</h1>
+  <p>This page allows you to test the API validation functionality. It includes both regular and bypass routes.</p>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="basic">Basic Tests</div>
+    <div class="tab" data-tab="security">Security Tests</div>
+    <div class="tab" data-tab="bypass">Bypass Tests</div>
+    <div class="tab" data-tab="rules">Rules & Mappings</div>
+  </div>
+
+  <div id="basic" class="tab-content active">
+    <h2>Basic Validation Tests</h2>
+    <div class="form-group">
+      <label for="name">Name:</label>
+      <input type="text" id="name" placeholder="Enter your name">
+    </div>
+    <div class="form-group">
+      <label for="email">Email:</label>
+      <input type="email" id="email" placeholder="Enter your email">
+    </div>
+    <div class="form-group">
+      <label for="message">Message:</label>
+      <textarea id="message" rows="4" placeholder="Enter your message"></textarea>
+    </div>
+    <button class="btn" onclick="testBasicValidation()">Test Basic Validation</button>
+    <div id="basic-response" class="response-container">
+      <pre>Response will appear here...</pre>
+    </div>
+  </div>
+
+  <div id="security" class="tab-content">
+    <h2>Security Validation Tests</h2>
+    <div class="form-group">
+      <label for="query">Query:</label>
+      <input type="text" id="query" placeholder="Enter a query">
+    </div>
+    <div class="form-group">
+      <label for="userId">User ID:</label>
+      <input type="text" id="userId" placeholder="Enter a user ID">
+    </div>
+    <button class="btn" onclick="testSecurityValidation()">Test Security Validation</button>
+    <button class="btn btn-danger" onclick="testMaliciousInput()">Test with Malicious Input</button>
+    <div id="security-response" class="response-container">
+      <pre>Response will appear here...</pre>
+    </div>
+  </div>
+
+  <div id="bypass" class="tab-content">
+    <h2>Bypass Route Tests</h2>
+    <p>These tests use routes that bypass CSRF protection and other security checks.</p>
+    <button class="btn" onclick="testBypassStatus()">Test Bypass Status</button>
+    <button class="btn" onclick="testBypassBasic()">Test Bypass Basic</button>
+    <button class="btn" onclick="testBypassSecurity()">Test Bypass Security</button>
+    <div id="bypass-response" class="response-container">
+      <pre>Response will appear here...</pre>
+    </div>
+  </div>
+
+  <div id="rules" class="tab-content">
+    <h2>Validation Rules & Mappings</h2>
+    <p>View the validation rules and mappings configured in the system.</p>
+    <button class="btn btn-primary" onclick="getValidationRules()">Get Validation Rules</button>
+    <button class="btn btn-primary" onclick="getValidationMappings()">Get Validation Mappings</button>
+    <button class="btn btn-primary" onclick="getBypassRules()">Get Bypass Rules</button>
+    <button class="btn btn-primary" onclick="getBypassMappings()">Get Bypass Mappings</button>
+    <div id="rules-response" class="response-container">
+      <pre>Response will appear here...</pre>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching functionality
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs and contents
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        // Add active class to clicked tab and corresponding content
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Helper function to make API requests
+    async function makeRequest(url, method = 'GET', data = null) {
+      try {
+        const options = {
+          method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include' // Include cookies for CSRF token
+        };
+        
+        if (data) {
+          options.body = JSON.stringify(data);
+        }
+        
+        const response = await fetch(url, options);
+        return await response.json();
+      } catch (error) {
+        return { error: error.message };
+      }
+    }
+
+    // Display response in the container
+    function displayResponse(containerId, data) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    }
+
+    // Basic validation test
+    async function testBasicValidation() {
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const message = document.getElementById('message').value;
+      
+      const data = { name, email, message };
+      const response = await makeRequest('/api/no-csrf/basic', 'POST', data);
+      
+      displayResponse('basic-response', response);
+    }
+
+    // Security validation test
+    async function testSecurityValidation() {
+      const query = document.getElementById('query').value;
+      const userId = document.getElementById('userId').value;
+      
+      const data = { query, userId };
+      const response = await makeRequest('/api/no-csrf/security', 'POST', data);
+      
+      displayResponse('security-response', response);
+    }
+
+    // Test with malicious input
+    async function testMaliciousInput() {
+      document.getElementById('query').value = "SELECT * FROM users; DROP TABLE users;";
+      document.getElementById('userId').value = "1234; DROP TABLE users;";
+      
+      testSecurityValidation();
+    }
+
+    // Test bypass status
+    async function testBypassStatus() {
+      const response = await makeRequest('/api/validation-bypass/status');
+      displayResponse('bypass-response', response);
+    }
+
+    // Test bypass basic
+    async function testBypassBasic() {
+      const name = document.getElementById('name').value || 'John Doe';
+      const email = document.getElementById('email').value || 'john@example.com';
+      const message = document.getElementById('message').value || 'This is a test message for validation';
+      
+      const data = { name, email, message };
+      const response = await makeRequest('/api/validation-bypass/basic', 'POST', data);
+      
+      displayResponse('bypass-response', response);
+    }
+
+    // Test bypass security
+    async function testBypassSecurity() {
+      const query = document.getElementById('query').value || 'How is the weather today?';
+      const userId = document.getElementById('userId').value || '1234';
+      
+      const data = { query, userId };
+      const response = await makeRequest('/api/validation-bypass/security', 'POST', data);
+      
+      displayResponse('bypass-response', response);
+    }
+
+    // Get validation rules
+    async function getValidationRules() {
+      const response = await makeRequest('/api/validation-test/rules');
+      displayResponse('rules-response', response);
+    }
+
+    // Get validation mappings
+    async function getValidationMappings() {
+      const response = await makeRequest('/api/validation-test/mappings');
+      displayResponse('rules-response', response);
+    }
+
+    // Get bypass rules
+    async function getBypassRules() {
+      const response = await makeRequest('/api/validation-bypass/rules');
+      displayResponse('rules-response', response);
+    }
+
+    // Get bypass mappings
+    async function getBypassMappings() {
+      const response = await makeRequest('/api/validation-bypass/mappings');
+      displayResponse('rules-response', response);
+    }
+  </script>
+</body>
+</html>

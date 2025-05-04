@@ -18,8 +18,11 @@ const baseUrl = 'http://localhost:5000';
 const api = axios.create({
   baseURL: baseUrl,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+    'Origin': 'http://localhost:5000',
+    'Referer': 'http://localhost:5000/'
+  },
+  withCredentials: true
 });
 
 /**
@@ -44,8 +47,15 @@ async function getCsrfToken() {
     logSection('Getting CSRF Token');
     const response = await api.get('/api/csrf-token');
     console.log(chalk.green('CSRF token obtained'));
-    console.log('Token snippet:', response.data.csrfToken.substring(0, 8) + '...');
-    return response.data.csrfToken;
+    
+    const csrfToken = response.data.csrfToken;
+    console.log('Token snippet:', csrfToken.substring(0, 8) + '...');
+    
+    // Store the CSRF token in the default headers for all future requests
+    api.defaults.headers.common['X-CSRF-Token'] = csrfToken;
+    api.defaults.headers.common['csrf-token'] = csrfToken;
+    
+    return csrfToken;
   } catch (error) {
     console.error(chalk.red('Error getting CSRF token:'), error.message);
     if (error.response) {

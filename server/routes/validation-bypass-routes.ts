@@ -1,9 +1,9 @@
 /**
  * Validation Bypass Routes
  * 
- * These routes are specifically designed to bypass all security checks
- * for API validation testing. This includes authentication, CSRF protection,
- * and other security middleware.
+ * These routes are specifically designed to bypass ALL security checks
+ * for API validation testing. This includes CSRF protection,
+ * authentication, and other security middleware.
  * 
  * WARNING: NEVER enable these routes in a production environment.
  */
@@ -12,25 +12,35 @@ import express, { Request, Response } from 'express';
 
 const router = express.Router();
 
-// Status endpoint for testing connectivity
+/**
+ * Get validation status
+ */
 router.get('/status', (req: Request, res: Response) => {
-  console.log('[VALIDATION-BYPASS] Status check received');
-  
-  res.json({
-    success: true,
-    message: 'Validation bypass routes are active',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
+  try {
+    res.json({
+      success: true,
+      message: 'Validation bypass test routes active',
+      timestamp: new Date().toISOString(),
+      securityBypass: true,
+      csrfProtection: false,
+      authenticationRequired: false
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: (error as Error).message
+    });
+  }
 });
 
-// Basic schema validation test
+/**
+ * Test basic validation
+ */
 router.post('/basic', (req: Request, res: Response) => {
-  console.log('[VALIDATION-BYPASS] Basic validation test:', req.body);
-  
   try {
-    // Simple validation
     const { name, email, message } = req.body;
+    
+    // Simple validation
     const errors = [];
     
     if (!name || name.length < 2 || name.length > 100) {
@@ -55,188 +65,152 @@ router.post('/basic', (req: Request, res: Response) => {
       });
     }
     
-    // Validation succeeded
     res.json({
       success: true,
       validation: {
-        passed: true
+        passed: true,
+        bypassRoute: true
       },
       data: { name, email, message }
     });
   } catch (error) {
-    console.error('[VALIDATION-BYPASS] Error in basic validation:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: (error as Error).message
     });
   }
 });
 
-// Security validation test (simulates AI security checking)
+/**
+ * Test security validation
+ */
 router.post('/security', (req: Request, res: Response) => {
-  console.log('[VALIDATION-BYPASS] Security validation test:', req.body);
-  
   try {
-    // Get the input from request body
-    const { query, userId, adminOverride } = req.body;
+    // Parse the request body
+    const { query, userId } = req.body;
     
-    // Define suspicious patterns to check for
-    const suspiciousPatterns = [
-      "SELECT", "INSERT", "UPDATE", "DELETE", "DROP", 
-      "1=1", "OR 1=1", "--", "/*", "*/", ";", 
-      "<script>", "</script>", "eval(", "document.cookie",
-      "admin", "password", "token", "secret"
-    ];
-    
-    // Convert entire request to string for pattern matching
-    const requestStr = JSON.stringify(req.body).toLowerCase();
-    const warnings = [];
-    let securityScore = 1.0;
-    
-    // Check for suspicious patterns in the request
-    for (const pattern of suspiciousPatterns) {
-      if (requestStr.includes(pattern.toLowerCase())) {
-        warnings.push(`Suspicious pattern detected: ${pattern}`);
-        securityScore -= 0.1; // Reduce score for each suspicious pattern found
-      }
-    }
-    
-    // Check for SQL injection specifically in the query field
-    if (typeof query === 'string') {
-      // Additional SQL injection checks
-      const sqlInjectionPatterns = ["SELECT", "FROM", "WHERE", "DROP", "TABLE", "INSERT", "DELETE", "UPDATE", ";"];
-      for (const pattern of sqlInjectionPatterns) {
-        if (query.toUpperCase().includes(pattern)) {
-          warnings.push(`SQL injection attempt detected in query: ${pattern}`);
-          securityScore -= 0.15; // Larger penalty for SQL injection
+    // Check for SQL injection
+    const hasSqlInjection = 
+      typeof query === 'string' && (
+        query.toLowerCase().includes('select') ||
+        query.toLowerCase().includes('from') ||
+        query.toLowerCase().includes('drop') ||
+        query.toLowerCase().includes('table') ||
+        query.toLowerCase().includes(';') ||
+        query.toLowerCase().includes('--')
+      );
+      
+    // Check for other suspicious patterns
+    const hasSuspiciousUserId = 
+      typeof userId === 'string' && (
+        userId.includes(';') ||
+        userId.includes('--') ||
+        userId.includes('\'') ||
+        userId.includes('"')
+      );
+      
+    // Generate results
+    if (hasSqlInjection || hasSuspiciousUserId) {
+      return res.json({
+        success: true,
+        validation: {
+          passed: false,
+          securityScore: 0.2,
+          bypassRoute: true,
+          warnings: [
+            ...(hasSqlInjection ? ['Potential SQL injection detected in query'] : []),
+            ...(hasSuspiciousUserId ? ['Suspicious characters detected in userId'] : [])
+          ]
         }
-      }
+      });
     }
     
-    // Check for injection in userId
-    if (typeof userId === 'string' && userId.includes(';')) {
-      warnings.push('Potential command injection detected in userId');
-      securityScore -= 0.2;
-    }
-    
-    // Check for admin override attempts
-    if (adminOverride === 'true' || adminOverride === true) {
-      warnings.push('Unauthorized admin override attempt detected');
-      securityScore -= 0.3;
-    }
-    
-    // Ensure score doesn't go below 0.1
-    securityScore = Math.max(0.1, securityScore);
-    
-    // Return validation result
     res.json({
-      success: true, // API call succeeded
+      success: true,
       validation: {
-        passed: securityScore > 0.75, // Validation passes if score is high enough
-        securityScore,
-        validationId: `bypass-${Date.now()}`,
-        warnings: warnings.length > 0 ? warnings : ['No security issues detected'],
-        timestamp: new Date().toISOString()
+        passed: true,
+        securityScore: 0.9,
+        bypassRoute: true
       }
     });
   } catch (error) {
-    console.error('[VALIDATION-BYPASS] Error in security validation:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error during security validation'
+      error: (error as Error).message
     });
   }
 });
 
-// Return route configuration for testing validation mappings
-router.get('/mappings', (req: Request, res: Response) => {
-  console.log('[VALIDATION-BYPASS] Validation mappings request received');
-  
-  res.json({
-    success: true,
-    message: 'Validation mappings retrieved successfully',
-    mappings: [
-      {
-        route: '/api/contact',
-        validationType: 'schema',
-        schemaName: 'contactSchema',
-        requiredFields: ['name', 'email', 'message']
-      },
-      {
-        route: '/api/newsletter',
-        validationType: 'schema',
-        schemaName: 'newsletterSchema',
-        requiredFields: ['email']
-      },
-      {
-        route: '/api/search',
-        validationType: 'security',
-        securityChecks: ['sql-injection', 'xss']
-      },
-      {
-        route: '/api/user/profile',
-        validationType: 'combined',
-        schemaName: 'userProfileSchema',
-        securityChecks: ['xss', 'data-exposure']
-      },
-      {
-        route: '/api/admin/*',
-        validationType: 'ai',
-        aiModel: 'security-analyzer-v2',
-        confidence: 0.85
-      }
-    ]
-  });
+/**
+ * Get validation rules
+ */
+router.get('/rules', (req: Request, res: Response) => {
+  try {
+    // Return a set of validation rules for testing
+    res.json({
+      success: true,
+      message: 'Validation rules retrieved successfully',
+      bypassRoute: true,
+      rules: [
+        {
+          id: 'contact-form-bypass',
+          name: 'Contact Form Validation (Bypass)',
+          description: 'Validates contact form submissions with security bypass',
+          target: 'body',
+          priority: 10,
+          isActive: true,
+          tags: ['form', 'contact', 'bypass']
+        },
+        {
+          id: 'security-test-bypass',
+          name: 'Security Test Validation (Bypass)',
+          description: 'Validates security test inputs with security bypass',
+          target: 'body',
+          priority: 20,
+          isActive: true,
+          tags: ['security', 'test', 'bypass']
+        }
+      ]
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: (error as Error).message
+    });
+  }
 });
 
-// Return validation rules configuration
-router.get('/rules', (req: Request, res: Response) => {
-  console.log('[VALIDATION-BYPASS] Validation rules request received');
-  
-  res.json({
-    success: true,
-    message: 'Validation rules retrieved successfully',
-    rules: [
-      {
-        name: 'email',
-        type: 'regex',
-        pattern: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
-        errorMessage: 'Invalid email format'
-      },
-      {
-        name: 'name',
-        type: 'length',
-        min: 2,
-        max: 100,
-        errorMessage: 'Name must be between 2 and 100 characters'
-      },
-      {
-        name: 'message',
-        type: 'length',
-        min: 10,
-        max: 2000,
-        errorMessage: 'Message must be between 10 and 2000 characters'
-      },
-      {
-        name: 'password',
-        type: 'regex',
-        pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$',
-        errorMessage: 'Password must be at least 8 characters and include uppercase, lowercase, and numbers'
-      },
-      {
-        name: 'sqlInjection',
-        type: 'security',
-        patterns: ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'DROP', '--'],
-        errorMessage: 'Potential SQL injection detected'
-      },
-      {
-        name: 'xss',
-        type: 'security',
-        patterns: ['<script>', '</script>', 'javascript:', 'onerror=', 'onload='],
-        errorMessage: 'Potential XSS attack detected'
-      }
-    ]
-  });
+/**
+ * Get validation mappings
+ */
+router.get('/mappings', (req: Request, res: Response) => {
+  try {
+    // Return validation mappings for testing
+    res.json({
+      success: true,
+      message: 'Validation mappings retrieved successfully',
+      bypassRoute: true,
+      mappings: [
+        {
+          route: '/api/validation-bypass/basic',
+          method: 'POST',
+          rules: ['contact-form-bypass'],
+          priority: 10
+        },
+        {
+          route: '/api/validation-bypass/security',
+          method: 'POST',
+          rules: ['security-test-bypass'],
+          priority: 20
+        }
+      ]
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: (error as Error).message
+    });
+  }
 });
 
 export default router;
