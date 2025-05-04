@@ -7,7 +7,11 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { ValidationEngine, ValidationOptions } from './ValidationEngine';
-import { rateLimitingSystem } from '../threat/RateLimitingSystem';
+import { RateLimitingSystem, RateLimitResult } from './RateLimitingSystem';
+
+// Import the rate limiting system - will be defined by type in case direct import isn't possible
+// We use the 'as' keyword to assert the type without actual runtime imports
+const rateLimitingSystem = {} as RateLimitingSystem;
 
 // Handle security logging with a fallback mechanism to avoid circular dependencies
 function logSecurityEvent(eventData: any): void {
@@ -61,9 +65,8 @@ export function createUnifiedValidation(ruleIds: string[], options: UnifiedValid
 
     try {
       // 1. Apply rate limiting first
-      // Adapt to the existing rate limiting system interface
-      // Note: We're using a simplified approach that works with the existing implementation
-      const rateLimitResult = {
+      // Initialize default rate limit result
+      const rateLimitResult: RateLimitResult = {
         allowed: true,
         message: '',
         retryAfter: 0
@@ -71,24 +74,47 @@ export function createUnifiedValidation(ruleIds: string[], options: UnifiedValid
       
       // Try to use the rate limiting system if available
       try {
-        // Check if the rate limiting check method exists
-        if (typeof rateLimitingSystem.check === 'function') {
-          const result = await rateLimitingSystem.check(req, {
-            type: defaultOptions.rateLimitType
-          });
-          
-          // Update with actual result
-          rateLimitResult.allowed = result.allowed;
-          rateLimitResult.message = result.message;
-          rateLimitResult.retryAfter = result.retryAfter;
-        } else if (typeof rateLimitingSystem.checkRate === 'function') {
-          // Alternative method name
-          const result = await rateLimitingSystem.checkRate(req, defaultOptions.rateLimitType);
-          
-          // Update with actual result
-          rateLimitResult.allowed = result.allowed;
-          rateLimitResult.message = result.message;
-          rateLimitResult.retryAfter = result.retryAfter || 60;
+        // Get the actual rate limiting system via dynamic import
+        // This avoids circular dependencies
+        let actualRateLimiter;
+        
+        try {
+          // Try to import from the standard location
+          actualRateLimiter = require('../threat/RateLimitingSystem').rateLimitingSystem;
+        } catch (e) {
+          // Fallback locations if the standard import fails
+          try {
+            actualRateLimiter = require('../../security/RateLimitingSystem').rateLimitingSystem;
+          } catch (e2) {
+            try {
+              actualRateLimiter = require('../../../server/security/RateLimitingSystem').rateLimitingSystem;
+            } catch (e3) {
+              console.warn('[RATE_LIMIT] Unable to import rate limiting system, skipping rate limit checks');
+            }
+          }
+        }
+        
+        // If we found a rate limiter, try to apply it
+        if (actualRateLimiter) {
+          if (typeof actualRateLimiter.check === 'function') {
+            // Use the primary check method
+            const result = await actualRateLimiter.check(req, {
+              type: defaultOptions.rateLimitType
+            });
+            
+            // Update with actual result
+            rateLimitResult.allowed = result.allowed;
+            rateLimitResult.message = result.message;
+            rateLimitResult.retryAfter = result.retryAfter || 60;
+          } else if (typeof actualRateLimiter.checkRate === 'function') {
+            // Use the alternative check method
+            const result = await actualRateLimiter.checkRate(req, defaultOptions.rateLimitType);
+            
+            // Update with actual result
+            rateLimitResult.allowed = result.allowed;
+            rateLimitResult.message = result.message;
+            rateLimitResult.retryAfter = result.retryAfter || 60;
+          }
         }
       } catch (error) {
         console.warn('[RATE_LIMIT] Error checking rate limit:', error instanceof Error ? error.message : String(error));

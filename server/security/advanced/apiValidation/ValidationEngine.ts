@@ -1,395 +1,273 @@
 /**
- * Advanced API Validation Engine Module
+ * Validation Engine Module
  * 
- * Provides comprehensive request validation and deep inspection capabilities
- * to protect API endpoints from malicious inputs, data leakage, and various attacks.
- * 
- * Features:
- * - Schema-based validation with strong typing
- * - Deep request inspection
- * - Content validation for multiple data formats
- * - Rate limiting integration
- * - Zero-knowledge proof verification
- * - Integration with RASP and quantum cryptography
+ * The core of the API validation system that provides schema registration,
+ * validation, and rule management. Supports different validation modes and targets.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { createHash } from 'crypto';
-import { QuantumResistantEncryption } from '../quantum/QuantumResistantEncryption';
-import { RASPCore } from '../rasp/RASPCore';
+import { ValidationErrorHandler } from './ValidationErrorHandler';
 
-// Use a simple logger to avoid circular dependencies
-const SimpleLogger = {
-  log: (data: any, level: string = 'info', domain: string = 'API_VALIDATION') => {
-    console.log(`[${level.toUpperCase()}] [${domain}]`, typeof data === 'string' ? data : JSON.stringify(data));
-  }
-};
-
-// Define types for better type safety
-export type ValidationMode = 'strict' | 'balanced' | 'permissive';
-export type ValidationTarget = 'body' | 'query' | 'params' | 'headers' | 'all';
-
+// Define validation options interface
 export interface ValidationOptions {
-  mode?: ValidationMode;
-  target?: ValidationTarget | ValidationTarget[];
-  rateLimit?: number;
-  requireZKProof?: boolean;
-  skipApiKeys?: boolean;
-  contentTypes?: string[];
-  maxRequestSize?: number;
-  logValidationErrors?: boolean;
+  mode?: 'strict' | 'flexible' | 'permissive';
+  target?: 'body' | 'query' | 'params' | 'headers' | 'cookies' | 'all';
+  includeDetails?: boolean;
+  statusCode?: number;
+  logSeverity?: 'low' | 'medium' | 'high' | 'critical';
+  useCasing?: 'preserve' | 'camel' | 'snake' | 'pascal';
 }
 
-export interface ValidationResult {
-  valid: boolean;
-  errors?: z.ZodError | Error | null;
-  warnings?: string[];
-  validatedData?: any;
-  timestamp: number;
-}
-
-export interface ValidationRule<T = any> {
+// Map of validation rules for different endpoints
+export type ValidationRule = {
   id: string;
   name: string;
   description?: string;
-  targets: ValidationTarget[];
-  schema: z.ZodSchema<T>;
-  transform?: (data: T) => any;
-  additionalChecks?: (data: T, req: Request) => Promise<boolean> | boolean;
-}
+  schema: z.ZodTypeAny;
+  target?: 'body' | 'query' | 'params' | 'headers' | 'cookies';
+  isActive?: boolean;
+  priority?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+  tags?: string[];
+};
 
+/**
+ * The ValidationEngine is responsible for managing validation rules and performing validation.
+ */
 export class ValidationEngine {
-  private static readonly logger = SimpleLogger;
-  private static rules = new Map<string, ValidationRule>();
-  private static endpoints = new Map<string, string[]>();
+  // Maps rule IDs to validation rules
+  private static rules: Map<string, ValidationRule> = new Map();
+  
+  // Maps endpoints to rule IDs
+  private static endpoints: Map<string, string[]> = new Map();
   
   /**
    * Register a validation rule
    */
-  static registerRule<T>(rule: ValidationRule<T>): void {
-    this.rules.set(rule.id, rule);
+  static registerRule(ruleId: string, rule: Omit<ValidationRule, 'id'>): void {
+    if (this.rules.has(ruleId)) {
+      throw new Error(`Validation rule with ID '${ruleId}' already exists`);
+    }
     
-    this.logger.log({
-      action: 'RULE_REGISTERED',
-      ruleId: rule.id,
-      ruleName: rule.name,
-      targets: rule.targets,
-      timestamp: Date.now()
-    }, 'info', 'API_VALIDATION');
+    this.rules.set(ruleId, {
+      id: ruleId,
+      ...rule,
+      isActive: rule.isActive !== false, // Default to active
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
   }
   
   /**
-   * Apply rules to an endpoint
+   * Get a validation rule by ID
+   */
+  static getRule(ruleId: string): ValidationRule | undefined {
+    return this.rules.get(ruleId);
+  }
+  
+  /**
+   * Update a validation rule
+   */
+  static updateRule(ruleId: string, updates: Partial<Omit<ValidationRule, 'id' | 'createdAt'>>): void {
+    const rule = this.rules.get(ruleId);
+    
+    if (!rule) {
+      throw new Error(`Validation rule with ID '${ruleId}' not found`);
+    }
+    
+    this.rules.set(ruleId, {
+      ...rule,
+      ...updates,
+      updatedAt: new Date()
+    });
+  }
+  
+  /**
+   * Apply validation rules to an endpoint
    */
   static applyRulesToEndpoint(endpoint: string, ruleIds: string[]): void {
-    // Validate ruleIds exist
-    const invalidRules = ruleIds.filter(id => !this.rules.has(id));
-    if (invalidRules.length > 0) {
-      throw new Error(`Cannot apply non-existent rules to endpoint ${endpoint}: ${invalidRules.join(', ')}`);
+    // Validate that all rules exist
+    for (const ruleId of ruleIds) {
+      if (!this.rules.has(ruleId)) {
+        throw new Error(`Validation rule with ID '${ruleId}' not found`);
+      }
     }
     
     this.endpoints.set(endpoint, ruleIds);
-    
-    this.logger.log({
-      action: 'RULES_APPLIED',
-      endpoint,
-      ruleIds,
-      timestamp: Date.now()
-    }, 'info', 'API_VALIDATION');
   }
   
   /**
-   * Create validation middleware for an endpoint
+   * Get all rules for an endpoint
    */
-  static createValidationMiddleware(ruleIds: string[], options: ValidationOptions = {}): (req: Request, res: Response, next: NextFunction) => Promise<void> {
-    // Merge with default options
-    const mergedOptions: ValidationOptions = {
+  static getRulesForEndpoint(endpoint: string): ValidationRule[] {
+    const ruleIds = this.endpoints.get(endpoint) || [];
+    
+    return ruleIds
+      .map(id => this.rules.get(id))
+      .filter(rule => rule && rule.isActive) as ValidationRule[];
+  }
+  
+  /**
+   * Create validation middleware for an API endpoint
+   */
+  static createValidationMiddleware(ruleIds: string[], options: ValidationOptions = {}) {
+    const defaultOptions = {
       mode: 'strict',
       target: 'all',
-      rateLimit: 0, // No rate limit by default
-      requireZKProof: false,
-      skipApiKeys: false,
-      contentTypes: ['application/json'],
-      maxRequestSize: 1024 * 1024, // 1MB
-      logValidationErrors: true,
+      includeDetails: process.env.NODE_ENV !== 'production',
+      statusCode: 400,
+      logSeverity: 'medium',
+      useCasing: 'preserve',
       ...options
     };
     
-    // Collect rules
-    const rules = ruleIds.map(id => {
-      const rule = this.rules.get(id);
-      if (!rule) {
-        throw new Error(`Validation rule with ID ${id} not found`);
-      }
-      return rule;
-    });
-    
-    // Return middleware function
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const startTime = Date.now();
-        
-        // Check content type if specified
-        if (mergedOptions.contentTypes && mergedOptions.contentTypes.length > 0) {
-          const contentType = req.header('Content-Type') || '';
-          const isValidContentType = mergedOptions.contentTypes.some(
-            type => contentType.toLowerCase().includes(type.toLowerCase())
-          );
+        // Collect all rules by ID
+        const rules = ruleIds.map(id => {
+          const rule = this.rules.get(id);
           
-          if (!isValidContentType) {
-            return this.sendValidationError(
-              res, 
-              `Invalid Content-Type. Expected one of: ${mergedOptions.contentTypes.join(', ')}`,
-              415,
-              startTime
-            );
+          if (!rule) {
+            throw new Error(`Validation rule with ID '${id}' not found`);
           }
-        }
+          
+          if (!rule.isActive) {
+            throw new Error(`Validation rule with ID '${id}' is inactive`);
+          }
+          
+          return rule;
+        });
         
-        // Check request size
-        if (mergedOptions.maxRequestSize && req.headers['content-length']) {
-          const contentLength = parseInt(req.headers['content-length'] as string, 10);
-          if (contentLength > mergedOptions.maxRequestSize) {
-            return this.sendValidationError(
+        // Validate each target area based on the rule's target or the global target
+        for (const rule of rules) {
+          const target = rule.target || defaultOptions.target;
+          
+          // Skip if target is 'all' - we'll handle this later
+          if (target === 'all') continue;
+          
+          const data = req[target as keyof Request];
+          
+          // Apply the validation schema
+          const result = rule.schema.safeParse(data);
+          
+          if (!result.success) {
+            return ValidationErrorHandler.handleZodError(
               res,
-              `Request size exceeds maximum allowed size of ${mergedOptions.maxRequestSize} bytes`,
-              413,
-              startTime
+              result.error,
+              {
+                includeDetails: defaultOptions.includeDetails as boolean,
+                statusCode: defaultOptions.statusCode as number,
+                logSeverity: defaultOptions.logSeverity as 'low' | 'medium' | 'high' | 'critical'
+              }
             );
           }
-        }
-        
-        // Prepare targets
-        const targets: ValidationTarget[] = Array.isArray(mergedOptions.target) 
-          ? mergedOptions.target 
-          : [mergedOptions.target || 'all'];
-        
-        if (targets.includes('all')) {
-          targets.push('body', 'query', 'params', 'headers');
-          // Remove 'all' as it's not an actual target
-          const allIndex = targets.indexOf('all');
-          if (allIndex !== -1) {
-            targets.splice(allIndex, 1);
-          }
-        }
-        
-        // Apply validation for each rule
-        const validationResults = await Promise.all(
-          rules.map(async rule => {
-            // Skip rules not applicable to any of the specified targets
-            if (!rule.targets.some(t => targets.includes(t))) {
-              return { valid: true, timestamp: Date.now() };
-            }
-            
-            try {
-              // Process each target that this rule applies to
-              const applicableTargets = rule.targets.filter(t => targets.includes(t));
-              
-              for (const target of applicableTargets) {
-                const dataToValidate = this.getDataFromRequest(req, target);
-                
-                // Validate data against schema
-                const validatedData = rule.schema.parse(dataToValidate);
-                
-                // Apply additional checks if specified
-                if (rule.additionalChecks) {
-                  const additionalChecksResult = await Promise.resolve(rule.additionalChecks(validatedData, req));
-                  if (!additionalChecksResult) {
-                    return {
-                      valid: false,
-                      errors: new Error(`Additional validation checks failed for rule ${rule.id}`),
-                      timestamp: Date.now()
-                    };
-                  }
-                }
-                
-                // Apply transformation if specified
-                if (rule.transform) {
-                  // Apply the transform and update the request data
-                  const transformedData = rule.transform(validatedData);
-                  this.setDataOnRequest(req, target, transformedData);
-                }
-              }
-              
-              return { valid: true, timestamp: Date.now() };
-            } catch (error) {
-              return {
-                valid: false,
-                errors: error instanceof Error ? error : new Error(String(error)),
-                timestamp: Date.now()
-              };
-            }
-          })
-        );
-        
-        // Check if any validations failed
-        const failedValidations = validationResults.filter(result => !result.valid);
-        
-        if (failedValidations.length > 0) {
-          // In strict mode, any validation failure results in rejection
-          if (mergedOptions.mode === 'strict') {
-            // Log validation errors if configured
-            if (mergedOptions.logValidationErrors) {
-              this.logger.log({
-                action: 'VALIDATION_FAILED',
-                endpoint: req.path,
-                method: req.method,
-                failedRules: failedValidations.map((_, index) => rules[index].id),
-                errors: failedValidations.map(result => result.errors?.message || 'Unknown error'),
-                timestamp: Date.now(),
-                processingTime: Date.now() - startTime
-              }, 'warn', 'API_VALIDATION');
-            }
-            
-            // Get the first error message
-            const errorMessage = failedValidations[0].errors?.message || 'Validation failed';
-            
-            return this.sendValidationError(res, errorMessage, 400, startTime);
-          }
           
-          // In balanced mode, log warnings but allow the request to proceed
-          else if (mergedOptions.mode === 'balanced') {
-            this.logger.log({
-              action: 'VALIDATION_WARNING',
-              endpoint: req.path,
-              method: req.method,
-              failedRules: failedValidations.map((_, index) => rules[index].id),
-              warnings: failedValidations.map(result => result.errors?.message || 'Unknown error'),
-              timestamp: Date.now(),
-              processingTime: Date.now() - startTime
-            }, 'warn', 'API_VALIDATION');
+          // Update the request data with parsed values if validation succeeds
+          if (defaultOptions.mode === 'strict') {
+            (req as any)[target] = result.data;
           }
-          
-          // Permissive mode just logs the issues but doesn't affect the request
         }
         
-        // Log successful validation
-        this.logger.log({
-          action: 'VALIDATION_PASSED',
-          endpoint: req.path,
-          method: req.method,
-          timestamp: Date.now(),
-          processingTime: Date.now() - startTime
-        }, 'info', 'API_VALIDATION');
+        // Handle 'all' target validation by combining all target areas
+        const allTargetRules = rules.filter(rule => 
+          // Check if the rule's target is 'all' 
+          (rule.target as string) === 'all' || 
+          // Or if the default target is 'all' and the rule doesn't specify a target
+          defaultOptions.target === 'all');
         
-        // Proceed to next middleware
+        if (allTargetRules.length > 0) {
+          const combinedData = {
+            body: req.body,
+            query: req.query,
+            params: req.params,
+            headers: req.headers,
+            cookies: req.cookies
+          };
+          
+          for (const rule of allTargetRules) {
+            const result = rule.schema.safeParse(combinedData);
+            
+            if (!result.success) {
+              return ValidationErrorHandler.handleZodError(
+                res,
+                result.error,
+                {
+                  includeDetails: defaultOptions.includeDetails as boolean,
+                  statusCode: defaultOptions.statusCode as number,
+                  logSeverity: defaultOptions.logSeverity as 'low' | 'medium' | 'high' | 'critical'
+                }
+              );
+            }
+          }
+        }
+        
+        // If we get here, all validations have passed
         next();
       } catch (error) {
-        // Log and handle any unexpected errors in the validation process
-        this.logger.log({
-          action: 'VALIDATION_ERROR',
-          endpoint: req.path,
-          method: req.method,
-          error: error instanceof Error ? error.message : String(error),
-          timestamp: Date.now()
-        }, 'error', 'API_VALIDATION');
+        // Handle unexpected errors
+        console.error('[VALIDATION_ENGINE] Error during validation:', error);
         
-        return this.sendValidationError(
+        return ValidationErrorHandler.handleCustomError(
           res,
-          'Internal validation error',
-          500,
-          Date.now()
+          'Validation system error',
+          { error: error instanceof Error ? error.message : String(error) },
+          {
+            includeDetails: defaultOptions.includeDetails as boolean,
+            statusCode: 500,
+            logSeverity: 'high'
+          }
         );
       }
     };
   }
   
   /**
-   * Create validation middleware for a specific endpoint
+   * Get all registered validation rules
    */
-  static createEndpointValidation(endpoint: string, options: ValidationOptions = {}): (req: Request, res: Response, next: NextFunction) => Promise<void> {
-    const ruleIds = this.endpoints.get(endpoint);
-    
-    if (!ruleIds || ruleIds.length === 0) {
-      throw new Error(`No validation rules found for endpoint ${endpoint}`);
-    }
-    
-    return this.createValidationMiddleware(ruleIds, options);
+  static getAllRules(): ValidationRule[] {
+    return Array.from(this.rules.values());
   }
   
   /**
-   * Get request data based on target
+   * Get all endpoints with their associated rule IDs
    */
-  private static getDataFromRequest(req: Request, target: ValidationTarget): any {
-    switch (target) {
-      case 'body':
-        return req.body;
-      case 'query':
-        return req.query;
-      case 'params':
-        return req.params;
-      case 'headers':
-        return req.headers;
-      default:
-        return {};
-    }
+  static getAllEndpoints(): { endpoint: string; ruleIds: string[] }[] {
+    return Array.from(this.endpoints.entries()).map(([endpoint, ruleIds]) => ({
+      endpoint,
+      ruleIds
+    }));
   }
   
   /**
-   * Set transformed data back to the request
+   * Generate validation documentation
    */
-  private static setDataOnRequest(req: Request, target: ValidationTarget, data: any): void {
-    switch (target) {
-      case 'body':
-        req.body = data;
-        break;
-      case 'query':
-        req.query = data;
-        break;
-      case 'params':
-        req.params = data;
-        break;
-      // Headers are typically read-only, so we don't modify them
-      default:
-        break;
+  static async generateDocumentation(format: 'markdown' | 'json' | 'html' = 'markdown'): Promise<string> {
+    try {
+      // Dynamically import the doc generator to avoid circular dependencies
+      const { ValidationDocGenerator } = require('./ValidationDocGenerator');
+      
+      return await ValidationDocGenerator.generateDocs({
+        outputDir: './docs/validation',
+        format,
+        includeExamples: true,
+        includePatterns: true,
+        includeSchema: true,
+        title: 'API Validation Documentation'
+      });
+    } catch (error) {
+      console.error('[VALIDATION_ENGINE] Error generating documentation:', error);
+      return `Error generating documentation: ${error instanceof Error ? error.message : String(error)}`;
     }
   }
   
   /**
-   * Send a validation error response
+   * Clear all validation rules and endpoint associations
+   * (Typically used in testing)
    */
-  private static sendValidationError(
-    res: Response,
-    message: string,
-    statusCode: number,
-    startTime: number
-  ): Response {
-    const processingTime = Date.now() - startTime;
-    
-    return res.status(statusCode).json({
-      error: 'Validation Error',
-      message,
-      timestamp: Date.now(),
-      processingTime
-    });
+  static reset(): void {
+    this.rules.clear();
+    this.endpoints.clear();
   }
-}
-
-// Export a convenient function to create validation middleware
-export function validateRequest(ruleIds: string[], options?: ValidationOptions) {
-  return ValidationEngine.createValidationMiddleware(ruleIds, options);
-}
-
-// Export a function to create a zod validation rule
-export function createValidationRule<T>(
-  id: string,
-  name: string,
-  schema: z.ZodSchema<T>,
-  targets: ValidationTarget[] = ['body'],
-  options: {
-    description?: string;
-    transform?: (data: T) => any;
-    additionalChecks?: (data: T, req: Request) => Promise<boolean> | boolean;
-  } = {}
-): ValidationRule<T> {
-  return {
-    id,
-    name,
-    description: options.description,
-    targets,
-    schema,
-    transform: options.transform,
-    additionalChecks: options.additionalChecks
-  };
 }

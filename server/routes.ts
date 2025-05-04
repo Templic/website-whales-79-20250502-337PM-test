@@ -20,7 +20,7 @@ import {
 } from './utils/auth-utils';
 import { setupCSRFProtection } from './middleware/csrfProtectionMiddleware';
 import { createAutoValidationMiddleware, initializeCommonValidationRules } from './middleware/apiValidationMiddleware';
-import { registerCommonValidationRules, registerCustomValidationRules } from './validation/apiValidationRules';
+import { registerApiValidationRules } from './validation/apiValidationRules';
 import { threatProtectionMiddleware } from './security/advanced/middleware/ThreatProtectionMiddleware';
 import { securityConfig } from './security/advanced/config/SecurityConfig';
 import { rateLimitTestRouter } from './routes/rate-limit-test.routes';
@@ -205,9 +205,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Initialize API validation rules
   initializeCommonValidationRules();
   
-  // Register common and custom validation rules
-  registerCommonValidationRules();
-  registerCustomValidationRules();
+  // Register API validation rules
+  registerApiValidationRules();
   
   // Apply threat protection middleware based on security configuration
   if (securityConfig.getSecurityFeatures().realTimeMonitoring) {
@@ -226,10 +225,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Apply the API validation middleware to all API routes
   // This will auto-validate requests based on registered rules
-  app.use('/api', createAutoValidationMiddleware({
-    mode: 'balanced', // Use balanced mode to avoid blocking too aggressively
-    logValidationErrors: true
-  }));
+  const validationMiddleware = createAutoValidationMiddleware({
+    mode: 'strict' // Use strict mode for proper validation
+  });
+  app.use('/api', validationMiddleware);
   
   console.log("✅ API Validation middleware initialized successfully");
 

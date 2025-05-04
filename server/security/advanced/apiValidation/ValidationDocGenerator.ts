@@ -5,9 +5,10 @@
  * making it easier for developers to understand and use the validation system.
  */
 
+import { ValidationRule } from './ValidationEngine';
+import { z } from 'zod';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ValidationEngine } from './ValidationEngine';
 
 interface ValidationDocOptions {
   outputDir: string;
@@ -23,165 +24,203 @@ export class ValidationDocGenerator {
    * Generate documentation for all registered validation rules
    */
   static async generateDocs(options: ValidationDocOptions): Promise<string> {
-    // Get all validation rules and endpoints
-    const rules = ValidationEngine['rules']; // Access private field
-    const endpoints = ValidationEngine['endpoints']; // Access private field
-    
-    let content = '';
-    
-    switch (options.format) {
-      case 'markdown':
-        content = this.generateMarkdown(rules, endpoints, options);
-        break;
-      case 'json':
-        content = this.generateJson(rules, endpoints, options);
-        break;
-      case 'html':
-        content = this.generateHtml(rules, endpoints, options);
-        break;
+    try {
+      // Dynamically import ValidationEngine to avoid circular dependencies
+      const { ValidationEngine } = require('./ValidationEngine');
+      
+      // Get all rules and endpoints
+      const rules = ValidationEngine.getAllRules();
+      const endpoints = ValidationEngine.getAllEndpoints();
+      
+      let docs: string;
+      
+      // Generate docs in the requested format
+      switch (options.format) {
+        case 'markdown':
+          docs = this.generateMarkdown(rules, endpoints, options);
+          break;
+        case 'json':
+          docs = this.generateJson(rules, endpoints, options);
+          break;
+        case 'html':
+          docs = this.generateHtml(rules, endpoints, options);
+          break;
+        default:
+          throw new Error(`Unsupported format: ${options.format}`);
+      }
+      
+      // Ensure output directory exists
+      if (!fs.existsSync(options.outputDir)) {
+        fs.mkdirSync(options.outputDir, { recursive: true });
+      }
+      
+      // Write the documentation to a file
+      const filename = `api-validation.${options.format === 'html' ? 'html' : options.format === 'json' ? 'json' : 'md'}`;
+      const outputPath = path.join(options.outputDir, filename);
+      
+      fs.writeFileSync(outputPath, docs);
+      
+      return docs;
+    } catch (error) {
+      throw new Error(`Error generating validation documentation: ${error instanceof Error ? error.message : String(error)}`);
     }
-    
-    // Create output directory if it doesn't exist
-    if (!fs.existsSync(options.outputDir)) {
-      fs.mkdirSync(options.outputDir, { recursive: true });
-    }
-    
-    // Write the documentation to a file
-    const filename = `validation-docs.${options.format === 'json' ? 'json' : 
-                      options.format === 'html' ? 'html' : 'md'}`;
-    const outputPath = path.join(options.outputDir, filename);
-    
-    fs.writeFileSync(outputPath, content);
-    
-    return outputPath;
   }
   
   /**
    * Generate markdown documentation
    */
   private static generateMarkdown(
-    rules: Map<string, any>,
-    endpoints: Map<string, string[]>,
+    rules: ValidationRule[],
+    endpoints: { endpoint: string; ruleIds: string[] }[],
     options: ValidationDocOptions
   ): string {
     const title = options.title || 'API Validation Documentation';
-    let content = `# ${title}\n\n`;
     
-    // Add introduction
-    content += `## Introduction\n\n`;
-    content += `This document provides details about the validation rules applied to API endpoints in this application. `;
-    content += `It serves as a reference for developers working with the API.\n\n`;
+    let markdown = `# ${title}\n\n`;
+    markdown += `Generated on: ${new Date().toISOString()}\n\n`;
     
-    // Add validation rules section
-    content += `## Validation Rules\n\n`;
+    // Table of contents
+    markdown += `## Table of Contents\n\n`;
+    markdown += `- [Overview](#overview)\n`;
+    markdown += `- [Endpoints](#endpoints)\n`;
+    markdown += `- [Validation Rules](#validation-rules)\n`;
     
-    rules.forEach((rule, id) => {
-      content += `### ${rule.name} (ID: \`${id}\`)\n\n`;
+    if (options.includePatterns) {
+      markdown += `- [Validation Patterns](#validation-patterns)\n`;
+    }
+    
+    // Overview
+    markdown += `\n## Overview\n\n`;
+    markdown += `This document provides detailed information about the API validation rules used in the system. `;
+    markdown += `The validation system ensures that all API requests are properly validated for data integrity and security.\n\n`;
+    markdown += `Total Rules: ${rules.length}\n`;
+    markdown += `Total Endpoints: ${endpoints.length}\n\n`;
+    
+    // Endpoints
+    markdown += `\n## Endpoints\n\n`;
+    
+    if (endpoints.length === 0) {
+      markdown += `No endpoints with validation rules defined.\n\n`;
+    } else {
+      markdown += `| Endpoint | Validation Rules |\n`;
+      markdown += `|---------|------------------|\n`;
+      
+      endpoints.forEach(endpoint => {
+        const ruleNames = endpoint.ruleIds
+          .map(id => {
+            const rule = rules.find(r => r.id === id);
+            return rule ? rule.name : id;
+          })
+          .join(', ');
+        
+        markdown += `| \`${endpoint.endpoint}\` | ${ruleNames} |\n`;
+      });
+    }
+    
+    // Validation Rules
+    markdown += `\n## Validation Rules\n\n`;
+    
+    rules.forEach(rule => {
+      markdown += `### ${rule.name}\n\n`;
       
       if (rule.description) {
-        content += `${rule.description}\n\n`;
+        markdown += `${rule.description}\n\n`;
       }
       
-      content += `**Targets:** ${rule.targets.join(', ')}\n\n`;
+      markdown += `- **ID**: \`${rule.id}\`\n`;
+      markdown += `- **Target**: ${rule.target || 'all'}\n`;
+      markdown += `- **Active**: ${rule.isActive ? 'Yes' : 'No'}\n`;
       
+      if (rule.priority !== undefined) {
+        markdown += `- **Priority**: ${rule.priority}\n`;
+      }
+      
+      if (rule.tags && rule.tags.length > 0) {
+        markdown += `- **Tags**: ${rule.tags.join(', ')}\n`;
+      }
+      
+      // Include schema details if requested
       if (options.includeSchema && rule.schema) {
-        content += `**Schema:**\n\`\`\`typescript\n${this.zodSchemaToString(rule.schema)}\n\`\`\`\n\n`;
+        markdown += `\n#### Schema\n\n`;
+        markdown += `\`\`\`typescript\n${this.zodSchemaToString(rule.schema)}\n\`\`\`\n\n`;
       }
       
-      // Find endpoints using this rule
-      const usingEndpoints = Array.from(endpoints.entries())
-        .filter(([, ruleIds]) => ruleIds.includes(id))
-        .map(([endpoint]) => endpoint);
-      
-      if (usingEndpoints.length > 0) {
-        content += `**Used by endpoints:**\n`;
-        usingEndpoints.forEach(endpoint => {
-          content += `- \`${endpoint}\`\n`;
-        });
-        content += `\n`;
-      }
-      
+      // Include examples if requested
       if (options.includeExamples) {
-        content += `**Example:**\n\`\`\`json\n${this.generateExampleForRule(rule)}\n\`\`\`\n\n`;
+        markdown += `\n#### Example\n\n`;
+        markdown += `\`\`\`json\n${this.generateExampleForRule(rule)}\n\`\`\`\n\n`;
       }
-    });
-    
-    // Add endpoints section
-    content += `## API Endpoints\n\n`;
-    
-    endpoints.forEach((ruleIds, endpoint) => {
-      content += `### ${endpoint}\n\n`;
       
-      content += `**Validation Rules Applied:**\n`;
-      ruleIds.forEach(id => {
-        const rule = rules.get(id);
-        if (rule) {
-          content += `- ${rule.name} (ID: \`${id}\`)\n`;
-        }
-      });
-      content += `\n`;
+      markdown += `\n`;
     });
     
-    // Add usage guide
-    content += `## Usage Guide\n\n`;
-    content += `To work with these validation rules, ensure your API requests meet the validation criteria specified above. `;
-    content += `If validation fails, the API will return a 400 Bad Request response with details about the validation errors.\n\n`;
-    
-    content += `### Example Error Response\n\n`;
-    content += `\`\`\`json
-{
-  "error": "Validation Error",
-  "message": "The request data failed validation",
-  "timestamp": 1625097600000,
-  "details": [
-    {
-      "path": "email",
-      "message": "Invalid email address",
-      "code": "invalid_string"
-    }
-  ]
-}
-\`\`\`\n\n`;
-    
-    return content;
+    return markdown;
   }
   
   /**
    * Generate JSON documentation
    */
   private static generateJson(
-    rules: Map<string, any>,
-    endpoints: Map<string, string[]>,
+    rules: ValidationRule[],
+    endpoints: { endpoint: string; ruleIds: string[] }[],
     options: ValidationDocOptions
   ): string {
     const doc = {
       title: options.title || 'API Validation Documentation',
-      generated: new Date().toISOString(),
-      rules: Array.from(rules.entries()).map(([id, rule]) => {
-        const ruleDoc: any = {
-          id,
+      generatedAt: new Date().toISOString(),
+      summary: {
+        totalRules: rules.length,
+        totalEndpoints: endpoints.length
+      },
+      endpoints: endpoints.map(endpoint => ({
+        path: endpoint.endpoint,
+        ruleIds: endpoint.ruleIds,
+        rules: endpoint.ruleIds.map(id => {
+          const rule = rules.find(r => r.id === id);
+          return rule ? {
+            id: rule.id,
+            name: rule.name,
+            description: rule.description,
+            target: rule.target || 'all',
+            isActive: rule.isActive
+          } : { id };
+        })
+      })),
+      rules: rules.map(rule => {
+        const result: any = {
+          id: rule.id,
           name: rule.name,
           description: rule.description,
-          targets: rule.targets
+          target: rule.target || 'all',
+          isActive: rule.isActive
         };
         
+        if (rule.priority !== undefined) {
+          result.priority = rule.priority;
+        }
+        
+        if (rule.tags && rule.tags.length > 0) {
+          result.tags = rule.tags;
+        }
+        
         if (options.includeSchema && rule.schema) {
-          ruleDoc.schema = this.zodSchemaToObject(rule.schema);
+          try {
+            result.schema = this.zodSchemaToObject(rule.schema);
+          } catch (error) {
+            result.schema = { error: 'Unable to serialize schema' };
+          }
         }
         
         if (options.includeExamples) {
-          ruleDoc.example = JSON.parse(this.generateExampleForRule(rule));
+          try {
+            result.example = JSON.parse(this.generateExampleForRule(rule));
+          } catch (error) {
+            result.example = { note: 'Example could not be generated' };
+          }
         }
         
-        return ruleDoc;
-      }),
-      endpoints: Array.from(endpoints.entries()).map(([endpoint, ruleIds]) => ({
-        endpoint,
-        rules: ruleIds.map(id => {
-          const rule = rules.get(id);
-          return rule ? { id, name: rule.name } : { id };
-        })
-      }))
+        return result;
+      })
     };
     
     return JSON.stringify(doc, null, 2);
@@ -191,229 +230,152 @@ export class ValidationDocGenerator {
    * Generate HTML documentation
    */
   private static generateHtml(
-    rules: Map<string, any>,
-    endpoints: Map<string, string[]>,
+    rules: ValidationRule[],
+    endpoints: { endpoint: string; ruleIds: string[] }[],
     options: ValidationDocOptions
   ): string {
     const title = options.title || 'API Validation Documentation';
     
-    let content = `
-<!DOCTYPE html>
+    let html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
+  <title>${this.escapeHtml(title)}</title>
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    h1, h2, h3 {
-      color: #2c3e50;
-    }
-    h1 {
-      border-bottom: 2px solid #eaecef;
-      padding-bottom: 10px;
-    }
-    h2 {
-      margin-top: 30px;
-      border-bottom: 1px solid #eaecef;
-      padding-bottom: 5px;
-    }
-    h3 {
-      margin-top: 25px;
-    }
-    pre {
-      background-color: #f6f8fa;
-      border-radius: 3px;
-      padding: 16px;
-      overflow: auto;
-    }
-    code {
-      font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-      background-color: rgba(27, 31, 35, 0.05);
-      border-radius: 3px;
-      padding: 0.2em 0.4em;
-    }
-    pre code {
-      background-color: transparent;
-      padding: 0;
-    }
-    .rule-card {
-      background-color: #fff;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      margin-bottom: 20px;
-      padding: 15px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .endpoint-card {
-      background-color: #f9f9f9;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      margin-bottom: 15px;
-      padding: 15px;
-    }
-    .tag {
-      display: inline-block;
-      background-color: #e1e1e1;
-      border-radius: 3px;
-      padding: 2px 8px;
-      margin-right: 5px;
-      font-size: 12px;
-    }
-    .nav {
-      background-color: #f3f3f3;
-      padding: 10px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-    }
-    .nav a {
-      margin-right: 15px;
-      color: #0366d6;
-      text-decoration: none;
-    }
-    .nav a:hover {
-      text-decoration: underline;
-    }
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1, h2, h3 { color: #2c3e50; }
+    table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
+    th { background-color: #f2f2f2; }
+    pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    code { font-family: monospace; background-color: #f5f5f5; padding: 2px 4px; border-radius: 3px; }
+    .rule { border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px; }
+    .description { font-style: italic; color: #666; }
+    .tag { display: inline-block; background-color: #e0e0e0; padding: 2px 6px; border-radius: 3px; margin-right: 5px; font-size: 0.9em; }
+    .active { color: green; }
+    .inactive { color: red; }
+    .toc { background-color: #f9f9f9; padding: 10px 20px; border-radius: 5px; margin-bottom: 20px; }
+    .toc ul { list-style-type: none; padding-left: 20px; }
   </style>
 </head>
 <body>
-  <h1>${title}</h1>
+  <h1>${this.escapeHtml(title)}</h1>
+  <p>Generated on: ${new Date().toISOString()}</p>
   
-  <div class="nav">
-    <a href="#introduction">Introduction</a>
-    <a href="#rules">Validation Rules</a>
-    <a href="#endpoints">API Endpoints</a>
-    <a href="#guide">Usage Guide</a>
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#endpoints">Endpoints</a></li>
+      <li><a href="#validation-rules">Validation Rules</a></li>
+      ${options.includePatterns ? '<li><a href="#validation-patterns">Validation Patterns</a></li>' : ''}
+    </ul>
   </div>
   
-  <h2 id="introduction">Introduction</h2>
+  <h2 id="overview">Overview</h2>
   <p>
-    This document provides details about the validation rules applied to API endpoints in this application.
-    It serves as a reference for developers working with the API.
+    This document provides detailed information about the API validation rules used in the system.
+    The validation system ensures that all API requests are properly validated for data integrity and security.
+  </p>
+  <p>
+    <strong>Total Rules:</strong> ${rules.length}<br>
+    <strong>Total Endpoints:</strong> ${endpoints.length}
   </p>
   
-  <h2 id="rules">Validation Rules</h2>
+  <h2 id="endpoints">Endpoints</h2>
 `;
     
-    // Add validation rules
-    rules.forEach((rule, id) => {
-      content += `
-  <div class="rule-card">
-    <h3>${rule.name} <code>${id}</code></h3>
+    if (endpoints.length === 0) {
+      html += `<p>No endpoints with validation rules defined.</p>`;
+    } else {
+      html += `<table>
+    <tr>
+      <th>Endpoint</th>
+      <th>Validation Rules</th>
+    </tr>
+`;
+      
+      endpoints.forEach(endpoint => {
+        const ruleNames = endpoint.ruleIds
+          .map(id => {
+            const rule = rules.find(r => r.id === id);
+            return rule ? this.escapeHtml(rule.name) : this.escapeHtml(id);
+          })
+          .join(', ');
+        
+        html += `    <tr>
+      <td><code>${this.escapeHtml(endpoint.endpoint)}</code></td>
+      <td>${ruleNames}</td>
+    </tr>
+`;
+      });
+      
+      html += `</table>`;
+    }
+    
+    html += `
+  <h2 id="validation-rules">Validation Rules</h2>
+`;
+    
+    rules.forEach(rule => {
+      html += `<div class="rule">
+    <h3>${this.escapeHtml(rule.name)}</h3>
 `;
       
       if (rule.description) {
-        content += `    <p>${rule.description}</p>\n`;
-      }
-      
-      content += `    <p><strong>Targets:</strong> `;
-      rule.targets.forEach((target: string) => {
-        content += `<span class="tag">${target}</span>`;
-      });
-      content += `</p>\n`;
-      
-      if (options.includeSchema && rule.schema) {
-        content += `
-    <details>
-      <summary>Schema</summary>
-      <pre><code>${this.escapeHtml(this.zodSchemaToString(rule.schema))}</code></pre>
-    </details>
+        html += `    <p class="description">${this.escapeHtml(rule.description)}</p>
 `;
       }
       
-      // Find endpoints using this rule
-      const usingEndpoints = Array.from(endpoints.entries())
-        .filter(([, ruleIds]) => ruleIds.includes(id))
-        .map(([endpoint]) => endpoint);
-      
-      if (usingEndpoints.length > 0) {
-        content += `
-    <details>
-      <summary>Used by ${usingEndpoints.length} endpoints</summary>
-      <ul>
+      html += `    <p>
+      <strong>ID:</strong> <code>${this.escapeHtml(rule.id)}</code><br>
+      <strong>Target:</strong> ${this.escapeHtml(rule.target || 'all')}<br>
+      <strong>Active:</strong> <span class="${rule.isActive ? 'active' : 'inactive'}">${rule.isActive ? 'Yes' : 'No'}</span><br>
 `;
-        usingEndpoints.forEach(endpoint => {
-          content += `        <li><code>${endpoint}</code></li>\n`;
+      
+      if (rule.priority !== undefined) {
+        html += `      <strong>Priority:</strong> ${rule.priority}<br>
+`;
+      }
+      
+      if (rule.tags && rule.tags.length > 0) {
+        html += `      <strong>Tags:</strong> `;
+        
+        rule.tags.forEach(tag => {
+          html += `<span class="tag">${this.escapeHtml(tag)}</span>`;
         });
-        content += `      </ul>
-    </details>
+        
+        html += `<br>
 `;
       }
       
+      html += `    </p>
+`;
+      
+      // Include schema details if requested
+      if (options.includeSchema && rule.schema) {
+        html += `    <h4>Schema</h4>
+    <pre><code>${this.escapeHtml(this.zodSchemaToString(rule.schema))}</code></pre>
+`;
+      }
+      
+      // Include examples if requested
       if (options.includeExamples) {
-        content += `
-    <details>
-      <summary>Example</summary>
-      <pre><code>${this.escapeHtml(this.generateExampleForRule(rule))}</code></pre>
-    </details>
+        html += `    <h4>Example</h4>
+    <pre><code>${this.escapeHtml(this.generateExampleForRule(rule))}</code></pre>
 `;
       }
       
-      content += `  </div>\n`;
-    });
-    
-    // Add endpoints section
-    content += `
-  <h2 id="endpoints">API Endpoints</h2>
-`;
-    
-    endpoints.forEach((ruleIds, endpoint) => {
-      content += `
-  <div class="endpoint-card">
-    <h3>${endpoint}</h3>
-    <p><strong>Validation Rules Applied:</strong></p>
-    <ul>
-`;
-      
-      ruleIds.forEach(id => {
-        const rule = rules.get(id);
-        if (rule) {
-          content += `      <li>${rule.name} <code>${id}</code></li>\n`;
-        }
-      });
-      
-      content += `    </ul>
-  </div>
+      html += `  </div>
 `;
     });
     
-    // Add usage guide
-    content += `
-  <h2 id="guide">Usage Guide</h2>
-  <p>
-    To work with these validation rules, ensure your API requests meet the validation criteria specified above.
-    If validation fails, the API will return a 400 Bad Request response with details about the validation errors.
-  </p>
-  
-  <h3>Example Error Response</h3>
-  <pre><code>{
-  "error": "Validation Error",
-  "message": "The request data failed validation",
-  "timestamp": 1625097600000,
-  "details": [
-    {
-      "path": "email",
-      "message": "Invalid email address",
-      "code": "invalid_string"
-    }
-  ]
-}</code></pre>
-
-  <footer>
-    <p>Documentation generated on ${new Date().toLocaleString()}</p>
-  </footer>
+    html += `
 </body>
-</html>
-`;
+</html>`;
     
-    return content;
+    return html;
   }
   
   /**
@@ -421,10 +383,21 @@ export class ValidationDocGenerator {
    */
   private static zodSchemaToString(schema: any): string {
     try {
-      // This is a simplified representation
-      return JSON.stringify(this.zodSchemaToObject(schema), null, 2);
+      if (!schema) return 'undefined';
+      
+      // Try to get the description of the schema
+      let schemaStr = '';
+      
+      if (typeof schema.describe === 'function') {
+        const description = schema.describe();
+        schemaStr = JSON.stringify(description, null, 2);
+      } else {
+        schemaStr = String(schema);
+      }
+      
+      return schemaStr;
     } catch (error) {
-      return 'Schema could not be stringified';
+      return `Unable to convert schema to string: ${error instanceof Error ? error.message : String(error)}`;
     }
   }
   
@@ -432,110 +405,32 @@ export class ValidationDocGenerator {
    * Convert a Zod schema to an object representation
    */
   private static zodSchemaToObject(schema: any): any {
-    // This is a very simplified representation
-    // In a real implementation, you would need to analyze the Zod schema structure
-    
     try {
-      // Try to extract the type description from the schema
-      if (schema._def) {
-        // Handle different schema types
-        if (schema._def.typeName === 'ZodObject') {
-          const shape = {};
-          
-          for (const [key, value] of Object.entries(schema._def.shape())) {
-            (shape as any)[key] = this.zodSchemaToObject(value);
-          }
-          
-          return { type: 'object', shape };
-        }
-        else if (schema._def.typeName === 'ZodString') {
-          let result: any = { type: 'string' };
-          
-          // Add constraints if available
-          if (schema._def.checks) {
-            schema._def.checks.forEach((check: any) => {
-              if (check.kind === 'min') {
-                result.min = check.value;
-              } else if (check.kind === 'max') {
-                result.max = check.value;
-              } else if (check.kind === 'email') {
-                result.format = 'email';
-              } else if (check.kind === 'url') {
-                result.format = 'url';
-              } else if (check.kind === 'uuid') {
-                result.format = 'uuid';
-              } else if (check.kind === 'regex') {
-                result.pattern = check.regex.toString();
-              }
-            });
-          }
-          
-          return result;
-        }
-        else if (schema._def.typeName === 'ZodNumber') {
-          let result: any = { type: 'number' };
-          
-          // Add constraints if available
-          if (schema._def.checks) {
-            schema._def.checks.forEach((check: any) => {
-              if (check.kind === 'min') {
-                result.min = check.value;
-              } else if (check.kind === 'max') {
-                result.max = check.value;
-              } else if (check.kind === 'int') {
-                result.integer = true;
-              } else if (check.kind === 'positive') {
-                result.exclusiveMinimum = 0;
-              } else if (check.kind === 'nonnegative') {
-                result.minimum = 0;
-              }
-            });
-          }
-          
-          return result;
-        }
-        else if (schema._def.typeName === 'ZodBoolean') {
-          return { type: 'boolean' };
-        }
-        else if (schema._def.typeName === 'ZodArray') {
-          return {
-            type: 'array',
-            items: this.zodSchemaToObject(schema._def.type)
-          };
-        }
-        else if (schema._def.typeName === 'ZodEnum') {
-          return {
-            type: 'enum',
-            values: schema._def.values
-          };
-        }
-        else {
-          return { type: schema._def.typeName };
-        }
+      if (!schema) return null;
+      
+      if (typeof schema.describe === 'function') {
+        return schema.describe();
       }
       
-      // Fallback to simple type name if known structure not found
-      return { type: typeof schema };
-      
-    } catch (error) {
       return { type: 'unknown' };
+    } catch (error) {
+      return { error: `Unable to convert schema to object: ${error instanceof Error ? error.message : String(error)}` };
     }
   }
   
   /**
    * Generate a JSON example for a validation rule
    */
-  private static generateExampleForRule(rule: any): string {
+  private static generateExampleForRule(rule: ValidationRule): string {
     try {
-      if (!rule.schema) {
-        return '{}';
-      }
+      if (!rule.schema) return '{}';
       
-      // Generate an example based on the schema
+      // Create an example based on the schema
       const example = this.createExampleFromSchema(rule.schema);
+      
       return JSON.stringify(example, null, 2);
     } catch (error) {
-      return '{}';
+      return `{"error": "Unable to generate example: ${error instanceof Error ? error.message : String(error)}"}`;
     }
   }
   
@@ -544,83 +439,42 @@ export class ValidationDocGenerator {
    */
   private static createExampleFromSchema(schema: any): any {
     try {
-      // Handle different schema types
-      if (schema._def) {
-        if (schema._def.typeName === 'ZodObject') {
-          const example = {};
-          
-          for (const [key, value] of Object.entries(schema._def.shape())) {
-            (example as any)[key] = this.createExampleFromSchema(value);
-          }
-          
-          return example;
-        }
-        else if (schema._def.typeName === 'ZodString') {
-          // Check for special string formats
-          if (schema._def.checks) {
-            for (const check of schema._def.checks) {
-              if (check.kind === 'email') {
-                return 'user@example.com';
-              } else if (check.kind === 'url') {
-                return 'https://example.com';
-              } else if (check.kind === 'uuid') {
-                return '123e4567-e89b-12d3-a456-426614174000';
-              } else if (check.kind === 'regex') {
-                // Return a simple example for regex patterns
-                return 'example-value';
-              }
-            }
-          }
-          
-          return 'string-value';
-        }
-        else if (schema._def.typeName === 'ZodNumber') {
-          let value = 42;
-          
-          // Check for constraints
-          if (schema._def.checks) {
-            for (const check of schema._def.checks) {
-              if (check.kind === 'int') {
-                value = Math.floor(value);
-              } else if (check.kind === 'positive') {
-                value = Math.max(1, value);
-              } else if (check.kind === 'nonnegative') {
-                value = Math.max(0, value);
-              } else if (check.kind === 'min') {
-                value = Math.max(check.value, value);
-              } else if (check.kind === 'max') {
-                value = Math.min(check.value, value);
-              }
-            }
-          }
-          
-          return value;
-        }
-        else if (schema._def.typeName === 'ZodBoolean') {
-          return true;
-        }
-        else if (schema._def.typeName === 'ZodArray') {
-          return [this.createExampleFromSchema(schema._def.type)];
-        }
-        else if (schema._def.typeName === 'ZodEnum') {
-          return schema._def.values[0];
-        }
-        else if (schema._def.typeName === 'ZodDate') {
-          return new Date().toISOString();
-        }
-        else if (schema._def.typeName === 'ZodOptional' || schema._def.typeName === 'ZodNullable') {
-          return this.createExampleFromSchema(schema._def.innerType);
-        }
-        else {
-          return null;
-        }
+      if (!schema) return {};
+      
+      if (typeof schema.describe !== 'function') {
+        return { example: 'not available' };
       }
       
-      // Default fallback
-      return null;
+      const description = schema.describe();
       
+      switch (description.type) {
+        case 'string':
+          return 'example-string';
+        case 'number':
+          return 123;
+        case 'boolean':
+          return true;
+        case 'date':
+          return new Date().toISOString();
+        case 'array':
+          return [this.createExampleFromSchema(description.element)];
+        case 'object':
+          const example: any = {};
+          if (description.shape) {
+            for (const [key, value] of Object.entries(description.shape)) {
+              example[key] = this.createExampleFromSchema(value);
+            }
+          }
+          return example;
+        case 'enum':
+          return description.values?.[0] || 'enum-value';
+        case 'union':
+          return this.createExampleFromSchema(description.options?.[0]);
+        default:
+          return { example: `type: ${description.type}` };
+      }
     } catch (error) {
-      return null;
+      return { error: `Example generation failed: ${error instanceof Error ? error.message : String(error)}` };
     }
   }
   
@@ -628,6 +482,8 @@ export class ValidationDocGenerator {
    * Escape HTML special characters for safe HTML output
    */
   private static escapeHtml(text: string): string {
+    if (!text) return '';
+    
     return text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -640,27 +496,164 @@ export class ValidationDocGenerator {
    * Generate documentation for a specific rule
    */
   static generateRuleDoc(ruleId: string, options: ValidationDocOptions): string {
-    const rule = ValidationEngine['rules'].get(ruleId);
-    
-    if (!rule) {
-      throw new Error(`Rule with ID ${ruleId} not found`);
-    }
-    
-    // Format based on options
-    switch (options.format) {
-      case 'markdown':
-        return `# ${rule.name} (${ruleId})\n\n${rule.description || ''}\n\n**Targets:** ${rule.targets.join(', ')}\n`;
-      case 'json':
-        return JSON.stringify({
-          id: ruleId,
-          name: rule.name,
-          description: rule.description,
-          targets: rule.targets
-        }, null, 2);
-      case 'html':
-        return `<h1>${rule.name} (${ruleId})</h1><p>${rule.description || ''}</p><p><strong>Targets:</strong> ${rule.targets.join(', ')}</p>`;
-      default:
-        return '';
+    try {
+      // Dynamically import ValidationEngine to avoid circular dependencies
+      const { ValidationEngine } = require('./ValidationEngine');
+      
+      const rule = ValidationEngine.getRule(ruleId);
+      
+      if (!rule) {
+        throw new Error(`Rule with ID '${ruleId}' not found`);
+      }
+      
+      // Generate documentation for just this rule
+      switch (options.format) {
+        case 'markdown':
+          let markdown = `# Validation Rule: ${rule.name}\n\n`;
+          
+          if (rule.description) {
+            markdown += `${rule.description}\n\n`;
+          }
+          
+          markdown += `- **ID**: \`${rule.id}\`\n`;
+          markdown += `- **Target**: ${rule.target || 'all'}\n`;
+          markdown += `- **Active**: ${rule.isActive ? 'Yes' : 'No'}\n`;
+          
+          if (rule.priority !== undefined) {
+            markdown += `- **Priority**: ${rule.priority}\n`;
+          }
+          
+          if (rule.tags && rule.tags.length > 0) {
+            markdown += `- **Tags**: ${rule.tags.join(', ')}\n`;
+          }
+          
+          // Include schema details if requested
+          if (options.includeSchema && rule.schema) {
+            markdown += `\n## Schema\n\n`;
+            markdown += `\`\`\`typescript\n${this.zodSchemaToString(rule.schema)}\n\`\`\`\n\n`;
+          }
+          
+          // Include examples if requested
+          if (options.includeExamples) {
+            markdown += `\n## Example\n\n`;
+            markdown += `\`\`\`json\n${this.generateExampleForRule(rule)}\n\`\`\`\n\n`;
+          }
+          
+          return markdown;
+          
+        case 'json':
+          const jsonDoc: any = {
+            id: rule.id,
+            name: rule.name,
+            description: rule.description,
+            target: rule.target || 'all',
+            isActive: rule.isActive
+          };
+          
+          if (rule.priority !== undefined) {
+            jsonDoc.priority = rule.priority;
+          }
+          
+          if (rule.tags && rule.tags.length > 0) {
+            jsonDoc.tags = rule.tags;
+          }
+          
+          if (options.includeSchema && rule.schema) {
+            try {
+              jsonDoc.schema = this.zodSchemaToObject(rule.schema);
+            } catch (error) {
+              jsonDoc.schema = { error: 'Unable to serialize schema' };
+            }
+          }
+          
+          if (options.includeExamples) {
+            try {
+              jsonDoc.example = JSON.parse(this.generateExampleForRule(rule));
+            } catch (error) {
+              jsonDoc.example = { note: 'Example could not be generated' };
+            }
+          }
+          
+          return JSON.stringify(jsonDoc, null, 2);
+          
+        case 'html':
+          // Similar to the HTML generation in generateHtml, but for a single rule
+          let html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validation Rule: ${this.escapeHtml(rule.name)}</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+    h1, h2, h3 { color: #2c3e50; }
+    pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    code { font-family: monospace; background-color: #f5f5f5; padding: 2px 4px; border-radius: 3px; }
+    .rule { border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px; }
+    .description { font-style: italic; color: #666; }
+    .tag { display: inline-block; background-color: #e0e0e0; padding: 2px 6px; border-radius: 3px; margin-right: 5px; font-size: 0.9em; }
+    .active { color: green; }
+    .inactive { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Validation Rule: ${this.escapeHtml(rule.name)}</h1>
+`;
+          
+          if (rule.description) {
+            html += `  <p class="description">${this.escapeHtml(rule.description)}</p>
+`;
+          }
+          
+          html += `  <p>
+    <strong>ID:</strong> <code>${this.escapeHtml(rule.id)}</code><br>
+    <strong>Target:</strong> ${this.escapeHtml(rule.target || 'all')}<br>
+    <strong>Active:</strong> <span class="${rule.isActive ? 'active' : 'inactive'}">${rule.isActive ? 'Yes' : 'No'}</span><br>
+`;
+          
+          if (rule.priority !== undefined) {
+            html += `    <strong>Priority:</strong> ${rule.priority}<br>
+`;
+          }
+          
+          if (rule.tags && rule.tags.length > 0) {
+            html += `    <strong>Tags:</strong> `;
+            
+            rule.tags.forEach(tag => {
+              html += `<span class="tag">${this.escapeHtml(tag)}</span>`;
+            });
+            
+            html += `<br>
+`;
+          }
+          
+          html += `  </p>
+`;
+          
+          // Include schema details if requested
+          if (options.includeSchema && rule.schema) {
+            html += `  <h2>Schema</h2>
+  <pre><code>${this.escapeHtml(this.zodSchemaToString(rule.schema))}</code></pre>
+`;
+          }
+          
+          // Include examples if requested
+          if (options.includeExamples) {
+            html += `  <h2>Example</h2>
+  <pre><code>${this.escapeHtml(this.generateExampleForRule(rule))}</code></pre>
+`;
+          }
+          
+          html += `</body>
+</html>`;
+          
+          return html;
+          
+        default:
+          throw new Error(`Unsupported format: ${options.format}`);
+      }
+    } catch (error) {
+      throw new Error(`Error generating rule documentation: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }

@@ -201,4 +201,76 @@ router.post('/secured', isAuthenticated, async (req: Request, res: Response) => 
   }
 });
 
+/**
+ * Analyze security threats in code or network traffic
+ * 
+ * @route POST /api/openai/security-analysis
+ * @body content - The code or log data to analyze
+ * @body contentType - The type of content ('code', 'logs', 'network', 'config')
+ * @body context - Additional context about the environment
+ */
+router.post('/security-analysis', isAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const { content, contentType = 'code', context = '' } = req.body;
+    
+    if (!content) {
+      return res.status(400).json({ error: 'No content provided for analysis' });
+    }
+    
+    // Here we have access to the authenticated user through req.user
+    const userId = (req.user as any)?.claims?.sub;
+    console.log(`[OpenAI] Processing security analysis request for user: ${userId}`);
+    
+    // Construct a specialized system prompt for security analysis
+    const systemPrompt = `You are an expert security analyst specializing in detecting vulnerabilities, weaknesses, and potential threats in ${contentType}. 
+Focus on identifying security issues like:
+- SQL injection vulnerabilities
+- Cross-site scripting (XSS) opportunities
+- Insecure direct object references
+- Authentication weaknesses
+- Authorization flaws
+- Sensitive data exposure
+- Missing security headers
+- Cross-site request forgery vectors
+- Insecure cryptographic storage
+- Insufficient input validation
+- Insecure configurations
+
+Provide a comprehensive analysis with:
+1. Identified security issues (ranked by severity)
+2. Detailed explanation of each vulnerability
+3. Potential exploitation scenarios
+4. Recommended fixes with code examples when applicable
+5. Best practices for prevention`;
+    
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Please analyze the following ${contentType}:\n\n${content}\n\nAdditional context: ${context}` }
+      ],
+      max_tokens: 1500,
+      temperature: 0.2,
+      response_format: { type: "json_object" }
+    });
+    
+    const analysis = response.choices[0].message.content;
+    
+    // Log the request for security auditing (without the full content)
+    console.log(`[SECURITY] AI security analysis performed on ${contentType} by user ${userId}`);
+    
+    return res.json({
+      analysis: JSON.parse(analysis),
+      model: response.model,
+      usage: response.usage
+    });
+  } catch (error: any) {
+    console.error('[OpenAI] Error in security analysis endpoint:', error);
+    return res.status(500).json({ 
+      error: 'Error processing security analysis request', 
+      message: error.message || 'Unknown error'
+    });
+  }
+});
+
 export default router;
