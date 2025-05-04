@@ -98,7 +98,7 @@ router.post('/contact', validateRequest(
     email: z.string().email(),
     message: z.string().min(10).max(1000)
   })
-), (req, res) => {
+), (req: express.Request, res: express.Response) => {
   secureLog('info', logComponent, `Contact form submission from ${req.body.email}`);
   
   res.json({
@@ -121,7 +121,7 @@ router.post('/api-security', testAuth, validateRequestWithAI({
     detailedAnalysis: true,
     threshold: 0.6
   }
-}), (req, res) => {
+}), (req: express.Request, res: express.Response) => {
   secureLog('info', logComponent, 'API security validation passed');
   
   res.json({
@@ -152,7 +152,7 @@ router.post('/signup', testAuth, [
       detailedAnalysis: true
     }
   })
-], (req, res) => {
+], (req: express.Request, res: express.Response) => {
   secureLog('info', logComponent, `User signup for ${req.body.username}`);
   
   res.json({
