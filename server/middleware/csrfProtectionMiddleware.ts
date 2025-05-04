@@ -110,6 +110,7 @@ export function setupCSRFProtection(app: Express): void {
       '/api/webhook',
       '/api/content/key/',  // Content API - critical for development
       '/api/csrf-token',     // CSRF token endpoint
+      '/api/openai/',        // OpenAI API integration
       '/service-worker.js',  // Service worker
       '/manifest.json',      // Web manifest
       // Rate limiting test routes
@@ -130,6 +131,14 @@ export function setupCSRFProtection(app: Express): void {
       '/assets/',
       '/src/main.tsx',
       '/node_modules/',
+      // Third-party content and widget integrations
+      '/api/taskade/',       // Taskade widget API 
+      '/taskade-widget.js',  // Taskade widget script
+      '/api/youtube/',       // YouTube API integration
+      '/api/maps/',          // Google Maps API integration
+      '/widget/',            // General widget endpoints
+      // Allow iframe content from trusted sources
+      '/iframe-content/',    
       // Exempting the Dale Loves Whales Flask app routes from CSRF protection
       '/',
       '/index.html',
@@ -286,6 +295,24 @@ export function setupCSRFProtection(app: Express): void {
         req.path.startsWith('/api/content/') ||
         req.path.startsWith('/api/auth/') ||
         req.path === '/api/csrf-token' ||
+        // Third-party integrations
+        req.path.startsWith('/api/openai/') ||
+        req.path.startsWith('/api/taskade/') ||
+        req.path.startsWith('/api/youtube/') ||
+        req.path.startsWith('/api/maps/') ||
+        req.path.startsWith('/widget/') ||
+        req.path.startsWith('/iframe-content/') ||
+        req.path === '/taskade-widget.js' ||
+        // Check for third-party domain references in the path
+        req.path.includes('taskade.com') ||
+        req.path.includes('youtube.com') ||
+        req.path.includes('youtu.be') ||
+        req.path.includes('maps.google.com') ||
+        req.path.includes('maps.googleapis.com') ||
+        req.path.includes('openai.com') ||
+        req.path.includes('stripe.com') ||
+        req.path.includes('googleapis.com') ||
+        req.path.includes('googleusercontent.com') ||
         // Vite development routes
         req.path.startsWith('/@vite') ||
         req.path.startsWith('/@fs/') ||

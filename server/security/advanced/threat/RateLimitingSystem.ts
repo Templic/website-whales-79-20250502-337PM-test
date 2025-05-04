@@ -711,9 +711,29 @@ export class RateLimitingSystem {
           path.startsWith('/api/content/') ||
           path.startsWith('/api/auth/') ||
           path.startsWith('/api/public/') ||
-          path === '/api/csrf-token') {
+          path.startsWith('/api/openai/') ||
+          path.startsWith('/api/taskade/') ||
+          path.startsWith('/api/youtube/') ||
+          path.startsWith('/api/maps/') ||
+          path.startsWith('/widget/') ||
+          path.startsWith('/iframe-content/') ||
+          path === '/api/csrf-token' ||
+          path === '/taskade-widget.js') {
         log(`Skipping rate limiting for Replit resource: ${path}`, 'debug');
         return true;
+      }
+      
+      // Skip rate limiting for third-party domains in iframe src/scripts
+      const thirdPartyDomains = ['taskade.com', 'youtube.com', 'youtu.be', 'maps.google.com', 
+                                'maps.googleapis.com', 'openai.com', 'stripe.com', 
+                                'googleapis.com', 'googleusercontent.com'];
+      
+      // Check if path contains any of these third-party domain references
+      for (const domain of thirdPartyDomains) {
+        if (path.includes(domain)) {
+          log(`Skipping rate limiting for third-party content: ${path}`, 'debug');
+          return true;
+        }
       }
     }
     
