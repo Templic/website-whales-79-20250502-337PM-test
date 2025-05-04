@@ -30,6 +30,10 @@ import { AdvancedAPIValidation } from './security/advanced/apiValidation_new';
 import { RASPCore } from './security/advanced/rasp/RASPCore';
 import { SecurityMonitor } from './security/advanced/monitoring/SecurityMonitor';
 
+// Import Flask proxy and starter
+import { setupFlaskProxy } from './middleware/flaskProxyMiddleware';
+import { startFlaskApp } from './utils/startFlaskApp';
+
 // Start time tracking
 const startTime = Date.now();
 
@@ -151,6 +155,19 @@ async function initializeServer() {
 
   try {
     // === STAGE 1: Essential Services ===
+    // Start Flask app (before anything else)
+    log('Starting Flask app...', 'server');
+    try {
+      await startFlaskApp();
+      log('Flask app started successfully', 'server');
+    } catch (flaskError) {
+      log(`Error starting Flask app: ${flaskError}`, 'server');
+      console.error('Flask app error:', flaskError);
+    }
+    
+    // Set up Flask proxy before other middleware
+    setupFlaskProxy(app);
+    
     // Connect to database (critical)
     const dbStartTime = Date.now();
     await initializeDatabase();
