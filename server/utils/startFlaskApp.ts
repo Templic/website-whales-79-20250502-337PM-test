@@ -175,10 +175,12 @@ export function startFlaskApp(): Promise<void> {
       tryStartFlask();
       
       // Set a timeout to resolve anyway after a reasonable time
+      // We increase this timeout to give Flask more time to start
       startupTimeout = setTimeout(() => {
-        log('Flask app startup timeout - assuming it\'s running', 'warn');
+        log('Flask app startup timeout - assuming it\'s running or using fallback', 'warn');
+        log('The Flask proxy middleware will provide fallback content if needed', 'info');
         resolve();
-      }, 10000);
+      }, 20000); // Extended to 20 seconds
     } catch (error) {
       log(`Error starting Flask app: ${error}`, 'error');
       reject(error);

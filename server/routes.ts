@@ -214,11 +214,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     console.log("✅ Threat protection middleware initialized successfully");
   }
   
-  // Register rate limit test bypass routes BEFORE CSRF protection
-  // This allows us to test rate limiting without dealing with CSRF tokens
-  console.log("Registering rate limit test bypass routes...");
-  app.use(rateLimitTestBypassRouter);
-  console.log("✅ Rate limit test bypass routes registered");
+  // Rate limit test bypass routes are now registered in server/index.ts
+  // before the CSRF middleware is applied to ensure they work correctly
   
   // Apply the API validation middleware to all API routes
   // This will auto-validate requests based on registered rules

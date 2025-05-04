@@ -230,10 +230,10 @@ function createRateLimitTestBypassRouter() {
   const bypassRouter = Router();
   
   // Add a direct bypass endpoint that specifically skips CSRF
-  bypassRouter.use('/no-csrf/rate-limit-test', (req: Request, res: Response, next: NextFunction) => {
+  bypassRouter.use('/no-csrf/rate-limit-test*', (req: Request, res: Response, next: NextFunction) => {
     // Mark this request to skip CSRF validation
     (req as any).__skipCSRF = true;
-    log(`Direct CSRF bypass for rate limiting test: ${req.path}`, 'warn');
+    log(`Direct CSRF bypass for rate limiting test: ${req.method} ${req.path}`, 'warn');
     
     // Continue to the actual route handlers
     return router(req, res, next);

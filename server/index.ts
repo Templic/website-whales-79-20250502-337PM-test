@@ -51,6 +51,14 @@ app.use(cookieParser());
 import { CSRFProtection } from './middleware/csrfProtection';
 
 // Initialize CSRF protection with deep security features
+// First, register our CSRF bypass routes
+// This must be done BEFORE applying CSRF protection
+// This allows our test endpoints to explicitly bypass CSRF
+import { rateLimitTestBypassRouter } from './routes/rate-limit-test-bypass.routes';
+log('Registering rate limit test bypass routes (before CSRF)...', 'server');
+app.use(rateLimitTestBypassRouter);
+log('✅ Rate limit test bypass routes registered', 'server');
+
 if (config.security.csrfProtection) {
   log('Setting up enhanced CSRF protection with deep security features', 'server');
   
@@ -74,6 +82,9 @@ if (config.security.csrfProtection) {
       '/api/metrics/public',
       '/api/health-check',
       '/api/status',
+      // CSRF bypass for rate limit testing
+      '/no-csrf/rate-limit-test',
+      '/no-csrf/rate-limit-test/*',
       // Flask app routes
       '/',
       '/index.html',

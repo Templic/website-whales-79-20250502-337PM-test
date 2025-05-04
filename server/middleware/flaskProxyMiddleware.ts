@@ -32,11 +32,14 @@ const FLASK_APP_ROUTES = [
   '/favicon.ico'
 ];
 
-// Create proxy middleware
+// Create proxy middleware with better error handling and timeouts
 const flaskProxy = createProxyMiddleware({
   target: 'http://localhost:5001',
   changeOrigin: true,
   logLevel: 'warn',
+  // Increase timeout for slow Flask startup
+  proxyTimeout: 10000,   // 10 seconds for proxy timeouts
+  timeout: 10000,        // 10 seconds for connection timeout
   pathRewrite: {
     '^/api/flask': '/' // Rewrite /api/flask/something to /something
   },
@@ -48,6 +51,11 @@ const flaskProxy = createProxyMiddleware({
   },
   onError: (err, req, res) => {
     log(`[Flask Proxy] Proxy error: ${err.message}`, 'error');
+    
+    // Handle the case when Flask is not ready yet
+    if (err.code === 'ECONNREFUSED') {
+      log('[Flask Proxy] Flask app not ready yet - serving fallback content', 'warn');
+    }
     
     // Instead of showing an error, provide fallback content
     serveFallbackContent(req, res);
