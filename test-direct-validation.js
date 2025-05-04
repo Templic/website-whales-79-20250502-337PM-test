@@ -100,7 +100,8 @@ async function testBasicSchemaValidation() {
     message: 'This is a test message with sufficient length.'
   };
   
-  const validResult = await makeRequest('/no-security/basic', 'POST', validData);
+  // Try our new direct test endpoint instead
+  const validResult = await makeRequest('/test/basic-validation', 'POST', validData);
   printTestResult('Valid data passes validation', validResult.success && validResult.data.success);
   
   // Test invalid email
@@ -110,7 +111,7 @@ async function testBasicSchemaValidation() {
     message: 'This is a test message with sufficient length.'
   };
   
-  const invalidEmailResult = await makeRequest('/no-security/basic', 'POST', invalidEmailData);
+  const invalidEmailResult = await makeRequest('/test/basic-validation', 'POST', invalidEmailData);
   printTestResult('Invalid email is rejected', !invalidEmailResult.success || !invalidEmailResult.data.success);
   
   // Test short message
@@ -120,7 +121,7 @@ async function testBasicSchemaValidation() {
     message: 'Too short'
   };
   
-  const shortMessageResult = await makeRequest('/no-security/basic', 'POST', shortMessageData);
+  const shortMessageResult = await makeRequest('/test/basic-validation', 'POST', shortMessageData);
   printTestResult('Short message is rejected', !shortMessageResult.success || !shortMessageResult.data.success);
 }
 
@@ -141,7 +142,7 @@ async function testAISecurityValidation() {
     sort: 'price_asc'
   };
   
-  const safeResult = await makeRequest('/no-security/ai-security', 'POST', safePayload);
+  const safeResult = await makeRequest('/test/ai-security', 'POST', safePayload);
   printTestResult('Safe payload passes AI validation', 
     safeResult.success && safeResult.data.success && safeResult.data.validation.passed);
   
@@ -158,7 +159,7 @@ async function testAISecurityValidation() {
     sort: '1=1; --'
   };
   
-  const suspiciousResult = await makeRequest('/no-security/ai-security', 'POST', suspiciousPayload);
+  const suspiciousResult = await makeRequest('/test/ai-security', 'POST', suspiciousPayload);
   printTestResult('Suspicious payload is detected', 
     suspiciousResult.success && suspiciousResult.data.success && !suspiciousResult.data.validation.passed);
 }
@@ -167,7 +168,7 @@ async function testAISecurityValidation() {
 async function testValidationStatus() {
   printHeader('Validation Pipeline Status (Direct Test)');
   
-  const statusResult = await makeRequest('/no-security/status');
+  const statusResult = await makeRequest('/test/validation-status');
   printTestResult('Validation status endpoint works', 
     statusResult.success && statusResult.data.success);
 }
