@@ -1,129 +1,84 @@
 # API Validation Framework
 
-## Overview
+This repository contains a comprehensive API validation framework designed to ensure data integrity and security for your APIs. The system validates incoming requests using multiple strategies including schema validation, security validation, and AI-powered validation.
 
-The API Validation Framework is a flexible and powerful system designed to validate API requests using multiple validation strategies. It provides a comprehensive validation pipeline that includes schema validation, security validation, and AI-powered validation capabilities.
+## Quick Start
+
+To test the API validation system:
+
+1. Run the simplified validation server:
+   ```bash
+   ./run-simplified-validation.sh
+   ```
+
+2. Open the test page in your browser:
+   ```bash
+   ./run-api-validation-test.sh
+   ```
+
+3. Try different validation tests:
+   - Valid and invalid schema examples
+   - Safe and malicious security inputs
+   - Custom validation requests
+
+## Documentation
+
+- [API Validation User Guide](API-VALIDATION-USER-GUIDE.md) - Comprehensive guide for using the validation system
+- [API Validation Technical Summary](API-VALIDATION-SUMMARY.md) - Technical overview of the validation framework
 
 ## Key Features
 
-- **Schema Validation**: Type checking and data structure validation using Zod schemas
-- **Security Validation**: Protection against common security threats like SQL injection and XSS
-- **AI-Powered Validation**: Advanced validation using AI models to detect potential security issues
-- **Bypass Mechanisms**: Testing routes that bypass CSRF and other protections
-- **Standalone Operation**: Can run independently from the main application
+- **Schema Validation**: Enforce data types, required fields, and value constraints
+- **Security Validation**: Detect and block malicious inputs (SQL injection, XSS)
+- **Advanced Pattern Detection**: Identify suspicious patterns in user input
+- **Method-specific Validation**: Apply different rules based on HTTP method
+- **Conditional Validation**: Dynamic rule selection based on request properties
 
-## Standalone Test Server
+## Files and Components
 
-A dedicated test server can be started on port 4000 for testing API validation without affecting the main application:
+- `simplified-validation-server.cjs` - Standalone server for testing
+- `validation-integration-example.js` - Example of integrating with Express
+- `api-validation-test.html` - Browser-based test UI
+- `run-simplified-validation.sh` - Script to start the standalone server
+- `run-api-validation-test.sh` - Script to run the test UI
+- `disable-test-routes.sh` - Script to disable test routes for production
 
-```bash
-./start-api-validation-server.sh
-```
+## Usage in Production
 
-## API Endpoints
+Before deploying to production:
 
-The validation API exposes several endpoints for testing and validation:
+1. Disable test routes:
+   ```bash
+   ./disable-test-routes.sh
+   ```
 
-- **Health Check**: `GET /api/health`
-- **Basic Schema Validation**: `POST /api/validate/basic`
-- **Security Validation**: `POST /api/validate/security`
+2. Integrate validation middleware with your Express routes:
+   ```javascript
+   app.post('/api/users',
+     validationMiddleware({ rules: ['schema:user', 'security:high'] }),
+     userController.create
+   );
+   ```
 
-## Test UI
+3. Add custom validation rules as needed:
+   ```javascript
+   registerValidationRule({
+     id: 'schema:myCustomRule',
+     type: 'schema',
+     schema: myZodSchema
+   });
+   ```
 
-A simple HTML page is provided for easy testing of the validation API:
+## Known Issues
 
-```
-api-validation-test.html
-```
+- In the Replit environment, the main application UI may not display correctly due to conflicts between the security system and Replit's preview environment.
+- The standalone validation server provides all validation capabilities without these conflicts.
 
-This page allows you to:
-- Check API health status
-- Test basic schema validation
-- Test security validation with both safe and malicious inputs
+## Next Steps
 
-## Example Usage
+Future enhancements planned for the API validation system:
 
-### Schema Validation
-
-```javascript
-// Example schema validation request
-const response = await fetch('http://localhost:4000/api/validate/basic', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    name: 'John Doe',
-    email: 'john@example.com',
-    age: 30
-  })
-});
-
-const result = await response.json();
-```
-
-### Security Validation
-
-```javascript
-// Example security validation request (safe input)
-const response = await fetch('http://localhost:4000/api/validate/security', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    query: 'normal user input'
-  })
-});
-
-const result = await response.json();
-// Expected score for safe input: ~0.9
-
-// Example security validation request (malicious input)
-const response = await fetch('http://localhost:4000/api/validate/security', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    query: "' OR 1=1; DROP TABLE users; --"
-  })
-});
-
-const result = await response.json();
-// Expected score for malicious input: ~0.2
-```
-
-## Integration with Main Application
-
-The validation system can be integrated with the main application by using the validation middleware:
-
-```javascript
-// Example integration
-app.use('/api/protected-endpoint', validationMiddleware({
-  rules: ['schema:user', 'security:high']
-}), protectedEndpointHandler);
-```
-
-## Implementation Details
-
-The implementation consists of several components:
-
-1. **ValidationEngine**: Core validation engine that processes validation rules
-2. **Schema Registry**: Registry of Zod schemas for type validation
-3. **Security Validator**: Analyzes inputs for security threats
-4. **Bypass Mechanisms**: Special routes for testing that bypass security checks
-
-## Troubleshooting
-
-If encountering issues with the standalone server:
-
-1. Check if port 4000 is already in use: `lsof -i:4000`
-2. Kill any existing process on port 4000: `kill $(lsof -t -i:4000)`
-3. Restart the API validation server: `./start-api-validation-server.sh`
-
-## Security Considerations
-
-- The test endpoints bypass normal security protections and should NOT be enabled in production
-- All test routes are controlled by environment variables that should be disabled in production
-- CSRF protection is disabled for test routes but should be enabled for production routes
+1. Enhanced AI validation with machine learning threat detection
+2. Custom validation rules UI for easy configuration
+3. Validation analytics dashboard
+4. Rule import/export functionality
