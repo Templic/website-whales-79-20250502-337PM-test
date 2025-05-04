@@ -20,6 +20,18 @@ function isContentApiRoute(path: string): boolean {
 }
 
 /**
+ * Check if this is a Taskade or third-party integration path
+ */
+function isThirdPartyIntegrationPath(path: string): boolean {
+  return path.includes('/taskade-embed') || 
+         path.startsWith('/taskade-') || 
+         path.includes('/api/taskade/') || 
+         path.includes('taskade.com') ||
+         path.includes('/integrations/') ||
+         path.includes('/embed/');
+}
+
+/**
  * Check if this is a special path that needs CSRF exemption
  */
 function needsCsrfExemption(path: string): boolean {
@@ -27,11 +39,16 @@ function needsCsrfExemption(path: string): boolean {
     '/service-worker.js',
     '/manifest.json',
     '/sw.js',
-    '/taskade-embed'
+    '/taskade-embed',
+    '/api/taskade-redirect',
+    '/api/taskade-proxy'
   ];
   
   const exemptPathPrefixes = [
-    '/taskade-'
+    '/taskade-',
+    '/api/taskade/',
+    '/api/integrations/',
+    '/api/embed/'
   ];
   
   // Check exact path matches
@@ -44,6 +61,11 @@ function needsCsrfExemption(path: string): boolean {
     if (path.startsWith(prefix)) {
       return true;
     }
+  }
+  
+  // Check if it's a third-party integration path
+  if (isThirdPartyIntegrationPath(path)) {
+    return true;
   }
   
   return false;
@@ -90,6 +112,41 @@ export function contentApiCsrfBypass(req: Request, res: Response, next: NextFunc
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       });
+    }
+  }
+  
+  // Special handling for Taskade-related paths
+  if (isThirdPartyIntegrationPath(req.path)) {
+    console.log(`[Integration] Setting integration exemption for: ${req.path}`);
+    
+    // Set the special flag that our CSRF middleware checks for
+    (req as any).__skipCSRF = true;
+    
+    // Remove all restrictive headers
+    res.removeHeader('X-Frame-Options');
+    res.removeHeader('Content-Security-Policy');
+    
+    // Set permissive CORS headers
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    // Set permissive security headers
+    res.header('Cross-Origin-Embedder-Policy', 'unsafe-none');
+    res.header('Cross-Origin-Opener-Policy', 'unsafe-none');
+    res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+    
+    // For Taskade specifically
+    if (req.path.includes('taskade')) {
+      // Set a permissive Content-Security-Policy specifically for Taskade
+      res.header(
+        'Content-Security-Policy',
+        "default-src * 'unsafe-inline' 'unsafe-eval'; " +
+        "connect-src * wss://*.taskade.com; " +
+        "frame-src * https://*.taskade.com https://www.taskade.com; " +
+        "frame-ancestors * https://*.taskade.com;"
+      );
     }
   }
   

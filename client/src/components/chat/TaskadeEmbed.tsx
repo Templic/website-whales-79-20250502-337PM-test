@@ -58,7 +58,11 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({ chatOnly = false, className
         title="Taskade AI Embed"
         className="w-full h-full border-0"
         onLoad={handleIframeLoad}
-        allow="clipboard-read; clipboard-write"
+        allow="clipboard-read; clipboard-write; fullscreen; camera; microphone; geolocation"
+        allowFullScreen
+        loading="lazy"
+        crossOrigin="anonymous"
+        referrerPolicy="no-referrer"
         style={{
           opacity: loading ? 0 : 1,
           transition: reducedMotion ? 'none' : 'opacity 0.3s ease'
