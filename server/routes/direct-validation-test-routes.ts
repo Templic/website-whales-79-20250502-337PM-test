@@ -13,13 +13,14 @@
  * WARNING: These routes represent a security risk if exposed in production.
  */
 
-import express, { Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
+import { noSecurityMiddleware } from '../middleware/noSecurityMiddleware';
+import { z } from 'zod';
 
-const router = express.Router();
+const router = Router();
 
-// Add built-in middleware to parse JSON and url-encoded request bodies
-router.use(express.json());
-router.use(express.urlencoded({ extended: true }));
+// Apply the no-security middleware to all routes in this router
+router.use(noSecurityMiddleware);
 
 /**
  * Direct status endpoint
@@ -28,13 +29,9 @@ router.use(express.urlencoded({ extended: true }));
 router.get('/status', (req: Request, res: Response) => {
   res.json({
     success: true,
-    message: 'Direct validation test routes active',
-    timestamp: new Date().toISOString(),
+    active: true,
     securityMode: 'COMPLETELY_BYPASSED',
-    noSecurity: true,
-    noCsrf: true,
-    noRateLimiting: true,
-    noAuthentication: true
+    message: 'Direct validation test API is active'
   });
 });
 
@@ -43,26 +40,34 @@ router.get('/status', (req: Request, res: Response) => {
  * POST /api/direct-validation/basic
  */
 router.post('/basic', (req: Request, res: Response) => {
+  // Basic validation schema for contact form
+  const schema = z.object({
+    name: z.string().min(2, { message: 'Name must be between 2 and 100 characters' }).max(100),
+    email: z.string().email({ message: 'Invalid email address' }),
+    message: z.string().min(10, { message: 'Message must be between 10 and 2000 characters' }).max(2000)
+  });
+
   try {
-    const { name, email, message } = req.body;
-    
-    // Simple validation
-    const errors = [];
-    
-    if (!name || name.length < 2 || name.length > 100) {
-      errors.push({ field: 'name', error: 'Name must be between 2 and 100 characters' });
-    }
-    
-    if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      errors.push({ field: 'email', error: 'Invalid email address' });
-    }
-    
-    if (!message || message.length < 10 || message.length > 2000) {
-      errors.push({ field: 'message', error: 'Message must be between 10 and 2000 characters' });
-    }
-    
-    if (errors.length > 0) {
-      return res.status(400).json({
+    // Attempt to validate the request body
+    const result = schema.safeParse(req.body);
+
+    if (result.success) {
+      return res.json({
+        success: true,
+        validation: {
+          passed: true,
+          securityMode: 'COMPLETELY_BYPASSED'
+        },
+        data: result.data
+      });
+    } else {
+      // Extract validation errors
+      const errors = result.error.errors.map(err => ({
+        field: err.path[0],
+        error: err.message
+      }));
+
+      return res.json({
         success: false,
         validation: {
           passed: false,
@@ -71,20 +76,16 @@ router.post('/basic', (req: Request, res: Response) => {
         }
       });
     }
-    
-    res.json({
-      success: true,
+  } catch (error) {
+    console.error('Error in direct validation endpoint:', error);
+    return res.status(500).json({
+      success: false,
       validation: {
-        passed: true,
+        passed: false,
+        errors: [{ field: 'server', error: 'Server error during validation' }],
         securityMode: 'COMPLETELY_BYPASSED'
       },
-      data: { name, email, message }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-      securityMode: 'COMPLETELY_BYPASSED'
+      error: 'Internal server error'
     });
   }
 });
@@ -95,56 +96,44 @@ router.post('/basic', (req: Request, res: Response) => {
  */
 router.post('/security', (req: Request, res: Response) => {
   try {
+    // Extract query and userId from the request body
     const { query, userId } = req.body;
+
+    // Define potential security issues to check for
+    const potentialSqlInjection = /\b(SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|UNION|JOIN|WHERE|FROM|INTO|VALUES)\b/i;
     
-    // Check for SQL injection patterns
-    const hasSqlInjection = 
-      typeof query === 'string' && (
-        query.toLowerCase().includes('select') ||
-        query.toLowerCase().includes('from') ||
-        query.toLowerCase().includes('drop') ||
-        query.toLowerCase().includes('table') ||
-        query.toLowerCase().includes(';') ||
-        query.toLowerCase().includes('--')
-      );
-      
-    // Check for suspicious user ID patterns
-    const hasSuspiciousUserId = 
-      typeof userId === 'string' && (
-        userId.includes(';') ||
-        userId.includes('--') ||
-        userId.includes('\'') ||
-        userId.includes('"')
-      );
-      
-    if (hasSqlInjection || hasSuspiciousUserId) {
-      return res.json({
-        success: true,
-        validation: {
-          passed: false,
-          securityScore: 0.2,
-          securityMode: 'COMPLETELY_BYPASSED',
-          warnings: [
-            ...(hasSqlInjection ? ['Potential SQL injection detected in query'] : []),
-            ...(hasSuspiciousUserId ? ['Suspicious characters detected in userId'] : [])
-          ]
-        }
-      });
+    // Check for SQL injection in the query
+    const hasSqlInjection = potentialSqlInjection.test(query);
+    
+    // Calculate a security score (0-1, where 1 is perfectly secure)
+    let securityScore = 1.0;
+    const warnings: string[] = [];
+
+    if (hasSqlInjection) {
+      securityScore = 0.2; // Low security score for SQL injection
+      warnings.push('Potential SQL injection detected in query');
     }
-    
-    res.json({
+
+    return res.json({
       success: true,
       validation: {
-        passed: true,
-        securityScore: 0.9,
-        securityMode: 'COMPLETELY_BYPASSED'
+        passed: securityScore > 0.5, // Pass if score is above 0.5
+        securityScore,
+        securityMode: 'COMPLETELY_BYPASSED',
+        ...(warnings.length > 0 && { warnings })
       }
     });
   } catch (error) {
-    res.status(500).json({
+    console.error('Error in security validation endpoint:', error);
+    return res.status(500).json({
       success: false,
-      error: (error as Error).message,
-      securityMode: 'COMPLETELY_BYPASSED'
+      validation: {
+        passed: false,
+        securityScore: 0,
+        securityMode: 'COMPLETELY_BYPASSED',
+        errors: [{ field: 'server', error: 'Server error during security validation' }]
+      },
+      error: 'Internal server error'
     });
   }
 });
@@ -154,30 +143,33 @@ router.post('/security', (req: Request, res: Response) => {
  * GET /api/direct-validation/rules
  */
 router.get('/rules', (req: Request, res: Response) => {
+  // Sample validation rules
+  const rules = [
+    {
+      id: 'direct-basic-validation',
+      name: 'Direct Basic Validation',
+      description: 'Validates basic form input without security checks',
+      target: 'body',
+      priority: 10,
+      isActive: true,
+      tags: ['form', 'direct', 'no-security']
+    },
+    {
+      id: 'direct-security-validation',
+      name: 'Direct Security Validation',
+      description: 'Validates security-related input without security checks',
+      target: 'body',
+      priority: 20,
+      isActive: true,
+      tags: ['security', 'direct', 'no-security']
+    }
+  ];
+
   res.json({
     success: true,
-    count: 2,
+    count: rules.length,
     securityMode: 'COMPLETELY_BYPASSED',
-    rules: [
-      {
-        id: 'direct-basic-validation',
-        name: 'Direct Basic Validation',
-        description: 'Validates basic form input without security checks',
-        target: 'body',
-        priority: 10,
-        isActive: true,
-        tags: ['form', 'direct', 'no-security']
-      },
-      {
-        id: 'direct-security-validation',
-        name: 'Direct Security Validation',
-        description: 'Validates security-related input without security checks',
-        target: 'body',
-        priority: 20,
-        isActive: true,
-        tags: ['security', 'direct', 'no-security']
-      }
-    ]
+    rules
   });
 });
 
@@ -186,25 +178,28 @@ router.get('/rules', (req: Request, res: Response) => {
  * GET /api/direct-validation/mappings
  */
 router.get('/mappings', (req: Request, res: Response) => {
+  // Sample validation mappings
+  const mappings = [
+    {
+      route: '/api/direct-validation/basic',
+      method: 'POST',
+      rules: ['direct-basic-validation'],
+      priority: 10,
+      securityLevel: 'none'
+    },
+    {
+      route: '/api/direct-validation/security',
+      method: 'POST',
+      rules: ['direct-security-validation'],
+      priority: 20,
+      securityLevel: 'none'
+    }
+  ];
+
   res.json({
     success: true,
     securityMode: 'COMPLETELY_BYPASSED',
-    mappings: [
-      {
-        route: '/api/direct-validation/basic',
-        method: 'POST',
-        rules: ['direct-basic-validation'],
-        priority: 10,
-        securityLevel: 'none'
-      },
-      {
-        route: '/api/direct-validation/security',
-        method: 'POST',
-        rules: ['direct-security-validation'],
-        priority: 20,
-        securityLevel: 'none'
-      }
-    ]
+    mappings
   });
 });
 

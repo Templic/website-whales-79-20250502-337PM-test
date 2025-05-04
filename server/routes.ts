@@ -186,6 +186,7 @@ import noCsrfValidationRoutes from './routes/no-csrf-validation-routes';
 import directTestValidationRoutes from './routes/direct-test-validation-routes';
 import noSecurityTestRoutes from './routes/no-security-test-routes';
 import validationBypassRoutes from './routes/validation-bypass-routes';
+import directValidationTestRoutes from './routes/direct-validation-test-routes';
 import { completeCsrfBypass } from './security/middleware/completeCsrfBypass';
 // Theme routes are imported above
 import deadlinksRoutes from './routes/deadlinks';
@@ -462,6 +463,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Add validation bypass routes with complete security bypass
   app.use('/api/validation-bypass', completeCsrfBypass(), validationBypassRoutes);
   console.log("✅ Validation bypass routes added with complete security bypass");
+  
+  // Add direct validation test routes with complete security bypass
+  app.use('/api/direct-validation', directValidationTestRoutes);
+  console.log("✅ Direct validation test routes added with built-in security bypass");
   
   // Direct test API endpoints
   // These are hardcoded here for maximum security bypass effectiveness

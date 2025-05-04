@@ -1,0 +1,27 @@
+{
+  "id": "INC-20250504-SYS-M8402",
+  "title": "File integrity changes detected in critical files",
+  "description": "Detected 1 modified and 0 missing critical security files",
+  "severity": "medium",
+  "status": "new",
+  "category": "system",
+  "source": "security_scan",
+  "timestamp": "2025-05-04T21:59:59.768Z",
+  "lastUpdated": "2025-05-04T21:59:59.768Z",
+  "affectedComponents": [
+    "file-integrity",
+    "security-configuration"
+  ],
+  "relatedEvents": [],
+  "actions": [
+    {
+      "id": "INC-20250504-SYS-M8402-det-maa735lk2x",
+      "description": "Incident detected: File integrity changes detected in critical files",
+      "type": "detection",
+      "timestamp": "2025-05-04T21:59:59.768Z",
+      "automaticAction": true
+    }
+  ],
+  "evidenceReferences": [],
+  "integrityHash": "71cf27ef295b227a74084f867f8ea2ab50ec48b86266de183b77f5b36adad0f7"
+}

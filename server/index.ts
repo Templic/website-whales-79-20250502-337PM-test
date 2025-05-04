@@ -105,6 +105,8 @@ if (config.security.csrfProtection) {
       '/direct-validation-test.html',
       '/api/validation-test/*',
       '/api/direct-validation/*',
+      // Direct validation test page and its static assets
+      '/direct-validation-test.html',
       // Flask app routes
       '/',
       '/index.html',
