@@ -8,7 +8,7 @@
 
 import express from 'express';
 import { z } from 'zod';
-import { validateRequest, validateRequestWithAI } from '../middleware/apiValidationMiddleware';
+import { apiValidationMiddleware } from '../middleware/apiValidationMiddleware';
 import { ValidationEngine } from '../security/advanced/apiValidation/ValidationEngine';
 import secureLog from '../security/utils/secureLogger';
 import { 
@@ -90,6 +90,86 @@ ValidationEngine.registerRule('pagination', {
 ValidationEngine.applyRulesToEndpoint('/api/validation-test/contact', ['contact-form']);
 ValidationEngine.applyRulesToEndpoint('/api/validation-test/signup', ['signup-form']);
 ValidationEngine.applyRulesToEndpoint('/api/validation-test/items', ['pagination']);
+
+/**
+ * Helper function to validate request body against a Zod schema
+ */
+function validateRequest(schema: z.ZodType<any>) {
+  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    try {
+      const validatedData = schema.parse(req.body);
+      req.body = validatedData;
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({
+          success: false,
+          message: 'Validation failed',
+          errors: error.errors.map(err => ({
+            message: err.message,
+            path: err.path,
+            code: err.code
+          }))
+        });
+      } else {
+        console.error('Unexpected validation error:', error);
+        res.status(500).json({
+          success: false,
+          message: 'Internal validation error'
+        });
+      }
+    }
+  };
+}
+
+/**
+ * Helper function to validate request using AI security analysis
+ */
+function validateRequestWithAI(options: any) {
+  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // This is a simplified implementation that would connect to the real AI validation
+    // In a real implementation, this would use ValidationAIConnector
+    
+    // Simple pattern matching to simulate AI validation
+    const suspiciousPatterns = [
+      "SELECT", "INSERT", "UPDATE", "DELETE", "DROP", 
+      "1=1", "OR 1=1", "--", "/*", "*/", ";", 
+      "<script>", "</script>", "eval(", "document.cookie"
+    ];
+    
+    const requestStr = JSON.stringify(req.body).toLowerCase();
+    const warnings = [];
+    let securityScore = 1.0;
+    
+    // Check for suspicious patterns
+    for (const pattern of suspiciousPatterns) {
+      if (requestStr.includes(pattern.toLowerCase())) {
+        warnings.push(`Suspicious pattern detected: ${pattern}`);
+        securityScore -= 0.1; // Reduce score for each pattern
+      }
+    }
+    
+    securityScore = Math.max(0.1, securityScore); // Don't go below 0.1
+    
+    // For high security requirements, block suspicious requests
+    if (securityScore < 0.7 && options.aiOptions?.threshold > securityScore) {
+      return res.status(400).json({
+        success: false,
+        message: 'Security validation failed',
+        warnings: warnings
+      });
+    }
+    
+    // Add validation metadata to request
+    (req as any).securityValidation = {
+      score: securityScore,
+      warnings: warnings,
+      passed: true
+    };
+    
+    next();
+  };
+}
 
 // Test route with basic schema validation
 router.post('/contact', validateRequest(

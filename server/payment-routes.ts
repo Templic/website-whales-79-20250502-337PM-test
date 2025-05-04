@@ -1,19 +1,44 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import Stripe from 'stripe';
-import paymentTransactionLogger, { PaymentTransactionType } from './security/paymentTransactionLogger';
+import paymentTransactionLogger, { PaymentTransactionType, PaymentTransactionStatus } from './security/paymentTransactionLogger';
 import { csrfProtection } from './security/middleware/csrfProtection';
+import { pciComplianceMiddleware } from './security/middleware/pciCompliance';
+import { recordAuditEvent } from './security/secureAuditTrail';
+import { getClientIPFromRequest, redactSensitiveInfo } from './utils/security';
+import { PaymentOperationType } from './security/PaymentAccessControl';
 
 const router = express.Router();
 
+// Apply PCI compliance middleware to all payment routes
+router.use(pciComplianceMiddleware); // Apply security headers and sanitization
+
+// Helper function to get client IP for transaction logging (PCI DSS Req 10.3.1)
+function getClientIP(req: Request): string {
+  return req.ip || req.socket.remoteAddress || 'unknown';
+}
+
 // Initialize Stripe
-const stripeApiKey = process.env.STRIPE_SECRET_KEY_20250416;
+const stripeApiKey = process.env.STRIPE_SECRET_KEY;
 if (!stripeApiKey) {
+  recordAuditEvent({
+    timestamp: new Date().toISOString(),
+    action: 'PAYMENT_CONFIGURATION_ERROR',
+    resource: 'stripe:api_key',
+    result: 'failure',
+    severity: 'critical',
+    details: {
+      error: 'Stripe API key not configured',
+      startup: true
+    }
+  });
   throw new Error('Stripe secret key is required. Please check environment variables.');
 }
 
+// Type assertion to fix apiVersion compatibility issue
+const apiVersion = '2023-10-16' as any;
 const stripe = new Stripe(stripeApiKey, {
-  apiVersion: '2023-10-16'
+  apiVersion
 });
 
 // Schema for validating payment intent request
@@ -24,11 +49,11 @@ const paymentIntentSchema = z.object({
 });
 
 // Helper function to initialize Stripe
-function getStripeClient() {
+function getStripeClient(): Stripe {
   if (!stripeApiKey) {
     throw new Error('Stripe API key is not configured');
   }
-  return new Stripe(stripeApiKey);
+  return new Stripe(stripeApiKey, { apiVersion: apiVersion });
 }
 
 // Create payment intent
@@ -43,7 +68,7 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
     }
 
     // Initialize Stripe
-    const stripe = getStripeClient();
+    const stripeClient = getStripeClient();
 
     // Validate request data
     const validationResult = paymentIntentSchema.safeParse(req.body);
@@ -56,9 +81,13 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
     }
 
     const { amount, currency, metadata } = validationResult.data;
+    
+    // Get client IP for audit trail (PCI DSS Req 10.3.1)
+    const clientIp = getClientIP(req);
+    const userId = metadata?.userId || req.user?.id;
 
     // Create payment intent with Stripe
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await stripeClient.paymentIntents.create({
       amount,
       currency,
       metadata,
@@ -71,7 +100,8 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
     paymentTransactionLogger.logTransaction({
       timestamp: new Date().toISOString(),
       transaction_id: paymentIntent.id,
-      user_id: metadata?.userId,
+      user_id: userId,
+      ip_address: clientIp,
       payment_gateway: 'stripe',
       transaction_type: 'intent_created',
       amount,
@@ -81,14 +111,17 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
       meta: metadata
     });
 
-    // Return client secret to frontend
-    // @ts-ignore - Response type issue
-  return res.json({
+    // Return client secret to frontend (PCI DSS compliant - only sending client_secret, not the full API key)
+    return res.json({
       success: true,
       clientSecret: paymentIntent.client_secret,
     });
-  } catch (error) {
+  } catch (error: any) { // Type assertion to fix type errors
     console.error('Error creating payment intent:', error);
+    
+    // Get client IP for audit trail
+    const clientIp = getClientIP(req);
+    const userId = req.body?.metadata?.userId || req.user?.id;
     
     // Log payment error (PCI DSS Requirement 10.2)
     paymentTransactionLogger.logFailedPayment({
@@ -96,16 +129,18 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
       gateway: 'stripe',
       amount: req.body?.amount || 0,
       currency: req.body?.currency || 'usd',
-      errorMessage: error.message || 'Unknown error',
+      errorMessage: error?.message || 'Unknown error',
+      errorCode: error?.code,
+      userId: userId,
+      ipAddress: clientIp,
       meta: {
-        errorCode: error.code,
         metadata: req.body?.metadata
       }
     });
     
     return res.status(500).json({
       success: false,
-      message: error.message || 'Failed to create payment intent',
+      message: 'Failed to create payment intent. Please try again later.',
     });
   }
 });
@@ -122,7 +157,7 @@ router.post('/confirm', csrfProtection(), async (req: Request, res: Response) =>
     }
 
     // Initialize Stripe
-    const stripe = getStripeClient();
+    const stripeClient = getStripeClient();
 
     const { paymentMethodId, orderId } = req.body;
 
@@ -132,62 +167,102 @@ router.post('/confirm', csrfProtection(), async (req: Request, res: Response) =>
         message: 'Payment method ID and order ID are required',
       });
     }
+    
+    // Get client IP for audit trail (PCI DSS Req 10.3.1)
+    const clientIp = getClientIP(req);
+    const userId = req.body?.userId || req.user?.id;
 
     // In a real application, you would retrieve the order from the database
     // and validate that it exists and the payment status is appropriate
     
-    // For simulation purposes, we'll create a mock order
-    const mockOrder = {
+    // For simulation purposes, we'll create a sample record based on payment confirmation
+    // that would typically come from your database in a production system
+    const confirmedPayment = {
       id: orderId,
-      amount: 2500, // This would come from the database in a real app
+      amount: 2500, // In a real app, this would come from your database
       currency: 'usd',
       status: 'paid',
       paymentId: paymentMethodId,
     };
     
+    // Record this confirmation in the audit trail for PCI compliance
+    recordAuditEvent({
+      timestamp: new Date().toISOString(),
+      action: 'PAYMENT_CONFIRMATION',
+      resource: `payment:${paymentMethodId}`,
+      userId: userId,
+      ipAddress: clientIp,
+      result: 'success',
+      severity: 'info',
+      details: {
+        orderId,
+        amount: confirmedPayment.amount,
+        currency: confirmedPayment.currency
+      }
+    });
+    
     // Log successful payment (PCI DSS Requirement 10.2)
     paymentTransactionLogger.logSuccessfulPayment({
       transactionId: paymentMethodId,
       orderId,
-      userId: req.body.userId,
+      userId: userId as string,
       gateway: 'stripe',
-      amount: mockOrder.amount,
-      currency: mockOrder.currency,
+      amount: confirmedPayment.amount,
+      currency: confirmedPayment.currency,
       last4: req.body.last4,
-      ipAddress: req.ip,
+      ipAddress: clientIp,
       meta: {
-        email: req.body.email
+        email: req.body.email ? '[REDACTED EMAIL]' : undefined // Redact for PCI compliance
       }
     });
     
-    // Return the mock order
-    // @ts-ignore - Response type issue
-  return res.json({
+    // Return the confirmation
+    return res.json({
       success: true,
-      order: mockOrder,
+      order: confirmedPayment,
     });
-  } catch (error) {
+  } catch (error: any) { // Type assertion for error handling
     console.error('Error confirming payment:', error);
+    
+    // Get client IP for audit trail
+    const clientIp = getClientIP(req);
+    const userId = req.body?.userId || req.user?.id;
+    
+    // Log this error in the audit trail (PCI DSS Req 10.2)
+    recordAuditEvent({
+      timestamp: new Date().toISOString(),
+      action: 'PAYMENT_CONFIRMATION_ERROR',
+      resource: `payment:${req.body.paymentMethodId || 'unknown'}`,
+      userId: userId,
+      ipAddress: clientIp,
+      result: 'failure',
+      severity: 'warning',
+      details: {
+        error: error?.message || 'Unknown error',
+        orderId: req.body.orderId || 'unknown'
+      }
+    });
     
     // Log payment failure (PCI DSS Requirement 10.2)
     paymentTransactionLogger.logFailedPayment({
       transactionId: req.body.paymentMethodId || `failed_${Date.now()}`,
-      orderId: req.body.orderId || 'unknown',
-      userId: req.body.userId,
+      orderId: req.body.orderId,
+      userId: userId as string,
       gateway: 'stripe',
-      amount: req.body.amount || 0,
+      amount: req.body.amount ? Number(req.body.amount) : 0, // Convert to number 
       currency: req.body.currency || 'usd',
-      errorMessage: error.message || 'Unknown error',
-      ipAddress: req.ip,
+      errorMessage: error?.message || 'Unknown error',
+      errorCode: error?.code,
+      ipAddress: clientIp,
       meta: {
-        errorCode: error.code,
-        email: req.body.email
+        email: req.body.email ? '[REDACTED EMAIL]' : undefined // Redact for PCI compliance
       }
     });
     
+    // Return a generic error to client (don't expose internal details - PCI DSS Req 6.5.5)
     return res.status(500).json({
       success: false,
-      message: error.message || 'Failed to confirm payment',
+      message: 'Payment confirmation failed. Please contact customer support.',
     });
   }
 });

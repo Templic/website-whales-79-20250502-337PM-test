@@ -19,7 +19,7 @@ import {
   hasAdminPrivileges 
 } from './utils/auth-utils';
 import { setupCSRFProtection } from './middleware/csrfProtectionMiddleware';
-import { createAutoValidationMiddleware, initializeCommonValidationRules } from './middleware/apiValidationMiddleware';
+import { apiValidationMiddleware } from './middleware/apiValidationMiddleware';
 import { registerApiValidationRules } from './validation/apiValidationRules';
 import { createValidationMiddleware, createAIValidationMiddleware, createDatabaseValidationMiddleware } from './middleware/validationPipelineMiddleware';
 import { threatProtectionMiddleware } from './security/advanced/middleware/ThreatProtectionMiddleware';
@@ -215,9 +215,6 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Set up our authentication system
   await setupAuth(app);
   
-  // Initialize API validation rules
-  initializeCommonValidationRules();
-  
   // Register API validation rules
   registerApiValidationRules();
   
@@ -245,11 +242,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   console.log("✅ Third-party integration middleware initialized successfully");
   
   // Apply the API validation middleware to all API routes
-  // This will auto-validate requests based on registered rules
-  const validationMiddleware = createAutoValidationMiddleware({
-    mode: 'strict' // Use strict mode for proper validation
-  });
-  app.use('/api', validationMiddleware);
+  // This will validate payment API requests
+  app.use('/api', apiValidationMiddleware);
   
   console.log("✅ API Validation middleware initialized successfully");
 

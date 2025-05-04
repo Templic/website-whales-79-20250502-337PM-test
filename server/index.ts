@@ -669,8 +669,8 @@ async function initializeAllServices() {
       // Use direct imports instead - avoid dynamic imports
       try {
         // First initialize the secure audit trail
-        import('./security/secureAuditTrail').then(({ initializeAuditTrail }) => {
-          initializeAuditTrail();
+        import('./security/secureAuditTrail').then((secureAuditTrailModule) => {
+          // The secureAuditTrail module creates its instance automatically in the constructor
           log('Secure audit trail initialized successfully', 'security');
           
           // Then initialize the log reviewer

@@ -1,587 +1,450 @@
 /**
- * Secure Audit Trail System
+ * Secure Audit Trail Module
  * 
- * This module implements a secure audit trail system to meet PCI-DSS Requirement 10.5:
- * Secure audit trails so they cannot be altered.
+ * This module implements a tamper-evident, cryptographically secure audit logging system
+ * for tracking security-relevant events in compliance with PCI DSS requirements:
+ * - 10.2 (Implement automated audit trails)
+ * - 10.3 (Record audit trail entries for all system components)
+ * - 10.5 (Secure audit trails so they cannot be altered)
  * 
- * Features:
- * 1. Tamper-evident logging
- * 2. Cryptographic protections
- * 3. Audit access controls
- * 4. Integrity verification
+ * Key features:
+ * - Tamper-evident audit log using hash chaining
+ * - Digitally signed log entries
+ * - Cryptographic verification of log integrity
+ * - Separate storage for different event types
  */
 
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { log } from '../utils/logger';
 
-// Types
-export interface AuditLogEntry {
-  timestamp: string;
-  action: string;
-  resource: string;
-  userId?: string;
-  ipAddress?: string;
-  result: 'success' | 'failure' | 'warning';
-  severity: 'info' | 'warning' | 'critical';
-  details?: Record<string, any>;
-  hash?: string;
-  previousHash?: string;
-}
+// Define log severity levels
+export type AuditEventSeverity = 'info' | 'warning' | 'critical';
 
-interface AuditChain {
-  entries: AuditLogEntry[];
-  latestHash: string;
-  entryCount: number;
-  chainIntact: boolean;
-}
-
-// Configuration
-const AUDIT_DIR = path.join(process.cwd(), 'logs', 'audit');
-const VERIFICATION_INTERVAL = 60 * 60 * 1000; // 1 hour
-const HASH_ALGORITHM = 'sha256';
-const HASH_ENCODING = 'hex';
-const MAX_ENTRIES_PER_FILE = 10000;
-
-// State
-let isInitialized = false;
-let currentChain: AuditChain;
-let verificationInterval: NodeJS.Timeout | null = null;
-
-/**
- * Initialize the secure audit trail system
- */
-export function initializeAuditTrail(): void {
-  if (isInitialized) {
-    log('Secure audit trail already initialized', 'audit');
-    return;
-  }
-
-  try {
-    log('Initializing secure audit trail...', 'audit');
-    
-    // Create audit directory if it doesn't exist
-    if (!fs.existsSync(AUDIT_DIR)) {
-      fs.mkdirSync(AUDIT_DIR, { recursive: true });
-    }
-    
-    // Load or create the current chain
-    currentChain = loadLatestChain();
-    
-    // Schedule regular integrity verification
-    verificationInterval = setInterval(() => {
-      verifyAuditTrailIntegrity();
-    }, VERIFICATION_INTERVAL);
-    
-    log('Secure audit trail initialized successfully', 'audit');
-    isInitialized = true;
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    log(`Failed to initialize secure audit trail: ${errorMessage}`, 'audit');
-  }
-}
-
-/**
- * Record an event in the audit trail
- */
-export function recordAuditEvent(entry: Omit<AuditLogEntry, 'hash' | 'previousHash'>): boolean {
-  if (!isInitialized) {
-    log('Secure audit trail not initialized', 'audit');
-    return false;
-  }
-
-  try {
-    // Create a complete entry with hash
-    const completeEntry: AuditLogEntry = {
-      ...entry,
-      previousHash: currentChain.latestHash
-    };
-    
-    // Calculate the hash for this entry
-    completeEntry.hash = calculateEntryHash(completeEntry);
-    
-    // Add to the current chain
-    currentChain.entries.push(completeEntry);
-    currentChain.latestHash = completeEntry.hash;
-    currentChain.entryCount++;
-    
-    // Save the entry to disk
-    saveEntry(completeEntry);
-    
-    // If we've reached the max entries per file, start a new chain
-    if (currentChain.entries.length >= MAX_ENTRIES_PER_FILE) {
-      rotateChain();
-    }
-    
-    return true;
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    log(`Failed to record audit event: ${errorMessage}`, 'audit');
-    return false;
-  }
-}
-
-/**
- * Get audit logs for a specific time period
- */
-export function getAuditLogs(
-  startDate: Date,
-  endDate: Date,
-  filter?: Partial<AuditLogEntry>
-): AuditLogEntry[] {
-  if (!isInitialized) {
-    log('Secure audit trail not initialized', 'audit');
-    return [];
-  }
-
-  try {
-    const startTimestamp = startDate.toISOString();
-    const endTimestamp = endDate.toISOString();
-    
-    // Find all audit files in the date range
-    const auditFiles = fs.readdirSync(AUDIT_DIR)
-      .filter(file => file.endsWith('.json'))
-      .sort();
-    
-    let logs: AuditLogEntry[] = [];
-    
-    // Process each file
-    for (const file of auditFiles) {
-      const filePath = path.join(AUDIT_DIR, file);
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      
-      try {
-        const chain = JSON.parse(fileContent) as AuditChain;
-        
-        // Filter entries by timestamp
-        const filteredEntries = chain.entries.filter(entry => {
-          // Check timestamp range
-          if (entry.timestamp < startTimestamp || entry.timestamp > endTimestamp) {
-            return false;
-          }
-          
-          // Apply additional filters if provided
-          if (filter) {
-            for (const [key, value] of Object.entries(filter)) {
-              if (entry[key] !== value) {
-                return false;
-              }
-            }
-          }
-          
-          return true;
-        });
-        
-        logs = logs.concat(filteredEntries);
-      } catch (error) {
-        log(`Error parsing audit file ${file}: ${error}`, 'audit');
-      }
-    }
-    
-    // Sort by timestamp
-    logs.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-    
-    return logs;
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    log(`Failed to get audit logs: ${errorMessage}`, 'audit');
-    return [];
-  }
-}
-
-/**
- * Generate a report of the audit trail for a specific time period
- */
-export function generateAuditReport(
-  startDate: Date,
-  endDate: Date,
-  options?: {
-    includeDetails?: boolean;
-    filter?: Partial<AuditLogEntry>;
-    format?: 'text' | 'json' | 'csv';
-    outputPath?: string;
-  }
-): string {
-  const format = options?.format || 'text';
-  const includeDetails = options?.includeDetails !== undefined ? options.includeDetails : true;
+// Define audit event structure
+export interface AuditEvent {
+  // Required fields (PCI DSS 10.3.1-6)
+  timestamp: string;           // When the event occurred
+  action: string;              // What action was performed
+  resource: string;            // What resource was affected
   
-  try {
-    const logs = getAuditLogs(startDate, endDate, options?.filter);
-    
-    if (logs.length === 0) {
-      return 'No audit logs found for the specified period.';
-    }
-    
-    let report = '';
-    const outputPath = options?.outputPath || path.join(AUDIT_DIR, `audit-report-${new Date().toISOString().replace(/:/g, '-')}.${format}`);
-    
-    switch (format) {
-      case 'json':
-        report = JSON.stringify(logs, null, 2);
-        fs.writeFileSync(outputPath, report);
-        break;
-        
-      case 'csv':
-        // CSV header
-        report = 'Timestamp,Action,Resource,UserID,IPAddress,Result,Severity\n';
-        
-        // CSV rows
-        for (const entry of logs) {
-          report += `${entry.timestamp},${entry.action},${entry.resource},${entry.userId || ''},${entry.ipAddress || ''},${entry.result},${entry.severity}\n`;
-        }
-        
-        fs.writeFileSync(outputPath, report);
-        break;
-        
-      case 'text':
-      default:
-        // Text report
-        report = `Audit Report: ${startDate.toISOString()} to ${endDate.toISOString()}\n`;
-        report += `Generated: ${new Date().toISOString()}\n`;
-        report += `Total Entries: ${logs.length}\n\n`;
-        
-        // Group by action
-        const actionGroups: Record<string, AuditLogEntry[]> = {};
-        for (const entry of logs) {
-          if (!actionGroups[entry.action]) {
-            actionGroups[entry.action] = [];
-          }
-          actionGroups[entry.action].push(entry);
-        }
-        
-        // Group by severity
-        const severityCounts = {
-          info: logs.filter(e => e.severity === 'info').length,
-          warning: logs.filter(e => e.severity === 'warning').length,
-          critical: logs.filter(e => e.severity === 'critical').length
-        };
-        
-        report += `Summary by Severity:\n`;
-        report += `  Critical: ${severityCounts.critical}\n`;
-        report += `  Warning: ${severityCounts.warning}\n`;
-        report += `  Info: ${severityCounts.info}\n\n`;
-        
-        report += `Summary by Action:\n`;
-        for (const [action, entries] of Object.entries(actionGroups)) {
-          report += `  ${action}: ${entries.length} entries\n`;
-        }
-        report += '\n';
-        
-        // Detailed entries
-        if (includeDetails) {
-          report += 'Detailed Entries:\n';
-          for (const entry of logs) {
-            report += `[${entry.timestamp}] ${entry.action} - ${entry.resource}\n`;
-            report += `  Severity: ${entry.severity}, Result: ${entry.result}\n`;
-            
-            if (entry.userId) report += `  User ID: ${entry.userId}\n`;
-            if (entry.ipAddress) report += `  IP Address: ${entry.ipAddress}\n`;
-            
-            if (entry.details) {
-              report += `  Details: ${JSON.stringify(entry.details, null, 2).replace(/\n/g, '\n  ')}\n`;
-            }
-            
-            report += '\n';
-          }
-        }
-        
-        fs.writeFileSync(outputPath, report);
-        break;
-    }
-    
-    log(`Audit report generated: ${outputPath}`, 'audit');
-    return outputPath;
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    log(`Failed to generate audit report: ${errorMessage}`, 'audit');
-    return '';
-  }
+  // User identification (PCI DSS 10.3.1-2)
+  userId?: string;             // Who performed the action
+  ipAddress?: string;          // Source IP address
+  
+  // Result information (PCI DSS 10.3.3-5)
+  result: 'success' | 'failure'; // Outcome of the action
+  severity: AuditEventSeverity;  // Severity level
+  
+  // Additional details (PCI DSS 10.3.6)
+  details?: Record<string, any>; // Additional context
+}
+
+// Internal structure for stored audit entries
+interface StoredAuditEntry extends AuditEvent {
+  entryId: string;             // Unique ID for this entry
+  previousHash?: string;       // Hash of the previous entry (for tamper evidence)
+  entryHash: string;           // Hash of this entry (for integrity verification)
+  signature?: string;          // Digital signature (if key pair is available)
 }
 
 /**
- * Verify the integrity of the entire audit trail
+ * Create a secure hash from a string using SHA-256
  */
-export function verifyAuditTrailIntegrity(): boolean {
-  if (!isInitialized) {
-    log('Secure audit trail not initialized', 'audit');
-    return false;
-  }
+function createSecureHash(data: string): string {
+  return crypto.createHash('sha256').update(data).digest('hex');
+}
 
-  try {
-    log('Verifying audit trail integrity...', 'audit');
+class SecureAuditTrail {
+  private auditLogDir: string;
+  private generalLogFile: string;
+  private paymentLogFile: string;
+  private authLogFile: string;
+  private adminLogFile: string;
+  
+  constructor() {
+    this.auditLogDir = path.join(process.cwd(), 'logs', 'audit');
+    this.generalLogFile = path.join(this.auditLogDir, 'general-audit.log');
+    this.paymentLogFile = path.join(this.auditLogDir, 'payment-audit.log');
+    this.authLogFile = path.join(this.auditLogDir, 'auth-audit.log');
+    this.adminLogFile = path.join(this.auditLogDir, 'admin-audit.log');
     
-    // Find all audit files
-    const auditFiles = fs.readdirSync(AUDIT_DIR)
-      .filter(file => file.endsWith('.json'))
-      .sort();
+    // Ensure audit log directory exists
+    this.ensureLogDirectoryExists();
+  }
+  
+  /**
+   * Ensure that the audit log directory exists
+   */
+  private ensureLogDirectoryExists(): void {
+    try {
+      if (!fs.existsSync(this.auditLogDir)) {
+        fs.mkdirSync(this.auditLogDir, { recursive: true, mode: 0o750 });
+        console.log('[security] Created audit logs directory');
+      }
+    } catch (error) {
+      console.error('[error] Failed to create audit logs directory:', error);
+    }
+  }
+  
+  /**
+   * Determine which log file to use based on the action
+   */
+  private getLogFileForAction(action: string): string {
+    // Payment-related actions go to payment log
+    if (action.startsWith('PAYMENT_')) {
+      return this.paymentLogFile;
+    }
     
-    let previousHash = '';
-    let isIntact = true;
+    // Authentication-related actions go to auth log
+    if (action.startsWith('AUTH_') || action.includes('LOGIN') || action.includes('LOGOUT')) {
+      return this.authLogFile;
+    }
     
-    // Process each file
-    for (const file of auditFiles) {
-      const filePath = path.join(AUDIT_DIR, file);
-      const fileContent = fs.readFileSync(filePath, 'utf8');
+    // Admin-related actions go to admin log
+    if (action.startsWith('ADMIN_')) {
+      return this.adminLogFile;
+    }
+    
+    // Default to general log
+    return this.generalLogFile;
+  }
+  
+  /**
+   * Calculate hash for an audit entry to ensure integrity
+   */
+  private calculateEntryHash(entry: Omit<StoredAuditEntry, 'entryHash' | 'signature'>): string {
+    // Create a deterministic string representation
+    const dataString = JSON.stringify(entry, Object.keys(entry).sort());
+    
+    // Calculate SHA-256 hash using helper function
+    return createSecureHash(dataString);
+  }
+  
+  /**
+   * Get the latest entry hash from a log file
+   */
+  private getLatestEntryHash(logFile: string): string | undefined {
+    try {
+      if (!fs.existsSync(logFile)) {
+        return undefined;
+      }
       
-      try {
-        const chain = JSON.parse(fileContent) as AuditChain;
-        
-        // Verify the chain
-        const verificationResult = verifyChain(chain, previousHash);
-        isIntact = isIntact && verificationResult.intact;
-        
-        if (!verificationResult.intact) {
-          log(`Integrity violation detected in audit file: ${file}`, 'audit');
-          log(`First integrity error at entry ${verificationResult.firstErrorIndex}`, 'audit');
+      const content = fs.readFileSync(logFile, 'utf-8');
+      const lines = content.trim().split('\n');
+      
+      if (lines.length === 0 || lines[0] === '') {
+        return undefined;
+      }
+      
+      const lastLine = lines[lines.length - 1];
+      const lastEntry = JSON.parse(lastLine);
+      
+      return lastEntry.entryHash;
+    } catch (error) {
+      console.error(`[error] Error reading latest audit entry hash: ${error}`);
+      return undefined;
+    }
+  }
+  
+  /**
+   * Create a digital signature for an entry
+   * Only used if a private key is available
+   */
+  private signEntry(data: string): string | undefined {
+    try {
+      // Check if a private key is available for signing
+      const privateKeyPath = process.env.AUDIT_SIGNING_KEY_PATH;
+      if (!privateKeyPath || !fs.existsSync(privateKeyPath)) {
+        return undefined;
+      }
+      
+      const privateKey = fs.readFileSync(privateKeyPath);
+      const sign = crypto.createSign('SHA256');
+      sign.update(data);
+      sign.end();
+      
+      return sign.sign(privateKey, 'base64');
+    } catch (error) {
+      console.error(`[error] Error signing audit entry: ${error}`);
+      return undefined;
+    }
+  }
+  
+  /**
+   * Record an audit event
+   * Implements PCI DSS Requirements 10.2, 10.3, and 10.5
+   */
+  public recordEvent(event: AuditEvent): string {
+    try {
+      // Generate a unique ID for this entry
+      const entryId = `audit_${crypto.randomBytes(8).toString('hex')}`;
+      
+      // Determine which log file to use
+      const logFile = this.getLogFileForAction(event.action);
+      
+      // Get the hash of the previous entry (if any)
+      const previousHash = this.getLatestEntryHash(logFile);
+      
+      // Prepare the entry to be stored
+      const entryToStore: Omit<StoredAuditEntry, 'entryHash' | 'signature'> = {
+        ...event,
+        entryId,
+        previousHash
+      };
+      
+      // Calculate the hash for this entry
+      const entryHash = this.calculateEntryHash(entryToStore);
+      
+      // Add the hash to the entry
+      const entryWithHash: Omit<StoredAuditEntry, 'signature'> = {
+        ...entryToStore,
+        entryHash
+      };
+      
+      // Sign the entry if possible
+      const signature = this.signEntry(JSON.stringify(entryWithHash));
+      
+      // Create the final entry
+      const finalEntry: StoredAuditEntry = {
+        ...entryWithHash,
+        signature
+      };
+      
+      // Serialize the entry to JSON
+      const serializedEntry = JSON.stringify(finalEntry);
+      
+      // Ensure log directory exists
+      this.ensureLogDirectoryExists();
+      
+      // Append to the appropriate log file
+      fs.appendFileSync(logFile, serializedEntry + '\n', {
+        mode: 0o640 // Owner: read/write, Group: read, Others: none
+      });
+      
+      // For critical events, also log to console (but redact sensitive details)
+      if (event.severity === 'critical') {
+        const { details, ...safeEvent } = event;
+        console.log(`[security-critical] Audit event: ${JSON.stringify(safeEvent)}`);
+      }
+      
+      return entryId;
+    } catch (error) {
+      console.error(`[error] Failed to record audit event: ${error}`);
+      // Still return a generated ID even if logging failed
+      return `error_${Date.now()}`;
+    }
+  }
+  
+  /**
+   * Verify the integrity of an audit log file
+   * Implements PCI DSS Requirement 10.5.5
+   */
+  public verifyLogIntegrity(logFile: string = this.generalLogFile): {
+    intact: boolean;
+    totalEntries: number;
+    verifiedEntries: number;
+    issues?: { entryId: string; reason: string }[];
+  } {
+    try {
+      if (!fs.existsSync(logFile)) {
+        return { intact: true, totalEntries: 0, verifiedEntries: 0 };
+      }
+      
+      // Read all log entries
+      const content = fs.readFileSync(logFile, 'utf-8');
+      const lines = content.split('\n').filter(line => line.trim());
+      
+      if (lines.length === 0) {
+        return { intact: true, totalEntries: 0, verifiedEntries: 0 };
+      }
+      
+      // Verify each entry and the hash chain
+      let previousHash: string | undefined;
+      const issues: { entryId: string; reason: string }[] = [];
+      
+      for (let i = 0; i < lines.length; i++) {
+        try {
+          const entry: StoredAuditEntry = JSON.parse(lines[i]);
           
-          // Record the integrity violation in the audit log
-          recordAuditEvent({
-            timestamp: new Date().toISOString(),
-            action: 'AUDIT_INTEGRITY_VIOLATION',
-            resource: file,
-            result: 'failure',
-            severity: 'critical',
-            details: {
-              file,
-              errorIndex: verificationResult.firstErrorIndex,
-              expectedHash: verificationResult.expectedHash,
-              actualHash: verificationResult.actualHash
-            }
+          // Verify the hash chain (except for the first entry)
+          if (i > 0 && entry.previousHash !== previousHash) {
+            issues.push({
+              entryId: entry.entryId,
+              reason: 'Hash chain broken: previousHash does not match previous entry\'s hash'
+            });
+          }
+          
+          // Verify the entry's own hash
+          const { entryHash, signature, ...entryData } = entry;
+          const calculatedHash = this.calculateEntryHash(entryData as any);
+          
+          if (calculatedHash !== entryHash) {
+            issues.push({
+              entryId: entry.entryId,
+              reason: 'Entry hash mismatch: content may have been tampered with'
+            });
+          }
+          
+          // TODO: Verify signature if present and public key is available
+          
+          // Update previous hash for next iteration
+          previousHash = entry.entryHash;
+        } catch (err) {
+          issues.push({
+            entryId: `line_${i + 1}`,
+            reason: `Invalid audit entry format: ${err}`
           });
         }
-        
-        // Update previous hash for next file
-        if (chain.entries.length > 0) {
-          previousHash = chain.entries[chain.entries.length - 1].hash || '';
-        }
-      } catch (error) {
-        log(`Error verifying audit file ${file}: ${error}`, 'audit');
-        isIntact = false;
       }
-    }
-    
-    // Log verification result
-    if (isIntact) {
-      log('Audit trail integrity verification passed', 'audit');
       
-      // Record successful verification
-      recordAuditEvent({
-        timestamp: new Date().toISOString(),
-        action: 'AUDIT_INTEGRITY_VERIFICATION',
-        resource: 'audit_trail',
-        result: 'success',
-        severity: 'info',
-        details: {
-          filesVerified: auditFiles.length
+      return {
+        intact: issues.length === 0,
+        totalEntries: lines.length,
+        verifiedEntries: lines.length - issues.length,
+        issues: issues.length > 0 ? issues : undefined
+      };
+    } catch (error) {
+      console.error(`[error] Error verifying audit log integrity: ${error}`);
+      return {
+        intact: false,
+        totalEntries: 0,
+        verifiedEntries: 0,
+        issues: [{ entryId: 'overall', reason: `Verification error: ${error}` }]
+      };
+    }
+  }
+  
+  /**
+   * Rotate audit logs (useful for maintenance)
+   */
+  public rotateAuditLogs(maxSizeInMB = 10): void {
+    try {
+      const logFiles = [
+        this.generalLogFile,
+        this.paymentLogFile,
+        this.authLogFile,
+        this.adminLogFile
+      ];
+      
+      for (const logFile of logFiles) {
+        if (!fs.existsSync(logFile)) {
+          continue;
         }
-      });
-    } else {
-      log('Audit trail integrity verification failed', 'audit');
+        
+        // Check file size
+        const stats = fs.statSync(logFile);
+        const fileSizeInMB = stats.size / (1024 * 1024);
+        
+        // Rotate if file size exceeds the limit
+        if (fileSizeInMB > maxSizeInMB) {
+          const timestamp = new Date().toISOString().replace(/:/g, '-');
+          const logName = path.basename(logFile, '.log');
+          const rotatedLogFile = path.join(
+            this.auditLogDir,
+            `${logName}-${timestamp}.log`
+          );
+          
+          // Rename current log file to archived log file
+          fs.renameSync(logFile, rotatedLogFile);
+          
+          // Create a new empty log file
+          fs.writeFileSync(logFile, '', {
+            mode: 0o640 // Owner: read/write, Group: read, Others: none
+          });
+          
+          // Log the rotation
+          this.recordEvent({
+            timestamp: new Date().toISOString(),
+            action: 'AUDIT_LOG_ROTATION',
+            resource: `file:${logFile}`,
+            result: 'success',
+            severity: 'info',
+            details: {
+              size_mb: fileSizeInMB.toFixed(2),
+              old_path: logFile,
+              archived_path: rotatedLogFile
+            }
+          });
+          
+          console.log(`[security] Rotated audit log ${logFile} to ${rotatedLogFile}`);
+        }
+      }
+    } catch (error) {
+      console.error(`[error] Error rotating audit logs: ${error}`);
     }
-    
-    return isIntact;
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    log(`Failed to verify audit trail integrity: ${errorMessage}`, 'audit');
-    return false;
   }
 }
 
+// Create and export a singleton instance
+const secureAuditTrail = new SecureAuditTrail();
+
 /**
- * Load the latest audit chain or create a new one
+ * Convenience function to record an audit event
  */
-function loadLatestChain(): AuditChain {
-  // Find all audit files
-  const auditFiles = fs.readdirSync(AUDIT_DIR)
-    .filter(file => file.endsWith('.json'))
-    .sort();
-  
-  if (auditFiles.length === 0) {
-    // No existing chain, create a new one
-    return createNewChain();
-  }
-  
-  // Load the latest file
-  const latestFile = auditFiles[auditFiles.length - 1];
-  const filePath = path.join(AUDIT_DIR, latestFile);
-  
+export function recordAuditEvent(event: AuditEvent): string {
+  return secureAuditTrail.recordEvent(event);
+}
+
+/**
+ * Retrieve audit logs from a specific log file
+ * @param logType Optional: The type of log to retrieve (payment, auth, admin, or general)
+ * @param startTime Optional: The start timestamp to filter logs (ISO date string)
+ * @param endTime Optional: The end timestamp to filter logs (ISO date string)
+ */
+export function getAuditLogs(
+  logType?: 'payment' | 'auth' | 'admin' | 'general',
+  startTime?: string,
+  endTime?: string
+): StoredAuditEntry[] {
   try {
-    const fileContent = fs.readFileSync(filePath, 'utf8');
-    const chain = JSON.parse(fileContent) as AuditChain;
+    const auditLogDir = path.join(process.cwd(), 'logs', 'audit');
+    let logFile: string;
     
-    // If the chain is full, create a new one
-    if (chain.entries.length >= MAX_ENTRIES_PER_FILE) {
-      return createNewChain(chain.latestHash);
+    // Determine which log file to use
+    switch(logType) {
+      case 'payment':
+        logFile = path.join(auditLogDir, 'payment-audit.log');
+        break;
+      case 'auth':
+        logFile = path.join(auditLogDir, 'auth-audit.log');
+        break;
+      case 'admin':
+        logFile = path.join(auditLogDir, 'admin-audit.log');
+        break;
+      default:
+        logFile = path.join(auditLogDir, 'general-audit.log');
+        break;
     }
     
-    // Verify the chain's integrity
-    const verificationResult = verifyChain(chain);
-    
-    if (!verificationResult.intact) {
-      log(`Integrity violation detected in latest audit file. Creating new chain.`, 'audit');
-      
-      // Record the integrity violation
-      const entry: AuditLogEntry = {
-        timestamp: new Date().toISOString(),
-        action: 'AUDIT_INTEGRITY_VIOLATION',
-        resource: latestFile,
-        result: 'failure',
-        severity: 'critical',
-        details: {
-          file: latestFile,
-          errorIndex: verificationResult.firstErrorIndex,
-          expectedHash: verificationResult.expectedHash,
-          actualHash: verificationResult.actualHash
-        },
-        hash: '',
-        previousHash: ''
-      };
-      
-      // Create a new chain with this violation as the first entry
-      const newChain = createNewChain();
-      
-      // Calculate hash for the entry
-      entry.hash = calculateEntryHash(entry);
-      newChain.entries.push(entry);
-      newChain.latestHash = entry.hash;
-      newChain.entryCount = 1;
-      
-      // Save the new chain
-      saveChain(newChain);
-      
-      return newChain;
+    // Check if log file exists
+    if (!fs.existsSync(logFile)) {
+      return [];
     }
     
-    return chain;
+    // Read and parse log file
+    const logs = fs.readFileSync(logFile, 'utf-8')
+      .trim()
+      .split('\n')
+      .filter(line => line.trim().length > 0)
+      .map(line => JSON.parse(line) as StoredAuditEntry);
+    
+    // Filter by time range if provided
+    if (startTime || endTime) {
+      return logs.filter(log => {
+        const logTime = new Date(log.timestamp).getTime();
+        const start = startTime ? new Date(startTime).getTime() : 0;
+        const end = endTime ? new Date(endTime).getTime() : Infinity;
+        
+        return logTime >= start && logTime <= end;
+      });
+    }
+    
+    return logs;
   } catch (error) {
-    log(`Error loading latest audit chain: ${error}. Creating new chain.`, 'audit');
-    return createNewChain();
+    console.error(`Error retrieving audit logs: ${error}`);
+    return [];
   }
 }
 
-/**
- * Create a new audit chain
- */
-function createNewChain(previousHash: string = ''): AuditChain {
-  return {
-    entries: [],
-    latestHash: previousHash,
-    entryCount: 0,
-    chainIntact: true
-  };
-}
-
-/**
- * Calculate the hash for an audit entry
- */
-function calculateEntryHash(entry: AuditLogEntry): string {
-  // Create a copy of the entry without the hash field
-  const hashableEntry = { ...entry };
-  delete hashableEntry.hash;
-  
-  // Serialize and hash
-  const entryString = JSON.stringify(hashableEntry);
-  return crypto.createHash(HASH_ALGORITHM).update(entryString).digest(HASH_ENCODING as crypto.BinaryToTextEncoding);
-}
-
-/**
- * Save an audit entry to the current chain file
- */
-function saveEntry(entry: AuditLogEntry): void {
-  // Get the current chain file path
-  const timestamp = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-  const chainFile = `audit-${timestamp}-${currentChain.entryCount}.json`;
-  const filePath = path.join(AUDIT_DIR, chainFile);
-  
-  // Update the chain's entry count
-  currentChain.entryCount = currentChain.entries.length;
-  
-  // Save the updated chain
-  saveChain(currentChain, filePath);
-}
-
-/**
- * Save the entire chain to a file
- */
-function saveChain(chain: AuditChain, filePath?: string): void {
-  if (!filePath) {
-    const timestamp = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    filePath = path.join(AUDIT_DIR, `audit-${timestamp}-${chain.entryCount}.json`);
-  }
-  
-  fs.writeFileSync(filePath, JSON.stringify(chain, null, 2));
-}
-
-/**
- * Rotate to a new chain when the current one is full
- */
-function rotateChain(): void {
-  const previousHash = currentChain.latestHash;
-  
-  // Create a new chain
-  currentChain = createNewChain(previousHash);
-  
-  log(`Audit chain rotated. New chain created with previous hash: ${previousHash.substring(0, 10)}...`, 'audit');
-}
-
-/**
- * Verify the integrity of a chain
- */
-function verifyChain(
-  chain: AuditChain,
-  initialPreviousHash: string = ''
-): {
-  intact: boolean;
-  firstErrorIndex: number;
-  expectedHash: string;
-  actualHash: string;
-} {
-  if (chain.entries.length === 0) {
-    return {
-      intact: true,
-      firstErrorIndex: -1,
-      expectedHash: '',
-      actualHash: ''
-    };
-  }
-  
-  let previousHash = initialPreviousHash;
-  
-  for (let i = 0; i < chain.entries.length; i++) {
-    const entry = chain.entries[i];
-    
-    // Check previous hash
-    if (entry.previousHash !== previousHash) {
-      return {
-        intact: false,
-        firstErrorIndex: i,
-        expectedHash: previousHash,
-        actualHash: entry.previousHash || ''
-      };
-    }
-    
-    // Recalculate hash
-    const calculatedHash = calculateEntryHash(entry);
-    
-    // Check hash
-    if (entry.hash !== calculatedHash) {
-      return {
-        intact: false,
-        firstErrorIndex: i,
-        expectedHash: calculatedHash,
-        actualHash: entry.hash || ''
-      };
-    }
-    
-    // Update previous hash for next entry
-    previousHash = entry.hash || '';
-  }
-  
-  return {
-    intact: true,
-    firstErrorIndex: -1,
-    expectedHash: '',
-    actualHash: ''
-  };
-}
+export default secureAuditTrail;
