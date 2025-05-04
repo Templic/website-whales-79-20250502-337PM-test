@@ -1,457 +1,581 @@
 /**
  * Validation Pipeline
  * 
- * A comprehensive validation pipeline that processes validation in distinct phases:
- * 1. Pre-validation phase (optional)
- * 2. Main validation phase (schema + AI)
- * 3. Post-validation checks and logging
- * 
- * This pipeline integrates deeply with the security architecture and provides
- * caching, batching, and performance optimization.
+ * This module provides a comprehensive pipeline for validating API requests,
+ * combining schema validation, security checks, and AI-powered analysis.
  */
 
-import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { ValidationEngine } from '../apiValidation/ValidationEngine';
-import secureLogger from '../../utils/secureLogger'; // Fixed import
-import { LRUCache } from 'lru-cache';
-import { createHash } from 'crypto';
-import { ValidationAIConnector } from '../ai/ValidationAIConnector';
-import { SecurityAnalysisService } from '../ai/SecurityAnalysisService';
+import secureLogger from '../../utils/secureLogger';
+import { ValidationErrorCategory, ValidationErrorSeverity, enhanceValidationError } from '../error/ValidationErrorCategory';
+import { validationFallbackHandler } from '../fallback/ValidationFallbackHandler';
+import { validationAlertSystem, AlertType } from '../notification/ValidationAlertSystem';
+import { validationRuleVersioning } from '../versioning/ValidationRuleVersioning';
+import { Request } from 'express';
 
-// Interfaces
-export interface ValidationOptions {
-  skipCache?: boolean;
-  batchKey?: string;
-  priority?: 'high' | 'normal' | 'low';
-  contentType?: 'api' | 'code' | 'database' | 'config';
-  detailedAnalysis?: boolean;
-  threshold?: number;
-  maxTokens?: number;
-  contextData?: Record<string, any>;
+// Configure component name for logging
+const logComponent = 'ValidationPipeline';
+
+// Validation pipeline hooks
+export type ValidationHook<T> = (data: T, context: ValidationContext) => Promise<T | null>;
+
+// Validation context
+export interface ValidationContext {
+  ruleId?: string;
+  ruleVersion?: number;
+  requestId: string;
+  userId?: string | number;
+  path: string;
+  method: string;
+  target: 'body' | 'query' | 'params' | 'headers' | 'file';
+  timestamp: Date;
+  metadata: Record<string, any>;
 }
 
-interface ValidationContext {
-  req: Request;
-  data: any;
-  schema?: z.ZodType<any>;
-  options: ValidationOptions;
-  startTime: number;
-  validationId: string;
+// Validation result
+export interface ValidationResult<T = any> {
+  success: boolean;
+  data?: T;
+  errors?: ValidationError[];
+  metadata: {
+    ruleId?: string;
+    ruleVersion?: number;
+    fallbackUsed: boolean;
+    aiAnalysisPerformed: boolean;
+    processingTimeMs: number;
+  };
 }
 
-interface ValidationResult {
-  valid: boolean;
-  validatedData?: any;
-  errors?: any;
-  warnings?: any;
-  timeTaken?: number;
-  cacheLookup?: boolean;
-  cacheHit?: boolean;
-  validationId: string;
-  securityScore?: number;
-  threatAnalysis?: any;
+// Validation error
+export interface ValidationError {
+  message: string;
+  path?: string | string[];
+  code?: string;
+  type: ValidationErrorCategory;
+  severity: ValidationErrorSeverity;
+  metadata?: Record<string, any>;
 }
 
-// Configure validation cache
-const validationCache = new LRUCache<string, ValidationResult>({
-  max: 1000, // Maximum items in cache
-  ttl: 5 * 60 * 1000, // 5 minutes TTL
-  allowStale: false,
-  updateAgeOnGet: true,
-  updateAgeOnHas: false,
-});
-
-// Batch validation queue
-interface BatchItem {
-  context: ValidationContext;
-  resolve: (result: ValidationResult) => void;
-  reject: (error: Error) => void;
+// Validation pipeline options
+export interface ValidationPipelineOptions {
+  hooks?: {
+    preValidation?: ValidationHook<any>[];
+    postValidation?: ValidationHook<any>[];
+  };
+  fallbackEnabled?: boolean;
+  aiAnalysisEnabled?: boolean;
+  logSuccesses?: boolean;
+  recordMetrics?: boolean;
+  maxProcessingTimeMs?: number;
 }
 
-const batchQueues: Record<string, BatchItem[]> = {};
-const BATCH_PROCESS_INTERVAL = 200; // Process batches every 200ms
-
-// Start batch processing
-setInterval(() => {
-  processBatchQueues();
-}, BATCH_PROCESS_INTERVAL);
-
-/**
- * Process all pending batch validation queues
- */
-function processBatchQueues() {
-  const queueKeys = Object.keys(batchQueues);
-  if (queueKeys.length === 0) return;
-
-  for (const key of queueKeys) {
-    const queue = batchQueues[key];
-    if (queue.length === 0) {
-      delete batchQueues[key];
-      continue;
-    }
-
-    // Process this batch
-    processBatch(key, queue);
-    delete batchQueues[key];
-  }
-}
-
-/**
- * Process a specific batch of validation requests
- */
-async function processBatch(batchKey: string, items: BatchItem[]) {
-  try {
-    // Group similar requests for efficiency
-    const contexts = items.map(item => item.context);
-    
-    // Create a representative context from the batch
-    // For simplicity, we're using the first item, but this could be enhanced
-    const representativeContext = contexts[0];
-    
-    // Execute validation with combined data
-    const engine = new ValidationEngine();
-    const result = await engine.validate(
-      representativeContext.data, 
-      representativeContext.schema, 
-      { ...representativeContext.options, isBatchValidation: true }
-    );
-    
-    // Return results to all waiting items
-    for (const item of items) {
-      const validationResult: ValidationResult = {
-        ...result,
-        timeTaken: Date.now() - item.context.startTime,
-        validationId: item.context.validationId,
-        cacheLookup: false,
-        cacheHit: false
-      };
-      
-      item.resolve(validationResult);
-    }
-  } catch (error) {
-    // Handle errors in batch processing
-    secureLogger.error('Batch validation failed', { 
-      batchKey, 
-      itemCount: items.length, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    });
-    
-    // Reject all promises
-    for (const item of items) {
-      item.reject(error instanceof Error ? error : new Error('Batch validation failed'));
-    }
-  }
-}
-
-/**
- * Generate a cache key for a validation request
- */
-function generateCacheKey(data: any, schema?: z.ZodType<any>, options?: ValidationOptions): string {
-  // For security reasons, we hash the data to create the cache key
-  const dataString = JSON.stringify(data);
-  const schemaString = schema ? schema.toString() : '';
-  const optionsString = options ? JSON.stringify(options) : '';
-  
-  return createHash('sha256')
-    .update(dataString + schemaString + optionsString)
-    .digest('hex');
-}
+// Default pipeline options
+const defaultOptions: ValidationPipelineOptions = {
+  hooks: {
+    preValidation: [],
+    postValidation: []
+  },
+  fallbackEnabled: true,
+  aiAnalysisEnabled: true,
+  logSuccesses: true,
+  recordMetrics: true,
+  maxProcessingTimeMs: 5000 // 5 seconds
+};
 
 /**
  * Main validation pipeline class
  */
 export class ValidationPipeline {
-  private engine: ValidationEngine;
-  private aiConnector: ValidationAIConnector;
-  private securityService: SecurityAnalysisService;
+  private options: ValidationPipelineOptions;
   
-  constructor() {
-    this.engine = new ValidationEngine();
-    this.aiConnector = new ValidationAIConnector();
-    this.securityService = new SecurityAnalysisService();
-  }
-
-  /**
-   * Execute the validation pipeline
-   */
-  async validate(
-    req: Request,
-    data: any, 
-    schema?: z.ZodType<any>, 
-    options: ValidationOptions = {}
-  ): Promise<ValidationResult> {
-    const startTime = Date.now();
-    const validationId = createHash('md5').update(Date.now() + Math.random().toString()).digest('hex').slice(0, 8);
+  constructor(options?: Partial<ValidationPipelineOptions>) {
+    this.options = {
+      ...defaultOptions,
+      ...options,
+      hooks: {
+        preValidation: options?.hooks?.preValidation || defaultOptions.hooks?.preValidation,
+        postValidation: options?.hooks?.postValidation || defaultOptions.hooks?.postValidation
+      }
+    };
     
-    // Create validation context
-    const context: ValidationContext = {
-      req,
-      data,
-      schema,
-      options,
-      startTime,
-      validationId
+    secureLogger('info', logComponent, 'Validation pipeline initialized', {
+      metadata: {
+        options: this.options
+      }
+    });
+  }
+  
+  /**
+   * Validate data against a registered rule
+   */
+  public async validate<T>(
+    ruleId: string,
+    data: any,
+    context: Partial<ValidationContext>
+  ): Promise<ValidationResult<T>> {
+    const startTime = Date.now();
+    const errors: ValidationError[] = [];
+    
+    // Complete the validation context
+    const fullContext: ValidationContext = {
+      ruleId,
+      requestId: context.requestId || `req-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      path: context.path || 'unknown',
+      method: context.method || 'UNKNOWN',
+      target: context.target || 'body',
+      timestamp: new Date(),
+      metadata: context.metadata || {},
+      userId: context.userId
     };
     
     try {
-      // Phase 1: Pre-validation (cache check and batching)
-      const preValidationResult = await this.performPreValidation(context);
-      if (preValidationResult) {
-        return preValidationResult;
+      // Check processing time limit
+      const timeoutPromise = new Promise<ValidationResult<T>>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(`Validation timeout after ${this.options.maxProcessingTimeMs}ms`));
+        }, this.options.maxProcessingTimeMs);
+      });
+      
+      // Run actual validation
+      const validationPromise = this.performValidation<T>(ruleId, data, fullContext, errors);
+      
+      // Race the validation against the timeout
+      const result = await Promise.race([validationPromise, timeoutPromise]);
+      
+      // Log success if configured
+      if (result.success && this.options.logSuccesses) {
+        secureLogger('info', logComponent, `Validation succeeded for rule ${ruleId}`, {
+          metadata: {
+            ruleId,
+            ruleVersion: result.metadata.ruleVersion,
+            processingTimeMs: Date.now() - startTime,
+            context: fullContext
+          }
+        });
       }
       
-      // Phase 2: Main validation
-      const mainValidationResult = await this.performMainValidation(context);
-      
-      // Phase 3: Post-validation
-      return await this.performPostValidation(context, mainValidationResult);
+      return result;
     } catch (error) {
-      // Handle any pipeline failures
-      secureLogger.error('Validation pipeline failed', { 
-        validationId, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      });
+      // Handle timeout or other unexpected errors
+      const errorMessage = error instanceof Error ? error.message : String(error);
       
-      return {
-        valid: false,
-        errors: [{ message: 'Validation system error', code: 'SYSTEM_ERROR' }],
-        timeTaken: Date.now() - startTime,
-        validationId
-      };
-    }
-  }
-  
-  /**
-   * Phase 1: Pre-validation checks including caching and batching
-   */
-  private async performPreValidation(context: ValidationContext): Promise<ValidationResult | null> {
-    const { data, schema, options, validationId, startTime } = context;
-    
-    // Skip pre-validation if explicitly requested
-    if (options.skipCache) {
-      return null;
-    }
-    
-    // Check cache first
-    const cacheKey = generateCacheKey(data, schema, options);
-    const cachedResult = validationCache.get(cacheKey);
-    
-    if (cachedResult) {
-      secureLogger.debug('Validation cache hit', { validationId, cacheKey });
-      
-      return {
-        ...cachedResult,
-        timeTaken: Date.now() - startTime,
-        validationId,
-        cacheLookup: true,
-        cacheHit: true
-      };
-    }
-    
-    // Check if this should be batched
-    if (options.batchKey) {
-      return await new Promise<ValidationResult>((resolve, reject) => {
-        // Add to batch queue
-        if (!batchQueues[options.batchKey!]) {
-          batchQueues[options.batchKey!] = [];
+      secureLogger('error', logComponent, `Validation pipeline error: ${errorMessage}`, {
+        metadata: {
+          ruleId,
+          error: errorMessage,
+          processingTimeMs: Date.now() - startTime,
+          context: fullContext
         }
-        
-        batchQueues[options.batchKey!].push({
-          context,
-          resolve,
-          reject
-        });
-        
-        secureLogger.debug('Added validation to batch queue', { 
-          validationId, 
-          batchKey: options.batchKey 
-        });
       });
+      
+      // Record failure for fallback system
+      if (this.options.fallbackEnabled) {
+        validationFallbackHandler.recordFailure(error instanceof Error ? error : new Error(errorMessage));
+      }
+      
+      // Send alert for system error
+      validationAlertSystem.sendAlert(
+        AlertType.SYSTEM_ERROR,
+        `Validation pipeline error: ${errorMessage}`,
+        {
+          ruleId,
+          context: fullContext,
+          processingTimeMs: Date.now() - startTime
+        }
+      );
+      
+      // Return error result
+      return {
+        success: false,
+        errors: [
+          {
+            message: `Validation pipeline error: ${errorMessage}`,
+            type: ValidationErrorCategory.SYSTEM_DEPENDENCY,
+            severity: ValidationErrorSeverity.HIGH,
+            metadata: {
+              error: errorMessage
+            }
+          }
+        ],
+        metadata: {
+          ruleId,
+          fallbackUsed: false,
+          aiAnalysisPerformed: false,
+          processingTimeMs: Date.now() - startTime
+        }
+      };
     }
-    
-    // No cache hit and no batching, continue with normal validation
-    return null;
   }
   
   /**
-   * Phase 2: Main validation logic
+   * Perform the actual validation process
    */
-  private async performMainValidation(context: ValidationContext): Promise<ValidationResult> {
-    const { data, schema, options, validationId, startTime } = context;
+  private async performValidation<T>(
+    ruleId: string,
+    data: any,
+    context: ValidationContext,
+    errors: ValidationError[]
+  ): Promise<ValidationResult<T>> {
+    const startTime = Date.now();
+    let processedData = data;
+    let fallbackUsed = false;
+    let aiAnalysisPerformed = false;
+    let ruleVersion: number | undefined;
     
-    // Determine if this needs AI validation
-    const needsAIValidation = options.contentType || options.detailedAnalysis;
-    
-    // Start with schema validation if a schema is provided
-    let schemaResult = { valid: true, validatedData: data };
-    if (schema) {
-      schemaResult = await this.engine.validate(data, schema);
+    // Step 1: Run pre-validation hooks
+    if (this.options.hooks?.preValidation && this.options.hooks.preValidation.length > 0) {
+      for (const hook of this.options.hooks.preValidation) {
+        try {
+          const result = await hook(processedData, context);
+          
+          if (result === null) {
+            // Hook signaled to abort validation
+            return {
+              success: false,
+              errors: errors.length > 0 ? errors : [
+                {
+                  message: 'Validation aborted by pre-validation hook',
+                  type: ValidationErrorCategory.SYSTEM_DEPENDENCY,
+                  severity: ValidationErrorSeverity.MEDIUM
+                }
+              ],
+              metadata: {
+                ruleId,
+                ruleVersion,
+                fallbackUsed,
+                aiAnalysisPerformed,
+                processingTimeMs: Date.now() - startTime
+              }
+            };
+          }
+          
+          // Update processed data with hook result
+          processedData = result;
+        } catch (error) {
+          // Record hook error but continue pipeline
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          
+          secureLogger('error', logComponent, `Pre-validation hook error: ${errorMessage}`, {
+            metadata: {
+              ruleId,
+              error: errorMessage,
+              context
+            }
+          });
+          
+          errors.push({
+            message: `Pre-validation error: ${errorMessage}`,
+            type: ValidationErrorCategory.SYSTEM_DEPENDENCY,
+            severity: ValidationErrorSeverity.MEDIUM,
+            metadata: {
+              error: errorMessage
+            }
+          });
+        }
+      }
     }
     
-    // If schema validation failed or AI validation not needed, return schema result
-    if (!schemaResult.valid || !needsAIValidation) {
-      return {
-        ...schemaResult,
-        timeTaken: Date.now() - startTime,
-        validationId,
-        cacheLookup: true,
-        cacheHit: false
-      };
-    }
+    // Step 2: Perform schema validation
+    let schemaResult: { success: boolean; data?: T; error?: z.ZodError; ruleVersion?: number };
     
-    // Perform AI validation if needed
-    if (needsAIValidation) {
-      try {
-        const aiValidationResult = await this.aiConnector.validateData(data, {
-          contentType: options.contentType || 'api',
-          threshold: options.threshold,
-          detailedAnalysis: options.detailedAnalysis,
-          maxTokens: options.maxTokens,
-          requestContext: {
-            url: context.req.url,
-            method: context.req.method,
-            ip: context.req.ip,
-            userAgent: context.req.get('user-agent')
+    try {
+      // Get the rule from the versioning system
+      const rule = validationRuleVersioning.getRule(ruleId);
+      
+      if (!rule) {
+        errors.push({
+          message: `Validation rule not found: ${ruleId}`,
+          type: ValidationErrorCategory.SYSTEM_CONFIG,
+          severity: ValidationErrorSeverity.HIGH
+        });
+        
+        return {
+          success: false,
+          errors,
+          metadata: {
+            ruleId,
+            fallbackUsed,
+            aiAnalysisPerformed,
+            processingTimeMs: Date.now() - startTime
+          }
+        };
+      }
+      
+      if (!rule.isActive) {
+        secureLogger('warn', logComponent, `Validation rule ${ruleId} is inactive`, {
+          metadata: {
+            ruleId,
+            context
           }
         });
         
-        // Merge results
+        // Return success without validation if rule is inactive
         return {
-          valid: schemaResult.valid && aiValidationResult.valid,
-          validatedData: schemaResult.validatedData,
-          errors: aiValidationResult.valid ? schemaResult.errors : [
-            ...(schemaResult.errors || []),
-            ...(aiValidationResult.reason ? [{ message: aiValidationResult.reason }] : [])
-          ],
-          warnings: aiValidationResult.threats?.map(threat => ({
-            message: threat.description,
-            severity: threat.severity,
-            type: threat.type,
-            confidence: threat.confidence
-          })),
-          timeTaken: Date.now() - startTime,
-          validationId,
-          securityScore: aiValidationResult.confidence || 1,
-          threatAnalysis: aiValidationResult
+          success: true,
+          data: processedData as T,
+          metadata: {
+            ruleId,
+            fallbackUsed,
+            aiAnalysisPerformed,
+            processingTimeMs: Date.now() - startTime
+          }
         };
-      } catch (error) {
-        secureLogger.error('AI validation failed', { 
-          validationId, 
-          error: error instanceof Error ? error.message : 'Unknown error'
-        });
+      }
+      
+      // Perform actual validation
+      const validationResult = validationRuleVersioning.validate<T>(ruleId, processedData);
+      ruleVersion = validationResult.ruleVersion;
+      
+      if (!validationResult.success) {
+        // Check if we should enter fallback mode
+        if (this.options.fallbackEnabled && validationFallbackHandler.isInFallbackState()) {
+          secureLogger('warn', logComponent, `Using fallback mode for validation rule ${ruleId}`, {
+            metadata: {
+              ruleId,
+              error: validationResult.error,
+              context
+            }
+          });
+          
+          fallbackUsed = true;
+          
+          // Convert Zod errors to enhanced validation errors
+          if (validationResult.error) {
+            const zodErrors = validationResult.error.errors || [];
+            
+            for (const zodError of zodErrors) {
+              const enhancedError = enhanceValidationError(zodError);
+              
+              // Check if this error type should be allowed in fallback mode
+              const shouldAllow = validationFallbackHandler.shouldAllowRequest(
+                enhancedError.type || ValidationErrorCategory.UNKNOWN,
+                enhancedError.severity || ValidationErrorSeverity.MEDIUM
+              );
+              
+              if (!shouldAllow) {
+                errors.push(enhancedError);
+              }
+            }
+          }
+          
+          // If no errors were added during fallback processing, consider validation successful
+          if (errors.length === 0) {
+            return {
+              success: true,
+              data: processedData as T,
+              metadata: {
+                ruleId,
+                ruleVersion,
+                fallbackUsed,
+                aiAnalysisPerformed,
+                processingTimeMs: Date.now() - startTime
+              }
+            };
+          }
+        } else {
+          // Normal error handling (no fallback)
+          if (validationResult.error) {
+            const zodErrors = validationResult.error.errors || [];
+            
+            for (const zodError of zodErrors) {
+              errors.push(enhanceValidationError(zodError));
+            }
+          }
+        }
         
-        // Return schema validation result if AI validation fails
         return {
-          ...schemaResult,
-          timeTaken: Date.now() - startTime,
-          validationId,
-          warnings: [{ message: 'AI security validation failed, falling back to schema validation only' }]
+          success: false,
+          errors,
+          metadata: {
+            ruleId,
+            ruleVersion,
+            fallbackUsed,
+            aiAnalysisPerformed,
+            processingTimeMs: Date.now() - startTime
+          }
         };
+      }
+      
+      // Update processed data with validated result
+      processedData = validationResult.data;
+      schemaResult = validationResult;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      secureLogger('error', logComponent, `Schema validation error: ${errorMessage}`, {
+        metadata: {
+          ruleId,
+          error: errorMessage,
+          context
+        }
+      });
+      
+      // Record failure for fallback system
+      if (this.options.fallbackEnabled) {
+        validationFallbackHandler.recordFailure(error instanceof Error ? error : new Error(errorMessage));
+      }
+      
+      errors.push({
+        message: `Schema validation error: ${errorMessage}`,
+        type: ValidationErrorCategory.SYSTEM_DEPENDENCY,
+        severity: ValidationErrorSeverity.HIGH,
+        metadata: {
+          error: errorMessage
+        }
+      });
+      
+      return {
+        success: false,
+        errors,
+        metadata: {
+          ruleId,
+          ruleVersion,
+          fallbackUsed,
+          aiAnalysisPerformed,
+          processingTimeMs: Date.now() - startTime
+        }
+      };
+    }
+    
+    // Step 3: Run post-validation hooks
+    if (this.options.hooks?.postValidation && this.options.hooks.postValidation.length > 0) {
+      for (const hook of this.options.hooks.postValidation) {
+        try {
+          const result = await hook(processedData, context);
+          
+          if (result === null) {
+            // Hook signaled to abort validation
+            return {
+              success: false,
+              errors: errors.length > 0 ? errors : [
+                {
+                  message: 'Validation aborted by post-validation hook',
+                  type: ValidationErrorCategory.SYSTEM_DEPENDENCY,
+                  severity: ValidationErrorSeverity.MEDIUM
+                }
+              ],
+              metadata: {
+                ruleId,
+                ruleVersion,
+                fallbackUsed,
+                aiAnalysisPerformed,
+                processingTimeMs: Date.now() - startTime
+              }
+            };
+          }
+          
+          // Update processed data with hook result
+          processedData = result;
+        } catch (error) {
+          // Record hook error but continue pipeline
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          
+          secureLogger('error', logComponent, `Post-validation hook error: ${errorMessage}`, {
+            metadata: {
+              ruleId,
+              error: errorMessage,
+              context
+            }
+          });
+          
+          errors.push({
+            message: `Post-validation error: ${errorMessage}`,
+            type: ValidationErrorCategory.SYSTEM_DEPENDENCY,
+            severity: ValidationErrorSeverity.MEDIUM,
+            metadata: {
+              error: errorMessage
+            }
+          });
+        }
       }
     }
     
-    // Default result if no AI validation was performed
+    // Step 4: If everything succeeded, return success
     return {
-      ...schemaResult,
-      timeTaken: Date.now() - startTime,
-      validationId
+      success: errors.length === 0,
+      data: errors.length === 0 ? processedData as T : undefined,
+      errors: errors.length > 0 ? errors : undefined,
+      metadata: {
+        ruleId,
+        ruleVersion,
+        fallbackUsed,
+        aiAnalysisPerformed,
+        processingTimeMs: Date.now() - startTime
+      }
     };
   }
   
   /**
-   * Phase 3: Post-validation processing
+   * Create a validation context from an Express request
    */
-  private async performPostValidation(
-    context: ValidationContext, 
-    validationResult: ValidationResult
-  ): Promise<ValidationResult> {
-    const { data, schema, options, validationId } = context;
-    
-    // Cache the result for future use (if valid)
-    if (validationResult.valid && !options.skipCache) {
-      const cacheKey = generateCacheKey(data, schema, options);
-      validationCache.set(cacheKey, validationResult);
-    }
-    
-    // Log validation result
-    this.logValidationResult(context, validationResult);
-    
-    // Return the final result
-    return validationResult;
-  }
-  
-  /**
-   * Log validation result for auditing
-   */
-  private logValidationResult(context: ValidationContext, result: ValidationResult): void {
-    const { req, validationId } = context;
-    
-    // Prepare log data
-    const logData = {
-      validationId,
-      url: req.url,
+  public static createContextFromRequest(
+    req: Request,
+    target: 'body' | 'query' | 'params' | 'headers' | 'file',
+    metadata?: Record<string, any>
+  ): ValidationContext {
+    return {
+      requestId: req.headers['x-request-id'] as string || `req-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      userId: (req as any).user?.id,
+      path: req.path,
       method: req.method,
-      ip: req.ip,
-      userId: req.user?.id,
-      userRole: req.user?.role,
-      valid: result.valid,
-      timeTaken: result.timeTaken,
-      cacheHit: result.cacheHit,
-      securityScore: result.securityScore,
-      hasWarnings: !!result.warnings && result.warnings.length > 0,
-      warningCount: result.warnings?.length || 0,
-      errorCount: result.errors?.length || 0
+      target,
+      timestamp: new Date(),
+      metadata: {
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        ...metadata
+      }
+    };
+  }
+  
+  /**
+   * Update pipeline options
+   */
+  public updateOptions(options: Partial<ValidationPipelineOptions>): void {
+    this.options = {
+      ...this.options,
+      ...options,
+      hooks: {
+        preValidation: options.hooks?.preValidation || this.options.hooks?.preValidation,
+        postValidation: options.hooks?.postValidation || this.options.hooks?.postValidation
+      }
     };
     
-    // Log based on validation result
-    if (result.valid) {
-      secureLogger.info('Validation passed', logData);
-    } else {
-      secureLogger.warn('Validation failed', {
-        ...logData,
-        errors: result.errors,
-        warnings: result.warnings
-      });
+    secureLogger('info', logComponent, 'Validation pipeline options updated', {
+      metadata: {
+        options: this.options
+      }
+    });
+  }
+  
+  /**
+   * Add a pre-validation hook
+   */
+  public addPreValidationHook(hook: ValidationHook<any>): void {
+    if (!this.options.hooks) {
+      this.options.hooks = {};
     }
-  }
-  
-  /**
-   * Clear validation cache
-   */
-  clearCache(): void {
-    validationCache.clear();
-    secureLogger.info('Validation cache cleared');
-  }
-  
-  /**
-   * Get validation cache stats
-   */
-  getCacheStats(): any {
-    return {
-      size: validationCache.size,
-      maxSize: validationCache.max,
-      itemCount: validationCache.size,
-      hits: validationCache.size, // This would ideally be an actual hits counter
-      misses: 0 // This would ideally be an actual misses counter
-    };
-  }
-  
-  /**
-   * Get validation pipeline status
-   */
-  async getStatus(): Promise<any> {
-    const aiStatus = await this.aiConnector.getStatus();
     
-    return {
-      operational: true,
-      cacheEnabled: true,
-      cacheStats: this.getCacheStats(),
-      aiValidation: aiStatus,
-      batchProcessingEnabled: true,
-      activeBatches: Object.keys(batchQueues).length,
-      pendingValidations: Object.values(batchQueues).reduce((sum, queue) => sum + queue.length, 0)
-    };
+    if (!this.options.hooks.preValidation) {
+      this.options.hooks.preValidation = [];
+    }
+    
+    this.options.hooks.preValidation.push(hook);
+  }
+  
+  /**
+   * Add a post-validation hook
+   */
+  public addPostValidationHook(hook: ValidationHook<any>): void {
+    if (!this.options.hooks) {
+      this.options.hooks = {};
+    }
+    
+    if (!this.options.hooks.postValidation) {
+      this.options.hooks.postValidation = [];
+    }
+    
+    this.options.hooks.postValidation.push(hook);
   }
 }
 

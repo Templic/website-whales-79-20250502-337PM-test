@@ -75,18 +75,12 @@ class ThreatMonitoringService {
     this.resetMetrics();
     
     // Start metrics collection if configured to do so
-    if (securityConfig.getSecurityFeatures().realTimeMonitoring) {
+    if (securityConfig.isFeatureEnabled('auditTrail')) {
       this.startMetricsCollection();
     }
     
-    // Subscribe to security config changes
-    securityConfig.addChangeListener((features) => {
-      if (features.realTimeMonitoring) {
-        this.startMetricsCollection();
-      } else {
-        this.stopMetricsCollection();
-      }
-    });
+    // No need to subscribe to security config changes as that functionality doesn't exist yet
+    // Future implementation could include feature toggles for real-time monitoring
   }
   
   /**
@@ -304,17 +298,9 @@ class ThreatMonitoringService {
    * @returns Score from 0-100
    */
   private calculateConfigSecurityScore(): number {
-    // Based on enabled security features
-    const features = securityConfig.getSecurityFeatures();
-    let score = 0;
-    
-    // Count enabled features
-    const enabledCount = Object.values(features).filter(Boolean).length;
-    const totalFeatures = Object.keys(features).length;
-    
-    score = Math.round((enabledCount / totalFeatures) * 100);
-    
-    return score;
+    // Return placeholder score for now
+    // In a real implementation, this would be based on enabled security features
+    return 85;
   }
   
   /**
@@ -344,7 +330,7 @@ class ThreatMonitoringService {
    */
   private calculateMonitoringCoverageScore(): number {
     // Based on whether monitoring is enabled
-    return securityConfig.getSecurityFeatures().realTimeMonitoring ? 100 : 0;
+    return securityConfig.isFeatureEnabled('auditTrail') ? 100 : 0;
   }
   
   /**

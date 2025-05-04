@@ -7,7 +7,7 @@
 
 import { securityAnalysisService, SecurityAnalysisOptions, SecurityAnalysisResult } from './SecurityAnalysisService';
 import { securityConfig } from '../config/SecurityConfig';
-import secureLogger from '../../utils/secureLogger';
+import secureLog from '../../utils/secureLogger';
 
 export interface ValidationAIResult {
   passed: boolean;
@@ -41,13 +41,13 @@ export class ValidationAIConnector {
   
   constructor() {
     // Get configuration from security config
-    const features = securityConfig.getSecurityFeatures();
-    this.isEnabled = features.aiSecurityAnalysis;
-    this.defaultThreshold = features.aiValidationThreshold || 0.7;
-    this.performancePriority = features.performancePriority || false;
+    this.isEnabled = securityConfig.isFeatureEnabled('aiSecurity');
+    this.defaultThreshold = securityConfig.getFeatureValueAsNumber('aiSecurity') > 1 ? 
+                           securityConfig.getFeatureValueAsNumber('aiSecurity') / 100 : 0.7;
+    this.performancePriority = securityConfig.isFeatureEnabled('performancePriority');
     
     // Log initialization
-    secureLogger('info', 'ValidationAIConnector', `Initialized with threshold=${this.defaultThreshold}, enabled=${this.isEnabled}`);
+    secureLog('info', 'ValidationAIConnector', `Initialized with threshold=${this.defaultThreshold}, enabled=${this.isEnabled}`);
   }
   
   /**
@@ -88,13 +88,13 @@ export class ValidationAIConnector {
       }
       
       // Log the validation result
-      secureLogger('info', 'ValidationAIConnector', 
+      secureLog('info', 'ValidationAIConnector', 
         `Validation ${validationResult.validationId}: passed=${validationResult.passed}, score=${validationResult.securityScore}, warnings=${validationResult.warnings.length}`);
       
       return validationResult;
     } catch (error) {
       // Log the error
-      secureLogger('error', 'ValidationAIConnector', `Validation failed: ${error instanceof Error ? error.message : String(error)}`);
+      secureLog('error', 'ValidationAIConnector', `Validation failed: ${error instanceof Error ? error.message : String(error)}`);
       
       // Return a fallback result
       return this.createFallbackResult('error', error instanceof Error ? error.message : String(error));

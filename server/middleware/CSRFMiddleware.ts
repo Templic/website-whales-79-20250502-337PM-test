@@ -26,7 +26,7 @@ export function CSRFProtection(req: Request, res: Response, next: NextFunction) 
  */
 export function CSRFTokenSetter(req: Request, res: Response, next: NextFunction) {
   // Skip if CSRF protection is globally disabled
-  if (!securityConfig.getSecurityFeatures().csrfProtection) {
+  if (!securityConfig.isFeatureEnabled('csrfProtection')) {
     return next();
   }
   
@@ -36,7 +36,7 @@ export function CSRFTokenSetter(req: Request, res: Response, next: NextFunction)
 // Helper function to get CSRF token from request
 export function getCSRFToken(req: Request): string | undefined {
   // Skip if CSRF protection is globally disabled
-  if (!securityConfig.getSecurityFeatures().csrfProtection) {
+  if (!securityConfig.isFeatureEnabled('csrfProtection')) {
     return undefined;
   }
   
@@ -48,7 +48,7 @@ export function getCSRFToken(req: Request): string | undefined {
 // Helper to create the hidden input field for forms
 export function csrfField(req: Request): string {
   // Skip if CSRF protection is globally disabled
-  if (!securityConfig.getSecurityFeatures().csrfProtection) {
+  if (!securityConfig.isFeatureEnabled('csrfProtection')) {
     return '';
   }
   

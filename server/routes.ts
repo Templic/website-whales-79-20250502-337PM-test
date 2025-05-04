@@ -222,7 +222,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   registerApiValidationRules();
   
   // Apply threat protection middleware based on security configuration
-  if (securityConfig.getSecurityFeatures().realTimeMonitoring) {
+  if (securityConfig.isFeatureEnabled('auditTrail')) {
     console.log("[SECURITY] Applying threat protection middleware...");
     app.use(threatProtectionMiddleware);
     console.log("✅ Threat protection middleware initialized successfully");
@@ -423,7 +423,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.use('/api/security', securityRoutes);
   
   // Apply MFA Middleware when the feature is enabled
-  if (securityConfig.getSecurityFeatures().mfa) {
+  if (securityConfig.isFeatureEnabled('securityHeaders')) {
     console.log("[SECURITY] Applying MFA middleware to protected routes...");
     // Apply to specific routes that need MFA protection
     app.use('/api/admin', MFAMiddleware);

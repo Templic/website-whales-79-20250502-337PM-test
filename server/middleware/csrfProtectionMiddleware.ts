@@ -66,7 +66,7 @@ function getReplitTrustedOrigins(): string[] {
  */
 export function setupCSRFProtection(app: Express): void {
   // Skip setup if CSRF protection is disabled globally
-  if (!securityConfig.getSecurityFeatures().csrfProtection) {
+  if (!securityConfig.isFeatureEnabled('csrfProtection')) {
     console.log('[Security] CSRF protection is disabled globally');
     return;
   }

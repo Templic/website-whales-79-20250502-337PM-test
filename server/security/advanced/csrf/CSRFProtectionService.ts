@@ -220,7 +220,7 @@ export class CSRFProtectionService {
   createMiddleware() {
     return (req: Request, res: Response, next: NextFunction) => {
       // Skip if CSRF protection is disabled globally
-      if (!securityConfig.getSecurityFeatures().csrfProtection) {
+      if (!securityConfig.isFeatureEnabled('csrfProtection')) {
         return next();
       }
       
@@ -299,7 +299,7 @@ export class CSRFProtectionService {
   createTokenSetter() {
     return (req: Request, res: Response, next: NextFunction) => {
       // Skip if CSRF protection is disabled globally
-      if (!securityConfig.getSecurityFeatures().csrfProtection) {
+      if (!securityConfig.isFeatureEnabled('csrfProtection')) {
         return next();
       }
       

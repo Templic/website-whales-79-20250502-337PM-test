@@ -13,7 +13,16 @@ import { threatDetectionService, type DetectionContext } from '../threat/ThreatD
 import { threatMonitoringService } from '../threat/ThreatMonitoringService';
 import { TokenBucketRateLimiter } from '../threat/TokenBucketRateLimiter';
 import LRUCache from '../threat/SecurityCache';
-import { securityConfig, SecurityLevel } from '../config/SecurityConfig';
+import { securityConfig } from '../config/SecurityConfig';
+
+// Define security levels for the middleware
+export enum SecurityLevel {
+  MONITOR = 'MONITOR',
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  MAXIMUM = 'MAXIMUM'
+}
 
 // Import threat types from database service
 import { ThreatType, ThreatSeverity } from '../threat/ThreatDatabaseService';
@@ -75,7 +84,18 @@ const rateLimitExemptPaths = [
  * Used to control protection intensity and what features are active
  */
 function getSecurityLevel(): SecurityLevel {
-  return securityConfig.getSecurityLevel();
+  // Map security level based on securityConfig features
+  if (securityConfig.isFeatureEnabled('maximumSecurity')) {
+    return SecurityLevel.MAXIMUM;
+  } else if (securityConfig.isFeatureEnabled('highSecurity')) {
+    return SecurityLevel.HIGH;
+  } else if (securityConfig.isFeatureEnabled('mediumSecurity')) {
+    return SecurityLevel.MEDIUM;
+  } else if (securityConfig.isFeatureEnabled('lowSecurity')) {
+    return SecurityLevel.LOW;
+  } else {
+    return SecurityLevel.MONITOR;
+  }
 }
 
 /**

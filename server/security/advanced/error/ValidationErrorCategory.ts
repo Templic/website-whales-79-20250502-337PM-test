@@ -5,6 +5,14 @@
  * enabling better error handling, reporting, and resolution.
  */
 
+import secureLogger from '../../utils/secureLogger';
+
+// Configure component name for logging
+const logComponent = 'ValidationErrorCategory';
+
+/**
+ * Validation error severity levels
+ */
 export enum ValidationErrorSeverity {
   LOW = 'low',       // Low-impact errors, typically UI/UX issues
   MEDIUM = 'medium', // Medium-impact errors, may affect functionality but not security
@@ -12,6 +20,9 @@ export enum ValidationErrorSeverity {
   CRITICAL = 'critical' // Critical errors, must be addressed immediately
 }
 
+/**
+ * Validation error categories
+ */
 export enum ValidationErrorCategory {
   // Schema validation errors
   SCHEMA_TYPE_ERROR = 'schema_type_error',         // Data type mismatch
@@ -64,35 +75,198 @@ export const errorCategoryMap: Record<string, {
   category: ValidationErrorCategory, 
   severity: ValidationErrorSeverity 
 }> = {
-  // Schema validation errors
-  'invalid_type': { category: ValidationErrorCategory.SCHEMA_TYPE_ERROR, severity: ValidationErrorSeverity.MEDIUM },
-  'too_small': { category: ValidationErrorCategory.SCHEMA_CONSTRAINT_ERROR, severity: ValidationErrorSeverity.MEDIUM },
-  'too_big': { category: ValidationErrorCategory.SCHEMA_CONSTRAINT_ERROR, severity: ValidationErrorSeverity.MEDIUM },
-  'invalid_string': { category: ValidationErrorCategory.SCHEMA_FORMAT_ERROR, severity: ValidationErrorSeverity.MEDIUM },
-  'required_error': { category: ValidationErrorCategory.SCHEMA_REQUIRED_ERROR, severity: ValidationErrorSeverity.MEDIUM },
+  // Zod error codes
+  'invalid_type': {
+    category: ValidationErrorCategory.SCHEMA_TYPE_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  'invalid_string': {
+    category: ValidationErrorCategory.SCHEMA_CONSTRAINT_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  'too_small': {
+    category: ValidationErrorCategory.SCHEMA_CONSTRAINT_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  'too_big': {
+    category: ValidationErrorCategory.SCHEMA_CONSTRAINT_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  'invalid_enum_value': {
+    category: ValidationErrorCategory.SCHEMA_CONSTRAINT_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  'invalid_arguments': {
+    category: ValidationErrorCategory.SCHEMA_CONSTRAINT_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  'invalid_return_type': {
+    category: ValidationErrorCategory.SCHEMA_CONSTRAINT_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  'invalid_date': {
+    category: ValidationErrorCategory.SCHEMA_FORMAT_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  'invalid_string.email': {
+    category: ValidationErrorCategory.SCHEMA_FORMAT_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  'invalid_string.url': {
+    category: ValidationErrorCategory.SCHEMA_FORMAT_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  'invalid_string.uuid': {
+    category: ValidationErrorCategory.SCHEMA_FORMAT_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  'required_error': {
+    category: ValidationErrorCategory.SCHEMA_REQUIRED_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
   
-  // Security validation errors
-  'sql_injection': { category: ValidationErrorCategory.SECURITY_INJECTION, severity: ValidationErrorSeverity.CRITICAL },
-  'xss_detected': { category: ValidationErrorCategory.SECURITY_XSS, severity: ValidationErrorSeverity.CRITICAL },
-  'csrf_error': { category: ValidationErrorCategory.SECURITY_CSRF, severity: ValidationErrorSeverity.HIGH },
-  'auth_error': { category: ValidationErrorCategory.SECURITY_AUTH, severity: ValidationErrorSeverity.HIGH },
-  'access_denied': { category: ValidationErrorCategory.SECURITY_ACCESS, severity: ValidationErrorSeverity.HIGH },
+  // Security error codes
+  'sql_injection': {
+    category: ValidationErrorCategory.SECURITY_INJECTION,
+    severity: ValidationErrorSeverity.CRITICAL
+  },
+  'xss': {
+    category: ValidationErrorCategory.SECURITY_XSS,
+    severity: ValidationErrorSeverity.CRITICAL
+  },
+  'csrf': {
+    category: ValidationErrorCategory.SECURITY_CSRF,
+    severity: ValidationErrorSeverity.HIGH
+  },
+  'auth_failure': {
+    category: ValidationErrorCategory.SECURITY_AUTH,
+    severity: ValidationErrorSeverity.HIGH
+  },
+  'access_denied': {
+    category: ValidationErrorCategory.SECURITY_ACCESS,
+    severity: ValidationErrorSeverity.HIGH
+  },
   
-  // Database validation errors
-  'db_query': { category: ValidationErrorCategory.DB_QUERY_ERROR, severity: ValidationErrorSeverity.HIGH },
-  'db_constraint': { category: ValidationErrorCategory.DB_CONSTRAINT_ERROR, severity: ValidationErrorSeverity.MEDIUM },
-  'db_relation': { category: ValidationErrorCategory.DB_RELATION_ERROR, severity: ValidationErrorSeverity.MEDIUM },
+  // Database error codes
+  'db_query': {
+    category: ValidationErrorCategory.DB_QUERY_ERROR,
+    severity: ValidationErrorSeverity.HIGH
+  },
+  'db_constraint': {
+    category: ValidationErrorCategory.DB_CONSTRAINT_ERROR,
+    severity: ValidationErrorSeverity.HIGH
+  },
+  'db_relation': {
+    category: ValidationErrorCategory.DB_RELATION_ERROR,
+    severity: ValidationErrorSeverity.HIGH
+  },
   
-  // AI validation errors
-  'content_policy': { category: ValidationErrorCategory.AI_CONTENT_POLICY, severity: ValidationErrorSeverity.HIGH },
-  'ai_threat': { category: ValidationErrorCategory.AI_THREAT_DETECTED, severity: ValidationErrorSeverity.CRITICAL },
-  'anomaly': { category: ValidationErrorCategory.AI_ANOMALY, severity: ValidationErrorSeverity.MEDIUM },
-  
-  // System errors
-  'timeout': { category: ValidationErrorCategory.SYSTEM_TIMEOUT, severity: ValidationErrorSeverity.MEDIUM },
-  'dependency': { category: ValidationErrorCategory.SYSTEM_DEPENDENCY, severity: ValidationErrorSeverity.HIGH },
-  'config': { category: ValidationErrorCategory.SYSTEM_CONFIG, severity: ValidationErrorSeverity.HIGH }
+  // System error codes
+  'timeout': {
+    category: ValidationErrorCategory.SYSTEM_TIMEOUT,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  'dependency_failure': {
+    category: ValidationErrorCategory.SYSTEM_DEPENDENCY,
+    severity: ValidationErrorSeverity.HIGH
+  },
+  'config_error': {
+    category: ValidationErrorCategory.SYSTEM_CONFIG,
+    severity: ValidationErrorSeverity.HIGH
+  }
 };
+
+/**
+ * Patterns to match in error messages for categorization
+ */
+export const errorPatternMap: Array<{
+  pattern: RegExp;
+  category: ValidationErrorCategory;
+  severity: ValidationErrorSeverity;
+}> = [
+  // Security patterns
+  {
+    pattern: /(?:sql|database)\s+injection/i,
+    category: ValidationErrorCategory.SECURITY_INJECTION,
+    severity: ValidationErrorSeverity.CRITICAL
+  },
+  {
+    pattern: /cross[\s-]site\s+scripting|xss/i,
+    category: ValidationErrorCategory.SECURITY_XSS,
+    severity: ValidationErrorSeverity.CRITICAL
+  },
+  {
+    pattern: /csrf|cross[\s-]site\s+request\s+forgery/i,
+    category: ValidationErrorCategory.SECURITY_CSRF,
+    severity: ValidationErrorSeverity.HIGH
+  },
+  {
+    pattern: /(?:invalid|expired|missing)\s+(?:token|session|credential)/i,
+    category: ValidationErrorCategory.SECURITY_AUTH,
+    severity: ValidationErrorSeverity.HIGH
+  },
+  {
+    pattern: /(?:unauthorized|forbidden|permission\s+denied)/i,
+    category: ValidationErrorCategory.SECURITY_ACCESS,
+    severity: ValidationErrorSeverity.HIGH
+  },
+  
+  // Database patterns
+  {
+    pattern: /(?:invalid|malformed)\s+(?:query|sql)/i,
+    category: ValidationErrorCategory.DB_QUERY_ERROR,
+    severity: ValidationErrorSeverity.HIGH
+  },
+  {
+    pattern: /(?:constraint|unique|duplicate)\s+violation/i,
+    category: ValidationErrorCategory.DB_CONSTRAINT_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  {
+    pattern: /(?:foreign\s+key|relation)\s+(?:constraint|error)/i,
+    category: ValidationErrorCategory.DB_RELATION_ERROR,
+    severity: ValidationErrorSeverity.HIGH
+  },
+  
+  // Schema patterns
+  {
+    pattern: /(?:expected|invalid)\s+type/i,
+    category: ValidationErrorCategory.SCHEMA_TYPE_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  {
+    pattern: /(?:too\s+(?:short|long|small|large)|invalid\s+(?:format|value))/i,
+    category: ValidationErrorCategory.SCHEMA_CONSTRAINT_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  {
+    pattern: /(?:required|missing)(?:\s+field|\s+property)?/i,
+    category: ValidationErrorCategory.SCHEMA_REQUIRED_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  {
+    pattern: /(?:invalid|malformed)\s+(?:email|url|phone|date|format)/i,
+    category: ValidationErrorCategory.SCHEMA_FORMAT_ERROR,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  
+  // System patterns
+  {
+    pattern: /(?:timeout|timed\s+out)/i,
+    category: ValidationErrorCategory.SYSTEM_TIMEOUT,
+    severity: ValidationErrorSeverity.MEDIUM
+  },
+  {
+    pattern: /(?:dependency|service)\s+(?:unavailable|failure|error)/i,
+    category: ValidationErrorCategory.SYSTEM_DEPENDENCY,
+    severity: ValidationErrorSeverity.HIGH
+  },
+  {
+    pattern: /(?:configuration|config)\s+(?:invalid|error|missing)/i,
+    category: ValidationErrorCategory.SYSTEM_CONFIG,
+    severity: ValidationErrorSeverity.HIGH
+  }
+];
 
 /**
  * Categorize an error based on code or message pattern
@@ -101,77 +275,87 @@ export function categorizeError(error: { code?: string; message: string }): {
   category: ValidationErrorCategory; 
   severity: ValidationErrorSeverity;
 } {
-  // Try to match by code first
+  // Check for error code match
   if (error.code && errorCategoryMap[error.code]) {
     return errorCategoryMap[error.code];
   }
   
-  // Then try to match by message patterns
-  const message = error.message.toLowerCase();
-  
-  if (message.includes('sql') && (message.includes('injection') || message.includes('syntax'))) {
-    return { category: ValidationErrorCategory.SECURITY_INJECTION, severity: ValidationErrorSeverity.CRITICAL };
+  // Check for error code + message type
+  if (error.code && error.message) {
+    const combinedCode = `${error.code}.${error.message.toLowerCase()}`;
+    if (errorCategoryMap[combinedCode]) {
+      return errorCategoryMap[combinedCode];
+    }
   }
   
-  if (message.includes('xss') || message.includes('script') || message.includes('cross-site')) {
-    return { category: ValidationErrorCategory.SECURITY_XSS, severity: ValidationErrorSeverity.CRITICAL };
-  }
-  
-  if (message.includes('csrf') || message.includes('token')) {
-    return { category: ValidationErrorCategory.SECURITY_CSRF, severity: ValidationErrorSeverity.HIGH };
-  }
-  
-  if (message.includes('required')) {
-    return { category: ValidationErrorCategory.SCHEMA_REQUIRED_ERROR, severity: ValidationErrorSeverity.MEDIUM };
-  }
-  
-  if (message.includes('type')) {
-    return { category: ValidationErrorCategory.SCHEMA_TYPE_ERROR, severity: ValidationErrorSeverity.MEDIUM };
-  }
-  
-  if (message.includes('min') || message.includes('max') || message.includes('length') || message.includes('size')) {
-    return { category: ValidationErrorCategory.SCHEMA_CONSTRAINT_ERROR, severity: ValidationErrorSeverity.MEDIUM };
-  }
-  
-  if (message.includes('email') || message.includes('url') || message.includes('format')) {
-    return { category: ValidationErrorCategory.SCHEMA_FORMAT_ERROR, severity: ValidationErrorSeverity.MEDIUM };
-  }
-  
-  if (message.includes('timeout')) {
-    return { category: ValidationErrorCategory.SYSTEM_TIMEOUT, severity: ValidationErrorSeverity.MEDIUM };
+  // Check for pattern match in message
+  if (error.message) {
+    for (const patternMatch of errorPatternMap) {
+      if (patternMatch.pattern.test(error.message)) {
+        return {
+          category: patternMatch.category,
+          severity: patternMatch.severity
+        };
+      }
+    }
   }
   
   // Default to unknown
-  return { category: ValidationErrorCategory.UNKNOWN, severity: ValidationErrorSeverity.MEDIUM };
+  return {
+    category: ValidationErrorCategory.UNKNOWN,
+    severity: ValidationErrorSeverity.MEDIUM
+  };
 }
 
 /**
  * Enhanced error handler that categorizes errors and adds metadata
  */
 export function enhanceValidationError(error: any): ValidationError {
-  // Start with basic error properties
-  const enhancedError: ValidationError = {
-    message: error.message || 'Unknown validation error',
-    path: error.path,
-    code: error.code
-  };
-  
-  // Categorize the error
-  const { category, severity } = categorizeError(error);
-  enhancedError.type = category;
-  enhancedError.severity = severity;
-  
-  // Add any additional metadata from the original error
-  if (error.metadata) {
-    enhancedError.metadata = { ...error.metadata };
-  } else {
-    enhancedError.metadata = {};
+  try {
+    // Basic error info
+    const enhancedError: ValidationError = {
+      message: error.message || 'Unknown validation error',
+      path: error.path || undefined,
+      code: error.code || undefined
+    };
+    
+    // Categorize the error
+    const categorization = categorizeError(error);
+    enhancedError.type = categorization.category;
+    enhancedError.severity = categorization.severity;
+    
+    // Add metadata if available
+    if (error.metadata) {
+      enhancedError.metadata = { ...error.metadata };
+    }
+    
+    secureLogger('info', logComponent, 'Enhanced validation error', {
+      metadata: {
+        originalError: {
+          message: error.message,
+          code: error.code,
+          path: error.path
+        },
+        enhancedError
+      }
+    });
+    
+    return enhancedError;
+  } catch (enhancementError) {
+    // If enhancement fails, return a basic error
+    secureLogger('error', logComponent, 'Error enhancing validation error', {
+      metadata: {
+        error: enhancementError instanceof Error ? enhancementError.message : String(enhancementError),
+        originalError: error
+      }
+    });
+    
+    return {
+      message: error.message || 'Unknown validation error',
+      type: ValidationErrorCategory.UNKNOWN,
+      severity: ValidationErrorSeverity.MEDIUM
+    };
   }
-  
-  // Add timestamp for tracking
-  enhancedError.metadata.timestamp = new Date().toISOString();
-  
-  return enhancedError;
 }
 
 /**
@@ -180,44 +364,44 @@ export function enhanceValidationError(error: any): ValidationError {
 export function getErrorCategoryDescription(category: ValidationErrorCategory): string {
   switch (category) {
     case ValidationErrorCategory.SCHEMA_TYPE_ERROR:
-      return 'The data provided has an incorrect type (e.g., string instead of number)';
+      return 'The data type of one or more fields is incorrect.';
     case ValidationErrorCategory.SCHEMA_CONSTRAINT_ERROR:
-      return 'The data provided violates constraints (e.g., too short, too long)';
+      return 'One or more fields failed to meet specified constraints (e.g., length, range).';
     case ValidationErrorCategory.SCHEMA_REQUIRED_ERROR:
-      return 'A required field is missing from the request';
+      return 'One or more required fields are missing.';
     case ValidationErrorCategory.SCHEMA_FORMAT_ERROR:
-      return 'The data format is invalid (e.g., incorrect email format)';
+      return 'One or more fields have an invalid format (e.g., email, URL).';
     case ValidationErrorCategory.SECURITY_INJECTION:
-      return 'Potential injection attack detected in the request';
+      return 'Potential injection attack detected in the input.';
     case ValidationErrorCategory.SECURITY_XSS:
-      return 'Cross-site scripting vulnerability detected';
+      return 'Potential cross-site scripting (XSS) vulnerability detected.';
     case ValidationErrorCategory.SECURITY_CSRF:
-      return 'Cross-site request forgery protection error';
+      return 'Cross-site request forgery (CSRF) protection failed.';
     case ValidationErrorCategory.SECURITY_AUTH:
-      return 'Authentication error';
+      return 'Authentication issue detected.';
     case ValidationErrorCategory.SECURITY_ACCESS:
-      return 'Access control violation';
+      return 'Authorization or access control issue detected.';
     case ValidationErrorCategory.DB_QUERY_ERROR:
-      return 'Invalid database query';
+      return 'Invalid database query detected.';
     case ValidationErrorCategory.DB_CONSTRAINT_ERROR:
-      return 'Database constraint violation';
+      return 'Database constraint violation detected.';
     case ValidationErrorCategory.DB_RELATION_ERROR:
-      return 'Invalid database relation';
+      return 'Invalid database relation detected.';
     case ValidationErrorCategory.AI_CONTENT_POLICY:
-      return 'Content policy violation detected by AI';
+      return 'Content violates the system\'s content policy.';
     case ValidationErrorCategory.AI_THREAT_DETECTED:
-      return 'Security threat detected by AI';
+      return 'AI system detected a potential security threat.';
     case ValidationErrorCategory.AI_ANOMALY:
-      return 'Unusual request pattern detected by AI';
+      return 'AI system detected unusual or anomalous behavior.';
     case ValidationErrorCategory.SYSTEM_TIMEOUT:
-      return 'Validation timed out';
+      return 'Operation timed out during processing.';
     case ValidationErrorCategory.SYSTEM_DEPENDENCY:
-      return 'Dependency failure in validation system';
+      return 'A system dependency failed or was unavailable.';
     case ValidationErrorCategory.SYSTEM_CONFIG:
-      return 'Validation system configuration error';
+      return 'System configuration error detected.';
     case ValidationErrorCategory.UNKNOWN:
     default:
-      return 'Unclassified validation error';
+      return 'Unknown or unclassified error.';
   }
 }
 
@@ -228,40 +412,118 @@ export function getErrorResolutionSteps(category: ValidationErrorCategory): stri
   switch (category) {
     case ValidationErrorCategory.SCHEMA_TYPE_ERROR:
       return [
-        'Check the data type of each field being submitted',
-        'Ensure numbers are not sent as strings',
-        'Verify date formats match expected formats'
+        'Check the data types of all fields in your request.',
+        'Ensure numbers are not sent as strings, dates are in the correct format, etc.',
+        'Refer to the API documentation for the expected data types.'
       ];
     case ValidationErrorCategory.SCHEMA_CONSTRAINT_ERROR:
       return [
-        'Verify field lengths meet minimum and maximum requirements',
-        'Check that numeric values are within accepted ranges',
-        'Ensure array items meet all constraints'
+        'Check if values meet all specified constraints (min/max length, range, etc.).',
+        'Verify that values are within acceptable ranges or formats.',
+        'Refer to the API documentation for specific constraints.'
       ];
     case ValidationErrorCategory.SCHEMA_REQUIRED_ERROR:
       return [
-        'Ensure all required fields are included in the request',
-        'Check for null or undefined values',
-        'Verify field names match expected schema'
+        'Ensure all required fields are included in your request.',
+        'Check for typos in field names.',
+        'Refer to the API documentation for the list of required fields.'
       ];
     case ValidationErrorCategory.SCHEMA_FORMAT_ERROR:
       return [
-        'Verify email addresses follow valid format',
-        'Check URL format is correct and includes protocol',
-        'Ensure dates follow accepted format (e.g., ISO 8601)'
+        'Check the format of fields like email, URL, phone number, etc.',
+        'Ensure the values adhere to the expected formats.',
+        'Validate formats client-side before submission.'
       ];
     case ValidationErrorCategory.SECURITY_INJECTION:
       return [
-        'Remove any SQL-like syntax from input',
-        'Do not include executable code in input fields',
-        'Use parameterized queries for database operations'
+        'Remove any SQL or script syntax from your input.',
+        'Use parameterized values instead of constructing queries manually.',
+        'Apply proper escaping to special characters.'
       ];
-    // Add more resolution steps for other categories
+    case ValidationErrorCategory.SECURITY_XSS:
+      return [
+        'Remove HTML/JavaScript code from text input fields.',
+        'Use plain text instead of HTML where possible.',
+        'Escape special characters in user-generated content.'
+      ];
+    case ValidationErrorCategory.SECURITY_CSRF:
+      return [
+        'Include the CSRF token in your request headers or form data.',
+        'Ensure your session is valid and not expired.',
+        'Avoid submitting forms in multiple tabs simultaneously.'
+      ];
+    case ValidationErrorCategory.SECURITY_AUTH:
+      return [
+        'Check that your authentication credentials are valid.',
+        'Ensure your session or token has not expired.',
+        'Log in again to obtain a fresh session/token.'
+      ];
+    case ValidationErrorCategory.SECURITY_ACCESS:
+      return [
+        'Verify that you have permission to access the requested resource.',
+        'Check if your account has the necessary role or privileges.',
+        'Contact the system administrator if you believe this is an error.'
+      ];
+    case ValidationErrorCategory.DB_QUERY_ERROR:
+      return [
+        'Check the query syntax for errors.',
+        'Verify that all referenced tables and columns exist.',
+        'Ensure the query is appropriate for the database type (SQL, NoSQL).'
+      ];
+    case ValidationErrorCategory.DB_CONSTRAINT_ERROR:
+      return [
+        'Check for duplicate key violations.',
+        'Ensure values meet database constraints (unique, not null, etc.).',
+        'Verify that values are within acceptable ranges for the columns.'
+      ];
+    case ValidationErrorCategory.DB_RELATION_ERROR:
+      return [
+        'Verify that referenced records exist in the related tables.',
+        'Check that foreign key relationships are maintained.',
+        'Ensure cascading deletes are handled properly.'
+      ];
+    case ValidationErrorCategory.AI_CONTENT_POLICY:
+      return [
+        'Review your content for policy violations.',
+        'Remove any potentially offensive, harmful, or prohibited content.',
+        'Check the content policy documentation for specific guidelines.'
+      ];
+    case ValidationErrorCategory.AI_THREAT_DETECTED:
+      return [
+        'Remove any potentially malicious content from your request.',
+        'Check for accidental inclusion of script or code snippets.',
+        'If you believe this is a false positive, contact support.'
+      ];
+    case ValidationErrorCategory.AI_ANOMALY:
+      return [
+        'Check if your request deviates significantly from normal usage patterns.',
+        'Verify that the request is not part of an automated or high-frequency batch.',
+        'Try again with a more typical request pattern.'
+      ];
+    case ValidationErrorCategory.SYSTEM_TIMEOUT:
+      return [
+        'Try the request again after a short delay.',
+        'Consider breaking large requests into smaller chunks.',
+        'Check network connectivity and latency.'
+      ];
+    case ValidationErrorCategory.SYSTEM_DEPENDENCY:
+      return [
+        'Verify that all required services are available.',
+        'Check external dependencies that might be affecting the system.',
+        'Try again later as the issue might be temporary.'
+      ];
+    case ValidationErrorCategory.SYSTEM_CONFIG:
+      return [
+        'Check configuration settings for errors.',
+        'Verify environment variables and settings are correct.',
+        'Contact the system administrator for configuration issues.'
+      ];
+    case ValidationErrorCategory.UNKNOWN:
     default:
       return [
-        'Verify input data meets all requirements',
-        'Check for any security-sensitive characters or patterns',
-        'Contact support if the issue persists'
+        'Check all inputs for errors or inconsistencies.',
+        'Verify that the request format follows the API documentation.',
+        'If the issue persists, contact support with details of your request.'
       ];
   }
 }

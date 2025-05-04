@@ -10,7 +10,7 @@ import express from 'express';
 import { z } from 'zod';
 import { validateRequest, validateRequestWithAI } from '../middleware/apiValidationMiddleware';
 import { ValidationEngine } from '../security/advanced/apiValidation/ValidationEngine';
-import { secureLog } from '../security/utils/secureLogger';
+import secureLog from '../security/utils/secureLogger';
 import { 
   createValidationMiddleware, 
   createAIValidationMiddleware,
