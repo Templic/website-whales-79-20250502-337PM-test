@@ -1,2 +1,2 @@
 #!/bin/bash
-node server/simple-index.js
+node server/simple-validation-server.cjs

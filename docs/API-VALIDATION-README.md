@@ -1,93 +1,116 @@
 # API Validation Framework
 
-This document outlines the API validation framework implemented in this application. The validation framework provides schema-based validation using Zod, security checks for detecting malicious input, and AI-assisted validation capabilities.
+This document provides an overview of the API validation framework and explains how to use it for testing and integrating with your application.
 
 ## Overview
 
-The API validation framework consists of:
+The API validation framework provides a simple, standalone server for validating user inputs and detecting potential security threats. It includes:
 
-1. **Schema Validation**: Uses Zod schemas to validate input structure and types
-2. **Security Validation**: Detects potential security threats like SQL injection
-3. **AI-Assisted Validation**: Uses LLM models to analyze complex input patterns (available in the main application)
+1. **Basic Schema Validation** - Uses predefined schemas to validate data structure and types
+2. **Security Validation** - Detects potential security threats like SQL injection
+3. **Health Check Endpoint** - Simple endpoint to verify the validation server is running
 
-## API Endpoints
+## Server Setup
 
-### Main Application Endpoints
+The validation server runs on port 4000 by default to avoid conflicts with the main application server. This separation allows for independent testing and development of validation rules.
 
-The main application includes the following validation endpoints:
-
-- `/api/direct-validation/basic`: Basic validation endpoint
-- `/api/direct-validation/security`: Security validation endpoint that detects malicious input
-
-These endpoints bypass CSRF protection and other security middleware for testing purposes. However, due to the Vite router in development mode, these endpoints may return HTML instead of the expected JSON response.
-
-### Standalone Validation Server
-
-A standalone validation server is available at port 4000 with the following endpoints:
-
-- `/api/health`: Health check endpoint
-- `/api/validate/basic`: Schema-based validation using Zod
-- `/api/validate/security`: Security validation that detects SQL injection attempts
-
-## Running the Standalone Server
-
-To run the standalone validation server:
+### Starting the Server
 
 ```bash
+# Start the validation server
 ./start-api.sh
 ```
 
-This will start the server on port 4000.
+This will start the standalone validation server on port 4000.
 
-## Testing the API
+## API Endpoints
 
-To test the validation API, run:
+The API validation server provides the following endpoints:
 
-```bash
-node test-simple-validation-api.js
+### 1. Health Check
+
+```
+GET /api/health
 ```
 
-This will test all validation endpoints with both valid and invalid input.
+Returns the current status of the API server.
 
-## Response Format
+Example response:
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-05-04T23:05:35.270Z"
+}
+```
 
-### Basic Validation Response
+### 2. Basic Validation
 
-For valid input:
+```
+POST /api/validate/basic
+```
 
+Validates user data according to predefined schemas.
+
+Request body:
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "age": 30
+}
+```
+
+Example success response:
 ```json
 {
   "success": true,
   "validation": {
     "passed": true,
     "data": {
-      // Validated and sanitized input
+      "name": "John Doe",
+      "email": "john@example.com",
+      "age": 30
     }
   }
 }
 ```
 
-For invalid input:
-
+Example failure response:
 ```json
 {
-  "success": false,
+  "success": true,
   "validation": {
     "passed": false,
     "errors": [
       {
-        "field": "fieldName",
-        "error": "Error message"
+        "field": "name",
+        "error": "Name must be at least 2 characters"
+      },
+      {
+        "field": "email",
+        "error": "Invalid email format"
       }
     ]
   }
 }
 ```
 
-### Security Validation Response
+### 3. Security Validation
 
-For safe input:
+```
+POST /api/validate/security
+```
 
+Checks user inputs for potential security threats.
+
+Request body:
+```json
+{
+  "query": "normal user input"
+}
+```
+
+Example response for safe input:
 ```json
 {
   "success": true,
@@ -98,8 +121,7 @@ For safe input:
 }
 ```
 
-For potentially malicious input:
-
+Example response for potentially malicious input:
 ```json
 {
   "success": true,
@@ -113,24 +135,115 @@ For potentially malicious input:
 }
 ```
 
-## Integration Notes
+## Testing the API
 
-1. The validation framework is designed to work with both direct API requests and form submissions.
+### Automated Tests
 
-2. The security score ranges from 0 to 1, with scores below 0.5 considered potentially malicious.
+Run the automated test script to verify all endpoints are working correctly:
 
-3. In production, all validation routes require proper authentication and authorization, but for testing, security can be bypassed using special testing routes.
+```bash
+# Run the API validation tests
+./run-api-validation-test.sh
+```
 
-4. When the main application is running in development mode, the Vite router may intercept API requests and return HTML instead of JSON. In this case, use the standalone validation server for testing.
+This will perform tests on all endpoints and display the results in the console.
+
+### Manual Testing
+
+You can also test the API manually using the HTML test page:
+
+1. Start the validation server with `./start-api.sh`
+2. Open `public/validation-test.html` in a web browser
+3. Use the interface to test different validation scenarios
+
+## Integration with Your Application
+
+To integrate the validation API with your application:
+
+1. Make HTTP requests to the validation endpoints
+2. Process the validation results as needed
+3. Display appropriate feedback to users
+
+Example JavaScript integration:
+
+```javascript
+async function validateUserData(userData) {
+  try {
+    const response = await fetch('http://localhost:4000/api/validate/basic', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(userData)
+    });
+    
+    const result = await response.json();
+    
+    if (result.validation.passed) {
+      // Data is valid
+      return {
+        valid: true,
+        data: result.validation.data
+      };
+    } else {
+      // Data is invalid
+      return {
+        valid: false,
+        errors: result.validation.errors
+      };
+    }
+  } catch (error) {
+    console.error('Validation error:', error);
+    return {
+      valid: false,
+      errors: [{ field: 'general', error: 'Validation service unavailable' }]
+    };
+  }
+}
+```
 
 ## Security Considerations
 
-- The validation test routes bypass normal security checks and should not be enabled in production.
-- The standalone validation server should only be used for development and testing, not in production environments.
-- In production, all API endpoints should enforce CSRF protection and other security measures.
+- The validation server is intended for development and testing
+- In production, validation should be performed on the same server as your application
+- CORS is enabled on the validation server to allow requests from any origin
+- For production use, restrict CORS to specific origins
 
-## Future Enhancements
+## Troubleshooting
 
-1. Add AI-assisted validation to the standalone validation server
-2. Implement more sophisticated security validation patterns
-3. Add performance metrics for validation operations
+If you encounter issues with the validation server:
+
+1. Check that the server is running on port 4000
+2. Verify that the port is not being used by another application
+3. Check the console output for any error messages
+4. Ensure your requests are properly formatted as JSON
+
+## Advanced Usage
+
+### Adding Custom Validation Rules
+
+To add custom validation rules, modify the validation functions in `server/simple-validation-server.cjs`.
+
+For example, to add a password strength check:
+
+```javascript
+// Add to validateBasic function
+if (data.password) {
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  if (!passwordRegex.test(data.password)) {
+    errors.push({
+      field: 'password',
+      error: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character'
+    });
+  }
+}
+```
+
+### Custom Security Rules
+
+To add custom security validation rules, modify the `validateSecurity` function:
+
+```javascript
+// Add to sqlInjectionPatterns array
+/\bEXEC\b.*?\bsp_/i, // Check for potential stored procedure execution
+```
