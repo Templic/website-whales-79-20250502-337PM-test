@@ -10,7 +10,7 @@ import express from 'express';
 import { z } from 'zod';
 import { validateRequest, validateRequestWithAI } from '../middleware/apiValidationMiddleware';
 import { ValidationEngine } from '../security/advanced/apiValidation/ValidationEngine';
-import { secureLogger } from '../security/utils/secureLogger';
+import { secureLog } from '../security/utils/secureLogger';
 import { 
   createValidationMiddleware, 
   createAIValidationMiddleware,
@@ -99,7 +99,7 @@ router.post('/contact', validateRequest(
     message: z.string().min(10).max(1000)
   })
 ), (req, res) => {
-  secureLogger('info', logComponent, `Contact form submission from ${req.body.email}`);
+  secureLog('info', logComponent, `Contact form submission from ${req.body.email}`);
   
   res.json({
     success: true,
@@ -122,7 +122,7 @@ router.post('/api-security', testAuth, validateRequestWithAI({
     threshold: 0.6
   }
 }), (req, res) => {
-  secureLogger('info', logComponent, 'API security validation passed');
+  secureLog('info', logComponent, 'API security validation passed');
   
   res.json({
     success: true,
@@ -153,7 +153,7 @@ router.post('/signup', testAuth, [
     }
   })
 ], (req, res) => {
-  secureLogger('info', logComponent, `User signup for ${req.body.username}`);
+  secureLog('info', logComponent, `User signup for ${req.body.username}`);
   
   res.json({
     success: true,
