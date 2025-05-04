@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security API Direct Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    h1 {
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 10px;
+    }
+    
+    h2 {
+      color: #2980b9;
+      margin-top: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .test-section {
+      margin-bottom: 30px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+    }
+    
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    
+    button:hover {
+      background-color: #2980b9;
+    }
+    
+    pre {
+      background-color: #f1f1f1;
+      padding: 10px;
+      border-radius: 4px;
+      overflow: auto;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+    
+    .token-info {
+      margin-bottom: 10px;
+      padding: 5px 10px;
+      background-color: #e8f4fc;
+      border-radius: 4px;
+      display: inline-block;
+      font-family: monospace;
+    }
+    
+    .log-section {
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: #1e1e1e;
+      color: #f1f1f1;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    
+    .success {
+      color: #2ecc71;
+    }
+    
+    .warning {
+      color: #f39c12;
+    }
+    
+    .error {
+      color: #e74c3c;
+    }
+    
+    .info {
+      color: #3498db;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Security API Direct Test</h1>
+    <p>This page directly tests the security validation API endpoints without any authentication.</p>
+    
+    <div class="test-section">
+      <h2>1. Get CSRF Token</h2>
+      <p>This button will fetch a CSRF token from the server.</p>
+      <button id="getToken">Get CSRF Token</button>
+      <div id="tokenInfo" class="token-info">No CSRF token</div>
+      <pre id="tokenResult">Run the test to see results...</pre>
+    </div>
+
+    <div class="test-section">
+      <h2>2. No-CSRF API Status</h2>
+      <p>Tests the no-CSRF API status endpoint.</p>
+      <button id="testStatusEndpoint">Test Status Endpoint</button>
+      <pre id="statusResult">Run the test to see results...</pre>
+    </div>
+    
+    <div class="test-section">
+      <h2>3. No-Security API Status</h2>
+      <p>Tests the no-security API status endpoint.</p>
+      <button id="testNoSecurityStatus">Test No-Security Status</button>
+      <pre id="noSecurityStatusResult">Run the test to see results...</pre>
+    </div>
+    
+    <div class="test-section">
+      <h2>4. Direct Security Test - Safe Payload</h2>
+      <p>Tests the security validation with a safe payload.</p>
+      <button id="testSafeSecurity">Test Safe Payload</button>
+      <pre id="safeSecurityResult">Run the test to see results...</pre>
+    </div>
+    
+    <div class="test-section">
+      <h2>5. Direct Security Test - Suspicious Payload</h2>
+      <p>Tests the security validation with a suspicious payload (SQL injection attempt).</p>
+      <button id="testSuspiciousSecurity">Test Suspicious Payload</button>
+      <pre id="suspiciousSecurityResult">Run the test to see results...</pre>
+    </div>
+    
+    <div class="test-section">
+      <h2>Log</h2>
+      <button id="clearLog">Clear Log</button>
+      <div id="log" class="log-section">
+        <p>Test log will appear here...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let csrfToken = '';
+    const logElement = document.getElementById('log');
+    const tokenInfoElement = document.getElementById('tokenInfo');
+
+    // Helper function to log events with timestamps
+    function log(message, type = 'info') {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString();
+      const msgElement = document.createElement('p');
+      msgElement.innerHTML = `<span class="${type}">[${timeString}]</span> ${message}`;
+      logElement.appendChild(msgElement);
+      logElement.scrollTop = logElement.scrollHeight;
+    }
+
+    // Function to format JSON for display
+    function formatJSON(obj) {
+      try {
+        return JSON.stringify(obj, null, 2);
+      } catch (e) {
+        return `Error formatting JSON: ${e.message}`;
+      }
+    }
+
+    // Function to update token info display
+    function updateTokenInfo() {
+      if (csrfToken) {
+        tokenInfoElement.textContent = `CSRF Token: ${csrfToken.substring(0, 8)}...`;
+        tokenInfoElement.title = csrfToken;
+      } else {
+        tokenInfoElement.textContent = 'No CSRF token';
+        tokenInfoElement.title = '';
+      }
+    }
+
+    // Function to make API requests with CSRF token
+    async function makeRequest(url, options = {}) {
+      try {
+        const defaultOptions = {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        };
+
+        // Add CSRF token if available
+        if (csrfToken) {
+          defaultOptions.headers['X-CSRF-Token'] = csrfToken;
+        }
+
+        // Merge default options with provided options
+        const mergedOptions = {
+          ...defaultOptions,
+          ...options,
+          headers: {
+            ...defaultOptions.headers,
+            ...(options.headers || {})
+          }
+        };
+
+        log(`Making request to ${url}`, 'info');
+        const response = await fetch(url, mergedOptions);
+        
+        // Check if the response is JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const data = await response.json();
+            
+            if (response.ok) {
+              log(`Request to ${url} successful`, 'success');
+            } else {
+              log(`Request to ${url} failed: ${response.status} ${response.statusText}`, 'error');
+            }
+            
+            return { status: response.status, data };
+          } catch (jsonError) {
+            log(`Error parsing JSON response: ${jsonError.message}`, 'error');
+            const text = await response.text();
+            return { 
+              status: response.status, 
+              error: 'JSON parse error',
+              text: text.substring(0, 150) + '...'
+            };
+          }
+        } else {
+          // Handle non-JSON response
+          const text = await response.text();
+          log(`Non-JSON response received (${contentType})`, 'warning');
+          return { 
+            status: response.status, 
+            error: 'Non-JSON response',
+            contentType: contentType || 'unknown',
+            text: text.substring(0, 150) + '...'
+          };
+        }
+      } catch (error) {
+        log(`Error making request to ${url}: ${error.message}`, 'error');
+        return { status: 0, error: error.message };
+      }
+    }
+
+    // Get CSRF Token
+    document.getElementById('getToken').addEventListener('click', async () => {
+      const tokenResult = document.getElementById('tokenResult');
+      tokenResult.textContent = 'Getting CSRF token...';
+      
+      try {
+        log('Requesting CSRF token from /api/csrf-token', 'info');
+        const response = await fetch('/api/csrf-token');
+        
+        // Check the content type before trying to parse as JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          throw new Error(`Server returned non-JSON response (${contentType}): ${text.substring(0, 100)}...`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.csrfToken) {
+          throw new Error('Response does not contain csrfToken field');
+        }
+        
+        csrfToken = data.csrfToken;
+        
+        log(`CSRF token obtained: ${csrfToken.substring(0, 8)}...`, 'success');
+        tokenResult.textContent = formatJSON(data);
+        updateTokenInfo();
+      } catch (error) {
+        const errorMsg = `Error getting CSRF token: ${error.message}`;
+        log(errorMsg, 'error');
+        tokenResult.textContent = errorMsg;
+        
+        // Log details about error for debugging
+        console.error('CSRF token fetch error:', error);
+      }
+    });
+
+    // Test status endpoint
+    document.getElementById('testStatusEndpoint').addEventListener('click', async () => {
+      const statusResult = document.getElementById('statusResult');
+      statusResult.textContent = 'Testing no-CSRF status endpoint...';
+      
+      const result = await makeRequest('/api/no-csrf/status', {
+        headers: {
+          'X-CSRF-Token': csrfToken || 'no-csrf-token-needed'
+        }
+      });
+      
+      statusResult.textContent = formatJSON(result);
+    });
+    
+    // Test no-security status endpoint
+    document.getElementById('testNoSecurityStatus').addEventListener('click', async () => {
+      const noSecurityStatusResult = document.getElementById('noSecurityStatusResult');
+      noSecurityStatusResult.textContent = 'Testing no-security status endpoint...';
+      
+      const result = await makeRequest('/api/no-security/status', {
+        headers: {
+          'X-CSRF-Token': csrfToken || 'no-csrf-token-needed'
+        }
+      });
+      
+      noSecurityStatusResult.textContent = formatJSON(result);
+    });
+
+    // Test safe security validation
+    document.getElementById('testSafeSecurity').addEventListener('click', async () => {
+      const safeSecurityResult = document.getElementById('safeSecurityResult');
+      safeSecurityResult.textContent = 'Testing security validation with safe payload...';
+      
+      // Direct API call to no-security endpoint
+      const result = await makeRequest('/api/no-security/ai-security', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': csrfToken || 'no-csrf-token-needed'
+        },
+        body: JSON.stringify({
+          query: 'How is the weather today?',
+          userId: '1234'
+        })
+      });
+      
+      safeSecurityResult.textContent = formatJSON(result);
+    });
+
+    // Test suspicious security validation
+    document.getElementById('testSuspiciousSecurity').addEventListener('click', async () => {
+      const suspiciousSecurityResult = document.getElementById('suspiciousSecurityResult');
+      suspiciousSecurityResult.textContent = 'Testing security validation with suspicious payload...';
+      
+      // Direct API call to no-security endpoint
+      const result = await makeRequest('/api/no-security/ai-security', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': csrfToken || 'no-csrf-token-needed'
+        },
+        body: JSON.stringify({
+          query: 'SELECT * FROM users; DROP TABLE users;',
+          userId: '1234; DROP TABLE users;',
+          adminOverride: 'true'
+        })
+      });
+      
+      suspiciousSecurityResult.textContent = formatJSON(result);
+    });
+
+    // Clear log
+    document.getElementById('clearLog').addEventListener('click', () => {
+      logElement.innerHTML = '<p>Log cleared</p>';
+      log('Log cleared', 'info');
+    });
+
+    // Initial log message
+    log('Security API Direct Test page loaded', 'info');
+  </script>
+</body>
+</html>
