@@ -40,6 +40,8 @@ import { CSRFProtection } from './middleware/csrfProtection';
 import { rateLimitTestBypassRouter } from './routes/rate-limit-test-bypass.routes';
 import { contentApiCsrfBypass } from './middleware/contentApiCsrfBypass';
 import { thirdPartyIntegrationMiddleware, taskadeIntegrationMiddleware } from './middleware/thirdPartyIntegrationMiddleware';
+import { noSecurityMiddleware } from './middleware/noSecurityMiddleware';
+import directValidationTestRoutes from './routes/direct-validation-test-routes';
 
 // Start time tracking
 const startTime = Date.now();
@@ -66,6 +68,11 @@ log('✅ Vite exemption middleware registered', 'server');
 log('Registering rate limit test bypass routes (before CSRF)...', 'server');
 app.use(rateLimitTestBypassRouter);
 log('✅ Rate limit test bypass routes registered', 'server');
+
+// Register direct validation test routes with no security middleware
+log('Registering direct validation test routes with complete security bypass...', 'server');
+app.use('/api/direct-validation', noSecurityMiddleware, directValidationTestRoutes);
+log('✅ Direct validation test routes registered with complete security bypass', 'server');
 
 if (config.security.csrfProtection) {
   log('Setting up enhanced CSRF protection with deep security features', 'server');
@@ -96,6 +103,7 @@ if (config.security.csrfProtection) {
       // API validation testing
       '/api-validation-test',
       '/api/validation-test/*',
+      '/api/direct-validation/*',
       // Flask app routes
       '/',
       '/index.html',
