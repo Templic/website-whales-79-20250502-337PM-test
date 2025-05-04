@@ -28,7 +28,14 @@ const EXEMPT_ROUTES = [
   '/contact',
   '/blog',
   // Static assets
-  /\.(css|js|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot)$/
+  /\.(css|js|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot)$/,
+  // Vite development resources
+  /^\/@.*$/,                         // Vite HMR and other resources
+  /^\/node_modules\/.*/,             // Node modules
+  /^\/src\/.*/,                      // Source files
+  /^\/service-worker\.js$/,          // Service worker
+  /^\/manifest\.json$/,              // Web manifest
+  /^\/assets\/.*/                    // Assets
 ];
 
 /**
@@ -171,7 +178,16 @@ const DEFAULT_CONFIG: Required<RateLimitingSystemConfig> = {
     '/health',
     '/ping',
     '/favicon.ico',
-    /\.(jpg|png|gif|svg|webp|woff|woff2|ttf|eot)$/i
+    '/api/csrf-token',
+    '/api/content/key/',
+    '/service-worker.js',
+    '/manifest.json',
+    '/api/auth/session',
+    /\.(jpg|png|gif|svg|webp|woff|woff2|ttf|eot)$/i,
+    /^\/api\/content\/key\/.*/i,  // All content key endpoints
+    /^\/@fs\/.*/i,                // Vite file system access
+    /^\/@vite\/.*/i,              // Vite resources
+    /^\/node_modules\/.*/i        // Node modules access
   ]
 };
 
@@ -679,6 +695,41 @@ export class RateLimitingSystem {
    * @returns Whether to skip
    */
   private shouldSkipPath(path: string): boolean {
+    // Check if this is a development environment
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    
+    // Special handling for development environment
+    if (isDevelopment) {
+      // Skip rate limiting for Vite/webpack dev resources
+      if (path.startsWith('/@') || 
+          path.startsWith('/node_modules/') ||
+          path.startsWith('/src/') ||
+          path.startsWith('/assets/') ||
+          path === '/service-worker.js' ||
+          path === '/manifest.json') {
+        log(`Skipping rate limiting for dev resource: ${path}`, 'debug');
+        return true;
+      }
+      
+      // Skip for API content in development
+      if (path.startsWith('/api/content/')) {
+        log(`Skipping rate limiting for API content in dev: ${path}`, 'debug');
+        return true;
+      }
+      
+      // Skip for authentication endpoints in development
+      if (path.startsWith('/api/auth/')) {
+        log(`Skipping rate limiting for auth endpoint in dev: ${path}`, 'debug');
+        return true;
+      }
+      
+      // Skip for CSRF token endpoint
+      if (path === '/api/csrf-token') {
+        log(`Skipping rate limiting for CSRF token endpoint: ${path}`, 'debug');
+        return true;
+      }
+    }
+    
     // First check if this is an exempt route that should always be skipped
     for (const exemptRoute of EXEMPT_ROUTES) {
       if (typeof exemptRoute === 'string') {
