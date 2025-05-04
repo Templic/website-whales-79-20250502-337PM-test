@@ -35,6 +35,9 @@ import { rateLimitingSystem } from './security/advanced/threat/RateLimitingSyste
 import { setupFlaskProxy } from './middleware/flaskProxyMiddleware';
 import { startFlaskApp } from './utils/startFlaskApp';
 import { initializeSecurityIntegration } from './security/advanced/SecurityIntegration';
+import viteExemptMiddleware, { viteSkipCSRFMiddleware } from './middleware/viteExemptMiddleware';
+import { CSRFProtection } from './middleware/csrfProtection';
+import { rateLimitTestBypassRouter } from './routes/rate-limit-test-bypass.routes';
 
 // Start time tracking
 const startTime = Date.now();
@@ -47,14 +50,17 @@ const httpServer = createServer(app);
 // Initialize essential middleware based on startup mode
 app.use(cookieParser());
 
+// Set up Vite exemption middleware to allow Vite resources to bypass CSRF protection
+log('Setting up Vite exemption middleware...', 'server');
+app.use(viteExemptMiddleware);
+log('✅ Vite exemption middleware registered', 'server');
+
 // Set up CSRF protection with exempt paths for Replit Auth
-import { CSRFProtection } from './middleware/csrfProtection';
 
 // Initialize CSRF protection with deep security features
 // First, register our CSRF bypass routes
 // This must be done BEFORE applying CSRF protection
 // This allows our test endpoints to explicitly bypass CSRF
-import { rateLimitTestBypassRouter } from './routes/rate-limit-test-bypass.routes';
 log('Registering rate limit test bypass routes (before CSRF)...', 'server');
 app.use(rateLimitTestBypassRouter);
 log('✅ Rate limit test bypass routes registered', 'server');
@@ -105,6 +111,15 @@ if (config.security.csrfProtection) {
       '/css',
       '/js',
       '/favicon.ico',
+      // Vite development routes (using regex patterns)
+      '/@vite/**',
+      '/@vite/*',
+      '/@vite',
+      '/@react-refresh',
+      '/@fs/**',
+      '/node_modules/**',
+      '/src/**',
+      '/src/*',
       // Development endpoints (if applicable)
       ...(process.env.NODE_ENV === 'development' ? ['/api/dev'] : [])
     ],
@@ -130,12 +145,13 @@ if (config.security.csrfProtection) {
         // Replit-specific origins
         'https://replit.com',
         'https://*.replit.app',
+        'https://*.janeway.replit.dev',
         // Application-specific
         process.env.NODE_ENV === 'production' 
           ? 'https://*.cosmic-community.com' 
           : 'http://localhost:*',
         // Allow null origin in development
-        ...(process.env.NODE_ENV === 'development' ? ['null'] : [])
+        'null'
       ],
       
       // Rate limiting for security failures
@@ -155,8 +171,18 @@ if (config.security.csrfProtection) {
     }
   });
   
-  // Apply CSRF middleware
-  app.use(csrfProtection.middleware);
+  // Apply Vite CSRF-skipping middleware first
+  app.use(viteSkipCSRFMiddleware);
+  
+  // Then apply CSRF middleware for non-Vite requests
+  app.use((req, res, next) => {
+    // Skip CSRF protection for Vite resources 
+    if ((req as any).__isViteResource) {
+      return next();
+    }
+    // Otherwise apply CSRF protection
+    csrfProtection.middleware(req, res, next);
+  });
   
   // Set up CSRF token endpoint
   csrfProtection.setupTokenEndpoint(app);

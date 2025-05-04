@@ -22,6 +22,30 @@ import { initializeRateLimitingAndCsrf, recordCsrfVerification, recordCsrfError 
 import { rateLimitingSystem } from '../security/advanced/threat/RateLimitingSystem';
 
 /**
+ * Check if a path is a Vite development resource
+ * This helper function identifies Vite-specific development paths
+ */
+function isVitePath(path: string): boolean {
+  const vitePatterns = [
+    /^\/@vite\//,       // Vite internal modules
+    /^\/@vite$/,        // Vite client entry
+    /^\/@react-refresh/,// React refresh runtime
+    /^\/@fs\//,         // Vite file system access
+    /^\/node_modules\//, // Node modules accessed by Vite
+    /^\/src\//          // Source files loaded by Vite
+  ];
+  
+  return vitePatterns.some(pattern => pattern.test(path));
+}
+
+/**
+ * Check if we're running in development mode
+ */
+function isDevMode(): boolean {
+  return process.env.NODE_ENV !== 'production';
+}
+
+/**
  * Setup CSRF protection for Express application
  */
 export function setupCSRFProtection(app: Express): void {
@@ -69,6 +93,14 @@ export function setupCSRFProtection(app: Express): void {
       '/rate-limit-test/stats',
       '/rate-limit-test/simulate-security-failure',
       '/rate-limit-test/simulate-security-success',
+      // Vite development routes
+      '/@vite',
+      '/@vite/',
+      '/@vite/client',
+      '/@react-refresh',
+      '/src/',
+      '/src/main.tsx',
+      '/node_modules/',
       // Exempting the Dale Loves Whales Flask app routes from CSRF protection
       '/',
       '/index.html',
@@ -202,7 +234,7 @@ export function setupCSRFProtection(app: Express): void {
         });
       }
       
-      // For Flask app routes and rate limit test routes that fail CSRF, always allow access
+      // For Flask app routes, Vite dev routes, and rate limit test routes that fail CSRF, always allow access
       // This ensures the app functions normally for testing
       if (
         // Flask app routes
@@ -218,6 +250,11 @@ export function setupCSRFProtection(app: Express): void {
         req.path === '/collaboration' || 
         req.path === '/contact' || 
         req.path === '/test' ||
+        // Vite development routes
+        req.path.startsWith('/@vite') ||
+        req.path.startsWith('/@react-refresh') ||
+        req.path.startsWith('/src/') ||
+        req.path.startsWith('/node_modules/') ||
         // Rate limit test routes
         req.path.startsWith('/rate-limit-test')
       ) {
