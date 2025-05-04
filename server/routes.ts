@@ -261,7 +261,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/test/rate-limit/*', // Rate limiting test bypass endpoints
     '/api/openai/*',  // OpenAI API endpoints
     '/api/validation-test/*', // API validation test endpoints
-    '/api/pipeline/*' // Enhanced validation pipeline endpoints
+    '/api/pipeline/*', // Enhanced validation pipeline endpoints
+    '/api/csrf-token'  // CSRF token endpoint (needed for tests)
   ];
 
   // Re-enable enhanced CSRF protection with rate limiting integration

@@ -7,7 +7,7 @@
  * Usage: node test-validation-pipeline.js
  */
 
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 const BASE_URL = 'http://localhost:5000';
 
 // ANSI color codes for prettier console output
@@ -37,22 +37,67 @@ const COLORS = {
   bgWhite: '\x1b[47m'
 };
 
+// Global csrf token variable
+let csrfToken = null;
+
+// Get CSRF token function
+async function getCsrfToken() {
+  try {
+    // First get the CSRF token from the server
+    const response = await fetch(`${BASE_URL}/api/csrf-token`);
+    const data = await response.json();
+    
+    if (data.csrfToken) {
+      console.log(COLORS.yellow + 'Successfully retrieved CSRF token' + COLORS.reset);
+      return data.csrfToken;
+    } else {
+      console.log(COLORS.red + 'Failed to get CSRF token' + COLORS.reset);
+      return null;
+    }
+  } catch (error) {
+    console.error('Failed to get CSRF token:', error);
+    return null;
+  }
+}
+
 // Test helper function
 async function makeRequest(endpoint, method = 'GET', data = null, options = {}) {
   try {
+    // Set up URL and base options
     const url = `${BASE_URL}${endpoint}`;
+    
+    // If we don't have a token and this is not a CSRF token request, get one
+    if (!csrfToken && !endpoint.includes('/api/csrf-token')) {
+      csrfToken = await getCsrfToken();
+    }
+    
+    // Prepare headers with CSRF token
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers
+    };
+    
+    // Add CSRF token to headers if we have one
+    if (csrfToken && !endpoint.includes('/api/login')) {
+      headers['X-CSRF-Token'] = csrfToken;
+    }
     
     const requestOptions = {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-      },
+      headers,
+      credentials: 'include', // Important for cookies
       ...(data && { body: JSON.stringify(data) })
     };
     
     const response = await fetch(url, requestOptions);
-    const responseData = await response.json();
+    
+    // Try to parse as JSON
+    let responseData;
+    try {
+      responseData = await response.json();
+    } catch (err) {
+      responseData = { text: await response.text() };
+    }
     
     return {
       status: response.status,
