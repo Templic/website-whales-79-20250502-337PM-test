@@ -244,8 +244,35 @@ Provide a comprehensive analysis with:
 5. Best practices for prevention
 
 IMPORTANT: Analyze all security issues and return your findings as JSON data.
-You must respond with properly formatted JSON data.
-The response must be in JSON format.`;
+You must respond with properly formatted JSON data using this exact structure:
+
+{
+  "summary": "Brief overall summary of the security analysis",
+  "metrics": {
+    "criticalCount": 0,
+    "highCount": 0,
+    "mediumCount": 0,
+    "lowCount": 0,
+    "infoCount": 0,
+    "totalIssues": 0,
+    "riskScore": 0
+  },
+  "issues": [
+    {
+      "title": "Issue title",
+      "description": "Detailed description",
+      "severity": "critical|high|medium|low|info",
+      "location": "Line number or code area",
+      "codeSnippet": "Relevant code snippet",
+      "potentialImpact": "What could happen if exploited",
+      "remediation": "How to fix this issue"
+    }
+  ],
+  "recommendations": [
+    "General recommendation 1",
+    "General recommendation 2"
+  ]
+}`;
     
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
