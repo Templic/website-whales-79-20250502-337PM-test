@@ -415,9 +415,23 @@ async function initializeServer() {
         // Set extremely permissive CSP
         res.setHeader('Content-Security-Policy', "frame-ancestors *;");
         res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+        res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
       }
       
       next();
+    });
+    
+    // Add a dedicated route for Taskade embedding
+    app.get('/taskade-embed', (req, res) => {
+      res.sendFile('taskade-embed.html', { root: './public' });
+    });
+    
+    // Add a direct proxy route for Taskade content
+    app.get('/taskade-proxy/:taskadeId', (req, res) => {
+      const taskadeId = req.params.taskadeId || '01JRV02MYWJW6VJS9XGR1VB5J4';
+      res.redirect(`https://www.taskade.com/a/${taskadeId}`);
     });
 
     // Handle compression based on startup priority
