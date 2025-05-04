@@ -30,7 +30,8 @@ export const csrfExemptRoutes = [
   '/api/user',    // Current user endpoint
   '/api/admin/*', // Admin API endpoints
   '/api/search/*', // Search endpoints
-  '/api/secure/*'  // Secure API endpoints
+  '/api/secure/*',  // Secure API endpoints
+  '/api/validation-test/*' // Validation testing routes
 ];
 
 // Define the role hierarchy

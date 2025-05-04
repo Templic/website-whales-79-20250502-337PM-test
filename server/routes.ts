@@ -2323,6 +2323,7 @@ app.post("/api/posts/comments/:id/reject", isAdmin, async (req, res) => {
   app.use('/api/security/audit', auditSecurityRoutes);
   app.use('/api/security/dashboard', securityDashboardRoutes);
   app.use('/api/test', testSecurityRouter);
+  app.use('/api/validation-test', validationTestRoutes); // Validation testing routes
 
   // Import test API routes (these bypass CSRF protection for testing)
   // These routes are explicitly mounted WITHOUT any CSRF protection
