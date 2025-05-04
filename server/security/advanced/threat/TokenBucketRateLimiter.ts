@@ -373,4 +373,122 @@ export class TokenBucketRateLimiter {
       return 0;
     }
   }
+  
+  /**
+   * Get available tokens for a bucket
+   * This is useful for checking how close a client is to being rate limited
+   * 
+   * @param key Bucket key
+   * @returns Available tokens or capacity if bucket doesn't exist
+   */
+  public getAvailableTokens(key: string): number {
+    try {
+      // Get time
+      const now = Date.now();
+      
+      // Get bucket
+      let bucket = this.buckets.get(key);
+      
+      // If bucket doesn't exist, return full capacity
+      if (!bucket) {
+        return this.config.capacity;
+      }
+      
+      // Refill tokens if needed
+      this.refillTokens(bucket, now);
+      
+      return bucket.tokens;
+    } catch (error) {
+      log(`Error getting available tokens: ${error}`, 'error');
+      return this.config.capacity;
+    }
+  }
+  
+  /**
+   * Add tokens to a bucket
+   * This is useful for rewarding good behavior
+   * 
+   * @param key Bucket key
+   * @param tokens Tokens to add
+   * @returns New token count
+   */
+  public addTokens(key: string, tokens: number = 1): number {
+    try {
+      // Get time
+      const now = Date.now();
+      
+      // Get bucket
+      let bucket = this.buckets.get(key);
+      
+      // Create bucket if not exists
+      if (!bucket) {
+        bucket = {
+          tokens: this.config.capacity,
+          lastRefill: now,
+          lastUsage: 0,
+          capacity: this.config.capacity
+        };
+        
+        this.buckets.set(key, bucket);
+      }
+      
+      // Refill tokens if needed
+      this.refillTokens(bucket, now);
+      
+      // Add tokens to bucket (up to capacity)
+      bucket.tokens = Math.min(bucket.capacity, bucket.tokens + tokens);
+      
+      return bucket.tokens;
+    } catch (error) {
+      log(`Error adding tokens: ${error}`, 'error');
+      return 0;
+    }
+  }
+  
+  /**
+   * Consume tokens without context and adaptivity
+   * This is a simplified version of the consume method
+   * 
+   * @param key Bucket key
+   * @param tokens Tokens to consume
+   * @returns Whether tokens were consumed successfully
+   */
+  public consumeTokens(key: string, tokens: number = 1): boolean {
+    try {
+      // Get time
+      const now = Date.now();
+      
+      // Get bucket
+      let bucket = this.buckets.get(key);
+      
+      // Create bucket if not exists
+      if (!bucket) {
+        bucket = {
+          tokens: this.config.capacity,
+          lastRefill: now,
+          lastUsage: 0,
+          capacity: this.config.capacity
+        };
+        
+        this.buckets.set(key, bucket);
+      }
+      
+      // Refill tokens if needed
+      this.refillTokens(bucket, now);
+      
+      // Check if enough tokens
+      if (bucket.tokens < tokens) {
+        return false;
+      }
+      
+      // Consume tokens
+      bucket.tokens -= tokens;
+      bucket.lastUsage = now;
+      
+      return true;
+    } catch (error) {
+      log(`Error consuming tokens: ${error}`, 'error');
+      return false;
+    }
+  }
 }

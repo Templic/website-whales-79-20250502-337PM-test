@@ -1,430 +1,204 @@
 /**
- * Rate Limit Integration
- *
- * This module integrates rate limiting with CSRF protection.
- * It helps ensure that CSRF protection and rate limiting work together properly.
+ * Rate Limit Integration Module
+ * 
+ * This module provides integration between the rate limiting system and other
+ * security components, particularly CSRF protection, to facilitate shared state
+ * and coordinated responses to potential security threats.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { log } from '../../../utils/logger';
-import { getClientIp } from '../../../utils/ip-utils';
+import { rateLimitingSystem } from './RateLimitingSystem';
+import { config } from '../../../config';
 
 /**
- * CSRF verification entry
+ * Configuration options for rate limiting integration
  */
-interface CsrfVerificationEntry {
+export interface RateLimitIntegrationOptions {
   /**
-   * IP address
+   * Whether to enable CSRF integration
    */
-  ip: string;
+  enableCsrfIntegration?: boolean;
   
   /**
-   * User ID (if authenticated)
+   * The base penalty rate for CSRF failures
    */
-  userId?: string | number;
+  csrfFailurePenalty?: number;
   
   /**
-   * Timestamp
+   * The base reward rate for successful CSRF verifications
    */
-  timestamp: number;
-  
-  /**
-   * Request path
-   */
-  path: string;
-  
-  /**
-   * HTTP method
-   */
-  method: string;
-  
-  /**
-   * Request headers
-   */
-  headers: Record<string, string>;
-  
-  /**
-   * Whether verification was successful
-   */
-  success: boolean;
+  csrfSuccessReward?: number;
 }
 
 /**
- * CSRF verification registry
+ * Default integration options
  */
-interface CsrfVerificationRegistry {
-  /**
-   * All verifications
-   */
-  verifications: CsrfVerificationEntry[];
-  
-  /**
-   * Successful verifications
-   */
-  successful: Map<string, CsrfVerificationEntry[]>;
-  
-  /**
-   * Failed verifications
-   */
-  failed: Map<string, CsrfVerificationEntry[]>;
-  
-  /**
-   * Last cleanup time
-   */
-  lastCleanup: number;
-}
-
-/**
- * CSRF error entry
- */
-interface CsrfErrorEntry {
-  /**
-   * IP address
-   */
-  ip: string;
-  
-  /**
-   * User ID (if authenticated)
-   */
-  userId?: string | number;
-  
-  /**
-   * Timestamp
-   */
-  timestamp: number;
-  
-  /**
-   * Request path
-   */
-  path: string;
-  
-  /**
-   * HTTP method
-   */
-  method: string;
-  
-  /**
-   * Error type
-   */
-  errorType: string;
-  
-  /**
-   * Request headers
-   */
-  headers: Record<string, string>;
-}
-
-/**
- * Registry of recent CSRF verifications
- */
-const csrfRegistry: CsrfVerificationRegistry = {
-  verifications: [],
-  successful: new Map(),
-  failed: new Map(),
-  lastCleanup: Date.now()
+const defaultOptions: RateLimitIntegrationOptions = {
+  enableCsrfIntegration: true,
+  csrfFailurePenalty: 5, // Each failure costs 5 tokens
+  csrfSuccessReward: 1   // Each success adds 1 token (to gradually restore trust)
 };
 
-/**
- * Recent CSRF errors
- */
-const csrfErrors: CsrfErrorEntry[] = [];
+// Initialize with default options
+let options = { ...defaultOptions };
 
 /**
- * Recent rate limit exceptions granted
+ * Configure rate limit integration 
  */
-const rateLimitExceptions: Map<string, number> = new Map();
-
-/**
- * Record CSRF verification
- * 
- * @param req Express request
- */
-export function recordCsrfVerification(req: Request): void {
-  try {
-    // Get IP and user ID
-    const ip = getClientIp(req);
-    const userId = req.session?.userId;
-    
-    // Create entry
-    const entry: CsrfVerificationEntry = {
-      ip,
-      userId,
-      timestamp: Date.now(),
-      path: req.path,
-      method: req.method,
-      headers: Object.entries(req.headers)
-        .reduce((obj, [key, value]) => {
-          obj[key] = Array.isArray(value) ? value.join(', ') : String(value || '');
-          return obj;
-        }, {} as Record<string, string>),
-      success: true
-    };
-    
-    // Add to all verifications
-    csrfRegistry.verifications.push(entry);
-    
-    // Add to successful verifications
-    const ipKey = `ip:${ip}`;
-    const ipVerifications = csrfRegistry.successful.get(ipKey) || [];
-    ipVerifications.push(entry);
-    csrfRegistry.successful.set(ipKey, ipVerifications);
-    
-    // Add to user verifications if authenticated
-    if (userId) {
-      const userKey = `user:${userId}`;
-      const userVerifications = csrfRegistry.successful.get(userKey) || [];
-      userVerifications.push(entry);
-      csrfRegistry.successful.set(userKey, userVerifications);
-    }
-    
-    // Cleanup old entries if needed
-    cleanupCsrfRegistry();
-    
-    // Grant rate limit exception
-    grantRateLimitException(ip, userId);
-  } catch (error) {
-    log(`Error recording CSRF verification: ${error}`, 'error');
-  }
-}
-
-/**
- * Record CSRF error
- * 
- * @param req Express request
- * @param errorType Error type (optional, defaults to 'token_mismatch')
- */
-export function recordCsrfError(req: Request, errorType: string = 'token_mismatch'): void {
-  try {
-    // Get IP and user ID
-    const ip = getClientIp(req);
-    const userId = req.session?.userId;
-    
-    // Create error entry
-    const entry: CsrfErrorEntry = {
-      ip,
-      userId,
-      timestamp: Date.now(),
-      path: req.path,
-      method: req.method,
-      errorType,
-      headers: Object.entries(req.headers)
-        .reduce((obj, [key, value]) => {
-          obj[key] = Array.isArray(value) ? value.join(', ') : String(value || '');
-          return obj;
-        }, {} as Record<string, string>)
-    };
-    
-    // Add to errors
-    csrfErrors.push(entry);
-    
-    // Add to failed verifications
-    const ipKey = `ip:${ip}`;
-    const ipVerifications = csrfRegistry.failed.get(ipKey) || [];
-    
-    ipVerifications.push({
-      ...entry,
-      success: false
-    } as CsrfVerificationEntry);
-    
-    csrfRegistry.failed.set(ipKey, ipVerifications);
-    
-    // Add to user failed verifications if authenticated
-    if (userId) {
-      const userKey = `user:${userId}`;
-      const userVerifications = csrfRegistry.failed.get(userKey) || [];
-      
-      userVerifications.push({
-        ...entry,
-        success: false
-      } as CsrfVerificationEntry);
-      
-      csrfRegistry.failed.set(userKey, userVerifications);
-    }
-    
-    // Trim errors if too many
-    if (csrfErrors.length > 1000) {
-      csrfErrors.splice(0, csrfErrors.length - 1000);
-    }
-    
-    // Log error
-    log(`CSRF error (${errorType}): ${req.method} ${req.path}`, 'security');
-  } catch (error) {
-    log(`Error recording CSRF error: ${error}`, 'error');
-  }
-}
-
-/**
- * Cleanup CSRF registry
- */
-function cleanupCsrfRegistry(): void {
-  try {
-    const now = Date.now();
-    
-    // Skip if less than 10 minutes since last cleanup
-    if (now - csrfRegistry.lastCleanup < 10 * 60 * 1000) {
-      return;
-    }
-    
-    // Update last cleanup
-    csrfRegistry.lastCleanup = now;
-    
-    // Cleanup old entries (keep last 24 hours)
-    const cutoff = now - 24 * 60 * 60 * 1000;
-    
-    // Cleanup all verifications
-    csrfRegistry.verifications = csrfRegistry.verifications.filter(
-      v => v.timestamp >= cutoff
-    );
-    
-    // Cleanup successful verifications
-    for (const [key, verifications] of csrfRegistry.successful.entries()) {
-      const newVerifications = verifications.filter(v => v.timestamp >= cutoff);
-      
-      if (newVerifications.length === 0) {
-        csrfRegistry.successful.delete(key);
-      } else {
-        csrfRegistry.successful.set(key, newVerifications);
-      }
-    }
-    
-    // Cleanup failed verifications
-    for (const [key, verifications] of csrfRegistry.failed.entries()) {
-      const newVerifications = verifications.filter(v => v.timestamp >= cutoff);
-      
-      if (newVerifications.length === 0) {
-        csrfRegistry.failed.delete(key);
-      } else {
-        csrfRegistry.failed.set(key, newVerifications);
-      }
-    }
-    
-    // Cleanup old rate limit exceptions
-    for (const [key, timestamp] of rateLimitExceptions.entries()) {
-      if (timestamp < cutoff) {
-        rateLimitExceptions.delete(key);
-      }
-    }
-    
-    // Cleanup old CSRF errors
-    const oldErrorsLength = csrfErrors.length;
-    const newErrors = csrfErrors.filter(e => e.timestamp >= cutoff);
-    
-    if (newErrors.length !== oldErrorsLength) {
-      csrfErrors.splice(0, csrfErrors.length);
-      csrfErrors.push(...newErrors);
-    }
-  } catch (error) {
-    log(`Error cleaning up CSRF registry: ${error}`, 'error');
-  }
-}
-
-/**
- * Grant rate limit exception
- * 
- * @param ip IP address
- * @param userId User ID (if available)
- */
-function grantRateLimitException(ip: string, userId?: string | number): void {
-  try {
-    const now = Date.now();
-    
-    // Grant exception for IP
-    rateLimitExceptions.set(`ip:${ip}`, now);
-    
-    // Grant exception for user if authenticated
-    if (userId) {
-      rateLimitExceptions.set(`user:${userId}`, now);
-    }
-  } catch (error) {
-    log(`Error granting rate limit exception: ${error}`, 'error');
-  }
-}
-
-/**
- * Check if rate limit exception granted
- * 
- * @param ip IP address
- * @param userId User ID (if available)
- * @returns Whether exception granted
- */
-function hasRateLimitException(ip: string, userId?: string | number): boolean {
-  try {
-    const now = Date.now();
-    const exceptionWindow = 10 * 60 * 1000; // 10 minutes
-    
-    // Check IP exception
-    const ipException = rateLimitExceptions.get(`ip:${ip}`);
-    
-    if (ipException && now - ipException < exceptionWindow) {
-      return true;
-    }
-    
-    // Check user exception if authenticated
-    if (userId) {
-      const userException = rateLimitExceptions.get(`user:${userId}`);
-      
-      if (userException && now - userException < exceptionWindow) {
-        return true;
-      }
-    }
-    
-    return false;
-  } catch (error) {
-    log(`Error checking rate limit exception: ${error}`, 'error');
-    
-    // Fail open
-    return true;
-  }
+export function configureRateLimitIntegration(customOptions: RateLimitIntegrationOptions) {
+  options = { ...defaultOptions, ...customOptions };
+  log('Rate limit integration configured with custom options', 'security');
 }
 
 /**
  * Initialize rate limiting and CSRF integration
  * 
- * @returns Express middleware
+ * @returns Middleware that handles the integration
  */
-export function initializeRateLimitingAndCsrf(): (req: Request, res: Response, next: NextFunction) => void {
-  log('Initializing CSRF and rate limiting integration', 'security');
-  
+export function initializeRateLimitingAndCsrf() {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Check if this is CSRF verification redirect
-      const isVerificationRequired = req.path === '/csrf/verify' || req.query.csrf === 'verify';
-      
-      if (isVerificationRequired) {
-        // Don't rate limit verification pages
-        return next();
-      }
-      
-      // Get client information
-      const ip = getClientIp(req);
-      const userId = req.session?.userId;
-      
-      // Check for manual exception
-      if (hasRateLimitException(ip, userId)) {
-        // Skip rate limiting
-        return next();
-      }
-      
-      // Otherwise, continue to next middleware (which will likely be rate limiting)
+      // Additional preprocessing logic can be added here
+      // This middleware runs before both CSRF and rate limiting middleware
       next();
     } catch (error) {
-      log(`Error in CSRF rate limit integration: ${error}`, 'error');
-      
-      // Fail open
+      log(`Error in rate limiting and CSRF integration: ${error}`, 'security');
       next();
     }
   };
 }
 
 /**
- * Get the rate limiting integration components
+ * Record a successful CSRF token verification
  * 
- * @returns CSRF and rate limiting integration components
+ * This helps build trust for the client, potentially increasing their rate limits.
+ * 
+ * @param req Express request
  */
-export function getRateLimitingComponents() {
-  return {
-    csrfRegistry,
-    csrfErrors,
-    rateLimitExceptions
-  };
+export function recordCsrfVerification(req: Request) {
+  if (!options.enableCsrfIntegration) return;
+  
+  try {
+    const clientIp = getClientIp(req);
+    const userId = req.session?.userId;
+    
+    // Record success with the rate limiting system
+    // This gradually increases trust and potentially rate limits for verified users
+    rateLimitingSystem.recordSuccessfulSecurityCheck({
+      clientIp,
+      userId: userId?.toString(),
+      securityComponent: 'csrf',
+      checkType: 'token-verification',
+      successValue: options.csrfSuccessReward || 1
+    });
+    
+    // Record telemetry (optional)
+    if (config.features.enableExtraLogging) {
+      log(`CSRF verification success recorded for IP: ${clientIp}`, 'security');
+    }
+  } catch (error) {
+    log(`Error recording CSRF verification: ${error}`, 'security');
+  }
+}
+
+/**
+ * Record a CSRF token verification failure
+ * 
+ * This records failed CSRF checks, helping the rate limiter identify potential attacks.
+ * 
+ * @param req Express request
+ * @param errorType Type of CSRF error
+ */
+export function recordCsrfError(req: Request, errorType: string) {
+  if (!options.enableCsrfIntegration) return;
+  
+  try {
+    const clientIp = getClientIp(req);
+    const userId = req.session?.userId;
+    const path = req.path;
+    
+    // Record failure with the rate limiting system
+    // This potentially reduces rate limits for clients with CSRF errors
+    rateLimitingSystem.recordFailedSecurityCheck({
+      clientIp,
+      userId: userId?.toString(),
+      securityComponent: 'csrf',
+      checkType: 'token-verification',
+      failureType: errorType,
+      path,
+      failureValue: options.csrfFailurePenalty || 5
+    });
+    
+    // Log the failure for monitoring purposes
+    log(`CSRF verification failure recorded for IP: ${clientIp}, URL: ${req.url}, Type: ${errorType}`, 'security');
+  } catch (error) {
+    log(`Error recording CSRF error: ${error}`, 'security');
+  }
+}
+
+/**
+ * Get the client IP address
+ */
+function getClientIp(req: Request): string {
+  // First try the X-Forwarded-For header (common for proxied requests)
+  const xForwardedFor = req.headers['x-forwarded-for'];
+  if (xForwardedFor) {
+    // X-Forwarded-For can be a comma-separated list; take the first one
+    const ips = Array.isArray(xForwardedFor) 
+      ? xForwardedFor[0] 
+      : xForwardedFor.split(',')[0].trim();
+    return ips;
+  }
+  
+  // Fall back to other headers if X-Forwarded-For isn't present
+  const xRealIp = req.headers['x-real-ip'];
+  if (xRealIp) {
+    return Array.isArray(xRealIp) ? xRealIp[0] : xRealIp;
+  }
+  
+  // Finally, use the remote address from the request
+  return req.socket.remoteAddress || '0.0.0.0';
+}
+
+/**
+ * Evaluate integrated security threats
+ * 
+ * This function analyzes multiple security systems to determine if a request
+ * represents a significant threat that requires action beyond normal rate limiting.
+ * 
+ * @param req Express request
+ * @returns Threat level assessment
+ */
+export function evaluateIntegratedThreat(req: Request) {
+  try {
+    const clientIp = getClientIp(req);
+    const userId = req.session?.userId;
+    const path = req.path;
+    
+    // Retrieve security metrics from various components
+    // For now, we'll just check rate limiting and CSRF components
+    
+    // Get the client's current token deficit (if any)
+    const currentTokenDeficit = rateLimitingSystem.getTokenDeficit({
+      clientIp,
+      userId: userId?.toString(), 
+      path
+    });
+    
+    // Higher deficit means more suspicious activity
+    const threatLevel = {
+      score: currentTokenDeficit > 50 ? 'high' : 
+             currentTokenDeficit > 20 ? 'medium' : 
+             currentTokenDeficit > 5 ? 'low' : 'none',
+      tokenDeficit: currentTokenDeficit,
+      path,
+      ip: clientIp
+    };
+    
+    return threatLevel;
+  } catch (error) {
+    log(`Error evaluating integrated threat: ${error}`, 'security');
+    return { score: 'error', message: 'Error evaluating threat' };
+  }
 }

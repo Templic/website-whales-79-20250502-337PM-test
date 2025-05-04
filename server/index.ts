@@ -34,6 +34,7 @@ import { SecurityMonitor } from './security/advanced/monitoring/SecurityMonitor'
 import { rateLimitingSystem } from './security/advanced/threat/RateLimitingSystem';
 import { setupFlaskProxy } from './middleware/flaskProxyMiddleware';
 import { startFlaskApp } from './utils/startFlaskApp';
+import { initializeSecurityIntegration } from './security/advanced/SecurityIntegration';
 
 // Start time tracking
 const startTime = Date.now();
@@ -225,6 +226,24 @@ async function initializeServer() {
     });
 
 
+    // Initialize integrated security if configured
+    if (config.security.enableIntegratedSecurity) {
+      try {
+        log('Initializing integrated security between CSRF and rate limiting systems...', 'security');
+        
+        // Initialize security integration
+        initializeSecurityIntegration(app, {
+          enableCsrf: config.security.csrfProtection,
+          enableRateLimiting: config.security.enableRateLimiting,
+          enableIntegratedSecurity: true
+        });
+        
+        log('Security integration initialized successfully', 'security');
+      } catch (error) {
+        log(`Error initializing security integration: ${error}`, 'security');
+      }
+    }
+    
     // Security middleware
     app.use(
       helmet({

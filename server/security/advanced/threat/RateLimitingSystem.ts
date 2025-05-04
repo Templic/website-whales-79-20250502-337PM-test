@@ -13,7 +13,7 @@ import { TokenBucketRateLimiter } from './TokenBucketRateLimiter';
 import { AdaptiveRateLimiter } from './AdaptiveRateLimiter';
 import { RateLimitAnalytics } from './RateLimitAnalytics';
 import { threatDetectionService } from './ThreatDetectionService';
-import { recordCsrfVerification, recordCsrfError, getRateLimitingComponents } from './RateLimitIntegration';
+import { recordCsrfVerification, recordCsrfError } from './RateLimitIntegration';
 
 // Routes that should be exempt from rate limiting
 // This includes static content routes and public pages
@@ -387,6 +387,158 @@ export class RateLimitingSystem {
    */
   public recordCsrfError(req: Request, errorType: string): void {
     recordCsrfError(req, errorType);
+  }
+  
+  /**
+   * Record a successful security check
+   * Rewards tokens to clients that pass security checks
+   * 
+   * @param params Check parameters
+   */
+  public recordSuccessfulSecurityCheck(params: {
+    clientIp: string;
+    userId?: string;
+    securityComponent: string;
+    checkType: string;
+    successValue?: number;
+  }): void {
+    try {
+      const { 
+        clientIp, 
+        userId, 
+        securityComponent, 
+        checkType,
+        successValue = 1
+      } = params;
+      
+      // Get the security rate limiter
+      const limiter = this.rateLimiters.security;
+      
+      // Construct a key that's specific to this client and check type
+      const key = `${clientIp}:${userId || 'anonymous'}:${securityComponent}:${checkType}`;
+      
+      // Add tokens as a reward for successful security checks
+      limiter.addTokens(key, successValue);
+      
+      // Log if needed
+      if (this.config.contextAware) {
+        log(`Security check passed: ${securityComponent}:${checkType} for ${clientIp}`, 'security');
+      }
+    } catch (error) {
+      log(`Error recording successful security check: ${error}`, 'error');
+    }
+  }
+  
+  /**
+   * Record a failed security check
+   * Penalizes clients that fail security checks
+   * 
+   * @param params Check parameters
+   */
+  public recordFailedSecurityCheck(params: {
+    clientIp: string;
+    userId?: string;
+    securityComponent: string;
+    checkType: string;
+    failureType: string;
+    path?: string;
+    failureValue?: number;
+  }): void {
+    try {
+      const { 
+        clientIp, 
+        userId, 
+        securityComponent, 
+        checkType,
+        failureType,
+        path = '/',
+        failureValue = 5
+      } = params;
+      
+      // Get the security rate limiter
+      const limiter = this.rateLimiters.security;
+      
+      // Construct a key that's specific to this client and check type
+      const key = `${clientIp}:${userId || 'anonymous'}:${securityComponent}:${checkType}`;
+      
+      // Consume tokens as a penalty for failed security checks
+      limiter.consumeTokens(key, failureValue);
+      
+      // Log the failure
+      log(`Security check failed: ${securityComponent}:${checkType}:${failureType} for ${clientIp} on ${path}`, 'security');
+      
+      // Check if this puts the client over the suspicious activity threshold
+      const remainingTokens = limiter.getAvailableTokens(key);
+      if (remainingTokens <= 0) {
+        // Report suspicious activity
+        threatDetectionService.reportThreat({
+          sourceIp: clientIp,
+          userId: userId,
+          threatType: 'security_check_failure',
+          severity: 'medium',
+          details: {
+            component: securityComponent,
+            checkType,
+            failureType,
+            path
+          }
+        });
+      }
+    } catch (error) {
+      log(`Error recording failed security check: ${error}`, 'error');
+    }
+  }
+  
+  /**
+   * Get the token deficit for a client
+   * This can be used to assess the client's suspicious level
+   * 
+   * @param params Parameters
+   * @returns Token deficit (negative values indicate suspicious activity)
+   */
+  public getTokenDeficit(params: {
+    clientIp: string;
+    userId?: string;
+    path?: string;
+  }): number {
+    try {
+      const { clientIp, userId, path = '/' } = params;
+      
+      // Get the security rate limiter
+      const limiter = this.rateLimiters.security;
+      
+      // Determine the appropriate scope based on the path
+      let scope: RateLimitScope = 'security';
+      if (path.startsWith('/api/auth')) {
+        scope = 'auth';
+      } else if (path.startsWith('/api/admin')) {
+        scope = 'admin';
+      } else if (path.startsWith('/api')) {
+        scope = 'api';
+      }
+      
+      // Get the limiter for this scope
+      const scopeLimiter = this.rateLimiters[scope];
+      
+      // Construct keys for both security and scope-specific checks
+      const securityKey = `${clientIp}:${userId || 'anonymous'}:security:general`;
+      const scopeKey = `${clientIp}:${userId || 'anonymous'}:${scope}:general`;
+      
+      // Get available tokens for both limiters
+      const securityTokens = limiter.getAvailableTokens(securityKey);
+      const scopeTokens = scopeLimiter.getAvailableTokens(scopeKey);
+      
+      // Calculate deficit as the negative of available tokens
+      // The worse of the two deficits is returned
+      const securityDeficit = limiter.getCapacity() - securityTokens;
+      const scopeDeficit = scopeLimiter.getCapacity() - scopeTokens;
+      
+      // Return the worse of the two deficits
+      return Math.max(securityDeficit, scopeDeficit);
+    } catch (error) {
+      log(`Error getting token deficit: ${error}`, 'error');
+      return 0;
+    }
   }
   
   /**

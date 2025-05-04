@@ -31,6 +31,7 @@ export interface SecurityConfig {
   enableRateLimiting: boolean;
   csrfProtection: boolean;
   maxPayloadSize: string;
+  enableIntegratedSecurity?: boolean; // Controls integration between security components
 }
 
 export interface FeatureFlags {
@@ -175,7 +176,8 @@ const defaultConfig: ServerConfig = {
     scanInterval: 12 * 60 * 60 * 1000, // 12 hours
     enableRateLimiting: true,
     csrfProtection: true,
-    maxPayloadSize: '50mb'
+    maxPayloadSize: '50mb',
+    enableIntegratedSecurity: true // Enable integration between security components
   }
 };
 
