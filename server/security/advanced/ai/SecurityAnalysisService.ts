@@ -1,423 +1,359 @@
 /**
- * AI-Powered Security Analysis Service
+ * Security Analysis Service
  * 
- * This service provides integration with OpenAI's API to analyze security threats
- * in code, logs, network traffic, and configuration files.
+ * This service provides AI-powered security analysis of various data types including:
+ * - API requests and responses
+ * - Code for security vulnerabilities
+ * - Configuration files for security misconfigurations
+ * - Network traffic patterns for anomalies
+ * - Database queries for injection vulnerabilities
+ * 
+ * It uses OpenAI's GPT-4o model to analyze inputs and identify security threats.
  */
 
+import secureLogger from '../../utils/secureLogger';
 import OpenAI from 'openai';
-import { log } from '../../../utils/logger';
-import fs from 'fs';
-import path from 'path';
 
-// Initialize OpenAI client with API key
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Create secure logger
+const logger = secureLogger.createLogger('security-analysis-service', {
+  component: 'security',
+  subcomponent: 'ai-analysis',
+  redactKeys: ['password', 'token', 'secret', 'apiKey', 'authorization', 'x-api-key', 'sessionid']
+});
 
-// The newest OpenAI model is "gpt-4o" which was released May 13, 2024. 
-// Do not change this unless explicitly requested by the user.
-const DEFAULT_MODEL = 'gpt-4o';
-
-/**
- * Type of content to analyze
- */
-export type SecurityContentType = 'code' | 'logs' | 'network' | 'config' | 'api' | 'database';
-
-/**
- * Security severity levels
- */
-export type SecuritySeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
-
-/**
- * Security issue details
- */
-export interface SecurityIssue {
-  id?: string;
-  title: string;
-  description: string;
-  severity: SecuritySeverity;
-  location?: string;
-  codeSnippet?: string;
-  potentialImpact?: string;
-  remediation?: string;
-  remediationCode?: string;
-  references?: string[];
-  cvss?: number;
-  cwe?: string;
-}
-
-/**
- * Security analysis results
- */
-export interface SecurityAnalysisResult {
-  timestamp: string;
-  summary: string;
-  issues: SecurityIssue[];
-  metrics: {
-    criticalCount: number;
-    highCount: number;
-    mediumCount: number;
-    lowCount: number;
-    infoCount: number;
-    totalIssues: number;
-    riskScore: number;
-  };
-  recommendations: string[];
+// Service configuration
+interface ServiceConfig {
   model: string;
-  processingTimeMs: number;
+  maxTokens: number;
+  temperatureDefault: number;
+  debugMode: boolean;
 }
 
-/**
- * Security analysis options
- */
-export interface SecurityAnalysisOptions {
-  model?: string;
-  maxTokens?: number;
-  temperature?: number;
+// Analysis context
+interface AnalysisContext {
+  dataType: 'code' | 'api' | 'config' | 'network' | 'database' | 'logs';
+  data: string;
+  requestContext?: {
+    url?: string;
+    method?: string;
+    ip?: string;
+    userAgent?: string;
+    [key: string]: any;
+  };
   detailedAnalysis?: boolean;
-  includeReferences?: boolean;
-  includeRemediationCode?: boolean;
-  userId?: string | number;
+}
+
+// Threat object
+interface Threat {
+  type: string;
+  description: string;
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  confidence: number;
+  location?: string;
+  mitigation?: string;
+}
+
+// Code issue object
+interface CodeIssue {
+  line?: number;
+  column?: number;
+  code?: string;
+  description: string;
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  cwe?: string;
+  fix?: string;
+}
+
+// Analysis result
+interface AnalysisResult {
+  completed: boolean;
+  error?: string;
+  threats: Threat[];
+  codeIssues?: CodeIssue[];
+  analysis?: string;
+  timeTakenMs?: number;
+  riskScore?: number;
+  model?: string;
 }
 
 /**
- * AI-powered security analysis service
+ * Security Analysis Service for AI-powered threat detection
  */
 export class SecurityAnalysisService {
-  private static instance: SecurityAnalysisService;
+  private openai: OpenAI;
+  private config: ServiceConfig;
 
-  /**
-   * Get singleton instance
-   */
-  public static getInstance(): SecurityAnalysisService {
-    if (!SecurityAnalysisService.instance) {
-      SecurityAnalysisService.instance = new SecurityAnalysisService();
-    }
-    return SecurityAnalysisService.instance;
+  constructor() {
+    // Initialize OpenAI client
+    this.openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+
+    // Default configuration (can be overridden)
+    this.config = {
+      model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      maxTokens: 2048,
+      temperatureDefault: 0.1,
+      debugMode: process.env.NODE_ENV !== 'production'
+    };
+
+    logger.log('SecurityAnalysisService initialized', 'info');
   }
 
   /**
-   * Private constructor for singleton pattern
+   * Analyze data for security threats
    */
-  private constructor() {
-    log('AI Security Analysis Service initialized', 'security');
-  }
-
-  /**
-   * Analyze content for security threats
-   * 
-   * @param content Content to analyze
-   * @param contentType Type of content
-   * @param context Additional context about the environment
-   * @param options Analysis options
-   * @returns Analysis results
-   */
-  public async analyzeContent(
-    content: string,
-    contentType: SecurityContentType,
-    context: string = '',
-    options: SecurityAnalysisOptions = {}
-  ): Promise<SecurityAnalysisResult> {
+  async analyzeData(context: AnalysisContext): Promise<AnalysisResult> {
     const startTime = Date.now();
-    
+
     try {
-      const {
-        model = DEFAULT_MODEL,
-        maxTokens = 1500,
-        temperature = 0.2,
-        detailedAnalysis = true,
-        includeReferences = true,
-        includeRemediationCode = true,
-        userId
-      } = options;
+      logger.log(`Starting security analysis of ${context.dataType} data`, 'info');
 
-      // Construct a specialized system prompt for security analysis
-      const systemPrompt = `You are an expert security analyst specializing in detecting vulnerabilities, weaknesses, and potential threats in ${contentType}. 
-Focus on identifying security issues like:
-- SQL injection vulnerabilities
-- Cross-site scripting (XSS) opportunities
-- Insecure direct object references
-- Authentication weaknesses
-- Authorization flaws
-- Sensitive data exposure
-- Missing security headers
-- Cross-site request forgery vectors
-- Insecure cryptographic storage
-- Insufficient input validation
-- Insecure configurations
+      // Create an appropriate system prompt based on data type
+      const systemPrompt = this.createSystemPrompt(context.dataType, context.detailedAnalysis);
 
-${detailedAnalysis ? 'Provide a detailed, comprehensive analysis.' : 'Provide a concise, focused analysis.'}
-${includeReferences ? 'Include references to security standards and best practices.' : ''}
-${includeRemediationCode ? 'Include code examples for remediation when applicable.' : ''}
+      // Build the messages array
+      const messages = [
+        {
+          role: 'system',
+          content: systemPrompt
+        },
+        {
+          role: 'user',
+          content: [
+            `Please analyze the following ${context.dataType} data for security vulnerabilities:`,
+            `\`\`\`${context.dataType}`,
+            context.data,
+            '```',
+            context.requestContext ? `Additional context: ${JSON.stringify(context.requestContext)}` : ''
+          ].join('\n')
+        }
+      ];
 
-IMPORTANT: Analyze all security issues and return your findings as JSON data. 
-You must respond with properly formatted JSON data.
-The response must be in JSON format.
-
-Return your analysis in the following JSON format:
-{
-  "summary": "Brief overview of all findings",
-  "issues": [
-    {
-      "title": "Issue title",
-      "description": "Detailed description of the issue",
-      "severity": "critical|high|medium|low|info",
-      "location": "Where in the content the issue was found",
-      "codeSnippet": "Relevant code snippet if applicable",
-      "potentialImpact": "Description of potential exploitation or impact",
-      "remediation": "How to fix this issue",
-      "remediationCode": "Example code showing the fix",
-      "references": ["Relevant references to standards, articles, etc."],
-      "cvss": "CVSS score if applicable",
-      "cwe": "CWE identifier if applicable"
-    }
-  ],
-  "metrics": {
-    "criticalCount": 0,
-    "highCount": 0,
-    "mediumCount": 0,
-    "lowCount": 0,
-    "infoCount": 0,
-    "totalIssues": 0,
-    "riskScore": 0
-  },
-  "recommendations": [
-    "Overall recommendation 1",
-    "Overall recommendation 2"
-  ]
-}`;
-
-      const response = await openai.chat.completions.create({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Please analyze the following ${contentType} and return the results in JSON format:\n\n${content}\n\nAdditional context: ${context}` }
-        ],
-        max_tokens: maxTokens,
-        temperature,
-        response_format: { type: "json_object" }
+      // Call OpenAI for analysis
+      const response = await this.openai.chat.completions.create({
+        model: this.config.model,
+        messages: messages as any,
+        max_tokens: this.config.maxTokens,
+        temperature: this.config.temperatureDefault,
+        response_format: { type: 'json_object' }
       });
 
-      const analysisText = response.choices[0].message.content;
-      let analysis = JSON.parse(analysisText);
-
-      // Process and enhance the analysis
-      analysis = this.processAnalysisResults(analysis);
-
-      // Log the analysis request (without the full content)
-      log(`AI security analysis performed on ${contentType}${userId ? ` by user ${userId}` : ''}`, 'security');
-
-      // Calculate processing time
-      const processingTime = Date.now() - startTime;
-
-      // Return enhanced results
-      return {
-        ...analysis,
-        timestamp: new Date().toISOString(),
-        model: response.model,
-        processingTimeMs: processingTime
-      };
-    } catch (error: any) {
-      const processingTime = Date.now() - startTime;
-      
-      log(`Error in AI security analysis: ${error.message}`, 'error');
-      
-      // Return an error result
-      return {
-        timestamp: new Date().toISOString(),
-        summary: "Error performing security analysis",
-        issues: [],
-        metrics: {
-          criticalCount: 0,
-          highCount: 0,
-          mediumCount: 0,
-          lowCount: 0,
-          infoCount: 0,
-          totalIssues: 0,
-          riskScore: 0
-        },
-        recommendations: ["Please try again with different content or check the API key."],
-        model: DEFAULT_MODEL,
-        processingTimeMs: processingTime
-      };
-    }
-  }
-
-  /**
-   * Analyze a file for security threats
-   * 
-   * @param filePath Path to the file to analyze
-   * @param contentType Type of content
-   * @param context Additional context about the environment
-   * @param options Analysis options
-   * @returns Analysis results
-   */
-  public async analyzeFile(
-    filePath: string,
-    contentType?: SecurityContentType,
-    context: string = '',
-    options: SecurityAnalysisOptions = {}
-  ): Promise<SecurityAnalysisResult> {
-    try {
-      // Determine content type from file extension if not provided
-      if (!contentType) {
-        contentType = this.detectContentTypeFromFile(filePath);
-      }
-
-      // Read file content
-      const content = fs.readFileSync(filePath, 'utf-8');
-      
-      // Add file information to context
-      const fileInfo = `Filename: ${path.basename(filePath)}
-File path: ${filePath}
-File size: ${content.length} bytes`;
-      
-      const enhancedContext = context ? `${context}\n\n${fileInfo}` : fileInfo;
-      
-      // Analyze content
-      return this.analyzeContent(content, contentType, enhancedContext, options);
-    } catch (error: any) {
-      log(`Error analyzing file ${filePath}: ${error.message}`, 'error');
-      
-      // Return an error result
-      return {
-        timestamp: new Date().toISOString(),
-        summary: `Error analyzing file ${filePath}: ${error.message}`,
-        issues: [],
-        metrics: {
-          criticalCount: 0,
-          highCount: 0,
-          mediumCount: 0,
-          lowCount: 0,
-          infoCount: 0,
-          totalIssues: 0,
-          riskScore: 0
-        },
-        recommendations: ["Please check if the file exists and is readable."],
-        model: DEFAULT_MODEL,
-        processingTimeMs: 0
-      };
-    }
-  }
-
-  /**
-   * Detect content type from file extension
-   * 
-   * @param filePath Path to the file
-   * @returns Content type
-   */
-  private detectContentTypeFromFile(filePath: string): SecurityContentType {
-    const ext = path.extname(filePath).toLowerCase();
-    
-    switch (ext) {
-      case '.js':
-      case '.ts':
-      case '.jsx':
-      case '.tsx':
-      case '.py':
-      case '.php':
-      case '.java':
-      case '.c':
-      case '.cpp':
-      case '.cs':
-      case '.go':
-      case '.rb':
-      case '.rust':
-      case '.swift':
-        return 'code';
-        
-      case '.log':
-      case '.txt':
-        return 'logs';
-        
-      case '.json':
-      case '.yml':
-      case '.yaml':
-      case '.ini':
-      case '.conf':
-      case '.config':
-      case '.env':
-        return 'config';
-        
-      case '.sql':
-        return 'database';
-        
-      case '.http':
-      case '.har':
-      case '.pcap':
-        return 'network';
-        
-      default:
-        // Default to code
-        return 'code';
-    }
-  }
-
-  /**
-   * Process and enhance analysis results
-   * 
-   * @param analysis Raw analysis from OpenAI
-   * @returns Enhanced analysis
-   */
-  private processAnalysisResults(analysis: any): SecurityAnalysisResult {
-    try {
-      // Generate metrics if not present
-      if (!analysis.metrics) {
-        analysis.metrics = {
-          criticalCount: 0,
-          highCount: 0,
-          mediumCount: 0,
-          lowCount: 0,
-          infoCount: 0,
-          totalIssues: 0,
-          riskScore: 0
+      // Parse the AI response
+      let analysisOutput;
+      try {
+        const responseText = response.choices[0].message.content || '{}';
+        analysisOutput = JSON.parse(responseText);
+      } catch (parseError) {
+        logger.log('Error parsing AI response', 'error', { error: parseError });
+        return {
+          completed: false,
+          error: 'Failed to parse AI response',
+          threats: []
         };
       }
 
-      // Calculate metrics based on issues
-      if (analysis.issues && Array.isArray(analysis.issues)) {
-        // Count issues by severity
-        analysis.metrics.criticalCount = analysis.issues.filter((issue: SecurityIssue) => issue.severity === 'critical').length;
-        analysis.metrics.highCount = analysis.issues.filter((issue: SecurityIssue) => issue.severity === 'high').length;
-        analysis.metrics.mediumCount = analysis.issues.filter((issue: SecurityIssue) => issue.severity === 'medium').length;
-        analysis.metrics.lowCount = analysis.issues.filter((issue: SecurityIssue) => issue.severity === 'low').length;
-        analysis.metrics.infoCount = analysis.issues.filter((issue: SecurityIssue) => issue.severity === 'info').length;
-        
-        // Calculate total issues
-        analysis.metrics.totalIssues = analysis.issues.length;
-        
-        // Calculate risk score (weighted based on severity)
-        analysis.metrics.riskScore = 
-          analysis.metrics.criticalCount * 10 +
-          analysis.metrics.highCount * 5 +
-          analysis.metrics.mediumCount * 2 +
-          analysis.metrics.lowCount * 1;
-          
-        // Add unique IDs to issues if not present
-        analysis.issues = analysis.issues.map((issue: SecurityIssue, index: number) => {
-          if (!issue.id) {
-            issue.id = `SEC-${Date.now()}-${index}`;
-          }
-          return issue;
-        });
-      }
+      // Build the result
+      const threats: Threat[] = analysisOutput.threats?.map((threat: any) => ({
+        type: threat.type || 'Unknown',
+        description: threat.description || 'No description provided',
+        severity: threat.severity || 'medium',
+        confidence: typeof threat.confidence === 'number' ? threat.confidence : 0.5,
+        location: threat.location,
+        mitigation: threat.mitigation
+      })) || [];
 
-      // Ensure recommendations array exists
-      if (!analysis.recommendations || !Array.isArray(analysis.recommendations)) {
-        analysis.recommendations = [];
-      }
-      
-      // Add default recommendation if none provided
-      if (analysis.recommendations.length === 0) {
-        analysis.recommendations.push("Review and address identified security issues according to their severity.");
-      }
+      const codeIssues: CodeIssue[] = analysisOutput.code_issues?.map((issue: any) => ({
+        line: issue.line,
+        column: issue.column,
+        code: issue.code,
+        description: issue.description || 'No description provided',
+        severity: issue.severity || 'medium',
+        cwe: issue.cwe,
+        fix: issue.fix
+      })) || [];
 
-      return analysis;
+      const result: AnalysisResult = {
+        completed: true,
+        threats,
+        codeIssues,
+        analysis: analysisOutput.analysis,
+        timeTakenMs: Date.now() - startTime,
+        riskScore: analysisOutput.risk_score,
+        model: response.model
+      };
+
+      // Log results
+      const securityLevel = threats.some(t => t.severity === 'critical') ? 'critical' :
+        threats.some(t => t.severity === 'high') ? 'error' :
+          threats.some(t => t.severity === 'medium') ? 'warning' : 'info';
+
+      logger.log(
+        `Security analysis completed with ${threats.length} threats identified`,
+        securityLevel as any,
+        {
+          threatCount: threats.length,
+          highSeverityCount: threats.filter(t => 
+            t.severity === 'critical' || t.severity === 'high'
+          ).length,
+          timeTakenMs: result.timeTakenMs
+        }
+      );
+
+      return result;
     } catch (error) {
-      log(`Error processing analysis results: ${error}`, 'error');
-      return analysis; // Return original if processing fails
+      logger.log('Error during security analysis', 'error', { error });
+      return {
+        completed: false,
+        error: error instanceof Error ? error.message : 'Unknown error during analysis',
+        threats: []
+      };
     }
   }
-}
 
-// Export singleton instance
-export const securityAnalysisService = SecurityAnalysisService.getInstance();
+  /**
+   * Check the status of the security analysis service
+   */
+  async checkStatus(): Promise<{ available: boolean; model?: string }> {
+    try {
+      // Send a minimal request to OpenAI to check API status
+      const response = await this.openai.chat.completions.create({
+        model: this.config.model,
+        messages: [
+          { role: 'system', content: 'Please respond with just the text "OK".' },
+          { role: 'user', content: 'Status check' }
+        ],
+        max_tokens: 10
+      });
+
+      return {
+        available: true,
+        model: response.model
+      };
+    } catch (error) {
+      logger.log('Security analysis service status check failed', 'error', { error });
+      return { available: false };
+    }
+  }
+
+  /**
+   * Create an appropriate system prompt based on data type
+   */
+  private createSystemPrompt(dataType: string, detailed = false): string {
+    const basePrompt = `You are an expert security analyst with deep knowledge of cybersecurity, secure coding practices, and threat detection.
+Your task is to analyze the provided ${dataType} for security vulnerabilities, weaknesses, and potential threats.
+Focus on identifying concrete security issues rather than general best practices.
+
+Provide your analysis in JSON format with the following structure:
+{
+  "threats": [
+    {
+      "type": "string", // e.g., "SQL Injection", "XSS", "CSRF", etc.
+      "description": "string", // Detailed description of the threat
+      "severity": "critical" | "high" | "medium" | "low" | "info", // Severity rating
+      "confidence": number, // Confidence score from 0 to 1
+      "location": "string", // Where the issue was found (if applicable)
+      "mitigation": "string" // Recommended fix or mitigation
+    }
+  ],
+  "risk_score": number, // Overall risk score from 0 to 10
+  "analysis": "string" // Brief summary of your overall analysis
+}`;
+
+    // For detailed analysis, add code_issues to the JSON structure
+    const detailedAddition = detailed ? `
+For code analysis, also include code_issues:
+"code_issues": [
+  {
+    "line": number, // Line number where the issue was found
+    "column": number, // Column number (if applicable)
+    "code": "string", // The specific code with the issue
+    "description": "string", // Description of the issue
+    "severity": "critical" | "high" | "medium" | "low" | "info",
+    "cwe": "string", // Common Weakness Enumeration ID if applicable
+    "fix": "string" // Suggested fix for the issue
+  }
+]` : '';
+
+    // Additional instructions based on data type
+    let specificInstructions = '';
+    
+    switch(dataType) {
+      case 'code':
+        specificInstructions = `
+For code analysis, look for:
+- Insecure coding patterns
+- Input validation issues
+- Authentication/authorization flaws
+- Hardcoded credentials or secrets
+- Memory safety issues
+- Race conditions
+- Business logic flaws with security implications`;
+        break;
+        
+      case 'api':
+        specificInstructions = `
+For API analysis, look for:
+- Missing or improper authentication
+- Parameter manipulation vulnerabilities
+- Injection vulnerabilities
+- Data exposure risks
+- Insecure direct object references
+- Rate limiting issues
+- CSRF vulnerabilities`;
+        break;
+        
+      case 'config':
+        specificInstructions = `
+For configuration analysis, look for:
+- Insecure default settings
+- Overly permissive access controls
+- Missing security headers
+- Exposed credentials or secrets
+- Unnecessary services or features enabled
+- Outdated components or versions
+- Logging or monitoring gaps`;
+        break;
+        
+      case 'network':
+        specificInstructions = `
+For network data analysis, look for:
+- Unusual traffic patterns
+- Potential data exfiltration
+- Command and control communication
+- Suspicious authentication attempts
+- Protocol vulnerabilities
+- Unencrypted sensitive data
+- Signs of lateral movement`;
+        break;
+        
+      case 'database':
+        specificInstructions = `
+For database analysis, look for:
+- SQL injection vulnerabilities
+- Excessive privileges
+- Unencrypted sensitive data
+- Missing access controls
+- Insecure database configuration
+- Improper error handling
+- Race conditions`;
+        break;
+        
+      case 'logs':
+        specificInstructions = `
+For log analysis, look for:
+- Signs of intrusion or unauthorized access
+- Suspicious authentication patterns
+- Error messages that expose sensitive information
+- Unusual behavior from users or systems
+- Failed security controls
+- Potential privilege escalation
+- Indicators of compromise`;
+        break;
+    }
+
+    return `${basePrompt}${detailedAddition}${specificInstructions}
+
+Your response should be valid JSON only, with no additional text before or after the JSON object.`;
+  }
+}

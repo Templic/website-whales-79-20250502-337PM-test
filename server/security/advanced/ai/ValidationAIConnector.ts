@@ -1,313 +1,184 @@
 /**
  * ValidationAIConnector
  * 
- * This module connects the API Validation system with the AI-powered Security Analysis service,
- * allowing for AI-enhanced validation of API requests. It transforms security analysis results
- * into validation results that can be used by the API validation middleware.
+ * This module connects the validation system to AI capabilities for enhanced security analysis.
+ * It uses OpenAI's API to analyze requests, detect potential security threats, and provide
+ * detailed validation responses.
  */
 
-import { SecurityAnalysisService, SecurityContentType, SecurityAnalysisResult, SecuritySeverity } from './SecurityAnalysisService';
-import { securityAnalysisService } from './SecurityAnalysisService';
-import { log } from '../../utils/secureLogger';
+import secureLogger from '../../utils/secureLogger';
+import { SecurityAnalysisService } from './SecurityAnalysisService';
 
-// Define the interface for validation results
-export interface ValidationError {
-  rule: string;
-  message: string;
-  code?: string;
-  severity: 'error' | 'warning' | 'info';
-  path: string;
-  context?: Record<string, any>;
-}
+// Create secure logger for AI validation
+const logger = secureLogger.createLogger('validation-ai-connector', {
+  component: 'security',
+  subcomponent: 'ai',
+  redactKeys: ['password', 'token', 'secret', 'apiKey', 'authorization', 'x-api-key', 'sessionid']
+});
 
-export interface ValidationResult {
+// Interface for validation results
+interface AIValidationResult {
   valid: boolean;
-  errors: ValidationError[];
-  warnings: ValidationError[];
-  metadata?: Record<string, any>;
+  reason?: string;
+  confidence?: number;
+  threats?: {
+    type: string;
+    description: string;
+    severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+    confidence: number;
+    location?: string;
+    mitigation?: string;
+  }[];
+  codeIssues?: {
+    line?: number;
+    column?: number;
+    code?: string;
+    issue: string;
+    severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+    fix?: string;
+  }[];
+  analysis?: string;
+  debug?: any;
 }
 
-// Define validation rule interface
-export interface ValidationRule {
-  name: string;
-  description: string;
-  validate: (payload: any, context?: any) => Promise<ValidationResult>;
-}
-
-/**
- * Maps security severity to validation severity
- */
-const securityToValidationSeverity: Record<string, 'error' | 'warning' | 'info'> = {
-  'critical': 'error',
-  'high': 'error',
-  'medium': 'warning',
-  'low': 'info',
-  'info': 'info'
-};
-
-/**
- * Configuration options for AI validation
- */
-export interface AIValidationOptions {
-  /** Threshold for security severity that should trigger a validation failure */
-  errorThreshold?: 'critical' | 'high' | 'medium' | 'low';
-  /** Threshold for security severity that should trigger a validation warning */
-  warningThreshold?: 'high' | 'medium' | 'low' | 'info';
-  /** Whether to include detailed analysis in the validation result */
-  includeDetails?: boolean;
-  /** Maximum response time for AI validation in milliseconds */
-  timeoutMs?: number;
-  /** User ID associated with the validation request */
-  userId?: string | number;
+// Options for validation
+interface ValidationOptions {
+  contentType: 'code' | 'logs' | 'network' | 'config' | 'api' | 'database';
+  threshold?: number;
+  detailedAnalysis?: boolean;
+  maxTokens?: number;
+  requestContext?: {
+    url?: string;
+    method?: string;
+    ip?: string;
+    userAgent?: string;
+  };
 }
 
 /**
- * Default options for AI validation
- */
-const defaultOptions: AIValidationOptions = {
-  errorThreshold: 'high',
-  warningThreshold: 'medium',
-  includeDetails: true,
-  timeoutMs: 5000,
-};
-
-/**
- * ValidationAIConnector class
- * 
- * Provides a bridge between the API validation system and the AI-powered security analysis
+ * ValidationAIConnector connects the ValidationEngine to AI-powered analysis.
  */
 export class ValidationAIConnector {
-  private static instance: ValidationAIConnector;
-  private securityService: SecurityAnalysisService;
-
-  /**
-   * Get singleton instance
-   */
-  public static getInstance(): ValidationAIConnector {
-    if (!ValidationAIConnector.instance) {
-      ValidationAIConnector.instance = new ValidationAIConnector();
-    }
-    return ValidationAIConnector.instance;
+  private securityAnalysisService: SecurityAnalysisService;
+  
+  constructor() {
+    this.securityAnalysisService = new SecurityAnalysisService();
+    logger.log('ValidationAIConnector initialized', 'info');
   }
-
+  
   /**
-   * Private constructor for singleton pattern
+   * Validate data using AI-powered analysis
    */
-  private constructor() {
-    this.securityService = securityAnalysisService;
-    log('ValidationAIConnector initialized', 'info');
-  }
-
-  /**
-   * Validate a request payload using AI security analysis
-   * 
-   * @param payload Request payload to validate
-   * @param contentType Type of content to validate
-   * @param context Additional context about the request
-   * @param options Validation options
-   * @returns Validation result
-   */
-  public async validateRequest(
-    payload: any,
-    contentType: SecurityContentType = 'api',
-    context: string = '',
-    options: AIValidationOptions = {}
-  ): Promise<ValidationResult> {
-    const opts = { ...defaultOptions, ...options };
-    const startTime = Date.now();
-
+  async validateData(data: any, options: ValidationOptions): Promise<AIValidationResult> {
     try {
-      // Convert payload to string for analysis
-      const content = typeof payload === 'string' 
-        ? payload 
-        : JSON.stringify(payload, null, 2);
-
-      // Analyze the payload
-      const analysisResult = await this.securityService.analyzeContent(
-        content,
-        contentType,
-        context,
-        {
-          detailedAnalysis: opts.includeDetails,
-          userId: opts.userId
+      logger.log('Starting AI validation', 'info', { contentType: options.contentType });
+      
+      // Convert API data to format expected by security analysis
+      const contextForAnalysis = {
+        dataType: options.contentType,
+        data: JSON.stringify(data),
+        requestContext: options.requestContext || {},
+        detailedAnalysis: options.detailedAnalysis || false
+      };
+      
+      // Perform security analysis
+      const securityAnalysis = await this.securityAnalysisService.analyzeData(contextForAnalysis);
+      
+      // Extract threats above threshold
+      const threshold = options.threshold || 0.5;
+      const significantThreats = (securityAnalysis.threats || []).filter(
+        threat => threat.confidence >= threshold
+      );
+      
+      // If no significant threats or analysis not possible, return valid
+      if (!securityAnalysis.completed) {
+        logger.log('Security analysis failed to complete', 'warning', { 
+          error: securityAnalysis.error 
+        });
+        return { valid: true };
+      }
+      
+      // If no threats found, return valid
+      if (significantThreats.length === 0) {
+        logger.log('No significant threats found in AI validation', 'info');
+        return { valid: true };
+      }
+      
+      // Create validation result with threat details
+      const result: AIValidationResult = {
+        valid: false,
+        reason: "Security issues detected in request data",
+        confidence: Math.max(...significantThreats.map(t => t.confidence)),
+        threats: significantThreats.map(threat => ({
+          type: threat.type,
+          description: threat.description,
+          severity: threat.severity as 'critical' | 'high' | 'medium' | 'low' | 'info',
+          confidence: threat.confidence,
+          location: threat.location,
+          mitigation: threat.mitigation
+        }))
+      };
+      
+      // Add detailed analysis if requested
+      if (options.detailedAnalysis) {
+        result.analysis = securityAnalysis.analysis;
+        
+        // Add any code issues
+        if (securityAnalysis.codeIssues && securityAnalysis.codeIssues.length > 0) {
+          result.codeIssues = securityAnalysis.codeIssues.map(issue => ({
+            line: issue.line,
+            column: issue.column,
+            code: issue.code,
+            issue: issue.description,
+            severity: issue.severity as 'critical' | 'high' | 'medium' | 'low' | 'info',
+            fix: issue.fix
+          }));
+        }
+      }
+      
+      // Log validation result
+      const hasHighSeverity = significantThreats.some(
+        t => t.severity === 'critical' || t.severity === 'high'
+      );
+      
+      logger.log(
+        `AI validation found ${significantThreats.length} significant threats`, 
+        hasHighSeverity ? 'error' : 'warning', 
+        { 
+          threatCount: significantThreats.length,
+          highSeverityCount: significantThreats.filter(
+            t => t.severity === 'critical' || t.severity === 'high'
+          ).length
         }
       );
-
-      // Check if we've exceeded the timeout
-      if (opts.timeoutMs && Date.now() - startTime > opts.timeoutMs) {
-        log('AI validation timeout exceeded', 'warning');
-        return this.createTimeoutResult(opts.timeoutMs);
-      }
-
-      // Transform the security analysis result into a validation result
-      return this.transformAnalysisToValidationResult(analysisResult, opts);
-    } catch (error: any) {
-      log(`Error during AI validation: ${error.message}`, 'error');
+      
+      return result;
+    } catch (error) {
+      logger.log('Error in AI validation', 'error', { error });
+      
+      // On error, we don't want to block valid requests, so we return valid
+      // and let the calling code decide how to handle service disruptions
+      return { valid: true };
+    }
+  }
+  
+  /**
+   * Get status of the AI validation service
+   */
+  async getStatus(): Promise<{ available: boolean; latency?: number; model?: string; }> {
+    try {
+      const start = Date.now();
+      const statusResult = await this.securityAnalysisService.checkStatus();
+      const latency = Date.now() - start;
+      
       return {
-        valid: true, // Fail open on error
-        errors: [],
-        warnings: [
-          {
-            rule: 'ai-validation',
-            message: `AI validation failed: ${error.message}`,
-            severity: 'warning',
-            path: '',
-            context: { error: error.message }
-          }
-        ],
-        metadata: {
-          aiValidationError: true,
-          errorMessage: error.message,
-          processingTimeMs: Date.now() - startTime
-        }
+        available: statusResult.available,
+        latency,
+        model: statusResult.model
       };
+    } catch (error) {
+      logger.log('Error checking AI validation status', 'error', { error });
+      return { available: false };
     }
-  }
-
-  /**
-   * Transform a security analysis result into a validation result
-   * 
-   * @param analysis Security analysis result
-   * @param options Validation options
-   * @returns Validation result
-   */
-  private transformAnalysisToValidationResult(
-    analysis: SecurityAnalysisResult,
-    options: AIValidationOptions
-  ): ValidationResult {
-    // Define severity thresholds
-    const errorThresholds = this.getSeverityThresholds(options.errorThreshold || 'high');
-    const warningThresholds = this.getSeverityThresholds(options.warningThreshold || 'medium');
-
-    // Extract issues that meet the error threshold
-    const errors = analysis.issues
-      .filter(issue => errorThresholds.includes(issue.severity))
-      .map(issue => ({
-        rule: 'ai-security',
-        message: issue.title,
-        severity: 'error',
-        path: issue.location || '',
-        context: {
-          description: issue.description,
-          severity: issue.severity,
-          remediation: issue.remediation,
-          potentialImpact: issue.potentialImpact
-        }
-      }));
-
-    // Extract issues that meet the warning threshold but not the error threshold
-    const warnings = analysis.issues
-      .filter(issue => 
-        warningThresholds.includes(issue.severity) && 
-        !errorThresholds.includes(issue.severity)
-      )
-      .map(issue => ({
-        rule: 'ai-security',
-        message: issue.title,
-        severity: 'warning',
-        path: issue.location || '',
-        context: {
-          description: issue.description,
-          severity: issue.severity,
-          remediation: issue.remediation,
-          potentialImpact: issue.potentialImpact
-        }
-      }));
-
-    // Determine if the request is valid (no errors)
-    const valid = errors.length === 0;
-
-    return {
-      valid,
-      errors,
-      warnings,
-      metadata: {
-        aiValidation: true,
-        summary: analysis.summary,
-        riskScore: analysis.metrics.riskScore,
-        criticalCount: analysis.metrics.criticalCount,
-        highCount: analysis.metrics.highCount,
-        mediumCount: analysis.metrics.mediumCount,
-        lowCount: analysis.metrics.lowCount,
-        infoCount: analysis.metrics.infoCount,
-        totalIssues: analysis.metrics.totalIssues,
-        recommendations: analysis.recommendations,
-        model: analysis.model,
-        processingTimeMs: analysis.processingTimeMs
-      }
-    };
-  }
-
-  /**
-   * Get an array of severity levels based on a threshold
-   * 
-   * @param threshold Severity threshold
-   * @returns Array of severity levels
-   */
-  private getSeverityThresholds(threshold: string): string[] {
-    switch (threshold) {
-      case 'critical':
-        return ['critical'];
-      case 'high':
-        return ['critical', 'high'];
-      case 'medium':
-        return ['critical', 'high', 'medium'];
-      case 'low':
-        return ['critical', 'high', 'medium', 'low'];
-      case 'info':
-        return ['critical', 'high', 'medium', 'low', 'info'];
-      default:
-        return ['critical', 'high']; // Default to high threshold
-    }
-  }
-
-  /**
-   * Create a timeout validation result
-   * 
-   * @param timeoutMs Timeout in milliseconds
-   * @returns Validation result for timeout
-   */
-  private createTimeoutResult(timeoutMs: number): ValidationResult {
-    return {
-      valid: true, // Fail open on timeout
-      errors: [],
-      warnings: [
-        {
-          rule: 'ai-validation',
-          message: `AI validation timed out after ${timeoutMs}ms`,
-          severity: 'warning',
-          path: '',
-          context: { timeout: timeoutMs }
-        }
-      ],
-      metadata: {
-        aiValidationTimeout: true,
-        processingTimeMs: timeoutMs
-      }
-    };
-  }
-
-  /**
-   * Create an AI-powered validation rule
-   * 
-   * @param options Validation options
-   * @returns Validation rule
-   */
-  public createAIValidationRule(options: AIValidationOptions = {}): ValidationRule {
-    return {
-      name: 'ai-security-analysis',
-      description: 'AI-powered security analysis for request payloads',
-      validate: async (payload: any, context: any = {}) => {
-        return this.validateRequest(
-          payload,
-          context.contentType || 'api',
-          context.description || '',
-          { ...options, userId: context.userId }
-        );
-      }
-    };
   }
 }
-
-// Export singleton instance
-export const validationAIConnector = ValidationAIConnector.getInstance();

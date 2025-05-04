@@ -1,159 +1,280 @@
 /**
  * Validation Test Routes
  * 
- * This module provides routes for testing the validation engine
- * and AI-powered security validation.
+ * This file contains test routes for the API validation system.
+ * These routes demonstrate how to use both schema-based and AI-powered validation.
  */
 
-import express, { Request, Response } from 'express';
+import express from 'express';
 import { z } from 'zod';
+import { validateRequest, validateRequestWithAI } from '../middleware/apiValidationMiddleware';
 import { ValidationEngine } from '../security/advanced/apiValidation/ValidationEngine';
-import { validationAIConnector } from '../security/advanced/ai/ValidationAIConnector';
-import { isAuthenticated } from '../middleware/authMiddleware';
+import secureLogger from '../security/utils/secureLogger';
 
+// Create a router
 const router = express.Router();
 
-/**
- * Test endpoint that uses AI validation
- * 
- * @route POST /api/validation/test-ai
- */
-router.post('/test-ai', isAuthenticated, async (req: Request, res: Response) => {
-  try {
-    // Create a test validation schema
-    const testSchema = z.object({
-      username: z.string().min(3).max(50),
-      email: z.string().email().optional(),
-      action: z.string(),
-      preferences: z.object({
-        theme: z.string().optional(),
-        notifications: z.boolean().optional()
-      }).optional()
-    });
-
-    // First, validate with the schema
-    const parseResult = testSchema.safeParse(req.body);
-    
-    if (!parseResult.success) {
-      return res.status(400).json({
-        success: false,
-        message: 'Schema validation failed',
-        errors: parseResult.error.errors,
-        aiValidation: false
-      });
-    }
-
-    // Then perform AI validation
-    console.log('Running AI validation...');
-    const aiResult = await validationAIConnector.validateRequest(
-      req.body,
-      'api',
-      `Test validation for ${req.path}`,
-      {
-        errorThreshold: 'medium',
-        includeDetails: true,
-        timeoutMs: 15000,
-        userId: (req as any).user?.id || 'test-user'
-      }
-    );
-
-    // Combine results
-    return res.status(200).json({
-      success: true,
-      message: 'Validation completed',
-      schemaValidation: {
-        success: true,
-        data: parseResult.data
-      },
-      aiValidation: {
-        valid: aiResult.valid,
-        errorCount: aiResult.errors.length,
-        warningCount: aiResult.warnings.length,
-        errors: aiResult.errors,
-        warnings: aiResult.warnings,
-        metadata: aiResult.metadata
-      }
-    });
-  } catch (error: any) {
-    console.error('Error in AI validation test route:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Validation test failed',
-      error: error.message
-    });
-  }
+// Create a logger
+const logger = secureLogger.createLogger('validation-test-routes', {
+  component: 'routes',
+  subcomponent: 'validation-test'
 });
 
-/**
- * Test endpoint for standard schema validation (no AI)
- * 
- * @route POST /api/validation/test-standard
- */
-router.post('/test-standard', async (req: Request, res: Response) => {
-  try {
-    // Register a test validation rule
-    const testRuleId = 'test-rule';
-    
-    // Remove any existing rule with the same ID
-    try {
-      const existingRules = ValidationEngine.getAllRules();
-      if (existingRules.some(rule => rule.id === testRuleId)) {
-        ValidationEngine.reset();
-      }
-    } catch (error) {
-      // Ignore errors during cleanup
-    }
-
-    // Create a test validation schema
-    const testSchema = z.object({
-      username: z.string().min(3).max(50),
-      email: z.string().email().optional(),
-      action: z.string(),
-      preferences: z.object({
-        theme: z.string().optional(),
-        notifications: z.boolean().optional()
-      }).optional()
-    });
-
-    // Register the rule
-    ValidationEngine.registerRule(testRuleId, {
-      name: 'Test Validation Rule',
-      description: 'A rule for testing validation',
-      schema: testSchema,
-      target: 'body',
-      isActive: true,
-      priority: 1
-    });
-    
-    // Apply the rule to our test endpoint
-    ValidationEngine.applyRulesToEndpoint('/api/validation/test-standard', [testRuleId]);
-    
-    // Create validation middleware for this request
-    const validationMiddleware = ValidationEngine.createValidationMiddleware(
-      [testRuleId],
-      {
-        mode: 'strict',
-        includeDetails: true,
-        statusCode: 400,
-        logSeverity: 'medium'
-      }
-    );
-    
-    // Execute the middleware manually
-    validationMiddleware(req, res, () => {
-      // This is the "next" function that gets called if validation passes
-      return res.status(200).json({
-        success: true,
-        message: 'Standard validation succeeded',
-        data: req.body
-      });
-    });
-  } catch (error: any) {
-    console.error('Error in standard validation test route:', error);
-    return res.status(500).json({
+// Basic test authentication middleware
+// In a real application, use a proper authentication system
+const testAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  // Check for test auth header
+  const testAuthSecret = process.env.TEST_AUTH_SECRET || 'test-secret-key';
+  const authHeader = req.headers['x-test-auth'];
+  
+  if (!authHeader || authHeader !== testAuthSecret) {
+    return res.status(401).json({
       success: false,
-      message: 'Validation test failed',
-      error: error.message
+      message: 'Authentication required for validation test endpoints'
+    });
+  }
+  
+  next();
+};
+
+// Register example validation rules
+ValidationEngine.registerRule('contact-form', {
+  name: 'Contact Form Validation',
+  description: 'Validates contact form submissions',
+  schema: z.object({
+    name: z.string().min(2).max(100),
+    email: z.string().email(),
+    message: z.string().min(10).max(1000)
+  }),
+  target: 'body',
+  priority: 10,
+  tags: ['form', 'contact']
+});
+
+ValidationEngine.registerRule('signup-form', {
+  name: 'Signup Form Validation',
+  description: 'Validates user signup information',
+  schema: z.object({
+    username: z.string().min(3).max(30),
+    email: z.string().email(),
+    password: z.string().min(8).regex(/[A-Z]/).regex(/[a-z]/).regex(/[0-9]/),
+    confirmPassword: z.string()
+  }).refine(data => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword']
+  }),
+  target: 'body',
+  priority: 20,
+  tags: ['form', 'auth', 'signup']
+});
+
+ValidationEngine.registerRule('pagination', {
+  name: 'Pagination Parameters',
+  description: 'Validates pagination query parameters',
+  schema: z.object({
+    page: z.string().optional().transform(val => val ? Number(val) : 1),
+    limit: z.string().optional().transform(val => val ? Number(val) : 10),
+    sortBy: z.string().optional(),
+    order: z.enum(['asc', 'desc']).optional()
+  }),
+  target: 'query',
+  priority: 5,
+  tags: ['pagination', 'query']
+});
+
+// Associate rules with endpoints
+ValidationEngine.applyRulesToEndpoint('/api/validation-test/contact', ['contact-form']);
+ValidationEngine.applyRulesToEndpoint('/api/validation-test/signup', ['signup-form']);
+ValidationEngine.applyRulesToEndpoint('/api/validation-test/items', ['pagination']);
+
+// Test route with basic schema validation
+router.post('/contact', validateRequest(
+  z.object({
+    name: z.string().min(2).max(100),
+    email: z.string().email(),
+    message: z.string().min(10).max(1000)
+  })
+), (req, res) => {
+  logger.log(`Contact form submission from ${req.body.email}`, 'info');
+  
+  res.json({
+    success: true,
+    message: 'Contact form validated successfully',
+    data: {
+      name: req.body.name,
+      email: req.body.email,
+      messageLength: req.body.message.length
+    }
+  });
+});
+
+// Test route with AI validation (requires authentication)
+router.post('/api-security', testAuth, validateRequestWithAI({
+  useAI: true,
+  target: 'body',
+  aiOptions: {
+    contentType: 'api',
+    detailedAnalysis: true,
+    threshold: 0.6
+  }
+}), (req, res) => {
+  logger.log('API security validation passed', 'info');
+  
+  res.json({
+    success: true,
+    message: 'API security validation passed',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Test route with combined schema and AI validation (requires authentication)
+router.post('/signup', testAuth, [
+  validateRequest(
+    z.object({
+      username: z.string().min(3).max(30),
+      email: z.string().email(),
+      password: z.string().min(8).regex(/[A-Z]/).regex(/[a-z]/).regex(/[0-9]/),
+      confirmPassword: z.string()
+    }).refine(data => data.password === data.confirmPassword, {
+      message: 'Passwords do not match',
+      path: ['confirmPassword']
+    })
+  ),
+  validateRequestWithAI({
+    useAI: true,
+    target: 'body',
+    aiOptions: {
+      contentType: 'api',
+      detailedAnalysis: true
+    }
+  })
+], (req, res) => {
+  logger.log(`User signup for ${req.body.username}`, 'info');
+  
+  res.json({
+    success: true,
+    message: 'Signup validated successfully',
+    user: {
+      username: req.body.username,
+      email: req.body.email
+    }
+  });
+});
+
+// Test route for pagination with registered rule
+router.get('/items', (req, res) => {
+  const { page, limit, sortBy, order } = (req as any).validatedData?.query || { page: 1, limit: 10 };
+  
+  logger.log(`Items request with pagination: page=${page}, limit=${limit}`, 'info');
+  
+  // Mock items data
+  const items = Array.from({ length: limit }, (_, i) => ({
+    id: (page - 1) * limit + i + 1,
+    name: `Item ${(page - 1) * limit + i + 1}`,
+    created: new Date().toISOString()
+  }));
+  
+  res.json({
+    success: true,
+    pagination: {
+      page,
+      limit,
+      sortBy: sortBy || 'id',
+      order: order || 'asc',
+      total: 100, // Mock total
+      pages: Math.ceil(100 / limit)
+    },
+    data: items
+  });
+});
+
+// Test route with intentional security vulnerabilities for AI detection
+router.post('/security-test', testAuth, validateRequestWithAI({
+  useAI: true,
+  target: 'body',
+  aiOptions: {
+    contentType: 'api',
+    detailedAnalysis: true,
+    threshold: 0.4
+  }
+}), (req, res) => {
+  const { query, userId, adminOverride } = req.body;
+  
+  logger.log('Security test endpoint accessed', 'info');
+  
+  // This is intentionally vulnerable for testing purposes
+  if (adminOverride === 'true') {
+    return res.json({
+      success: true,
+      message: 'Admin override active',
+      data: {
+        sensitiveData: "This is sensitive data that should be protected",
+        query: query,
+        userId: userId
+      }
+    });
+  }
+  
+  res.json({
+    success: true,
+    message: 'Security test completed',
+    data: {
+      query: query
+    }
+  });
+});
+
+// Get validation rules information
+router.get('/rules', (req, res) => {
+  const rules = ValidationEngine.getAllRules();
+  
+  res.json({
+    success: true,
+    count: rules.length,
+    rules: rules.map(rule => ({
+      id: rule.id,
+      name: rule.name,
+      description: rule.description,
+      target: rule.target,
+      priority: rule.priority,
+      isActive: rule.isActive,
+      tags: rule.tags
+    }))
+  });
+});
+
+// Get endpoint mappings
+router.get('/mappings', (req, res) => {
+  const endpoints = ValidationEngine.getAllEndpoints();
+  
+  res.json({
+    success: true,
+    count: endpoints.length,
+    mappings: endpoints
+  });
+});
+
+// Generate validation documentation
+router.get('/documentation', async (req, res) => {
+  try {
+    const format = (req.query.format as 'json' | 'markdown' | 'html') || 'json';
+    const documentation = await ValidationEngine.generateDocumentation(format);
+    
+    if (format === 'json') {
+      res.json(JSON.parse(documentation));
+    } else if (format === 'html') {
+      res.setHeader('Content-Type', 'text/html');
+      res.send(documentation);
+    } else {
+      res.setHeader('Content-Type', 'text/markdown');
+      res.send(documentation);
+    }
+  } catch (error) {
+    logger.log('Error generating documentation', 'error', { error });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate documentation',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
