@@ -5,7 +5,75 @@
  * appropriate log levels, timestamps, and metadata.
  */
 
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// @ts-ignore - handle ESM/CJS differences
+const __filename = typeof __filename !== 'undefined' ? __filename : fileURLToPath(import.meta.url);
+// @ts-ignore - handle ESM/CJS differences
+const __dirname = typeof __dirname !== 'undefined' ? __dirname : dirname(__filename);
+
 type LogLevel = 'info' | 'warning' | 'error' | 'critical' | 'debug' | 'security' | 'audit';
+
+// Ensure logs directory exists
+const logsDir = path.join(process.cwd(), 'logs');
+const securityLogsDir = path.join(logsDir, 'security');
+
+try {
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+  
+  if (!fs.existsSync(securityLogsDir)) {
+    fs.mkdirSync(securityLogsDir, { recursive: true });
+  }
+} catch (err) {
+  console.error('Failed to create logs directory:', err);
+}
+
+// Get timestamp in consistent format
+function getTimestamp(): string {
+  return new Date().toISOString();
+}
+
+// Format a log entry as JSON
+function formatLogEntry(
+  message: string, 
+  level: LogLevel, 
+  metadata: Record<string, any> = {}
+): string {
+  return JSON.stringify({
+    timestamp: getTimestamp(),
+    level,
+    message,
+    ...metadata
+  });
+}
+
+// Write log to console and file
+function writeLog(entry: string, level: LogLevel): void {
+  // Always console log in development
+  if (process.env.NODE_ENV !== 'production') {
+    const consoleMethod = 
+      level === 'error' || level === 'critical' ? console.error :
+      level === 'warning' ? console.warn :
+      console.log;
+    
+    consoleMethod(`[${level.toUpperCase()}] ${entry}`);
+  }
+  
+  // Always write security and audit logs to file regardless of environment
+  if (level === 'security' || level === 'audit' || process.env.NODE_ENV === 'production') {
+    try {
+      const logFile = path.join(securityLogsDir, 'security.log');
+      fs.appendFileSync(logFile, entry + '\n', 'utf8');
+    } catch (err) {
+      console.error('Failed to write to security log file:', err);
+    }
+  }
+}
 
 /**
  * Log a message with a specific log level
@@ -15,48 +83,8 @@ type LogLevel = 'info' | 'warning' | 'error' | 'critical' | 'debug' | 'security'
  * @param metadata Additional metadata to include
  */
 export function log(message: string, level: LogLevel = 'info', metadata: Record<string, any> = {}): void {
-  const timestamp = new Date().toISOString();
-  const logPrefix = `[${timestamp}] [${level.padEnd(10)}]`;
-  
-  // Format the log message
-  const formattedMessage = `${logPrefix} ${message}`;
-  
-  // Log to console with appropriate level
-  switch (level) {
-    case 'error':
-    case 'critical':
-      console.error(formattedMessage, Object.keys(metadata).length > 0 ? metadata : '');
-      break;
-    case 'warning':
-      console.warn(formattedMessage, Object.keys(metadata).length > 0 ? metadata : '');
-      break;
-    case 'security':
-    case 'audit':
-      // Security and audit logs always go to error for high visibility
-      console.error(formattedMessage, Object.keys(metadata).length > 0 ? metadata : '');
-      
-      // Also log to security audit trail if available
-      try {
-        const { secureAuditTrail } = require('../monitoring/secureAuditTrail');
-        secureAuditTrail.log(message, level, metadata);
-      } catch (error) {
-        // Fall back to console if audit trail not available
-        console.error(`[${timestamp}] [audit-fail] Failed to log to audit trail:`, error);
-      }
-      break;
-    case 'debug':
-      // Only log debug in development
-      if (process.env.NODE_ENV !== 'production') {
-        console.debug(formattedMessage, Object.keys(metadata).length > 0 ? metadata : '');
-      }
-      break;
-    case 'info':
-    default:
-      console.log(formattedMessage, Object.keys(metadata).length > 0 ? metadata : '');
-      break;
-  }
-  
-  // Additional logging to monitoring systems could be added here
+  const entry = formatLogEntry(message, level, metadata);
+  writeLog(entry, level);
 }
 
 /**
@@ -66,11 +94,13 @@ export function log(message: string, level: LogLevel = 'info', metadata: Record<
  * @param context Additional context about the error
  */
 export function logError(error: Error, context: string = 'General Error'): void {
-  const timestamp = new Date().toISOString();
-  const logPrefix = `[${timestamp}] [error     ]`;
+  const metadata = {
+    errorType: error.name,
+    stack: error.stack,
+    context
+  };
   
-  console.error(`${logPrefix} ${context}: ${error.message}`);
-  console.error(`${logPrefix} Stack trace:`, error.stack);
+  log(error.message, 'error', metadata);
 }
 
 /**
@@ -82,8 +112,8 @@ export function logError(error: Error, context: string = 'General Error'): void 
 export function logSecurityEvent(message: string, metadata: Record<string, any> = {}): void {
   log(message, 'security', {
     ...metadata,
-    timestamp: new Date().toISOString(),
-    securityEvent: true
+    securityEvent: true,
+    timestamp: getTimestamp()
   });
 }
 
@@ -97,13 +127,31 @@ export function logSecurityEvent(message: string, metadata: Record<string, any> 
 export function createLogger(module: string, defaultMetadata: Record<string, any> = {}) {
   return {
     log: (message: string, level: LogLevel = 'info', metadata: Record<string, any> = {}) => {
-      log(`[${module}] ${message}`, level, { ...defaultMetadata, ...metadata });
+      log(message, level, {
+        module,
+        ...defaultMetadata,
+        ...metadata
+      });
     },
+    
     error: (error: Error, context: string = module) => {
-      logError(error, `[${module}] ${context}`);
+      logError(error, context);
     },
-    securityEvent: (message: string, metadata: Record<string, any> = {}) => {
-      logSecurityEvent(`[${module}] ${message}`, { ...defaultMetadata, ...metadata });
+    
+    security: (message: string, metadata: Record<string, any> = {}) => {
+      logSecurityEvent(message, {
+        module,
+        ...defaultMetadata,
+        ...metadata
+      });
     }
   };
 }
+
+// Export the default logger
+export default {
+  log,
+  logError,
+  logSecurityEvent,
+  createLogger
+};

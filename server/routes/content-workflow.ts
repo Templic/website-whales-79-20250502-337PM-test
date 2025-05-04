@@ -3,7 +3,7 @@ import { db } from '../db';
 import { contentItems } from '../services/contentScheduler';
 import { pgTable, serial, text, timestamp, integer, json, boolean } from 'drizzle-orm/pg-core';
 import { eq, and, between, like, desc, asc, gte, lte, isNull, ne } from 'drizzle-orm';
-import { requireAuth, requireRole } from '../middleware/authMiddleware';
+import { isAuthenticated, hasRole } from '../middleware/authMiddleware';
 import { logger } from '../logger';
 import { 
   runContentScheduler, 
@@ -39,7 +39,7 @@ const contentWorkflowHistory = pgTable('content_workflow_history', {
 const router = express.Router();
 
 // Get all content with pagination, filtering and sorting
-router.get('/content', requireAuth, async (req, res) => {
+router.get('/content', isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.user?.id;
     const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
@@ -111,7 +111,7 @@ router.get('/content', requireAuth, async (req, res) => {
 });
 
 // Get content details by ID
-router.get('/content/:id', requireAuth, async (req, res) => {
+router.get('/content/:id', isAuthenticated, async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
@@ -156,7 +156,7 @@ router.get('/content/:id', requireAuth, async (req, res) => {
 });
 
 // Create new content
-router.post('/content', requireAuth, async (req, res) => {
+router.post('/content', isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.user?.id;
     const {
@@ -225,7 +225,7 @@ router.post('/content', requireAuth, async (req, res) => {
 });
 
 // Update content
-router.put('/content/:id', requireAuth, async (req, res) => {
+router.put('/content/:id', isAuthenticated, async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
@@ -317,7 +317,7 @@ router.put('/content/:id', requireAuth, async (req, res) => {
 });
 
 // Submit content for review
-router.post('/submit/:id', requireAuth, async (req, res) => {
+router.post('/submit/:id', isAuthenticated, async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
@@ -375,7 +375,7 @@ router.post('/submit/:id', requireAuth, async (req, res) => {
 });
 
 // Approve content
-router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
+router.post('/approve/:id', isAuthenticated, hasRole(['admin', 'super_admin']), async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
@@ -432,7 +432,7 @@ router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), 
 });
 
 // Reject content
-router.post('/reject/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
+router.post('/reject/:id', isAuthenticated, hasRole(['admin', 'super_admin']), async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
@@ -483,7 +483,7 @@ router.post('/reject/:id', requireAuth, requireRole(['admin', 'super_admin']), a
 });
 
 // Request changes
-router.post('/request-changes/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
+router.post('/request-changes/:id', isAuthenticated, hasRole(['admin', 'super_admin']), async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
@@ -539,7 +539,7 @@ router.post('/request-changes/:id', requireAuth, requireRole(['admin', 'super_ad
 });
 
 // Get content review history
-router.get('/review-history/:id', requireAuth, async (req, res) => {
+router.get('/review-history/:id', isAuthenticated, async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
@@ -606,7 +606,7 @@ router.get('/review-history/:id', requireAuth, async (req, res) => {
 });
 
 // Archive content
-router.post('/archive/:id', requireAuth, async (req, res) => {
+router.post('/archive/:id', isAuthenticated, async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
@@ -658,7 +658,7 @@ router.post('/archive/:id', requireAuth, async (req, res) => {
 });
 
 // Run content scheduler manually (admin only)
-router.post('/scheduler/run', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
+router.post('/scheduler/run', isAuthenticated, hasRole(['admin', 'super_admin']), async (req, res) => {
   try {
     // Run the scheduler
     await runContentScheduler();
@@ -678,7 +678,7 @@ router.post('/scheduler/run', requireAuth, requireRole(['admin', 'super_admin'])
 });
 
 // Get content scheduler metrics (admin only)
-router.get('/scheduler/metrics', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
+router.get('/scheduler/metrics', isAuthenticated, hasRole(['admin', 'super_admin']), async (req, res) => {
   try {
     const metrics = getSchedulingMetrics();
     res.json(metrics);
@@ -689,7 +689,7 @@ router.get('/scheduler/metrics', requireAuth, requireRole(['admin', 'super_admin
 });
 
 // Reset content scheduler metrics (admin only)
-router.post('/scheduler/reset-metrics', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
+router.post('/scheduler/reset-metrics', isAuthenticated, hasRole(['admin', 'super_admin']), async (req, res) => {
   try {
     resetSchedulingMetrics();
     res.json({
@@ -703,7 +703,7 @@ router.post('/scheduler/reset-metrics', requireAuth, requireRole(['admin', 'supe
 });
 
 // Get upcoming scheduled content
-router.get('/upcoming', requireAuth, async (req, res) => {
+router.get('/upcoming', isAuthenticated, async (req, res) => {
   try {
     const scheduledContent = await getUpcomingScheduledContent();
     res.json(scheduledContent);
@@ -714,7 +714,7 @@ router.get('/upcoming', requireAuth, async (req, res) => {
 });
 
 // Get expiring content
-router.get('/expiring', requireAuth, async (req, res) => {
+router.get('/expiring', isAuthenticated, async (req, res) => {
   try {
     const expiringContent = await getExpiringContent();
     res.json(expiringContent);
@@ -725,7 +725,7 @@ router.get('/expiring', requireAuth, async (req, res) => {
 });
 
 // Get content analytics
-router.get('/analytics', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
+router.get('/analytics', isAuthenticated, hasRole(['admin', 'super_admin']), async (req, res) => {
   try {
     const startDateStr = req.query.start as string;
     const endDateStr = req.query.end as string;
@@ -750,7 +750,7 @@ router.get('/analytics', requireAuth, requireRole(['admin', 'super_admin']), asy
 });
 
 // Update content scheduling with advanced features
-router.patch('/content/:id/schedule', requireAuth, requireRole(['admin', 'editor', 'super_admin']), async (req, res) => {
+router.patch('/content/:id/schedule', isAuthenticated, hasRole(['admin', 'editor', 'super_admin']), async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
