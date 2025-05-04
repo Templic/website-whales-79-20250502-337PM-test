@@ -17,6 +17,10 @@ import express, { Request, Response } from 'express';
 
 const router = express.Router();
 
+// Add built-in middleware to parse JSON and url-encoded request bodies
+router.use(express.json());
+router.use(express.urlencoded({ extended: true }));
+
 /**
  * Direct status endpoint
  * GET /api/direct-validation/status

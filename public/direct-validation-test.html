@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Direct API Validation Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f7f8fa;
+      color: #333;
+    }
+    h1 {
+      color: #1a3e72;
+      border-bottom: 2px solid #e1e4e8;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #2c5282;
+      margin-top: 30px;
+    }
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    button {
+      background-color: #3182ce;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #2b6cb0;
+    }
+    .response {
+      background-color: #f0f4f8;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 15px;
+    }
+    .success {
+      border-left: 4px solid #48bb78;
+    }
+    .error {
+      border-left: 4px solid #f56565;
+    }
+    .info {
+      margin-top: 10px;
+      padding: 5px 10px;
+      background-color: #ebf8ff;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .tab {
+      display: inline-block;
+      padding: 10px 15px;
+      margin-right: 5px;
+      cursor: pointer;
+      border-radius: 4px 4px 0 0;
+      background-color: #e2e8f0;
+    }
+    .tab.active {
+      background-color: white;
+      border-top: 2px solid #3182ce;
+      font-weight: 500;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Direct API Validation Test</h1>
+  <p>This page allows testing of API validation functionality without security checks.</p>
+  
+  <div class="tabs">
+    <div class="tab active" data-tab="status">Status</div>
+    <div class="tab" data-tab="basic">Basic Validation</div>
+    <div class="tab" data-tab="security">Security Validation</div>
+    <div class="tab" data-tab="rules">Rules</div>
+    <div class="tab" data-tab="mappings">Mappings</div>
+  </div>
+
+  <div class="tab-content active" id="status-tab">
+    <div class="card">
+      <h2>Status Check</h2>
+      <p>Check if the direct validation test routes are active.</p>
+      <button id="check-status">Check Status</button>
+      <div class="response" id="status-response"></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="basic-tab">
+    <div class="card">
+      <h2>Basic Validation Test</h2>
+      <p>Test basic form validation rules.</p>
+      <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name" placeholder="Enter name (2-100 characters)">
+      </div>
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" placeholder="Enter valid email address">
+      </div>
+      <div class="form-group">
+        <label for="message">Message:</label>
+        <textarea id="message" placeholder="Enter message (10-2000 characters)"></textarea>
+      </div>
+      <button id="test-basic">Test Basic Validation</button>
+      <div class="response" id="basic-response"></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="security-tab">
+    <div class="card">
+      <h2>Security Validation Test</h2>
+      <p>Test security validation rules for potentially malicious inputs.</p>
+      <div class="form-group">
+        <label for="query">Query:</label>
+        <input type="text" id="query" placeholder="Enter query (try SQL keywords like 'SELECT')">
+      </div>
+      <div class="form-group">
+        <label for="userId">User ID:</label>
+        <input type="text" id="userId" placeholder="Enter user ID (try special chars like ' or ;)">
+      </div>
+      <button id="test-security">Test Security Validation</button>
+      <div class="info">
+        <strong>SQL Injection Test:</strong> Try entering "SELECT * FROM users" in the query field.
+      </div>
+      <div class="response" id="security-response"></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="rules-tab">
+    <div class="card">
+      <h2>Validation Rules</h2>
+      <p>View available validation rules.</p>
+      <button id="get-rules">Get Rules</button>
+      <div class="response" id="rules-response"></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="mappings-tab">
+    <div class="card">
+      <h2>Validation Mappings</h2>
+      <p>View route to validation rule mappings.</p>
+      <button id="get-mappings">Get Mappings</button>
+      <div class="response" id="mappings-response"></div>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        
+        tab.classList.add('active');
+        document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+      });
+    });
+
+    // Helper to format JSON response
+    function formatResponse(response, element, isSuccess = true) {
+      const formatted = JSON.stringify(response, null, 2);
+      element.textContent = formatted;
+      element.className = `response ${isSuccess ? 'success' : 'error'}`;
+    }
+
+    // Check Status
+    document.getElementById('check-status').addEventListener('click', async () => {
+      const responseElement = document.getElementById('status-response');
+      try {
+        const response = await fetch('/api/direct-validation/status');
+        const data = await response.json();
+        formatResponse(data, responseElement);
+      } catch (error) {
+        formatResponse({error: error.message}, responseElement, false);
+      }
+    });
+
+    // Basic Validation Test
+    document.getElementById('test-basic').addEventListener('click', async () => {
+      const responseElement = document.getElementById('basic-response');
+      try {
+        const response = await fetch('/api/direct-validation/basic', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            name: document.getElementById('name').value,
+            email: document.getElementById('email').value,
+            message: document.getElementById('message').value
+          })
+        });
+        const data = await response.json();
+        formatResponse(data, responseElement, data.success);
+      } catch (error) {
+        formatResponse({error: error.message}, responseElement, false);
+      }
+    });
+
+    // Security Validation Test
+    document.getElementById('test-security').addEventListener('click', async () => {
+      const responseElement = document.getElementById('security-response');
+      try {
+        const response = await fetch('/api/direct-validation/security', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            query: document.getElementById('query').value,
+            userId: document.getElementById('userId').value
+          })
+        });
+        const data = await response.json();
+        formatResponse(data, responseElement, response.ok);
+      } catch (error) {
+        formatResponse({error: error.message}, responseElement, false);
+      }
+    });
+
+    // Get Rules
+    document.getElementById('get-rules').addEventListener('click', async () => {
+      const responseElement = document.getElementById('rules-response');
+      try {
+        const response = await fetch('/api/direct-validation/rules');
+        const data = await response.json();
+        formatResponse(data, responseElement);
+      } catch (error) {
+        formatResponse({error: error.message}, responseElement, false);
+      }
+    });
+
+    // Get Mappings
+    document.getElementById('get-mappings').addEventListener('click', async () => {
+      const responseElement = document.getElementById('mappings-response');
+      try {
+        const response = await fetch('/api/direct-validation/mappings');
+        const data = await response.json();
+        formatResponse(data, responseElement);
+      } catch (error) {
+        formatResponse({error: error.message}, responseElement, false);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -102,6 +102,7 @@ if (config.security.csrfProtection) {
       '/no-csrf/rate-limit-test/*',
       // API validation testing
       '/api-validation-test',
+      '/direct-validation-test.html',
       '/api/validation-test/*',
       '/api/direct-validation/*',
       // Flask app routes
