@@ -1,17 +1,28 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
-import { Loader2, RefreshCw, Maximize2, MinusCircle, MessageSquare, Settings, HelpCircle } from 'lucide-react';
+import { 
+  Loader2, RefreshCw, Maximize2, MinusCircle, MessageSquare, 
+  Settings, HelpCircle, ExternalLink, Copy, ChevronDown, SendIcon
+} from 'lucide-react';
 
 interface TaskadeEmbedProps {
   chatOnly?: boolean;
   className?: string;
   taskadeId?: string;
+  title?: string;
   view?: 'agent' | 'embed' | 'widget' | 'chat';
   height?: string | number;
   width?: string | number;
   showToolbar?: boolean;
   enableMemory?: boolean;
   theme?: 'light' | 'dark' | 'system';
+  showCapabilities?: boolean;
+}
+
+interface CapabilityProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
 }
 
 /**
@@ -25,12 +36,14 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
   chatOnly = false, 
   className = '',
   taskadeId = '01JRV02MYWJW6VJS9XGR1VB5J4',
+  title = 'Cosmic Assistant',
   view = 'agent',
   height = '100%',
   width = '100%',
   showToolbar = true,
   enableMemory = true,
-  theme = 'system'
+  theme = 'system',
+  showCapabilities = true
 }) => {
   const { reducedMotion } = useAccessibility();
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -38,6 +51,26 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [capabilitiesVisible, setCapabilitiesVisible] = useState(true);
+  
+  // Predefined Taskade agent capabilities based on reference images
+  const capabilities: CapabilityProps[] = [
+    {
+      icon: <div className="w-5 h-5 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-white">1</div>,
+      title: "Knowledge Access",
+      description: "Access cosmic consciousness insights and sacred geometry meanings"
+    },
+    {
+      icon: <div className="w-5 h-5 flex items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-500 text-white">2</div>,
+      title: "Creative Assistance",
+      description: "Help with visualization techniques and meditation guidance"
+    },
+    {
+      icon: <div className="w-5 h-5 flex items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white">3</div>,
+      title: "Music Exploration",
+      description: "Discover music aligned with cosmic frequencies and intentions"
+    }
+  ];
   
   // Build the URL with appropriate parameters for the desired view
   const getEmbedUrl = useCallback(() => {
@@ -139,13 +172,26 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
     setCollapsed(prev => !prev);
   };
 
+  // Toggle capabilities display
+  const toggleCapabilities = () => {
+    setCapabilitiesVisible(prev => !prev);
+  };
+
   const containerHeight = collapsed ? '48px' : (typeof height === 'number' ? `${height}px` : height);
   const containerWidth = typeof width === 'number' ? `${width}px` : width;
+
+  // Create branded border with cosmic theme
+  const brandedBorder = "border border-neutral-800 dark:border-neutral-700 rounded-xl overflow-hidden";
+  
+  // Cosmic radial gradient background
+  const cosmicBackground = view === 'agent' || view === 'chat' 
+    ? "bg-black dark:bg-gradient-to-br from-black via-gray-900 to-gray-900"
+    : "bg-background";
 
   return (
     <div 
       ref={containerRef}
-      className={`taskade-container relative overflow-hidden transition-all duration-300 ${className}`}
+      className={`taskade-container relative overflow-hidden transition-all duration-300 ${brandedBorder} ${className}`}
       style={{ 
         height: containerHeight, 
         width: containerWidth,
@@ -155,44 +201,50 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
     >
       {/* Toolbar */}
       {showToolbar && (
-        <div className="taskade-toolbar flex items-center justify-between bg-primary/10 p-2 shadow-sm">
+        <div className="taskade-toolbar flex items-center justify-between bg-black dark:bg-black py-3 px-4 border-b border-neutral-800 shadow-sm">
           <div className="flex items-center gap-2">
-            <MessageSquare size={18} className="text-primary" />
-            <span className="text-sm font-medium">Taskade AI Assistant</span>
+            <div className="w-6 h-6 flex items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
+              <MessageSquare size={14} className="text-white" />
+            </div>
+            <span className="text-sm font-medium text-white">{title}</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             {error && (
-              <RefreshCw
-                size={16}
-                className="cursor-pointer text-muted-foreground hover:text-primary transition-colors"
+              <button
+                className="w-7 h-7 rounded flex items-center justify-center hover:bg-neutral-800 transition-colors"
                 onClick={handleRefresh}
                 title="Reload"
-              />
+                aria-label="Reload Taskade"
+              >
+                <RefreshCw size={14} className="text-white" />
+              </button>
             )}
-            <HelpCircle 
-              size={16} 
-              className="cursor-pointer text-muted-foreground hover:text-primary transition-colors"
-              title="Help" 
-            />
-            <Settings 
-              size={16} 
-              className="cursor-pointer text-muted-foreground hover:text-primary transition-colors"
-              title="Settings" 
-            />
+            <button 
+              className="w-7 h-7 rounded flex items-center justify-center hover:bg-neutral-800 transition-colors"
+              title="Open in new window" 
+              aria-label="Open in new window"
+              onClick={() => window.open(`https://www.taskade.com/a/${taskadeId}`, '_blank')}
+            >
+              <ExternalLink size={14} className="text-neutral-400" />
+            </button>
             {collapsed ? (
-              <Maximize2
-                size={16}
-                className="cursor-pointer text-muted-foreground hover:text-primary transition-colors"
+              <button
+                className="w-7 h-7 rounded flex items-center justify-center hover:bg-neutral-800 transition-colors"
                 onClick={toggleCollapsed}
                 title="Expand"
-              />
+                aria-label="Expand chat"
+              >
+                <Maximize2 size={14} className="text-neutral-400" />
+              </button>
             ) : (
-              <MinusCircle
-                size={16}
-                className="cursor-pointer text-muted-foreground hover:text-primary transition-colors"
+              <button
+                className="w-7 h-7 rounded flex items-center justify-center hover:bg-neutral-800 transition-colors"
                 onClick={toggleCollapsed}
                 title="Minimize"
-              />
+                aria-label="Minimize chat"
+              >
+                <MinusCircle size={14} className="text-neutral-400" />
+              </button>
             )}
           </div>
         </div>
@@ -200,25 +252,78 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
 
       {/* Content area */}
       <div 
-        className={`taskade-content relative ${collapsed ? 'hidden' : 'block'} h-[calc(100%-48px)] w-full`}
+        className={`taskade-content relative ${collapsed ? 'hidden' : 'flex flex-col'} h-[calc(100%-48px)] w-full ${cosmicBackground}`}
       >
+        {/* Capabilities section - shown while loading or when agent view is first opened */}
+        {showCapabilities && !error && (view === 'agent' || view === 'chat') && capabilitiesVisible && (
+          <div className="taskade-capabilities px-4 py-5 flex flex-col bg-black text-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Start a conversation</h3>
+              <button
+                onClick={toggleCapabilities}
+                className="text-neutral-400 hover:text-white transition-colors"
+                aria-label="Hide capabilities"
+              >
+                <ChevronDown size={16} />
+              </button>
+            </div>
+            <p className="text-sm text-neutral-400 mb-4">
+              Ask questions to get insights based on your agent's description, persona, tone, and access to knowledge.
+            </p>
+            
+            <div className="grid gap-2 mb-4">
+              {capabilities.map((capability, index) => (
+                <div key={index} className="flex items-start gap-3 p-2 rounded-lg hover:bg-neutral-900 transition-colors">
+                  {capability.icon}
+                  <div>
+                    <h4 className="text-sm font-medium text-white">{capability.title}</h4>
+                    <p className="text-xs text-neutral-400">{capability.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Example questions input field (non-functional, just for UI) */}
+            <div className="relative mt-auto">
+              <div className="flex w-full items-center space-x-2 relative">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="Ask me anything..."
+                    className="w-full rounded-lg bg-neutral-900 border border-neutral-800 py-2 px-4 text-sm text-white focus:ring-1 focus:ring-indigo-500 placeholder:text-neutral-500"
+                    readOnly
+                    onClick={() => setCapabilitiesVisible(false)}
+                  />
+                </div>
+                <button 
+                  className="rounded-lg bg-indigo-600 p-2 text-white hover:bg-indigo-700 transition-colors"
+                  onClick={() => setCapabilitiesVisible(false)}
+                  aria-label="Send message"
+                >
+                  <SendIcon size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Loading overlay */}
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm z-10">
             <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
-              <p className="text-sm text-muted-foreground">Loading Taskade AI...</p>
+              <div className="w-12 h-12 rounded-full border-2 border-neutral-800 border-t-indigo-500 animate-spin mx-auto mb-4"></div>
+              <p className="text-sm text-neutral-400">Loading Taskade AI...</p>
             </div>
           </div>
         )}
         
         {/* Error message */}
         {error && !loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/90 z-10">
-            <div className="text-center max-w-md p-6 rounded-lg bg-card shadow-md">
-              <p className="text-sm text-destructive mb-4">{error}</p>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-10">
+            <div className="text-center max-w-md p-6 rounded-lg bg-neutral-900 border border-neutral-800 shadow-xl">
+              <p className="text-sm text-red-400 mb-4">{error}</p>
               <button 
-                className="py-2 px-4 bg-primary text-primary-foreground rounded-md text-sm"
+                className="py-2 px-4 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors"
                 onClick={handleRefresh}
               >
                 Retry
@@ -232,7 +337,7 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
           ref={iframeRef}
           src={getEmbedUrl()}
           title="Taskade AI Embed"
-          className="w-full h-full border-0"
+          className={`w-full border-0 ${capabilitiesVisible ? 'hidden' : 'block'} flex-1`}
           onLoad={handleIframeLoad}
           onError={handleIframeError}
           allow="clipboard-read; clipboard-write; fullscreen; camera; microphone; geolocation"
@@ -247,9 +352,17 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
           }}
         />
         
-        {/* Bottom gradient for aesthetic reasons */}
-        {!loading && !error && !collapsed && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/70 to-transparent h-8 pointer-events-none" />
+        {/* Powered by Taskade footer */}
+        {!loading && !error && !collapsed && (view === 'agent' || view === 'chat') && (
+          <div className="py-2 px-3 bg-black text-center text-xs text-neutral-500 border-t border-neutral-800">
+            Powered by <span className="inline-flex items-center gap-1">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="#9CA3AF"/>
+                <path d="M8 12L11 15L16 9" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Taskade
+            </span>
+          </div>
         )}
       </div>
     </div>

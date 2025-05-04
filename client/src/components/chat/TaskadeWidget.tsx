@@ -1,16 +1,17 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
-import { X, MessageSquare, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { X, MessageSquare, Loader2, SendIcon, ChevronUp, ExternalLink } from 'lucide-react';
 import TaskadeEmbed from './TaskadeEmbed';
 
 interface TaskadeWidgetProps {
   enabled?: boolean;
   taskadeId?: string;
+  title?: string;
   theme?: 'light' | 'dark' | 'system';
   enableMemory?: boolean;
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   showBranding?: boolean;
+  greetingMessage?: string;
 }
 
 /**
@@ -22,14 +23,17 @@ interface TaskadeWidgetProps {
 const TaskadeWidget: React.FC<TaskadeWidgetProps> = ({
   enabled = true,
   taskadeId = '01JRV02MYWJW6VJS9XGR1VB5J4',
+  title = 'Cosmic Assistant',
   theme = 'system',
   enableMemory = true,
   position = 'bottom-right',
-  showBranding = false
+  showBranding = true,
+  greetingMessage = "Ask me about cosmic consciousness and sacred geometry."
 }) => {
   const { reducedMotion } = useAccessibility();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showGreeting, setShowGreeting] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Determine position classes
@@ -46,6 +50,11 @@ const TaskadeWidget: React.FC<TaskadeWidgetProps> = ({
     if (!isOpen) {
       setLoading(true);
       // Loading will be handled by TaskadeEmbed component
+    } else {
+      // When closing, reset the greeting to be shown next time
+      setTimeout(() => {
+        setShowGreeting(true);
+      }, 300);
     }
   };
   
@@ -54,6 +63,8 @@ const TaskadeWidget: React.FC<TaskadeWidgetProps> = ({
     const handleMessage = (event: MessageEvent) => {
       if (event.data && event.data.type) {
         if (event.data.type === 'taskade-loaded') {
+          setLoading(false);
+        } else if (event.data.type === 'taskade-error') {
           setLoading(false);
         } else if (event.data.type === 'taskade-close') {
           setIsOpen(false);
@@ -95,65 +106,129 @@ const TaskadeWidget: React.FC<TaskadeWidgetProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
+
+  // Dismiss the greeting bubble
+  const dismissGreeting = () => {
+    setShowGreeting(false);
+  };
   
   if (!enabled) return null;
+  
+  // Dark cosmic gradient for widget
+  const cosmicGradient = "bg-gradient-to-r from-indigo-600 to-purple-600";
   
   return (
     <div className={`fixed ${positionClasses} z-50`} ref={containerRef}>
       {/* Chat button */}
       {!isOpen && (
-        <Button 
-          onClick={toggleWidget} 
-          className={`h-14 w-14 rounded-full flex items-center justify-center shadow-lg bg-primary hover:bg-primary/90 ${
-            reducedMotion ? '' : 'animate-pulse-subtle'
-          }`}
-          title="Open AI Chat Assistant"
-        >
-          <MessageSquare className="h-6 w-6 text-primary-foreground" />
-          {showBranding && (
-            <span className="absolute -top-10 whitespace-nowrap bg-background/90 px-2 py-1 rounded text-xs font-medium shadow">
-              Powered by Taskade AI
-            </span>
+        <div className="relative">
+          {/* Greeting bubble */}
+          {showGreeting && (
+            <div 
+              className="absolute bottom-16 right-0 w-64 bg-black text-white rounded-lg shadow-lg p-3 border border-neutral-800 mb-2 animate-fade-in-slide-up"
+              style={{
+                transition: reducedMotion ? 'none' : 'all 0.2s ease',
+              }}
+            >
+              <button 
+                className="absolute top-2 right-2 text-neutral-400 hover:text-white" 
+                onClick={dismissGreeting}
+                aria-label="Dismiss greeting"
+              >
+                <X size={14} />
+              </button>
+              <p className="text-sm pr-4">{greetingMessage}</p>
+              <div className="absolute -bottom-2 right-5 w-4 h-4 bg-black border-r border-b border-neutral-800 transform rotate-45"></div>
+            </div>
           )}
-        </Button>
+          
+          {/* Chat button */}
+          <button
+            onClick={toggleWidget}
+            className={`h-14 w-14 rounded-full flex items-center justify-center shadow-xl ${cosmicGradient} hover:shadow-lg hover:opacity-95 ${
+              reducedMotion ? '' : 'animate-pulse-subtle'
+            }`}
+            title="Open AI Chat Assistant"
+            aria-label="Open AI Chat"
+          >
+            <MessageSquare className="h-6 w-6 text-white" />
+            
+            {/* Brand label (optional) */}
+            {showBranding && (
+              <span className="absolute -top-10 right-0 whitespace-nowrap bg-black/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-white shadow-lg border border-neutral-800">
+                Powered by Taskade AI
+              </span>
+            )}
+          </button>
+        </div>
       )}
       
       {/* Chat window */}
       {isOpen && (
         <div 
-          className="w-[350px] md:w-[400px] h-[500px] bg-background rounded-lg shadow-xl border overflow-hidden flex flex-col"
+          className="w-[350px] md:w-[400px] h-[520px] overflow-hidden rounded-xl shadow-2xl border border-neutral-800 bg-black"
           style={{
             transition: reducedMotion ? 'none' : 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
             transform: isOpen ? 'translateY(0)' : 'translateY(20px)',
             opacity: isOpen ? 1 : 0
           }}
         >
-          <div className="p-3 bg-primary text-primary-foreground flex justify-between items-center">
+          {/* Chat header */}
+          <div className="py-3 px-4 bg-black text-white border-b border-neutral-800 flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              <h3 className="font-medium text-sm">Cosmic Assistant</h3>
-              {loading && <Loader2 className="h-3 w-3 ml-2 animate-spin" />}
+              <div className="w-6 h-6 flex items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
+                <MessageSquare size={14} className="text-white" />
+              </div>
+              <span className="text-sm font-medium">{title}</span>
+              {loading && (
+                <div className="w-3 h-3 rounded-full border border-neutral-800 border-t-white animate-spin ml-2"></div>
+              )}
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={toggleWidget} 
-              className="h-8 w-8 rounded-full hover:bg-primary-foreground/20"
-              aria-label="Close chat"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            
+            <div className="flex items-center gap-2">
+              <button
+                className="w-7 h-7 rounded flex items-center justify-center hover:bg-neutral-800 transition-colors"
+                onClick={() => window.open(`https://www.taskade.com/a/${taskadeId}`, '_blank')}
+                title="Open in new window"
+                aria-label="Open in new window"
+              >
+                <ExternalLink size={14} className="text-neutral-400" />
+              </button>
+              
+              <button
+                className="w-7 h-7 rounded flex items-center justify-center hover:bg-neutral-800 transition-colors"
+                onClick={toggleWidget}
+                title="Close chat"
+                aria-label="Close chat"
+              >
+                <X size={14} className="text-neutral-400" />
+              </button>
+            </div>
           </div>
           
-          <div className="flex-1 relative">
+          {/* Main chat area */}
+          <div className="flex-1 relative h-[calc(100%-48px)]">
+            {/* Use the enhanced TaskadeEmbed component */}
             <TaskadeEmbed 
               className="w-full h-full"
               taskadeId={taskadeId}
+              title={title}
               view="widget" 
               showToolbar={false}
               enableMemory={enableMemory}
-              theme={theme}
+              theme="dark" // Force dark theme for widget
+              showCapabilities={true}
             />
+            
+            {/* Loading overlay - will be handled by TaskadeEmbed */}
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-50">
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-full border-2 border-neutral-800 border-t-indigo-500 animate-spin mx-auto mb-4"></div>
+                  <p className="text-sm text-neutral-400">Loading {title}...</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
