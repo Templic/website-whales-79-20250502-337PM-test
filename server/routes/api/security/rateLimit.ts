@@ -1,47 +1,57 @@
 /**
- * Rate Limiting API
- * 
- * Provides API endpoints for monitoring and managing the rate limiting system.
- * These endpoints are protected and only accessible to authorized security admins.
+ * Rate Limiting API Routes
+ *
+ * This module provides API endpoints for monitoring and managing the rate limiting system.
+ * These endpoints are for authorized administrators to view and control rate limiting behavior.
  */
 
-import { Router } from 'express';
+import express, { Request, Response } from 'express';
+import { isAdmin } from '../../../utils/auth-utils';
 import { 
   rateLimiters, 
   adaptiveRateLimiter, 
-  rateLimitAnalytics,
-  generateRateLimitReport,
-  getAdaptiveAdjustmentMetrics 
+  rateLimitAnalytics 
 } from '../../../security/advanced/threat/RateLimitingSystem';
+import { recordAuditEvent } from '../../../security/secureAuditTrail';
 
-const router = Router();
+const router = express.Router();
 
-/**
- * GET /api/security/rate-limit/status
- * 
- * Gets the current status of all rate limiters
- */
-router.get('/status', async (req, res) => {
+// Get rate limiting status
+router.get('/status', isAdmin, (req: Request, res: Response) => {
   try {
-    // Get status of all limiters
-    const status = Object.entries(rateLimiters).map(([name, limiter]) => {
-      return {
-        name,
-        config: limiter.getConfig(),
-        violationStats: Object.keys(limiter.getViolationStats()).length
-      };
-    });
+    // Get metrics from each component
+    const analytics = rateLimitAnalytics.generateReport();
+    const adaptiveMetrics = adaptiveRateLimiter.getAdjustmentMetrics();
     
-    // Get adaptive adjustment metrics
-    const adaptiveMetrics = getAdaptiveAdjustmentMetrics();
+    // Build a comprehensive status
+    const status = {
+      timestamp: new Date().toISOString(),
+      metrics: {
+        analytics: {
+          totalViolations: analytics.summary.totalViolations,
+          recentViolations: analytics.summary.recentViolations,
+          suspiciousUsers: analytics.summary.suspiciousUsers,
+          globalErrorRate: analytics.summary.globalErrorRate,
+          suspiciousRequestRate: analytics.summary.suspiciousRequestRate
+        },
+        adaptive: {
+          systemLoadFactor: adaptiveMetrics.systemLoadFactor,
+          threatFactor: adaptiveMetrics.threatFactor,
+          errorRateFactor: adaptiveMetrics.errorRateFactor,
+          effectiveMultipliers: adaptiveMetrics.effectiveMultipliers
+        }
+      },
+      resourceTypes: analytics.resourceTypes,
+      suspiciousUsers: analytics.suspiciousUsers,
+      trends: analytics.trends
+    };
     
     res.json({
       success: true,
-      status,
-      adaptiveMetrics
+      status
     });
   } catch (error) {
-    console.error('Error getting rate limit status:', error);
+    console.error('[RateLimit] Error getting rate limit status:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get rate limit status'
@@ -49,161 +59,209 @@ router.get('/status', async (req, res) => {
   }
 });
 
-/**
- * GET /api/security/rate-limit/report
- * 
- * Generates a report on rate limiting activity
- * 
- * Query parameters:
- * - start: Start time (timestamp)
- * - end: End time (timestamp)
- */
-router.get('/report', async (req, res) => {
+// Force collection of rate limit violations
+router.post('/collect-violations', isAdmin, (req: Request, res: Response) => {
   try {
-    const startTime = req.query.start ? parseInt(req.query.start as string) : undefined;
-    const endTime = req.query.end ? parseInt(req.query.end as string) : undefined;
-    
-    // Generate report
-    const report = generateRateLimitReport(startTime, endTime);
+    // Trigger collection of violation data
+    rateLimitAnalytics.storeViolations();
     
     res.json({
       success: true,
-      report
+      message: 'Rate limit violations collected'
     });
   } catch (error) {
-    console.error('Error generating rate limit report:', error);
+    console.error('[RateLimit] Error collecting rate limit violations:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to generate rate limit report'
+      message: 'Failed to collect rate limit violations'
     });
   }
 });
 
-/**
- * GET /api/security/rate-limit/threats
- * 
- * Identifies potential attackers based on rate limit violations
- */
-router.get('/threats', async (req, res) => {
+// Update rate limit configuration for a specific tier
+router.post('/configure/:tier', isAdmin, (req: Request, res: Response) => {
   try {
-    // Collect latest violations
-    rateLimitAnalytics.collectViolations();
+    const { tier } = req.params;
+    const { capacity, refillRate, refillInterval } = req.body;
     
-    // Identify potential attackers
-    const potentialAttackers = rateLimitAnalytics.identifyPotentialAttackers();
-    
-    res.json({
-      success: true,
-      potentialAttackers
-    });
-  } catch (error) {
-    console.error('Error identifying rate limit threats:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to identify rate limit threats'
-    });
-  }
-});
-
-/**
- * POST /api/security/rate-limit/reset
- * 
- * Resets rate limits for a specific key or all keys
- * 
- * Body parameters:
- * - limiter: Name of the limiter (optional, resets all if not specified)
- * - key: Specific key to reset (optional, resets all keys if not specified)
- */
-router.post('/reset', async (req, res) => {
-  try {
-    const { limiter: limiterName, key } = req.body;
-    
-    if (limiterName && !rateLimiters[limiterName]) {
+    // Validate the tier
+    if (!rateLimiters[tier]) {
       return res.status(400).json({
         success: false,
-        message: `Unknown limiter: ${limiterName}`
+        message: `Invalid rate limit tier: ${tier}`
       });
     }
     
-    if (limiterName && key) {
-      // Reset specific key in specific limiter
-      rateLimiters[limiterName].reset(key);
-      
-      res.json({
-        success: true,
-        message: `Reset rate limit for key '${key}' in limiter '${limiterName}'`
-      });
-    } else if (limiterName) {
-      // Reset all keys in specific limiter
-      rateLimiters[limiterName].resetAll();
-      
-      res.json({
-        success: true,
-        message: `Reset all rate limits in limiter '${limiterName}'`
-      });
-    } else {
-      // Reset all keys in all limiters
-      Object.entries(rateLimiters).forEach(([name, limiter]) => {
-        limiter.resetAll();
-      });
-      
-      res.json({
-        success: true,
-        message: 'Reset all rate limits in all limiters'
+    // Validate the parameters
+    if (capacity === undefined || refillRate === undefined || refillInterval === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required parameters: capacity, refillRate, refillInterval'
       });
     }
+    
+    // Update the configuration
+    const limiter = rateLimiters[tier];
+    limiter.updateConfig({
+      capacity: Number(capacity),
+      refillRate: Number(refillRate),
+      refillInterval: Number(refillInterval)
+    });
+    
+    // Record the configuration change
+    recordAuditEvent({
+      timestamp: new Date().toISOString(),
+      action: 'RATE_LIMIT_CONFIG_UPDATE',
+      resource: `rate-limit-${tier}`,
+      result: 'success',
+      severity: 'info',
+      details: {
+        tier,
+        capacity: Number(capacity),
+        refillRate: Number(refillRate),
+        refillInterval: Number(refillInterval),
+        updatedBy: req.user?.username || 'unknown'
+      }
+    });
+    
+    res.json({
+      success: true,
+      message: `Rate limit configuration updated for tier: ${tier}`,
+      config: {
+        tier,
+        capacity: Number(capacity),
+        refillRate: Number(refillRate),
+        refillInterval: Number(refillInterval)
+      }
+    });
   } catch (error) {
-    console.error('Error resetting rate limits:', error);
+    console.error(`[RateLimit] Error updating rate limit configuration:`, error);
     res.status(500).json({
       success: false,
-      message: 'Failed to reset rate limits'
+      message: 'Failed to update rate limit configuration'
     });
   }
 });
 
-/**
- * POST /api/security/rate-limit/adaptive/reset
- * 
- * Resets all rate limiters to their base configurations
- */
-router.post('/adaptive/reset', async (req, res) => {
+// Force recalculation of adaptive rate limiting factors
+router.post('/recalculate-factors', isAdmin, (req: Request, res: Response) => {
   try {
-    adaptiveRateLimiter.resetToBaseConfigs();
+    // Force immediate recalculation
+    adaptiveRateLimiter.forceRecalculation();
+    
+    // Get the updated metrics
+    const adaptiveMetrics = adaptiveRateLimiter.getAdjustmentMetrics();
     
     res.json({
       success: true,
-      message: 'Reset all rate limiters to base configurations'
+      message: 'Adaptive rate limiting factors recalculated',
+      metrics: adaptiveMetrics
     });
   } catch (error) {
-    console.error('Error resetting adaptive rate limiters:', error);
+    console.error('[RateLimit] Error recalculating adaptive factors:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to reset adaptive rate limiters'
+      message: 'Failed to recalculate adaptive factors'
     });
   }
 });
 
-/**
- * POST /api/security/rate-limit/adaptive/adjust
- * 
- * Forces an immediate adjustment of rate limits
- */
-router.post('/adaptive/adjust', async (req, res) => {
+// Block a specific IP or user from making requests (extreme rate limiting)
+router.post('/block', isAdmin, (req: Request, res: Response) => {
   try {
-    adaptiveRateLimiter.adjustRateLimits();
+    const { identifier, reason, duration } = req.body;
     
-    const adaptiveMetrics = getAdaptiveAdjustmentMetrics();
+    // Validate parameters
+    if (!identifier) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required parameter: identifier'
+      });
+    }
+    
+    // Duration is in minutes, default to 60 (1 hour)
+    const blockDuration = duration ? Number(duration) : 60;
+    
+    // Apply a custom rate limit configuration to this identifier
+    // This effectively blocks them by setting extremely low limits
+    for (const tier in rateLimiters) {
+      rateLimiters[tier].setCustomConfig(identifier, {
+        capacity: 1,
+        refillRate: 1,
+        refillInterval: blockDuration * 60000 // Convert minutes to milliseconds
+      });
+    }
+    
+    // Record the block action
+    recordAuditEvent({
+      timestamp: new Date().toISOString(),
+      action: 'RATE_LIMIT_BLOCK',
+      resource: 'rate-limiting',
+      result: 'success',
+      severity: 'warning',
+      details: {
+        identifier,
+        reason: reason || 'Manual block by administrator',
+        duration: blockDuration,
+        blockedBy: req.user?.username || 'unknown'
+      }
+    });
     
     res.json({
       success: true,
-      message: 'Rate limits adjusted',
-      adaptiveMetrics
+      message: `Blocked ${identifier} for ${blockDuration} minutes`,
+      expiresAt: new Date(Date.now() + blockDuration * 60000).toISOString()
     });
   } catch (error) {
-    console.error('Error adjusting rate limits:', error);
+    console.error('[RateLimit] Error blocking identifier:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to adjust rate limits'
+      message: 'Failed to block identifier'
+    });
+  }
+});
+
+// Unblock a specific IP or user
+router.post('/unblock', isAdmin, (req: Request, res: Response) => {
+  try {
+    const { identifier } = req.body;
+    
+    // Validate parameters
+    if (!identifier) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required parameter: identifier'
+      });
+    }
+    
+    // Remove custom rate limit configurations for this identifier
+    for (const tier in rateLimiters) {
+      rateLimiters[tier].removeCustomConfig(identifier);
+    }
+    
+    // Record the unblock action
+    recordAuditEvent({
+      timestamp: new Date().toISOString(),
+      action: 'RATE_LIMIT_UNBLOCK',
+      resource: 'rate-limiting',
+      result: 'success',
+      severity: 'info',
+      details: {
+        identifier,
+        reason: 'Manual unblock by administrator',
+        unblocked_by: req.user?.username || 'unknown'
+      }
+    });
+    
+    res.json({
+      success: true,
+      message: `Unblocked ${identifier}`
+    });
+  } catch (error) {
+    console.error('[RateLimit] Error unblocking identifier:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to unblock identifier'
     });
   }
 });

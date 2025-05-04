@@ -1,84 +1,147 @@
 /**
- * Rate Limiting System Integration
+ * Rate Limit Integration
  *
- * This module handles the integration of our context-aware rate limiting system
- * with the main application. It initializes all necessary components and provides
- * methods for applying rate limiting to different parts of the application.
+ * This module provides the integration between the rate limiting system and the rest of the application.
+ * It initializes the rate limiting components, connects to middleware, and registers API routes.
  */
 
-import { Application } from 'express';
+import { Express, Request, Response, NextFunction } from 'express';
+import { log } from '../../../utils/logger';
+import { recordAuditEvent } from '../../secureAuditTrail';
 import { 
   rateLimiters,
-  adaptiveRateLimiter,
-  rateLimitAnalytics,
-  collectRateLimitViolations,
   createUnifiedRateLimit,
   authRateLimit,
   adminRateLimit,
   securityRateLimit,
   apiRateLimit,
-  publicRateLimit
+  publicRateLimit 
 } from './RateLimitingSystem';
-
-import router from '../../../routes/api/security/rateLimit';
+import { rateLimitAnalytics } from './RateLimitingSystem';
+import { threatDetectionService } from './ThreatDetectionService';
 
 /**
- * Initializes the rate limiting system
+ * Initialize the rate limiting system
  */
 export function initializeRateLimiting(): void {
-  console.log('[RateLimit] Initializing rate limiting system...');
-  
-  // The RateLimitingSystem.ts file handles the instantiation of all components
-  
-  console.log('[RateLimit] Rate limiting system initialized successfully');
+  try {
+    log('Initializing rate limiting system...', 'security');
+    
+    // Set up periodic cleanup tasks
+    setupPeriodicTasks();
+    
+    // Record the initialization in the audit trail
+    recordAuditEvent({
+      timestamp: new Date().toISOString(),
+      action: 'RATE_LIMIT_INIT',
+      resource: 'rate-limiting',
+      result: 'success',
+      severity: 'info',
+      details: {
+        message: 'Rate limiting system initialized successfully'
+      }
+    });
+    
+    log('Rate limiting system initialized successfully', 'security');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log(`Failed to initialize rate limiting system: ${errorMessage}`, 'security');
+  }
 }
 
 /**
- * Applies rate limiting to Express application routes
+ * Apply rate limiting middleware to Express application routes
  * 
- * @param app The Express application
+ * @param app Express application
  */
-export function applyRateLimiting(app: Application): void {
-  console.log('[RateLimit] Applying rate limiting to application routes...');
-  
-  // Apply global rate limiting to all routes
-  app.use(createUnifiedRateLimit({
-    tier: 'global',
-    blockingEnabled: true,
-    logViolations: true
-  }));
-  
-  // Apply rate limiting to specific routes based on their sensitivity
-  app.use('/api/auth', authRateLimit);
-  app.use('/api/admin', adminRateLimit);
-  app.use('/api/security', securityRateLimit);
-  app.use('/api', apiRateLimit);
-  
-  // Register rate limit API endpoint for monitoring
-  app.use('/api/security/rate-limit', securityRateLimit, router);
-  
-  console.log('[RateLimit] Rate limiting applied to application routes');
+export function applyRateLimiting(app: Express): void {
+  try {
+    log('Applying rate limiting middleware...', 'security');
+    
+    // Apply global rate limiting to all routes
+    app.use(createUnifiedRateLimit({ tier: 'global' }));
+    
+    // Apply tier-specific rate limiting to route groups
+    app.use('/api/auth', authRateLimit);
+    app.use('/api/admin', adminRateLimit);
+    app.use('/api/security', securityRateLimit);
+    app.use('/api', apiRateLimit);
+    
+    // Route for API endpoints related to rate limiting management
+    const rateLimitRouter = require('../../../routes/api/security/rateLimit').default;
+    app.use('/api/security/rate-limit', rateLimitRouter);
+    
+    log('Rate limiting middleware applied successfully', 'security');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log(`Failed to apply rate limiting middleware: ${errorMessage}`, 'security');
+  }
 }
 
 /**
- * Handles application shutdown, collecting final analytics
+ * Set up periodic tasks for the rate limiting system
  */
-export function shutdownRateLimiting(): void {
-  // Collect final analytics before shutdown
-  collectRateLimitViolations();
+function setupPeriodicTasks(): void {
+  // Periodically store rate limit violations (every 5 minutes)
+  setInterval(() => {
+    try {
+      rateLimitAnalytics.storeViolations();
+    } catch (error) {
+      log(`Error storing rate limit violations: ${error}`, 'security');
+    }
+  }, 5 * 60 * 1000); // 5 minutes
+  
+  // Periodically clear old suspicious IPs (every hour)
+  setInterval(() => {
+    try {
+      threatDetectionService.clearOldSuspiciousIps();
+    } catch (error) {
+      log(`Error clearing old suspicious IPs: ${error}`, 'security');
+    }
+  }, 60 * 60 * 1000); // 1 hour
 }
 
 /**
- * Provides access to the rate limiting components
+ * Function to check if a request should be blocked by rate limiting
+ * Useful for integrating with other security components
+ * 
+ * @param req The Express request
+ * @param identifier The user or IP identifier
+ * @returns True if the request should be rate limited
  */
-export {
-  rateLimiters,
-  adaptiveRateLimiter,
-  rateLimitAnalytics,
-  createUnifiedRateLimit,
-  authRateLimit,
-  adminRateLimit,
-  securityRateLimit,
-  apiRateLimit,
-  publicRateLimit
+export function shouldRateLimit(req: Request, identifier: string): boolean {
+  try {
+    // Check if the global limiter would rate limit this request
+    return !rateLimiters.global.consumeSync(identifier, 1);
+  } catch (error) {
+    // In case of error, don't block the request
+    log(`Error checking rate limit: ${error}`, 'security');
+    return false;
+  }
+}
+
+/**
+ * Record a rate limit attempt (for use by other components)
+ * 
+ * @param req The Express request
+ * @param identifier The user or IP identifier
+ * @param wasBlocked Whether the request was blocked
+ */
+export function recordRateLimitAttempt(req: Request, identifier: string, wasBlocked: boolean): void {
+  try {
+    if (wasBlocked) {
+      // Record the violation on the threat detection service
+      // This will increase the threat score for subsequent requests
+      threatDetectionService.recordViolation(identifier);
+    }
+  } catch (error) {
+    log(`Error recording rate limit attempt: ${error}`, 'security');
+  }
+}
+
+// Export components for use by other modules
+export { 
+  rateLimiters, 
+  rateLimitAnalytics, 
+  threatDetectionService 
 };

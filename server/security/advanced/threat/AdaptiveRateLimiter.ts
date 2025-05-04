@@ -1,333 +1,287 @@
 /**
  * Adaptive Rate Limiter
- * 
- * Dynamically adjusts rate limits based on:
- * - System load
- * - Memory usage
- * - Security threat levels
- * - Time-of-day patterns
- * - Historical traffic patterns
- * 
- * This component allows the rate limiting system to automatically
- * become more restrictive under high load or elevated security threats.
+ *
+ * This class dynamically adjusts rate limits based on system conditions and security threat levels.
+ * It can tighten limits during high load or security incidents, and relax them during normal operation.
  */
 
-import { TokenBucketRateLimiter, RateLimitConfig } from './TokenBucketRateLimiter';
+import { RateLimitContext } from './RateLimitContextBuilder';
+import { RateLimitAnalytics } from './RateLimitAnalytics';
 
-// Optional dependencies
-let systemMonitor: any;
-let securityFabric: any;
-
-try {
-  // Attempt to import system monitor for load information
-  systemMonitor = require('../../../utils/systemMonitor');
-} catch (error) {
-  console.log('System monitor not available for adaptive rate limiting');
+export interface AdaptiveRateLimiterConfig {
+  minBurstMultiplier: number;
+  maxBurstMultiplier: number;
+  systemLoadThreshold: number;
+  threatLevelImpact: number;
+  errorRateThreshold: number;
+  adjustmentInterval: number;
+  analytics: RateLimitAnalytics;
 }
 
-try {
-  // Attempt to import security fabric for threat information
-  securityFabric = require('../SecurityFabric').default;
-} catch (error) {
-  console.log('Security fabric not available for adaptive rate limiting');
-}
-
-export interface AdaptiveRateLimiterOptions {
-  // How often to adjust limits (ms)
-  adjustmentInterval?: number;
-  
-  // Maximum restriction factor (1.0 means no restriction, 2.0 means 50% of original limit)
-  maxRestrictionFactor?: number;
-  
-  // Minimum tokens allowed (won't go below this)
-  minimumTokensPercent?: number;
-  
-  // Load thresholds
-  loadThresholds?: {
-    start: number;  // Start restricting at this load (0-1)
-    max: number;    // Maximum restriction at this load (0-1)
-  };
-  
-  // Memory thresholds
-  memoryThresholds?: {
-    start: number;  // Start restricting at this memory usage (0-1)
-    max: number;    // Maximum restriction at this memory usage (0-1)
-  };
-  
-  // Threat level thresholds
-  threatThresholds?: {
-    start: number;  // Start restricting at this threat level (0-100)
-    max: number;    // Maximum restriction at this threat level (0-100)
-  };
-  
-  // Whether to enable more detailed logging
-  verbose?: boolean;
-}
-
-/**
- * Manages adaptive rate limit adjustments based on system conditions
- */
 export class AdaptiveRateLimiter {
-  private limiters: Record<string, TokenBucketRateLimiter>;
-  private baseConfigs: Record<string, RateLimitConfig>;
-  private lastAdjustment: number = 0;
-  private options: AdaptiveRateLimiterOptions;
-  private adjustmentInterval: number;
-  private adjustmentTimer: NodeJS.Timeout | null = null;
+  private config: AdaptiveRateLimiterConfig;
+  private lastAdjustmentTime: number;
+  private currentAdjustments: Map<string, number>;
+  private systemLoadFactor: number;
+  private threatFactor: number;
+  private errorRateFactor: number;
   
-  constructor(
-    limiters: Record<string, TokenBucketRateLimiter>,
-    options: AdaptiveRateLimiterOptions = {}
-  ) {
-    this.limiters = limiters;
-    this.options = options;
-    this.baseConfigs = {};
-    this.adjustmentInterval = options.adjustmentInterval || 60 * 1000; // Default: 1 minute
+  constructor(config: AdaptiveRateLimiterConfig) {
+    this.config = {
+      minBurstMultiplier: 0.5,
+      maxBurstMultiplier: 3.0,
+      systemLoadThreshold: 0.75,
+      threatLevelImpact: 0.5,
+      errorRateThreshold: 0.1,
+      adjustmentInterval: 60000, // 1 minute
+      analytics: config.analytics,
+      ...config
+    };
     
-    // Store base configurations
-    Object.entries(limiters).forEach(([key, limiter]) => {
-      this.baseConfigs[key] = { ...limiter.getConfig() };
-    });
-    
-    // Schedule periodic adjustments
-    this.startPeriodicAdjustments();
+    this.lastAdjustmentTime = Date.now();
+    this.currentAdjustments = new Map();
+    this.systemLoadFactor = 1.0;
+    this.threatFactor = 1.0;
+    this.errorRateFactor = 1.0;
   }
   
   /**
-   * Start periodic rate limit adjustments
+   * Get the adaptive multiplier for a given context
+   * 
+   * @param context The rate limit context
+   * @returns The multiplier to apply to the rate limit
    */
-  private startPeriodicAdjustments(): void {
-    if (this.adjustmentTimer) {
-      clearInterval(this.adjustmentTimer);
+  public getAdaptiveMultiplier(context: RateLimitContext): number {
+    // Check if we need to recalculate global factors
+    this.updateGlobalFactorsIfNeeded();
+    
+    // Start with the global factors
+    let multiplier = this.systemLoadFactor * this.threatFactor * this.errorRateFactor;
+    
+    // Get any specific adjustment for this resource type
+    const resourceTypeAdjustment = this.currentAdjustments.get(context.resourceType) || 1.0;
+    multiplier *= resourceTypeAdjustment;
+    
+    // Adjust based on the specific threat level for this context
+    if (context.threatLevel > 0) {
+      const threatAdjustment = 1.0 - (context.threatLevel * this.config.threatLevelImpact);
+      multiplier *= Math.max(0.1, threatAdjustment); // Ensure at least 10% capacity
     }
     
-    this.adjustmentTimer = setInterval(() => {
-      this.adjustRateLimits();
-    }, this.adjustmentInterval);
-    
-    if (this.options.verbose) {
-      console.log(`[AdaptiveRateLimiter] Started periodic adjustments every ${this.adjustmentInterval / 1000} seconds`);
+    // Apply per-user adjustments for authenticated users
+    if (context.authenticated && context.userId) {
+      const userKey = `user:${context.userId}`;
+      const userAdjustment = this.currentAdjustments.get(userKey) || 1.0;
+      multiplier *= userAdjustment;
     }
+    
+    // Ensure the multiplier is within bounds
+    return Math.max(
+      this.config.minBurstMultiplier,
+      Math.min(this.config.maxBurstMultiplier, multiplier)
+    );
   }
   
   /**
-   * Stop periodic rate limit adjustments
+   * Update the global factors if needed based on the adjustment interval
    */
-  public stopPeriodicAdjustments(): void {
-    if (this.adjustmentTimer) {
-      clearInterval(this.adjustmentTimer);
-      this.adjustmentTimer = null;
-      
-      if (this.options.verbose) {
-        console.log('[AdaptiveRateLimiter] Stopped periodic adjustments');
-      }
-    }
-  }
-  
-  /**
-   * Adjust rate limits based on current system conditions
-   */
-  public adjustRateLimits(): void {
+  private updateGlobalFactorsIfNeeded(): void {
     const now = Date.now();
     
-    // Limit adjustment frequency
-    if (now - this.lastAdjustment < this.adjustmentInterval) {
-      return;
+    // Only update at most once per adjustment interval
+    if (now - this.lastAdjustmentTime >= this.config.adjustmentInterval) {
+      this.updateSystemLoadFactor();
+      this.updateThreatFactor();
+      this.updateErrorRateFactor();
+      this.updateResourceTypeAdjustments();
+      this.lastAdjustmentTime = now;
     }
-    
-    this.lastAdjustment = now;
-    
-    // Get current system metrics
+  }
+  
+  /**
+   * Update the system load factor based on current system load
+   */
+  private updateSystemLoadFactor(): void {
+    // Get the current system load (0-1)
     const systemLoad = this.getCurrentSystemLoad();
-    const memoryUsage = this.getCurrentMemoryUsage();
-    const currentThreatLevel = this.getCurrentThreatLevel();
     
-    // Calculate adjustment factors
-    const loadFactor = this.calculateLoadFactor(systemLoad);
-    const memoryFactor = this.calculateMemoryFactor(memoryUsage);
-    const threatFactor = this.calculateThreatFactor(currentThreatLevel);
-    
-    // Combined restriction factor (higher means more restrictive)
-    // Take the most restrictive of the three factors
-    const restrictionFactor = Math.max(loadFactor, memoryFactor, threatFactor);
-    
-    // Cap at maximum restriction
-    const maxRestriction = this.options.maxRestrictionFactor || 5.0;
-    const finalRestrictionFactor = Math.min(restrictionFactor, maxRestriction);
-    
-    // Log adjustment if significant or in verbose mode
-    if (finalRestrictionFactor > 1.1 || this.options.verbose) {
-      console.log(`[AdaptiveRateLimiter] Calculating adjustment: load=${loadFactor.toFixed(2)}, memory=${memoryFactor.toFixed(2)}, threat=${threatFactor.toFixed(2)}, final=${finalRestrictionFactor.toFixed(2)}`);
+    // Calculate the factor - linear reduction as load approaches threshold
+    if (systemLoad > this.config.systemLoadThreshold) {
+      // Above threshold - reduce capacity
+      const overageRatio = (systemLoad - this.config.systemLoadThreshold) / 
+        (1 - this.config.systemLoadThreshold);
+      
+      // Scale down as load increases above threshold
+      this.systemLoadFactor = 1.0 - (overageRatio * 0.5);
+    } else {
+      // Below threshold - potentially increase capacity
+      const headroomRatio = (this.config.systemLoadThreshold - systemLoad) / 
+        this.config.systemLoadThreshold;
+      
+      // Scale up slightly when load is well below threshold
+      this.systemLoadFactor = 1.0 + (headroomRatio * 0.2);
     }
     
-    // Apply adjustments to each limiter
-    Object.entries(this.limiters).forEach(([key, limiter]) => {
-      const baseConfig = this.baseConfigs[key];
+    // Ensure the factor is within bounds
+    this.systemLoadFactor = Math.max(0.5, Math.min(1.2, this.systemLoadFactor));
+  }
+  
+  /**
+   * Update the threat factor based on current threat level
+   */
+  private updateThreatFactor(): void {
+    // Get the current global threat level (0-1)
+    const globalThreatLevel = this.getGlobalThreatLevel();
+    
+    // Calculate the factor - exponential reduction as threat level increases
+    if (globalThreatLevel > 0.1) {
+      // Above minimal threshold - reduce capacity
+      this.threatFactor = 1.0 - (Math.pow(globalThreatLevel, 1.5) * 0.6);
+    } else {
+      // Below minimal threshold - normal capacity
+      this.threatFactor = 1.0;
+    }
+    
+    // Ensure the factor is within bounds
+    this.threatFactor = Math.max(0.4, Math.min(1.0, this.threatFactor));
+  }
+  
+  /**
+   * Update the error rate factor based on current error rates
+   */
+  private updateErrorRateFactor(): void {
+    // Get the current error rate (0-1)
+    const errorRate = this.getGlobalErrorRate();
+    
+    // Calculate the factor - linear reduction as error rate increases
+    if (errorRate > this.config.errorRateThreshold) {
+      // Above threshold - reduce capacity
+      const overageRatio = (errorRate - this.config.errorRateThreshold) / 
+        (1 - this.config.errorRateThreshold);
       
-      // Skip if no base config
-      if (!baseConfig) return;
-      
-      // Calculate new token rate based on restriction factor
-      const minimumPercent = this.options.minimumTokensPercent || 0.1; // Default to 10% minimum
-      const adjustedTokens = Math.max(
-        Math.floor(baseConfig.tokensPerInterval / finalRestrictionFactor),
-        Math.ceil(baseConfig.tokensPerInterval * minimumPercent)
-      );
-      
-      // Calculate adjusted burst capacity
-      const adjustedBurst = Math.max(
-        Math.floor(baseConfig.burstCapacity! / finalRestrictionFactor),
-        adjustedTokens // Burst capacity should be at least equal to tokens per interval
-      );
-      
-      // Apply new configuration
-      limiter.updateConfig({
-        tokensPerInterval: adjustedTokens,
-        interval: baseConfig.interval,
-        burstCapacity: adjustedBurst
-      });
-      
-      if (this.options.verbose || finalRestrictionFactor > 1.5) {
-        console.log(`[AdaptiveRateLimiter] Adjusted ${key} rate limit to ${adjustedTokens}/${baseConfig.tokensPerInterval} tokens/interval (restriction: ${finalRestrictionFactor.toFixed(2)})`);
+      // Scale down as error rate increases above threshold
+      this.errorRateFactor = 1.0 - (overageRatio * 0.4);
+    } else {
+      // Below threshold - normal capacity
+      this.errorRateFactor = 1.0;
+    }
+    
+    // Ensure the factor is within bounds
+    this.errorRateFactor = Math.max(0.6, Math.min(1.0, this.errorRateFactor));
+  }
+  
+  /**
+   * Update adjustments for different resource types
+   */
+  private updateResourceTypeAdjustments(): void {
+    // Get analytics about recent violations by resource type
+    const analytics = this.config.analytics.getResourceTypeViolations();
+    
+    // Reset existing resource type adjustments
+    this.currentAdjustments = new Map();
+    
+    // Calculate new adjustments based on violation rates
+    for (const [resourceType, violationRate] of Object.entries(analytics.violationRatesByType)) {
+      if (violationRate > 0.1) {
+        // Higher violation rates lead to lower multipliers
+        const adjustment = 1.0 - (violationRate * 0.6);
+        this.currentAdjustments.set(resourceType, Math.max(0.4, adjustment));
       }
-    });
+    }
+    
+    // Special handling for any suspicious users
+    const suspiciousUsers = this.config.analytics.getSuspiciousUsers();
+    
+    for (const user of suspiciousUsers) {
+      // Apply a significant reduction to suspicious users
+      this.currentAdjustments.set(`user:${user.userId}`, 0.3);
+    }
   }
   
   /**
-   * Calculate load-based adjustment factor
-   */
-  private calculateLoadFactor(systemLoad: number): number {
-    const thresholds = this.options.loadThresholds || { start: 0.7, max: 0.9 };
-    
-    // Below start threshold, no restriction (factor = 1.0)
-    if (systemLoad < thresholds.start) return 1.0;
-    
-    // At or above max threshold, maximum restriction
-    if (systemLoad >= thresholds.max) return this.options.maxRestrictionFactor || 5.0;
-    
-    // Linear scaling between start and max thresholds
-    const range = thresholds.max - thresholds.start;
-    const position = (systemLoad - thresholds.start) / range;
-    const maxAdditional = (this.options.maxRestrictionFactor || 5.0) - 1.0;
-    
-    return 1.0 + (position * maxAdditional);
-  }
-  
-  /**
-   * Calculate memory-based adjustment factor
-   */
-  private calculateMemoryFactor(memoryUsage: number): number {
-    const thresholds = this.options.memoryThresholds || { start: 0.8, max: 0.95 };
-    
-    // Below start threshold, no restriction (factor = 1.0)
-    if (memoryUsage < thresholds.start) return 1.0;
-    
-    // At or above max threshold, maximum restriction
-    if (memoryUsage >= thresholds.max) return this.options.maxRestrictionFactor || 5.0;
-    
-    // Linear scaling between start and max thresholds
-    const range = thresholds.max - thresholds.start;
-    const position = (memoryUsage - thresholds.start) / range;
-    const maxAdditional = (this.options.maxRestrictionFactor || 5.0) - 1.0;
-    
-    return 1.0 + (position * maxAdditional);
-  }
-  
-  /**
-   * Calculate threat-based adjustment factor
-   */
-  private calculateThreatFactor(threatLevel: number): number {
-    const thresholds = this.options.threatThresholds || { start: 50, max: 80 };
-    
-    // Below start threshold, no restriction (factor = 1.0)
-    if (threatLevel < thresholds.start) return 1.0;
-    
-    // At or above max threshold, maximum restriction
-    if (threatLevel >= thresholds.max) return this.options.maxRestrictionFactor || 5.0;
-    
-    // Linear scaling between start and max thresholds
-    const range = thresholds.max - thresholds.start;
-    const position = (threatLevel - thresholds.start) / range;
-    const maxAdditional = (this.options.maxRestrictionFactor || 5.0) - 1.0;
-    
-    return 1.0 + (position * maxAdditional);
-  }
-  
-  /**
-   * Get current system load (0-1)
+   * Get the current system load
+   * 
+   * @returns A value between 0 and 1 representing system load
    */
   private getCurrentSystemLoad(): number {
-    if (systemMonitor && systemMonitor.getCurrentLoad) {
-      return systemMonitor.getCurrentLoad() || 0;
+    // Check if we have real metrics from the system monitor
+    if (global.systemMetrics && typeof global.systemMetrics.cpuUsage === 'number') {
+      return global.systemMetrics.cpuUsage / 100;
     }
-    return 0;
-  }
-  
-  /**
-   * Get current memory usage (0-1)
-   */
-  private getCurrentMemoryUsage(): number {
-    if (systemMonitor && systemMonitor.getMemoryUsage) {
-      return systemMonitor.getMemoryUsage() || 0;
-    }
-    return 0;
-  }
-  
-  /**
-   * Get current threat level (0-100)
-   */
-  private getCurrentThreatLevel(): number {
-    if (securityFabric && securityFabric.getCurrentThreatLevel) {
-      return securityFabric.getCurrentThreatLevel() || 0;
-    }
-    return 0;
-  }
-  
-  /**
-   * Reset all limiters to their base configurations
-   */
-  public resetToBaseConfigs(): void {
-    Object.entries(this.baseConfigs).forEach(([key, config]) => {
-      const limiter = this.limiters[key];
-      if (limiter) {
-        limiter.updateConfig(config);
-      }
-    });
     
-    if (this.options.verbose) {
-      console.log('[AdaptiveRateLimiter] Reset all limiters to base configurations');
-    }
+    // Fallback to random value for this example
+    // In a real system, this would be replaced with actual system metrics
+    return Math.random() * 0.7;
   }
   
   /**
-   * Get current adjustment metrics
+   * Get the current global threat level
+   * 
+   * @returns A value between 0 and 1 representing threat level
    */
-  public getAdjustmentMetrics(): Record<string, any> {
-    const systemLoad = this.getCurrentSystemLoad();
-    const memoryUsage = this.getCurrentMemoryUsage();
-    const currentThreatLevel = this.getCurrentThreatLevel();
+  private getGlobalThreatLevel(): number {
+    // Check if we have threat metrics
+    if (global.securityMetrics && typeof global.securityMetrics.threatLevel === 'number') {
+      return global.securityMetrics.threatLevel / 100;
+    }
     
+    // Get from threat detection service if available
+    const threatDetectionService = global.threatDetectionService;
+    if (threatDetectionService && typeof threatDetectionService.getGlobalThreatLevel === 'function') {
+      return threatDetectionService.getGlobalThreatLevel();
+    }
+    
+    // Fallback to analytics-based estimation
+    const suspiciousRequests = this.config.analytics.getSuspiciousRequestRate();
+    return Math.min(1.0, suspiciousRequests * 5);
+  }
+  
+  /**
+   * Get the current global error rate
+   * 
+   * @returns A value between 0 and 1 representing error rate
+   */
+  private getGlobalErrorRate(): number {
+    // Check if we have error metrics
+    if (global.applicationMetrics && typeof global.applicationMetrics.errorRate === 'number') {
+      return global.applicationMetrics.errorRate;
+    }
+    
+    // Use analytics data
+    return this.config.analytics.getGlobalErrorRate();
+  }
+  
+  /**
+   * Get the current adjustment metrics
+   * 
+   * @returns An object with all the current metrics and adjustments
+   */
+  public getAdjustmentMetrics() {
     return {
-      lastAdjustment: this.lastAdjustment,
-      systemLoad,
-      memoryUsage,
-      threatLevel: currentThreatLevel,
-      loadFactor: this.calculateLoadFactor(systemLoad),
-      memoryFactor: this.calculateMemoryFactor(memoryUsage),
-      threatFactor: this.calculateThreatFactor(currentThreatLevel),
-      adjustments: Object.entries(this.limiters).map(([key, limiter]) => ({
-        limiter: key,
-        baseRate: this.baseConfigs[key]?.tokensPerInterval || 0,
-        currentRate: limiter.getConfig().tokensPerInterval,
-        restrictionFactor: (this.baseConfigs[key]?.tokensPerInterval || 0) / limiter.getConfig().tokensPerInterval
-      }))
+      systemLoadFactor: this.systemLoadFactor,
+      threatFactor: this.threatFactor,
+      errorRateFactor: this.errorRateFactor,
+      lastAdjustmentTime: this.lastAdjustmentTime,
+      resourceTypeAdjustments: Object.fromEntries(this.currentAdjustments),
+      effectiveMultipliers: {
+        normal: this.systemLoadFactor * this.threatFactor * this.errorRateFactor,
+        auth: this.getAdaptiveMultiplier({ resourceType: 'auth' } as RateLimitContext),
+        admin: this.getAdaptiveMultiplier({ resourceType: 'admin' } as RateLimitContext),
+        security: this.getAdaptiveMultiplier({ resourceType: 'security' } as RateLimitContext),
+        api: this.getAdaptiveMultiplier({ resourceType: 'api' } as RateLimitContext),
+        public: this.getAdaptiveMultiplier({ resourceType: 'public' } as RateLimitContext)
+      }
     };
   }
   
   /**
-   * Dispose of resources
+   * Force an immediate recalculation of all factors
    */
-  public dispose(): void {
-    this.stopPeriodicAdjustments();
+  public forceRecalculation(): void {
+    this.updateSystemLoadFactor();
+    this.updateThreatFactor();
+    this.updateErrorRateFactor();
+    this.updateResourceTypeAdjustments();
+    this.lastAdjustmentTime = Date.now();
   }
 }

@@ -39,6 +39,9 @@ export function initializeEnhancedSecurity(): void {
     // Initialize log review system (with 12-hour review interval)
     initializeLogReviewer(12);
     
+    // Initialize rate limiting system
+    initializeRateLimiting();
+    
     // Setup default scheduled scans
     setupDefaultScheduledScans();
     

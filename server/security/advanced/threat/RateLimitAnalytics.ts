@@ -1,275 +1,428 @@
 /**
  * Rate Limit Analytics
- * 
- * Provides tools for analyzing rate limit data, including:
- * - Tracking rate limit violations
- * - Identifying potential attackers
- * - Generating reports on rate limiting effectiveness
- * - Providing insights to security monitoring systems
+ *
+ * This class tracks and analyzes rate limit violations to provide insights
+ * for the adaptive rate limiter and security monitoring.
  */
 
-import { TokenBucketRateLimiter } from './TokenBucketRateLimiter';
+import { RateLimitContext } from './RateLimitContextBuilder';
+import { recordAuditEvent } from '../../secureAuditTrail';
 
+// Define violation data structure
 export interface RateLimitViolation {
-  key: string;
-  timestamp: number;
-  count: number;
-  firstViolation: number;
-  lastViolation: number;
-  paths: string[];
-  ipAddress?: string;
-  userId?: string;
-  userAgent?: string;
+  timestamp: string;
+  ip: string;
+  identifier: string;
+  endpoint: string;
+  method: string;
+  tier: string;
+  cost: number;
+  context: RateLimitContext;
+  adaptiveMultiplier?: number;
 }
 
-export interface RateLimitReport {
-  period: {
-    start: number;
-    end: number;
-  };
-  summary: {
-    totalViolations: number;
-    uniqueIps: number;
-    uniqueUsers: number;
-    topPaths: Array<{ path: string; count: number }>;
-    potentialAttacks: number;
-  };
-  violations: RateLimitViolation[];
+// Define suspicious user
+export interface SuspiciousUser {
+  userId: string | number;
+  violationCount: number;
+  lastViolation: string;
+  violationRate: number;
 }
 
 export class RateLimitAnalytics {
-  private violationHistory: RateLimitViolation[] = [];
-  private maxHistorySize: number;
-  private limiters: Record<string, TokenBucketRateLimiter>;
+  private violations: RateLimitViolation[] = [];
+  private violationHistory: Map<string, number[]> = new Map();
+  private requestCounts: Map<string, number> = new Map();
+  private errorCounts: Map<string, number> = new Map();
+  private lastAuditTime: number = Date.now();
+  private auditInterval: number = 300000; // 5 minutes
+  private maxViolationsStored: number = 1000;
+  private violationThreshold: number = 10;
   
-  constructor(
-    limiters: Record<string, TokenBucketRateLimiter>,
-    maxHistorySize: number = 1000
-  ) {
-    this.limiters = limiters;
-    this.maxHistorySize = maxHistorySize;
+  constructor() {
+    // Set up periodic violation storage
+    setInterval(() => {
+      this.storeViolations();
+    }, this.auditInterval);
   }
   
   /**
-   * Collect rate limit violations from all limiters
+   * Record a rate limit violation
+   * 
+   * @param violation The violation details
    */
-  public collectViolations(): void {
-    const now = Date.now();
+  public recordViolation(violation: RateLimitViolation): void {
+    // Add to in-memory store
+    this.violations.push(violation);
     
-    Object.entries(this.limiters).forEach(([limiterName, limiter]) => {
-      const violations = limiter.getViolationStats();
-      
-      Object.entries(violations).forEach(([key, data]) => {
-        // Extract IP and user ID from key if possible
-        let ipAddress: string | undefined;
-        let userId: string | undefined;
-        
-        if (key.startsWith('ip:')) {
-          const parts = key.split(':');
-          if (parts.length >= 2) {
-            ipAddress = parts[1];
-          }
-        } else if (key.startsWith('user:')) {
-          const parts = key.split(':');
-          if (parts.length >= 2) {
-            userId = parts[1];
-          }
-        }
-        
-        // Create violation record
-        const violation: RateLimitViolation = {
-          key,
-          timestamp: now,
-          count: data.count,
-          firstViolation: data.firstViolation,
-          lastViolation: data.lastViolation,
-          paths: data.paths,
-          ipAddress,
-          userId
-        };
-        
-        // Add to history
-        this.violationHistory.push(violation);
-      });
-      
-      // Reset violation stats to avoid duplicates in future collections
-      limiter.resetViolationStats();
-    });
+    // Ensure we don't exceed the maximum number of violations to store
+    if (this.violations.length > this.maxViolationsStored) {
+      this.violations.shift();
+    }
     
-    // Trim history if needed
-    if (this.violationHistory.length > this.maxHistorySize) {
-      this.violationHistory = this.violationHistory.slice(-this.maxHistorySize);
+    // Track violation count by identifier
+    const identifier = violation.identifier;
+    const pastHour = Date.now() - 3600000;
+    
+    // Initialize if new
+    if (!this.violationHistory.has(identifier)) {
+      this.violationHistory.set(identifier, []);
+    }
+    
+    // Record this violation timestamp
+    const timestamps = this.violationHistory.get(identifier) || [];
+    timestamps.push(Date.now());
+    
+    // Remove timestamps older than 1 hour
+    const recentTimestamps = timestamps.filter(time => time > pastHour);
+    this.violationHistory.set(identifier, recentTimestamps);
+    
+    // Check for suspicious activity that should trigger an immediate alert
+    if (recentTimestamps.length >= this.violationThreshold) {
+      this.alertSuspiciousActivity(violation, recentTimestamps.length);
     }
   }
   
   /**
-   * Generate a report for a specific time period
-   * 
-   * @param startTime Start timestamp (defaults to 1 hour ago)
-   * @param endTime End timestamp (defaults to now)
+   * Store violations for long-term analysis and reporting
    */
-  public generateReport(startTime?: number, endTime?: number): RateLimitReport {
-    const end = endTime || Date.now();
-    const start = startTime || (end - 60 * 60 * 1000); // Default to 1 hour
+  public storeViolations(): void {
+    const now = Date.now();
     
-    // Filter violations by time period
-    const violations = this.violationHistory.filter(
-      v => v.timestamp >= start && v.timestamp <= end
-    );
+    // Skip if we don't have any new violations or if it's too soon
+    if (this.violations.length === 0 || now - this.lastAuditTime < this.auditInterval) {
+      return;
+    }
     
-    // Extract unique IPs and users
-    const uniqueIps = new Set<string>();
-    const uniqueUsers = new Set<string>();
-    const pathCounts: Record<string, number> = {};
-    
-    violations.forEach(v => {
-      if (v.ipAddress) uniqueIps.add(v.ipAddress);
-      if (v.userId) uniqueUsers.add(v.userId);
+    try {
+      // Group violations by type for summary
+      const violationsByType: Record<string, number> = {};
+      const violationsByIp: Record<string, number> = {};
+      const violationsByEndpoint: Record<string, number> = {};
       
-      // Count paths
-      v.paths.forEach(path => {
-        pathCounts[path] = (pathCounts[path] || 0) + 1;
+      this.violations.forEach(violation => {
+        // Count by resource type
+        const type = violation.context.resourceType;
+        violationsByType[type] = (violationsByType[type] || 0) + 1;
+        
+        // Count by IP
+        violationsByIp[violation.ip] = (violationsByIp[violation.ip] || 0) + 1;
+        
+        // Count by endpoint
+        violationsByEndpoint[violation.endpoint] = (violationsByEndpoint[violation.endpoint] || 0) + 1;
       });
+      
+      // Get the top offenders
+      const topIps = Object.entries(violationsByIp)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([ip, count]) => ({ ip, count }));
+        
+      const topEndpoints = Object.entries(violationsByEndpoint)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([endpoint, count]) => ({ endpoint, count }));
+      
+      // Create a summary for the audit log
+      const summary = {
+        timestamp: new Date().toISOString(),
+        totalViolations: this.violations.length,
+        violationsByType,
+        topIps,
+        topEndpoints,
+        periodMinutes: Math.round((now - this.lastAuditTime) / 60000)
+      };
+      
+      // Record in the security audit trail
+      recordAuditEvent({
+        timestamp: new Date().toISOString(),
+        action: 'RATE_LIMIT_SUMMARY',
+        resource: 'rate-limiting',
+        result: 'info',
+        severity: this.violations.length > 100 ? 'warning' : 'info',
+        details: summary
+      });
+      
+      // Store detailed violation data for later analysis if needed
+      // This could write to a database or file for long-term storage
+      
+      // Clear the in-memory violations after storage
+      this.violations = [];
+      this.lastAuditTime = now;
+    } catch (error) {
+      console.error('[RateLimit] Error storing rate limit violations:', error);
+    }
+  }
+  
+  /**
+   * Track a successful request (non-rate-limited)
+   * 
+   * @param resourceType The type of resource being accessed
+   */
+  public trackRequest(resourceType: string): void {
+    this.requestCounts.set(
+      resourceType,
+      (this.requestCounts.get(resourceType) || 0) + 1
+    );
+  }
+  
+  /**
+   * Track an error response
+   * 
+   * @param resourceType The type of resource that returned an error
+   */
+  public trackError(resourceType: string): void {
+    this.errorCounts.set(
+      resourceType,
+      (this.errorCounts.get(resourceType) || 0) + 1
+    );
+  }
+  
+  /**
+   * Get violation data for resource types
+   * 
+   * @returns Violation statistics by resource type
+   */
+  public getResourceTypeViolations() {
+    const violationsByType: Record<string, number> = {};
+    const requestsByType: Record<string, number> = {};
+    const violationRatesByType: Record<string, number> = {};
+    
+    // Convert maps to records for easier access
+    for (const [type, count] of this.requestCounts.entries()) {
+      requestsByType[type] = count;
+    }
+    
+    // Count violations by resource type
+    this.violations.forEach(violation => {
+      const type = violation.context.resourceType;
+      violationsByType[type] = (violationsByType[type] || 0) + 1;
     });
     
-    // Sort paths by count
-    const topPaths = Object.entries(pathCounts)
-      .map(([path, count]) => ({ path, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
-    
-    // Identify potential attacks (high violation counts or rapid succession)
-    const potentialAttacks = violations.filter(v => {
-      // More than 20 violations
-      if (v.count > 20) return true;
+    // Calculate violation rates
+    for (const type in violationsByType) {
+      const requests = requestsByType[type] || 0;
+      const violations = violationsByType[type] || 0;
       
-      // More than 10 violations in less than 1 minute
-      if (v.count > 10 && (v.lastViolation - v.firstViolation) < 60000) return true;
-      
-      return false;
-    }).length;
+      // Calculate rate, avoiding division by zero
+      violationRatesByType[type] = requests > 0 ? violations / requests : 0;
+    }
     
     return {
-      period: { start, end },
-      summary: {
-        totalViolations: violations.length,
-        uniqueIps: uniqueIps.size,
-        uniqueUsers: uniqueUsers.size,
-        topPaths,
-        potentialAttacks
-      },
-      violations
+      violationsByType,
+      requestsByType,
+      violationRatesByType
     };
   }
   
   /**
-   * Get all violation data
+   * Get a list of suspicious users based on violation patterns
+   * 
+   * @returns Array of suspicious users
    */
-  public getAllViolations(): RateLimitViolation[] {
-    return [...this.violationHistory];
-  }
-  
-  /**
-   * Get violations for a specific IP
-   */
-  public getViolationsForIp(ip: string): RateLimitViolation[] {
-    return this.violationHistory.filter(v => v.ipAddress === ip);
-  }
-  
-  /**
-   * Get violations for a specific user
-   */
-  public getViolationsForUser(userId: string): RateLimitViolation[] {
-    return this.violationHistory.filter(v => v.userId === userId);
-  }
-  
-  /**
-   * Get violations for a specific path
-   */
-  public getViolationsForPath(path: string): RateLimitViolation[] {
-    return this.violationHistory.filter(v => v.paths.includes(path));
-  }
-  
-  /**
-   * Clear violation history
-   */
-  public clearHistory(): void {
-    this.violationHistory = [];
-  }
-  
-  /**
-   * Identify potential attackers based on violation patterns
-   */
-  public identifyPotentialAttackers(): Array<{
-    ipOrUser: string;
-    violationCount: number;
-    distinctPaths: number;
-    lastViolation: number;
-    threatScore: number;
-  }> {
-    // Group by IP or user ID
-    const groupedByActor: Record<string, {
-      violationCount: number;
-      paths: Set<string>;
-      lastViolation: number;
-      violations: RateLimitViolation[];
-    }> = {};
+  public getSuspiciousUsers(): SuspiciousUser[] {
+    const result: SuspiciousUser[] = [];
+    const pastHour = Date.now() - 3600000;
     
-    this.violationHistory.forEach(v => {
-      const actorId = v.userId || v.ipAddress || v.key;
-      
-      if (!groupedByActor[actorId]) {
-        groupedByActor[actorId] = {
-          violationCount: 0,
-          paths: new Set<string>(),
-          lastViolation: 0,
-          violations: []
-        };
+    // Group violations by user ID
+    const userViolations: Record<string, RateLimitViolation[]> = {};
+    
+    this.violations.forEach(violation => {
+      if (violation.context.userId) {
+        const userId = String(violation.context.userId);
+        userViolations[userId] = userViolations[userId] || [];
+        userViolations[userId].push(violation);
       }
-      
-      const actor = groupedByActor[actorId];
-      
-      // Update stats
-      actor.violationCount += v.count;
-      v.paths.forEach(p => actor.paths.add(p));
-      actor.lastViolation = Math.max(actor.lastViolation, v.lastViolation);
-      actor.violations.push(v);
     });
     
-    // Calculate threat score and filter significant threats
-    return Object.entries(groupedByActor)
-      .map(([ipOrUser, data]) => {
-        // Calculate threat score (0-100)
-        let threatScore = 0;
+    // Check the violation history map for high-frequency offenders
+    for (const [identifier, timestamps] of this.violationHistory.entries()) {
+      // Only check user identifiers
+      if (!identifier.startsWith('user:')) continue;
+      
+      // Get the user ID from the identifier
+      const userId = identifier.split(':')[1];
+      
+      // Get recent violation count
+      const recentTimestamps = timestamps.filter(time => time > pastHour);
+      
+      // If this user has enough recent violations, mark as suspicious
+      if (recentTimestamps.length >= this.violationThreshold) {
+        // Find the most recent violation
+        const mostRecent = Math.max(...recentTimestamps);
         
-        // Factor 1: Number of violations (max 50 points)
-        threatScore += Math.min(data.violationCount / 2, 50);
-        
-        // Factor 2: Distinct paths (max 30 points)
-        // More distinct paths suggests scanning or broader attacks
-        threatScore += Math.min(data.paths.size * 3, 30);
-        
-        // Factor 3: Recency (max 20 points)
-        // More recent violations are more concerning
-        const now = Date.now();
-        const hoursSinceLastViolation = (now - data.lastViolation) / (60 * 60 * 1000);
-        if (hoursSinceLastViolation < 1) {
-          threatScore += 20; // Within the last hour
-        } else if (hoursSinceLastViolation < 24) {
-          threatScore += 10; // Within the last day
-        } else if (hoursSinceLastViolation < 168) {
-          threatScore += 5;  // Within the last week
+        result.push({
+          userId,
+          violationCount: recentTimestamps.length,
+          lastViolation: new Date(mostRecent).toISOString(),
+          violationRate: recentTimestamps.length / 60 // Per minute
+        });
+      }
+    }
+    
+    return result;
+  }
+  
+  /**
+   * Get the global rate of suspicious requests
+   * 
+   * @returns A ratio of suspicious to total requests
+   */
+  public getSuspiciousRequestRate(): number {
+    // Calculate total requests across all types
+    let totalRequests = 0;
+    for (const count of this.requestCounts.values()) {
+      totalRequests += count;
+    }
+    
+    // Calculate suspicious requests (those with high violation rates)
+    const suspiciousUsers = this.getSuspiciousUsers();
+    const suspiciousViolations = suspiciousUsers.reduce(
+      (sum, user) => sum + user.violationCount,
+      0
+    );
+    
+    // Calculate rate, avoiding division by zero
+    return totalRequests > 0 ? suspiciousViolations / totalRequests : 0;
+  }
+  
+  /**
+   * Get the global error rate
+   * 
+   * @returns A ratio of errors to total requests
+   */
+  public getGlobalErrorRate(): number {
+    // Calculate total requests across all types
+    let totalRequests = 0;
+    for (const count of this.requestCounts.values()) {
+      totalRequests += count;
+    }
+    
+    // Calculate total errors across all types
+    let totalErrors = 0;
+    for (const count of this.errorCounts.values()) {
+      totalErrors += count;
+    }
+    
+    // Calculate rate, avoiding division by zero
+    return totalRequests > 0 ? totalErrors / totalRequests : 0;
+  }
+  
+  /**
+   * Get the number of violations for a specific identifier
+   * 
+   * @param identifier The identifier to check
+   * @returns The number of recent violations
+   */
+  public getViolationCount(identifier: string): number {
+    const timestamps = this.violationHistory.get(identifier) || [];
+    const pastHour = Date.now() - 3600000;
+    return timestamps.filter(time => time > pastHour).length;
+  }
+  
+  /**
+   * Alert about suspicious activity
+   * 
+   * @param violation The latest violation
+   * @param count The number of recent violations
+   */
+  private alertSuspiciousActivity(violation: RateLimitViolation, count: number): void {
+    try {
+      // Record in the security audit trail
+      recordAuditEvent({
+        timestamp: new Date().toISOString(),
+        action: 'RATE_LIMIT_ALERT',
+        resource: 'rate-limiting',
+        result: 'alert',
+        severity: count > 20 ? 'warning' : 'info',
+        details: {
+          identifier: violation.identifier,
+          ip: violation.ip,
+          endpoint: violation.endpoint,
+          method: violation.method,
+          violationCount: count,
+          tier: violation.tier,
+          resourceType: violation.context.resourceType
         }
-        
-        return {
-          ipOrUser,
-          violationCount: data.violationCount,
-          distinctPaths: data.paths.size,
-          lastViolation: data.lastViolation,
-          threatScore
-        };
-      })
-      .filter(actor => actor.threatScore > 20) // Only include significant threats
-      .sort((a, b) => b.threatScore - a.threatScore);
+      });
+    } catch (error) {
+      console.error('[RateLimit] Error recording rate limit alert:', error);
+    }
+  }
+  
+  /**
+   * Generate a comprehensive report on rate limiting activity
+   * 
+   * @returns A detailed report of rate limiting activity
+   */
+  public generateReport() {
+    const now = Date.now();
+    const pastHour = now - 3600000;
+    const pastDay = now - 86400000;
+    
+    // Calculate recent violations
+    const recentViolations = this.violations.filter(
+      v => new Date(v.timestamp).getTime() > pastHour
+    );
+    
+    // Get suspicious users
+    const suspiciousUsers = this.getSuspiciousUsers();
+    
+    // Get resource type info
+    const resourceTypeData = this.getResourceTypeViolations();
+    
+    // Calculate violation trends by counting from the violation history
+    const violationTrends: Record<string, number[]> = {
+      '10min': Array(6).fill(0),
+      '1hour': Array(6).fill(0),
+      '24hour': Array(24).fill(0)
+    };
+    
+    // Aggregate all timestamps for trend analysis
+    const allTimestamps: number[] = [];
+    for (const timestamps of this.violationHistory.values()) {
+      allTimestamps.push(...timestamps);
+    }
+    
+    // Calculate trends
+    allTimestamps.forEach(timestamp => {
+      // For 10-minute intervals (last hour)
+      if (timestamp > pastHour) {
+        const minutesAgo = Math.floor((now - timestamp) / (10 * 60000));
+        if (minutesAgo < 6) {
+          violationTrends['10min'][minutesAgo]++;
+        }
+      }
+      
+      // For 10-minute intervals (last hour)
+      if (timestamp > pastHour) {
+        const minutesAgo = Math.floor((now - timestamp) / (10 * 60000));
+        if (minutesAgo < 6) {
+          violationTrends['1hour'][minutesAgo]++;
+        }
+      }
+      
+      // For 1-hour intervals (last day)
+      if (timestamp > pastDay) {
+        const hoursAgo = Math.floor((now - timestamp) / 3600000);
+        if (hoursAgo < 24) {
+          violationTrends['24hour'][hoursAgo]++;
+        }
+      }
+    });
+    
+    return {
+      summary: {
+        totalViolations: this.violations.length,
+        recentViolations: recentViolations.length,
+        suspiciousUsers: suspiciousUsers.length,
+        globalErrorRate: this.getGlobalErrorRate(),
+        suspiciousRequestRate: this.getSuspiciousRequestRate()
+      },
+      resourceTypes: resourceTypeData,
+      suspiciousUsers: suspiciousUsers.slice(0, 10), // Top 10 only
+      trends: violationTrends,
+      timestamp: new Date().toISOString()
+    };
   }
 }

@@ -1,144 +1,251 @@
 /**
- * Advanced Rate Limiting System
- * 
- * Central integration module for the context-aware rate limiting system.
- * This module initializes all components and exports the unified system.
+ * Rate Limiting System
+ *
+ * This module combines all components of the rate limiting system and exports
+ * configured instances and middlewares for use throughout the application.
  */
 
-import { TokenBucketRateLimiter } from './TokenBucketRateLimiter';
-import { AdaptiveRateLimiter } from './AdaptiveRateLimiter';
+import { Request, Response, NextFunction } from 'express';
+import { TokenBucketRateLimiter, RateLimitConfig } from './TokenBucketRateLimiter';
+import { RateLimitContextBuilder } from './RateLimitContextBuilder';
 import { RateLimitAnalytics } from './RateLimitAnalytics';
-import { createUnifiedRateLimit } from '../../../middleware/unifiedRateLimit';
+import { AdaptiveRateLimiter } from './AdaptiveRateLimiter';
+import { threatDetectionService } from './ThreatDetectionService';
+import { log } from '../../../utils/logger';
 
-// Initialize all rate limiters
-const rateLimiters = {
-  // Global limiter - applies to all requests
+// Create the rate limit analytics instance
+export const rateLimitAnalytics = new RateLimitAnalytics();
+
+// Create the adaptive rate limiter
+export const adaptiveRateLimiter = new AdaptiveRateLimiter({
+  minBurstMultiplier: 0.5,
+  maxBurstMultiplier: 3.0,
+  systemLoadThreshold: 0.75,
+  threatLevelImpact: 0.5,
+  errorRateThreshold: 0.1,
+  adjustmentInterval: 60000, // 1 minute
+  analytics: rateLimitAnalytics
+});
+
+// Define the context builder
+export const contextBuilder = new RateLimitContextBuilder();
+
+// Create different rate limiters for different tiers of access
+export const rateLimiters = {
+  // Global rate limiter (applies to all requests)
   global: new TokenBucketRateLimiter({
-    tokensPerInterval: 1000, // 1000 requests per minute globally
-    interval: 60 * 1000,     // 1 minute
-    burstCapacity: 2000      // Allow bursts up to 2000 requests
+    capacity: 100,       // 100 requests
+    refillRate: 30,      // 30 tokens refilled
+    refillInterval: 10000, // every 10 seconds
+    contextAware: true,
+    analytics: rateLimitAnalytics
   }),
   
-  // Auth endpoints - login, register, password reset
+  // Authentication rate limiter
   auth: new TokenBucketRateLimiter({
-    tokensPerInterval: 10,   // 10 requests per minute for auth
-    interval: 60 * 1000,     // 1 minute
-    burstCapacity: 20,       // Allow bursts up to 20 requests
-    errorHandler: (context) => {
-      console.warn(`[RateLimit] Auth rate limit exceeded for ${context.ip} on ${context.path}`);
-    }
+    capacity: 20,        // 20 requests
+    refillRate: 5,       // 5 tokens refilled
+    refillInterval: 60000, // every 60 seconds
+    contextAware: true,
+    analytics: rateLimitAnalytics
   }),
   
-  // Admin endpoints
+  // Admin rate limiter
   admin: new TokenBucketRateLimiter({
-    tokensPerInterval: 100,  // 100 requests per minute for admin
-    interval: 60 * 1000,     // 1 minute
-    burstCapacity: 200       // Allow bursts up to 200 requests
+    capacity: 50,        // 50 requests
+    refillRate: 10,      // 10 tokens refilled
+    refillInterval: 10000, // every 10 seconds
+    contextAware: true,
+    analytics: rateLimitAnalytics
   }),
   
-  // Security operations
+  // Security operations rate limiter
   security: new TokenBucketRateLimiter({
-    tokensPerInterval: 60,   // 60 requests per minute for security
-    interval: 60 * 1000,     // 1 minute
-    burstCapacity: 120       // Allow bursts up to 120 requests
+    capacity: 30,        // 30 requests
+    refillRate: 10,      // 10 tokens refilled
+    refillInterval: 30000, // every 30 seconds
+    contextAware: true,
+    analytics: rateLimitAnalytics
   }),
   
-  // Standard API endpoints
+  // API rate limiter
   api: new TokenBucketRateLimiter({
-    tokensPerInterval: 300,  // 300 requests per minute for API
-    interval: 60 * 1000,     // 1 minute
-    burstCapacity: 500,      // Allow bursts up to 500 requests
-    costCalculator: (context) => {
-      // Higher cost for write operations
-      return context.method === 'GET' ? 1 : 2;
-    }
+    capacity: 60,        // 60 requests
+    refillRate: 15,      // 15 tokens refilled
+    refillInterval: 15000, // every 15 seconds
+    contextAware: true,
+    analytics: rateLimitAnalytics
   }),
   
-  // Public endpoints
+  // Public routes rate limiter
   public: new TokenBucketRateLimiter({
-    tokensPerInterval: 500,  // 500 requests per minute for public
-    interval: 60 * 1000,     // 1 minute
-    burstCapacity: 1000      // Allow bursts up to 1000 requests
+    capacity: 120,       // 120 requests
+    refillRate: 40,      // 40 tokens refilled
+    refillInterval: 10000, // every 10 seconds
+    contextAware: true,
+    analytics: rateLimitAnalytics
   })
 };
 
-// Initialize the adaptive rate limiter
-const adaptiveRateLimiter = new AdaptiveRateLimiter(rateLimiters, {
-  adjustmentInterval: 30 * 1000, // Adjust every 30 seconds
-  maxRestrictionFactor: 5.0,     // Maximum 5x restriction (down to 20% of normal)
-  minimumTokensPercent: 0.1,     // Never go below 10% of normal limits
-  loadThresholds: { start: 0.7, max: 0.9 },
-  memoryThresholds: { start: 0.8, max: 0.95 },
-  threatThresholds: { start: 50, max: 80 },
-  verbose: false
-});
+// Define a type for the different tiers
+export type RateLimitTier = keyof typeof rateLimiters;
 
-// Initialize analytics
-const rateLimitAnalytics = new RateLimitAnalytics(rateLimiters);
+// Options for the unified rate limit middleware
+export interface UnifiedRateLimitOptions {
+  tier?: RateLimitTier;
+  statusCode?: number;
+  message?: string;
+  skipSuccessfulRequests?: boolean;
+  headers?: boolean;
+}
 
-// Schedule periodic collection of violations
-const ANALYTICS_COLLECTION_INTERVAL = 5 * 60 * 1000; // 5 minutes
-setInterval(() => {
-  try {
-    rateLimitAnalytics.collectViolations();
-    
-    // Check for potential attackers
-    const potentialAttackers = rateLimitAnalytics.identifyPotentialAttackers();
-    if (potentialAttackers.length > 0) {
-      console.warn(`[RateLimit] Identified ${potentialAttackers.length} potential attackers`);
+/**
+ * Create a unified rate limit middleware
+ * 
+ * @param options Options for the rate limiter
+ * @returns Express middleware function
+ */
+export function createUnifiedRateLimit(options: UnifiedRateLimitOptions = {}) {
+  // Default options
+  const {
+    tier = 'api',
+    statusCode = 429,
+    message = 'Too many requests, please try again later.',
+    skipSuccessfulRequests = false,
+    headers = true
+  } = options;
+  
+  // Get the appropriate rate limiter
+  const limiter = rateLimiters[tier];
+  
+  // Return the middleware function
+  return function unifiedRateLimit(req: Request, res: Response, next: NextFunction) {
+    try {
+      // Skip certain requests
+      if (req.method === 'OPTIONS') {
+        return next();
+      }
       
-      // Log the top 3 potential attackers
-      potentialAttackers.slice(0, 3).forEach(attacker => {
-        console.warn(`[RateLimit] Potential attacker: ${attacker.ipOrUser}, violations: ${attacker.violationCount}, threat score: ${attacker.threatScore}`);
-      });
+      // Build context from the request for context-aware limiting
+      const context = contextBuilder.buildContext(req);
+      
+      // Calculate the request cost based on the context
+      const cost = contextBuilder.calculateRequestCost(req, context);
+      
+      // Get adaptive multiplier based on system conditions
+      const adaptiveMultiplier = adaptiveRateLimiter.getAdaptiveMultiplier(context);
+      
+      // Try to consume tokens from the bucket
+      const result = limiter.consume(
+        context.identifier,
+        cost,
+        context,
+        adaptiveMultiplier
+      );
+      
+      // Set rate limit headers if enabled
+      if (headers) {
+        res.setHeader('X-RateLimit-Limit', limiter.getCapacity(context.identifier).toString());
+        res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
+        res.setHeader('X-RateLimit-Reset', Math.ceil(result.resetTime / 1000).toString());
+        
+        if (result.limited) {
+          res.setHeader('Retry-After', Math.ceil(result.retryAfter / 1000).toString());
+        }
+      }
+      
+      if (result.limited) {
+        // Rate limited - record the violation
+        rateLimitAnalytics.recordViolation({
+          timestamp: new Date().toISOString(),
+          ip: context.ip,
+          identifier: context.identifier,
+          endpoint: req.path,
+          method: req.method,
+          tier,
+          cost,
+          context,
+          adaptiveMultiplier
+        });
+        
+        // Update threat detection service
+        threatDetectionService.recordViolation(context.identifier);
+        
+        // Send the rate limit response
+        log(`Rate limited: ${context.identifier} (${req.method} ${req.path})`, 'security');
+        
+        return res.status(statusCode).json({
+          success: false,
+          message,
+          retryAfter: Math.ceil(result.retryAfter / 1000)
+        });
+      }
+      
+      // Track successful request
+      rateLimitAnalytics.trackRequest(context.resourceType);
+      
+      // Continue with the request
+      return next();
+    } catch (error) {
+      // Log the error
+      log(`Rate limit error: ${error}`, 'security');
+      
+      // Continue with the request on error (fail open)
+      return next();
     }
+  };
+}
+
+// Create middleware instances for different tiers
+export const globalRateLimit = createUnifiedRateLimit({ tier: 'global' });
+export const authRateLimit = createUnifiedRateLimit({ tier: 'auth' });
+export const adminRateLimit = createUnifiedRateLimit({ tier: 'admin' });
+export const securityRateLimit = createUnifiedRateLimit({ tier: 'security' });
+export const apiRateLimit = createUnifiedRateLimit({ tier: 'api' });
+export const publicRateLimit = createUnifiedRateLimit({ tier: 'public' });
+
+/**
+ * Generate a comprehensive report on rate limiting activity
+ * 
+ * @returns A detailed report
+ */
+export function generateRateLimitReport() {
+  try {
+    // Get analytics report
+    const analyticsReport = rateLimitAnalytics.generateReport();
+    
+    // Get limiter statistics
+    const limiterStats = {} as Record<string, any>;
+    
+    for (const [tier, limiter] of Object.entries(rateLimiters)) {
+      limiterStats[tier] = limiter.getStats();
+    }
+    
+    // Get adaptive rate limiting metrics
+    const adaptiveMetrics = adaptiveRateLimiter.getAdjustmentMetrics();
+    
+    // Build the comprehensive report
+    return {
+      timestamp: new Date().toISOString(),
+      analytics: analyticsReport,
+      limiters: limiterStats,
+      adaptive: adaptiveMetrics
+    };
   } catch (error) {
-    console.error('[RateLimit] Error collecting analytics:', error);
+    log(`Error generating rate limit report: ${error}`, 'security');
+    
+    return {
+      timestamp: new Date().toISOString(),
+      error: 'Failed to generate report'
+    };
   }
-}, ANALYTICS_COLLECTION_INTERVAL);
-
-// Export a function to manually collect violations (e.g., for shutdown)
-export function collectRateLimitViolations(): void {
-  rateLimitAnalytics.collectViolations();
 }
 
-// Export the middleware factory functions
-export { createUnifiedRateLimit } from '../../../middleware/unifiedRateLimit';
-
-// Export pre-configured middleware for common scenarios
-export const {
-  authRateLimit,
-  adminRateLimit,
-  securityRateLimit,
-  apiRateLimit,
-  publicRateLimit
-} = require('../../../middleware/unifiedRateLimit');
-
-// Export the rate limiters for direct access
-export { rateLimiters, adaptiveRateLimiter, rateLimitAnalytics };
-
-// Export a function to generate a report
-export function generateRateLimitReport(startTime?: number, endTime?: number) {
-  return rateLimitAnalytics.generateReport(startTime, endTime);
-}
-
-// Export a function to get the current adaptive adjustment metrics
+/**
+ * Get the adaptive adjustment metrics
+ * 
+ * @returns Current adaptive metrics
+ */
 export function getAdaptiveAdjustmentMetrics() {
   return adaptiveRateLimiter.getAdjustmentMetrics();
-}
-
-// Initialize immediately and log
-console.log('[RateLimit] Advanced Rate Limiting System initialized');
-console.log('[RateLimit] Middleware and analytics ready');
-console.log('[RateLimit] Adaptive adjustments active');
-
-// Export a cleanup function for graceful shutdown
-export function cleanupRateLimiting() {
-  // Collect final violations
-  rateLimitAnalytics.collectViolations();
-  
-  // Stop adaptive adjustment
-  adaptiveRateLimiter.dispose();
-  
-  console.log('[RateLimit] Rate limiting system shutdown cleanly');
 }
