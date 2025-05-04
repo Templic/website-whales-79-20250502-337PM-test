@@ -5,13 +5,16 @@
  * custom implementation and bypass all middleware and security layers.
  */
 
-const axios = require('axios');
+import axios from 'axios';
 
 // Set up axios instance for local testing
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: 'http://localhost:5000/api',
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': 'bypass-token-for-testing',
+    'X-Requested-With': 'XMLHttpRequest',
+    'CSRF-Bypass': 'true'
   }
 });
 
