@@ -41,6 +41,7 @@ export const csrfExemptRoutes = [
   '/api/validation-test/*', // Standard validation testing routes
   '/api/no-csrf/*',  // All no-CSRF routes should be exempt
   '/api/no-csrf/validation-test/*', // Specifically exempt no-CSRF validation test routes
+  '/api/direct-test/*', // Direct test routes with custom implementation
   
   // API testing endpoints
   '/api/test/*', // General test endpoints

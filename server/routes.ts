@@ -179,6 +179,7 @@ import searchRoutes from './routes/search/index';
 import csrfRoutes from './routes/csrf-routes';
 import validationTestRoutes from './routes/validation-test-routes';
 import noCsrfValidationRoutes from './routes/no-csrf-validation-routes';
+import directTestValidationRoutes from './routes/direct-test-validation-routes';
 // Theme routes are imported above
 import deadlinksRoutes from './routes/deadlinks';
 import { bypassCsrfForTesting } from './security/middleware/bypassCsrfForTesting';
@@ -426,6 +427,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Use the bypass middleware explicitly for these routes
   app.use('/api/no-csrf/validation-test', bypassCsrfForTesting(), noCsrfValidationRoutes);
   console.log("✅ No-CSRF validation test routes added with CSRF bypass");
+  
+  // Add direct test validation routes with completely custom implementation
+  // These routes bypass all middleware and security layers
+  app.use('/api/direct-test', bypassCsrfForTesting(), directTestValidationRoutes);
+  console.log("✅ Direct test validation routes added with CSRF bypass");
   
   // Add enhanced validation pipeline routes
   // Contact form schema validation with caching
