@@ -181,6 +181,7 @@ import validationTestRoutes from './routes/validation-test-routes';
 import noCsrfValidationRoutes from './routes/no-csrf-validation-routes';
 // Theme routes are imported above
 import deadlinksRoutes from './routes/deadlinks';
+import { bypassCsrfForTesting } from './security/middleware/bypassCsrfForTesting';
 import advancedSecurityRoutes from './routes/advanced-security-routes';
 import securityAdminRoutes from './security/admin/SecurityAdminRoutes';
 import zeroKnowledgeSecurityRoutes from './security/advanced/zkp/ZeroKnowledgeSecurityRoutes';
@@ -263,6 +264,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/openai/*',  // OpenAI API endpoints
     '/api/validation-test/*', // API validation test endpoints
     '/api/pipeline/*', // Enhanced validation pipeline endpoints
+    '/api/no-csrf/*', // No CSRF routes (explicitly exempted)
+    '/api/no-csrf/validation-test/*', // No CSRF validation test routes
     '/api/csrf-token'  // CSRF token endpoint (needed for tests)
   ];
 
@@ -420,8 +423,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   console.log("✅ OpenAI integration routes added");
   
   // Add no-CSRF validation test routes (for development and testing only)
-  app.use('/api/no-csrf/validation-test', noCsrfValidationRoutes);
-  console.log("✅ No-CSRF validation test routes added");
+  // Use the bypass middleware explicitly for these routes
+  app.use('/api/no-csrf/validation-test', bypassCsrfForTesting(), noCsrfValidationRoutes);
+  console.log("✅ No-CSRF validation test routes added with CSRF bypass");
   
   // Add enhanced validation pipeline routes
   // Contact form schema validation with caching

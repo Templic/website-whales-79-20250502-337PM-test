@@ -123,7 +123,7 @@ async function testSchemaValidation() {
     message: "Too short"
   };
   
-  const shortMessageResponse = await makeRequest('/api/validation-test/basic', 'POST', shortMessageData);
+  const shortMessageResponse = await makeRequest('/api/no-csrf/validation-test/basic', 'POST', shortMessageData);
   printResult(
     'Short message is rejected',
     shortMessageResponse.status !== 200 || !shortMessageResponse.data.success,
@@ -145,7 +145,7 @@ async function testAIValidation() {
     sort: "price_asc" 
   };
   
-  const safeResponse = await makeRequest('/api/validation-test/ai-security', 'POST', safePayload);
+  const safeResponse = await makeRequest('/api/no-csrf/validation-test/ai-security', 'POST', safePayload);
   printResult(
     'Safe payload passes AI validation', 
     safeResponse.status === 200 && safeResponse.data.success, 
@@ -159,7 +159,7 @@ async function testAIValidation() {
     action: "SELECT * FROM users;"
   };
   
-  const suspiciousResponse = await makeRequest('/api/validation-test/ai-security', 'POST', suspiciousPayload);
+  const suspiciousResponse = await makeRequest('/api/no-csrf/validation-test/ai-security', 'POST', suspiciousPayload);
   
   // For suspicious content, we expect either a rejection or warnings
   const hasWarnings = suspiciousResponse.data.validation && 
