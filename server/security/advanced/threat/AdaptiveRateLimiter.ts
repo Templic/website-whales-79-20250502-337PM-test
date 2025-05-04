@@ -1,169 +1,215 @@
 /**
  * Adaptive Rate Limiter
  *
- * This module adjusts rate limits based on current system conditions.
- * It can scale limits up or down based on load, time of day, etc.
+ * This module provides adaptive rate limiting based on system conditions.
+ * It adjusts rate limits based on traffic patterns, system load, and threat levels.
  */
 
 import { log } from '../../../utils/logger';
 import { RateLimitContext } from './RateLimitContextBuilder';
 import { RateLimitAnalytics } from './RateLimitAnalytics';
-import os from 'os';
 
 /**
  * Configuration for adaptive rate limiter
  */
 export interface AdaptiveRateLimiterConfig {
   /**
-   * Analytics instance to use
+   * Analytics instance for tracking metrics
    */
   analytics: RateLimitAnalytics;
   
   /**
-   * Minimum multiplier for burst capacity
+   * Base multiplier when system is under normal conditions
    */
-  minBurstMultiplier?: number;
+  baseMultiplier?: number;
   
   /**
-   * Maximum multiplier for burst capacity
+   * Minimum multiplier to apply
    */
-  maxBurstMultiplier?: number;
+  minMultiplier?: number;
   
   /**
-   * How much to scale down during high load (0-1)
+   * Maximum multiplier to apply
    */
-  highLoadScaleFactor?: number;
+  maxMultiplier?: number;
   
   /**
-   * How much to scale up during low load (1+)
+   * Threshold for high CPU usage (0-1)
    */
-  lowLoadScaleFactor?: number;
+  highCpuThreshold?: number;
   
   /**
-   * CPU threshold for high load (0-1)
+   * Adjustment factor for high CPU usage
    */
-  highLoadThreshold?: number;
+  cpuAdjustmentFactor?: number;
   
   /**
-   * CPU threshold for low load (0-1)
+   * Threshold for high memory usage (0-1)
    */
-  lowLoadThreshold?: number;
+  highMemoryThreshold?: number;
   
   /**
-   * Time window for CPU monitoring in milliseconds
+   * Adjustment factor for high memory usage
    */
-  loadWindowMs?: number;
+  memoryAdjustmentFactor?: number;
   
   /**
-   * Scale factor for low activity hours (1+)
+   * Adjustment factor for high threat levels
    */
-  offHoursScaleFactor?: number;
+  threatAdjustmentFactor?: number;
   
   /**
-   * Start hour for low activity period (0-23)
+   * Multiplier for authenticated users
    */
-  offHoursStart?: number;
+  authenticatedMultiplier?: number;
   
   /**
-   * End hour for low activity period (0-23)
+   * Additional multiplier for admin users
    */
-  offHoursEnd?: number;
+  adminMultiplier?: number;
   
   /**
-   * Scale factor for high reputation users (1+)
+   * Adjustment factor for IP reputation
    */
-  goodReputationFactor?: number;
+  ipReputationFactor?: number;
   
   /**
-   * Scale factor for low reputation users (0-1)
+   * Interval to check system load (ms)
    */
-  badReputationFactor?: number;
+  loadCheckInterval?: number;
 }
 
 /**
- * Adaptively adjusts rate limits based on various factors
+ * System load metrics
+ */
+interface SystemLoadMetrics {
+  /**
+   * CPU usage (0-1)
+   */
+  cpuUsage: number;
+  
+  /**
+   * Memory usage (0-1)
+   */
+  memoryUsage: number;
+  
+  /**
+   * Last updated timestamp
+   */
+  lastUpdated: number;
+}
+
+/**
+ * Adaptive rate limiter class
  */
 export class AdaptiveRateLimiter {
+  // Configuration
   private config: Required<AdaptiveRateLimiterConfig>;
-  private cpuLoadHistory: number[] = [];
-  private cpuLoadInterval: NodeJS.Timeout;
-  private currentSystemMultiplier: number = 1.0;
+  
+  // Analytics
   private analytics: RateLimitAnalytics;
-
+  
+  // System load metrics
+  private systemLoad: SystemLoadMetrics = {
+    cpuUsage: 0,
+    memoryUsage: 0,
+    lastUpdated: 0
+  };
+  
+  // Global adaptive multiplier (adjusted by system conditions)
+  private globalAdaptiveMultiplier: number = 1.0;
+  
+  // Recent adaptations for tracking
+  private recentAdaptations: Array<{
+    timestamp: number;
+    multiplier: number;
+    reason: string;
+  }> = [];
+  
+  // Interval for checking CPU load
+  private cpuLoadInterval: NodeJS.Timeout;
+  
   constructor(config: AdaptiveRateLimiterConfig) {
-    // Set defaults
+    // Set configuration with defaults
     this.config = {
       analytics: config.analytics,
-      minBurstMultiplier: config.minBurstMultiplier || 0.5,
-      maxBurstMultiplier: config.maxBurstMultiplier || 2.0,
-      highLoadScaleFactor: config.highLoadScaleFactor || 0.5,
-      lowLoadScaleFactor: config.lowLoadScaleFactor || 1.5,
-      highLoadThreshold: config.highLoadThreshold || 0.8,
-      lowLoadThreshold: config.lowLoadThreshold || 0.2,
-      loadWindowMs: config.loadWindowMs || 60000, // 1 minute
-      offHoursScaleFactor: config.offHoursScaleFactor || 1.5,
-      offHoursStart: config.offHoursStart || 22, // 10 PM
-      offHoursEnd: config.offHoursEnd || 6, // 6 AM
-      goodReputationFactor: config.goodReputationFactor || 1.5,
-      badReputationFactor: config.badReputationFactor || 0.5
+      baseMultiplier: config.baseMultiplier || 1.0,
+      minMultiplier: config.minMultiplier || 0.2,
+      maxMultiplier: config.maxMultiplier || 2.0,
+      highCpuThreshold: config.highCpuThreshold || 0.7,
+      cpuAdjustmentFactor: config.cpuAdjustmentFactor || 0.5,
+      highMemoryThreshold: config.highMemoryThreshold || 0.8,
+      memoryAdjustmentFactor: config.memoryAdjustmentFactor || 0.7,
+      threatAdjustmentFactor: config.threatAdjustmentFactor || 0.5,
+      authenticatedMultiplier: config.authenticatedMultiplier || 1.2,
+      adminMultiplier: config.adminMultiplier || 1.5,
+      ipReputationFactor: config.ipReputationFactor || 0.5,
+      loadCheckInterval: config.loadCheckInterval || 60000 // 1 minute
     };
     
+    // Store analytics
     this.analytics = this.config.analytics;
     
-    // Start CPU monitoring
-    this.startCpuMonitoring();
+    // Initialize system load
+    this.updateSystemLoad();
+    
+    // Start load check interval
+    this.cpuLoadInterval = setInterval(() => {
+      this.updateSystemLoad();
+      this.adjustGlobalMultiplier();
+    }, this.config.loadCheckInterval);
     
     log('Adaptive rate limiter initialized', 'security');
   }
   
   /**
-   * Get adaptive multiplier for a context
+   * Get adaptive multiplier for a request
    * 
    * @param context Rate limit context
-   * @returns Multiplier to apply to rate limit
+   * @returns Multiplier to apply
    */
   public getAdaptiveMultiplier(context: RateLimitContext): number {
     try {
-      // Start with system load multiplier
-      let multiplier = this.currentSystemMultiplier;
+      // Start with global adaptive multiplier
+      let multiplier = this.globalAdaptiveMultiplier;
       
-      // Adjust for resource sensitivity
-      multiplier *= this.getResourceSensitivityFactor(context.resourceSensitivity);
+      // Apply context-specific adjustments
       
       // Adjust for authentication status
       if (context.authenticated) {
-        multiplier *= 1.2; // Authenticated users get 20% more capacity
+        multiplier *= this.config.authenticatedMultiplier;
       }
       
-      // Adjust for user role
-      multiplier *= this.getRoleMultiplier(context.roleWeight);
-      
-      // Adjust for time of day
-      multiplier *= this.getTimeOfDayMultiplier();
-      
-      // Adjust for known good/bad bots
-      if (context.isGoodBot) {
-        multiplier *= 1.5; // Good bots get 50% more capacity
+      // Adjust for role (admin gets higher multiplier)
+      if (context.role === 'admin' || context.roleWeight <= 2) {
+        multiplier *= this.config.adminMultiplier;
       }
       
-      if (context.isBadBot) {
-        multiplier *= 0.2; // Bad bots get 80% less capacity
+      // Adjust for threat level
+      if (context.threatLevel > 0) {
+        // Higher threat level = lower multiplier
+        multiplier *= (1 - (context.threatLevel * this.config.threatAdjustmentFactor));
       }
       
       // Adjust for blacklisted IPs
       if (context.isBlacklisted) {
-        multiplier *= 0.1; // Blacklisted IPs get 90% less capacity
+        multiplier *= 0.1; // 90% reduction
       }
       
-      // Adjust for threat level
-      multiplier *= (1 - context.threatLevel * 0.8); // High threat = lower capacity
+      // Adjust for whitelisted IPs
+      if (context.isWhitelisted) {
+        multiplier *= 2.0; // 100% increase
+      }
       
-      // Cap the multiplier
-      multiplier = Math.max(this.config.minBurstMultiplier, Math.min(this.config.maxBurstMultiplier, multiplier));
+      // Adjust for resource sensitivity
+      multiplier *= Math.max(0.5, 1 - (context.resourceSensitivity - 1) * 0.1);
+      
+      // Ensure within bounds
+      multiplier = Math.max(this.config.minMultiplier, Math.min(this.config.maxMultiplier, multiplier));
       
       return multiplier;
     } catch (error) {
-      log(`Error calculating adaptive multiplier: ${error}`, 'security');
+      log(`Error calculating adaptive multiplier: ${error}`, 'error');
       
       // Return safe default
       return 1.0;
@@ -171,138 +217,161 @@ export class AdaptiveRateLimiter {
   }
   
   /**
-   * Start monitoring CPU load
+   * Update system load metrics
    */
-  private startCpuMonitoring(): void {
-    // Track CPU load
-    this.updateCpuLoad();
-    
-    // Set up periodic monitoring
-    this.cpuLoadInterval = setInterval(() => {
-      this.updateCpuLoad();
-    }, 5000); // Every 5 seconds
-  }
-  
-  /**
-   * Update CPU load average
-   */
-  private updateCpuLoad(): void {
+  private updateSystemLoad(): void {
     try {
-      // Get current CPU load average (1 minute)
-      const loadAvg = os.loadavg()[0];
-      const cpuCount = os.cpus().length;
+      // In a real implementation, this would use process metrics
+      // For now, we'll simulate with some random values
       
-      // Calculate relative load (0-1)
-      const relativeLoad = Math.min(1, loadAvg / cpuCount);
+      // Get CPU usage - in a real app, this would use an actual OS metrics API
+      const prevCpuUsage = this.systemLoad.cpuUsage;
       
-      // Add to history
-      this.cpuLoadHistory.push(relativeLoad);
+      // Simulated CPU usage - would be replaced with real metrics
+      const cpuUsage = Math.min(0.3 + Math.random() * 0.2, 1.0);
       
-      // Keep only recent history
-      const historySize = Math.ceil(this.config.loadWindowMs / 5000);
-      if (this.cpuLoadHistory.length > historySize) {
-        this.cpuLoadHistory = this.cpuLoadHistory.slice(-historySize);
-      }
+      // Simulated memory usage - would be replaced with real metrics
+      const memoryUsage = Math.min(0.4 + Math.random() * 0.2, 1.0);
       
-      // Calculate average load
-      const avgLoad = this.cpuLoadHistory.reduce((sum, load) => sum + load, 0) / this.cpuLoadHistory.length;
-      
-      // Update system multiplier based on load
-      if (avgLoad >= this.config.highLoadThreshold) {
-        // High load: Scale down
-        this.currentSystemMultiplier = this.config.highLoadScaleFactor;
-      } else if (avgLoad <= this.config.lowLoadThreshold) {
-        // Low load: Scale up
-        this.currentSystemMultiplier = this.config.lowLoadScaleFactor;
-      } else {
-        // Normal load: Linear interpolation
-        const loadRange = this.config.highLoadThreshold - this.config.lowLoadThreshold;
-        const normalizedLoad = (avgLoad - this.config.lowLoadThreshold) / loadRange;
-        this.currentSystemMultiplier = this.config.lowLoadScaleFactor - 
-          normalizedLoad * (this.config.lowLoadScaleFactor - this.config.highLoadScaleFactor);
-      }
+      // Update system load
+      this.systemLoad = {
+        cpuUsage,
+        memoryUsage,
+        lastUpdated: Date.now()
+      };
       
       // Log significant changes
-      if (this.cpuLoadHistory.length === 1 || Math.abs(this.cpuLoadHistory[this.cpuLoadHistory.length - 2] - relativeLoad) > 0.2) {
-        log(`CPU load: ${(relativeLoad * 100).toFixed(2)}%, system multiplier: ${this.currentSystemMultiplier.toFixed(2)}`, 'perf');
+      if (Math.abs(cpuUsage - prevCpuUsage) > 0.1) {
+        log(`System CPU usage changed from ${(prevCpuUsage * 100).toFixed(1)}% to ${(cpuUsage * 100).toFixed(1)}%`, 'perf');
       }
-    } catch (e) {
-      log(`Error updating CPU load: ${e}`, 'security');
+    } catch (error) {
+      log(`Error updating system load: ${error}`, 'error');
+    }
+  }
+  
+  /**
+   * Adjust global adaptive multiplier based on system conditions
+   */
+  private adjustGlobalMultiplier(): void {
+    try {
+      // Store previous multiplier
+      const previousMultiplier = this.globalAdaptiveMultiplier;
       
-      // Safe default
-      this.currentSystemMultiplier = 1.0;
+      // Start with base multiplier
+      let multiplier = this.config.baseMultiplier;
+      let reason = '';
+      
+      // Adjust for CPU usage
+      if (this.systemLoad.cpuUsage > this.config.highCpuThreshold) {
+        // High CPU usage = lower multiplier
+        const cpuFactor = 1 - ((this.systemLoad.cpuUsage - this.config.highCpuThreshold) 
+          / (1 - this.config.highCpuThreshold)) * this.config.cpuAdjustmentFactor;
+        
+        multiplier *= cpuFactor;
+        reason = 'high CPU usage';
+      }
+      
+      // Adjust for memory usage
+      if (this.systemLoad.memoryUsage > this.config.highMemoryThreshold) {
+        // High memory usage = lower multiplier
+        const memoryFactor = 1 - ((this.systemLoad.memoryUsage - this.config.highMemoryThreshold) 
+          / (1 - this.config.highMemoryThreshold)) * this.config.memoryAdjustmentFactor;
+        
+        multiplier *= memoryFactor;
+        reason = reason ? `${reason} and high memory usage` : 'high memory usage';
+      }
+      
+      // Ensure within bounds
+      multiplier = Math.max(this.config.minMultiplier, Math.min(this.config.maxMultiplier, multiplier));
+      
+      // Update global multiplier
+      this.globalAdaptiveMultiplier = multiplier;
+      
+      // Record adjustment if significant
+      if (Math.abs(multiplier - previousMultiplier) > 0.1) {
+        // Log adjustment
+        log(`Adjusted global rate limit multiplier from ${previousMultiplier.toFixed(2)} to ${multiplier.toFixed(2)} due to ${reason}`, 'security');
+        
+        // Record for analytics
+        this.recentAdaptations.push({
+          timestamp: Date.now(),
+          multiplier,
+          reason
+        });
+        
+        // Trim to last 100 adaptations
+        if (this.recentAdaptations.length > 100) {
+          this.recentAdaptations = this.recentAdaptations.slice(-100);
+        }
+      }
+    } catch (error) {
+      log(`Error adjusting global multiplier: ${error}`, 'error');
     }
   }
   
   /**
-   * Get resource sensitivity factor
+   * Get current system load
    * 
-   * @param sensitivity Resource sensitivity (1-5)
-   * @returns Multiplier
+   * @returns System load metrics
    */
-  private getResourceSensitivityFactor(sensitivity: number): number {
-    // More sensitive resources get lower multipliers
-    switch (sensitivity) {
-      case 1:
-        return 1.2; // Low sensitivity
-      case 2:
-        return 1.0; // Normal sensitivity
-      case 3:
-        return 0.8; // Medium sensitivity
-      case 4:
-        return 0.6; // High sensitivity
-      case 5:
-        return 0.4; // Very high sensitivity
-      default:
-        return 1.0;
-    }
+  public getSystemLoad(): SystemLoadMetrics {
+    return { ...this.systemLoad };
   }
   
   /**
-   * Get multiplier based on role weight
+   * Get current global adaptive multiplier
    * 
-   * @param roleWeight Role weight (lower = more privileged)
-   * @returns Multiplier
+   * @returns Global multiplier
    */
-  private getRoleMultiplier(roleWeight: number): number {
-    // Higher roles get higher multipliers
-    if (roleWeight <= 2) {
-      return 2.0; // Admin/superuser
-    } else if (roleWeight <= 5) {
-      return 1.5; // Staff/moderator
-    } else if (roleWeight <= 7) {
-      return 1.2; // Premium user
-    } else {
-      return 1.0; // Regular/guest user
-    }
+  public getGlobalMultiplier(): number {
+    return this.globalAdaptiveMultiplier;
   }
   
   /**
-   * Get time of day multiplier
+   * Get recent adaptations
    * 
-   * @returns Multiplier
+   * @param limit Max adaptations to return
+   * @returns Recent adaptations
    */
-  private getTimeOfDayMultiplier(): number {
-    // Higher multiplier during off-hours (less traffic expected)
-    const hour = new Date().getHours();
+  public getRecentAdaptations(limit = 10): Array<{
+    timestamp: number;
+    multiplier: number;
+    reason: string;
+  }> {
+    return this.recentAdaptations.slice(-limit);
+  }
+  
+  /**
+   * Forcibly set global adaptive multiplier
+   * 
+   * @param multiplier New multiplier
+   * @param reason Reason for change
+   */
+  public setGlobalMultiplier(multiplier: number, reason = 'manual adjustment'): void {
+    // Ensure within bounds
+    const boundedMultiplier = Math.max(
+      this.config.minMultiplier,
+      Math.min(this.config.maxMultiplier, multiplier)
+    );
     
-    // Check if current hour is within off-hours
-    if (
-      (this.config.offHoursStart > this.config.offHoursEnd && (hour >= this.config.offHoursStart || hour < this.config.offHoursEnd)) ||
-      (this.config.offHoursStart <= this.config.offHoursEnd && hour >= this.config.offHoursStart && hour < this.config.offHoursEnd)
-    ) {
-      return this.config.offHoursScaleFactor;
-    }
+    // Set multiplier
+    this.globalAdaptiveMultiplier = boundedMultiplier;
     
-    return 1.0;
+    // Record adjustment
+    this.recentAdaptations.push({
+      timestamp: Date.now(),
+      multiplier: boundedMultiplier,
+      reason
+    });
+    
+    // Log adjustment
+    log(`Manually set global rate limit multiplier to ${boundedMultiplier.toFixed(2)} (${reason})`, 'security');
   }
   
   /**
-   * Stop monitoring and clean up
+   * Dispose of limiter
    */
   public dispose(): void {
-    if (this.cpuLoadInterval) {
-      clearInterval(this.cpuLoadInterval);
-    }
+    clearInterval(this.cpuLoadInterval);
   }
 }

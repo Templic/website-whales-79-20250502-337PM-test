@@ -1,500 +1,749 @@
 /**
  * Rate Limiting System
  *
- * This module combines all rate limiting components into a complete system.
- * It provides ready-to-use middleware for different types of rate limiting.
+ * This module coordinates all rate limiting components into a cohesive system.
+ * It serves as the central orchestrator for rate limiting decisions.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { log } from '../../../utils/logger';
-import { recordAuditEvent } from '../../secureAuditTrail';
 import { getClientIp } from '../../../utils/ip-utils';
+import { RateLimitContext, RateLimitContextBuilder } from './RateLimitContextBuilder';
 import { TokenBucketRateLimiter } from './TokenBucketRateLimiter';
-import { RateLimitContextBuilder } from './RateLimitContextBuilder';
 import { AdaptiveRateLimiter } from './AdaptiveRateLimiter';
 import { RateLimitAnalytics } from './RateLimitAnalytics';
 import { threatDetectionService } from './ThreatDetectionService';
+import { recordCsrfVerification, recordCsrfError, getRateLimitingComponents } from './RateLimitIntegration';
 
-// Default rate limit configurations
-const DEFAULT_LIMITS = {
-  // Global limits (applies to all routes)
-  global: {
+/**
+ * Configuration for rate limiting system
+ */
+export interface RateLimitingSystemConfig {
+  /**
+   * Global rate limit
+   */
+  globalLimit?: {
+    capacity: number;
+    refillRate: number;
+    refillInterval: number;
+  };
+  
+  /**
+   * Auth endpoint rate limit
+   */
+  authLimit?: {
+    capacity: number;
+    refillRate: number;
+    refillInterval: number;
+  };
+  
+  /**
+   * API endpoint rate limit
+   */
+  apiLimit?: {
+    capacity: number;
+    refillRate: number;
+    refillInterval: number;
+  };
+  
+  /**
+   * Admin endpoint rate limit
+   */
+  adminLimit?: {
+    capacity: number;
+    refillRate: number;
+    refillInterval: number;
+  };
+  
+  /**
+   * Security endpoint rate limit
+   */
+  securityLimit?: {
+    capacity: number;
+    refillRate: number;
+    refillInterval: number;
+  };
+  
+  /**
+   * Public endpoint rate limit
+   */
+  publicLimit?: {
+    capacity: number;
+    refillRate: number;
+    refillInterval: number;
+  };
+  
+  /**
+   * Whether to use context-aware rate limiting
+   */
+  contextAware?: boolean;
+  
+  /**
+   * Skip whitelisted IPs
+   */
+  skipWhitelisted?: boolean;
+  
+  /**
+   * Whitelisted IPs
+   */
+  whitelistedIps?: string[];
+  
+  /**
+   * Blacklisted IPs
+   */
+  blacklistedIps?: string[];
+  
+  /**
+   * Paths that skip rate limiting
+   */
+  skipPaths?: (string | RegExp)[];
+}
+
+/**
+ * Default configuration for rate limiting
+ */
+const DEFAULT_CONFIG: Required<RateLimitingSystemConfig> = {
+  globalLimit: {
     capacity: 300,
     refillRate: 50,
     refillInterval: 60 * 1000 // 1 minute
   },
   
-  // Auth limits (login, register, etc.)
-  auth: {
+  authLimit: {
     capacity: 20,
     refillRate: 10,
     refillInterval: 60 * 1000 // 1 minute
   },
   
-  // API limits
-  api: {
+  apiLimit: {
     capacity: 100,
     refillRate: 20,
     refillInterval: 60 * 1000 // 1 minute
   },
   
-  // Admin limits
-  admin: {
+  adminLimit: {
     capacity: 100,
     refillRate: 20,
     refillInterval: 60 * 1000 // 1 minute
   },
   
-  // Security endpoints
-  security: {
+  securityLimit: {
     capacity: 30,
     refillRate: 10,
     refillInterval: 60 * 1000 // 1 minute
   },
   
-  // Public endpoints
-  public: {
+  publicLimit: {
     capacity: 60,
     refillRate: 20,
     refillInterval: 60 * 1000 // 1 minute
-  }
-};
-
-// Singleton instances
-let contextBuilder: RateLimitContextBuilder;
-let analytics: RateLimitAnalytics;
-let adaptiveRateLimiter: AdaptiveRateLimiter;
-let rateLimiters: {
-  global: TokenBucketRateLimiter;
-  auth: TokenBucketRateLimiter;
-  admin: TokenBucketRateLimiter;
-  security: TokenBucketRateLimiter;
-  api: TokenBucketRateLimiter;
-  public: TokenBucketRateLimiter;
+  },
+  
+  contextAware: true,
+  
+  skipWhitelisted: true,
+  
+  whitelistedIps: [
+    '127.0.0.1',
+    '::1',
+    'localhost'
+  ],
+  
+  blacklistedIps: [],
+  
+  skipPaths: [
+    '/health',
+    '/ping',
+    '/favicon.ico',
+    /\.(jpg|png|gif|svg|webp|woff|woff2|ttf|eot)$/i
+  ]
 };
 
 /**
- * Initialize the rate limiting system
- * 
- * @returns Middleware function
+ * Rate limit scope
  */
-export function initializeRateLimiting() {
-  try {
-    log('Initializing rate limiting system...', 'security');
+export type RateLimitScope = 'global' | 'auth' | 'api' | 'admin' | 'security' | 'public';
+
+/**
+ * Map for rate limiters by scope
+ */
+type RateLimiterMap = Record<RateLimitScope, TokenBucketRateLimiter>;
+
+/**
+ * Analysis result
+ */
+interface RateLimitAnalysisResult {
+  /**
+   * Response status
+   */
+  status: 'success' | 'failure' | 'warning';
+  
+  /**
+   * Response message
+   */
+  message: string;
+  
+  /**
+   * Retry after time (ms)
+   */
+  retryAfter?: number;
+  
+  /**
+   * Whether to skip rate limiting
+   */
+  skip?: boolean;
+  
+  /**
+   * Rate limit context
+   */
+  context?: RateLimitContext;
+  
+  /**
+   * Rate limiter used
+   */
+  limiter?: TokenBucketRateLimiter;
+  
+  /**
+   * Tokens consumed
+   */
+  tokens?: number;
+  
+  /**
+   * Capacity available
+   */
+  capacity?: number;
+  
+  /**
+   * Remaining tokens
+   */
+  remaining?: number;
+  
+  /**
+   * Reset time (ms since epoch)
+   */
+  resetTime?: number;
+  
+  /**
+   * Adaptive multiplier applied
+   */
+  adaptiveMultiplier?: number;
+}
+
+/**
+ * Rate limiting system class
+ */
+export class RateLimitingSystem {
+  private config: Required<RateLimitingSystemConfig>;
+  private contextBuilder: RateLimitContextBuilder;
+  private analytics: RateLimitAnalytics;
+  private adaptiveRateLimiter: AdaptiveRateLimiter;
+  private rateLimiters: RateLimiterMap;
+  
+  constructor(config: RateLimitingSystemConfig = {}) {
+    // Merge config with defaults
+    this.config = {
+      ...DEFAULT_CONFIG,
+      ...config,
+      globalLimit: { ...DEFAULT_CONFIG.globalLimit, ...config.globalLimit },
+      authLimit: { ...DEFAULT_CONFIG.authLimit, ...config.authLimit },
+      apiLimit: { ...DEFAULT_CONFIG.apiLimit, ...config.apiLimit },
+      adminLimit: { ...DEFAULT_CONFIG.adminLimit, ...config.adminLimit },
+      securityLimit: { ...DEFAULT_CONFIG.securityLimit, ...config.securityLimit },
+      publicLimit: { ...DEFAULT_CONFIG.publicLimit, ...config.publicLimit }
+    };
     
-    // Create context builder
-    contextBuilder = new RateLimitContextBuilder({
-      whitelistedIps: process.env.RATE_LIMIT_WHITELIST?.split(',') || [],
-      blacklistedIps: process.env.RATE_LIMIT_BLACKLIST?.split(',') || []
+    // Initialize components
+    this.contextBuilder = new RateLimitContextBuilder({
+      whitelistedIps: this.config.whitelistedIps,
+      blacklistedIps: this.config.blacklistedIps
     });
     
-    // Create analytics
-    analytics = new RateLimitAnalytics({
+    this.analytics = new RateLimitAnalytics({
       timeWindow: 24 * 60 * 60 * 1000, // 24 hours
       reportInterval: 60 * 60 * 1000 // 1 hour
     });
     
+    this.adaptiveRateLimiter = new AdaptiveRateLimiter({
+      analytics: this.analytics
+    });
+    
     // Create rate limiters
-    rateLimiters = {
+    this.rateLimiters = {
       global: new TokenBucketRateLimiter({
-        ...DEFAULT_LIMITS.global,
-        contextAware: true,
+        ...this.config.globalLimit,
+        contextAware: this.config.contextAware,
         name: 'global'
       }),
       
       auth: new TokenBucketRateLimiter({
-        ...DEFAULT_LIMITS.auth,
-        contextAware: true,
+        ...this.config.authLimit,
+        contextAware: this.config.contextAware,
         name: 'auth'
       }),
       
       api: new TokenBucketRateLimiter({
-        ...DEFAULT_LIMITS.api,
-        contextAware: true,
+        ...this.config.apiLimit,
+        contextAware: this.config.contextAware,
         name: 'api'
       }),
       
       admin: new TokenBucketRateLimiter({
-        ...DEFAULT_LIMITS.admin,
-        contextAware: true,
+        ...this.config.adminLimit,
+        contextAware: this.config.contextAware,
         name: 'admin'
       }),
       
       security: new TokenBucketRateLimiter({
-        ...DEFAULT_LIMITS.security,
-        contextAware: true,
+        ...this.config.securityLimit,
+        contextAware: this.config.contextAware,
         name: 'security'
       }),
       
       public: new TokenBucketRateLimiter({
-        ...DEFAULT_LIMITS.public,
-        contextAware: true,
+        ...this.config.publicLimit,
+        contextAware: this.config.contextAware,
         name: 'public'
       })
     };
     
-    // Create adaptive rate limiter
-    adaptiveRateLimiter = new AdaptiveRateLimiter({
-      analytics,
-      minBurstMultiplier: 0.5,
-      maxBurstMultiplier: 2.0
-    });
-    
-    // Log initialization
-    log('Rate limiting system initialized successfully', 'security');
-    
-    // Return middleware
-    return createRateLimitMiddleware();
-  } catch (error) {
-    log(`Error initializing rate limiting system: ${error}`, 'security');
-    
-    // Return pass-through middleware
-    return (req: Request, res: Response, next: NextFunction) => next();
+    log('Rate limiting system initialized', 'security');
   }
-}
-
-/**
- * Create a rate limit middleware
- * 
- * @param type Type of rate limiter to use
- * @returns Middleware function
- */
-export function createUnifiedRateLimit(type?: 'auth' | 'admin' | 'security' | 'api' | 'public') {
-  return (req: Request, res: Response, next: NextFunction) => {
+  
+  /**
+   * Create middleware for rate limiting
+   * 
+   * @returns Express middleware
+   */
+  public createMiddleware(): (req: Request, res: Response, next: NextFunction) => void {
+    return (req: Request, res: Response, next: NextFunction) => {
+      try {
+        // Check if path should be skipped
+        if (this.shouldSkipPath(req.path)) {
+          return next();
+        }
+        
+        // Analyze request
+        const analysis = this.analyzeRequest(req);
+        
+        // Skip rate limiting if necessary
+        if (analysis.skip) {
+          return next();
+        }
+        
+        // If rate limited, send response
+        if (analysis.status === 'failure') {
+          return this.sendRateLimitResponse(req, res, analysis);
+        }
+        
+        // Set rate limit headers
+        if (analysis.remaining !== undefined && analysis.resetTime !== undefined) {
+          res.setHeader('X-RateLimit-Limit', String(analysis.capacity || 0));
+          res.setHeader('X-RateLimit-Remaining', String(analysis.remaining));
+          res.setHeader('X-RateLimit-Reset', String(Math.floor((analysis.resetTime || 0) / 1000)));
+        }
+        
+        // Continue to next middleware
+        next();
+      } catch (error) {
+        // Log error
+        log(`Error in rate limit middleware: ${error}`, 'error');
+        
+        // Fail open
+        next();
+      }
+    };
+  }
+  
+  /**
+   * Record CSRF verification
+   * 
+   * @param req Express request
+   */
+  public recordCsrfVerification(req: Request): void {
+    recordCsrfVerification(req);
+  }
+  
+  /**
+   * Record CSRF error
+   * 
+   * @param req Express request
+   * @param errorType Error type
+   */
+  public recordCsrfError(req: Request, errorType: string): void {
+    recordCsrfError(req, errorType);
+  }
+  
+  /**
+   * Analyze request for rate limiting
+   * 
+   * @param req Express request
+   * @returns Analysis result
+   */
+  private analyzeRequest(req: Request): RateLimitAnalysisResult {
     try {
       // Get client IP
-      const ip = getClientIp(req);
+      const clientIp = getClientIp(req);
+      
+      // Check if client is whitelisted
+      if (this.config.skipWhitelisted && this.isIpWhitelisted(clientIp)) {
+        return {
+          status: 'success',
+          message: 'Client IP is whitelisted',
+          skip: true
+        };
+      }
       
       // Build context
-      const context = contextBuilder.buildContext(req);
+      const context = this.contextBuilder.buildContext(req);
       
-      // Attach context to request for other middleware
-      (req as any).rateLimitContext = context;
-      
-      // Get adaptive multiplier
-      const adaptiveMultiplier = adaptiveRateLimiter.getAdaptiveMultiplier(context);
-      
-      // Calculate request cost
-      const tokens = contextBuilder.calculateRequestCost(req, context);
+      // Determine scope
+      const scope = this.determineScope(req);
       
       // Get appropriate limiter
-      const limiterType = type || determineRateLimiterType(req);
-      const limiter = rateLimiters[limiterType] || rateLimiters.global;
+      const limiter = this.rateLimiters[scope];
+      
+      // Get adaptive multiplier
+      const adaptiveMultiplier = this.adaptiveRateLimiter.getAdaptiveMultiplier(context);
+      
+      // Calculate request cost
+      const tokens = this.contextBuilder.calculateRequestCost(req, context);
       
       // Get bucket key
-      const key = getBucketKey(req, context);
+      const key = this.getBucketKey(context);
+      
+      // Get capacity
+      const capacity = limiter.getCapacity(key, context, adaptiveMultiplier);
+      
+      // Check if over threat threshold
+      if (context.threatLevel > 0.75) {
+        // Very high threat
+        this.analytics.recordLimit(req, {} as Response, context, tokens, capacity, 30000);
+        
+        return {
+          status: 'failure',
+          message: 'Rate limited due to high threat level',
+          retryAfter: 30000,
+          context,
+          limiter,
+          tokens,
+          capacity,
+          remaining: 0,
+          resetTime: Date.now() + 30000,
+          adaptiveMultiplier
+        };
+      }
+      
+      // Check if client is blacklisted
+      if (context.isBlacklisted) {
+        // Apply stricter rate limiting to blacklisted IPs
+        const strictCapacity = Math.ceil(capacity * 0.1); // 90% reduction
+        const strictTokens = tokens * 5; // 5x token cost
+        
+        // Record limit
+        this.analytics.recordLimit(req, {} as Response, context, strictTokens, strictCapacity, 60000);
+        
+        return {
+          status: 'failure',
+          message: 'Rate limited due to blacklisted IP',
+          retryAfter: 60000,
+          context,
+          limiter,
+          tokens: strictTokens,
+          capacity: strictCapacity,
+          remaining: 0,
+          resetTime: Date.now() + 60000,
+          adaptiveMultiplier
+        };
+      }
       
       // Try to consume tokens
       const result = limiter.consume(key, tokens, context, adaptiveMultiplier);
       
-      // Set headers
-      res.setHeader('X-RateLimit-Limit', limiter.getCapacity(key, context, adaptiveMultiplier).toString());
-      res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
-      res.setHeader('X-RateLimit-Reset', Math.floor(result.resetTime / 1000).toString());
-      
-      // Check if rate limited
+      // Check result
       if (result.limited) {
         // Record limit
-        analytics.recordLimit(req, res, context, tokens, limiter.getCapacity(key, context, adaptiveMultiplier), result.retryAfter);
+        this.analytics.recordLimit(req, {} as Response, context, tokens, capacity, result.retryAfter);
         
-        // Set retry-after header
-        res.setHeader('Retry-After', Math.ceil(result.retryAfter / 1000).toString());
-        
-        // Log rate limit
-        log(`Rate limited: ${req.method} ${req.path} (${ip})`, 'security');
-        
-        // Record in audit trail if significant
-        if (tokens > 5) {
-          recordAuditEvent({
-            timestamp: new Date().toISOString(),
-            action: 'RATE_LIMIT_EXCEEDED',
-            resource: req.path,
-            result: 'warning',
-            severity: 'info',
-            details: {
-              ip,
-              userId: context.userId,
-              method: req.method,
-              path: req.path,
-              tokens,
-              capacity: limiter.getCapacity(key, context, adaptiveMultiplier),
-              retryAfter: result.retryAfter,
-              userAgent: req.headers['user-agent']
-            }
-          });
-        }
-        
-        // Send rate limit response
-        return sendRateLimitResponse(req, res, result.retryAfter);
+        return {
+          status: 'failure',
+          message: 'Rate limit exceeded',
+          retryAfter: result.retryAfter,
+          context,
+          limiter,
+          tokens,
+          capacity,
+          remaining: result.remaining,
+          resetTime: result.resetTime,
+          adaptiveMultiplier
+        };
       }
       
-      // Record pass
-      analytics.recordPass(req, context);
+      // Record successful request
+      this.analytics.recordPass(req, context);
       
-      // Proceed to next middleware
-      next();
+      return {
+        status: 'success',
+        message: 'Request allowed',
+        context,
+        limiter,
+        tokens,
+        capacity,
+        remaining: result.remaining,
+        resetTime: result.resetTime,
+        adaptiveMultiplier
+      };
     } catch (error) {
-      log(`Error in rate limit middleware: ${error}`, 'security');
+      log(`Error analyzing rate limit request: ${error}`, 'error');
       
-      // Fail open
-      next();
+      // Fail open - let request through
+      return {
+        status: 'warning',
+        message: 'Error analyzing rate limit request',
+        skip: true
+      };
     }
-  };
-}
-
-/**
- * Create a middleware function for rate limiting
- * 
- * @returns Middleware function
- */
-function createRateLimitMiddleware() {
-  return (req: Request, res: Response, next: NextFunction) => {
-    try {
-      // Get client IP
-      const ip = getClientIp(req);
-      
-      // Skip rate limiting for whitelisted paths
-      if (shouldSkipRateLimiting(req.path)) {
-        return next();
-      }
-      
-      // Build context
-      const context = contextBuilder.buildContext(req);
-      
-      // Attach context to request for other middleware
-      (req as any).rateLimitContext = context;
-      
-      // Get adaptive multiplier
-      const adaptiveMultiplier = adaptiveRateLimiter.getAdaptiveMultiplier(context);
-      
-      // Calculate request cost
-      const tokens = contextBuilder.calculateRequestCost(req, context);
-      
-      // Get appropriate limiter
-      const limiterType = determineRateLimiterType(req);
-      const limiter = rateLimiters[limiterType];
-      
-      // Get bucket key
-      const key = getBucketKey(req, context);
-      
-      // Try to consume tokens
-      const result = limiter.consume(key, tokens, context, adaptiveMultiplier);
-      
-      // Set headers
-      res.setHeader('X-RateLimit-Limit', limiter.getCapacity(key, context, adaptiveMultiplier).toString());
-      res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
-      res.setHeader('X-RateLimit-Reset', Math.floor(result.resetTime / 1000).toString());
-      
-      // Check if rate limited
-      if (result.limited) {
-        // Record limit
-        analytics.recordLimit(req, res, context, tokens, limiter.getCapacity(key, context, adaptiveMultiplier), result.retryAfter);
-        
-        // Set retry-after header
-        res.setHeader('Retry-After', Math.ceil(result.retryAfter / 1000).toString());
-        
-        // Log rate limit
-        log(`Rate limited: ${req.method} ${req.path} (${ip})`, 'security');
-        
-        // Record in audit trail if significant
-        if (tokens > 5) {
-          recordAuditEvent({
-            timestamp: new Date().toISOString(),
-            action: 'RATE_LIMIT_EXCEEDED',
-            resource: req.path,
-            result: 'blocked',
-            severity: 'warning',
-            details: {
-              ip,
-              userId: context.userId,
-              method: req.method,
-              path: req.path,
-              tokens,
-              capacity: limiter.getCapacity(key, context, adaptiveMultiplier),
-              retryAfter: result.retryAfter,
-              userAgent: req.headers['user-agent']
-            }
-          });
+  }
+  
+  /**
+   * Check if path should be skipped
+   * 
+   * @param path Request path
+   * @returns Whether to skip
+   */
+  private shouldSkipPath(path: string): boolean {
+    // Check against skip paths
+    for (const skipPath of this.config.skipPaths) {
+      if (typeof skipPath === 'string') {
+        if (path === skipPath) {
+          return true;
         }
-        
-        // Send rate limit response
-        return sendRateLimitResponse(req, res, result.retryAfter);
+      } else if (skipPath instanceof RegExp) {
+        if (skipPath.test(path)) {
+          return true;
+        }
       }
-      
-      // Record pass
-      analytics.recordPass(req, context);
-      
-      // Proceed to next middleware
-      next();
-    } catch (error) {
-      log(`Error in rate limit middleware: ${error}`, 'security');
-      
-      // Fail open
-      next();
     }
-  };
-}
-
-/**
- * Determine which rate limiter to use based on request
- * 
- * @param req Express request
- * @returns Rate limiter type
- */
-function determineRateLimiterType(req: Request): 'auth' | 'admin' | 'security' | 'api' | 'public' | 'global' {
-  const path = req.path.toLowerCase();
-  
-  // Auth endpoints
-  if (
-    path.includes('/auth') || 
-    path.includes('/login') || 
-    path.includes('/logout') || 
-    path.includes('/register') || 
-    path.includes('/reset-password')
-  ) {
-    return 'auth';
+    
+    return false;
   }
   
-  // Admin endpoints
-  if (path.includes('/admin')) {
-    return 'admin';
+  /**
+   * Check if IP is whitelisted
+   * 
+   * @param ip IP address
+   * @returns Whether whitelisted
+   */
+  private isIpWhitelisted(ip: string): boolean {
+    return this.config.whitelistedIps.includes(ip);
   }
   
-  // Security endpoints
-  if (path.includes('/security')) {
-    return 'security';
+  /**
+   * Determine rate limiting scope
+   * 
+   * @param req Express request
+   * @returns Rate limit scope
+   */
+  private determineScope(req: Request): RateLimitScope {
+    const path = req.path.toLowerCase();
+    
+    // Auth endpoints
+    if (
+      path.includes('/auth') ||
+      path.includes('/login') ||
+      path.includes('/logout') ||
+      path.includes('/register') ||
+      path.includes('/reset-password')
+    ) {
+      return 'auth';
+    }
+    
+    // Admin endpoints
+    if (path.includes('/admin')) {
+      return 'admin';
+    }
+    
+    // Security endpoints
+    if (path.includes('/security')) {
+      return 'security';
+    }
+    
+    // API endpoints (exclude auth and admin which are already handled)
+    if (
+      path.includes('/api') &&
+      !path.includes('/api/auth') &&
+      !path.includes('/api/admin') &&
+      !path.includes('/api/security')
+    ) {
+      return 'api';
+    }
+    
+    // Public endpoints
+    if (
+      path === '/' ||
+      path.includes('/public') ||
+      path.includes('/static') ||
+      path.includes('/assets') ||
+      path.endsWith('.js') ||
+      path.endsWith('.css') ||
+      path.endsWith('.png') ||
+      path.endsWith('.jpg') ||
+      path.endsWith('.svg') ||
+      path.endsWith('.ico')
+    ) {
+      return 'public';
+    }
+    
+    // Default to global
+    return 'global';
   }
   
-  // API endpoints (exclude auth and admin which are already handled)
-  if (
-    path.includes('/api') && 
-    !path.includes('/api/auth') && 
-    !path.includes('/api/admin')
-  ) {
-    return 'api';
+  /**
+   * Get bucket key
+   * 
+   * @param context Rate limit context
+   * @returns Bucket key
+   */
+  private getBucketKey(context: RateLimitContext): string {
+    // If authenticated, use user ID
+    if (context.authenticated && context.userId) {
+      return `user:${context.userId}`;
+    }
+    
+    // For API requests with API key, use API key
+    if (context.apiKey) {
+      return `api:${context.apiKey}`;
+    }
+    
+    // Otherwise, use IP
+    return `ip:${context.ip}`;
   }
   
-  // Public endpoints
-  if (
-    path === '/' || 
-    path.includes('/public') || 
-    path.includes('/static') || 
-    path.includes('/assets') ||
-    path.endsWith('.js') ||
-    path.endsWith('.css') ||
-    path.endsWith('.png') ||
-    path.endsWith('.jpg') ||
-    path.endsWith('.svg') ||
-    path.endsWith('.ico')
-  ) {
-    return 'public';
+  /**
+   * Send rate limit response
+   * 
+   * @param req Express request
+   * @param res Express response
+   * @param analysis Rate limit analysis
+   * @returns Response
+   */
+  private sendRateLimitResponse(
+    req: Request,
+    res: Response,
+    analysis: RateLimitAnalysisResult
+  ): Response {
+    // Set retry after header
+    if (analysis.retryAfter) {
+      res.setHeader('Retry-After', String(Math.ceil(analysis.retryAfter / 1000)));
+    }
+    
+    // For API requests, send JSON
+    if (req.path.includes('/api') || req.headers.accept?.includes('application/json')) {
+      return res.status(429).json({
+        error: 'Too Many Requests',
+        message: analysis.message,
+        retryAfter: analysis.retryAfter ? Math.ceil(analysis.retryAfter / 1000) : 60,
+        retryAt: new Date(Date.now() + (analysis.retryAfter || 60000)).toISOString()
+      });
+    }
+    
+    // For other requests, send HTML
+    return res.status(429).send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Rate Limited</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333; max-width: 650px; margin: 0 auto; padding: 2rem; }
+            h1 { color: #e53e3e; margin-top: 0; }
+            .card { background: #f8f9fa; border-left: 4px solid #e53e3e; padding: 1rem 1.5rem; border-radius: 4px; margin-bottom: 1.5rem; }
+            code { background: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 2px; font-size: 0.9em; }
+          </style>
+          <meta http-equiv="refresh" content="${Math.max(5, Math.ceil((analysis.retryAfter || 60000) / 1000))}">
+        </head>
+        <body>
+          <h1>Rate Limit Exceeded</h1>
+          <div class="card">
+            <p>You have made too many requests in a short period of time.</p>
+            <p>Please wait <strong>${Math.ceil((analysis.retryAfter || 60000) / 1000)} seconds</strong> before trying again.</p>
+          </div>
+          <p>This page will automatically refresh when you can try again.</p>
+          <p><small>Reference ID: ${req.ip} • ${new Date().toISOString()}</small></p>
+        </body>
+      </html>
+    `);
   }
   
-  // Default to global
-  return 'global';
-}
-
-/**
- * Get bucket key
- * 
- * @param req Express request
- * @param context Rate limit context
- * @returns Bucket key
- */
-function getBucketKey(req: Request, context: any): string {
-  // If authenticated, use user ID
-  if (context.authenticated && context.userId) {
-    return `user:${context.userId}`;
+  /**
+   * Generate a report of rate limiting activity
+   * 
+   * @returns Rate limiting report
+   */
+  public generateReport(): any {
+    return this.analytics.generateReport();
   }
   
-  // For API requests with API key, use API key
-  if (context.apiKey) {
-    return `api:${context.apiKey}`;
+  /**
+   * Get adaptive adjustment metrics
+   * 
+   * @returns Adaptive metrics
+   */
+  public getAdaptiveAdjustmentMetrics(): any {
+    return {
+      timestamp: new Date().toISOString(),
+      metrics: {
+        // Add any adaptive metrics here
+      }
+    };
   }
   
-  // Otherwise, use IP
-  return `ip:${context.ip}`;
-}
-
-/**
- * Should skip rate limiting for this path?
- * 
- * @param path Request path
- * @returns Whether to skip
- */
-function shouldSkipRateLimiting(path: string): boolean {
-  // Skip health check and certain static assets
-  return (
-    path === '/health' ||
-    path === '/ping' ||
-    path === '/favicon.ico' ||
-    path.endsWith('.jpg') ||
-    path.endsWith('.png') ||
-    path.endsWith('.gif') ||
-    path.endsWith('.svg') ||
-    path.endsWith('.webp') ||
-    path.endsWith('.woff') ||
-    path.endsWith('.woff2') ||
-    path.endsWith('.ttf') ||
-    path.endsWith('.eot')
-  );
-}
-
-/**
- * Send rate limit response
- * 
- * @param req Express request
- * @param res Express response
- * @param retryAfter Retry after time
- * @returns Response
- */
-function sendRateLimitResponse(req: Request, res: Response, retryAfter: number): Response {
-  // For API requests, send JSON
-  if (req.path.includes('/api') || req.headers.accept?.includes('application/json')) {
-    return res.status(429).json({
-      error: 'Too Many Requests',
-      message: `Rate limit exceeded. Please try again in ${Math.ceil(retryAfter / 1000)} seconds.`,
-      retryAfter: Math.ceil(retryAfter / 1000)
+  /**
+   * Blacklist an IP address
+   * 
+   * @param ip IP address
+   */
+  public blacklistIp(ip: string): void {
+    this.contextBuilder.blacklistIp(ip);
+    this.config.blacklistedIps.push(ip);
+    
+    log(`Blacklisted IP: ${ip}`, 'security');
+  }
+  
+  /**
+   * Whitelist an IP address
+   * 
+   * @param ip IP address
+   */
+  public whitelistIp(ip: string): void {
+    this.contextBuilder.whitelistIp(ip);
+    
+    // Remove from blacklist if present
+    const blacklistIndex = this.config.blacklistedIps.indexOf(ip);
+    if (blacklistIndex >= 0) {
+      this.config.blacklistedIps.splice(blacklistIndex, 1);
+    }
+    
+    // Add to whitelist if not present
+    if (!this.config.whitelistedIps.includes(ip)) {
+      this.config.whitelistedIps.push(ip);
+    }
+    
+    log(`Whitelisted IP: ${ip}`, 'security');
+  }
+  
+  /**
+   * Reset rate limits for a key
+   * 
+   * @param key Bucket key
+   */
+  public resetLimits(key: string): void {
+    // Reset in all limiters
+    Object.values(this.rateLimiters).forEach(limiter => {
+      limiter.reset(key);
     });
+    
+    log(`Reset rate limits for: ${key}`, 'security');
   }
-  
-  // For other requests, send HTML
-  return res.status(429).send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Too Many Requests</title>
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333; max-width: 650px; margin: 0 auto; padding: 2rem; }
-          h1 { color: #e53e3e; margin-top: 0; }
-          .card { background: #f8f9fa; border-left: 4px solid #e53e3e; padding: 1rem 1.5rem; border-radius: 4px; margin-bottom: 1.5rem; }
-          code { background: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 2px; font-size: 0.9em; }
-        </style>
-        <meta http-equiv="refresh" content="${Math.max(5, Math.ceil(retryAfter / 1000))}">
-      </head>
-      <body>
-        <h1>Too Many Requests</h1>
-        <div class="card">
-          <p>You have sent too many requests in a short period of time.</p>
-          <p>Please wait <strong>${Math.ceil(retryAfter / 1000)} seconds</strong> before trying again.</p>
-        </div>
-        <p>This page will automatically refresh when you can try again.</p>
-        <p><small>Reference: ${req.ip} • ${new Date().toISOString()}</small></p>
-      </body>
-    </html>
-  `);
 }
 
-/**
- * Get the rate limiting system components (for advanced usage)
- * 
- * @returns System components
- */
-export function getRateLimitingComponents() {
-  return {
-    contextBuilder,
-    analytics,
-    adaptiveRateLimiter,
-    rateLimiters
-  };
-}
+// Export singleton instance for use in the application
+export const rateLimitingSystem = new RateLimitingSystem();
