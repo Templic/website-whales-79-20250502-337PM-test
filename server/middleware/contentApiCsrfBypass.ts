@@ -26,10 +26,27 @@ function needsCsrfExemption(path: string): boolean {
   const exemptPaths = [
     '/service-worker.js',
     '/manifest.json',
-    '/sw.js'
+    '/sw.js',
+    '/taskade-embed'
   ];
   
-  return exemptPaths.includes(path);
+  const exemptPathPrefixes = [
+    '/taskade-'
+  ];
+  
+  // Check exact path matches
+  if (exemptPaths.includes(path)) {
+    return true;
+  }
+  
+  // Check path prefixes
+  for (const prefix of exemptPathPrefixes) {
+    if (path.startsWith(prefix)) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 /**

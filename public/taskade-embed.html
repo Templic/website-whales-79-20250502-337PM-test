@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; frame-src *; connect-src *">
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="unsafe-none">
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none">
+    <meta http-equiv="Cross-Origin-Resource-Policy" content="cross-origin">
     <title>Taskade Embedded View</title>
     <style>
         html, body {
@@ -65,10 +69,11 @@
         </div>
         <iframe 
             id="taskadeFrame"
-            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads"
+            allow="clipboard-read; clipboard-write; fullscreen"
             allowfullscreen
             referrerpolicy="origin"
-            loading="lazy">
+            loading="lazy"
+            crossorigin="anonymous">
         </iframe>
     </div>
 

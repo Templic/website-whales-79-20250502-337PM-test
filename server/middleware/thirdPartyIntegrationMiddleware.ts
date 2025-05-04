@@ -18,7 +18,9 @@ function isThirdPartyIntegration(path: string): boolean {
          path.includes('/api/taskade/') ||
          path.includes('/api/youtube/') ||
          path.includes('/api/maps/') ||
-         path.includes('/api/openai/');
+         path.includes('/api/openai/') ||
+         path.includes('/taskade-embed') ||
+         path.startsWith('/taskade-');
 }
 
 /**
@@ -27,7 +29,9 @@ function isThirdPartyIntegration(path: string): boolean {
 function isTaskadeIntegration(path: string): boolean {
   return path.includes('/taskade/') || 
          path.includes('/api/taskade/') ||
-         path.includes('taskade.com');
+         path.includes('taskade.com') ||
+         path.includes('/taskade-embed') ||
+         path.startsWith('/taskade-');
 }
 
 /**

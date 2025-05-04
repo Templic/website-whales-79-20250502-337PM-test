@@ -425,6 +425,21 @@ async function initializeServer() {
     
     // Add a dedicated route for Taskade embedding
     app.get('/taskade-embed', (req, res) => {
+      // Mark this request to skip CSRF
+      (req as any).__skipCSRF = true;
+      
+      // Remove all security headers that might prevent iframe embedding
+      res.removeHeader('X-Frame-Options');
+      res.removeHeader('Content-Security-Policy');
+      
+      // Set permissive headers for cross-origin embedding
+      res.setHeader('Content-Security-Policy', "frame-ancestors *;");
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+      res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      
+      // Send the HTML file
       res.sendFile('taskade-embed.html', { root: './public' });
     });
     
