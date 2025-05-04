@@ -27,6 +27,10 @@ import { securityConfig } from './security/advanced/config/SecurityConfig';
 import { rateLimitTestRouter } from './routes/rate-limit-test.routes';
 import { rateLimitTestBypassRouter } from './routes/rate-limit-test-bypass.routes';
 import { thirdPartyIntegrationMiddleware, taskadeIntegrationMiddleware } from './middleware/thirdPartyIntegrationMiddleware';
+import { contentApiCsrfBypass } from './middleware/contentApiCsrfBypass';
+import { validationApiCsrfBypass } from './middleware/validationApiCsrfBypass';
+import { noCSRF } from './security/middleware/noCSRF';
+import noCsrfRoutes from './routes/no-csrf-routes';
 
 // The isAuthenticated, isAdmin, and isSuperAdmin middleware are now imported from auth-utils.ts
 import { nanoid } from 'nanoid';
