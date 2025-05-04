@@ -62,9 +62,19 @@ export function setupCSRFProtection(app: Express): void {
       '/api/metrics',
       '/api/test/csrf-exempt',
       '/api/webhook',
-      // Exempting the homepage from CSRF to ensure it always loads
+      // Exempting the Dale Loves Whales Flask app routes from CSRF protection
       '/',
-      '/index.html'
+      '/index.html',
+      '/about',
+      '/new-music',
+      '/archived-music',
+      '/tour',
+      '/engage',
+      '/newsletter',
+      '/blog',
+      '/collaboration',
+      '/contact',
+      '/test'
     ],
     cookie: {
       key: 'csrf-token',
@@ -185,11 +195,24 @@ export function setupCSRFProtection(app: Express): void {
         });
       }
       
-      // For homepage requests that fail CSRF, try to recover gracefully
-      // This ensures the user can always access the homepage
-      if (req.path === '/' || req.path === '/index.html') {
-        console.log('[Security] Allowing homepage access despite CSRF error');
-        // Set a fresh CSRF token to recover
+      // For Flask app routes that fail CSRF, always allow access
+      // This ensures the Dale Loves Whales app functions normally
+      if (
+        req.path === '/' || 
+        req.path === '/index.html' || 
+        req.path === '/about' || 
+        req.path === '/new-music' || 
+        req.path === '/archived-music' || 
+        req.path === '/tour' || 
+        req.path === '/engage' || 
+        req.path === '/newsletter' || 
+        req.path === '/blog' || 
+        req.path === '/collaboration' || 
+        req.path === '/contact' || 
+        req.path === '/test'
+      ) {
+        console.log('[Security] Allowing Flask app access despite CSRF error for path:', req.path);
+        // Set a fresh CSRF token to recover and allow the request to proceed
         CSRFTokenSetter(req, res, () => {
           return next();
         });
