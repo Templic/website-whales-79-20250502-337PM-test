@@ -188,18 +188,10 @@ async function initializeServer() {
 
   try {
     // === STAGE 1: Essential Services ===
-    // Start Flask app (before anything else)
-    log('Starting Flask app...', 'server');
-    try {
-      await startFlaskApp();
-      log('Flask app started successfully', 'server');
-    } catch (flaskError) {
-      log(`Error starting Flask app: ${flaskError}`, 'server');
-      console.error('Flask app error:', flaskError);
-    }
+    // Flask app has been deprecated - React frontend now handles these routes
+    log('Flask app is deprecated - using React routes instead', 'server');
     
-    // Set up Flask proxy before other middleware
-    setupFlaskProxy(app);
+    // No longer need Flask proxy as those routes are now handled by React
     
     // Connect to database (critical)
     const dbStartTime = Date.now();

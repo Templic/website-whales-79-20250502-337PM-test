@@ -1,6 +1,6 @@
 # Application Architecture
 
-This document provides an overview of the application architecture, including the frontend, backend, and database components.
+This document provides an overview of the application architecture, including the frontend, backend, and database components. The architecture has been updated to remove the Flask dependency, with all routes now handled by the React frontend and Express backend.
 
 ## Architecture Overview
 
