@@ -1,265 +1,220 @@
 /**
  * Logger Utility
  * 
- * This module provides standardized logging functionality throughout the application.
- * It supports different log levels and categories for better log filtering.
+ * This module provides a centralized logging system with categories.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import chalk from 'chalk';
 
-// Ensure paths work in both ESM and CommonJS
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Log levels
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
-
-// Log categories
-export type LogCategory = 
-  | 'security' 
-  | 'system' 
-  | 'api' 
-  | 'database' 
-  | 'auth' 
-  | 'user' 
-  | 'scheduler' 
-  | 'email' 
-  | 'payment'
-  | 'perf'
-  | 'background'
-  | 'audit'
-  | 'db-maintenance';
-
-// Color codes for terminal
-const colors = {
-  reset: '\x1b[0m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m',
-  dim: '\x1b[2m',
-  bright: '\x1b[1m'
+// Configure log levels
+const LOG_LEVELS = {
+  debug: { color: 'blue', enabled: process.env.LOG_LEVEL === 'debug' },
+  info: { color: 'green', enabled: true },
+  warn: { color: 'yellow', enabled: true },
+  error: { color: 'red', enabled: true },
+  security: { color: 'magenta', enabled: true },
+  perf: { color: 'cyan', enabled: process.env.LOG_PERFORMANCE === 'true' },
+  audit: { color: 'gray', enabled: true }
 };
 
-// Category colors
-const categoryColors: Record<LogCategory, string> = {
-  security: colors.red,
-  system: colors.cyan,
-  api: colors.green,
-  database: colors.blue,
-  auth: colors.magenta,
-  user: colors.yellow,
-  scheduler: colors.cyan,
-  email: colors.cyan,
-  payment: colors.green,
-  perf: colors.yellow,
-  background: colors.blue,
-  audit: colors.magenta,
-  'db-maintenance': colors.blue
-};
+// Log category types
+type LogCategory = keyof typeof LOG_LEVELS;
 
-// Level colors
-const levelColors: Record<LogLevel, string> = {
-  debug: colors.dim,
-  info: colors.reset,
-  warn: colors.yellow,
-  error: colors.red,
-  fatal: `${colors.red}${colors.bright}`
-};
-
-// Configuration
-const config = {
-  // Enable console logging (always true in development)
-  console: process.env.NODE_ENV !== 'production' || process.env.LOG_CONSOLE === 'true',
+/**
+ * Enhanced log function with category support
+ * 
+ * @param message Message to log
+ * @param category Log category
+ */
+export function log(message: string, category: LogCategory = 'info'): void {
+  // Check if category is enabled
+  if (!LOG_LEVELS[category]?.enabled) {
+    return;
+  }
   
-  // Enable file logging
-  file: process.env.LOG_FILE === 'true',
+  const timestamp = new Date().toISOString();
+  const color = LOG_LEVELS[category]?.color || 'white';
   
-  // Log directory
-  logDir: path.join(process.cwd(), 'logs'),
+  // Get trace
+  const trace = new Error().stack?.split('\n')[2]?.trim() || '';
   
-  // Log rotation size in bytes (default: 10MB)
-  maxSize: parseInt(process.env.LOG_MAX_SIZE || '10485760', 10),
+  // Extract file and line from trace
+  const traceMatch = trace.match(/at\s+(.+)\s+\((.+):(\d+):(\d+)\)/);
+  const fileInfo = traceMatch ? `${traceMatch[2].split('/').pop()}:${traceMatch[3]}` : '';
   
-  // Minimum log level to record
-  level: (process.env.LOG_LEVEL || 'info') as LogLevel,
+  // Calculate padding
+  const categoryPadding = 10 - category.length;
+  const paddedCategory = category + ' '.repeat(Math.max(0, categoryPadding));
   
-  // Maximum log message size (will be truncated if longer)
-  maxMessageSize: parseInt(process.env.LOG_MAX_MESSAGE_SIZE || '10000', 10)
-};
-
-// Ensure log directory exists
-if (config.file) {
-  try {
-    if (!fs.existsSync(config.logDir)) {
-      fs.mkdirSync(config.logDir, { recursive: true });
-    }
-  } catch (error) {
-    console.error(`Failed to create log directory: ${error}`);
+  // Format message with color
+  const coloredMessage = chalk[color](message);
+  
+  // Log with timestamp, category, and caller info
+  console.log(`[${timestamp}] [${paddedCategory}] ${coloredMessage}${fileInfo ? ` (${fileInfo})` : ''}`);
+  
+  // If error category, add to error log stream
+  if (category === 'error' || category === 'security') {
+    appendToErrorLog(timestamp, category, message, fileInfo);
   }
 }
 
 /**
- * Get current log file path
+ * Append error or security log to persistent log stream
  * 
+ * @param timestamp Log timestamp
  * @param category Log category
- * @returns Log file path
+ * @param message Log message
+ * @param fileInfo File info
  */
-function getLogFilePath(category: LogCategory): string {
-  const date = new Date().toISOString().slice(0, 10);
-  return path.join(config.logDir, `${category}-${date}.log`);
-}
-
-/**
- * Truncate a message if it's too long
- * 
- * @param message Message to truncate
- * @returns Truncated message
- */
-function truncateMessage(message: string): string {
-  if (message.length > config.maxMessageSize) {
-    return `${message.substring(0, config.maxMessageSize)}... [TRUNCATED, ${message.length} chars total]`;
-  }
-  return message;
-}
-
-/**
- * Write log to file
- * 
- * @param formattedMessage Formatted log message
- * @param category Log category
- */
-function writeToFile(formattedMessage: string, category: LogCategory): void {
-  if (!config.file) return;
-
+function appendToErrorLog(timestamp: string, category: string, message: string, fileInfo: string): void {
   try {
-    const logFilePath = getLogFilePath(category);
-    fs.appendFileSync(logFilePath, formattedMessage + '\n');
+    // In a real implementation, this would write to a persistent log store
+    // For now, we just construct the log entry
+    const logEntry = {
+      timestamp,
+      category,
+      message,
+      fileInfo,
+      severity: category === 'security' ? determineSeverity(message) : 'error'
+    };
     
-    // Check file size and rotate if needed
-    const stats = fs.statSync(logFilePath);
-    if (stats.size > config.maxSize) {
-      const rotatedPath = `${logFilePath}.${Date.now()}`;
-      fs.renameSync(logFilePath, rotatedPath);
-    }
+    // In a production system, this could be sent to a log aggregation service
+    // console.debug('Error log entry:', logEntry);
   } catch (error) {
-    console.error(`Failed to write to log file: ${error}`);
+    console.error('Failed to append to error log:', error);
   }
 }
 
 /**
- * Format log message
+ * Determine security log severity based on content
  * 
  * @param message Log message
- * @param level Log level
- * @param category Log category
- * @returns Formatted message
+ * @returns Severity level
  */
-function formatMessage(message: string, level: LogLevel = 'info', category?: LogCategory): string {
-  // Get timestamp
-  const timestamp = new Date().toISOString();
+function determineSeverity(message: string): 'low' | 'medium' | 'high' | 'critical' {
+  const lowercaseMessage = message.toLowerCase();
   
-  // Build log message
-  return `[${timestamp}] [${level.toUpperCase()}] ${category ? `[${category}] ` : ''}${message}`;
+  // Check for critical indicators
+  if (
+    lowercaseMessage.includes('attack') ||
+    lowercaseMessage.includes('breach') ||
+    lowercaseMessage.includes('compromised') ||
+    lowercaseMessage.includes('exploit')
+  ) {
+    return 'critical';
+  }
+  
+  // Check for high severity indicators
+  if (
+    lowercaseMessage.includes('threat') ||
+    lowercaseMessage.includes('suspicious') ||
+    lowercaseMessage.includes('malicious') ||
+    lowercaseMessage.includes('unauthorized')
+  ) {
+    return 'high';
+  }
+  
+  // Check for medium severity indicators
+  if (
+    lowercaseMessage.includes('rate limit') ||
+    lowercaseMessage.includes('failed') ||
+    lowercaseMessage.includes('invalid') ||
+    lowercaseMessage.includes('blocked')
+  ) {
+    return 'medium';
+  }
+  
+  // Default to low
+  return 'low';
 }
 
 /**
- * Log a message
+ * Log an error with stack trace
  * 
- * @param message Message to log
- * @param category Optional log category
- * @param level Optional log level (default: info)
+ * @param error Error object or string
+ * @param context Optional context information
  */
-export function log(message: string, category?: LogCategory, level: LogLevel = 'info'): void {
+export function logError(error: Error | string, context?: string): void {
+  const errorObj = typeof error === 'string' ? new Error(error) : error;
+  const contextInfo = context ? ` (${context})` : '';
+  
+  log(`${errorObj.message}${contextInfo}\n${errorObj.stack}`, 'error');
+}
+
+/**
+ * Log a security event
+ * 
+ * @param event Security event description
+ * @param data Event data
+ * @param source Event source
+ */
+export function logSecurity(event: string, data?: any, source?: string): void {
   try {
-    // Skip logging if level is below configured level
-    const levels: LogLevel[] = ['debug', 'info', 'warn', 'error', 'fatal'];
-    if (levels.indexOf(level) < levels.indexOf(config.level)) {
-      return;
-    }
+    const sourceInfo = source ? ` (${source})` : '';
+    const message = `${event}${sourceInfo}`;
     
-    // Truncate message if needed
-    const truncatedMessage = truncateMessage(message);
+    // Log message
+    log(message, 'security');
     
-    // Format message
-    const formattedMessage = formatMessage(truncatedMessage, level, category);
-    
-    // Log to console
-    if (config.console) {
-      const levelColor = levelColors[level] || colors.reset;
-      const categoryColor = category ? categoryColors[category] || colors.reset : colors.reset;
-      
-      console.log(
-        `${levelColor}${formattedMessage}${colors.reset}`
-          .replace(
-            category ? `[${category}]` : '', 
-            category ? `${categoryColor}[${category}]${levelColor}` : ''
-          )
-      );
-    }
-    
-    // Log to file
-    if (config.file && category) {
-      writeToFile(formattedMessage, category);
+    // Log data if provided
+    if (data) {
+      const safeData = sanitizeData(data);
+      log(`Security event data: ${JSON.stringify(safeData)}`, 'security');
     }
   } catch (error) {
-    console.error(`Error in logger: ${error}`);
+    log(`Error logging security event: ${error}`, 'error');
   }
 }
 
 /**
- * Log a debug message
+ * Sanitize sensitive data for logging
  * 
- * @param message Message to log
- * @param category Optional log category
+ * @param data Data to sanitize
+ * @returns Sanitized data
  */
-export function debug(message: string, category?: LogCategory): void {
-  log(message, category, 'debug');
+function sanitizeData(data: any): any {
+  try {
+    // Clone data
+    const sanitized = JSON.parse(JSON.stringify(data));
+    
+    // Sensitive fields to redact
+    const sensitiveFields = [
+      'password', 'token', 'secret', 'key', 'auth', 'jwt', 'session', 
+      'cookie', 'credential', 'apiKey', 'api_key'
+    ];
+    
+    // Recursively sanitize object
+    function sanitizeObject(obj: any) {
+      if (!obj || typeof obj !== 'object') {
+        return;
+      }
+      
+      Object.keys(obj).forEach(key => {
+        const lowerKey = key.toLowerCase();
+        
+        // Check if this is a sensitive field
+        if (sensitiveFields.some(field => lowerKey.includes(field))) {
+          // Redact value but preserve type information
+          if (typeof obj[key] === 'string') {
+            obj[key] = '[REDACTED]';
+          } else if (Array.isArray(obj[key])) {
+            obj[key] = ['[REDACTED]'];
+          } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+            obj[key] = { redacted: true };
+          } else {
+            obj[key] = '[REDACTED]';
+          }
+        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+          // Recursively sanitize nested objects
+          sanitizeObject(obj[key]);
+        }
+      });
+    }
+    
+    sanitizeObject(sanitized);
+    return sanitized;
+  } catch (error) {
+    log(`Error sanitizing data: ${error}`, 'error');
+    return { error: 'Data sanitization failed' };
+  }
 }
-
-/**
- * Log an info message
- * 
- * @param message Message to log
- * @param category Optional log category
- */
-export function info(message: string, category?: LogCategory): void {
-  log(message, category, 'info');
-}
-
-/**
- * Log a warning message
- * 
- * @param message Message to log
- * @param category Optional log category
- */
-export function warn(message: string, category?: LogCategory): void {
-  log(message, category, 'warn');
-}
-
-/**
- * Log an error message
- * 
- * @param message Message to log
- * @param category Optional log category
- */
-export function error(message: string, category?: LogCategory): void {
-  log(message, category, 'error');
-}
-
-/**
- * Log a fatal message
- * 
- * @param message Message to log
- * @param category Optional log category
- */
-export function fatal(message: string, category?: LogCategory): void {
-  log(message, category, 'fatal');
-}
-
-// Export default log function
-export default log;

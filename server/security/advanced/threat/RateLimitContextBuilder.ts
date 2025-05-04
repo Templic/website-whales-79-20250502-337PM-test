@@ -1,28 +1,67 @@
 /**
  * Rate Limit Context Builder
  *
- * This module builds context objects for rate limiting decisions.
- * It extracts information from requests to make informed decisions.
+ * This module builds context information for rate limiting decisions.
+ * It helps make context-aware rate limiting decisions.
  */
 
 import { Request } from 'express';
 import { log } from '../../../utils/logger';
-import { getClientIp, getIpSubnet } from '../../../utils/ip-utils';
+import { getClientIp, getIpSubnet, isPrivateIp } from '../../../utils/ip-utils';
 import { threatDetectionService } from './ThreatDetectionService';
+
+/**
+ * Configuration for context builder
+ */
+export interface RateLimitContextBuilderConfig {
+  /**
+   * List of whitelisted IPs (skips rate limiting)
+   */
+  whitelistedIps?: string[];
+  
+  /**
+   * List of blacklisted IPs (more restrictive rate limiting)
+   */
+  blacklistedIps?: string[];
+  
+  /**
+   * List of known good bot user agents
+   */
+  goodBots?: RegExp[];
+  
+  /**
+   * List of known bad bot user agents
+   */
+  badBots?: RegExp[];
+  
+  /**
+   * Request cost multipliers for HTTP methods
+   */
+  methodCosts?: Record<string, number>;
+  
+  /**
+   * Request paths that are more resource-intensive
+   */
+  resourceIntensivePaths?: Array<{
+    pattern: RegExp;
+    cost: number;
+    sensitivity: number;
+  }>;
+}
 
 /**
  * Rate limit context
  */
 export interface RateLimitContext {
   /**
-   * IP address of the client
+   * Client IP address
    */
   ip: string;
   
   /**
-   * IP subnet (for rate limiting by network)
+   * IP subnet
    */
-  subnet: string;
+  ipSubnet: string;
   
   /**
    * User ID (if authenticated)
@@ -30,275 +69,261 @@ export interface RateLimitContext {
   userId?: string | number;
   
   /**
-   * User role (if authenticated)
-   */
-  role?: string;
-  
-  /**
-   * User role weight (lower = more privileged)
-   */
-  roleWeight: number;
-  
-  /**
-   * Session ID (if available)
-   */
-  sessionId?: string;
-  
-  /**
-   * Unique identifier for this client
-   */
-  identifier: string;
-  
-  /**
    * Whether the user is authenticated
    */
   authenticated: boolean;
   
   /**
-   * User agent from request
+   * User role (if available)
    */
-  userAgent?: string;
+  role?: string;
   
   /**
-   * Resource type being accessed
+   * Role weight (lower = more privileged)
+   */
+  roleWeight: number;
+  
+  /**
+   * Resource type identifier
    */
   resourceType: string;
   
   /**
-   * Resource sensitivity (1-5)
+   * Resource sensitivity (1-5, higher = more sensitive)
    */
   resourceSensitivity: number;
   
   /**
-   * Method cost multiplier (GET=1, POST=2, etc.)
-   */
-  methodCost: number;
-  
-  /**
-   * Content size cost factor
-   */
-  contentSizeFactor: number;
-  
-  /**
-   * Whether the IP is blacklisted
-   */
-  isBlacklisted: boolean;
-  
-  /**
-   * Whether the request is from a known good bot
-   */
-  isGoodBot: boolean;
-  
-  /**
-   * Whether the request is from a known bad bot
-   */
-  isBadBot: boolean;
-  
-  /**
-   * Request path
-   */
-  path: string;
-  
-  /**
-   * Request method
-   */
-  method: string;
-  
-  /**
-   * Threat level (0-1)
-   */
-  threatLevel: number;
-  
-  /**
-   * API key (if applicable)
+   * API key (if available)
    */
   apiKey?: string;
   
   /**
-   * Additional metadata
+   * User agent string
    */
-  metadata: Record<string, any>;
+  userAgent?: string;
+  
+  /**
+   * Whether user agent is a known good bot
+   */
+  isGoodBot: boolean;
+  
+  /**
+   * Whether user agent is a known bad bot
+   */
+  isBadBot: boolean;
+  
+  /**
+   * Whether IP is whitelisted
+   */
+  isWhitelisted: boolean;
+  
+  /**
+   * Whether IP is blacklisted
+   */
+  isBlacklisted: boolean;
+  
+  /**
+   * Threat level (0-1, higher = more threatening)
+   */
+  threatLevel: number;
+  
+  /**
+   * Unique identifier for this context
+   */
+  identifier: string;
+  
+  /**
+   * Any custom attributes
+   */
+  attributes: Record<string, any>;
 }
 
 /**
- * Configuration for the context builder
+ * Role weight mapping
  */
-export interface RateLimitContextBuilderConfig {
-  /**
-   * Whitelisted IPs (no rate limiting)
-   */
-  whitelistedIps?: string[];
-  
-  /**
-   * Blacklisted IPs (always rate limited)
-   */
-  blacklistedIps?: string[];
-  
-  /**
-   * Good bot user agent patterns
-   */
-  goodBots?: string[];
-  
-  /**
-   * Bad bot user agent patterns
-   */
-  badBots?: string[];
-  
-  /**
-   * Resource types and their sensitivity (1-5)
-   */
-  resourceTypes?: Record<string, number>;
-}
+const ROLE_WEIGHTS: Record<string, number> = {
+  'admin': 1,
+  'superuser': 1,
+  'staff': 3,
+  'moderator': 4,
+  'premium': 6,
+  'subscriber': 7,
+  'user': 8,
+  'guest': 10
+};
 
 /**
- * Builds rate limit contexts from requests
+ * Default method costs
+ */
+const DEFAULT_METHOD_COSTS: Record<string, number> = {
+  'GET': 1,
+  'HEAD': 0.5,
+  'OPTIONS': 0.5,
+  'POST': 2,
+  'PUT': 2,
+  'PATCH': 1.5,
+  'DELETE': 3
+};
+
+/**
+ * Default resource-intensive paths
+ */
+const DEFAULT_RESOURCE_INTENSIVE_PATHS: Array<{
+  pattern: RegExp;
+  cost: number; 
+  sensitivity: number;
+}> = [
+  { pattern: /\/api\/search/, cost: 3, sensitivity: 3 },
+  { pattern: /\/api\/report/, cost: 5, sensitivity: 3 },
+  { pattern: /\/api\/admin/, cost: 3, sensitivity: 5 },
+  { pattern: /\/api\/security/, cost: 2, sensitivity: 5 },
+  { pattern: /\/api\/auth/, cost: 2, sensitivity: 5 },
+  { pattern: /\/api\/upload/, cost: 4, sensitivity: 4 },
+  { pattern: /\/api\/download/, cost: 3, sensitivity: 2 },
+  { pattern: /\/api\/batch/, cost: 5, sensitivity: 3 }
+];
+
+/**
+ * Good bots user agent patterns
+ */
+const GOOD_BOTS: RegExp[] = [
+  /Googlebot/i,
+  /Bingbot/i,
+  /Slackbot/i,
+  /facebookexternalhit/i,
+  /Twitterbot/i,
+  /LinkedInBot/i,
+  /PinterestBot/i
+];
+
+/**
+ * Bad bots user agent patterns
+ */
+const BAD_BOTS: RegExp[] = [
+  /PetalBot/i,
+  /AhrefsBot/i,
+  /SemrushBot/i,
+  /MJ12bot/i,
+  /YandexBot/i,
+  /HeadlessChrome/i,
+  /PhantomJS/i,
+  /Bytespider/i
+];
+
+/**
+ * Builds context for rate limiting decisions
  */
 export class RateLimitContextBuilder {
-  private config: RateLimitContextBuilderConfig;
+  private whitelistedIps: Set<string>;
+  private blacklistedIps: Set<string>;
+  private goodBots: RegExp[];
+  private badBots: RegExp[];
+  private methodCosts: Record<string, number>;
+  private resourceIntensivePaths: Array<{
+    pattern: RegExp;
+    cost: number;
+    sensitivity: number;
+  }>;
   
   constructor(config: RateLimitContextBuilderConfig = {}) {
-    this.config = {
-      whitelistedIps: config.whitelistedIps || [],
-      blacklistedIps: config.blacklistedIps || [],
-      goodBots: config.goodBots || [
-        'googlebot',
-        'bingbot',
-        'yandexbot',
-        'slurp',
-        'duckduckbot',
-        'baiduspider',
-        'pingdom',
-        'uptimerobot'
-      ],
-      badBots: config.badBots || [
-        'spam',
-        'scrap',
-        'crawl',
-        'httrack',
-        'grabber',
-        'libwww',
-        'wget',
-        'python-requests'
-      ],
-      resourceTypes: config.resourceTypes || {
-        'auth': 5,      // Authentication endpoints
-        'admin': 5,     // Admin endpoints
-        'security': 5,  // Security endpoints
-        'user': 4,      // User data endpoints
-        'api': 3,       // General API endpoints
-        'static': 1,    // Static assets
-        'public': 1     // Public endpoints
-      }
-    };
+    // Initialize properties
+    this.whitelistedIps = new Set(config.whitelistedIps || []);
+    this.blacklistedIps = new Set(config.blacklistedIps || []);
+    this.goodBots = config.goodBots || GOOD_BOTS;
+    this.badBots = config.badBots || BAD_BOTS;
+    this.methodCosts = { ...DEFAULT_METHOD_COSTS, ...(config.methodCosts || {}) };
+    this.resourceIntensivePaths = config.resourceIntensivePaths || DEFAULT_RESOURCE_INTENSIVE_PATHS;
+    
+    // Add localhost and development IPs to whitelist
+    this.whitelistedIps.add('127.0.0.1');
+    this.whitelistedIps.add('::1');
+    this.whitelistedIps.add('localhost');
+    
+    log('Rate limit context builder initialized', 'security');
   }
   
   /**
-   * Build a rate limit context from a request
+   * Build context from request
    * 
    * @param req Express request
    * @returns Rate limit context
    */
   public buildContext(req: Request): RateLimitContext {
     try {
-      // Get IP address
+      // Get client IP
       const ip = getClientIp(req);
+      const ipSubnet = getIpSubnet(ip);
       
-      // Get IP subnet
-      const subnet = getIpSubnet(ip);
-      
-      // Get user ID from session
-      const userId = req.session?.userId;
-      
-      // Get session ID
-      const sessionId = req.session?.id;
+      // Check whitelisted and blacklisted
+      const isWhitelisted = this.isIpWhitelisted(ip);
+      const isBlacklisted = this.isIpBlacklisted(ip);
       
       // Get user agent
       const userAgent = req.headers['user-agent'] as string;
-      
-      // Check if authenticated
-      const authenticated = Boolean(userId);
-      
-      // Determine role and role weight
-      const role = req.session?.role || 'guest';
-      const roleWeight = this.getRoleWeight(role);
-      
-      // Get request path and method
-      const path = req.path;
-      const method = req.method;
-      
-      // Determine resource type
-      const resourceType = this.determineResourceType(path);
-      
-      // Get resource sensitivity
-      const resourceSensitivity = this.config.resourceTypes![resourceType] || 3;
-      
-      // Calculate method cost
-      const methodCost = this.getMethodCost(method);
-      
-      // Calculate content size factor
-      const contentSizeFactor = this.getContentSizeFactor(req);
-      
-      // Check if blacklisted
-      const isBlacklisted = this.config.blacklistedIps!.includes(ip);
       
       // Check if bot
       const isGoodBot = this.isGoodBot(userAgent);
       const isBadBot = this.isBadBot(userAgent);
       
+      // Get user info
+      const userId = req.session?.userId;
+      const authenticated = !!userId;
+      const role = req.session?.role || 'guest';
+      const roleWeight = this.getRoleWeight(role);
+      
+      // Get API key
+      const apiKey = this.extractApiKey(req);
+      
+      // Get resource info
+      const { resourceType, resourceSensitivity } = this.getResourceInfo(req);
+      
       // Get threat level
       const threatLevel = threatDetectionService.getThreatLevel(req, ip, userId);
       
-      // Get API key
-      const apiKey = (req.headers['x-api-key'] || req.query.api_key) as string;
+      // Create unique identifier for rate limiting
+      const identifier = this.generateIdentifier(req, ip, userId, apiKey);
       
-      // Create identifier
-      const identifier = userId ? `user:${userId}` : `ip:${ip}`;
-      
-      // Build context
-      return {
+      // Create context
+      const context: RateLimitContext = {
         ip,
-        subnet,
+        ipSubnet,
         userId,
+        authenticated,
         role,
         roleWeight,
-        sessionId,
-        identifier,
-        authenticated,
-        userAgent,
         resourceType,
         resourceSensitivity,
-        methodCost,
-        contentSizeFactor,
-        isBlacklisted,
+        apiKey,
+        userAgent,
         isGoodBot,
         isBadBot,
-        path,
-        method,
+        isWhitelisted,
+        isBlacklisted,
         threatLevel,
-        apiKey,
-        metadata: {}
+        identifier,
+        attributes: {}
       };
+      
+      return context;
     } catch (error) {
       log(`Error building rate limit context: ${error}`, 'security');
       
-      // Return a default context
+      // Return safe default context
       return {
-        ip: '0.0.0.0',
-        subnet: '0.0.0.0',
-        identifier: 'error',
+        ip: getClientIp(req),
+        ipSubnet: '',
         authenticated: false,
         roleWeight: 10,
-        resourceType: 'error',
+        resourceType: 'unknown',
         resourceSensitivity: 3,
-        methodCost: 1,
-        contentSizeFactor: 1,
-        isBlacklisted: false,
         isGoodBot: false,
         isBadBot: false,
-        path: '/',
-        method: 'GET',
+        isWhitelisted: false,
+        isBlacklisted: false,
         threatLevel: 0,
-        metadata: {}
+        identifier: req.ip || 'unknown',
+        attributes: {}
       };
     }
   }
@@ -308,45 +333,53 @@ export class RateLimitContextBuilder {
    * 
    * @param req Express request
    * @param context Rate limit context
-   * @returns Cost in tokens
+   * @returns Cost in tokens to consume
    */
   public calculateRequestCost(req: Request, context: RateLimitContext): number {
     try {
-      // Base cost is 1 token
-      let cost = 1;
+      // Start with base cost by method
+      const method = req.method.toUpperCase();
+      let cost = this.methodCosts[method] || 1;
       
-      // Adjust for method
-      cost *= context.methodCost;
+      // Check resource-intensive paths
+      for (const { pattern, cost: pathCost } of this.resourceIntensivePaths) {
+        if (pattern.test(req.path)) {
+          cost *= pathCost;
+          break;
+        }
+      }
       
-      // Adjust for resource sensitivity
-      cost *= Math.max(1, context.resourceSensitivity / 3);
+      // Adjust cost based on context
+      if (context.isBlacklisted) {
+        cost *= 2; // Blacklisted IPs have double cost
+      }
       
-      // Adjust for content size
-      cost *= context.contentSizeFactor;
+      if (context.isBadBot) {
+        cost *= 3; // Bad bots have triple cost
+      }
+      
+      if (context.isGoodBot) {
+        cost *= 0.5; // Good bots have half cost
+      }
+      
+      // Adjust for authentication status
+      if (context.authenticated) {
+        cost *= 0.8; // Authenticated users get a discount
+      }
       
       // Adjust for threat level
-      cost *= (1 + context.threatLevel * 2);
-      
-      // Reduce for authenticated users (except POST/PUT/DELETE)
-      if (context.authenticated && !['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
-        cost *= 0.8;
+      if (context.threatLevel > 0) {
+        const threatMultiplier = 1 + (context.threatLevel * 3);
+        cost *= threatMultiplier; // Higher threat = higher cost
       }
       
-      // Check for bulk operations
-      const bulkCount = this.getBulkCount(req);
-      if (bulkCount > 1) {
-        // Each bulk item adds 50% of base cost
-        cost += (bulkCount - 1) * (cost * 0.5);
+      // Adjust for role
+      if (context.roleWeight <= 3) {
+        cost *= 0.5; // Admins and staff get a discount
       }
       
-      // Check for search operations
-      if (req.query.q || req.query.search || req.query.filter) {
-        // Search operations are more expensive
-        cost *= 1.5;
-      }
-      
-      // Return the cost (minimum of 1)
-      return Math.max(1, Math.ceil(cost));
+      // Ensure minimum cost of 1
+      return Math.max(1, Math.round(cost));
     } catch (error) {
       log(`Error calculating request cost: ${error}`, 'security');
       
@@ -356,144 +389,27 @@ export class RateLimitContextBuilder {
   }
   
   /**
-   * Determine resource type from path
+   * Check if IP is whitelisted
    * 
-   * @param path Request path
-   * @returns Resource type
+   * @param ip IP address
+   * @returns Whether IP is whitelisted
    */
-  private determineResourceType(path: string): string {
-    // Auth endpoints
-    if (path.includes('/auth') || path.includes('/login') || path.includes('/logout') || path.includes('/register')) {
-      return 'auth';
-    }
-    
-    // Admin endpoints
-    if (path.includes('/admin')) {
-      return 'admin';
-    }
-    
-    // Security endpoints
-    if (path.includes('/security')) {
-      return 'security';
-    }
-    
-    // User endpoints
-    if (path.includes('/user') || path.includes('/profile') || path.includes('/account')) {
-      return 'user';
-    }
-    
-    // Static assets
-    if (
-      path.includes('/static') || 
-      path.includes('/assets') ||
-      path.includes('/css') ||
-      path.includes('/js') ||
-      path.includes('/img') ||
-      path.includes('/fonts') ||
-      path.endsWith('.js') ||
-      path.endsWith('.css') ||
-      path.endsWith('.png') ||
-      path.endsWith('.jpg') ||
-      path.endsWith('.svg') ||
-      path.endsWith('.ico')
-    ) {
-      return 'static';
-    }
-    
-    // API endpoints
-    if (path.includes('/api')) {
-      return 'api';
-    }
-    
-    // Default to public
-    return 'public';
+  private isIpWhitelisted(ip: string): boolean {
+    return this.whitelistedIps.has(ip) || isPrivateIp(ip);
   }
   
   /**
-   * Get method cost
+   * Check if IP is blacklisted
    * 
-   * @param method HTTP method
-   * @returns Cost multiplier
+   * @param ip IP address
+   * @returns Whether IP is blacklisted
    */
-  private getMethodCost(method: string): number {
-    switch (method.toUpperCase()) {
-      case 'GET':
-        return 1.0;
-      case 'HEAD':
-        return 0.5;
-      case 'OPTIONS':
-        return 0.5;
-      case 'POST':
-        return 2.0;
-      case 'PUT':
-        return 2.0;
-      case 'PATCH':
-        return 1.5;
-      case 'DELETE':
-        return 3.0;
-      default:
-        return 1.0;
-    }
+  private isIpBlacklisted(ip: string): boolean {
+    return this.blacklistedIps.has(ip);
   }
   
   /**
-   * Get content size factor
-   * 
-   * @param req Express request
-   * @returns Size factor
-   */
-  private getContentSizeFactor(req: Request): number {
-    try {
-      // Get content size
-      const contentLength = parseInt(req.headers['content-length'] as string, 10) || 0;
-      
-      // Calculate factor
-      if (contentLength === 0) {
-        return 1.0;
-      } else if (contentLength < 1024) {
-        return 1.0;
-      } else if (contentLength < 10 * 1024) {
-        return 1.2;
-      } else if (contentLength < 100 * 1024) {
-        return 1.5;
-      } else if (contentLength < 1024 * 1024) {
-        return 2.0;
-      } else {
-        return 3.0;
-      }
-    } catch (error) {
-      log(`Error calculating content size factor: ${error}`, 'security');
-      
-      return 1.0;
-    }
-  }
-  
-  /**
-   * Get role weight
-   * 
-   * @param role User role
-   * @returns Role weight (lower = more privileged)
-   */
-  private getRoleWeight(role: string): number {
-    switch (role.toLowerCase()) {
-      case 'admin':
-        return 1;
-      case 'moderator':
-        return 3;
-      case 'staff':
-        return 5;
-      case 'premium':
-        return 7;
-      case 'user':
-        return 8;
-      case 'guest':
-      default:
-        return 10;
-    }
-  }
-  
-  /**
-   * Check if request is from a good bot
+   * Check if user agent is a good bot
    * 
    * @param userAgent User agent string
    * @returns Whether it's a good bot
@@ -503,58 +419,210 @@ export class RateLimitContextBuilder {
       return false;
     }
     
-    const lowercaseUserAgent = userAgent.toLowerCase();
-    
-    return this.config.goodBots!.some(bot => lowercaseUserAgent.includes(bot));
+    return this.goodBots.some(pattern => pattern.test(userAgent));
   }
   
   /**
-   * Check if request is from a bad bot
+   * Check if user agent is a bad bot
    * 
    * @param userAgent User agent string
    * @returns Whether it's a bad bot
    */
   private isBadBot(userAgent?: string): boolean {
     if (!userAgent) {
-      return false;
+      return true; // Missing user agent is suspicious
     }
     
-    const lowercaseUserAgent = userAgent.toLowerCase();
-    
-    return this.config.badBots!.some(bot => lowercaseUserAgent.includes(bot));
+    return this.badBots.some(pattern => pattern.test(userAgent));
   }
   
   /**
-   * Get number of bulk items in request
+   * Get role weight (lower = more privileged)
+   * 
+   * @param role User role
+   * @returns Role weight
+   */
+  private getRoleWeight(role: string): number {
+    const lowercaseRole = role.toLowerCase();
+    
+    return ROLE_WEIGHTS[lowercaseRole] || 10;
+  }
+  
+  /**
+   * Extract API key from request
    * 
    * @param req Express request
-   * @returns Number of bulk items
+   * @returns API key or undefined
    */
-  private getBulkCount(req: Request): number {
-    try {
-      // Check for bulk operations in request body
-      if (req.body) {
-        // Check for arrays in common fields
-        const fields = ['items', 'data', 'records', 'entities', 'objects', 'documents'];
+  private extractApiKey(req: Request): string | undefined {
+    // Check authorization header
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return authHeader.substring(7);
+    }
+    
+    // Check query param
+    if (req.query.api_key) {
+      return String(req.query.api_key);
+    }
+    
+    // Check other common names
+    if (req.query.apikey) {
+      return String(req.query.apikey);
+    }
+    
+    if (req.query.key) {
+      return String(req.query.key);
+    }
+    
+    // Check body
+    if (req.body && (req.body.api_key || req.body.apikey || req.body.key)) {
+      return String(req.body.api_key || req.body.apikey || req.body.key);
+    }
+    
+    return undefined;
+  }
+  
+  /**
+   * Get resource info from request
+   * 
+   * @param req Express request
+   * @returns Resource type and sensitivity
+   */
+  private getResourceInfo(req: Request): { resourceType: string; resourceSensitivity: number } {
+    const path = req.path.toLowerCase();
+    
+    // Check resource-intensive paths
+    for (const { pattern, sensitivity } of this.resourceIntensivePaths) {
+      if (pattern.test(path)) {
+        const match = pattern.exec(path);
+        const resourceType = match ? match[0].replace(/^\/api\//, '') : 'unknown';
         
-        for (const field of fields) {
-          if (Array.isArray(req.body[field])) {
-            return req.body[field].length;
-          }
-        }
-        
-        // Check if the body itself is an array
-        if (Array.isArray(req.body)) {
-          return req.body.length;
-        }
+        return {
+          resourceType,
+          resourceSensitivity: sensitivity
+        };
+      }
+    }
+    
+    // Default categorization by path segments
+    if (path.includes('/api/')) {
+      const segments = path.split('/').filter(Boolean);
+      const resourceType = segments.length > 1 ? segments[1] : 'api';
+      
+      let resourceSensitivity = 2;
+      
+      if (path.includes('/admin')) {
+        resourceSensitivity = 5;
+      } else if (path.includes('/auth') || path.includes('/security')) {
+        resourceSensitivity = 5;
+      } else if (path.includes('/user') || path.includes('/account')) {
+        resourceSensitivity = 4;
       }
       
-      // No bulk operations found
-      return 1;
-    } catch (error) {
-      log(`Error getting bulk count: ${error}`, 'security');
-      
-      return 1;
+      return { resourceType, resourceSensitivity };
     }
+    
+    // Static assets
+    if (path.match(/\.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+      return { resourceType: 'static', resourceSensitivity: 1 };
+    }
+    
+    // Default
+    return { resourceType: 'web', resourceSensitivity: 2 };
+  }
+  
+  /**
+   * Generate unique identifier for rate limiting
+   * 
+   * @param req Express request
+   * @param ip Client IP
+   * @param userId User ID
+   * @param apiKey API key
+   * @returns Unique identifier
+   */
+  private generateIdentifier(
+    req: Request,
+    ip: string,
+    userId?: string | number,
+    apiKey?: string
+  ): string {
+    // If API key is provided, use that
+    if (apiKey) {
+      return `api:${apiKey}`;
+    }
+    
+    // If authenticated, use user ID
+    if (userId) {
+      return `user:${userId}`;
+    }
+    
+    // Otherwise, use IP
+    return `ip:${ip}`;
+  }
+  
+  /**
+   * Add IP to whitelist
+   * 
+   * @param ip IP address
+   */
+  public whitelistIp(ip: string): void {
+    this.whitelistedIps.add(ip);
+    this.blacklistedIps.delete(ip); // Remove from blacklist if present
+    
+    log(`Added IP ${ip} to rate limit whitelist`, 'security');
+  }
+  
+  /**
+   * Remove IP from whitelist
+   * 
+   * @param ip IP address
+   */
+  public unwhitelistIp(ip: string): void {
+    this.whitelistedIps.delete(ip);
+    
+    log(`Removed IP ${ip} from rate limit whitelist`, 'security');
+  }
+  
+  /**
+   * Add IP to blacklist
+   * 
+   * @param ip IP address
+   */
+  public blacklistIp(ip: string): void {
+    this.blacklistedIps.add(ip);
+    this.whitelistedIps.delete(ip); // Remove from whitelist if present
+    
+    log(`Added IP ${ip} to rate limit blacklist`, 'security');
+  }
+  
+  /**
+   * Remove IP from blacklist
+   * 
+   * @param ip IP address
+   */
+  public unblacklistIp(ip: string): void {
+    this.blacklistedIps.delete(ip);
+    
+    log(`Removed IP ${ip} from rate limit blacklist`, 'security');
+  }
+  
+  /**
+   * Get whitelisted IPs
+   * 
+   * @returns Array of whitelisted IPs
+   */
+  public getWhitelistedIps(): string[] {
+    return Array.from(this.whitelistedIps);
+  }
+  
+  /**
+   * Get blacklisted IPs
+   * 
+   * @returns Array of blacklisted IPs
+   */
+  public getBlacklistedIps(): string[] {
+    return Array.from(this.blacklistedIps);
   }
 }

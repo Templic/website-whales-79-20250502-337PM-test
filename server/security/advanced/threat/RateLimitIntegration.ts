@@ -1,298 +1,570 @@
 /**
- * Rate Limit Integration Module
- *
- * This module integrates the rate limiting system with CSRF protection
- * and other security features.
+ * Rate Limit Integration
+ * 
+ * This module integrates rate limiting with other security features like CSRF protection.
+ * It handles coordination between different security mechanisms to prevent conflicts.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { log } from '../../../utils/logger';
-import { initializeRateLimiting, createUnifiedRateLimit } from './RateLimitingSystem';
-import { recordAuditEvent } from '../../secureAuditTrail';
+import { getClientIp } from '../../../utils/ip-utils';
+import { RateLimitContextBuilder } from './RateLimitContextBuilder';
+import { TokenBucketRateLimiter } from './TokenBucketRateLimiter';
+import { AdaptiveRateLimiter } from './AdaptiveRateLimiter';
+import { RateLimitAnalytics } from './RateLimitAnalytics';
+import { threatDetectionService } from './ThreatDetectionService';
 
-// Default CSRF exempt paths to avoid rate limiting issues
-// These paths should match those in the CSRF protection module
-const DEFAULT_EXEMPT_PATHS = [
-  // Authentication endpoints (especially for Replit Auth)
-  '/api/login',
-  '/api/callback',
-  '/api/auth',
-  '/api/auth/callback',
-  '/api/logout',
+// Default rate limit configurations
+const DEFAULT_LIMITS = {
+  global: {
+    capacity: 300,
+    refillRate: 50,
+    refillInterval: 60 * 1000 // 1 minute
+  },
   
-  // Public API endpoints that don't change state
-  '/api/public',
-  '/api/health',
-  '/api/metrics',
+  auth: {
+    capacity: 20,
+    refillRate: 10,
+    refillInterval: 60 * 1000 // 1 minute
+  },
   
-  // External webhooks (typically have their own auth mechanisms)
-  '/api/webhook',
+  api: {
+    capacity: 100,
+    refillRate: 20,
+    refillInterval: 60 * 1000 // 1 minute
+  },
   
-  // The CSRF token endpoint itself
-  '/api/csrf-token',
+  admin: {
+    capacity: 100,
+    refillRate: 20,
+    refillInterval: 60 * 1000 // 1 minute
+  },
   
-  // Static assets
-  '/static',
-  '/assets',
-  '/favicon.ico',
+  security: {
+    capacity: 30,
+    refillRate: 10,
+    refillInterval: 60 * 1000 // 1 minute
+  },
   
-  // Root path (landing page)
-  '/'
-];
+  public: {
+    capacity: 60,
+    refillRate: 20,
+    refillInterval: 60 * 1000 // 1 minute
+  }
+};
 
-// Additional exempt paths specific to our application
-const ADDITIONAL_EXEMPT_PATHS = [
-  // Public documentation
-  '/docs',
-  '/api/docs',
-  
-  // API version endpoint
-  '/api/version',
-  
-  // Public resources
-  '/api/resources/public',
-  
-  // Public user profiles
-  '/api/users/public',
-  
-  // Health and status endpoints
-  '/api/status',
-  '/api/system/health',
-  
-  // Add more paths as needed
-];
+// Singleton instances
+let contextBuilder: RateLimitContextBuilder;
+let analytics: RateLimitAnalytics;
+let adaptiveRateLimiter: AdaptiveRateLimiter;
+let rateLimiters: {
+  global: TokenBucketRateLimiter;
+  auth: TokenBucketRateLimiter;
+  admin: TokenBucketRateLimiter;
+  security: TokenBucketRateLimiter;
+  api: TokenBucketRateLimiter;
+  public: TokenBucketRateLimiter;
+};
 
-// Combine all exempt paths
-const ALL_EXEMPT_PATHS = [...DEFAULT_EXEMPT_PATHS, ...ADDITIONAL_EXEMPT_PATHS];
+// Cache of recently verified CSRF tokens to prevent double rate limiting
+const csrfVerifiedRequests = new Map<string, number>();
+
+// Configuration for CSRF integration
+const CSRF_CONFIG = {
+  // Cache verified tokens for this long (ms)
+  cacheTime: 60 * 1000, // 1 minute
+  
+  // Paths that should get CSRF verification but not rate limiting
+  csrfOnlyPaths: [
+    // These paths are already verified via CSRF but should not be rate limited
+    '/api/csrf-token',    // Token generation endpoint
+    '/api/security/check', // Security check endpoint
+    '/api/auth/status'    // Auth status check
+  ],
+  
+  // CSRF error types to track
+  csrfErrorTypes: [
+    'token_missing',
+    'token_invalid',
+    'token_expired',
+    'token_used',
+    'entropy_failure'
+  ],
+  
+  // Cleanup interval for verified request cache
+  cleanupInterval: 5 * 60 * 1000 // 5 minutes
+};
+
+// Set up cleanup for verified requests
+let cleanupInterval: NodeJS.Timeout | null = null;
 
 /**
- * Check if a path is exempt from CSRF protection
- *
- * @param path Request path
- * @returns True if the path is exempt
- */
-export function isCsrfExemptPath(path: string): boolean {
-  // Check for exact match
-  if (ALL_EXEMPT_PATHS.includes(path)) {
-    return true;
-  }
-  
-  // Check for path prefix (e.g., /static/ matches /static/css/style.css)
-  for (const exemptPath of ALL_EXEMPT_PATHS) {
-    if (exemptPath.endsWith('/') && path.startsWith(exemptPath)) {
-      return true;
-    }
-  }
-  
-  // Special cases for static assets
-  if (
-    path.includes('/static/') ||
-    path.includes('/assets/') ||
-    path.endsWith('.js') ||
-    path.endsWith('.css') ||
-    path.endsWith('.png') ||
-    path.endsWith('.jpg') ||
-    path.endsWith('.jpeg') ||
-    path.endsWith('.gif') ||
-    path.endsWith('.svg') ||
-    path.endsWith('.ico') ||
-    path.endsWith('.woff') ||
-    path.endsWith('.woff2') ||
-    path.endsWith('.ttf') ||
-    path.endsWith('.eot')
-  ) {
-    return true;
-  }
-  
-  return false;
-}
-
-/**
- * Create a middleware that handles CSRF errors and integrates with rate limiting
- *
- * @param csrfInstance CSRF protection instance
- * @returns Middleware function
- */
-export function createCsrfErrorHandler(csrfInstance: any) {
-  return (err: any, req: Request, res: Response, next: NextFunction) => {
-    if (err.code !== 'EBADCSRFTOKEN') {
-      return next(err);
-    }
-    
-    try {
-      // Log CSRF token error
-      log(`CSRF token validation failed: ${req.method} ${req.path}`, 'security');
-      
-      // Record in audit trail
-      recordAuditEvent({
-        timestamp: new Date().toISOString(),
-        action: 'CSRF_VALIDATION_FAILED',
-        resource: req.path,
-        result: 'failure',
-        severity: 'warning',
-        details: {
-          ip: req.ip,
-          userId: req.session?.userId,
-          method: req.method,
-          path: req.path,
-          userAgent: req.headers['user-agent'],
-          referrer: req.headers.referer
-        }
-      });
-      
-      // Send appropriate response
-      if (req.path.startsWith('/api/')) {
-        return res.status(403).json({
-          error: 'CSRF token validation failed',
-          code: 'CSRF_ERROR',
-          message: 'Invalid security token. Please refresh the page and try again.'
-        });
-      } else {
-        // For HTML page requests, redirect to CSRF error page or show inline error
-        return res.status(403).send(`<!DOCTYPE html>
-          <html>
-            <head>
-              <title>Security Verification Required</title>
-              <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333; max-width: 650px; margin: 0 auto; padding: 2rem; }
-                h1 { color: #e53e3e; margin-top: 0; }
-                .card { background: #f8f9fa; border-left: 4px solid #e53e3e; padding: 1rem 1.5rem; border-radius: 4px; margin-bottom: 1.5rem; }
-                .btn { display: inline-block; background: #4299e1; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 500; }
-                .btn:hover { background: #3182ce; }
-              </style>
-              <script>
-                function refreshPage() {
-                  // Get a fresh CSRF token first
-                  fetch('/api/csrf-token')
-                    .then(response => response.json())
-                    .then(() => {
-                      // Then reload the page
-                      window.location.reload();
-                    })
-                    .catch(err => {
-                      console.error('Failed to refresh CSRF token', err);
-                      // Reload anyway
-                      window.location.reload();
-                    });
-                }
-                
-                // Auto refresh token after a short delay
-                setTimeout(() => {
-                  fetch('/api/csrf-token')
-                    .then(response => response.json())
-                    .then(data => console.log('CSRF token refreshed'))
-                    .catch(err => console.error('Failed to refresh CSRF token', err));
-                }, 1000);
-              </script>
-            </head>
-            <body>
-              <h1>Security Verification Required</h1>
-              <div class="card">
-                <p>Your security token has expired or is invalid.</p>
-                <p>This is a protection mechanism to keep your account secure.</p>
-              </div>
-              <p>Please try one of the following:</p>
-              <ul>
-                <li>Click the button below to refresh the page</li>
-                <li>Go back to the <a href="/">home page</a> and try again</li>
-              </ul>
-              <button class="btn" onclick="refreshPage()">Refresh Page</button>
-            </body>
-          </html>
-        `);
-      }
-    } catch (error) {
-      log(`Error handling CSRF error: ${error}`, 'security');
-      
-      // Fail open
-      return next(err);
-    }
-  };
-}
-
-/**
- * Create middleware to track request context
- * 
- * This middleware stores rate limit context in the request object
- * for use by other components. It doesn't perform rate limiting
- * itself, but makes the context available downstream.
+ * Initialize rate limiting and CSRF integration
  * 
  * @returns Middleware function
- */
-export function createContextTracker() {
-  return (req: Request, res: Response, next: NextFunction) => {
-    try {
-      // Skip exempt paths
-      if (isCsrfExemptPath(req.path)) {
-        return next();
-      }
-      
-      // Get the context from the request
-      const context = (req as any).rateLimitContext;
-      
-      // If no context is available, proceed (context should be created by rate limiting middleware)
-      if (!context) {
-        return next();
-      }
-      
-      // Add the context to the response locals for use in templates
-      res.locals.rateLimitContext = context;
-      
-      // Proceed
-      next();
-    } catch (error) {
-      log(`Error tracking rate limit context: ${error}`, 'security');
-      
-      // Fail open
-      next();
-    }
-  };
-}
-
-/**
- * Initialize all rate limiting and CSRF integration
- * 
- * @returns Object with rate limiting middleware and CSRF integration
  */
 export function initializeRateLimitingAndCsrf() {
   try {
     log('Initializing rate limiting and CSRF integration...', 'security');
     
-    // Initialize rate limiting
-    const rateLimitMiddleware = initializeRateLimiting();
+    // Create context builder
+    contextBuilder = new RateLimitContextBuilder({
+      whitelistedIps: process.env.RATE_LIMIT_WHITELIST?.split(',') || [],
+      blacklistedIps: process.env.RATE_LIMIT_BLACKLIST?.split(',') || []
+    });
     
-    // Create context tracker
-    const contextTracker = createContextTracker();
+    // Create analytics
+    analytics = new RateLimitAnalytics({
+      timeWindow: 24 * 60 * 60 * 1000, // 24 hours
+      reportInterval: 60 * 60 * 1000 // 1 hour
+    });
+    
+    // Create rate limiters
+    rateLimiters = {
+      global: new TokenBucketRateLimiter({
+        ...DEFAULT_LIMITS.global,
+        contextAware: true,
+        name: 'global'
+      }),
+      
+      auth: new TokenBucketRateLimiter({
+        ...DEFAULT_LIMITS.auth,
+        contextAware: true,
+        name: 'auth'
+      }),
+      
+      api: new TokenBucketRateLimiter({
+        ...DEFAULT_LIMITS.api,
+        contextAware: true,
+        name: 'api'
+      }),
+      
+      admin: new TokenBucketRateLimiter({
+        ...DEFAULT_LIMITS.admin,
+        contextAware: true,
+        name: 'admin'
+      }),
+      
+      security: new TokenBucketRateLimiter({
+        ...DEFAULT_LIMITS.security,
+        contextAware: true,
+        name: 'security'
+      }),
+      
+      public: new TokenBucketRateLimiter({
+        ...DEFAULT_LIMITS.public,
+        contextAware: true,
+        name: 'public'
+      })
+    };
+    
+    // Create adaptive rate limiter
+    adaptiveRateLimiter = new AdaptiveRateLimiter({
+      analytics
+    });
+    
+    // Start cleanup interval
+    cleanupInterval = setInterval(() => {
+      cleanupVerifiedRequests();
+    }, CSRF_CONFIG.cleanupInterval);
     
     // Log initialization
     log('Rate limiting and CSRF integration initialized successfully', 'security');
     
     // Return middleware
-    return {
-      rateLimitMiddleware,
-      contextTracker,
-      globalRateLimit: createUnifiedRateLimit('global'),
-      authRateLimit: createUnifiedRateLimit('auth'),
-      apiRateLimit: createUnifiedRateLimit('api'),
-      adminRateLimit: createUnifiedRateLimit('admin'),
-      securityRateLimit: createUnifiedRateLimit('security'),
-      publicRateLimit: createUnifiedRateLimit('public'),
-      createCsrfErrorHandler
-    };
+    return createRateLimitAndCsrfMiddleware();
   } catch (error) {
     log(`Error initializing rate limiting and CSRF integration: ${error}`, 'security');
     
     // Return pass-through middleware
-    return {
-      rateLimitMiddleware: (req: Request, res: Response, next: NextFunction) => next(),
-      contextTracker: (req: Request, res: Response, next: NextFunction) => next(),
-      globalRateLimit: (req: Request, res: Response, next: NextFunction) => next(),
-      authRateLimit: (req: Request, res: Response, next: NextFunction) => next(),
-      apiRateLimit: (req: Request, res: Response, next: NextFunction) => next(),
-      adminRateLimit: (req: Request, res: Response, next: NextFunction) => next(),
-      securityRateLimit: (req: Request, res: Response, next: NextFunction) => next(),
-      publicRateLimit: (req: Request, res: Response, next: NextFunction) => next(),
-      createCsrfErrorHandler: () => (err: any, req: Request, res: Response, next: NextFunction) => next(err)
-    };
+    return (req: Request, res: Response, next: NextFunction) => next();
   }
+}
+
+/**
+ * Create a middleware function for rate limiting with CSRF integration
+ * 
+ * @returns Middleware function
+ */
+function createRateLimitAndCsrfMiddleware() {
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Skip if this is a successful CSRF verification that was already rate limited
+      const requestId = getRequestIdentifier(req);
+      if (csrfVerifiedRequests.has(requestId)) {
+        // Request was already verified by CSRF middleware
+        csrfVerifiedRequests.delete(requestId);
+        return next();
+      }
+      
+      // Get client IP
+      const ip = getClientIp(req);
+      
+      // Skip rate limiting for whitelisted paths
+      if (shouldSkipRateLimiting(req.path)) {
+        return next();
+      }
+      
+      // Build context
+      const context = contextBuilder.buildContext(req);
+      
+      // Attach context to request for other middleware
+      (req as any).rateLimitContext = context;
+      
+      // Get adaptive multiplier
+      const adaptiveMultiplier = adaptiveRateLimiter.getAdaptiveMultiplier(context);
+      
+      // Calculate request cost
+      const tokens = contextBuilder.calculateRequestCost(req, context);
+      
+      // Get appropriate limiter
+      const limiterType = determineRateLimiterType(req);
+      const limiter = rateLimiters[limiterType];
+      
+      // Get bucket key
+      const key = getBucketKey(req, context);
+      
+      // Try to consume tokens
+      const result = limiter.consume(key, tokens, context, adaptiveMultiplier);
+      
+      // Set headers
+      res.setHeader('X-RateLimit-Limit', limiter.getCapacity(key, context, adaptiveMultiplier).toString());
+      res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
+      res.setHeader('X-RateLimit-Reset', Math.floor(result.resetTime / 1000).toString());
+      
+      // Check if rate limited
+      if (result.limited) {
+        // Record limit
+        analytics.recordLimit(req, res, context, tokens, limiter.getCapacity(key, context, adaptiveMultiplier), result.retryAfter);
+        
+        // Set retry-after header
+        res.setHeader('Retry-After', Math.ceil(result.retryAfter / 1000).toString());
+        
+        // Log rate limit
+        log(`Rate limited: ${req.method} ${req.path} (${ip})`, 'security');
+        
+        // Send rate limit response
+        return sendRateLimitResponse(req, res, result.retryAfter);
+      }
+      
+      // Record pass
+      analytics.recordPass(req, context);
+      
+      // If this request needs CSRF but not rate limiting, add to verified cache
+      if (isPathWithCsrfOnly(req.path) && req.method !== 'GET') {
+        // Mark as verified to prevent double rate limiting
+        csrfVerifiedRequests.set(requestId, Date.now());
+      }
+      
+      // Proceed to next middleware
+      next();
+    } catch (error) {
+      log(`Error in rate limit middleware: ${error}`, 'security');
+      
+      // Fail open
+      next();
+    }
+  };
+}
+
+/**
+ * Get request identifier for caching
+ * 
+ * @param req Express request
+ * @returns Unique identifier
+ */
+function getRequestIdentifier(req: Request): string {
+  // Create unique identifier for this request
+  const ip = getClientIp(req);
+  const userId = req.session?.userId || 'anonymous';
+  const path = req.path;
+  const method = req.method;
+  
+  return `${ip}:${userId}:${method}:${path}`;
+}
+
+/**
+ * Check if this path needs CSRF but not rate limiting
+ * 
+ * @param path Request path
+ * @returns Whether to skip rate limiting
+ */
+function isPathWithCsrfOnly(path: string): boolean {
+  return CSRF_CONFIG.csrfOnlyPaths.some(csrfPath => {
+    // Exact match
+    if (csrfPath === path) {
+      return true;
+    }
+    
+    // Wildcards
+    if (csrfPath.endsWith('*') && path.startsWith(csrfPath.slice(0, -1))) {
+      return true;
+    }
+    
+    return false;
+  });
+}
+
+/**
+ * Clean up verified requests cache
+ */
+function cleanupVerifiedRequests(): void {
+  try {
+    const now = Date.now();
+    let count = 0;
+    
+    // Remove expired entries
+    csrfVerifiedRequests.forEach((timestamp, key) => {
+      if (now - timestamp > CSRF_CONFIG.cacheTime) {
+        csrfVerifiedRequests.delete(key);
+        count++;
+      }
+    });
+    
+    // Log cleanup
+    if (count > 0) {
+      log(`Cleaned up ${count} verified CSRF requests from cache`, 'security');
+    }
+  } catch (error) {
+    log(`Error cleaning up verified requests: ${error}`, 'security');
+  }
+}
+
+/**
+ * Record a CSRF verification
+ * 
+ * @param req Express request
+ */
+export function recordCsrfVerification(req: Request): void {
+  try {
+    // Add to verified cache
+    const requestId = getRequestIdentifier(req);
+    csrfVerifiedRequests.set(requestId, Date.now());
+  } catch (error) {
+    log(`Error recording CSRF verification: ${error}`, 'security');
+  }
+}
+
+/**
+ * Record a CSRF error
+ * 
+ * @param req Express request
+ * @param errorType Error type
+ */
+export function recordCsrfError(req: Request, errorType: string): void {
+  try {
+    // Get client IP
+    const ip = getClientIp(req);
+    
+    // Get user ID if available
+    const userId = req.session?.userId;
+    
+    // Check if this is a known error type
+    if (CSRF_CONFIG.csrfErrorTypes.includes(errorType)) {
+      // Apply minor threat penalty for suspicious activity
+      threatDetectionService.recordError(ip, userId, req.path, 403, false);
+      
+      // If multiple failures, increase threat level
+      const context = contextBuilder.buildContext(req);
+      
+      // Update analytics for CSRF errors
+      // We'll track them as special rate limit events
+      analytics.recordLimit(
+        req,
+        {} as Response, // We don't need response here
+        context,
+        1,
+        10,
+        5000 // 5 second penalty
+      );
+      
+      // Log CSRF error
+      log(`CSRF error (${errorType}) on ${req.method} ${req.path} from ${ip}${userId ? ` (${userId})` : ''}`, 'security');
+    }
+  } catch (error) {
+    log(`Error recording CSRF error: ${error}`, 'security');
+  }
+}
+
+/**
+ * Determine which rate limiter to use based on request
+ * 
+ * @param req Express request
+ * @returns Rate limiter type
+ */
+function determineRateLimiterType(req: Request): 'auth' | 'admin' | 'security' | 'api' | 'public' | 'global' {
+  const path = req.path.toLowerCase();
+  
+  // Auth endpoints
+  if (
+    path.includes('/auth') || 
+    path.includes('/login') || 
+    path.includes('/logout') || 
+    path.includes('/register') || 
+    path.includes('/reset-password')
+  ) {
+    return 'auth';
+  }
+  
+  // Admin endpoints
+  if (path.includes('/admin')) {
+    return 'admin';
+  }
+  
+  // Security endpoints
+  if (path.includes('/security')) {
+    return 'security';
+  }
+  
+  // API endpoints (exclude auth and admin which are already handled)
+  if (
+    path.includes('/api') && 
+    !path.includes('/api/auth') && 
+    !path.includes('/api/admin')
+  ) {
+    return 'api';
+  }
+  
+  // Public endpoints
+  if (
+    path === '/' || 
+    path.includes('/public') || 
+    path.includes('/static') || 
+    path.includes('/assets') ||
+    path.endsWith('.js') ||
+    path.endsWith('.css') ||
+    path.endsWith('.png') ||
+    path.endsWith('.jpg') ||
+    path.endsWith('.svg') ||
+    path.endsWith('.ico')
+  ) {
+    return 'public';
+  }
+  
+  // Default to global
+  return 'global';
+}
+
+/**
+ * Get bucket key
+ * 
+ * @param req Express request
+ * @param context Rate limit context
+ * @returns Bucket key
+ */
+function getBucketKey(req: Request, context: any): string {
+  // If authenticated, use user ID
+  if (context.authenticated && context.userId) {
+    return `user:${context.userId}`;
+  }
+  
+  // For API requests with API key, use API key
+  if (context.apiKey) {
+    return `api:${context.apiKey}`;
+  }
+  
+  // Otherwise, use IP
+  return `ip:${context.ip}`;
+}
+
+/**
+ * Should skip rate limiting for this path?
+ * 
+ * @param path Request path
+ * @returns Whether to skip
+ */
+function shouldSkipRateLimiting(path: string): boolean {
+  // Skip health check and certain static assets
+  return (
+    path === '/health' ||
+    path === '/ping' ||
+    path === '/favicon.ico' ||
+    path.endsWith('.jpg') ||
+    path.endsWith('.png') ||
+    path.endsWith('.gif') ||
+    path.endsWith('.svg') ||
+    path.endsWith('.webp') ||
+    path.endsWith('.woff') ||
+    path.endsWith('.woff2') ||
+    path.endsWith('.ttf') ||
+    path.endsWith('.eot') ||
+    isPathWithCsrfOnly(path)
+  );
+}
+
+/**
+ * Send rate limit response
+ * 
+ * @param req Express request
+ * @param res Express response
+ * @param retryAfter Retry after time
+ * @returns Response
+ */
+function sendRateLimitResponse(req: Request, res: Response, retryAfter: number): Response {
+  // For API requests, send JSON
+  if (req.path.includes('/api') || req.headers.accept?.includes('application/json')) {
+    return res.status(429).json({
+      error: 'Too Many Requests',
+      message: `Rate limit exceeded. Please try again in ${Math.ceil(retryAfter / 1000)} seconds.`,
+      retryAfter: Math.ceil(retryAfter / 1000)
+    });
+  }
+  
+  // For other requests, send HTML
+  return res.status(429).send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Too Many Requests</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333; max-width: 650px; margin: 0 auto; padding: 2rem; }
+          h1 { color: #e53e3e; margin-top: 0; }
+          .card { background: #f8f9fa; border-left: 4px solid #e53e3e; padding: 1rem 1.5rem; border-radius: 4px; margin-bottom: 1.5rem; }
+          code { background: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 2px; font-size: 0.9em; }
+        </style>
+        <meta http-equiv="refresh" content="${Math.max(5, Math.ceil(retryAfter / 1000))}">
+      </head>
+      <body>
+        <h1>Too Many Requests</h1>
+        <div class="card">
+          <p>You have sent too many requests in a short period of time.</p>
+          <p>Please wait <strong>${Math.ceil(retryAfter / 1000)} seconds</strong> before trying again.</p>
+        </div>
+        <p>This page will automatically refresh when you can try again.</p>
+        <p><small>Reference: ${req.ip} • ${new Date().toISOString()}</small></p>
+      </body>
+    </html>
+  `);
+}
+
+/**
+ * Dispose of the system
+ */
+export function dispose(): void {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+  
+  if (adaptiveRateLimiter) {
+    adaptiveRateLimiter.dispose();
+  }
+  
+  if (analytics) {
+    analytics.dispose();
+  }
+}
+
+/**
+ * Get the rate limiting system components (for advanced usage)
+ * 
+ * @returns System components
+ */
+export function getRateLimitingComponents() {
+  return {
+    contextBuilder,
+    analytics,
+    adaptiveRateLimiter,
+    rateLimiters
+  };
 }
