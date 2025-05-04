@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Validation Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f8fa;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+    .test-section {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #3498db;
+      margin-top: 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    button {
+      background-color: #3498db;
+      border: none;
+      color: white;
+      padding: 10px 15px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 10px 0;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    pre {
+      background-color: #f7f9fb;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      border: 1px solid #e3e3e3;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+    .success {
+      color: #27ae60;
+      font-weight: bold;
+    }
+    .error {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+    .warning {
+      color: #f39c12;
+      font-weight: bold;
+    }
+    .log-section {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      margin: 0;
+    }
+    .token-display {
+      font-size: 14px;
+      color: #7f8c8d;
+      background-color: #f1f2f6;
+      padding: 5px 10px;
+      border-radius: 4px;
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>API Validation Test</h1>
+    <div id="tokenInfo" class="token-display">No CSRF token</div>
+  </div>
+
+  <div class="test-section">
+    <h2>1. Get CSRF Token</h2>
+    <button id="getToken">Get CSRF Token</button>
+    <pre id="tokenResult">Click the button to get a CSRF token...</pre>
+  </div>
+
+  <div class="test-section">
+    <h2>2. Validation Rules</h2>
+    <p>Tests the API endpoint that returns validation rules defined in the system.</p>
+    <button id="testRules">Test Validation Rules</button>
+    <pre id="rulesResult">Run the test to see results...</pre>
+  </div>
+
+  <div class="test-section">
+    <h2>3. Validation Mappings</h2>
+    <p>Tests the API endpoint that returns mappings between endpoints and validation rules.</p>
+    <button id="testMappings">Test Validation Mappings</button>
+    <pre id="mappingsResult">Run the test to see results...</pre>
+  </div>
+
+  <div class="test-section">
+    <h2>4. Security Validation - Safe Payload</h2>
+    <p>Tests the security validation with a safe payload.</p>
+    <button id="testSafeSecurity">Test Safe Payload</button>
+    <pre id="safeSecurityResult">Run the test to see results...</pre>
+  </div>
+
+  <div class="test-section">
+    <h2>5. Security Validation - Suspicious Payload</h2>
+    <p>Tests the security validation with a suspicious payload (SQL injection attempt).</p>
+    <button id="testSuspiciousSecurity">Test Suspicious Payload</button>
+    <pre id="suspiciousSecurityResult">Run the test to see results...</pre>
+  </div>
+
+  <div class="test-section">
+    <h2>Log</h2>
+    <button id="clearLog">Clear Log</button>
+    <div id="log" class="log-section">
+      <p>Test log will appear here...</p>
+    </div>
+  </div>
+
+  <script>
+    let csrfToken = '';
+    const logElement = document.getElementById('log');
+    const tokenInfoElement = document.getElementById('tokenInfo');
+
+    // Helper function to log events with timestamps
+    function log(message, type = 'info') {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString();
+      const msgElement = document.createElement('p');
+      msgElement.innerHTML = `<span class="${type}">[${timeString}]</span> ${message}`;
+      logElement.appendChild(msgElement);
+      logElement.scrollTop = logElement.scrollHeight;
+    }
+
+    // Function to format JSON for display
+    function formatJSON(obj) {
+      try {
+        return JSON.stringify(obj, null, 2);
+      } catch (e) {
+        return `Error formatting JSON: ${e.message}`;
+      }
+    }
+
+    // Function to update token info display
+    function updateTokenInfo() {
+      if (csrfToken) {
+        tokenInfoElement.textContent = `CSRF Token: ${csrfToken.substring(0, 8)}...`;
+        tokenInfoElement.title = csrfToken;
+      } else {
+        tokenInfoElement.textContent = 'No CSRF token';
+        tokenInfoElement.title = '';
+      }
+    }
+
+    // Function to make API requests with CSRF token
+    async function makeRequest(url, options = {}) {
+      try {
+        const defaultOptions = {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        };
+
+        // Add CSRF token if available
+        if (csrfToken) {
+          defaultOptions.headers['X-CSRF-Token'] = csrfToken;
+        }
+
+        // Merge default options with provided options
+        const mergedOptions = {
+          ...defaultOptions,
+          ...options,
+          headers: {
+            ...defaultOptions.headers,
+            ...(options.headers || {})
+          }
+        };
+
+        log(`Making request to ${url}`, 'info');
+        const response = await fetch(url, mergedOptions);
+        const data = await response.json();
+        
+        if (response.ok) {
+          log(`Request to ${url} successful`, 'success');
+        } else {
+          log(`Request to ${url} failed: ${response.status} ${response.statusText}`, 'error');
+        }
+        
+        return { status: response.status, data };
+      } catch (error) {
+        log(`Error making request to ${url}: ${error.message}`, 'error');
+        return { error: error.message };
+      }
+    }
+
+    // Get CSRF Token
+    document.getElementById('getToken').addEventListener('click', async () => {
+      const tokenResult = document.getElementById('tokenResult');
+      tokenResult.textContent = 'Getting CSRF token...';
+      
+      try {
+        const response = await fetch('/api/csrf-token');
+        const data = await response.json();
+        csrfToken = data.csrfToken;
+        
+        log(`CSRF token obtained: ${csrfToken.substring(0, 8)}...`, 'success');
+        tokenResult.textContent = `CSRF Token: ${csrfToken}`;
+        updateTokenInfo();
+      } catch (error) {
+        const errorMsg = `Error getting CSRF token: ${error.message}`;
+        log(errorMsg, 'error');
+        tokenResult.textContent = errorMsg;
+      }
+    });
+
+    // Test validation rules
+    document.getElementById('testRules').addEventListener('click', async () => {
+      const rulesResult = document.getElementById('rulesResult');
+      rulesResult.textContent = 'Testing validation rules...';
+      
+      if (!csrfToken) {
+        const msg = 'Please get a CSRF token first';
+        log(msg, 'warning');
+        rulesResult.textContent = msg;
+        return;
+      }
+      
+      const result = await makeRequest('/api/validation-test/rules', {
+        headers: {
+          'X-CSRF-Token': csrfToken
+        }
+      });
+      
+      rulesResult.textContent = formatJSON(result);
+    });
+
+    // Test validation mappings
+    document.getElementById('testMappings').addEventListener('click', async () => {
+      const mappingsResult = document.getElementById('mappingsResult');
+      mappingsResult.textContent = 'Testing validation mappings...';
+      
+      if (!csrfToken) {
+        const msg = 'Please get a CSRF token first';
+        log(msg, 'warning');
+        mappingsResult.textContent = msg;
+        return;
+      }
+      
+      const result = await makeRequest('/api/validation-test/mappings', {
+        headers: {
+          'X-CSRF-Token': csrfToken
+        }
+      });
+      
+      mappingsResult.textContent = formatJSON(result);
+    });
+
+    // Test safe security validation
+    document.getElementById('testSafeSecurity').addEventListener('click', async () => {
+      const safeSecurityResult = document.getElementById('safeSecurityResult');
+      safeSecurityResult.textContent = 'Testing security validation with safe payload...';
+      
+      if (!csrfToken) {
+        const msg = 'Please get a CSRF token first';
+        log(msg, 'warning');
+        safeSecurityResult.textContent = msg;
+        return;
+      }
+      
+      const result = await makeRequest('/api/validation-test/security-test', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({
+          query: 'How is the weather today?',
+          userId: '1234'
+        })
+      });
+      
+      safeSecurityResult.textContent = formatJSON(result);
+    });
+
+    // Test suspicious security validation
+    document.getElementById('testSuspiciousSecurity').addEventListener('click', async () => {
+      const suspiciousSecurityResult = document.getElementById('suspiciousSecurityResult');
+      suspiciousSecurityResult.textContent = 'Testing security validation with suspicious payload...';
+      
+      if (!csrfToken) {
+        const msg = 'Please get a CSRF token first';
+        log(msg, 'warning');
+        suspiciousSecurityResult.textContent = msg;
+        return;
+      }
+      
+      const result = await makeRequest('/api/validation-test/security-test', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({
+          query: 'SELECT * FROM users; DROP TABLE users;',
+          userId: '1234; DROP TABLE users;',
+          adminOverride: 'true'
+        })
+      });
+      
+      suspiciousSecurityResult.textContent = formatJSON(result);
+    });
+
+    // Clear log
+    document.getElementById('clearLog').addEventListener('click', () => {
+      logElement.innerHTML = '<p>Log cleared</p>';
+      log('Log cleared', 'info');
+    });
+
+    // Initial log message
+    log('API Validation Test page loaded', 'info');
+  </script>
+</body>
+</html>

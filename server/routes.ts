@@ -2893,6 +2893,12 @@ app.post("/api/posts/comments/:id/reject", isAdmin, async (req, res) => {
     }
   }, 24 * 60 * 60 * 1000);
 
+  // Special route for API validation test page
+  app.get('/api-validation-test', (req, res) => {
+    const testPagePath = path.resolve(process.cwd(), 'public/api-validation-test.html');
+    res.sendFile(testPagePath);
+  });
+
   // Let Vite handle frontend routes in development mode
   if (process.env.NODE_ENV === 'production') {
     app.get('/*', (req, res) => {

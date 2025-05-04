@@ -1,0 +1,27 @@
+{
+  "id": "INC-20250504-SYS-M7816",
+  "title": "File integrity changes detected in critical files",
+  "description": "Detected 1 modified and 0 missing critical security files",
+  "severity": "medium",
+  "status": "new",
+  "category": "system",
+  "source": "security_scan",
+  "timestamp": "2025-05-04T21:16:54.236Z",
+  "lastUpdated": "2025-05-04T21:16:54.237Z",
+  "affectedComponents": [
+    "file-integrity",
+    "security-configuration"
+  ],
+  "relatedEvents": [],
+  "actions": [
+    {
+      "id": "INC-20250504-SYS-M7816-det-maa5jql81z",
+      "description": "Incident detected: File integrity changes detected in critical files",
+      "type": "detection",
+      "timestamp": "2025-05-04T21:16:54.236Z",
+      "automaticAction": true
+    }
+  ],
+  "evidenceReferences": [],
+  "integrityHash": "f6dc9bb7b5bf203ef67020da95b9ddedfd4e4b46c14466bf851bf77b7cf0d358"
+}
