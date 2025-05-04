@@ -3,6 +3,7 @@
  * 
  * This file contains test routes for the API validation system.
  * These routes demonstrate how to use both schema-based and AI-powered validation.
+ * Now enhanced with the ValidationPipeline for improved performance and security.
  */
 
 import express from 'express';
@@ -10,6 +11,12 @@ import { z } from 'zod';
 import { validateRequest, validateRequestWithAI } from '../middleware/apiValidationMiddleware';
 import { ValidationEngine } from '../security/advanced/apiValidation/ValidationEngine';
 import secureLogger from '../security/utils/secureLogger';
+import { 
+  createValidationMiddleware, 
+  createAIValidationMiddleware,
+  createDatabaseValidationMiddleware
+} from '../middleware/validationPipelineMiddleware';
+import { validationPipeline } from '../security/advanced/validation/ValidationPipeline';
 
 // Create a router
 const router = express.Router();
@@ -275,6 +282,186 @@ router.get('/documentation', async (req, res) => {
       success: false,
       message: 'Failed to generate documentation',
       error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+//
+// New Pipeline-Based Routes
+//
+
+// Schema validation using pipeline
+router.post('/pipeline/contact', createValidationMiddleware(
+  z.object({
+    name: z.string().min(2).max(100),
+    email: z.string().email(),
+    message: z.string().min(10).max(1000)
+  }),
+  { // Pipeline options
+    batchKey: 'contact-forms',
+    priority: 'normal'
+  }
+), (req, res) => {
+  const validatedData = req.validatedData;
+  const validationMetadata = req.validationResult;
+  
+  logger.log(`Pipeline validated contact form from ${validatedData.email}`, 'info', {
+    validationId: validationMetadata.validationId,
+    timeTaken: validationMetadata.timeTaken
+  });
+  
+  res.json({
+    success: true,
+    message: 'Contact form validated with pipeline',
+    validation: {
+      id: validationMetadata.validationId,
+      timeTaken: validationMetadata.timeTaken,
+      cacheHit: validationMetadata.cacheHit
+    },
+    data: {
+      name: validatedData.name,
+      email: validatedData.email,
+      messageLength: validatedData.message.length
+    }
+  });
+});
+
+// AI-only validation using pipeline
+router.post('/pipeline/security', testAuth, createAIValidationMiddleware({
+  contentType: 'api',
+  detailedAnalysis: true,
+  threshold: 0.7,
+  priority: 'high'
+}), (req, res) => {
+  const validationMetadata = req.validationResult;
+  
+  logger.log('Pipeline AI validation passed', 'info', {
+    validationId: validationMetadata.validationId,
+    securityScore: validationMetadata.securityScore,
+    timeTaken: validationMetadata.timeTaken
+  });
+  
+  // Add security score to response headers
+  res.set('X-Security-Score', String(validationMetadata.securityScore || 1));
+  
+  res.json({
+    success: true,
+    message: 'AI security validation passed via pipeline',
+    validation: {
+      id: validationMetadata.validationId,
+      timeTaken: validationMetadata.timeTaken,
+      securityScore: validationMetadata.securityScore,
+      warningCount: validationMetadata.warnings?.length || 0
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Combined schema and AI validation using pipeline
+router.post('/pipeline/signup', testAuth, [
+  createValidationMiddleware(
+    z.object({
+      username: z.string().min(3).max(30),
+      email: z.string().email(),
+      password: z.string().min(8).regex(/[A-Z]/).regex(/[a-z]/).regex(/[0-9]/),
+      confirmPassword: z.string()
+    }).refine(data => data.password === data.confirmPassword, {
+      message: 'Passwords do not match',
+      path: ['confirmPassword']
+    }),
+    { skipCache: true } // Don't cache password data
+  ),
+  createAIValidationMiddleware({
+    contentType: 'api',
+    detailedAnalysis: true
+  })
+], (req, res) => {
+  const validatedData = req.validatedData;
+  const validationMetadata = req.validationResult;
+  
+  logger.log(`Pipeline validated signup for ${validatedData.username}`, 'info', {
+    validationId: validationMetadata.validationId,
+    timeTaken: validationMetadata.timeTaken
+  });
+  
+  res.json({
+    success: true,
+    message: 'Signup validated with pipeline',
+    validation: {
+      id: validationMetadata.validationId,
+      timeTaken: validationMetadata.timeTaken,
+      securityScore: validationMetadata.securityScore
+    },
+    user: {
+      username: validatedData.username,
+      email: validatedData.email
+    }
+  });
+});
+
+// Database operation validation
+router.post('/pipeline/db-operation', testAuth, createDatabaseValidationMiddleware({
+  detailedAnalysis: true,
+  priority: 'high'
+}), (req, res) => {
+  const validationMetadata = req.validationResult;
+  
+  logger.log('Database operation validated', 'info', {
+    validationId: validationMetadata.validationId,
+    timeTaken: validationMetadata.timeTaken
+  });
+  
+  res.json({
+    success: true,
+    message: 'Database operation validated',
+    validation: {
+      id: validationMetadata.validationId,
+      timeTaken: validationMetadata.timeTaken,
+      securityScore: validationMetadata.securityScore,
+      warningCount: validationMetadata.warnings?.length || 0
+    }
+  });
+});
+
+// Get validation pipeline status
+router.get('/pipeline/status', async (req, res) => {
+  try {
+    const status = await validationPipeline.getStatus();
+    
+    res.json({
+      success: true,
+      ...status
+    });
+  } catch (error) {
+    logger.log('Error getting pipeline status', 'error', { error });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get validation pipeline status',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Manage validation cache
+router.post('/pipeline/cache', testAuth, (req, res) => {
+  const { action } = req.body;
+  
+  if (action === 'clear') {
+    validationPipeline.clearCache();
+    logger.log('Validation cache cleared', 'info');
+    
+    res.json({
+      success: true,
+      message: 'Validation cache cleared',
+      timestamp: new Date().toISOString()
+    });
+  } else {
+    const stats = validationPipeline.getCacheStats();
+    
+    res.json({
+      success: true,
+      action: 'stats',
+      stats
     });
   }
 });

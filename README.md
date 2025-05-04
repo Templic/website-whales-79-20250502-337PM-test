@@ -304,6 +304,32 @@ These documents provide a framework for effectively using the Replit Agent to en
 
 The application implements comprehensive security measures including:
 
+### Enhanced Validation Framework
+
+The application features a sophisticated validation framework that provides comprehensive protection against improper input, API vulnerabilities, and security attacks:
+
+#### Validation Pipeline Architecture
+
+- **Three-Phase Validation**: Pre-validation (caching), main validation (schema + AI), and post-validation phases
+- **Performance Optimizations**: LRU caching, request batching, and tiered validation for optimal performance
+- **AI-Powered Security**: Integration with OpenAI's GPT-4o for advanced security analysis and threat detection
+
+For a complete overview, see [Validation Framework Documentation](README-validation-framework.md).
+
+#### Key Security Capabilities
+
+- **Schema Validation**: Type-safe validation using Zod schemas for all API endpoints
+- **AI Security Analysis**: Deep security analysis of request data for potential threats
+- **Database Query Validation**: Special validation for database operations to prevent SQL injection
+- **Cross-Request Pattern Recognition**: Identification of distributed attack patterns across multiple requests
+- **Immutable Audit Logging**: Comprehensive security logging for forensic analysis
+
+#### Integration with Other Security Systems
+
+- **CSRF Protection**: Seamless integration with the application's CSRF protection system
+- **Rate Limiting**: Coordination with rate limiting to provide progressive security responses
+- **User Authentication**: Context-aware validation based on user authentication status
+
 ### Advanced Cryptographic Capabilities
 
 #### Homomorphic Encryption

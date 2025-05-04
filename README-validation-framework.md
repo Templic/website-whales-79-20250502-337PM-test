@@ -160,6 +160,82 @@ const analytics = validation.getAnalytics();
 console.log(analytics.fieldErrorRates); // See which fields have the most errors
 ```
 
+## Enhanced Validation Pipeline
+
+The validation framework has been enhanced with a powerful, three-phase validation pipeline that offers advanced performance and integration features.
+
+### Key Pipeline Features
+
+1. **Three-Phase Validation Process**
+   - **Pre-validation phase**: Checks cache, performs request batching
+   - **Main validation phase**: Executes schema and/or AI-powered validation
+   - **Post-validation phase**: Logs results, updates cache, generates metrics
+
+2. **Performance Optimizations**
+   - **LRU caching**: Caches validation results for identical requests
+   - **Request batching**: Groups similar validation requests for processing
+   - **Tiered validation**: Skips unnecessary validation steps based on context
+   
+3. **Security Integration**
+   - **AI-powered threat detection**: Leverages GPT-4o for intelligent analysis
+   - **Severity-based warnings**: Classifies security concerns by severity
+   - **Immutable audit logging**: Records validation activity for security analysis
+
+4. **Middleware Integration**
+   - **Schema validation middleware**: For Zod schema validation
+   - **AI validation middleware**: For pure AI-powered validation
+   - **Database operation middleware**: Specialized validation for database queries
+
+### Using the Pipeline
+
+```typescript
+// Schema Validation
+app.post('/contact', createValidationMiddleware(
+  contactSchema,
+  { batchKey: 'contact-forms' }
+), (req, res) => {
+  // Access validated data
+  const validatedData = req.validatedData;
+  // Access validation metadata
+  const validationMeta = req.validationResult;
+  // Process the validated data
+  res.json({ success: true });
+});
+
+// AI Validation
+app.post('/api/data', createAIValidationMiddleware({
+  contentType: 'api',
+  detailedAnalysis: true,
+  threshold: 0.7
+}), (req, res) => {
+  // Process the validated data
+  res.json({ success: true });
+});
+
+// Database Validation
+app.post('/db/query', createDatabaseValidationMiddleware({
+  detailedAnalysis: true
+}), (req, res) => {
+  // Process the validated database operation
+  res.json({ success: true });
+});
+```
+
+### Pipeline Status and Management
+
+The validation pipeline provides monitoring capabilities to track usage and performance:
+
+```typescript
+// Get pipeline status
+const status = await validationPipeline.getStatus();
+console.log(status.cacheStats); // Cache performance metrics
+console.log(status.activeBatches); // Current batch processing status
+console.log(status.aiValidation); // AI service status
+
+// Clear validation cache
+validationPipeline.clearCache();
+```
+
 ## Future Enhancements
 
 1. **Schema Evolution Support**
