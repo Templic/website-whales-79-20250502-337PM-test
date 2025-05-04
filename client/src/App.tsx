@@ -322,9 +322,7 @@ function App() {
           <AccessibilityProvider>
             <ChatProvider>
               <ThemeProvider>
-                {/* Add OrientationProvider for responsive orientation handling */}
                 <OrientationProvider>
-                  {/* Add StylesProvider to optimize CSS-in-JS rendering */}
                   <StylesProvider
                     extractCritical={true}
                     optimizeSheets={true}
@@ -334,17 +332,11 @@ function App() {
                   >
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
                       <StarBackground starCount={150} />
-                      
-                      {/* Add ThemeController - a wrapper that safely uses the theme context */}
                       <ThemeController />
-                      
                       <AppRouter />
                       <ChatWidget />
-                      {/* Temporarily disable Taskade widget to prevent overlapping AI assistant buttons */}
-                      {/* <TaskadeWidget /> */}
                       <CookieConsent />
                       <ToastProvider />
-                      {/* Add Font optimization */}
                       <FontLoader
                         fonts={[
                           { family: 'Orbitron', display: 'swap' },
@@ -360,7 +352,6 @@ function App() {
                         preload={true}
                         addBodyClass={true}
                       />
-                      {/* Service Worker for offline capabilities */}
                       <ServiceWorkerManager 
                         registerOnMount={true}
                         showUpdateNotification={true} 

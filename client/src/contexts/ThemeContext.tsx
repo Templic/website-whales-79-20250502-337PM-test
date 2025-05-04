@@ -30,13 +30,13 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [error, setError] = useState<Error | null>(null);
   
   // API hook for fetching themes
-  const { useGetThemes } = useThemeAPI();
+  const themeAPI = useThemeAPI();
   
   // Local storage hook for persisting theme selection
   const [storedThemeId, setStoredThemeId] = useLocalStorage<number | null>('theme-id', null);
   
-  // Fetch themes from the API
-  const { data: themes = [], isLoading: isLoadingThemes, error: themesError } = useGetThemes();
+  // Fetch themes from the API using the public themes hook
+  const { data: themes = [], isLoading: isLoadingThemes, error: themesError } = themeAPI.usePublicThemes();
   
   // Initialize the theme based on the stored ID or default
   useEffect(() => {
