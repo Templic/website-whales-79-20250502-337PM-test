@@ -42,10 +42,31 @@ async function makeRequest(endpoint, method = 'GET', data = null) {
   try {
     const url = `${BASE_URL}${endpoint}`;
     
+    // First, get a CSRF token if we're not using a bypass endpoint
+    let csrfToken;
+    if (!endpoint.includes('/api/no-csrf/')) {
+      try {
+        const tokenResponse = await fetch(`${BASE_URL}/api/csrf-token`);
+        const tokenData = await tokenResponse.json();
+        csrfToken = tokenData.token;
+      } catch (err) {
+        console.warn('Failed to get CSRF token:', err.message);
+      }
+    }
+    
     const requestOptions = {
       method,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        // Add explicit CSRF bypass headers for no-csrf endpoints
+        ...(endpoint.includes('/api/no-csrf/') && {
+          'X-CSRF-Bypass': 'testing',
+          'X-CSRF-Token': 'test-bypass-token'
+        }),
+        // Otherwise use the actual CSRF token if available
+        ...(!endpoint.includes('/api/no-csrf/') && csrfToken && {
+          'X-CSRF-Token': csrfToken
+        })
       },
       ...(data && { body: JSON.stringify(data) })
     };
