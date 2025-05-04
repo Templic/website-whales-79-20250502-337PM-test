@@ -13,7 +13,7 @@ export PORT=8080
 export NODE_ENV=development
 
 # Start the server
-node simplified-validation-server.js &
+node simplified-validation-server.cjs &
 SERVER_PID=$!
 
 # Wait a moment for the server to start
