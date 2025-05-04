@@ -1,368 +1,466 @@
 /**
  * Threat Detection Service
  *
- * This service is responsible for detecting potential security threats based on request patterns,
- * user behavior, and known attack signatures. It provides a threat level rating that can be used
- * by the rate limiting system to adjust limits accordingly.
+ * This service provides threat detection capabilities for the rate limiting system.
+ * It maintains a list of suspicious IPs and identifiers, calculates threat scores,
+ * and provides a global threat level.
  */
 
 import { Request } from 'express';
-import fs from 'fs';
-import path from 'path';
+import { log } from '../../../utils/logger';
+import { recordAuditEvent } from '../../secureAuditTrail';
 
-// Define threat rules interface
-interface ThreatRule {
-  id: string;
-  name: string;
-  pattern: RegExp | string;
-  target: 'path' | 'query' | 'body' | 'headers' | 'ip' | 'userAgent';
-  severity: number; // 0 to 1
-  description: string;
-  patternType: 'regex' | 'substring';
+// Interface for threat score data
+interface ThreatData {
+  score: number;           // Current threat score (0-1)
+  violations: number;      // Number of violations
+  lastViolation: number;   // Timestamp of last violation
+  firstViolation: number;  // Timestamp of first violation
+  ipAddress?: string;      // IP address (for identifiers)
+  userId?: string | number; // User ID (for identifiers)
 }
 
-// Define cached IP reputations
-interface IpReputation {
-  ip: string;
-  score: number; // 0 to 1 (higher is worse)
-  lastUpdated: number;
-  source: string;
-}
-
-export class ThreatDetectionService {
-  private rules: ThreatRule[] = [];
-  private ipReputations: Map<string, IpReputation> = new Map();
-  private violationCounts: Map<string, number> = new Map();
-  private recentSuspiciousIps: Set<string> = new Set();
-  private lastRuleUpdateTime: number = 0;
-  private ruleUpdateInterval: number = 3600000; // 1 hour
+class ThreatDetectionService {
+  // Map of IP addresses to threat scores
+  private ipThreats: Map<string, ThreatData> = new Map();
+  
+  // Map of identifiers to threat scores
+  private identifierThreats: Map<string, ThreatData> = new Map();
+  
+  // Cache for resolved threat levels
+  private threatLevelCache: Map<string, { level: number, timestamp: number }> = new Map();
+  
+  // Global threat level (0-1)
+  private globalThreatLevel: number = 0;
+  
+  // Last time global threat level was recalculated
+  private lastGlobalUpdate: number = Date.now();
+  
+  // Maximum age of threat data (24 hours)
+  private maxThreatAge: number = 24 * 60 * 60 * 1000;
+  
+  // Violation Threshold for recording in audit trail
+  private auditThreshold: number = 5;
   
   constructor() {
-    // Load initial threat rules
-    this.loadThreatRules();
+    // Set up periodic cleanup
+    setInterval(() => this.clearOldThreats(), 30 * 60 * 1000); // Every 30 minutes
     
-    // Set up periodic rule updates
-    setInterval(() => {
-      this.loadThreatRules();
-    }, this.ruleUpdateInterval);
+    // Set up periodic global threat level recalculation
+    setInterval(() => this.recalculateGlobalThreatLevel(), 5 * 60 * 1000); // Every 5 minutes
   }
   
   /**
-   * Get the threat level for a request
+   * Record a violation from a specific identifier
+   * 
+   * @param identifier The identifier that violated rate limits
+   * @param ipAddress Optional IP address to associate with the violation
+   * @param userId Optional user ID to associate with the violation
+   */
+  public recordViolation(
+    identifier: string, 
+    ipAddress?: string, 
+    userId?: string | number
+  ): void {
+    try {
+      const now = Date.now();
+      
+      // Extract IP address from identifier if not provided directly
+      if (!ipAddress && identifier.startsWith('ip:')) {
+        ipAddress = identifier.substring(3);
+      }
+      
+      // Extract user ID from identifier if not provided directly
+      if (!userId && identifier.startsWith('user:')) {
+        userId = identifier.substring(5);
+      }
+      
+      // Record threat data for the identifier
+      let threatData = this.identifierThreats.get(identifier);
+      if (!threatData) {
+        threatData = {
+          score: 0.1, // Start with a small score
+          violations: 0,
+          lastViolation: now,
+          firstViolation: now,
+          ipAddress,
+          userId
+        };
+        this.identifierThreats.set(identifier, threatData);
+      }
+      
+      // Update threat data
+      threatData.violations++;
+      threatData.lastViolation = now;
+      
+      // Increase score based on violation frequency
+      const violationFrequency = now - threatData.firstViolation;
+      const violationsPerHour = (threatData.violations * 3600000) / Math.max(1, violationFrequency);
+      
+      // Higher violation frequency = higher score
+      if (violationsPerHour > 10) {
+        // More than 10 violations per hour
+        threatData.score = Math.min(1.0, threatData.score + 0.1);
+      } else if (violationsPerHour > 5) {
+        // 5-10 violations per hour
+        threatData.score = Math.min(1.0, threatData.score + 0.05);
+      } else {
+        // Fewer than 5 violations per hour
+        threatData.score = Math.min(1.0, threatData.score + 0.02);
+      }
+      
+      // Record in IP threats if we have an IP
+      if (ipAddress) {
+        let ipThreatData = this.ipThreats.get(ipAddress);
+        if (!ipThreatData) {
+          ipThreatData = {
+            score: 0.1,
+            violations: 0,
+            lastViolation: now,
+            firstViolation: now,
+            userId
+          };
+          this.ipThreats.set(ipAddress, ipThreatData);
+        }
+        
+        // Update IP threat data
+        ipThreatData.violations++;
+        ipThreatData.lastViolation = now;
+        
+        // Use same scoring algorithm for IP
+        const ipViolationFrequency = now - ipThreatData.firstViolation;
+        const ipViolationsPerHour = (ipThreatData.violations * 3600000) / Math.max(1, ipViolationFrequency);
+        
+        if (ipViolationsPerHour > 10) {
+          ipThreatData.score = Math.min(1.0, ipThreatData.score + 0.1);
+        } else if (ipViolationsPerHour > 5) {
+          ipThreatData.score = Math.min(1.0, ipThreatData.score + 0.05);
+        } else {
+          ipThreatData.score = Math.min(1.0, ipThreatData.score + 0.02);
+        }
+      }
+      
+      // Clear cache entry for this identifier
+      this.threatLevelCache.delete(identifier);
+      if (ipAddress) {
+        this.threatLevelCache.delete(`ip:${ipAddress}`);
+      }
+      
+      // Record significant threats in audit log
+      if (threatData.violations >= this.auditThreshold) {
+        recordAuditEvent({
+          timestamp: new Date().toISOString(),
+          action: 'THREAT_DETECTED',
+          resource: 'rate-limiting',
+          result: 'warning',
+          severity: threatData.score > 0.5 ? 'warning' : 'info',
+          details: {
+            identifier,
+            ipAddress,
+            userId: userId?.toString(),
+            violations: threatData.violations,
+            threatScore: threatData.score,
+            violationsPerHour: violationsPerHour
+          }
+        });
+      }
+      
+      // Recalculate global threat level if needed
+      const timeSinceLastUpdate = now - this.lastGlobalUpdate;
+      if (timeSinceLastUpdate > 300000) { // 5 minutes
+        this.recalculateGlobalThreatLevel();
+      }
+    } catch (error) {
+      log(`Error recording threat violation: ${error}`, 'security');
+    }
+  }
+  
+  /**
+   * Get the threat level for a specific request
    * 
    * @param req The Express request
-   * @param ip The client IP address
-   * @param userId The user ID if authenticated
-   * @returns A threat level between 0 and 1
+   * @param ip IP address to check
+   * @param userId Optional user ID to check
+   * @returns Threat level (0-1)
    */
   public getThreatLevel(req: Request, ip: string, userId?: string | number): number {
-    // Start with a base threat level of 0
-    let threatLevel = 0;
-    
-    // Check IP reputation
-    const ipReputation = this.getIpReputation(ip);
-    if (ipReputation > 0) {
-      // IP reputation contributes significantly to threat level
-      threatLevel += ipReputation * 0.4;
+    try {
+      const now = Date.now();
+      
+      // Create identifier based on available information
+      const identifier = userId ? `user:${userId}` : `ip:${ip}`;
+      
+      // Check cache first
+      const cachedThreat = this.threatLevelCache.get(identifier);
+      if (cachedThreat && now - cachedThreat.timestamp < 60000) { // 1 minute cache
+        return cachedThreat.level;
+      }
+      
+      // Start with a base threat level
+      let threatLevel = 0;
+      
+      // Check identifier threat
+      const identifierThreat = this.identifierThreats.get(identifier);
+      if (identifierThreat) {
+        threatLevel = Math.max(threatLevel, identifierThreat.score);
+      }
+      
+      // Check IP threat
+      const ipThreat = this.ipThreats.get(ip);
+      if (ipThreat) {
+        threatLevel = Math.max(threatLevel, ipThreat.score);
+      }
+      
+      // Check request-specific factors that might indicate threats
+      
+      // Suspicious headers
+      const userAgent = req.headers['user-agent'] || '';
+      if (!userAgent) {
+        threatLevel = Math.max(threatLevel, 0.3); // Missing user agent
+      } else if (userAgent.length < 10) {
+        threatLevel = Math.max(threatLevel, 0.2); // Very short user agent
+      }
+      
+      const acceptHeader = req.headers['accept'] || '';
+      if (!acceptHeader) {
+        threatLevel = Math.max(threatLevel, 0.1); // Missing accept header
+      }
+      
+      // Cache the result
+      this.threatLevelCache.set(identifier, {
+        level: threatLevel,
+        timestamp: now
+      });
+      
+      return threatLevel;
+    } catch (error) {
+      log(`Error getting threat level: ${error}`, 'security');
+      return 0;
     }
-    
-    // Check for suspicious patterns in the request
-    const patternThreat = this.checkRequestPatterns(req);
-    if (patternThreat > 0) {
-      // Pattern matches contribute to threat level
-      threatLevel += patternThreat * 0.5;
-    }
-    
-    // Check previous violations
-    const violationThreat = this.checkPreviousViolations(ip, userId);
-    if (violationThreat > 0) {
-      // Previous violations contribute to threat level
-      threatLevel += violationThreat * 0.3;
-    }
-    
-    // Normalize to ensure we're between 0 and 1
-    threatLevel = Math.min(1, threatLevel);
-    
-    // If this is a high threat, add to recent suspicious IPs
-    if (threatLevel > 0.6) {
-      this.recentSuspiciousIps.add(ip);
-    }
-    
-    return threatLevel;
   }
   
   /**
-   * Get the global threat level based on recent activity
+   * Get the global threat level for the system
    * 
-   * @returns A threat level between 0 and 1
+   * @returns Global threat level (0-1)
    */
   public getGlobalThreatLevel(): number {
-    // Calculate based on number of recent suspicious IPs
-    const suspiciousIpCount = this.recentSuspiciousIps.size;
-    
-    // More than 10 suspicious IPs is considered high threat
-    const normalizedCount = Math.min(suspiciousIpCount / 10, 1);
-    
-    return normalizedCount * 0.8; // Scale to 0.8 max since this is a global metric
+    return this.globalThreatLevel;
   }
   
   /**
-   * Record a violation by an identifier
-   * 
-   * @param identifier The user or IP identifier
+   * Recalculate the global threat level
    */
-  public recordViolation(identifier: string): void {
-    const currentCount = this.violationCounts.get(identifier) || 0;
-    this.violationCounts.set(identifier, currentCount + 1);
-  }
-  
-  /**
-   * Check the reputation of an IP address
-   * 
-   * @param ip The IP address to check
-   * @returns A reputation score between 0 and 1 (higher is worse)
-   */
-  private getIpReputation(ip: string): number {
-    // Check if we have a cached reputation
-    if (this.ipReputations.has(ip)) {
-      const reputation = this.ipReputations.get(ip);
-      // Cache reputation for 24 hours
-      if (reputation && Date.now() - reputation.lastUpdated < 86400000) {
-        return reputation.score;
-      }
-    }
-    
-    // In a real implementation, this would call out to a reputation service
-    // For this example, we'll use a simple heuristic based on the IP
-    let score = 0;
-    
-    // Check if IP is in recent suspicious list
-    if (this.recentSuspiciousIps.has(ip)) {
-      score += 0.5;
-    }
-    
-    // Check previous violations
-    const violations = this.violationCounts.get(ip) || 0;
-    if (violations > 0) {
-      // More violations means higher score
-      score += Math.min(violations / 10, 0.5);
-    }
-    
-    // Cache the result
-    this.ipReputations.set(ip, {
-      ip,
-      score,
-      lastUpdated: Date.now(),
-      source: 'internal'
-    });
-    
-    return score;
-  }
-  
-  /**
-   * Check for suspicious patterns in the request
-   * 
-   * @param req The Express request
-   * @returns A threat score between 0 and 1
-   */
-  private checkRequestPatterns(req: Request): number {
-    let highestSeverity = 0;
-    let matchCount = 0;
-    
-    // Check each rule against the request
-    for (const rule of this.rules) {
-      let target: any;
-      
-      // Get the appropriate part of the request to check
-      switch (rule.target) {
-        case 'path':
-          target = req.path;
-          break;
-        case 'query':
-          target = req.query ? JSON.stringify(req.query) : '';
-          break;
-        case 'body':
-          target = req.body ? JSON.stringify(req.body) : '';
-          break;
-        case 'headers':
-          target = req.headers ? JSON.stringify(req.headers) : '';
-          break;
-        case 'ip':
-          target = req.ip || '';
-          break;
-        case 'userAgent':
-          target = req.headers['user-agent'] || '';
-          break;
-        default:
-          target = '';
-      }
-      
-      // Skip if target is not available
-      if (!target) continue;
-      
-      // Check if the pattern matches
-      let matches = false;
-      
-      if (rule.patternType === 'regex') {
-        const pattern = rule.pattern instanceof RegExp ? 
-          rule.pattern : new RegExp(rule.pattern as string);
-        matches = pattern.test(target);
-      } else {
-        // Substring match
-        matches = target.includes(rule.pattern);
-      }
-      
-      if (matches) {
-        matchCount++;
-        highestSeverity = Math.max(highestSeverity, rule.severity);
-      }
-    }
-    
-    // Calculate threat level based on matches and their severity
-    if (matchCount === 0) {
-      return 0;
-    } else if (matchCount === 1) {
-      return highestSeverity;
-    } else {
-      // Multiple matches increase the threat level
-      return Math.min(1, highestSeverity + (matchCount - 1) * 0.1);
-    }
-  }
-  
-  /**
-   * Check for previous violations by this IP or user
-   * 
-   * @param ip The client IP address
-   * @param userId The user ID if authenticated
-   * @returns A threat score between 0 and 1
-   */
-  private checkPreviousViolations(ip: string, userId?: string | number): number {
-    const ipViolations = this.violationCounts.get(ip) || 0;
-    let userViolations = 0;
-    
-    if (userId) {
-      userViolations = this.violationCounts.get(`user:${userId}`) || 0;
-    }
-    
-    // Use the higher of the two counts
-    const violations = Math.max(ipViolations, userViolations);
-    
-    // Scale violations to a threat score
-    return Math.min(violations / 20, 1);
-  }
-  
-  /**
-   * Load threat detection rules
-   */
-  private loadThreatRules(): void {
+  private recalculateGlobalThreatLevel(): void {
     try {
-      // Check if we've updated recently
-      if (Date.now() - this.lastRuleUpdateTime < this.ruleUpdateInterval) {
+      const now = Date.now();
+      
+      // Skip if no threats
+      if (this.identifierThreats.size === 0 && this.ipThreats.size === 0) {
+        this.globalThreatLevel = 0;
+        this.lastGlobalUpdate = now;
         return;
       }
       
-      // In a real implementation, this would load from a database or file
-      // For this example, we'll use a simple set of built-in rules
-      this.rules = [
-        {
-          id: 'sql-injection-1',
-          name: 'SQL Injection Attempt (Basic)',
-          pattern: /'.*(\s|\+)*(or|and)(\s|\+)*.*=.*--.*/i,
-          target: 'query',
-          severity: 0.8,
-          description: 'SQL injection attempt with OR/AND operator and comment',
-          patternType: 'regex'
-        },
-        {
-          id: 'xss-basic-1',
-          name: 'XSS Attempt (Basic)',
-          pattern: /<script>.*<\/script>/i,
-          target: 'body',
-          severity: 0.7,
-          description: 'Basic cross-site scripting attempt with script tags',
-          patternType: 'regex'
-        },
-        {
-          id: 'path-traversal-1',
-          name: 'Path Traversal Attempt',
-          pattern: /\.\.(\/|\\)/,
-          target: 'path',
-          severity: 0.8,
-          description: 'Directory traversal attempt with ../',
-          patternType: 'regex'
-        },
-        {
-          id: 'admin-access',
-          name: 'Admin Access Attempt',
-          pattern: /\/api\/admin/i,
-          target: 'path',
-          severity: 0.3,
-          description: 'Attempt to access admin API endpoints',
-          patternType: 'regex'
-        },
-        {
-          id: 'auth-brute-force',
-          name: 'Authentication Brute Force',
-          pattern: /\/api\/auth\/login/i,
-          target: 'path',
-          severity: 0.4,
-          description: 'Multiple authentication attempts',
-          patternType: 'regex'
-        },
-        {
-          id: 'suspicious-user-agent-1',
-          name: 'Suspicious User Agent',
-          pattern: /(nmap|nikto|sqlmap|scanner|gobuster|burpsuite)/i,
-          target: 'userAgent',
-          severity: 0.9,
-          description: 'User agent contains known security tool',
-          patternType: 'regex'
-        }
-      ];
+      // Count active high threats (last hour)
+      const oneHourAgo = now - 60 * 60 * 1000;
+      let highThreatCount = 0;
+      let totalThreatScore = 0;
       
-      // Load custom rules from file if available
-      try {
-        const customRulesPath = path.join(process.cwd(), 'config', 'threat-rules.json');
-        
-        if (fs.existsSync(customRulesPath)) {
-          const customRules = JSON.parse(fs.readFileSync(customRulesPath, 'utf8'));
-          
-          if (Array.isArray(customRules)) {
-            // Convert string patterns to RegExp for regex pattern types
-            const processedRules = customRules.map(rule => {
-              if (rule.patternType === 'regex' && typeof rule.pattern === 'string') {
-                return {
-                  ...rule,
-                  pattern: new RegExp(rule.pattern, 'i')
-                };
-              }
-              return rule;
-            });
-            
-            this.rules = [...this.rules, ...processedRules];
+      // Count identifier threats
+      for (const [_, threat] of this.identifierThreats.entries()) {
+        if (threat.lastViolation >= oneHourAgo) {
+          totalThreatScore += threat.score;
+          if (threat.score > 0.5) {
+            highThreatCount++;
           }
         }
-      } catch (error) {
-        console.error('[ThreatDetection] Error loading custom threat rules:', error);
       }
       
-      this.lastRuleUpdateTime = Date.now();
+      // Count IP threats
+      for (const [_, threat] of this.ipThreats.entries()) {
+        if (threat.lastViolation >= oneHourAgo) {
+          // We don't add to totalThreatScore here to avoid double counting
+          if (threat.score > 0.7) {
+            highThreatCount++;
+          }
+        }
+      }
+      
+      // Calculate average threat score
+      const totalThreats = this.identifierThreats.size;
+      const avgThreatScore = totalThreats > 0 ? totalThreatScore / totalThreats : 0;
+      
+      // Calculate global threat level based on high threats and average scores
+      let newGlobalThreatLevel = 0;
+      
+      if (highThreatCount > 10) {
+        // Many high threats, very concerning
+        newGlobalThreatLevel = 0.8 + (Math.min(highThreatCount, 100) - 10) / 90 * 0.2;
+      } else if (highThreatCount > 5) {
+        // Several high threats, concerning
+        newGlobalThreatLevel = 0.6 + (highThreatCount - 5) / 5 * 0.2;
+      } else if (highThreatCount > 0) {
+        // Some high threats
+        newGlobalThreatLevel = 0.3 + highThreatCount / 5 * 0.3;
+      } else {
+        // No high threats, use average score
+        newGlobalThreatLevel = avgThreatScore * 0.3;
+      }
+      
+      // Smooth transitions by blending with previous value
+      this.globalThreatLevel = this.globalThreatLevel * 0.7 + newGlobalThreatLevel * 0.3;
+      
+      // Update last update time
+      this.lastGlobalUpdate = now;
+      
+      // Log global threat level changes
+      if (Math.abs(this.globalThreatLevel - newGlobalThreatLevel) > 0.1) {
+        log(`Global threat level updated: ${this.globalThreatLevel.toFixed(2)}`, 'security');
+      }
     } catch (error) {
-      console.error('[ThreatDetection] Error loading threat rules:', error);
+      log(`Error recalculating global threat level: ${error}`, 'security');
     }
   }
   
   /**
-   * Clear the suspicious IP cache older than a certain time
-   * 
-   * @param maxAgeMs Maximum age in milliseconds
+   * Clear old threat data
    */
-  public clearOldSuspiciousIps(maxAgeMs: number = 3600000): void {
-    // In a real implementation, this would track when IPs were added
-    // For simplicity, we'll just clear the entire set in this example
-    this.recentSuspiciousIps.clear();
+  public clearOldThreats(): void {
+    try {
+      const now = Date.now();
+      
+      // Clear old identifier threats
+      for (const [identifier, threat] of this.identifierThreats.entries()) {
+        if (now - threat.lastViolation > this.maxThreatAge) {
+          this.identifierThreats.delete(identifier);
+        }
+      }
+      
+      // Clear old IP threats
+      for (const [ip, threat] of this.ipThreats.entries()) {
+        if (now - threat.lastViolation > this.maxThreatAge) {
+          this.ipThreats.delete(ip);
+        }
+      }
+      
+      // Clear old cache entries
+      for (const [key, cache] of this.threatLevelCache.entries()) {
+        if (now - cache.timestamp > 3600000) { // 1 hour
+          this.threatLevelCache.delete(key);
+        }
+      }
+      
+      // Log cleanup
+      log(`Cleared old threat data. Remaining: ${this.identifierThreats.size} identifiers, ${this.ipThreats.size} IPs`, 'security');
+    } catch (error) {
+      log(`Error clearing old threats: ${error}`, 'security');
+    }
+  }
+  
+  /**
+   * Explicitly clear suspicious IPs that are older than the specified threshold
+   * 
+   * @param ageThresholdMs Age threshold in milliseconds (default: 6 hours)
+   */
+  public clearOldSuspiciousIps(ageThresholdMs: number = 6 * 60 * 60 * 1000): void {
+    try {
+      const now = Date.now();
+      const threshold = ageThresholdMs || this.maxThreatAge / 4; // Default to 1/4 of max age
+      
+      // Track how many were cleared
+      let clearedCount = 0;
+      
+      // Clear old IP threats
+      for (const [ip, threat] of this.ipThreats.entries()) {
+        if (now - threat.lastViolation > threshold) {
+          this.ipThreats.delete(ip);
+          this.threatLevelCache.delete(`ip:${ip}`);
+          clearedCount++;
+        }
+      }
+      
+      // Only log if something was cleared
+      if (clearedCount > 0) {
+        log(`Cleared ${clearedCount} suspicious IPs older than ${threshold / 3600000} hours`, 'security');
+      }
+    } catch (error) {
+      log(`Error clearing old suspicious IPs: ${error}`, 'security');
+    }
+  }
+  
+  /**
+   * Get statistics about threats
+   * 
+   * @returns Statistics about threats
+   */
+  public getStats(): any {
+    try {
+      const now = Date.now();
+      const last10Minutes = now - 10 * 60 * 1000;
+      const lastHour = now - 60 * 60 * 1000;
+      const last24Hours = now - 24 * 60 * 60 * 1000;
+      
+      let threats10m = 0;
+      let threats1h = 0;
+      let threats24h = 0;
+      let highThreats = 0;
+      
+      // Count recent threats by time period
+      for (const [_, threat] of this.identifierThreats.entries()) {
+        if (threat.lastViolation >= last10Minutes) {
+          threats10m++;
+        }
+        
+        if (threat.lastViolation >= lastHour) {
+          threats1h++;
+        }
+        
+        if (threat.lastViolation >= last24Hours) {
+          threats24h++;
+        }
+        
+        if (threat.score > 0.7) {
+          highThreats++;
+        }
+      }
+      
+      // Get top threats (highest scores)
+      const topThreats = Array.from(this.identifierThreats.entries())
+        .sort((a, b) => b[1].score - a[1].score)
+        .slice(0, 10)
+        .map(([identifier, threat]) => ({
+          identifier,
+          score: threat.score,
+          violations: threat.violations,
+          lastViolation: new Date(threat.lastViolation).toISOString(),
+          ipAddress: threat.ipAddress
+        }));
+      
+      // Return statistics
+      return {
+        timestamp: new Date().toISOString(),
+        globalThreatLevel: this.globalThreatLevel,
+        totalIdentifierThreats: this.identifierThreats.size,
+        totalIpThreats: this.ipThreats.size,
+        recentThreats: {
+          last10Minutes: threats10m,
+          lastHour: threats1h,
+          last24Hours: threats24h
+        },
+        highThreats,
+        topThreats
+      };
+    } catch (error) {
+      log(`Error getting threat stats: ${error}`, 'security');
+      
+      return {
+        timestamp: new Date().toISOString(),
+        error: 'Failed to get threat stats'
+      };
+    }
   }
 }
 
-// Export a singleton instance
+// Create a singleton instance
 export const threatDetectionService = new ThreatDetectionService();

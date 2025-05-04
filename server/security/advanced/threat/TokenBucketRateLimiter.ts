@@ -2,374 +2,346 @@
  * Token Bucket Rate Limiter
  *
  * This class implements the token bucket algorithm for rate limiting.
- * It supports context-aware limiting with dynamic bucket configurations
- * based on user roles, resource sensitivity, and system conditions.
+ * It provides context-aware rate limiting with dynamic bucket sizes
+ * and refill rates based on contextual information.
  */
 
 import { RateLimitContext } from './RateLimitContextBuilder';
 import { RateLimitAnalytics } from './RateLimitAnalytics';
+import { log } from '../../../utils/logger';
 
-// Define bucket configuration
+// Interface for configuration
 export interface RateLimitConfig {
-  capacity: number;        // Maximum tokens in the bucket (max burst)
-  refillRate: number;      // Tokens added per refill interval
-  refillInterval: number;  // Interval between refills in milliseconds
+  capacity: number;
+  refillRate: number;
+  refillInterval: number;
+  contextAware?: boolean;
+  analytics?: RateLimitAnalytics;
 }
 
-// Define the result of a consume operation
-export interface ConsumeResult {
-  limited: boolean;        // Whether the request is rate limited
-  remaining: number;       // Remaining tokens in the bucket
-  resetTime: number;       // Time when the bucket will be fully refilled
-  retryAfter: number;      // Milliseconds until the request can be attempted again
-}
-
-// Define a token bucket
+// Interface for a bucket
 interface TokenBucket {
-  tokens: number;          // Current tokens in the bucket
-  lastRefill: number;      // Timestamp of the last refill
-  config: RateLimitConfig; // Configuration for this bucket
+  tokens: number;
+  lastRefill: number;
+  capacity: number;
+  refillRate: number;
+  refillInterval: number;
+}
+
+// Interface for consume result
+interface ConsumeResult {
+  limited: boolean;
+  remaining: number;
+  resetTime: number;
+  retryAfter: number;
 }
 
 export class TokenBucketRateLimiter {
   private buckets: Map<string, TokenBucket> = new Map();
-  private defaultConfig: RateLimitConfig;
-  private customConfigs: Map<string, RateLimitConfig> = new Map();
-  private violations: Map<string, number> = new Map();
+  private config: RateLimitConfig;
   private contextAware: boolean;
   private analytics?: RateLimitAnalytics;
   
-  constructor(config: {
-    capacity: number,
-    refillRate: number,
-    refillInterval: number,
-    contextAware?: boolean,
-    analytics?: RateLimitAnalytics
-  }) {
-    this.defaultConfig = {
+  constructor(config: RateLimitConfig) {
+    this.config = {
       capacity: config.capacity,
       refillRate: config.refillRate,
-      refillInterval: config.refillInterval
+      refillInterval: config.refillInterval,
+      contextAware: config.contextAware || false
     };
     
-    this.contextAware = config.contextAware ?? false;
+    this.contextAware = this.config.contextAware || false;
     this.analytics = config.analytics;
+    
+    // Set up periodic cleanup
+    setInterval(() => this.cleanup(), 60 * 60 * 1000); // Every hour
   }
   
   /**
    * Consume tokens from a bucket
    * 
-   * @param identifier The bucket identifier (e.g., IP, user ID)
-   * @param cost The number of tokens to consume
-   * @param context Optional context information for context-aware limiting
-   * @param adaptiveMultiplier Optional multiplier applied to dynamic buckets
-   * @returns Result of the consumption operation
+   * @param key Bucket identifier
+   * @param cost Number of tokens to consume
+   * @param context Optional context for context-aware limiting
+   * @param adaptiveMultiplier Optional multiplier for adaptive rate limiting
+   * @returns Result of the consumption
    */
   public consume(
-    identifier: string,
-    cost: number = 1,
+    key: string, 
+    cost: number = 1, 
     context?: RateLimitContext,
     adaptiveMultiplier: number = 1.0
   ): ConsumeResult {
-    // Default values for the result
-    const defaultResult: ConsumeResult = {
-      limited: false,
-      remaining: 0,
-      resetTime: Date.now() + this.defaultConfig.refillInterval,
-      retryAfter: 0
-    };
-    
     try {
-      // Get or create the bucket for this identifier
-      const bucket = this.getOrCreateBucket(identifier);
+      const now = Date.now();
       
-      // Refill the bucket based on elapsed time
-      this.refillBucket(bucket);
+      // Get or create bucket
+      let bucket = this.getBucket(key);
       
-      // Apply adaptive rate limiting if a multiplier is provided
-      const effectiveCapacity = 
-        adaptiveMultiplier !== 1.0 
-          ? Math.max(1, Math.round(bucket.config.capacity * adaptiveMultiplier)) 
-          : bucket.config.capacity;
+      // Adjust bucket capacity and refill rate based on context if context-aware
+      if (this.contextAware && context) {
+        this.adjustBucketForContext(bucket, context, adaptiveMultiplier);
+      }
       
-      // Check if there are enough tokens
+      // Refill tokens based on time elapsed
+      this.refill(bucket, now);
+      
+      // Check if enough tokens are available
       if (bucket.tokens < cost) {
-        // Not enough tokens, rate limited
-        this.recordViolation(identifier);
-        
-        // Calculate when the request can be retried
-        const tokensNeeded = cost - bucket.tokens;
-        const refillRate = bucket.config.refillRate / bucket.config.refillInterval;
-        const retryAfter = Math.ceil(tokensNeeded / refillRate);
+        // Not enough tokens - rate limited
+        const resetTime = this.getTimeToNextToken(bucket, cost, now);
         
         return {
           limited: true,
           remaining: bucket.tokens,
-          resetTime: bucket.lastRefill + bucket.config.refillInterval,
-          retryAfter
+          resetTime: now + resetTime,
+          retryAfter: resetTime
         };
       }
       
-      // Enough tokens, consume them
+      // Consume tokens
       bucket.tokens -= cost;
+      
+      // Update the bucket in the map
+      this.buckets.set(key, bucket);
+      
+      // Calculate time until next refill
+      const timeToNextToken = this.getTimeToNextToken(bucket, 1, now);
       
       return {
         limited: false,
         remaining: bucket.tokens,
-        resetTime: bucket.lastRefill + bucket.config.refillInterval,
+        resetTime: now + timeToNextToken,
         retryAfter: 0
       };
     } catch (error) {
-      console.error(`[RateLimit] Error consuming tokens for ${identifier}:`, error);
-      return defaultResult;
+      // Log the error
+      log(`Error consuming tokens: ${error}`, 'security');
+      
+      // Fail open - allow the request but with zero remaining
+      return {
+        limited: false,
+        remaining: 0,
+        resetTime: Date.now() + this.config.refillInterval,
+        retryAfter: 0
+      };
     }
   }
   
   /**
-   * Synchronous version of consume - doesn't support context-aware limiting
+   * Update configuration for this rate limiter
    * 
-   * @param identifier The bucket identifier
-   * @param cost The number of tokens to consume
-   * @returns Whether the consumption was successful (not limited)
+   * @param config New configuration
    */
-  public consumeSync(identifier: string, cost: number = 1): boolean {
-    try {
-      // Get or create the bucket for this identifier
-      const bucket = this.getOrCreateBucket(identifier);
-      
-      // Refill the bucket based on elapsed time
-      this.refillBucket(bucket);
-      
-      // Check if there are enough tokens
-      if (bucket.tokens < cost) {
-        this.recordViolation(identifier);
-        return false; // Not enough tokens, rate limited
-      }
-      
-      // Enough tokens, consume them
-      bucket.tokens -= cost;
-      return true; // Consumption successful
-    } catch (error) {
-      console.error(`[RateLimit] Error in synchronous token consumption for ${identifier}:`, error);
-      return true; // Allow the request on error (fail open)
-    }
-  }
-  
-  /**
-   * Update the default configuration for this rate limiter
-   * 
-   * @param config The new configuration
-   */
-  public updateConfig(config: RateLimitConfig): void {
-    this.defaultConfig = {
-      ...this.defaultConfig,
+  public updateConfig(config: Partial<RateLimitConfig>): void {
+    // Update configuration
+    this.config = {
+      ...this.config,
       ...config
     };
     
-    // Clear all existing buckets to apply the new configuration
-    this.buckets.clear();
-  }
-  
-  /**
-   * Set a custom configuration for a specific identifier
-   * 
-   * @param identifier The identifier to customize
-   * @param config The custom configuration
-   */
-  public setCustomConfig(identifier: string, config: RateLimitConfig): void {
-    this.customConfigs.set(identifier, config);
+    // Update context-aware flag
+    this.contextAware = this.config.contextAware || false;
     
-    // Remove existing bucket to apply the new configuration
-    this.buckets.delete(identifier);
+    // Log update
+    log(`Rate limit configuration updated: capacity=${this.config.capacity}, refillRate=${this.config.refillRate}, interval=${this.config.refillInterval}ms`, 'security');
   }
   
   /**
-   * Remove a custom configuration for a specific identifier
+   * Get current capacity for a bucket
    * 
-   * @param identifier The identifier to reset to default configuration
+   * @param key Bucket identifier
+   * @returns Current capacity
    */
-  public removeCustomConfig(identifier: string): void {
-    this.customConfigs.delete(identifier);
-    
-    // Remove existing bucket to apply the default configuration
-    this.buckets.delete(identifier);
+  public getCapacity(key: string): number {
+    const bucket = this.buckets.get(key);
+    return bucket ? bucket.capacity : this.config.capacity;
   }
   
   /**
-   * Get the current capacity of a bucket
+   * Get statistics about this rate limiter
    * 
-   * @param identifier The bucket identifier
-   * @returns The current capacity
-   */
-  public getCapacity(identifier: string): number {
-    // Check if there's a custom configuration for this identifier
-    const customConfig = this.customConfigs.get(identifier);
-    if (customConfig) {
-      return customConfig.capacity;
-    }
-    
-    // Return the default capacity
-    return this.defaultConfig.capacity;
-  }
-  
-  /**
-   * Get the remaining tokens in a bucket
-   * 
-   * @param identifier The bucket identifier
-   * @returns The remaining tokens
-   */
-  public getRemaining(identifier: string): number {
-    // Get the bucket for this identifier
-    const bucket = this.buckets.get(identifier);
-    if (!bucket) {
-      // No bucket yet, return the default capacity
-      return this.getCapacity(identifier);
-    }
-    
-    // Refill the bucket to get the current token count
-    this.refillBucket(bucket);
-    
-    return bucket.tokens;
-  }
-  
-  /**
-   * Reset a specific bucket
-   * 
-   * @param identifier The bucket identifier
-   */
-  public resetBucket(identifier: string): void {
-    this.buckets.delete(identifier);
-  }
-  
-  /**
-   * Reset all buckets
-   */
-  public resetAllBuckets(): void {
-    this.buckets.clear();
-  }
-  
-  /**
-   * Get or create a bucket for a specific identifier
-   * 
-   * @param identifier The bucket identifier
-   * @returns The token bucket
-   */
-  private getOrCreateBucket(identifier: string): TokenBucket {
-    // Check if the bucket already exists
-    let bucket = this.buckets.get(identifier);
-    
-    if (!bucket) {
-      // Get the appropriate configuration for this identifier
-      const config = this.customConfigs.get(identifier) || this.defaultConfig;
-      
-      // Create a new bucket
-      bucket = {
-        tokens: config.capacity,
-        lastRefill: Date.now(),
-        config
-      };
-      
-      // Store the bucket
-      this.buckets.set(identifier, bucket);
-    }
-    
-    return bucket;
-  }
-  
-  /**
-   * Refill a bucket based on elapsed time
-   * 
-   * @param bucket The token bucket to refill
-   */
-  private refillBucket(bucket: TokenBucket): void {
-    const now = Date.now();
-    const elapsed = now - bucket.lastRefill;
-    
-    if (elapsed >= bucket.config.refillInterval) {
-      // Calculate the number of refill intervals that have passed
-      const intervals = Math.floor(elapsed / bucket.config.refillInterval);
-      
-      // Add tokens based on the refill rate and intervals
-      const tokensToAdd = intervals * bucket.config.refillRate;
-      
-      // Update the bucket
-      bucket.tokens = Math.min(bucket.tokens + tokensToAdd, bucket.config.capacity);
-      bucket.lastRefill = now - (elapsed % bucket.config.refillInterval);
-    }
-  }
-  
-  /**
-   * Record a violation for a specific identifier
-   * 
-   * @param identifier The identifier that violated the rate limit
-   */
-  private recordViolation(identifier: string): void {
-    // Increment the violation count
-    const count = this.violations.get(identifier) || 0;
-    this.violations.set(identifier, count + 1);
-    
-    // Use analytics if available
-    if (this.analytics) {
-      // The actual recording happens in the consuming middleware
-      // because we need additional context information
-    }
-  }
-  
-  /**
-   * Get statistical data about rate limiting
-   * 
-   * @returns Statistics about buckets and violations
+   * @returns Statistics about this rate limiter
    */
   public getStats(): any {
-    // Calculate statistics
-    const totalBuckets = this.buckets.size;
-    const totalCustomConfigs = this.customConfigs.size;
-    
-    let limitedBuckets = 0;
-    let totalTokens = 0;
-    let minTokens = Infinity;
-    let maxTokens = 0;
-    
-    // Process each bucket
-    for (const [identifier, bucket] of this.buckets.entries()) {
-      // Refill the bucket to get current state
-      this.refillBucket(bucket);
-      
-      // Update statistics
-      totalTokens += bucket.tokens;
-      minTokens = Math.min(minTokens, bucket.tokens);
-      maxTokens = Math.max(maxTokens, bucket.tokens);
-      
-      // Check if this bucket is effectively rate limited (cannot consume 1 token)
-      if (bucket.tokens < 1) {
-        limitedBuckets++;
-      }
-    }
-    
-    // Calculate averages
-    const avgTokens = totalBuckets > 0 ? totalTokens / totalBuckets : 0;
-    
-    // Gather violation statistics
-    let totalViolations = 0;
-    let highViolators = 0;
-    
-    for (const [identifier, count] of this.violations.entries()) {
-      totalViolations += count;
-      if (count >= 10) {
-        highViolators++;
-      }
-    }
-    
     return {
-      totalBuckets,
-      limitedBuckets,
-      avgTokens,
-      minTokens: minTokens === Infinity ? 0 : minTokens,
-      maxTokens,
-      totalCustomConfigs,
-      totalViolations,
-      highViolators,
-      defaultConfig: this.defaultConfig
+      bucketCount: this.buckets.size,
+      config: {
+        capacity: this.config.capacity,
+        refillRate: this.config.refillRate,
+        refillInterval: this.config.refillInterval,
+        contextAware: this.contextAware
+      }
     };
+  }
+  
+  /**
+   * Clear a specific bucket
+   * 
+   * @param key Bucket identifier
+   */
+  public resetBucket(key: string): void {
+    this.buckets.delete(key);
+  }
+  
+  /**
+   * Clean up old buckets
+   */
+  private cleanup(): void {
+    const now = Date.now();
+    let cleanedCount = 0;
+    
+    // Find buckets that haven't been used in a while
+    for (const [key, bucket] of this.buckets.entries()) {
+      // If the bucket is full, it hasn't been used in a while
+      if (bucket.tokens === bucket.capacity) {
+        // Check if it's been at least 24 hours since the last refill
+        const timeSinceLastRefill = now - bucket.lastRefill;
+        if (timeSinceLastRefill > 24 * 60 * 60 * 1000) {
+          // Remove the bucket
+          this.buckets.delete(key);
+          cleanedCount++;
+        }
+      }
+    }
+    
+    // Log cleanup
+    if (cleanedCount > 0) {
+      log(`Cleaned up ${cleanedCount} unused rate limit buckets`, 'security');
+    }
+  }
+  
+  /**
+   * Get or create a bucket
+   * 
+   * @param key Bucket identifier
+   * @returns Bucket
+   */
+  private getBucket(key: string): TokenBucket {
+    // Try to get existing bucket
+    const bucket = this.buckets.get(key);
+    
+    if (bucket) {
+      return bucket;
+    }
+    
+    // Create a new bucket
+    const newBucket: TokenBucket = {
+      tokens: this.config.capacity,
+      lastRefill: Date.now(),
+      capacity: this.config.capacity,
+      refillRate: this.config.refillRate,
+      refillInterval: this.config.refillInterval
+    };
+    
+    // Store the bucket
+    this.buckets.set(key, newBucket);
+    
+    return newBucket;
+  }
+  
+  /**
+   * Refill tokens in a bucket
+   * 
+   * @param bucket The bucket to refill
+   * @param now Current timestamp
+   */
+  private refill(bucket: TokenBucket, now: number): void {
+    // Calculate elapsed time since last refill
+    const elapsed = now - bucket.lastRefill;
+    
+    // Calculate number of tokens to add
+    const tokensToAdd = Math.floor(elapsed / bucket.refillInterval * bucket.refillRate);
+    
+    // If no tokens to add, return
+    if (tokensToAdd <= 0) {
+      return;
+    }
+    
+    // Add tokens, but don't exceed capacity
+    bucket.tokens = Math.min(bucket.capacity, bucket.tokens + tokensToAdd);
+    
+    // Update last refill time, accounting for partial intervals
+    const intervalsUsed = Math.floor(elapsed / bucket.refillInterval);
+    bucket.lastRefill += intervalsUsed * bucket.refillInterval;
+  }
+  
+  /**
+   * Adjust bucket parameters based on context
+   * 
+   * @param bucket The bucket to adjust
+   * @param context The context to use for adjustment
+   * @param adaptiveMultiplier Adaptive multiplier
+   */
+  private adjustBucketForContext(
+    bucket: TokenBucket, 
+    context: RateLimitContext,
+    adaptiveMultiplier: number
+  ): void {
+    // Start with the configured capacity
+    let adjustedCapacity = this.config.capacity;
+    
+    // Apply the adaptive multiplier
+    adjustedCapacity = Math.max(1, Math.round(adjustedCapacity * adaptiveMultiplier));
+    
+    // Ensure we don't wildly change the capacity
+    // Limit changes to +/- 50% of the original capacity
+    const minCapacity = Math.floor(this.config.capacity * 0.5);
+    const maxCapacity = Math.ceil(this.config.capacity * 1.5);
+    
+    // Clamp to the allowed range
+    bucket.capacity = Math.max(minCapacity, Math.min(maxCapacity, adjustedCapacity));
+    
+    // Similarly adjust the refill rate
+    let adjustedRefillRate = this.config.refillRate;
+    
+    // Apply the adaptive multiplier
+    adjustedRefillRate = Math.max(1, Math.round(adjustedRefillRate * adaptiveMultiplier));
+    
+    // Ensure we don't wildly change the refill rate
+    const minRefillRate = Math.floor(this.config.refillRate * 0.5);
+    const maxRefillRate = Math.ceil(this.config.refillRate * 1.5);
+    
+    // Clamp to the allowed range
+    bucket.refillRate = Math.max(minRefillRate, Math.min(maxRefillRate, adjustedRefillRate));
+  }
+  
+  /**
+   * Calculate time until the bucket will have the specified number of tokens
+   * 
+   * @param bucket The bucket
+   * @param tokens Number of tokens needed
+   * @param now Current timestamp
+   * @returns Time in milliseconds until tokens will be available
+   */
+  private getTimeToNextToken(bucket: TokenBucket, tokens: number, now: number): number {
+    // If we already have enough tokens, return 0
+    if (bucket.tokens >= tokens) {
+      return 0;
+    }
+    
+    // Calculate how many tokens we need
+    const tokensNeeded = tokens - bucket.tokens;
+    
+    // Calculate elapsed time since last refill
+    const elapsed = now - bucket.lastRefill;
+    
+    // Calculate partially refilled tokens (that aren't yet accounted for in bucket.tokens)
+    const partialRefill = Math.floor(elapsed / bucket.refillInterval * bucket.refillRate);
+    
+    // If we have enough with partial refill, calculate exact time
+    if (bucket.tokens + partialRefill >= tokens) {
+      // Calculate how many tokens we still need after partial refill
+      const stillNeeded = tokens - (bucket.tokens + partialRefill);
+      
+      // Calculate exact time needed for those tokens
+      return Math.ceil(stillNeeded * (bucket.refillInterval / bucket.refillRate));
+    }
+    
+    // Calculate time for the remaining tokens needed
+    const intervalsNeeded = Math.ceil(tokensNeeded / bucket.refillRate);
+    
+    // Calculate time until we have enough tokens
+    return Math.max(0, intervalsNeeded * bucket.refillInterval - elapsed);
   }
 }
