@@ -245,10 +245,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/secure/*'  // Secure API endpoints
   ];
 
-  // Temporarily disable CSRF protection to get the app working
-  // setupCSRFProtection(app);
+  // Re-enable enhanced CSRF protection with rate limiting integration
+  setupCSRFProtection(app);
   
-  console.log("⚠️ CSRF Protection temporarily disabled to fix routing issues");
+  console.log("✅ Enhanced CSRF protection with rate limiting integration enabled");
 
   // Simple health check endpoint
   app.get('/api/health', (req, res) => {

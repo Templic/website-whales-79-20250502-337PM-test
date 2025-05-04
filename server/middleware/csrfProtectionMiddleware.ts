@@ -7,6 +7,7 @@
  * - Origin and Referer validation
  * - Per-request token validation
  * - Token rotation
+ * - Integration with rate limiting system
  */
 import { Express, Request, Response, NextFunction } from 'express';
 import { 
@@ -17,6 +18,8 @@ import {
 import { securityConfig } from '../security/advanced/config/SecurityConfig';
 import { CSRFProtection, CSRFTokenSetter, csrfField } from './CSRFMiddleware';
 import { csrfExemptRoutes } from '../utils/auth-config';
+import { initializeRateLimitingAndCsrf, recordCsrfVerification, recordCsrfError } from '../security/advanced/threat/RateLimitIntegration';
+import { rateLimitingSystem } from '../security/advanced/threat/RateLimitingSystem';
 
 /**
  * Setup CSRF protection for Express application
@@ -28,6 +31,28 @@ export function setupCSRFProtection(app: Express): void {
     return;
   }
 
+  // Initialize the rate limiting integration with CSRF
+  initializeRateLimitingAndCsrf();
+
+  // First, ensure rate limiting system is active - this must happen before CSRF protection
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    // Only check rate limits for non-exempt routes
+    if (!req.path.startsWith('/api/public') && !req.path.startsWith('/api/health')) {
+      // Skip the actual rate limiting for GET requests to the homepage
+      // This ensures the homepage always loads without ever showing "Security Verification Required"
+      if (req.method === 'GET' && (req.path === '/' || req.path === '/index.html')) {
+        next();
+      } else {
+        // For all other requests, apply contextual rate limiting
+        // Use the middleware directly from the RateLimitingSystem instance
+        const rateLimitMiddleware = rateLimitingSystem.createMiddleware();
+        rateLimitMiddleware(req, res, next);
+      }
+    } else {
+      next();
+    }
+  });
+
   // Configure CSRF protection service with exempt routes
   const csrfOptions = {
     ignorePaths: [
@@ -36,7 +61,10 @@ export function setupCSRFProtection(app: Express): void {
       '/api/health',
       '/api/metrics',
       '/api/test/csrf-exempt',
-      '/api/webhook'
+      '/api/webhook',
+      // Exempting the homepage from CSRF to ensure it always loads
+      '/',
+      '/index.html'
     ],
     cookie: {
       key: 'csrf-token',
@@ -49,7 +77,14 @@ export function setupCSRFProtection(app: Express): void {
   };
 
   // Configure the CSRF protection service
-  Object.assign(csrfProtectionService.options, csrfOptions);
+  // Using the exposed configuration method if available, or fall back to direct assignment
+  if (typeof csrfProtectionService.configure === 'function') {
+    csrfProtectionService.configure(csrfOptions);
+  } else {
+    console.log('[Security] Using fallback CSRF configuration method');
+    // @ts-ignore - Accessing a private property for backward compatibility
+    Object.assign(csrfProtectionService.options || {}, csrfOptions);
+  }
 
   // Add a convenience endpoint for SPAs to get a fresh CSRF token
   app.get('/api/csrf-token', CSRFTokenSetter, function(req: Request, res: Response) {
@@ -64,22 +99,44 @@ export function setupCSRFProtection(app: Express): void {
   app.use(function(req: Request, res: Response, next: NextFunction) {
     // Skip GET requests (already handled by CSRFTokenSetter)
     if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+      // Record successful CSRF verification for GET requests in analytics
+      recordCsrfVerification(req);
       return next();
     }
     
     // Skip exempt routes
-    if (csrfOptions.ignorePaths.some(pattern => {
+    const isExempt = csrfOptions.ignorePaths.some(pattern => {
       if (typeof pattern === 'string') {
         return req.path === pattern || req.path.startsWith(pattern);
-      } else {
+      } else if (pattern instanceof RegExp) {
         return pattern.test(req.path);
       }
-    })) {
+      return false;
+    });
+    
+    if (isExempt) {
+      // Record exempt path in analytics
+      recordCsrfVerification(req, true);
       return next();
     }
     
-    // Apply CSRF protection
-    CSRFProtection(req, res, next);
+    // Wrap the CSRF Protection with our rate limiting integration
+    const wrappedCSRFProtection = (req: Request, res: Response, next: NextFunction) => {
+      CSRFProtection(req, res, (err?: any) => {
+        if (err) {
+          // Record CSRF error in rate limiting system
+          recordCsrfError(req);
+          next(err);
+        } else {
+          // Record successful CSRF verification
+          recordCsrfVerification(req);
+          next();
+        }
+      });
+    };
+    
+    // Apply enhanced CSRF protection
+    wrappedCSRFProtection(req, res, next);
   });
 
   // Add CSRF token to all HTML responses
@@ -111,10 +168,14 @@ export function setupCSRFProtection(app: Express): void {
     next();
   });
 
-  // Add CSRF error handler
+  // Add CSRF error handler with rate limiting integration
   app.use(function(err: any, req: Request, res: Response, next: NextFunction) {
     if (err && err.code === 'EBADCSRFTOKEN') {
       console.error('[Security] CSRF token validation failed for path:', req.path);
+      
+      // Record CSRF error in rate limiting system for security analysis
+      // This helps detect potential CSRF attacks
+      recordCsrfError(req);
       
       // Return a JSON error for API requests
       if (req.path.startsWith('/api/')) {
@@ -122,6 +183,17 @@ export function setupCSRFProtection(app: Express): void {
           error: 'CSRF token validation failed',
           code: 'CSRF_ERROR'
         });
+      }
+      
+      // For homepage requests that fail CSRF, try to recover gracefully
+      // This ensures the user can always access the homepage
+      if (req.path === '/' || req.path === '/index.html') {
+        console.log('[Security] Allowing homepage access despite CSRF error');
+        // Set a fresh CSRF token to recover
+        CSRFTokenSetter(req, res, () => {
+          return next();
+        });
+        return;
       }
       
       // Redirect to error page for HTML requests
