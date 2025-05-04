@@ -28,7 +28,13 @@ function isThirdPartyIntegrationPath(path: string): boolean {
          path.includes('/api/taskade/') || 
          path.includes('taskade.com') ||
          path.includes('/integrations/') ||
-         path.includes('/embed/');
+         path.includes('/embed/') ||
+         path.includes('/a/embed/') ||
+         path.includes('/a/agent/') ||
+         path.includes('/a/widget/') ||
+         path.includes('/a/chat/') ||
+         path.includes('/agent-widget') ||
+         path.endsWith('.taskade.com');
 }
 
 /**
@@ -41,14 +47,23 @@ function needsCsrfExemption(path: string): boolean {
     '/sw.js',
     '/taskade-embed',
     '/api/taskade-redirect',
-    '/api/taskade-proxy'
+    '/api/taskade-proxy',
+    '/agent-widget',
+    '/a/embed',
+    '/a/agent',
+    '/a/widget',
+    '/a/chat'
   ];
   
   const exemptPathPrefixes = [
     '/taskade-',
     '/api/taskade/',
     '/api/integrations/',
-    '/api/embed/'
+    '/api/embed/',
+    '/a/embed/',
+    '/a/agent/',
+    '/a/widget/',
+    '/a/chat/'
   ];
   
   // Check exact path matches
