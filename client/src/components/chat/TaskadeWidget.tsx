@@ -8,6 +8,7 @@ interface TaskadeWidgetProps {
   taskadeId?: string;
   title?: string;
   theme?: 'light' | 'dark' | 'system';
+  style?: 'basic' | 'taskade' | 'oceanic';
   enableMemory?: boolean;
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   showBranding?: boolean;
@@ -19,12 +20,18 @@ interface TaskadeWidgetProps {
  * 
  * This widget provides a fixed position chat bubble that opens
  * into a fully-featured Taskade AI assistant chat window.
+ * 
+ * Supports three different style modes:
+ * - basic: Simple, minimal styling
+ * - taskade: Styled to match Taskade's native UI (default)
+ * - oceanic: Ocean-themed styling with blue gradients
  */
 const TaskadeWidget: React.FC<TaskadeWidgetProps> = ({
   enabled = true,
   taskadeId = '01JRV02MYWJW6VJS9XGR1VB5J4',
   title = 'Cosmic Assistant',
   theme = 'system',
+  style = 'taskade',
   enableMemory = true,
   position = 'bottom-right',
   showBranding = true,
@@ -114,8 +121,44 @@ const TaskadeWidget: React.FC<TaskadeWidgetProps> = ({
   
   if (!enabled) return null;
   
-  // Dark cosmic gradient for widget
-  const cosmicGradient = "bg-gradient-to-r from-indigo-600 to-purple-600";
+  // Button & gradient styles based on the selected style mode
+  const getStyleClasses = () => {
+    switch (style) {
+      case 'basic':
+        return {
+          button: "bg-primary hover:bg-primary/90",
+          gradient: "",
+          loaderBorder: "border-primary",
+          greetingBg: "bg-background border-border",
+          windowBg: "bg-background border-border",
+          headerBg: "bg-muted/50",
+          iconBg: "bg-primary"
+        };
+      case 'oceanic':
+        return {
+          button: "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600",
+          gradient: "bg-gradient-to-br from-blue-600 to-cyan-500",
+          loaderBorder: "border-cyan-500",
+          greetingBg: "bg-slate-900 border-slate-800",
+          windowBg: "bg-slate-900 border-slate-800",
+          headerBg: "bg-slate-900 border-slate-800",
+          iconBg: "bg-gradient-to-br from-blue-500 to-cyan-500"
+        };
+      case 'taskade':
+      default:
+        return {
+          button: "bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95",
+          gradient: "bg-gradient-to-br from-indigo-500 to-purple-600",
+          loaderBorder: "border-indigo-500",
+          greetingBg: "bg-black border-neutral-800",
+          windowBg: "bg-black border-neutral-800",
+          headerBg: "bg-black border-neutral-800",
+          iconBg: "bg-gradient-to-br from-indigo-500 to-purple-600"
+        };
+    }
+  };
+
+  const styles = getStyleClasses();
   
   return (
     <div className={`fixed ${positionClasses} z-50`} ref={containerRef}>
@@ -125,7 +168,7 @@ const TaskadeWidget: React.FC<TaskadeWidgetProps> = ({
           {/* Greeting bubble */}
           {showGreeting && (
             <div 
-              className="absolute bottom-16 right-0 w-64 bg-black text-white rounded-lg shadow-lg p-3 border border-neutral-800 mb-2 animate-fade-in-slide-up"
+              className={`absolute bottom-16 right-0 w-64 ${styles.greetingBg} text-white rounded-lg shadow-lg p-3 mb-2 animate-fade-in-slide-up`}
               style={{
                 transition: reducedMotion ? 'none' : 'all 0.2s ease',
               }}
@@ -138,14 +181,14 @@ const TaskadeWidget: React.FC<TaskadeWidgetProps> = ({
                 <X size={14} />
               </button>
               <p className="text-sm pr-4">{greetingMessage}</p>
-              <div className="absolute -bottom-2 right-5 w-4 h-4 bg-black border-r border-b border-neutral-800 transform rotate-45"></div>
+              <div className={`absolute -bottom-2 right-5 w-4 h-4 ${styles.greetingBg} border-r border-b transform rotate-45`}></div>
             </div>
           )}
           
           {/* Chat button */}
           <button
             onClick={toggleWidget}
-            className={`h-14 w-14 rounded-full flex items-center justify-center shadow-xl ${cosmicGradient} hover:shadow-lg hover:opacity-95 ${
+            className={`h-14 w-14 rounded-full flex items-center justify-center shadow-xl ${styles.button} ${
               reducedMotion ? '' : 'animate-pulse-subtle'
             }`}
             title="Open AI Chat Assistant"
@@ -155,7 +198,7 @@ const TaskadeWidget: React.FC<TaskadeWidgetProps> = ({
             
             {/* Brand label (optional) */}
             {showBranding && (
-              <span className="absolute -top-10 right-0 whitespace-nowrap bg-black/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-white shadow-lg border border-neutral-800">
+              <span className={`absolute -top-10 right-0 whitespace-nowrap ${style === 'basic' ? 'bg-background/90' : 'bg-black/80 backdrop-blur-sm'} px-3 py-1 rounded-full text-xs font-medium text-white shadow-lg border ${style === 'basic' ? 'border-border' : 'border-neutral-800'}`}>
                 Powered by Taskade AI
               </span>
             )}
@@ -166,7 +209,7 @@ const TaskadeWidget: React.FC<TaskadeWidgetProps> = ({
       {/* Chat window */}
       {isOpen && (
         <div 
-          className="w-[350px] md:w-[400px] h-[520px] overflow-hidden rounded-xl shadow-2xl border border-neutral-800 bg-black"
+          className={`w-[350px] md:w-[400px] h-[520px] overflow-hidden rounded-xl shadow-2xl border ${styles.windowBg}`}
           style={{
             transition: reducedMotion ? 'none' : 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
             transform: isOpen ? 'translateY(0)' : 'translateY(20px)',
@@ -174,14 +217,14 @@ const TaskadeWidget: React.FC<TaskadeWidgetProps> = ({
           }}
         >
           {/* Chat header */}
-          <div className="py-3 px-4 bg-black text-white border-b border-neutral-800 flex justify-between items-center">
+          <div className={`py-3 px-4 ${styles.headerBg} text-white border-b flex justify-between items-center`}>
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 flex items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
+              <div className={`w-6 h-6 flex items-center justify-center rounded-lg ${styles.iconBg}`}>
                 <MessageSquare size={14} className="text-white" />
               </div>
               <span className="text-sm font-medium">{title}</span>
               {loading && (
-                <div className="w-3 h-3 rounded-full border border-neutral-800 border-t-white animate-spin ml-2"></div>
+                <div className={`w-3 h-3 rounded-full border border-neutral-800 ${style === 'basic' ? 'border-t-primary' : style === 'oceanic' ? 'border-t-cyan-500' : 'border-t-white'} animate-spin ml-2`}></div>
               )}
             </div>
             
@@ -216,15 +259,28 @@ const TaskadeWidget: React.FC<TaskadeWidgetProps> = ({
               view="widget" 
               showToolbar={false}
               enableMemory={enableMemory}
-              theme="dark" // Force dark theme for widget
+              theme={theme === 'system' ? 'dark' : theme} 
+              style={style}
               showCapabilities={true}
             />
             
-            {/* Loading overlay - will be handled by TaskadeEmbed */}
+            {/* Loading overlay */}
             {loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-50">
+              <div className={`absolute inset-0 flex items-center justify-center ${
+                style === 'basic' 
+                  ? 'bg-background/90' 
+                  : style === 'oceanic' 
+                  ? 'bg-slate-900/90 backdrop-blur-sm' 
+                  : 'bg-black/80 backdrop-blur-sm'
+              } z-50`}>
                 <div className="text-center">
-                  <div className="w-12 h-12 rounded-full border-2 border-neutral-800 border-t-indigo-500 animate-spin mx-auto mb-4"></div>
+                  <div className={`w-12 h-12 rounded-full border-2 ${
+                    style === 'basic' 
+                      ? 'border-background border-t-primary' 
+                      : style === 'oceanic' 
+                      ? 'border-slate-800 border-t-cyan-500' 
+                      : 'border-neutral-800 border-t-indigo-500'
+                  } animate-spin mx-auto mb-4`}></div>
                   <p className="text-sm text-neutral-400">Loading {title}...</p>
                 </div>
               </div>

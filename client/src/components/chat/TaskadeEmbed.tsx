@@ -16,6 +16,7 @@ interface TaskadeEmbedProps {
   showToolbar?: boolean;
   enableMemory?: boolean;
   theme?: 'light' | 'dark' | 'system';
+  style?: 'basic' | 'taskade' | 'oceanic';
   showCapabilities?: boolean;
 }
 
@@ -43,6 +44,7 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
   showToolbar = true,
   enableMemory = true,
   theme = 'system',
+  style = 'taskade',
   showCapabilities = true
 }) => {
   const { reducedMotion } = useAccessibility();
@@ -84,10 +86,11 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
       theme: theme,
       memory: enableMemory ? '1' : '0',
       toolbar: showToolbar ? '1' : '0',
+      style: style,
     });
     
     return `${baseUrl}?${params.toString()}`;
-  }, [taskadeId, view, theme, enableMemory, showToolbar]);
+  }, [taskadeId, view, theme, enableMemory, showToolbar, style]);
   
   // Handle iframe load event
   const handleIframeLoad = () => {
@@ -180,18 +183,73 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
   const containerHeight = collapsed ? '48px' : (typeof height === 'number' ? `${height}px` : height);
   const containerWidth = typeof width === 'number' ? `${width}px` : width;
 
-  // Create branded border with cosmic theme
-  const brandedBorder = "border border-neutral-800 dark:border-neutral-700 rounded-xl overflow-hidden";
+  // Get style classes based on the selected style
+  const getStyleClasses = () => {
+    switch (style) {
+      case 'basic':
+        return {
+          border: "border border-border dark:border-border rounded-xl overflow-hidden",
+          background: view === 'agent' || view === 'chat' 
+            ? "bg-card dark:bg-card"
+            : "bg-background dark:bg-background",
+          toolbarBg: "bg-muted/50 dark:bg-muted/50",
+          toolbarBorder: "border-border dark:border-border",
+          iconBg: "bg-primary dark:bg-primary",
+          capabilitiesBg: "bg-card dark:bg-card",
+          capabilitiesItemHover: "hover:bg-muted/50 dark:hover:bg-muted/50",
+          inputBg: "bg-muted/50 dark:bg-muted/50 border-border dark:border-border",
+          buttonBg: "bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90",
+          loaderBorder: "border-muted dark:border-muted border-t-primary dark:border-t-primary",
+          loadingBg: "bg-background/90 dark:bg-background/90",
+          errorBg: "bg-card dark:bg-card border-border dark:border-border",
+          footerBg: "bg-muted/20 dark:bg-muted/20 border-border dark:border-border"
+        };
+      case 'oceanic':
+        return {
+          border: "border border-slate-800 dark:border-slate-800 rounded-xl overflow-hidden",
+          background: view === 'agent' || view === 'chat' 
+            ? "bg-slate-900 dark:bg-gradient-to-br from-slate-900 via-blue-900/40 to-slate-900"
+            : "bg-slate-800 dark:bg-slate-800",
+          toolbarBg: "bg-slate-900 dark:bg-slate-900",
+          toolbarBorder: "border-slate-800 dark:border-slate-800",
+          iconBg: "bg-gradient-to-br from-blue-500 to-cyan-500",
+          capabilitiesBg: "bg-slate-900 dark:bg-slate-900",
+          capabilitiesItemHover: "hover:bg-slate-800 dark:hover:bg-slate-800",
+          inputBg: "bg-slate-800 dark:bg-slate-800 border-slate-700 dark:border-slate-700",
+          buttonBg: "bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700",
+          loaderBorder: "border-slate-800 border-t-cyan-500",
+          loadingBg: "bg-slate-900/90 backdrop-blur-sm",
+          errorBg: "bg-slate-800 dark:bg-slate-800 border-slate-700 dark:border-slate-700",
+          footerBg: "bg-slate-900 dark:bg-slate-900 border-slate-800 dark:border-slate-800"
+        };
+      case 'taskade':
+      default:
+        return {
+          border: "border border-neutral-800 dark:border-neutral-700 rounded-xl overflow-hidden",
+          background: view === 'agent' || view === 'chat' 
+            ? "bg-black dark:bg-gradient-to-br from-black via-gray-900 to-gray-900"
+            : "bg-background",
+          toolbarBg: "bg-black dark:bg-black",
+          toolbarBorder: "border-neutral-800 dark:border-neutral-800",
+          iconBg: "bg-gradient-to-br from-indigo-500 to-purple-600",
+          capabilitiesBg: "bg-black dark:bg-black",
+          capabilitiesItemHover: "hover:bg-neutral-900 dark:hover:bg-neutral-900",
+          inputBg: "bg-neutral-900 dark:bg-neutral-900 border-neutral-800 dark:border-neutral-800",
+          buttonBg: "bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700",
+          loaderBorder: "border-neutral-800 border-t-indigo-500",
+          loadingBg: "bg-black/90 backdrop-blur-sm",
+          errorBg: "bg-neutral-900 dark:bg-neutral-900 border-neutral-800 dark:border-neutral-800",
+          footerBg: "bg-black dark:bg-black border-neutral-800 dark:border-neutral-800"
+        };
+    }
+  };
   
-  // Cosmic radial gradient background
-  const cosmicBackground = view === 'agent' || view === 'chat' 
-    ? "bg-black dark:bg-gradient-to-br from-black via-gray-900 to-gray-900"
-    : "bg-background";
+  const styles = getStyleClasses();
 
   return (
     <div 
       ref={containerRef}
-      className={`taskade-container relative overflow-hidden transition-all duration-300 ${brandedBorder} ${className}`}
+      className={`taskade-container relative overflow-hidden transition-all duration-300 ${styles.border} ${className}`}
       style={{ 
         height: containerHeight, 
         width: containerWidth,
@@ -201,9 +259,9 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
     >
       {/* Toolbar */}
       {showToolbar && (
-        <div className="taskade-toolbar flex items-center justify-between bg-black dark:bg-black py-3 px-4 border-b border-neutral-800 shadow-sm">
+        <div className={`taskade-toolbar flex items-center justify-between ${styles.toolbarBg} py-3 px-4 border-b ${styles.toolbarBorder} shadow-sm`}>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 flex items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
+            <div className={`w-6 h-6 flex items-center justify-center rounded-lg ${styles.iconBg}`}>
               <MessageSquare size={14} className="text-white" />
             </div>
             <span className="text-sm font-medium text-white">{title}</span>
@@ -252,11 +310,11 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
 
       {/* Content area */}
       <div 
-        className={`taskade-content relative ${collapsed ? 'hidden' : 'flex flex-col'} h-[calc(100%-48px)] w-full ${cosmicBackground}`}
+        className={`taskade-content relative ${collapsed ? 'hidden' : 'flex flex-col'} h-[calc(100%-48px)] w-full ${styles.background}`}
       >
         {/* Capabilities section - shown while loading or when agent view is first opened */}
         {showCapabilities && !error && (view === 'agent' || view === 'chat') && capabilitiesVisible && (
-          <div className="taskade-capabilities px-4 py-5 flex flex-col bg-black text-white">
+          <div className={`taskade-capabilities px-4 py-5 flex flex-col ${styles.capabilitiesBg} text-white`}>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">Start a conversation</h3>
               <button
@@ -273,7 +331,7 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
             
             <div className="grid gap-2 mb-4">
               {capabilities.map((capability, index) => (
-                <div key={index} className="flex items-start gap-3 p-2 rounded-lg hover:bg-neutral-900 transition-colors">
+                <div key={index} className={`flex items-start gap-3 p-2 rounded-lg ${styles.capabilitiesItemHover} transition-colors`}>
                   {capability.icon}
                   <div>
                     <h4 className="text-sm font-medium text-white">{capability.title}</h4>
@@ -290,13 +348,13 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
                   <input
                     type="text"
                     placeholder="Ask me anything..."
-                    className="w-full rounded-lg bg-neutral-900 border border-neutral-800 py-2 px-4 text-sm text-white focus:ring-1 focus:ring-indigo-500 placeholder:text-neutral-500"
+                    className={`w-full rounded-lg ${styles.inputBg} py-2 px-4 text-sm text-white focus:ring-1 focus:ring-indigo-500 placeholder:text-neutral-500`}
                     readOnly
                     onClick={() => setCapabilitiesVisible(false)}
                   />
                 </div>
                 <button 
-                  className="rounded-lg bg-indigo-600 p-2 text-white hover:bg-indigo-700 transition-colors"
+                  className={`rounded-lg ${styles.buttonBg} p-2 text-white transition-colors`}
                   onClick={() => setCapabilitiesVisible(false)}
                   aria-label="Send message"
                 >
@@ -309,9 +367,9 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
         
         {/* Loading overlay */}
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm z-10">
+          <div className={`absolute inset-0 flex items-center justify-center ${styles.loadingBg} z-10`}>
             <div className="text-center">
-              <div className="w-12 h-12 rounded-full border-2 border-neutral-800 border-t-indigo-500 animate-spin mx-auto mb-4"></div>
+              <div className={`w-12 h-12 rounded-full border-2 ${styles.loaderBorder} animate-spin mx-auto mb-4`}></div>
               <p className="text-sm text-neutral-400">Loading Taskade AI...</p>
             </div>
           </div>
@@ -319,11 +377,11 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
         
         {/* Error message */}
         {error && !loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-10">
-            <div className="text-center max-w-md p-6 rounded-lg bg-neutral-900 border border-neutral-800 shadow-xl">
+          <div className={`absolute inset-0 flex items-center justify-center ${styles.loadingBg} z-10`}>
+            <div className={`text-center max-w-md p-6 rounded-lg ${styles.errorBg} shadow-xl`}>
               <p className="text-sm text-red-400 mb-4">{error}</p>
               <button 
-                className="py-2 px-4 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors"
+                className={`py-2 px-4 ${styles.buttonBg} text-white rounded-lg text-sm transition-colors`}
                 onClick={handleRefresh}
               >
                 Retry
@@ -354,7 +412,7 @@ const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({
         
         {/* Powered by Taskade footer */}
         {!loading && !error && !collapsed && (view === 'agent' || view === 'chat') && (
-          <div className="py-2 px-3 bg-black text-center text-xs text-neutral-500 border-t border-neutral-800">
+          <div className={`py-2 px-3 ${styles.footerBg} text-center text-xs text-neutral-500 border-t`}>
             Powered by <span className="inline-flex items-center gap-1">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="#9CA3AF"/>
