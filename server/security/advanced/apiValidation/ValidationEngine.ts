@@ -3,11 +3,16 @@
  * 
  * The core of the API validation system that provides schema registration,
  * validation, and rule management. Supports different validation modes and targets.
+ * 
+ * Enhanced with AI-powered security validation capabilities for advanced threat detection.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { ValidationErrorHandler } from './ValidationErrorHandler';
+
+// Lazy-load AI dependencies to avoid circular references
+let validationAIConnector: any = null;
 
 // Define validation options interface
 export interface ValidationOptions {
@@ -17,6 +22,13 @@ export interface ValidationOptions {
   statusCode?: number;
   logSeverity?: 'low' | 'medium' | 'high' | 'critical';
   useCasing?: 'preserve' | 'camel' | 'snake' | 'pascal';
+  useAI?: boolean;
+  aiOptions?: {
+    detailedAnalysis?: boolean;
+    contentType?: 'code' | 'logs' | 'network' | 'config' | 'api' | 'database';
+    threshold?: number;
+    maxTokens?: number;
+  };
 }
 
 // Map of validation rules for different endpoints
@@ -110,6 +122,64 @@ export class ValidationEngine {
   }
   
   /**
+   * Get the AI validation connector (lazy-loaded)
+   */
+  private static async getAIConnector() {
+    if (!validationAIConnector) {
+      try {
+        // Dynamic import to avoid circular references
+        const module = await import('../ai/ValidationAIConnector');
+        validationAIConnector = module.validationAIConnector;
+      } catch (error) {
+        console.error('[VALIDATION_ENGINE] Error loading AI connector:', error);
+        throw new Error('Failed to load AI validation connector');
+      }
+    }
+    return validationAIConnector;
+  }
+  
+  /**
+   * Perform AI-powered validation on request data
+   */
+  private static async performAIValidation(
+    req: Request,
+    content: string,
+    contentType: 'code' | 'logs' | 'network' | 'config' | 'api' | 'database',
+    aiOptions: Record<string, any> = {}
+  ) {
+    try {
+      const connector = await this.getAIConnector();
+      
+      // Create validation context from request
+      const context = {
+        path: req.path,
+        method: req.method,
+        userId: (req as any).user?.id || (req as any).user?.claims?.sub,
+        ip: req.ip,
+        isAuthenticated: !!(req as any).user,
+        roles: (req as any).user?.roles || [],
+        permissions: (req as any).user?.permissions || [],
+        sessionId: (req as any).sessionID,
+        timestamp: Date.now(),
+        additionalContext: {
+          userAgent: req.headers['user-agent'],
+          referrer: req.headers.referer || req.headers.referrer,
+          host: req.headers.host
+        }
+      };
+      
+      // Run AI validation
+      return await connector.validateWithAI(content, context, {
+        contentType,
+        ...aiOptions
+      });
+    } catch (error) {
+      console.error('[VALIDATION_ENGINE] AI validation error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Create validation middleware for an API endpoint
    */
   static createValidationMiddleware(ruleIds: string[], options: ValidationOptions = {}) {
@@ -120,6 +190,13 @@ export class ValidationEngine {
       statusCode: 400,
       logSeverity: 'medium',
       useCasing: 'preserve',
+      useAI: false,
+      aiOptions: {
+        detailedAnalysis: false,
+        contentType: 'api',
+        threshold: 5,
+        maxTokens: 1000
+      },
       ...options
     };
     
@@ -200,6 +277,72 @@ export class ValidationEngine {
                 }
               );
             }
+          }
+        }
+        
+        // If AI validation is enabled, check for security threats
+        if (defaultOptions.useAI && process.env.OPENAI_API_KEY) {
+          try {
+            // Get the content to analyze (typically the request body)
+            let contentToAnalyze = '';
+            const contentType = defaultOptions.aiOptions.contentType || 'api' as const;
+            
+            if (contentType === 'api') {
+              // For API validation, serialize the request data
+              contentToAnalyze = JSON.stringify({
+                method: req.method,
+                path: req.path,
+                query: req.query,
+                params: req.params,
+                body: req.body,
+                headers: { 
+                  ...req.headers,
+                  // Remove sensitive headers
+                  authorization: req.headers.authorization ? '[REDACTED]' : undefined,
+                  cookie: req.headers.cookie ? '[REDACTED]' : undefined
+                }
+              }, null, 2);
+            } else if (req.body && typeof req.body === 'object') {
+              // For other content types, use the request body
+              contentToAnalyze = JSON.stringify(req.body, null, 2);
+            } else if (req.body && typeof req.body === 'string') {
+              contentToAnalyze = req.body;
+            }
+            
+            // Skip AI validation if no content to analyze
+            if (contentToAnalyze) {
+              const aiResult = await this.performAIValidation(
+                req, 
+                contentToAnalyze, 
+                contentType, 
+                defaultOptions.aiOptions
+              );
+              
+              // If AI validation fails, return error
+              if (!aiResult.success) {
+                console.warn(`[VALIDATION_ENGINE] AI validation failed for ${req.path}:`, aiResult.errors);
+                
+                return ValidationErrorHandler.handleCustomError(
+                  res,
+                  'Security validation failed',
+                  { 
+                    errors: aiResult.errors,
+                    message: 'The request contains potentially malicious patterns' 
+                  },
+                  {
+                    includeDetails: defaultOptions.includeDetails as boolean,
+                    statusCode: 403,
+                    logSeverity: 'high'
+                  }
+                );
+              }
+              
+              // Attach AI validation result to request for later use
+              (req as any).aiValidationResult = aiResult;
+            }
+          } catch (aiError) {
+            console.error('[VALIDATION_ENGINE] AI validation error:', aiError);
+            // Continue despite AI validation error - don't block request
           }
         }
         
