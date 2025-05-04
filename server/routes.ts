@@ -21,6 +21,7 @@ import {
 import { setupCSRFProtection } from './middleware/csrfProtectionMiddleware';
 import { createAutoValidationMiddleware, initializeCommonValidationRules } from './middleware/apiValidationMiddleware';
 import { registerApiValidationRules } from './validation/apiValidationRules';
+import { createValidationMiddleware, createAIValidationMiddleware, createDatabaseValidationMiddleware } from './middleware/validationPipelineMiddleware';
 import { threatProtectionMiddleware } from './security/advanced/middleware/ThreatProtectionMiddleware';
 import { securityConfig } from './security/advanced/config/SecurityConfig';
 import { rateLimitTestRouter } from './routes/rate-limit-test.routes';
@@ -93,6 +94,8 @@ const comments = pgTable('comments', {
 
 // Define insertCommentSchema since it's not exported from schema.ts
 import { createInsertSchema } from 'drizzle-zod';
+import { z } from 'zod';
+
 const insertCommentSchema = createInsertSchema(comments).omit({
   id: true,
   createdAt: true,
@@ -257,7 +260,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/secure/*', // Secure API endpoints
     '/api/test/rate-limit/*', // Rate limiting test bypass endpoints
     '/api/openai/*',  // OpenAI API endpoints
-    '/api/validation-test/*' // API validation test endpoints
+    '/api/validation-test/*', // API validation test endpoints
+    '/api/pipeline/*' // Enhanced validation pipeline endpoints
   ];
 
   // Re-enable enhanced CSRF protection with rate limiting integration
@@ -412,6 +416,125 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Add OpenAI integration routes
   app.use('/api/openai', openaiRoutes);
   console.log("✅ OpenAI integration routes added");
+  
+  // Add enhanced validation pipeline routes
+  // Contact form schema validation with caching
+  const contactSchema = z.object({
+    name: z.string().min(2).max(100),
+    email: z.string().email(),
+    message: z.string().min(10).max(2000)
+  });
+  
+  app.post('/api/pipeline/contact', createValidationMiddleware(contactSchema, {
+    batchKey: 'contact-forms',
+    enableCaching: true
+  }), (req, res) => {
+    // Access the validated data from the middleware
+    const data = req.validatedData;
+    res.json({
+      success: true,
+      validation: {
+        passed: true,
+        cacheHit: req.validationResult?.cacheHit || false,
+        validationId: req.validationResult?.validationId
+      },
+      data
+    });
+  });
+  
+  // AI-powered security validation endpoint
+  app.post('/api/pipeline/security', createAIValidationMiddleware({
+    contentType: 'api',
+    detailedAnalysis: true,
+    threshold: 0.75 // Adjustable sensitivity threshold
+  }), (req, res) => {
+    res.json({
+      success: true,
+      validation: {
+        passed: true,
+        securityScore: req.validationResult?.securityScore || 1.0,
+        validationId: req.validationResult?.validationId,
+        warnings: req.validationResult?.warnings || []
+      },
+      message: "Request passed AI security validation"
+    });
+  });
+  
+  // Database operation validation
+  app.post('/api/pipeline/db-operation', createDatabaseValidationMiddleware({
+    detailedAnalysis: true
+  }), (req, res) => {
+    res.json({
+      success: true,
+      validation: {
+        passed: true,
+        validationId: req.validationResult?.validationId
+      },
+      message: "Database operation validated successfully"
+    });
+  });
+  
+  // Pipeline status endpoint
+  app.get('/api/pipeline/status', isAuthenticated, async (req, res) => {
+    try {
+      // Import pipeline directly to avoid circular dependencies
+      const { validationPipeline } = await import('./security/advanced/validation/ValidationPipeline');
+      const status = await validationPipeline.getStatus();
+      
+      res.json({
+        success: true,
+        status: {
+          cacheStats: status.cacheStats,
+          activeBatches: status.activeBatches,
+          aiValidation: status.aiValidation,
+          performance: status.performance
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching pipeline status:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve pipeline status'
+      });
+    }
+  });
+  
+  // Cache management endpoint
+  app.post('/api/pipeline/cache', isAuthenticated, async (req, res) => {
+    try {
+      // Import pipeline directly to avoid circular dependencies
+      const { validationPipeline } = await import('./security/advanced/validation/ValidationPipeline');
+      
+      const action = req.body.action;
+      
+      if (action === 'clear') {
+        validationPipeline.clearCache();
+        res.json({
+          success: true,
+          message: 'Validation cache cleared successfully'
+        });
+      } else if (action === 'stats') {
+        const status = await validationPipeline.getStatus();
+        res.json({
+          success: true,
+          cacheStats: status.cacheStats
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid cache action. Supported actions: clear, stats'
+        });
+      }
+    } catch (error) {
+      console.error('Error managing pipeline cache:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to manage pipeline cache'
+      });
+    }
+  });
+  
+  console.log("✅ Enhanced validation pipeline routes added");
   
   // Add API validation test routes
   app.use('/api/validation-test', validationTestRoutes);
