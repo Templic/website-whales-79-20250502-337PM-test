@@ -7,5 +7,14 @@
     "category": "system",
     "timestamp": "2025-05-04T21:16:54.236Z",
     "lastUpdated": "2025-05-04T21:16:54.237Z"
+  },
+  {
+    "id": "INC-20250504-SYS-M0299",
+    "title": "File integrity changes detected in critical files",
+    "severity": "medium",
+    "status": "new",
+    "category": "system",
+    "timestamp": "2025-05-04T21:44:17.670Z",
+    "lastUpdated": "2025-05-04T21:44:17.670Z"
   }
 ]

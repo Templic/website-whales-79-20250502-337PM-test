@@ -185,6 +185,7 @@ import validationTestRoutes from './routes/validation-test-routes';
 import noCsrfValidationRoutes from './routes/no-csrf-validation-routes';
 import directTestValidationRoutes from './routes/direct-test-validation-routes';
 import noSecurityTestRoutes from './routes/no-security-test-routes';
+import validationBypassRoutes from './routes/validation-bypass-routes';
 import { completeCsrfBypass } from './security/middleware/completeCsrfBypass';
 // Theme routes are imported above
 import deadlinksRoutes from './routes/deadlinks';
@@ -268,6 +269,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/user',     // Current user endpoint
     '/api/admin/*',  // Admin API endpoints
     '/api/search/*', // Search endpoints
+    '/security-api-test.html', // Direct API test page
+    '/api-validation-test.html', // Standard API test page
     '/api/secure/*', // Secure API endpoints
     '/api/test/rate-limit/*', // Rate limiting test bypass endpoints
     '/api/openai/*',  // OpenAI API endpoints
@@ -454,6 +457,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Add no-CSRF routes using noCSRF middleware
   app.use('/api/no-csrf', noCSRF(), noCsrfRoutes);
   console.log("✅ No-CSRF routes added with noCSRF middleware");
+  
+  // Add validation bypass routes with complete security bypass
+  app.use('/api/validation-bypass', completeCsrfBypass(), validationBypassRoutes);
+  console.log("✅ Validation bypass routes added with complete security bypass");
   
   // Direct test API endpoints
   // These are hardcoded here for maximum security bypass effectiveness
