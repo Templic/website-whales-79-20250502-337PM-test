@@ -169,7 +169,7 @@ router.post('/signup', testAuth, [
 router.get('/items', (req, res) => {
   const { page, limit, sortBy, order } = (req as any).validatedData?.query || { page: 1, limit: 10 };
   
-  secureLogger('info', logComponent, `Items request with pagination: page=${page}, limit=${limit}`);
+  secureLog('info', logComponent, `Items request with pagination: page=${page}, limit=${limit}`);
   
   // Mock items data
   const items = Array.from({ length: limit }, (_, i) => ({
@@ -204,7 +204,7 @@ router.post('/security-test', testAuth, validateRequestWithAI({
 }), (req, res) => {
   const { query, userId, adminOverride } = req.body;
   
-  secureLogger('info', logComponent, 'Security test endpoint accessed');
+  secureLog('info', logComponent, 'Security test endpoint accessed');
   
   // This is intentionally vulnerable for testing purposes
   if (adminOverride === 'true') {
@@ -274,7 +274,7 @@ router.get('/documentation', async (req, res) => {
       res.send(documentation);
     }
   } catch (error) {
-    secureLogger('error', logComponent, 'Error generating documentation', {
+    secureLog('error', logComponent, 'Error generating documentation', {
       metadata: {
         error: error instanceof Error ? error.message : String(error)
       }
@@ -306,7 +306,7 @@ router.post('/pipeline/contact', createValidationMiddleware(
   const validatedData = req.validatedData;
   const validationMetadata = req.validationResult;
   
-  secureLogger('info', logComponent, `Pipeline validated contact form from ${validatedData.email}`, {
+  secureLog('info', logComponent, `Pipeline validated contact form from ${validatedData.email}`, {
     metadata: {
       validationId: validationMetadata.validationId,
       timeTaken: validationMetadata.timeTaken
@@ -338,7 +338,7 @@ router.post('/pipeline/security', testAuth, createAIValidationMiddleware({
 }), (req, res) => {
   const validationMetadata = req.validationResult;
   
-  secureLogger('info', logComponent, 'Pipeline AI validation passed', {
+  secureLog('info', logComponent, 'Pipeline AI validation passed', {
     metadata: {
       validationId: validationMetadata.validationId,
       securityScore: validationMetadata.securityScore,
@@ -384,7 +384,7 @@ router.post('/pipeline/signup', testAuth, [
   const validatedData = req.validatedData;
   const validationMetadata = req.validationResult;
   
-  secureLogger('info', logComponent, `Pipeline validated signup for ${validatedData.username}`, {
+  secureLog('info', logComponent, `Pipeline validated signup for ${validatedData.username}`, {
     metadata: {
       validationId: validationMetadata.validationId,
       timeTaken: validationMetadata.timeTaken
@@ -413,7 +413,7 @@ router.post('/pipeline/db-operation', testAuth, createDatabaseValidationMiddlewa
 }), (req, res) => {
   const validationMetadata = req.validationResult;
   
-  secureLogger('info', logComponent, 'Database operation validated', {
+  secureLog('info', logComponent, 'Database operation validated', {
     metadata: {
       validationId: validationMetadata.validationId, 
       timeTaken: validationMetadata.timeTaken
@@ -442,7 +442,7 @@ router.get('/pipeline/status', async (req, res) => {
       ...status
     });
   } catch (error) {
-    secureLogger('error', logComponent, 'Error getting pipeline status', {
+    secureLog('error', logComponent, 'Error getting pipeline status', {
       metadata: {
         error: error instanceof Error ? error.message : String(error)
       }
@@ -461,7 +461,7 @@ router.post('/pipeline/cache', testAuth, (req, res) => {
   
   if (action === 'clear') {
     validationPipeline.clearCache();
-    secureLogger('info', logComponent, 'Validation cache cleared');
+    secureLog('info', logComponent, 'Validation cache cleared');
     
     res.json({
       success: true,

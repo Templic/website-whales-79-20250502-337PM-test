@@ -144,9 +144,12 @@ class SecurityConfig {
    * Enable a specific security feature
    */
   public enableFeature(feature: keyof SecurityFeatures): void {
+    // Only modify if the feature is a boolean type
     if (typeof this.features[feature] === 'boolean') {
-      // Use type assertion with unknown as intermediate step to satisfy TypeScript
-      this.features[feature] = true as unknown as typeof this.features[typeof feature];
+      // Create a type-safe way to update the property
+      const updatedFeatures = { ...this.features };
+      updatedFeatures[feature] = true;
+      this.features = updatedFeatures;
       this.notifyChangeListeners();
     }
   }
@@ -155,9 +158,12 @@ class SecurityConfig {
    * Disable a specific security feature
    */
   public disableFeature(feature: keyof SecurityFeatures): void {
+    // Only modify if the feature is a boolean type
     if (typeof this.features[feature] === 'boolean') {
-      // Use type assertion with unknown as intermediate step to satisfy TypeScript
-      this.features[feature] = false as unknown as typeof this.features[typeof feature];
+      // Create a type-safe way to update the property
+      const updatedFeatures = { ...this.features };
+      updatedFeatures[feature] = false;
+      this.features = updatedFeatures;
       this.notifyChangeListeners();
     }
   }
