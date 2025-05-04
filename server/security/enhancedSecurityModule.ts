@@ -13,6 +13,7 @@ import { initializeAuditTrail, recordAuditEvent } from './secureAuditTrail';
 import { initializeLogReviewer, reviewSecurityLogs } from './logReviewer';
 import { scanDependencies, generateUpdatePlan, applySafeUpdates, applySecurityUpdates } from '../utils/dependencyUpdater';
 import { log } from '../utils/logger';
+import { initializeRateLimiting } from './advanced/threat/RateLimitIntegration';
 
 // Track initialization state
 let isInitialized = false;
