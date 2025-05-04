@@ -1,0 +1,27 @@
+{
+  "id": "INC-20250504-SYS-M7570",
+  "title": "File integrity changes detected in critical files",
+  "description": "Detected 1 modified and 0 missing critical security files",
+  "severity": "medium",
+  "status": "new",
+  "category": "system",
+  "source": "security_scan",
+  "timestamp": "2025-05-04T22:14:44.278Z",
+  "lastUpdated": "2025-05-04T22:14:44.278Z",
+  "affectedComponents": [
+    "file-integrity",
+    "security-configuration"
+  ],
+  "relatedEvents": [],
+  "actions": [
+    {
+      "id": "INC-20250504-SYS-M7570-det-maa7m43acl",
+      "description": "Incident detected: File integrity changes detected in critical files",
+      "type": "detection",
+      "timestamp": "2025-05-04T22:14:44.278Z",
+      "automaticAction": true
+    }
+  ],
+  "evidenceReferences": [],
+  "integrityHash": "ac76756025ff20afe7ff115f0b7651a8f4e2a15446d68b6e64162261f1af7aad"
+}
