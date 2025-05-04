@@ -47,10 +47,14 @@ async function getCsrfToken() {
 /**
  * Test the validation rules endpoint
  */
-async function testValidationRules() {
+async function testValidationRules(csrfToken) {
   console.log('\n==== Testing Validation Rules Endpoint ====');
   
-  const result = await makeRequest('/api/validation-test/rules');
+  const result = await makeRequest('/api/validation-test/rules', {
+    headers: {
+      'X-CSRF-Token': csrfToken
+    }
+  });
   
   console.log('Result:', JSON.stringify(result, null, 2));
   return result;
@@ -59,10 +63,14 @@ async function testValidationRules() {
 /**
  * Test the mappings endpoint 
  */
-async function testValidationMappings() {
+async function testValidationMappings(csrfToken) {
   console.log('\n==== Testing Validation Mappings Endpoint ====');
   
-  const result = await makeRequest('/api/validation-test/mappings');
+  const result = await makeRequest('/api/validation-test/mappings', {
+    headers: {
+      'X-CSRF-Token': csrfToken
+    }
+  });
   
   console.log('Result:', JSON.stringify(result, null, 2));
   return result;
@@ -71,12 +79,15 @@ async function testValidationMappings() {
 /**
  * Test the security test endpoint
  */
-async function testSecurityValidation() {
+async function testSecurityValidation(csrfToken) {
   console.log('\n==== Testing Security Validation Endpoint ====');
   
   // Test with a safe payload
   const safeResult = await makeRequest('/api/validation-test/security-test', {
     method: 'POST',
+    headers: {
+      'X-CSRF-Token': csrfToken
+    },
     body: JSON.stringify({
       query: 'How is the weather today?',
       userId: '1234'
@@ -88,6 +99,9 @@ async function testSecurityValidation() {
   // Test with a suspicious payload (SQL injection attempt)
   const suspiciousResult = await makeRequest('/api/validation-test/security-test', {
     method: 'POST',
+    headers: {
+      'X-CSRF-Token': csrfToken
+    },
     body: JSON.stringify({
       query: 'SELECT * FROM users; DROP TABLE users;',
       userId: '1234; DROP TABLE users;',
@@ -106,22 +120,26 @@ async function testSecurityValidation() {
 async function runAllTests() {
   console.log('Starting API validation tests...');
   
+  let csrfToken;
+  
   // Try to get a CSRF token
   try {
-    const csrfToken = await getCsrfToken();
+    csrfToken = await getCsrfToken();
     console.log('Got CSRF token:', csrfToken);
   } catch (error) {
     console.warn('Could not get CSRF token:', error.message);
+    console.error('Cannot proceed with tests without a CSRF token. Exiting.');
+    return;
   }
   
   // Test validation rules
-  await testValidationRules();
+  await testValidationRules(csrfToken);
   
   // Test validation mappings
-  await testValidationMappings();
+  await testValidationMappings(csrfToken);
   
   // Test security validation
-  await testSecurityValidation();
+  await testSecurityValidation(csrfToken);
   
   console.log('\nAll tests completed!');
 }
