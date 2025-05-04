@@ -1,0 +1,27 @@
+{
+  "id": "INC-20250504-SYS-M6353",
+  "title": "File integrity changes detected in critical files",
+  "description": "Detected 1 modified and 0 missing critical security files",
+  "severity": "medium",
+  "status": "new",
+  "category": "system",
+  "source": "security_scan",
+  "timestamp": "2025-05-04T22:34:07.956Z",
+  "lastUpdated": "2025-05-04T22:34:07.956Z",
+  "affectedComponents": [
+    "file-integrity",
+    "security-configuration"
+  ],
+  "relatedEvents": [],
+  "actions": [
+    {
+      "id": "INC-20250504-SYS-M6353-det-maa8b1zokr",
+      "description": "Incident detected: File integrity changes detected in critical files",
+      "type": "detection",
+      "timestamp": "2025-05-04T22:34:07.956Z",
+      "automaticAction": true
+    }
+  ],
+  "evidenceReferences": [],
+  "integrityHash": "ad8715fd4caa3b3ce44b902297b0dde5dc07dcb9551a28dce80b093ef43ba999"
+}

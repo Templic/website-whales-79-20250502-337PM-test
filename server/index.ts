@@ -70,9 +70,15 @@ app.use(rateLimitTestBypassRouter);
 log('✅ Rate limit test bypass routes registered', 'server');
 
 // Register direct validation test routes with no security middleware
-log('Registering direct validation test routes with complete security bypass...', 'server');
-app.use('/api/direct-validation', noSecurityMiddleware, directValidationTestRoutes);
-log('✅ Direct validation test routes registered with complete security bypass', 'server');
+// Only enable direct validation test routes if explicitly enabled or in development
+const enableValidationTestRoutes = process.env.ENABLE_VALIDATION_TEST_ROUTES === 'true' || process.env.NODE_ENV === 'development';
+if (enableValidationTestRoutes) {
+  log('Registering direct validation test routes with complete security bypass...', 'server');
+  app.use('/api/direct-validation', noSecurityMiddleware, directValidationTestRoutes);
+  log('✅ Direct validation test routes registered with complete security bypass', 'server');
+} else {
+  log('Direct validation test routes disabled - use ENABLE_VALIDATION_TEST_ROUTES=true to enable', 'server');
+}
 
 if (config.security.csrfProtection) {
   log('Setting up enhanced CSRF protection with deep security features', 'server');
