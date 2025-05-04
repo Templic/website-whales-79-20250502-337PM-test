@@ -95,7 +95,7 @@ async function testSchemaValidation() {
     message: "This is a test message that meets the validation requirements."
   };
   
-  const validResponse = await makeRequest('/api/validation-test/basic', 'POST', validData);
+  const validResponse = await makeRequest('/api/no-csrf/validation-test/basic', 'POST', validData);
   printResult(
     'Valid data passes validation', 
     validResponse.status === 200 && validResponse.data.success, 
@@ -109,7 +109,7 @@ async function testSchemaValidation() {
     message: "This is a test message with an invalid email format."
   };
   
-  const invalidEmailResponse = await makeRequest('/api/validation-test/basic', 'POST', invalidEmailData);
+  const invalidEmailResponse = await makeRequest('/api/no-csrf/validation-test/basic', 'POST', invalidEmailData);
   printResult(
     'Invalid email is rejected',
     invalidEmailResponse.status !== 200 || !invalidEmailResponse.data.success,

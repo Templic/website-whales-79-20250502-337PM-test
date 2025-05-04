@@ -178,6 +178,7 @@ import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search/index';
 import csrfRoutes from './routes/csrf-routes';
 import validationTestRoutes from './routes/validation-test-routes';
+import noCsrfValidationRoutes from './routes/no-csrf-validation-routes';
 // Theme routes are imported above
 import deadlinksRoutes from './routes/deadlinks';
 import advancedSecurityRoutes from './routes/advanced-security-routes';
@@ -417,6 +418,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Add OpenAI integration routes
   app.use('/api/openai', openaiRoutes);
   console.log("✅ OpenAI integration routes added");
+  
+  // Add no-CSRF validation test routes (for development and testing only)
+  app.use('/api/no-csrf/validation-test', noCsrfValidationRoutes);
+  console.log("✅ No-CSRF validation test routes added");
   
   // Add enhanced validation pipeline routes
   // Contact form schema validation with caching
