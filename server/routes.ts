@@ -25,6 +25,7 @@ import { threatProtectionMiddleware } from './security/advanced/middleware/Threa
 import { securityConfig } from './security/advanced/config/SecurityConfig';
 import { rateLimitTestRouter } from './routes/rate-limit-test.routes';
 import { rateLimitTestBypassRouter } from './routes/rate-limit-test-bypass.routes';
+import { thirdPartyIntegrationMiddleware, taskadeIntegrationMiddleware } from './middleware/thirdPartyIntegrationMiddleware';
 
 // The isAuthenticated, isAdmin, and isSuperAdmin middleware are now imported from auth-utils.ts
 import { nanoid } from 'nanoid';
@@ -217,6 +218,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Rate limit test bypass routes are now registered in server/index.ts
   // before the CSRF middleware is applied to ensure they work correctly
+  
+  // Apply third-party integration middleware to support embedding external content
+  app.use(thirdPartyIntegrationMiddleware);
+  app.use(taskadeIntegrationMiddleware);
+  console.log("✅ Third-party integration middleware initialized successfully");
   
   // Apply the API validation middleware to all API routes
   // This will auto-validate requests based on registered rules

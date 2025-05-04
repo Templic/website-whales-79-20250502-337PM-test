@@ -184,8 +184,19 @@ export function setupCSRFProtection(app: Express): void {
     res.json({ csrfToken: token });
   });
 
-  // Apply CSRF token setter to all GET requests
-  app.get('*', CSRFTokenSetter);
+  // Apply CSRF token setter to all GET requests, but exempt content API routes
+  app.get('*', (req, res, next) => {
+    // Skip CSRF token setter for content API paths
+    if (req.path.includes('/api/content/')) {
+      console.log(`[CSRF Debug] Exempting content API path from token setter: ${req.path}`);
+      // Record exempt path in analytics
+      recordCsrfVerification(req, true);
+      return next();
+    }
+    
+    // For all other paths, set CSRF token
+    CSRFTokenSetter(req, res, next);
+  });
 
   // Apply CSRF protection to non-GET requests (except for exempt routes)
   app.use(function(req: Request, res: Response, next: NextFunction) {
