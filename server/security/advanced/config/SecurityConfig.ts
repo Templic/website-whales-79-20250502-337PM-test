@@ -1,401 +1,208 @@
 /**
- * Security Configuration Service
+ * Security Configuration
  * 
- * Provides centralized configuration for all security features:
- * - Feature toggles (enabling/disabling security features)
- * - Security levels (low, medium, high, custom)
- * - Custom security settings
- * - Configuration persistence
+ * This module provides configuration for the security features of the application,
+ * including AI-powered security analysis, validation thresholds, and performance settings.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { db } from '../../../db';
-import { securitySettings } from '../../../../shared/schema';
-import { eq } from 'drizzle-orm';
+import secureLogger from '../../utils/secureLogger';
 
-// Security features that can be enabled/disabled
+// Define the security features interface
 export interface SecurityFeatures {
-  // Core security
-  threatDetection: boolean;        // Detect and block threats
-  realTimeMonitoring: boolean;     // Collect security metrics
-  ipReputation: boolean;           // Use IP reputation data
+  // Basic security features
+  csrfProtection: boolean;
+  rateLimiting: boolean;
+  inputValidation: boolean;
+  xssProtection: boolean;
+  sqlInjectionProtection: boolean;
   
-  // Additional protections
-  csrfProtection: boolean;         // CSRF tokens
-  xssProtection: boolean;          // XSS filtering
-  sqlInjectionProtection: boolean; // SQL injection protection
-  rateLimiting: boolean;           // Rate limiting
+  // Advanced security features
+  aiSecurityAnalysis: boolean;
+  fallbackValidation: boolean;
+  aiValidationThreshold: number;
+  performancePriority: boolean;
+  secureLogging: boolean;
   
-  // Authentication security
-  twoFactorAuth: boolean;          // 2FA for admin accounts
-  mfa: boolean;                    // Multi-factor authentication (TOTP)
-  passwordPolicies: boolean;       // Password strength requirements
-  bruteForceProtection: boolean;   // Protection against brute force attacks
+  // Authentication features
+  mfa: boolean;
+  passwordPolicies: boolean;
+  sessionTimeout: number; // minutes
   
-  // Advanced features
-  zeroKnowledgeProofs: boolean;    // Zero-knowledge authentication
-  aiThreatDetection: boolean;      // AI-powered threat detection
+  // Monitoring features
+  auditLogging: boolean;
+  threatDetection: boolean;
 }
 
-// Security level options
-export type SecurityLevel = 'MONITOR' | 'LOW' | 'MEDIUM' | 'HIGH' | 'MAXIMUM' | 'custom';
+// Default settings
+const defaultFeatures: SecurityFeatures = {
+  // Basic security features
+  csrfProtection: true,
+  rateLimiting: true,
+  inputValidation: true,
+  xssProtection: true,
+  sqlInjectionProtection: true,
+  
+  // Advanced security features
+  aiSecurityAnalysis: process.env.OPENAI_API_KEY ? true : false, // Enable if API key is present
+  fallbackValidation: true,
+  aiValidationThreshold: 0.7, // 0-1 scale, higher is more strict
+  performancePriority: false,
+  secureLogging: true,
+  
+  // Authentication features
+  mfa: false, // Disabled by default
+  passwordPolicies: true,
+  sessionTimeout: 60, // 60 minutes
+  
+  // Monitoring features
+  auditLogging: true,
+  threatDetection: true
+};
 
-// Type for security configuration listeners
-type ConfigChangeListener = (features: SecurityFeatures, level: SecurityLevel) => void;
+// Type definition for change listeners
+type SecurityConfigChangeListener = (features: SecurityFeatures) => void;
 
-/**
- * Security configuration service
- */
+// Singleton configuration class
 class SecurityConfig {
   private features: SecurityFeatures;
-  private level: SecurityLevel;
-  private configPath: string;
-  private defaultConfigPath: string;
-  private listeners: ConfigChangeListener[] = [];
+  private changeListeners: SecurityConfigChangeListener[] = [];
   
   constructor() {
-    this.configPath = path.join(process.cwd(), 'config', 'security-config.json');
-    this.defaultConfigPath = path.join(process.cwd(), 'config', 'security-config.default.json');
-    
-    // Set default configuration - start in MONITOR mode for safety
-    this.features = this.getDefaultFeatures('MONITOR');
-    this.level = 'MONITOR';
-    
-    // Load configuration
-    this.loadConfig();
+    this.features = { ...defaultFeatures };
+    this.loadEnvironmentOverrides();
   }
   
   /**
-   * Get the current security features configuration
+   * Load overrides from environment variables
    */
-  getSecurityFeatures(): SecurityFeatures {
+  private loadEnvironmentOverrides() {
+    // Basic security features
+    if (process.env.SECURITY_CSRF_PROTECTION) {
+      this.features.csrfProtection = process.env.SECURITY_CSRF_PROTECTION === 'true';
+    }
+    
+    if (process.env.SECURITY_RATE_LIMITING) {
+      this.features.rateLimiting = process.env.SECURITY_RATE_LIMITING === 'true';
+    }
+    
+    // Advanced security features
+    if (process.env.SECURITY_AI_ANALYSIS) {
+      this.features.aiSecurityAnalysis = process.env.SECURITY_AI_ANALYSIS === 'true';
+    }
+    
+    if (process.env.SECURITY_FALLBACK_VALIDATION) {
+      this.features.fallbackValidation = process.env.SECURITY_FALLBACK_VALIDATION === 'true';
+    }
+    
+    if (process.env.SECURITY_AI_THRESHOLD) {
+      const threshold = parseFloat(process.env.SECURITY_AI_THRESHOLD);
+      if (!isNaN(threshold) && threshold >= 0 && threshold <= 1) {
+        this.features.aiValidationThreshold = threshold;
+      }
+    }
+    
+    if (process.env.SECURITY_PERFORMANCE_PRIORITY) {
+      this.features.performancePriority = process.env.SECURITY_PERFORMANCE_PRIORITY === 'true';
+    }
+    
+    // Authentication features
+    if (process.env.SECURITY_MFA) {
+      this.features.mfa = process.env.SECURITY_MFA === 'true';
+    }
+    
+    if (process.env.SECURITY_SESSION_TIMEOUT) {
+      const timeout = parseInt(process.env.SECURITY_SESSION_TIMEOUT, 10);
+      if (!isNaN(timeout) && timeout > 0) {
+        this.features.sessionTimeout = timeout;
+      }
+    }
+  }
+  
+  /**
+   * Get all security features
+   */
+  public getSecurityFeatures(): SecurityFeatures {
     return { ...this.features };
   }
   
   /**
-   * Get the current security level
-   */
-  getSecurityLevel(): SecurityLevel {
-    return this.level;
-  }
-  
-  /**
-   * Set security level
-   * 
-   * @param level The security level
-   * @returns Promise resolving to whether the operation was successful
-   */
-  async setSecurityLevel(level: SecurityLevel): Promise<boolean> {
-    // If setting to custom, maintain current features
-    if (level === 'custom') {
-      this.level = 'custom';
-    } else {
-      // Otherwise apply the features for this level
-      this.features = this.getDefaultFeatures(level);
-      this.level = level;
-    }
-    
-    // Save configuration to database
-    try {
-      await this.saveConfig();
-      
-      // Notify listeners
-      this.notifyListeners();
-      
-      return true;
-    } catch (error) {
-      console.error(`Error setting security level to ${level}:`, error);
-      return false;
-    }
-  }
-  
-  /**
    * Update security features
-   * 
-   * @param features The features to update
-   * @returns Promise resolving to whether the operation was successful
    */
-  async updateSecurityFeatures(features: Partial<SecurityFeatures>): Promise<boolean> {
-    // Update features
+  public updateSecurityFeatures(updates: Partial<SecurityFeatures>): SecurityFeatures {
     this.features = {
       ...this.features,
-      ...features
+      ...updates
     };
     
-    // Set level to custom when manually updating features
-    this.level = 'custom';
+    // Notify listeners about the changes
+    this.notifyChangeListeners();
     
-    // Save configuration to database
-    try {
-      await this.saveConfig();
-      
-      // Notify listeners
-      this.notifyListeners();
-      
-      return true;
-    } catch (error) {
-      console.error(`Error updating security features:`, error);
-      return false;
+    return this.getSecurityFeatures();
+  }
+  
+  /**
+   * Enable a specific security feature
+   */
+  public enableFeature(feature: keyof SecurityFeatures): void {
+    if (typeof this.features[feature] === 'boolean') {
+      this.features[feature] = true as any; // Type cast to fix TS error
+      this.notifyChangeListeners();
     }
   }
   
   /**
-   * Add a listener for configuration changes
-   * 
-   * @param listener The listener function
+   * Disable a specific security feature
    */
-  addChangeListener(listener: ConfigChangeListener): void {
-    this.listeners.push(listener);
+  public disableFeature(feature: keyof SecurityFeatures): void {
+    if (typeof this.features[feature] === 'boolean') {
+      this.features[feature] = false as any; // Type cast to fix TS error
+      this.notifyChangeListeners();
+    }
   }
   
   /**
-   * Remove a configuration change listener
-   * 
-   * @param listener The listener function to remove
+   * Check if a specific security feature is enabled
    */
-  removeChangeListener(listener: ConfigChangeListener): void {
-    const index = this.listeners.indexOf(listener);
+  public isFeatureEnabled(feature: keyof SecurityFeatures): boolean {
+    return typeof this.features[feature] === 'boolean' ? !!this.features[feature] : false;
+  }
+  
+  /**
+   * Add a change listener to be notified when security features are updated
+   */
+  public addChangeListener(listener: SecurityConfigChangeListener): void {
+    this.changeListeners.push(listener);
+  }
+  
+  /**
+   * Remove a change listener
+   */
+  public removeChangeListener(listener: SecurityConfigChangeListener): void {
+    const index = this.changeListeners.indexOf(listener);
     if (index !== -1) {
-      this.listeners.splice(index, 1);
+      this.changeListeners.splice(index, 1);
     }
   }
   
   /**
-   * Load security configuration from database
+   * Notify all listeners of changes to security features
+   * This is called internally after any updates to the features
    */
-  private async loadConfig(): Promise<void> {
-    try {
-      // First try to load from database
-      const settings = await db.select().from(securitySettings).limit(1);
-      
-      if (settings.length > 0) {
-        const setting = settings[0];
-        
-        if (setting.value && typeof setting.value === 'string') {
-          const config = JSON.parse(setting.value);
-          
-          if (config.features) {
-            this.features = config.features;
-          }
-          
-          if (config.level) {
-            this.level = config.level;
-          }
-          
-          console.log(`Loaded security configuration from database (level: ${this.level})`);
-          return;
-        }
-      }
-      
-      // If not in database, try to load from file
-      if (fs.existsSync(this.configPath)) {
-        const configJson = fs.readFileSync(this.configPath, 'utf8');
-        const config = JSON.parse(configJson);
-        
-        if (config.features) {
-          this.features = config.features;
-        }
-        
-        if (config.level) {
-          this.level = config.level;
-        }
-        
-        console.log(`Loaded security configuration from file (level: ${this.level})`);
-        
-        // Save to database for future
-        await this.saveConfig();
-      } else {
-        // If not in file, create default configuration
-        console.log(`Creating default security configuration (level: ${this.level})`);
-        await this.saveConfig();
-      }
-    } catch (error) {
-      console.error('Error loading security configuration:', error);
-      
-      // Fallback to defaults - use MONITOR mode for safety
-      this.features = this.getDefaultFeatures('MONITOR');
-      this.level = 'MONITOR';
-    }
-  }
-  
-  /**
-   * Save security configuration to database and file
-   */
-  private async saveConfig(): Promise<void> {
-    const config = {
-      features: this.features,
-      level: this.level
-    };
-    
-    // Save to database
-    try {
-      const settings = await db.select().from(securitySettings).limit(1);
-      
-      if (settings.length > 0) {
-        // Update existing setting
-        await db.update(securitySettings)
-          .set({
-            value: JSON.stringify(config),
-            updatedAt: new Date()
-          })
-          .where(eq(securitySettings.key, 'security_config'));
-      } else {
-        // Create new setting
-        await db.insert(securitySettings)
-          .values({
-            key: 'security_config',
-            value: JSON.stringify(config),
-            description: 'Security configuration settings',
-            category: 'security',
-            createdAt: new Date(),
-            updatedAt: new Date()
-          });
-      }
-    } catch (error) {
-      console.error('Error saving security configuration to database:', error);
-    }
-    
-    // Also save to file
-    try {
-      // Ensure config directory exists
-      const configDir = path.dirname(this.configPath);
-      if (!fs.existsSync(configDir)) {
-        fs.mkdirSync(configDir, { recursive: true });
-      }
-      
-      // Write to file
-      fs.writeFileSync(
-        this.configPath,
-        JSON.stringify(config, null, 2),
-        'utf8'
-      );
-    } catch (error) {
-      console.error('Error saving security configuration to file:', error);
-    }
-  }
-  
-  /**
-   * Get default features for a security level
-   * 
-   * @param level The security level
-   */
-  private getDefaultFeatures(level: SecurityLevel): SecurityFeatures {
-    switch (level) {
-      case 'MONITOR':
-        // Monitor-only mode: collect data but don't block anything
-        return {
-          threatDetection: true,
-          realTimeMonitoring: true,
-          ipReputation: false,
-          csrfProtection: false,
-          xssProtection: false,
-          sqlInjectionProtection: false,
-          rateLimiting: false,
-          twoFactorAuth: false,
-          mfa: false,
-          passwordPolicies: false,
-          bruteForceProtection: false,
-          zeroKnowledgeProofs: false,
-          aiThreatDetection: false
-        };
-        
-      case 'LOW':
-        // Basic protection for non-critical systems
-        return {
-          threatDetection: true,
-          realTimeMonitoring: true,
-          ipReputation: false,
-          csrfProtection: true,
-          xssProtection: true,
-          sqlInjectionProtection: true,
-          rateLimiting: false,
-          twoFactorAuth: false,
-          mfa: false,
-          passwordPolicies: true,
-          bruteForceProtection: false,
-          zeroKnowledgeProofs: false,
-          aiThreatDetection: false
-        };
-        
-      case 'MEDIUM':
-        // Standard protection for production systems
-        return {
-          threatDetection: true,
-          realTimeMonitoring: true,
-          ipReputation: true,
-          csrfProtection: true,
-          xssProtection: true,
-          sqlInjectionProtection: true,
-          rateLimiting: true,
-          twoFactorAuth: false,
-          mfa: true,
-          passwordPolicies: true,
-          bruteForceProtection: true,
-          zeroKnowledgeProofs: false,
-          aiThreatDetection: false
-        };
-        
-      case 'HIGH':
-        // Enhanced protection for sensitive systems
-        return {
-          threatDetection: true,
-          realTimeMonitoring: true,
-          ipReputation: true,
-          csrfProtection: true,
-          xssProtection: true,
-          sqlInjectionProtection: true,
-          rateLimiting: true,
-          twoFactorAuth: true,
-          mfa: true,
-          passwordPolicies: true,
-          bruteForceProtection: true,
-          zeroKnowledgeProofs: true,
-          aiThreatDetection: true
-        };
-        
-      case 'MAXIMUM':
-        // Maximum protection for critical systems
-        return {
-          threatDetection: true,
-          realTimeMonitoring: true,
-          ipReputation: true,
-          csrfProtection: true,
-          xssProtection: true,
-          sqlInjectionProtection: true,
-          rateLimiting: true,
-          twoFactorAuth: true,
-          mfa: true,
-          passwordPolicies: true,
-          bruteForceProtection: true,
-          zeroKnowledgeProofs: true,
-          aiThreatDetection: true
-        };
-        
-      case 'custom':
-      default:
-        // Return current features
-        return { ...this.features };
-    }
-  }
-  
-  /**
-   * Notify all listeners of configuration changes
-   */
-  private notifyListeners(): void {
-    // Make a copy of features to prevent modification
-    const featuresCopy = { ...this.features };
-    
-    // Notify all listeners
-    for (const listener of this.listeners) {
+  private notifyChangeListeners(): void {
+    const features = this.getSecurityFeatures();
+    for (const listener of this.changeListeners) {
       try {
-        listener(featuresCopy, this.level);
+        listener(features);
       } catch (error) {
-        console.error('Error in security configuration listener:', error);
+        secureLogger('error', 'SecurityConfig', 'Error in security config change listener', {
+          metadata: {
+            error: error instanceof Error ? error.message : String(error)
+          }
+        });
       }
     }
   }
 }
 
-// Create and export singleton instance
+// Export a singleton instance
 export const securityConfig = new SecurityConfig();

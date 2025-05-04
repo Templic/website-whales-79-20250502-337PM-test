@@ -21,11 +21,8 @@ import { validationPipeline } from '../security/advanced/validation/ValidationPi
 // Create a router
 const router = express.Router();
 
-// Create a logger
-const logger = secureLogger.createLogger('validation-test-routes', {
-  component: 'routes',
-  subcomponent: 'validation-test'
-});
+// Define logger component name
+const logComponent = 'validation-test-routes';
 
 // Basic test authentication middleware
 // In a real application, use a proper authentication system
@@ -102,7 +99,7 @@ router.post('/contact', validateRequest(
     message: z.string().min(10).max(1000)
   })
 ), (req, res) => {
-  logger.log(`Contact form submission from ${req.body.email}`, 'info');
+  secureLogger('info', logComponent, `Contact form submission from ${req.body.email}`);
   
   res.json({
     success: true,
@@ -125,7 +122,7 @@ router.post('/api-security', testAuth, validateRequestWithAI({
     threshold: 0.6
   }
 }), (req, res) => {
-  logger.log('API security validation passed', 'info');
+  secureLogger('info', logComponent, 'API security validation passed');
   
   res.json({
     success: true,
@@ -156,7 +153,7 @@ router.post('/signup', testAuth, [
     }
   })
 ], (req, res) => {
-  logger.log(`User signup for ${req.body.username}`, 'info');
+  secureLogger('info', logComponent, `User signup for ${req.body.username}`);
   
   res.json({
     success: true,
@@ -172,7 +169,7 @@ router.post('/signup', testAuth, [
 router.get('/items', (req, res) => {
   const { page, limit, sortBy, order } = (req as any).validatedData?.query || { page: 1, limit: 10 };
   
-  logger.log(`Items request with pagination: page=${page}, limit=${limit}`, 'info');
+  secureLogger('info', logComponent, `Items request with pagination: page=${page}, limit=${limit}`);
   
   // Mock items data
   const items = Array.from({ length: limit }, (_, i) => ({
@@ -207,7 +204,7 @@ router.post('/security-test', testAuth, validateRequestWithAI({
 }), (req, res) => {
   const { query, userId, adminOverride } = req.body;
   
-  logger.log('Security test endpoint accessed', 'info');
+  secureLogger('info', logComponent, 'Security test endpoint accessed');
   
   // This is intentionally vulnerable for testing purposes
   if (adminOverride === 'true') {
@@ -277,7 +274,11 @@ router.get('/documentation', async (req, res) => {
       res.send(documentation);
     }
   } catch (error) {
-    logger.log('Error generating documentation', 'error', { error });
+    secureLogger('error', logComponent, 'Error generating documentation', {
+      metadata: {
+        error: error instanceof Error ? error.message : String(error)
+      }
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to generate documentation',
@@ -305,9 +306,11 @@ router.post('/pipeline/contact', createValidationMiddleware(
   const validatedData = req.validatedData;
   const validationMetadata = req.validationResult;
   
-  logger.log(`Pipeline validated contact form from ${validatedData.email}`, 'info', {
-    validationId: validationMetadata.validationId,
-    timeTaken: validationMetadata.timeTaken
+  secureLogger('info', logComponent, `Pipeline validated contact form from ${validatedData.email}`, {
+    metadata: {
+      validationId: validationMetadata.validationId,
+      timeTaken: validationMetadata.timeTaken
+    }
   });
   
   res.json({
@@ -335,10 +338,12 @@ router.post('/pipeline/security', testAuth, createAIValidationMiddleware({
 }), (req, res) => {
   const validationMetadata = req.validationResult;
   
-  logger.log('Pipeline AI validation passed', 'info', {
-    validationId: validationMetadata.validationId,
-    securityScore: validationMetadata.securityScore,
-    timeTaken: validationMetadata.timeTaken
+  secureLogger('info', logComponent, 'Pipeline AI validation passed', {
+    metadata: {
+      validationId: validationMetadata.validationId,
+      securityScore: validationMetadata.securityScore,
+      timeTaken: validationMetadata.timeTaken
+    }
   });
   
   // Add security score to response headers
@@ -379,9 +384,11 @@ router.post('/pipeline/signup', testAuth, [
   const validatedData = req.validatedData;
   const validationMetadata = req.validationResult;
   
-  logger.log(`Pipeline validated signup for ${validatedData.username}`, 'info', {
-    validationId: validationMetadata.validationId,
-    timeTaken: validationMetadata.timeTaken
+  secureLogger('info', logComponent, `Pipeline validated signup for ${validatedData.username}`, {
+    metadata: {
+      validationId: validationMetadata.validationId,
+      timeTaken: validationMetadata.timeTaken
+    }
   });
   
   res.json({

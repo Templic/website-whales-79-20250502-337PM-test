@@ -1,453 +1,344 @@
 /**
- * Secure Logger Module
+ * Secure Logger
  * 
- * Provides a secure, tamper-resistant logging system for security-related events.
- * This logger implements several important features:
- * 
- * 1. Immutable logs: Once created, logs cannot be modified or deleted
- * 2. Structured logging: All logs follow a consistent format with metadata
- * 3. Severity levels: Logs are categorized by severity
- * 4. Context tracking: Logs can be associated with specific contexts (user, request, etc.)
- * 5. Redaction: Sensitive data is automatically redacted
+ * This utility provides secure, tamper-evident logging for security events,
+ * ensuring that security logs are properly formatted, stored securely,
+ * and cannot be modified once created.
  */
 
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { createHash } from 'crypto';
 
-type LogSeverity = 'debug' | 'info' | 'warning' | 'error' | 'critical';
+// Log severity levels
+export type LogSeverity = 'debug' | 'info' | 'warning' | 'error' | 'critical';
 
-interface LogEntry {
+// Log entry structure
+export interface SecureLogEntry {
   timestamp: string;
   severity: LogSeverity;
   component: string;
-  subcomponent?: string;
   message: string;
-  metadata?: Record<string, any>;
-  hash?: string;
+  hash: string; // HMAC of the log entry for tamper detection
+  requestId?: string; // Optional request ID for correlation
+  userId?: string | number; // Optional user ID if authenticated
+  metadata?: Record<string, any>; // Additional contextual information
 }
 
-interface LoggerOptions {
-  component: string;
-  subcomponent?: string;
-  redactKeys?: string[];
-  logToConsole?: boolean;
+// Configuration options
+interface SecureLoggerConfig {
+  enabled: boolean;
+  logToConsole: boolean;
+  logToFile: boolean;
+  logFilePath: string;
+  hmacSecret: string;
+  redactSensitiveData: boolean;
+  maxLogSize: number; // Maximum size of log file in bytes
+  rotationCount: number; // Number of log files to keep when rotating
 }
+
+// Default configuration
+const defaultConfig: SecureLoggerConfig = {
+  enabled: process.env.NODE_ENV !== 'test', // Disabled in test environment
+  logToConsole: true,
+  logToFile: true,
+  logFilePath: path.join(process.cwd(), 'logs', 'security.log'),
+  hmacSecret: process.env.LOG_HMAC_SECRET || 'default-secret-key-change-in-production',
+  redactSensitiveData: true,
+  maxLogSize: 10 * 1024 * 1024, // 10 MB
+  rotationCount: 5
+};
+
+// Singleton instance configuration
+let config: SecureLoggerConfig = { ...defaultConfig };
 
 /**
- * Logger class for security-related events
+ * Initialize the secure logger with custom configuration
  */
-class SecureLogger {
-  private component: string;
-  private subcomponent?: string;
-  private redactKeys: string[];
-  private logToConsole: boolean;
-  private logFile: string;
-  private lastHash: string = '';
-
-  constructor(name: string, options: LoggerOptions) {
-    this.component = options.component;
-    this.subcomponent = options.subcomponent;
-    this.redactKeys = options.redactKeys || ['password', 'token', 'secret', 'key'];
-    this.logToConsole = options.logToConsole !== false;
-    
-    // Create logs directory if it doesn't exist
-    const logsDir = path.join(process.cwd(), 'logs');
-    if (!fs.existsSync(logsDir)) {
-      fs.mkdirSync(logsDir, { recursive: true });
-    }
-    
-    // Set log file path
-    this.logFile = path.join(logsDir, `${name}.log`);
-    
-    // Write initial log entry
-    this.writeInitialEntry(name);
-  }
-
-  /**
-   * Log a message with the specified severity
-   */
-  log(message: string, severity: LogSeverity = 'info', metadata?: Record<string, any>): void {
-    try {
-      // Redact sensitive data
-      const safeMetadata = metadata ? this.redactSensitiveData(metadata) : undefined;
-      
-      // Create log entry
-      const entry: LogEntry = {
-        timestamp: new Date().toISOString(),
-        severity,
-        component: this.component,
-        subcomponent: this.subcomponent,
-        message,
-        metadata: safeMetadata
-      };
-      
-      // Create a hash from the previous hash and current entry
-      const entryString = JSON.stringify(entry);
-      const hash = createHash('sha256')
-        .update(this.lastHash)
-        .update(entryString)
-        .digest('hex');
-      
-      // Add hash to the entry
-      entry.hash = hash;
-      this.lastHash = hash;
-      
-      // Write to file
-      this.writeToFile(entry);
-      
-      // Log to console if enabled
-      if (this.logToConsole) {
-        const severityColors = {
-          debug: '\x1b[90m', // Gray
-          info: '\x1b[32m',  // Green
-          warning: '\x1b[33m', // Yellow
-          error: '\x1b[31m',   // Red
-          critical: '\x1b[41m\x1b[37m' // White on Red background
-        };
-        
-        const resetColor = '\x1b[0m';
-        const color = severityColors[severity] || '';
-        
-        console.log(
-          `${color}[${entry.timestamp}] [${severity.toUpperCase()}] ${message}${resetColor}`,
-          safeMetadata || ''
-        );
-      }
-    } catch (error) {
-      console.error('Failed to write security log:', error);
-    }
-  }
-
-  /**
-   * Recursively redact sensitive data in objects
-   */
-  private redactSensitiveData(obj: Record<string, any>): Record<string, any> {
-    const result: Record<string, any> = {};
-    
-    for (const [key, value] of Object.entries(obj)) {
-      // Check if this key should be redacted
-      const shouldRedact = this.redactKeys.some(redactKey => 
-        key.toLowerCase().includes(redactKey.toLowerCase())
-      );
-      
-      if (shouldRedact) {
-        // Redact the value
-        result[key] = '[REDACTED]';
-      } else if (value && typeof value === 'object' && !Array.isArray(value)) {
-        // Recursively redact nested objects
-        result[key] = this.redactSensitiveData(value);
-      } else {
-        // Pass through other values
-        result[key] = value;
-      }
-    }
-    
-    return result;
-  }
-
-  /**
-   * Write the initial log entry for this logger instance
-   */
-  private writeInitialEntry(name: string): void {
-    try {
-      const entry: LogEntry = {
-        timestamp: new Date().toISOString(),
-        severity: 'info',
-        component: this.component,
-        subcomponent: this.subcomponent,
-        message: `Secure logger initialized: ${name}`,
-        metadata: {
-          logFile: this.logFile,
-          pid: process.pid,
-          nodeVersion: process.version,
-          env: process.env.NODE_ENV || 'development'
-        }
-      };
-      
-      // Create initial hash
-      const entryString = JSON.stringify(entry);
-      const hash = createHash('sha256')
-        .update(entryString)
-        .digest('hex');
-      
-      entry.hash = hash;
-      this.lastHash = hash;
-      
-      this.writeToFile(entry);
-    } catch (error) {
-      console.error('Failed to write initial security log:', error);
-    }
-  }
-
-  /**
-   * Write a log entry to the file, handling rotation if needed
-   */
-  private writeToFile(entry: LogEntry): void {
-    try {
-      // Check if log rotation is needed
-      this.checkRotation();
-      
-      // Append to log file
-      fs.appendFileSync(this.logFile, JSON.stringify(entry) + '\n');
-    } catch (error) {
-      console.error('Failed to write to security log file:', error);
-    }
-  }
-
-  /**
-   * Check if log rotation is needed and perform it if so
-   */
-  private checkRotation(): void {
-    try {
-      // Check if file exists
-      if (!fs.existsSync(this.logFile)) {
-        return;
-      }
-      
-      // Get file stats
-      const stats = fs.statSync(this.logFile);
-      
-      // Rotate if file is larger than 10MB
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (stats.size >= maxSize) {
-        this.rotateLogFiles();
-      }
-    } catch (error) {
-      console.error('Failed to check log rotation:', error);
-    }
-  }
-
-  /**
-   * Rotate log files, keeping a specified number of backups
-   */
-  private rotateLogFiles(): void {
-    try {
-      const maxBackups = 5;
-      
-      // Remove oldest backup if it exists
-      const oldestBackup = `${this.logFile}.${maxBackups}`;
-      if (fs.existsSync(oldestBackup)) {
-        fs.unlinkSync(oldestBackup);
-      }
-      
-      // Shift existing backups
-      for (let i = maxBackups - 1; i >= 1; i--) {
-        const oldFile = `${this.logFile}.${i}`;
-        const newFile = `${this.logFile}.${i + 1}`;
-        
-        if (fs.existsSync(oldFile)) {
-          fs.renameSync(oldFile, newFile);
-        }
-      }
-      
-      // Move current log to .1
-      fs.renameSync(this.logFile, `${this.logFile}.1`);
-      
-      // Create new log file with rotation entry
-      const entry: LogEntry = {
-        timestamp: new Date().toISOString(),
-        severity: 'info',
-        component: this.component,
-        subcomponent: this.subcomponent,
-        message: 'Log file rotated',
-        metadata: {
-          previousFile: `${this.logFile}.1`
-        }
-      };
-      
-      // Create new hash chain starting from the rotated file's last hash
-      const entryString = JSON.stringify(entry);
-      const hash = createHash('sha256')
-        .update(this.lastHash)
-        .update(entryString)
-        .digest('hex');
-      
-      entry.hash = hash;
-      this.lastHash = hash;
-      
-      // Write to the new file
-      fs.writeFileSync(this.logFile, JSON.stringify(entry) + '\n');
-    } catch (error) {
-      console.error('Failed to rotate log files:', error);
-    }
-  }
-}
-
-/**
- * Create a new secure logger
- */
-function createLogger(name: string, options: LoggerOptions): SecureLogger {
-  return new SecureLogger(name, options);
-}
-
-/**
- * Verify the integrity of a log file
- */
-function verifyLogIntegrity(logFilePath: string): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-  let valid = true;
+export function initSecureLogger(customConfig: Partial<SecureLoggerConfig> = {}): void {
+  config = {
+    ...defaultConfig,
+    ...customConfig
+  };
   
-  try {
-    // Read the log file
-    const content = fs.readFileSync(logFilePath, 'utf8');
-    const lines = content.trim().split('\n');
-    
-    if (lines.length === 0) {
-      errors.push('Log file is empty');
-      return { valid: false, errors };
-    }
-    
-    let previousHash = '';
-    
-    // Verify each log entry
-    for (let i = 0; i < lines.length; i++) {
+  // Ensure log directory exists
+  if (config.logToFile) {
+    const logDir = path.dirname(config.logFilePath);
+    if (!fs.existsSync(logDir)) {
       try {
-        const entry: LogEntry = JSON.parse(lines[i]);
-        
-        // Skip hash checking for the first entry
-        if (i === 0) {
-          previousHash = entry.hash || '';
-          continue;
-        }
-        
-        // Remove the hash from the entry to recreate it
-        const { hash, ...entryWithoutHash } = entry;
-        
-        // Recreate the hash
-        const entryString = JSON.stringify(entryWithoutHash);
-        const calculatedHash = createHash('sha256')
-          .update(previousHash)
-          .update(entryString)
-          .digest('hex');
-        
-        // Compare hashes
-        if (calculatedHash !== hash) {
-          errors.push(`Integrity check failed for entry ${i + 1}: Hash mismatch`);
-          valid = false;
-        }
-        
-        previousHash = hash || '';
+        fs.mkdirSync(logDir, { recursive: true });
       } catch (error) {
-        errors.push(`Failed to parse log entry ${i + 1}: ${error}`);
-        valid = false;
+        console.error(`Failed to create log directory at ${logDir}:`, error);
+        config.logToFile = false; // Disable file logging
       }
     }
-  } catch (error) {
-    errors.push(`Failed to read log file: ${error}`);
-    valid = false;
   }
-  
-  return { valid, errors };
 }
 
 /**
- * Export a filtered log in various formats
+ * Get current secure logger configuration
  */
-function exportLogs(
-  logFilePath: string,
+export function getSecureLoggerConfig(): Readonly<SecureLoggerConfig> {
+  return { ...config };
+}
+
+/**
+ * Main secure logging function
+ */
+export function secureLog(
+  severity: LogSeverity,
+  component: string,
+  message: string,
   options: {
-    format?: 'json' | 'csv' | 'text';
-    severity?: LogSeverity[];
-    component?: string[];
-    startDate?: Date;
-    endDate?: Date;
-    outputPath?: string;
+    requestId?: string;
+    userId?: string | number;
+    metadata?: Record<string, any>;
   } = {}
-): { success: boolean; message: string; outputPath?: string } {
-  try {
-    const {
-      format = 'json',
+): SecureLogEntry {
+  if (!config.enabled) {
+    // Return an empty log entry instead of null to avoid type errors
+    return {
+      timestamp: new Date().toISOString(),
       severity,
       component,
-      startDate,
-      endDate,
-      outputPath
-    } = options;
+      message,
+      hash: '',
+    };
+  }
+  
+  // Create the log entry object
+  const timestamp = new Date().toISOString();
+  const { requestId, userId, metadata } = options;
+  
+  // Process metadata and redact sensitive information if configured
+  let processedMetadata = metadata;
+  if (metadata && config.redactSensitiveData) {
+    processedMetadata = redactSensitiveData(metadata);
+  }
+  
+  // Create the base log entry without the hash
+  const baseEntry = {
+    timestamp,
+    severity,
+    component,
+    message,
+    requestId,
+    userId,
+    metadata: processedMetadata
+  };
+  
+  // Calculate HMAC for the log entry for tamper detection
+  const hmac = crypto.createHmac('sha256', config.hmacSecret);
+  hmac.update(JSON.stringify(baseEntry));
+  const hash = hmac.digest('hex');
+  
+  // Create the complete log entry
+  const logEntry: SecureLogEntry = {
+    ...baseEntry,
+    hash
+  };
+  
+  // Log to console if configured
+  if (config.logToConsole) {
+    logToConsole(logEntry);
+  }
+  
+  // Log to file if configured
+  if (config.logToFile) {
+    logToFile(logEntry);
+  }
+  
+  return logEntry;
+}
+
+/**
+ * Log to console with appropriate styling based on severity
+ */
+function logToConsole(logEntry: SecureLogEntry): void {
+  const { timestamp, severity, component, message } = logEntry;
+  
+  // Choose appropriate console method and color based on severity
+  let consoleMethod: 'log' | 'info' | 'warn' | 'error' = 'log';
+  let color = '';
+  
+  switch (severity) {
+    case 'debug':
+      consoleMethod = 'log';
+      color = '\x1b[36m'; // Cyan
+      break;
+    case 'info':
+      consoleMethod = 'info';
+      color = '\x1b[32m'; // Green
+      break;
+    case 'warning':
+      consoleMethod = 'warn';
+      color = '\x1b[33m'; // Yellow
+      break;
+    case 'error':
+      consoleMethod = 'error';
+      color = '\x1b[31m'; // Red
+      break;
+    case 'critical':
+      consoleMethod = 'error';
+      color = '\x1b[41m\x1b[37m'; // White on Red background
+      break;
+  }
+  
+  // Format console output
+  const reset = '\x1b[0m';
+  const formattedMessage = `${color}[${timestamp}] [${severity.toUpperCase()}] [${component}]${reset} ${message}`;
+  
+  console[consoleMethod](formattedMessage);
+}
+
+/**
+ * Log to file with rotation support
+ */
+function logToFile(logEntry: SecureLogEntry): void {
+  try {
+    // Check if log rotation is needed
+    checkLogRotation();
     
-    // Read the log file
-    const content = fs.readFileSync(logFilePath, 'utf8');
-    const lines = content.trim().split('\n');
+    // Format the log entry as JSON
+    const logLine = JSON.stringify(logEntry) + '\n';
     
-    // Filter log entries
-    const filteredEntries: LogEntry[] = [];
-    
-    for (const line of lines) {
-      try {
-        const entry: LogEntry = JSON.parse(line);
-        
-        // Filter by severity
-        if (severity && !severity.includes(entry.severity)) {
-          continue;
-        }
-        
-        // Filter by component
-        if (component && !component.includes(entry.component)) {
-          continue;
-        }
-        
-        // Filter by date range
-        const entryDate = new Date(entry.timestamp);
-        
-        if (startDate && entryDate < startDate) {
-          continue;
-        }
-        
-        if (endDate && entryDate > endDate) {
-          continue;
-        }
-        
-        filteredEntries.push(entry);
-      } catch (error) {
-        // Skip invalid entries
-      }
-    }
-    
-    // Generate output
-    let output = '';
-    
-    if (format === 'json') {
-      output = JSON.stringify(filteredEntries, null, 2);
-    } else if (format === 'csv') {
-      // Generate CSV header
-      output = 'timestamp,severity,component,subcomponent,message\n';
-      
-      // Add entries
-      for (const entry of filteredEntries) {
-        output += `"${entry.timestamp}","${entry.severity}","${entry.component}","${entry.subcomponent || ''}","${
-          entry.message.replace(/"/g, '""')
-        }"\n`;
-      }
-    } else if (format === 'text') {
-      // Generate text output
-      for (const entry of filteredEntries) {
-        output += `[${entry.timestamp}] [${entry.severity.toUpperCase()}] ${
-          entry.component
-        }${entry.subcomponent ? `/${entry.subcomponent}` : ''}: ${entry.message}\n`;
-        
-        if (entry.metadata) {
-          output += `  Metadata: ${JSON.stringify(entry.metadata)}\n`;
-        }
-        
-        output += '\n';
-      }
-    }
-    
-    // Write to output file if specified
-    if (outputPath) {
-      fs.writeFileSync(outputPath, output);
-      return { success: true, message: `Exported ${filteredEntries.length} log entries to ${outputPath}`, outputPath };
-    }
-    
-    return { success: true, message: `Filtered ${filteredEntries.length} log entries` };
+    // Append to log file
+    fs.appendFileSync(config.logFilePath, logLine, { encoding: 'utf8' });
   } catch (error) {
-    return { success: false, message: `Failed to export logs: ${error}` };
+    // Fall back to console logging on file error
+    console.error('Failed to write to security log file:', error);
+    logToConsole({
+      ...logEntry,
+      message: `${logEntry.message} (Note: Failed to write to log file)`,
+      severity: 'error'
+    });
   }
 }
 
-export default {
-  createLogger,
-  verifyLogIntegrity,
-  exportLogs
-};
+/**
+ * Check if log rotation is needed and perform rotation if necessary
+ */
+function checkLogRotation(): void {
+  try {
+    // Skip if file doesn't exist yet
+    if (!fs.existsSync(config.logFilePath)) {
+      return;
+    }
+    
+    // Get file stats
+    const stats = fs.statSync(config.logFilePath);
+    
+    // Check if file exceeds max size
+    if (stats.size >= config.maxLogSize) {
+      // Perform log rotation
+      rotateLogFiles();
+    }
+  } catch (error) {
+    console.error('Error checking log file size:', error);
+  }
+}
+
+/**
+ * Rotate log files
+ */
+function rotateLogFiles(): void {
+  try {
+    // Remove the oldest log file if it exists
+    const oldestLog = `${config.logFilePath}.${config.rotationCount}`;
+    if (fs.existsSync(oldestLog)) {
+      fs.unlinkSync(oldestLog);
+    }
+    
+    // Shift all existing log files
+    for (let i = config.rotationCount - 1; i >= 1; i--) {
+      const oldPath = `${config.logFilePath}.${i}`;
+      const newPath = `${config.logFilePath}.${i + 1}`;
+      
+      if (fs.existsSync(oldPath)) {
+        fs.renameSync(oldPath, newPath);
+      }
+    }
+    
+    // Rename current log file
+    if (fs.existsSync(config.logFilePath)) {
+      fs.renameSync(config.logFilePath, `${config.logFilePath}.1`);
+    }
+  } catch (error) {
+    console.error('Error rotating log files:', error);
+  }
+}
+
+/**
+ * Redact sensitive data from metadata
+ */
+function redactSensitiveData(metadata: Record<string, any>): Record<string, any> {
+  const sensitiveKeyPatterns = [
+    /pass(word)?/i,
+    /secret/i,
+    /token/i,
+    /key/i,
+    /auth/i,
+    /credential/i,
+    /ssn/i,
+    /social.*security/i,
+    /credit.*card/i,
+    /card.*number/i,
+    /cvv/i,
+    /session/i
+  ];
+  
+  const result = { ...metadata };
+  
+  // Recursive function to redact sensitive fields
+  function redact(obj: Record<string, any>, path: string = ''): void {
+    Object.keys(obj).forEach(key => {
+      const currentPath = path ? `${path}.${key}` : key;
+      
+      // Check if this key matches sensitive patterns
+      const isSensitive = sensitiveKeyPatterns.some(pattern => pattern.test(key));
+      
+      if (isSensitive) {
+        // Redact sensitive field
+        if (typeof obj[key] === 'string') {
+          const length = obj[key].length;
+          obj[key] = length > 0 ? `[REDACTED:${length}]` : '[REDACTED]';
+        } else if (obj[key] !== null && obj[key] !== undefined) {
+          obj[key] = '[REDACTED]';
+        }
+      } else if (obj[key] !== null && typeof obj[key] === 'object') {
+        // Recursively process nested objects
+        redact(obj[key], currentPath);
+      }
+    });
+  }
+  
+  redact(result);
+  return result;
+}
+
+// Export convenience methods
+export function logDebug(component: string, message: string, options?: any): SecureLogEntry {
+  return secureLog('debug', component, message, options);
+}
+
+export function logInfo(component: string, message: string, options?: any): SecureLogEntry {
+  return secureLog('info', component, message, options);
+}
+
+export function logWarning(component: string, message: string, options?: any): SecureLogEntry {
+  return secureLog('warning', component, message, options);
+}
+
+export function logError(component: string, message: string, options?: any): SecureLogEntry {
+  return secureLog('error', component, message, options);
+}
+
+export function logCritical(component: string, message: string, options?: any): SecureLogEntry {
+  return secureLog('critical', component, message, options);
+}
+
+// Initialize logger with default config
+initSecureLogger();
+
+// Default export for importing as `import secureLog from './secureLogger'`
+export default secureLog;

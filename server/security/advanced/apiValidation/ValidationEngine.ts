@@ -12,12 +12,8 @@ import { z } from 'zod';
 import secureLogger from '../../utils/secureLogger';
 import { ValidationAIConnector } from '../ai/ValidationAIConnector';
 
-// Create secure logger for validation events
-const logger = secureLogger.createLogger('api-validation', {
-  component: 'security',
-  subcomponent: 'validation',
-  redactKeys: ['password', 'token', 'secret', 'apiKey', 'authorization', 'x-api-key', 'sessionid']
-});
+// Use secure logger for validation events
+const logComponent = 'ValidationEngine';
 
 // Validation options
 export interface ValidationOptions {
@@ -30,7 +26,7 @@ export interface ValidationOptions {
   useAI?: boolean;
   aiOptions?: {
     detailedAnalysis?: boolean;
-    contentType?: 'code' | 'logs' | 'network' | 'config' | 'api' | 'database';
+    contentType?: 'code' | 'api' | 'user-content' | 'database-query';
     threshold?: number;
     maxTokens?: number;
   };
@@ -106,7 +102,7 @@ export class ValidationEngine {
     };
 
     this.rules.set(ruleId, fullRule);
-    logger.log(`Registered validation rule: ${ruleId}`, 'info', { rule: fullRule.name });
+    secureLogger('info', logComponent, `Registered validation rule: ${ruleId}`, { metadata: { rule: fullRule.name } });
   }
 
   /**
@@ -128,9 +124,9 @@ export class ValidationEngine {
         updatedAt: new Date()
       };
       this.rules.set(ruleId, updatedRule);
-      logger.log(`Updated validation rule: ${ruleId}`, 'info', { rule: updatedRule.name });
+      secureLogger('info', logComponent, `Updated validation rule: ${ruleId}`, { metadata: { rule: updatedRule.name } });
     } else {
-      logger.log(`Attempted to update non-existent rule: ${ruleId}`, 'warning');
+      secureLogger('warning', logComponent, `Attempted to update non-existent rule: ${ruleId}`);
     }
   }
 
@@ -139,7 +135,7 @@ export class ValidationEngine {
    */
   static applyRulesToEndpoint(endpoint: string, ruleIds: string[]): void {
     this.endpoints.set(endpoint, ruleIds);
-    logger.log(`Applied rules to endpoint: ${endpoint}`, 'info', { rules: ruleIds.join(', ') });
+    secureLogger('info', logComponent, `Applied rules to endpoint: ${endpoint}`, { metadata: { rules: ruleIds.join(', ') } });
   }
 
   /**
@@ -162,9 +158,11 @@ export class ValidationEngine {
         // Dynamic import to avoid circular dependencies
         const { ValidationAIConnector } = await import('../ai/ValidationAIConnector');
         this.aiConnector = new ValidationAIConnector();
-        logger.log('AI validation connector initialized', 'info');
+        secureLogger('info', logComponent, 'AI validation connector initialized');
       } catch (error) {
-        logger.log('Failed to initialize AI validation connector', 'error', { error });
+        secureLogger('error', logComponent, 'Failed to initialize AI validation connector', { 
+          metadata: { error: error instanceof Error ? error.message : String(error) } 
+        });
         return null;
       }
     }
@@ -182,7 +180,7 @@ export class ValidationEngine {
     try {
       const connector = await this.getAIConnector();
       if (!connector) {
-        logger.log('AI validation skipped - connector not available', 'warning');
+        secureLogger('warning', logComponent, 'AI validation skipped - connector not available');
         return { valid: true };
       }
 
@@ -198,7 +196,18 @@ export class ValidationEngine {
           method: req.method
         };
       } else {
-        data = req[target];
+        // Handle each target type explicitly to avoid TypeScript error
+        if (target === 'body') {
+          data = req.body;
+        } else if (target === 'query') {
+          data = req.query;
+        } else if (target === 'params') {
+          data = req.params;
+        } else if (target === 'headers') {
+          data = req.headers;
+        } else if (target === 'cookies') {
+          data = req.cookies;
+        }
       }
 
       // Set the content type for analysis
@@ -208,41 +217,61 @@ export class ValidationEngine {
       const threshold = options.aiOptions?.threshold || 0.5;
 
       // Perform AI validation
-      const result = await connector.validateData(
-        data, 
-        {
-          contentType,
-          threshold,
-          detailedAnalysis: options.aiOptions?.detailedAnalysis || false,
-          maxTokens: options.aiOptions?.maxTokens,
-          requestContext: {
-            url: req.url,
-            method: req.method,
-            ip: req.ip
-          }
-        }
-      );
+      const result = await connector.validate(data, {
+        contentType: contentType as any,
+        threshold,
+        detailedAnalysis: options.aiOptions?.detailedAnalysis || false
+      });
 
-      if (!result.valid) {
+      if (!result.passed) {
         const securityLevel = getSecurityThresholdFromOptions(options);
-        logger.log(
-          `AI validation failed for ${req.method} ${req.path}`, 
+        secureLogger(
           securityLevel === 'critical' ? 'critical' : 
           securityLevel === 'high' ? 'error' : 
           securityLevel === 'medium' ? 'warning' : 'info',
+          logComponent,
+          `AI validation failed for ${req.method} ${req.path}`, 
           {
-            threats: result.threats,
-            reason: result.reason,
-            confidence: result.confidence,
-            method: req.method,
-            url: req.url
+            metadata: {
+              warnings: result.warnings,
+              securityScore: result.securityScore,
+              method: req.method,
+              url: req.url
+            }
           }
         );
       }
 
-      return result;
+      return { 
+        valid: result.passed,
+        confidence: result.securityScore,
+        reason: result.warnings.length > 0 ? result.warnings[0] : undefined,
+        threats: result.warnings.map(w => {
+          const match = w.match(/\[(.*?)\] (.*?) \((\d+)% confidence\)/);
+          if (match) {
+            return {
+              type: 'security_threat',
+              severity: match[1].toLowerCase() as 'critical' | 'high' | 'medium' | 'low' | 'info',
+              description: match[2],
+              confidence: parseInt(match[3], 10) / 100
+            };
+          }
+          return {
+            type: 'security_threat',
+            severity: 'medium',
+            description: w,
+            confidence: 0.5
+          };
+        })
+      };
     } catch (error) {
-      logger.log('Error performing AI validation', 'error', { error, url: req.url, method: req.method });
+      secureLogger('error', logComponent, 'Error performing AI validation', { 
+        metadata: {
+          error: error instanceof Error ? error.message : String(error), 
+          url: req.url, 
+          method: req.method 
+        }
+      });
       // Still return valid=true in case of errors to not block requests due to internal errors
       return { valid: true };
     }
@@ -275,12 +304,33 @@ export class ValidationEngine {
         for (const rule of rules) {
           const ruleTarget = rule.target || target;
           
-          // Skip if no schema or irrelevant target
-          if (!rule.schema || !req[ruleTarget]) continue;
+          // Skip if no schema
+          if (!rule.schema) continue;
+          
+          // Check if target exists in request
+          let targetData: any;
+          if (ruleTarget === 'body') {
+            targetData = req.body;
+          } else if (ruleTarget === 'query') {
+            targetData = req.query;
+          } else if (ruleTarget === 'params') {
+            targetData = req.params;
+          } else if (ruleTarget === 'headers') {
+            targetData = req.headers;
+          } else if (ruleTarget === 'cookies') {
+            targetData = req.cookies;
+          } else {
+            // Skip unsupported target
+            secureLogger('warning', logComponent, `Skipping validation for unsupported target: ${ruleTarget}`);
+            continue;
+          }
+          
+          // Skip if target doesn't exist
+          if (!targetData) continue;
 
           try {
-            // Parse data with Zod
-            const result = await rule.schema.safeParseAsync(req[ruleTarget]);
+            // Parse data with Zod using the target data we already retrieved
+            const result = await rule.schema.safeParseAsync(targetData);
             
             if (result.success) {
               // Store validated data by target
@@ -295,17 +345,20 @@ export class ValidationEngine {
                   errors: includeDetails ? result.error.format() : undefined
                 };
                 
-                logger.log(
-                  `Validation failed for ${req.method} ${req.path}`, 
+                secureLogger(
                   options.logSeverity === 'critical' ? 'critical' : 
                   options.logSeverity === 'high' ? 'error' : 
                   options.logSeverity === 'medium' ? 'warning' : 'info',
+                  logComponent,
+                  `Validation failed for ${req.method} ${req.path}`, 
                   {
-                    rule: rule.name,
-                    target: ruleTarget,
-                    errors: result.error.format(),
-                    method: req.method,
-                    url: req.url
+                    metadata: {
+                      rule: rule.name,
+                      target: ruleTarget,
+                      errors: result.error.format(),
+                      method: req.method,
+                      url: req.url
+                    }
                   }
                 );
                 
@@ -320,12 +373,14 @@ export class ValidationEngine {
               }
             }
           } catch (error) {
-            logger.log('Error during schema validation', 'error', { 
-              error, 
-              rule: rule.name,
-              target: ruleTarget,
-              method: req.method,
-              url: req.url
+            secureLogger('error', logComponent, 'Error during schema validation', { 
+              metadata: {
+                error: error instanceof Error ? error.message : String(error), 
+                rule: rule.name,
+                target: ruleTarget,
+                method: req.method,
+                url: req.url
+              }
             });
             
             if (mode === 'strict') {
@@ -371,11 +426,13 @@ export class ValidationEngine {
                 data: aiResult
               }));
             }
-          } catch (aiError) {
-            logger.log('Error during AI validation', 'error', { 
-              error: aiError, 
-              method: req.method,
-              url: req.url
+          } catch (error) {
+            secureLogger('error', logComponent, 'Error during AI validation', { 
+              metadata: {
+                error: error instanceof Error ? error.message : String(error), 
+                method: req.method,
+                url: req.url
+              }
             });
             
             // Don't block in case of AI validation errors
@@ -409,10 +466,12 @@ export class ValidationEngine {
         
         next();
       } catch (error) {
-        logger.log('Unexpected error in validation middleware', 'error', { 
-          error, 
-          method: req.method,
-          url: req.url
+        secureLogger('error', logComponent, 'Unexpected error in validation middleware', { 
+          metadata: {
+            error: error instanceof Error ? error.message : String(error), 
+            method: req.method,
+            url: req.url
+          }
         });
         
         next(error);
@@ -424,7 +483,7 @@ export class ValidationEngine {
    * Perform direct AI validation without middleware
    */
   static async validateWithAI(data: any, options: Omit<ValidationOptions, 'target'> & { 
-    contentType: 'code' | 'logs' | 'network' | 'config' | 'api' | 'database'
+    contentType: 'code' | 'api' | 'user-content' | 'database-query'
   }): Promise<AIValidationResult> {
     try {
       const connector = await this.getAIConnector();
@@ -432,14 +491,30 @@ export class ValidationEngine {
         return { valid: true };
       }
       
-      return await connector.validateData(data, {
+      const result = await connector.validate(data, {
         contentType: options.contentType,
         threshold: options.aiOptions?.threshold || 0.5,
         detailedAnalysis: options.aiOptions?.detailedAnalysis || false,
-        maxTokens: options.aiOptions?.maxTokens
       });
+
+      return { 
+        valid: result.passed,
+        confidence: result.securityScore,
+        reason: result.warnings.length > 0 ? result.warnings[0] : undefined,
+        threats: result.warnings.map(w => ({
+          type: 'security_threat',
+          severity: 'medium',
+          description: w,
+          confidence: 0.5
+        })),
+        analysis: result.recommendations?.join('\n')
+      };
     } catch (error) {
-      logger.log('Error performing direct AI validation', 'error', { error });
+      secureLogger('error', logComponent, 'Error performing direct AI validation', { 
+        metadata: {
+          error: error instanceof Error ? error.message : String(error)
+        }
+      });
       return { valid: true };
     }
   }
@@ -469,98 +544,86 @@ export class ValidationEngine {
     const endpoints = this.getAllEndpoints();
     
     if (format === 'json') {
-      return JSON.stringify({ rules, endpoints }, null, 2);
+      return JSON.stringify({
+        rules,
+        endpoints
+      }, null, 2);
     } else if (format === 'html') {
-      // Simple HTML documentation
-      let html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Validation Documentation</title>
-  <style>
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 20px; }
-    h1, h2, h3 { color: #0055aa; }
-    .rule { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
-    .rule h3 { margin-top: 0; }
-    .endpoint { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
-    .tag { display: inline-block; background: #e0e0e0; border-radius: 3px; padding: 2px 6px; margin-right: 5px; font-size: 0.8rem; }
-    .priority { font-weight: bold; }
-    .inactive { color: #888; font-style: italic; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
-    tr:hover { background-color: #f5f5f5; }
-  </style>
-</head>
-<body>
-  <h1>API Validation Documentation</h1>
-  
-  <h2>Validation Rules</h2>
-  ${rules.map(rule => `
-  <div class="rule ${rule.isActive === false ? 'inactive' : ''}">
-    <h3>${rule.name} <span class="rule-id">(${rule.id})</span></h3>
-    ${rule.description ? `<p>${rule.description}</p>` : ''}
-    <p><strong>Target:</strong> ${rule.target || 'body'}</p>
-    <p><strong>Priority:</strong> <span class="priority">${rule.priority || 0}</span></p>
-    <p><strong>Status:</strong> ${rule.isActive === false ? 'Inactive' : 'Active'}</p>
-    ${rule.tags && rule.tags.length ? `<p><strong>Tags:</strong> ${rule.tags.map(tag => `<span class="tag">${tag}</span>`).join(' ')}</p>` : ''}
-    <p><strong>Created:</strong> ${rule.createdAt?.toISOString()}</p>
-    <p><strong>Updated:</strong> ${rule.updatedAt?.toISOString()}</p>
-  </div>
-  `).join('')}
-
-  <h2>Endpoint Mappings</h2>
-  <table>
-    <tr>
-      <th>Endpoint</th>
-      <th>Rules</th>
-    </tr>
-    ${endpoints.map(({ endpoint, ruleIds }) => `
-    <tr>
-      <td>${endpoint}</td>
-      <td>${ruleIds.map(id => {
-        const rule = this.getRule(id);
-        return rule ? `<span class="tag">${rule.name}</span>` : id;
-      }).join(' ')}</td>
-    </tr>
-    `).join('')}
-  </table>
-</body>
-</html>`;
+      // Generate basic HTML documentation
+      const html = `
+        <html>
+          <head>
+            <title>API Validation Documentation</title>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0 auto; max-width: 800px; padding: 20px; }
+              h1, h2, h3 { color: #333; }
+              table { border-collapse: collapse; width: 100%; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f2f2f2; }
+              tr:nth-child(even) { background-color: #f9f9f9; }
+              .rule-details { margin-left: 20px; }
+            </style>
+          </head>
+          <body>
+            <h1>API Validation Documentation</h1>
+            
+            <h2>Validation Rules</h2>
+            <table>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Target</th>
+                <th>Priority</th>
+              </tr>
+              ${rules.map(rule => `
+                <tr>
+                  <td>${rule.id}</td>
+                  <td>${rule.name}</td>
+                  <td>${rule.description || 'No description'}</td>
+                  <td>${rule.target || 'Default'}</td>
+                  <td>${rule.priority || 0}</td>
+                </tr>
+              `).join('')}
+            </table>
+            
+            <h2>Endpoints with Validation</h2>
+            <table>
+              <tr>
+                <th>Endpoint</th>
+                <th>Applied Rules</th>
+              </tr>
+              ${endpoints.map(endpoint => `
+                <tr>
+                  <td>${endpoint.endpoint}</td>
+                  <td>${endpoint.ruleIds.join(', ')}</td>
+                </tr>
+              `).join('')}
+            </table>
+          </body>
+        </html>
+      `;
       
       return html;
     } else {
-      // Markdown documentation
+      // Generate markdown documentation
       let markdown = '# API Validation Documentation\n\n';
       
       markdown += '## Validation Rules\n\n';
+      markdown += '| ID | Name | Description | Target | Priority |\n';
+      markdown += '|----|------|-------------|--------|----------|\n';
       
-      for (const rule of rules) {
-        markdown += `### ${rule.name} (${rule.id})\n\n`;
-        if (rule.description) {
-          markdown += `${rule.description}\n\n`;
-        }
-        markdown += `- **Target:** ${rule.target || 'body'}\n`;
-        markdown += `- **Priority:** ${rule.priority || 0}\n`;
-        markdown += `- **Status:** ${rule.isActive === false ? 'Inactive' : 'Active'}\n`;
-        if (rule.tags && rule.tags.length) {
-          markdown += `- **Tags:** ${rule.tags.join(', ')}\n`;
-        }
-        markdown += `- **Created:** ${rule.createdAt?.toISOString()}\n`;
-        markdown += `- **Updated:** ${rule.updatedAt?.toISOString()}\n\n`;
-      }
+      rules.forEach(rule => {
+        markdown += `| ${rule.id} | ${rule.name} | ${rule.description || 'No description'} | ${rule.target || 'Default'} | ${rule.priority || 0} |\n`;
+      });
       
-      markdown += '## Endpoint Mappings\n\n';
-      markdown += '| Endpoint | Rules |\n|----------|-------|\n';
+      markdown += '\n## Endpoints with Validation\n\n';
+      markdown += '| Endpoint | Applied Rules |\n';
+      markdown += '|----------|---------------|\n';
       
-      for (const { endpoint, ruleIds } of endpoints) {
-        const ruleNames = ruleIds.map(id => {
-          const rule = this.getRule(id);
-          return rule ? rule.name : id;
-        }).join(', ');
-        
-        markdown += `| ${endpoint} | ${ruleNames} |\n`;
-      }
+      endpoints.forEach(endpoint => {
+        markdown += `| ${endpoint.endpoint} | ${endpoint.ruleIds.join(', ')} |\n`;
+      });
       
       return markdown;
     }
@@ -574,7 +637,7 @@ export class ValidationEngine {
     this.rules.clear();
     this.endpoints.clear();
     this.aiConnector = null;
-    logger.log('ValidationEngine reset', 'info');
+    secureLogger('info', logComponent, 'ValidationEngine reset');
   }
 }
 
@@ -582,13 +645,18 @@ export class ValidationEngine {
  * Helper function to map validation options to security threshold
  */
 function getSecurityThresholdFromOptions(options: ValidationOptions): 'critical' | 'high' | 'medium' | 'low' | 'info' {
-  if (options.logSeverity === 'critical') return 'critical';
-  if (options.logSeverity === 'high') return 'high';
-  if (options.logSeverity === 'medium') return 'medium';
-  if (options.logSeverity === 'low') return 'low';
+  if (options.logSeverity) {
+    return options.logSeverity as any;
+  }
   
-  // Default based on mode
-  if (options.mode === 'strict') return 'high';
-  if (options.mode === 'flexible') return 'medium';
-  return 'low';
+  // Default mapping based on validation mode
+  switch (options.mode) {
+    case 'strict': return 'high';
+    case 'flexible': return 'medium';
+    case 'permissive': return 'low';
+    default: return 'medium';
+  }
 }
+
+// Export default singleton instance
+export default ValidationEngine;

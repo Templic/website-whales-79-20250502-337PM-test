@@ -457,6 +457,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.use('/api/no-security', completeCsrfBypass(), noSecurityTestRoutes);
   console.log("✅ No-security test routes added with complete security bypass");
   
+  // Add no-CSRF routes using noCSRF middleware
+  app.use('/api/no-csrf', noCSRF(), noCsrfRoutes);
+  console.log("✅ No-CSRF routes added with noCSRF middleware");
+  
   // Direct test API endpoints
   // These are hardcoded here for maximum security bypass effectiveness
   // These routes are exempt from CSRF protection by being defined before CSRF middleware is applied

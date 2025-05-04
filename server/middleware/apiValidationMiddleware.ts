@@ -10,12 +10,8 @@ import { z } from 'zod';
 import { ValidationEngine, ValidationOptions } from '../security/advanced/apiValidation/ValidationEngine';
 import secureLogger from '../security/utils/secureLogger';
 
-// Create secure logger for validation middleware
-const logger = secureLogger.createLogger('api-validation-middleware', {
-  component: 'middleware',
-  subcomponent: 'validation',
-  redactKeys: ['password', 'token', 'secret', 'apiKey', 'authorization', 'x-api-key', 'sessionid']
-});
+// Component name for secure logging
+const logComponent = 'api-validation-middleware';
 
 // A map of common validation rules
 const commonRules = new Map<string, { schema: z.ZodTypeAny, options: any }>();
@@ -68,7 +64,7 @@ export function initializeCommonValidationRules() {
     options: { target: 'params' }
   });
   
-  logger.log('Common validation rules initialized', 'info');
+  secureLogger('info', logComponent, 'Common validation rules initialized');
 }
 
 /**
@@ -95,7 +91,7 @@ export function createAutoValidationMiddleware(options: ValidationOptions = {}) 
       // Apply the middleware
       await middleware(req, res, next);
     } catch (error) {
-      logger.log('Error in auto-validation middleware', 'error', { error, path: req.path });
+      secureLogger('error', logComponent, 'Error in auto-validation middleware', { metadata: { path: req.path, error: error instanceof Error ? error.message : String(error) } });
       next(error);
     }
   };
