@@ -134,6 +134,13 @@
     <button id="testSuspiciousSecurity">Test Suspicious Payload</button>
     <pre id="suspiciousSecurityResult">Run the test to see results...</pre>
   </div>
+  
+  <div class="test-section">
+    <h2>6. No-Security Test - Basic Security Validation</h2>
+    <p>Tests the no-security endpoint (bypasses all security checks).</p>
+    <button id="testNoSecurity">Test No-Security Endpoint</button>
+    <pre id="noSecurityResult">Run the test to see results...</pre>
+  </div>
 
   <div class="test-section">
     <h2>Log</h2>
@@ -378,6 +385,28 @@
       suspiciousSecurityResult.textContent = formatJSON(result);
     });
 
+    // Test the no-security endpoint
+    document.getElementById('testNoSecurity').addEventListener('click', async () => {
+      const noSecurityResult = document.getElementById('noSecurityResult');
+      noSecurityResult.textContent = 'Testing no-security endpoint...';
+      
+      if (!csrfToken) {
+        const msg = 'Please get a CSRF token first';
+        log(msg, 'warning');
+        noSecurityResult.textContent = msg;
+        return;
+      }
+      
+      // Test the status endpoint to verify the no-security routes are working
+      const result = await makeRequest('/api/no-security/status', {
+        headers: {
+          'X-CSRF-Token': csrfToken
+        }
+      });
+      
+      noSecurityResult.textContent = formatJSON(result);
+    });
+    
     // Clear log
     document.getElementById('clearLog').addEventListener('click', () => {
       logElement.innerHTML = '<p>Log cleared</p>';
