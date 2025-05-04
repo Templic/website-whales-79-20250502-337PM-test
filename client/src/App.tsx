@@ -321,59 +321,61 @@ function App() {
         <CartProvider>
           <AccessibilityProvider>
             <ChatProvider>
+              <ThemeProvider>
                 {/* Add OrientationProvider for responsive orientation handling */}
                 <OrientationProvider>
-                {/* Add StylesProvider to optimize CSS-in-JS rendering */}
-                <StylesProvider
-                  extractCritical={true}
-                  optimizeSheets={true}
-                  injectIntoHead={true}
-                  deduplicate={true}
-                  delayNonCritical={100}
-                >
-                <ErrorBoundary FallbackComponent={ErrorFallback}>
-                  <StarBackground starCount={150} />
-                  
-                  {/* Add ThemeController - a wrapper that safely uses the theme context */}
-                  <ThemeController />
-                  
-                  <AppRouter />
-                  <ChatWidget />
-                  {/* Temporarily disable Taskade widget to prevent overlapping AI assistant buttons */}
-                  {/* <TaskadeWidget /> */}
-                  <CookieConsent />
-                  <ToastProvider />
-                  {/* Add Font optimization */}
-                  <FontLoader
-                    fonts={[
-                      { family: 'Orbitron', display: 'swap' },
-                      { family: 'Space Grotesk', display: 'swap' },
-                      { family: 'Cinzel', display: 'swap' },
-                      { family: 'Exo 2', display: 'swap' },
-                      { family: 'Gruppo', display: 'swap' },
-                      { family: 'Michroma', display: 'swap' },
-                      { family: 'Poiret One', display: 'swap' },
-                      { family: 'Syncopate', display: 'swap' }
-                    ]}
-                    display="swap"
-                    preload={true}
-                    addBodyClass={true}
-                  />
-                  {/* Service Worker for offline capabilities */}
-                  <ServiceWorkerManager 
-                    registerOnMount={true}
-                    showUpdateNotification={true} 
-                    showOfflineNotification={true}
-                  />
-                </ErrorBoundary>
-                </StylesProvider>
+                  {/* Add StylesProvider to optimize CSS-in-JS rendering */}
+                  <StylesProvider
+                    extractCritical={true}
+                    optimizeSheets={true}
+                    injectIntoHead={true}
+                    deduplicate={true}
+                    delayNonCritical={100}
+                  >
+                    <ErrorBoundary FallbackComponent={ErrorFallback}>
+                      <StarBackground starCount={150} />
+                      
+                      {/* Add ThemeController - a wrapper that safely uses the theme context */}
+                      <ThemeController />
+                      
+                      <AppRouter />
+                      <ChatWidget />
+                      {/* Temporarily disable Taskade widget to prevent overlapping AI assistant buttons */}
+                      {/* <TaskadeWidget /> */}
+                      <CookieConsent />
+                      <ToastProvider />
+                      {/* Add Font optimization */}
+                      <FontLoader
+                        fonts={[
+                          { family: 'Orbitron', display: 'swap' },
+                          { family: 'Space Grotesk', display: 'swap' },
+                          { family: 'Cinzel', display: 'swap' },
+                          { family: 'Exo 2', display: 'swap' },
+                          { family: 'Gruppo', display: 'swap' },
+                          { family: 'Michroma', display: 'swap' },
+                          { family: 'Poiret One', display: 'swap' },
+                          { family: 'Syncopate', display: 'swap' }
+                        ]}
+                        display="swap"
+                        preload={true}
+                        addBodyClass={true}
+                      />
+                      {/* Service Worker for offline capabilities */}
+                      <ServiceWorkerManager 
+                        registerOnMount={true}
+                        showUpdateNotification={true} 
+                        showOfflineNotification={true}
+                      />
+                    </ErrorBoundary>
+                  </StylesProvider>
                 </OrientationProvider>
-              </ChatProvider>
-            </AccessibilityProvider>
-          </CartProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    );
+              </ThemeProvider>
+            </ChatProvider>
+          </AccessibilityProvider>
+        </CartProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
 }
 
 export default App;
