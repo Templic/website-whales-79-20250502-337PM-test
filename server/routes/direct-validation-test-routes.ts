@@ -18,6 +18,24 @@ const router = express.Router();
 // Apply noSecurityMiddleware to all routes in this router
 router.use(noSecurityMiddleware);
 
+// Special middleware to force bypass all security restrictions
+router.use((req, res, next) => {
+  // Mark this request to skip all security
+  (req as any).__skipCSRF = true;
+  (req as any).__noSecurity = true;
+  
+  // Explicitly set headers to bypass CORS restrictions
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('X-Security-Mode', 'COMPLETELY_BYPASSED');
+  
+  // Log the bypass
+  console.log(`[DIRECT-VALIDATION] Security completely bypassed for ${req.method} ${req.path}`);
+  
+  next();
+});
+
 // Make sure JSON body parsing is enabled for these routes
 router.use(express.json());
 

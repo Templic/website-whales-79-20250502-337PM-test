@@ -102,11 +102,15 @@ if (config.security.csrfProtection) {
       '/no-csrf/rate-limit-test/*',
       // API validation testing
       '/api-validation-test',
+      '/api-validation-test.html',
       '/direct-validation-test.html',
       '/api/validation-test/*',
       '/api/direct-validation/*',
       // Direct validation test page and its static assets
       '/direct-validation-test.html',
+      // Make sure the paths are also covered with query parameters and fragments
+      '/direct-validation-test.html?*',
+      '/direct-validation-test.html#*',
       // Flask app routes
       '/',
       '/index.html',
