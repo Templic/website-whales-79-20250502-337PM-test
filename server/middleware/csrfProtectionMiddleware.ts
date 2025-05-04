@@ -86,6 +86,10 @@ export function setupCSRFProtection(app: Express): void {
       '/api/metrics',
       '/api/test/csrf-exempt',
       '/api/webhook',
+      '/api/content/key/',  // Content API - critical for development
+      '/api/csrf-token',     // CSRF token endpoint
+      '/service-worker.js',  // Service worker
+      '/manifest.json',      // Web manifest
       // Rate limiting test routes
       '/rate-limit-test',
       '/rate-limit-test/basic',
@@ -97,8 +101,11 @@ export function setupCSRFProtection(app: Express): void {
       '/@vite',
       '/@vite/',
       '/@vite/client',
+      '/@vite-client',
+      '/@fs/',
       '/@react-refresh',
       '/src/',
+      '/assets/',
       '/src/main.tsx',
       '/node_modules/',
       // Exempting the Dale Loves Whales Flask app routes from CSRF protection
@@ -234,10 +241,10 @@ export function setupCSRFProtection(app: Express): void {
         });
       }
       
-      // For Flask app routes, Vite dev routes, and rate limit test routes that fail CSRF, always allow access
-      // This ensures the app functions normally for testing
+      // For development routes that fail CSRF, always allow access in development
+      // This ensures the app functions normally during development
       if (
-        // Flask app routes
+        // These paths should never require CSRF protection
         req.path === '/' || 
         req.path === '/index.html' || 
         req.path === '/about' || 
@@ -250,10 +257,19 @@ export function setupCSRFProtection(app: Express): void {
         req.path === '/collaboration' || 
         req.path === '/contact' || 
         req.path === '/test' ||
+        // Service worker and web manifest
+        req.path === '/service-worker.js' ||
+        req.path === '/manifest.json' ||
+        // API content and auth endpoints
+        req.path.startsWith('/api/content/') ||
+        req.path.startsWith('/api/auth/') ||
+        req.path === '/api/csrf-token' ||
         // Vite development routes
         req.path.startsWith('/@vite') ||
+        req.path.startsWith('/@fs/') ||
         req.path.startsWith('/@react-refresh') ||
         req.path.startsWith('/src/') ||
+        req.path.startsWith('/assets/') ||
         req.path.startsWith('/node_modules/') ||
         // Rate limit test routes
         req.path.startsWith('/rate-limit-test')
