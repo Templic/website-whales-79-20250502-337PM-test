@@ -12,11 +12,27 @@ const api = axios.create({
   baseURL: 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json',
-    'X-CSRF-Token': 'bypass-token-for-testing',
-    'X-Requested-With': 'XMLHttpRequest',
-    'CSRF-Bypass': 'true'
-  }
+    'X-Requested-With': 'XMLHttpRequest'
+  },
+  withCredentials: true
 });
+
+// Function to get the CSRF token
+async function getCsrfToken() {
+  try {
+    const response = await axios.get('http://localhost:5000/api/csrf-token');
+    const token = response.data.csrfToken;
+    
+    // Update the default headers with the token
+    api.defaults.headers['X-CSRF-Token'] = token;
+    
+    console.log(`Retrieved CSRF token: ${token}`);
+    return token;
+  } catch (error) {
+    console.error('Failed to get CSRF token:', error.message);
+    return null;
+  }
+}
 
 // Test formatting helpers
 function printHeader(text) {
@@ -33,10 +49,16 @@ function printTestResult(title, success) {
 
 async function makeRequest(endpoint, method = 'GET', data = null) {
   try {
+    // Add CSRF token to the data if it's a POST request
+    let requestData = data;
+    if (method !== 'GET' && data !== null && api.defaults.headers['X-CSRF-Token']) {
+      requestData = { ...data, _csrf: api.defaults.headers['X-CSRF-Token'] };
+    }
+    
     const response = await api({
       method,
       url: endpoint,
-      data
+      data: requestData
     });
     
     console.log('Response:');
@@ -78,7 +100,7 @@ async function testBasicSchemaValidation() {
     message: 'This is a test message with sufficient length.'
   };
   
-  const validResult = await makeRequest('/direct-test/basic', 'POST', validData);
+  const validResult = await makeRequest('/no-security/basic', 'POST', validData);
   printTestResult('Valid data passes validation', validResult.success && validResult.data.success);
   
   // Test invalid email
@@ -88,7 +110,7 @@ async function testBasicSchemaValidation() {
     message: 'This is a test message with sufficient length.'
   };
   
-  const invalidEmailResult = await makeRequest('/direct-test/basic', 'POST', invalidEmailData);
+  const invalidEmailResult = await makeRequest('/no-security/basic', 'POST', invalidEmailData);
   printTestResult('Invalid email is rejected', !invalidEmailResult.success || !invalidEmailResult.data.success);
   
   // Test short message
@@ -98,7 +120,7 @@ async function testBasicSchemaValidation() {
     message: 'Too short'
   };
   
-  const shortMessageResult = await makeRequest('/direct-test/basic', 'POST', shortMessageData);
+  const shortMessageResult = await makeRequest('/no-security/basic', 'POST', shortMessageData);
   printTestResult('Short message is rejected', !shortMessageResult.success || !shortMessageResult.data.success);
 }
 
@@ -119,7 +141,7 @@ async function testAISecurityValidation() {
     sort: 'price_asc'
   };
   
-  const safeResult = await makeRequest('/direct-test/ai-security', 'POST', safePayload);
+  const safeResult = await makeRequest('/no-security/ai-security', 'POST', safePayload);
   printTestResult('Safe payload passes AI validation', 
     safeResult.success && safeResult.data.success && safeResult.data.validation.passed);
   
@@ -136,7 +158,7 @@ async function testAISecurityValidation() {
     sort: '1=1; --'
   };
   
-  const suspiciousResult = await makeRequest('/direct-test/ai-security', 'POST', suspiciousPayload);
+  const suspiciousResult = await makeRequest('/no-security/ai-security', 'POST', suspiciousPayload);
   printTestResult('Suspicious payload is detected', 
     suspiciousResult.success && suspiciousResult.data.success && !suspiciousResult.data.validation.passed);
 }
@@ -145,7 +167,7 @@ async function testAISecurityValidation() {
 async function testValidationStatus() {
   printHeader('Validation Pipeline Status (Direct Test)');
   
-  const statusResult = await makeRequest('/direct-test/status');
+  const statusResult = await makeRequest('/no-security/status');
   printTestResult('Validation status endpoint works', 
     statusResult.success && statusResult.data.success);
 }
@@ -155,6 +177,17 @@ async function runTests() {
   printHeader('Direct Validation Test Suite');
   
   try {
+    // First, get a CSRF token
+    console.log('Fetching CSRF token...');
+    const token = await getCsrfToken();
+    
+    if (!token) {
+      console.error('Failed to get CSRF token. Tests may fail due to CSRF protection.');
+    } else {
+      console.log('Successfully obtained CSRF token, proceeding with tests.');
+    }
+    
+    // Add token to request data as well
     await testBasicSchemaValidation();
     await testAISecurityValidation();
     await testValidationStatus();

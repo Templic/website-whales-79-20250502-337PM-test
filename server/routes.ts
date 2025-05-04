@@ -180,6 +180,8 @@ import csrfRoutes from './routes/csrf-routes';
 import validationTestRoutes from './routes/validation-test-routes';
 import noCsrfValidationRoutes from './routes/no-csrf-validation-routes';
 import directTestValidationRoutes from './routes/direct-test-validation-routes';
+import noSecurityTestRoutes from './routes/no-security-test-routes';
+import { completeCsrfBypass } from './security/middleware/completeCsrfBypass';
 // Theme routes are imported above
 import deadlinksRoutes from './routes/deadlinks';
 import { bypassCsrfForTesting } from './security/middleware/bypassCsrfForTesting';
@@ -267,6 +269,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/pipeline/*', // Enhanced validation pipeline endpoints
     '/api/no-csrf/*', // No CSRF routes (explicitly exempted)
     '/api/no-csrf/validation-test/*', // No CSRF validation test routes
+    '/api/direct-test/*', // Direct test routes with custom implementation
+    '/api/no-security/*', // No security test routes (completely bypass security)
+    '/api/no-security/basic', // Explicit exemption for basic test endpoint
+    '/api/no-security/ai-security', // Explicit exemption for AI security test endpoint
+    '/api/no-security/status', // Explicit exemption for status endpoint
     '/api/csrf-token'  // CSRF token endpoint (needed for tests)
   ];
 
@@ -432,6 +439,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // These routes bypass all middleware and security layers
   app.use('/api/direct-test', bypassCsrfForTesting(), directTestValidationRoutes);
   console.log("✅ Direct test validation routes added with CSRF bypass");
+  
+  // Add no-security test routes with complete security bypass
+  // These routes completely bypass ALL security checks
+  app.use('/api/no-security', completeCsrfBypass(), noSecurityTestRoutes);
+  console.log("✅ No-security test routes added with complete security bypass");
   
   // Add enhanced validation pipeline routes
   // Contact form schema validation with caching
