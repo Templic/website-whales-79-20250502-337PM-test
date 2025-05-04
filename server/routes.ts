@@ -169,6 +169,7 @@ import contentWorkflowRoutes from './routes/content-workflow';
 import contentAIRoutes from './routes/contentAI';
 import contentRecommendationsRoutes from './routes/contentRecommendations';
 import notificationsRoutes from './routes/notifications';
+import openaiRoutes from './routes/openai-routes';
 import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search/index';
 import csrfRoutes from './routes/csrf-routes';
@@ -248,7 +249,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/admin/*',  // Admin API endpoints
     '/api/search/*', // Search endpoints
     '/api/secure/*', // Secure API endpoints
-    '/api/test/rate-limit/*' // Rate limiting test bypass endpoints
+    '/api/test/rate-limit/*', // Rate limiting test bypass endpoints
+    '/api/openai/*'  // OpenAI API endpoints
   ];
 
   // Re-enable enhanced CSRF protection with rate limiting integration
@@ -399,6 +401,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Add rate limiting test routes (disabled in production)
   app.use(rateLimitTestRouter);
   console.log("✅ Rate limiting test routes added");
+  
+  // Add OpenAI integration routes
+  app.use('/api/openai', openaiRoutes);
+  console.log("✅ OpenAI integration routes added");
 
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', isAdmin, async (req, res) => {

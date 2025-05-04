@@ -52,11 +52,11 @@ router.post('/completions', async (req: Request, res: Response) => {
       model: response.model,
       usage: response.usage
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[OpenAI] Error generating completion:', error);
     return res.status(500).json({ 
       error: 'Error generating OpenAI completion', 
-      message: error.message
+      message: error.message || 'Unknown error'
     });
   }
 });
@@ -88,11 +88,11 @@ router.post('/images', async (req: Request, res: Response) => {
     return res.json({
       images: response.data,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[OpenAI] Error generating image:', error);
     return res.status(500).json({ 
       error: 'Error generating image', 
-      message: error.message
+      message: error.message || 'Unknown error'
     });
   }
 });
@@ -149,11 +149,11 @@ router.post('/vision', async (req: Request, res: Response) => {
       model: response.model,
       usage: response.usage
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[OpenAI] Error analyzing image:', error);
     return res.status(500).json({ 
       error: 'Error analyzing image', 
-      message: error.message
+      message: error.message || 'Unknown error'
     });
   }
 });
@@ -173,7 +173,7 @@ router.post('/secured', isAuthenticated, async (req: Request, res: Response) => 
     }
     
     // Here we have access to the authenticated user through req.user
-    const userId = req.user?.claims?.sub;
+    const userId = (req.user as any)?.claims?.sub;
     console.log(`[OpenAI] Processing secured request for user: ${userId}`);
     
     const response = await openai.chat.completions.create({
@@ -192,11 +192,11 @@ router.post('/secured', isAuthenticated, async (req: Request, res: Response) => 
       model: response.model,
       usage: response.usage
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[OpenAI] Error in secured endpoint:', error);
     return res.status(500).json({ 
       error: 'Error processing secured request', 
-      message: error.message
+      message: error.message || 'Unknown error'
     });
   }
 });

@@ -134,9 +134,14 @@ export function setupCSRFProtection(app: Express): void {
       // Third-party content and widget integrations
       '/api/taskade/',       // Taskade widget API 
       '/taskade-widget.js',  // Taskade widget script
+      '/taskade/',           // Taskade paths
+      '/taskade-embed/',     // Taskade embed paths
       '/api/youtube/',       // YouTube API integration
+      '/youtube-embed/',     // YouTube embed paths
       '/api/maps/',          // Google Maps API integration
+      '/maps-embed/',        // Google Maps embed paths
       '/widget/',            // General widget endpoints
+      '/embed/',             // General embed endpoints
       // Allow iframe content from trusted sources
       '/iframe-content/',    
       // Exempting the Dale Loves Whales Flask app routes from CSRF protection
@@ -298,21 +303,33 @@ export function setupCSRFProtection(app: Express): void {
         // Third-party integrations
         req.path.startsWith('/api/openai/') ||
         req.path.startsWith('/api/taskade/') ||
+        req.path.startsWith('/taskade/') ||
+        req.path.startsWith('/taskade-embed/') ||
         req.path.startsWith('/api/youtube/') ||
+        req.path.startsWith('/youtube-embed/') ||
         req.path.startsWith('/api/maps/') ||
+        req.path.startsWith('/maps-embed/') ||
         req.path.startsWith('/widget/') ||
+        req.path.startsWith('/embed/') ||
         req.path.startsWith('/iframe-content/') ||
         req.path === '/taskade-widget.js' ||
         // Check for third-party domain references in the path
         req.path.includes('taskade.com') ||
+        req.path.includes('app.taskade.com') ||
+        req.path.includes('www.taskade.com') ||
+        req.path.includes('taskade.embed') ||
         req.path.includes('youtube.com') ||
+        req.path.includes('youtube-nocookie.com') ||
         req.path.includes('youtu.be') ||
+        req.path.includes('ytimg.com') ||
         req.path.includes('maps.google.com') ||
         req.path.includes('maps.googleapis.com') ||
         req.path.includes('openai.com') ||
         req.path.includes('stripe.com') ||
         req.path.includes('googleapis.com') ||
         req.path.includes('googleusercontent.com') ||
+        req.path.includes('doubleclick.net') ||
+        req.path.includes('googletagmanager.com') ||
         // Vite development routes
         req.path.startsWith('/@vite') ||
         req.path.startsWith('/@fs/') ||
