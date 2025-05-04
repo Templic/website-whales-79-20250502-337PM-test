@@ -146,10 +146,19 @@ class SecurityConfig {
   public enableFeature(feature: keyof SecurityFeatures): void {
     // Only modify if the feature is a boolean type
     if (typeof this.features[feature] === 'boolean') {
-      // Create a type-safe way to update the property
+      // Create a new object with the updated feature
       const updatedFeatures = { ...this.features };
-      updatedFeatures[feature] = true;
+      
+      // Use a more explicit cast to avoid TypeScript errors
+      // Extract the features as a mutable object type
+      const mutableFeatures = updatedFeatures as { [key: string]: boolean | number };
+      
+      // Set the value (we've already checked that it's a boolean type)
+      mutableFeatures[feature] = true;
+      
+      // Set the features back
       this.features = updatedFeatures;
+      
       this.notifyChangeListeners();
     }
   }
@@ -160,10 +169,19 @@ class SecurityConfig {
   public disableFeature(feature: keyof SecurityFeatures): void {
     // Only modify if the feature is a boolean type
     if (typeof this.features[feature] === 'boolean') {
-      // Create a type-safe way to update the property
+      // Create a new object with the updated feature
       const updatedFeatures = { ...this.features };
-      updatedFeatures[feature] = false;
+      
+      // Use a more explicit cast to avoid TypeScript errors
+      // Extract the features as a mutable object type
+      const mutableFeatures = updatedFeatures as { [key: string]: boolean | number };
+      
+      // Set the value (we've already checked that it's a boolean type)
+      mutableFeatures[feature] = false;
+      
+      // Set the features back
       this.features = updatedFeatures;
+      
       this.notifyChangeListeners();
     }
   }
