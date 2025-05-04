@@ -103,11 +103,23 @@ app.listen(3000, () => {
 `;
 
 // Function to test the security analysis endpoint
+// Get the replit URL from environment
+const getApiUrl = () => {
+  // Check if we have REPLIT_SLUG env variable
+  if (process.env.REPLIT_SLUG) {
+    return `https://${process.env.REPLIT_SLUG}.replit.dev`;
+  }
+  
+  // Fallback to localhost (for local development)
+  return 'http://localhost:3000';
+};
+
 async function testSecurityAnalysis() {
   try {
-    console.log('Testing OpenAI Security Analysis Endpoint...\n');
+    const apiUrl = getApiUrl();
+    console.log(`Testing OpenAI Security Analysis Endpoint on ${apiUrl}...\n`);
     
-    const response = await axios.post('http://localhost:3000/api/openai/security-analysis', {
+    const response = await axios.post(`${apiUrl}/api/openai/security-analysis`, {
       content: vulnerableCode,
       contentType: 'code',
       context: 'This is a test Node.js Express application that needs security analysis.'
