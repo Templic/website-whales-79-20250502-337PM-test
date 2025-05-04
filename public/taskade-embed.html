@@ -8,9 +8,14 @@
     <meta http-equiv="Cross-Origin-Embedder-Policy" content="unsafe-none">
     <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none">
     <meta http-equiv="Cross-Origin-Resource-Policy" content="cross-origin">
+    <!-- Performance and security headers -->
+    <meta http-equiv="Permissions-Policy" content="microphone=*, camera=*, geolocation=*, clipboard-read=*, clipboard-write=*">
+    <meta http-equiv="Referrer-Policy" content="no-referrer">
     <!-- Allow prefetching of taskade.com resources -->
     <link rel="dns-prefetch" href="//www.taskade.com">
+    <link rel="dns-prefetch" href="//assets.taskade.com">
     <link rel="preconnect" href="https://www.taskade.com" crossorigin>
+    <link rel="preconnect" href="https://assets.taskade.com" crossorigin>
     <title>Taskade Embedded View</title>
     <style>
         html, body {
@@ -19,17 +24,42 @@
             height: 100%;
             width: 100%;
             overflow: hidden;
-            font-family: Arial, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             background-color: transparent;
         }
+
+        /* Automatically handle dark mode */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #121212;
+                color: #f5f5f5;
+            }
+            .loading {
+                background-color: rgba(18, 18, 18, 0.8) !important;
+            }
+            .spinner {
+                border-color: rgba(255, 255, 255, 0.1);
+                border-top-color: #09d;
+            }
+            .error-container {
+                background-color: #1e1e1e !important;
+                color: #e0e0e0 !important;
+            }
+            .error-container button {
+                background-color: #2a2a2a !important;
+                color: #e0e0e0 !important;
+            }
+        }
+        
         .iframe-container {
             position: relative;
             width: 100%;
             height: 100%;
-            min-height: 600px;
+            min-height: 400px;
             border: none;
             overflow: hidden;
         }
+        
         iframe {
             position: absolute;
             top: 0;
@@ -39,6 +69,7 @@
             border: none;
             background-color: transparent;
         }
+        
         .loading {
             position: absolute;
             top: 0;
@@ -46,26 +77,85 @@
             right: 0;
             bottom: 0;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             background-color: rgba(248, 249, 250, 0.8);
             z-index: 10;
             transition: opacity 0.3s ease-in-out;
         }
+        
         .loading.hidden {
             opacity: 0;
             pointer-events: none;
         }
+        
+        .loading-text {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #555;
+        }
+        
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(0, 0, 0, 0.1);
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
             border-radius: 50%;
             border-top-color: #09d;
             animation: spin 1s ease-in-out infinite;
         }
+        
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+        
+        .error-container {
+            text-align: center;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+        }
+        
+        .error-container h3 {
+            margin-top: 0;
+            color: #e53935;
+        }
+        
+        .error-container button {
+            margin-top: 16px;
+            padding: 8px 16px;
+            background-color: #09d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .error-container button:hover {
+            background-color: #08b;
+        }
+
+        /* Add custom classes for different themes */
+        body.theme-dark {
+            background-color: #121212;
+            color: #f5f5f5;
+        }
+        
+        body.theme-dark .loading {
+            background-color: rgba(18, 18, 18, 0.8);
+        }
+        
+        body.theme-dark .loading-text {
+            color: #aaa;
+        }
+        
+        body.theme-dark .error-container {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
         }
     </style>
 </head>
@@ -73,13 +163,15 @@
     <div class="iframe-container">
         <div class="loading" id="loading">
             <div class="spinner"></div>
+            <div class="loading-text">Loading Taskade AI...</div>
         </div>
         <iframe 
             id="taskadeFrame"
+            title="Taskade AI Assistant"
             allow="clipboard-read; clipboard-write; fullscreen; camera; microphone; geolocation"
             allowfullscreen
             referrerpolicy="no-referrer"
-            loading="lazy"
+            loading="eager"
             importance="high"
             crossorigin="anonymous">
         </iframe>
@@ -93,51 +185,188 @@
             document.documentElement.classList.add('taskade-integration');
         }
         
-        document.addEventListener('DOMContentLoaded', function() {
+        // Apply theme
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('theme-dark');
+            } else if (theme === 'light') {
+                document.body.classList.remove('theme-dark');
+            } else if (theme === 'system') {
+                // Check system preference
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.body.classList.add('theme-dark');
+                } else {
+                    document.body.classList.remove('theme-dark');
+                }
+            }
+        }
+        
+        // Function to build the Taskade URL with all parameters
+        function buildTaskadeUrl(params) {
+            const { id, view = 'agent', memory = '1', toolbar = '1' } = params;
+            
+            let baseUrl = 'https://www.taskade.com/';
+            
+            // Determine the URL path based on view type
+            if (view === 'agent' || view === 'chat') {
+                baseUrl += `a/${id}`;
+            } else if (view === 'embed') {
+                baseUrl += `embed/${id}`;
+            } else if (view === 'widget') {
+                baseUrl += `widget/${id}`;
+            } else {
+                baseUrl += `a/${id}`; // Default to agent view
+            }
+            
+            // Add query parameters
+            const urlParams = new URLSearchParams();
+            
+            if (memory === '0') {
+                urlParams.append('memory', 'false');
+            }
+            
+            if (toolbar === '0') {
+                urlParams.append('hideToolbar', 'true');
+            }
+            
+            const queryString = urlParams.toString();
+            return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+        }
+        
+        // Function to handle errors
+        function handleError(message) {
+            const loading = document.getElementById('loading');
+            loading.innerHTML = `
+                <div class="error-container">
+                    <h3>Failed to load Taskade content</h3>
+                    <p>${message || 'Please try refreshing the page or check your network connection.'}</p>
+                    <button onclick="window.location.reload()">Retry</button>
+                </div>
+            `;
+            
+            // Notify parent about the error
+            if (window.parent && window.parent !== window) {
+                try {
+                    window.parent.postMessage({ 
+                        type: 'taskade-error', 
+                        error: message || 'Failed to load content'
+                    }, '*');
+                } catch (e) {
+                    console.warn('Could not notify parent frame of error', e);
+                }
+            }
+        }
+        
+        // Initialize the Taskade embedding
+        function initTaskade() {
             // Set up security bypasses
             setupCSRFBypass();
             
+            // Get URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const taskadeId = urlParams.get('id') || '01JRV02MYWJW6VJS9XGR1VB5J4';
+            const view = urlParams.get('view') || 'agent';
+            const theme = urlParams.get('theme') || 'system';
+            const memory = urlParams.get('memory') || '1';
+            const toolbar = urlParams.get('toolbar') || '1';
             
+            // Apply theme
+            applyTheme(theme);
+            
+            // Get references to DOM elements
             const iframe = document.getElementById('taskadeFrame');
             const loading = document.getElementById('loading');
             
-            // Set the iframe source
-            iframe.src = `https://www.taskade.com/a/${taskadeId}`;
+            // Handle communication events between this frame and the parent
+            window.addEventListener('message', function(event) {
+                // Handle messages from parent
+                if (event.data && event.data.type === 'taskade-refresh') {
+                    console.log('Refreshing Taskade iframe');
+                    loading.classList.remove('hidden');
+                    
+                    // Rebuild the URL with current parameters
+                    const taskadeUrl = buildTaskadeUrl({
+                        id: taskadeId,
+                        view: view,
+                        memory: memory,
+                        toolbar: toolbar
+                    });
+                    
+                    // Reload the iframe
+                    iframe.src = 'about:blank';
+                    setTimeout(() => {
+                        iframe.src = taskadeUrl;
+                    }, 50);
+                }
+            });
             
-            // Hide loading when iframe is loaded
-            iframe.onload = function() {
-                console.log('Taskade iframe loaded successfully');
+            try {
+                // Build the Taskade URL with parameters
+                const taskadeUrl = buildTaskadeUrl({
+                    id: taskadeId,
+                    view: view,
+                    memory: memory,
+                    toolbar: toolbar
+                });
+                
+                // Set the iframe source
+                iframe.src = taskadeUrl;
+                
+                // Hide loading when iframe is loaded
+                iframe.onload = function() {
+                    console.log('Taskade iframe loaded successfully');
+                    setTimeout(() => {
+                        loading.classList.add('hidden');
+                    }, 300);
+                    
+                    // Ensure parent knows iframe is loaded
+                    if (window.parent && window.parent !== window) {
+                        try {
+                            window.parent.postMessage({ 
+                                type: 'taskade-loaded', 
+                                success: true,
+                                id: taskadeId,
+                                view: view
+                            }, '*');
+                        } catch (e) {
+                            console.warn('Could not notify parent frame', e);
+                        }
+                    }
+                };
+                
+                // Handle errors
+                iframe.onerror = function(err) {
+                    console.error('Taskade iframe loading error:', err);
+                    handleError('Failed to load Taskade content. Please check your connection.');
+                };
+                
+                // Set a loading timeout
                 setTimeout(() => {
-                    loading.classList.add('hidden');
-                }, 300);
-                
-                // Ensure parent knows iframe is loaded
-                if (window.parent && window.parent !== window) {
-                    try {
-                        window.parent.postMessage({ type: 'taskade-loaded', success: true }, '*');
-                    } catch (e) {
-                        console.warn('Could not notify parent frame', e);
+                    if (!loading.classList.contains('hidden')) {
+                        console.warn('Taskade iframe loading timeout');
+                        // Don't show error yet, just log a warning
                     }
-                }
-            };
+                }, 10000);
+            } catch (err) {
+                console.error('Error initializing Taskade:', err);
+                handleError(err.message);
+            }
             
-            // Handle errors
-            iframe.onerror = function(err) {
-                console.error('Taskade iframe loading error:', err);
-                loading.innerHTML = '<div style="text-align: center; padding: 20px;"><h3>Failed to load Taskade content</h3><p>Please try refreshing the page or check your network connection.</p></div>';
-                
-                // Notify parent about the error
-                if (window.parent && window.parent !== window) {
-                    try {
-                        window.parent.postMessage({ type: 'taskade-error', error: 'Failed to load content' }, '*');
-                    } catch (e) {
-                        console.warn('Could not notify parent frame of error', e);
-                    }
-                }
-            };
-        });
+            // Listen for dark mode changes
+            if (theme === 'system' && window.matchMedia) {
+                const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                darkModeMediaQuery.addEventListener('change', (e) => {
+                    applyTheme('system');
+                });
+            }
+        }
+        
+        // Initialize when the DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTaskade);
+        } else {
+            initTaskade();
+        }
     </script>
 </body>
 </html>
