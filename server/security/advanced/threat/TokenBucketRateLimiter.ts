@@ -11,12 +11,34 @@
  * - Individual rate limits per IP/user
  * - Burst capacity (allowing occasional bursts of traffic)
  * - Custom rate limit configurations for different paths
+ * - Context-aware rate limiting decisions
+ * - Dynamic cost calculation based on request properties
+ * - Violation tracking and analytics
  */
 
-interface RateLimitConfig {
+export interface RateLimitConfig {
   tokensPerInterval: number;  // Number of tokens added per interval
   interval: number;           // Interval in milliseconds
   burstCapacity?: number;     // Maximum tokens the bucket can hold (defaults to tokensPerInterval)
+  
+  // Enhanced configuration options
+  costCalculator?: (context: RequestContext) => number; // Dynamic request cost
+  keyGenerator?: (context: RequestContext) => string;   // Custom key generation
+  errorHandler?: (context: RequestContext) => void;     // Handle exceeded limits
+  bypassFunction?: (context: RequestContext) => boolean; // Bypass criteria
+}
+
+export interface RequestContext {
+  ip: string;                 // Client IP address
+  userId?: string;            // User ID if authenticated
+  userRole?: string;          // User role if available
+  path: string;               // Request path
+  method: string;             // HTTP method (GET, POST, etc.)
+  headers: Record<string, string>; // Request headers
+  securityRisk?: number;      // 0-1 risk score from security system
+  systemLoad?: number;        // 0-1 current system load
+  resourceType?: string;      // Categorization of requested resource
+  customData?: Record<string, any>; // Any additional context data
 }
 
 interface TokenBucket {
@@ -25,10 +47,18 @@ interface TokenBucket {
   config: RateLimitConfig;    // Configuration for this bucket
 }
 
+interface ViolationData {
+  count: number;              // Number of violations
+  firstViolation: number;     // Timestamp of first violation
+  lastViolation: number;      // Timestamp of most recent violation
+  paths: Set<string>;         // Paths that triggered violations
+}
+
 export class TokenBucketRateLimiter {
   private buckets: Map<string, TokenBucket> = new Map();
   private defaultConfig: RateLimitConfig;
   private customConfigs: Map<string, RateLimitConfig> = new Map();
+  private violations: Map<string, ViolationData> = new Map();
 
   /**
    * Create a new rate limiter
@@ -39,7 +69,29 @@ export class TokenBucketRateLimiter {
     this.defaultConfig = {
       tokensPerInterval: config.tokensPerInterval,
       interval: config.interval,
-      burstCapacity: config.burstCapacity || config.tokensPerInterval
+      burstCapacity: config.burstCapacity || config.tokensPerInterval,
+      costCalculator: config.costCalculator,
+      keyGenerator: config.keyGenerator,
+      errorHandler: config.errorHandler,
+      bypassFunction: config.bypassFunction
+    };
+  }
+  
+  /**
+   * Get a copy of the current configuration
+   */
+  getConfig(): RateLimitConfig {
+    return { ...this.defaultConfig };
+  }
+  
+  /**
+   * Update the default configuration
+   */
+  updateConfig(config: Partial<RateLimitConfig>): void {
+    this.defaultConfig = {
+      ...this.defaultConfig,
+      ...config,
+      burstCapacity: config.burstCapacity || config.tokensPerInterval || this.defaultConfig.burstCapacity
     };
   }
 
@@ -201,5 +253,182 @@ export class TokenBucketRateLimiter {
    */
   resetAll(): void {
     this.buckets.clear();
+  }
+  
+  /**
+   * Check limit with full context awareness
+   * 
+   * @param context Request context with IP, user info, path, etc.
+   * @returns true if within limits, false if exceeded
+   */
+  consumeWithContext(context: RequestContext): boolean {
+    // Check if this request should bypass rate limiting
+    if (this.shouldBypass(context)) {
+      return true;
+    }
+    
+    // Generate appropriate key from context
+    const key = this.getKeyFromContext(context);
+    
+    // Calculate cost based on context
+    const cost = this.calculateCost(context);
+    
+    // Try to consume tokens
+    const result = this.consume(key, cost);
+    
+    // Track violation if limit was exceeded
+    if (!result) {
+      this.trackViolation(key, context);
+      
+      // If there's an error handler, call it
+      const config = this.getConfigForKey(key);
+      if (config.errorHandler) {
+        try {
+          config.errorHandler(context);
+        } catch (error) {
+          console.error(`Error in rate limit error handler for ${key}:`, error);
+        }
+      }
+    }
+    
+    return result;
+  }
+  
+  /**
+   * Generate key from request context using configured logic
+   */
+  getKeyFromContext(context: RequestContext): string {
+    // Use custom key generator if configured
+    if (this.defaultConfig.keyGenerator) {
+      return this.defaultConfig.keyGenerator(context);
+    }
+    
+    // Default tiered key generation based on available context
+    if (context.userId) {
+      // Authenticated user - track by user ID and path type
+      return `user:${context.userId}:${context.resourceType || 'default'}`;
+    }
+    
+    if (context.path) {
+      // Unauthenticated but with path - track by IP and path
+      return `ip:${context.ip}:${context.path}`;
+    }
+    
+    // Just track by IP as fallback
+    return `ip:${context.ip}`;
+  }
+  
+  /**
+   * Calculate request cost based on context
+   */
+  private calculateCost(context: RequestContext): number {
+    // Use custom cost calculator if configured
+    if (this.defaultConfig.costCalculator) {
+      return this.defaultConfig.costCalculator(context);
+    }
+    
+    // Default cost calculation based on context
+    let cost = 1.0;
+    
+    // Higher cost for known security risks
+    if (context.securityRisk && context.securityRisk > 0) {
+      cost *= (1 + context.securityRisk);
+    }
+    
+    // Higher cost under system load
+    if (context.systemLoad && context.systemLoad > 0.7) {
+      cost *= (1 + (context.systemLoad - 0.7) * 2);
+    }
+    
+    // Higher cost for write operations
+    if (context.method === 'POST' || context.method === 'PUT' || context.method === 'DELETE') {
+      cost *= 1.5;
+    }
+    
+    // Higher cost for admin/security resources
+    if (context.resourceType === 'admin' || context.resourceType === 'security') {
+      cost *= 2.0;
+    }
+    
+    return cost;
+  }
+  
+  /**
+   * Check if request should bypass rate limiting
+   */
+  private shouldBypass(context: RequestContext): boolean {
+    // Use custom bypass function if configured
+    if (this.defaultConfig.bypassFunction) {
+      return this.defaultConfig.bypassFunction(context);
+    }
+    
+    // Default bypass logic
+    
+    // Bypass for internal monitoring paths
+    if (context.path === '/health' || context.path === '/status') {
+      return true;
+    }
+    
+    // Bypass for admin users
+    if (context.userRole === 'admin' || context.userRole === 'security_admin') {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Track rate limit violation for analysis
+   */
+  private trackViolation(key: string, context: RequestContext): void {
+    const now = Date.now();
+    let data = this.violations.get(key);
+    
+    if (!data) {
+      data = {
+        count: 0,
+        firstViolation: now,
+        lastViolation: now,
+        paths: new Set()
+      };
+      this.violations.set(key, data);
+    }
+    
+    // Update violation data
+    data.count++;
+    data.lastViolation = now;
+    if (context.path) {
+      data.paths.add(context.path);
+    }
+  }
+  
+  /**
+   * Get statistics about rate limit violations
+   */
+  getViolationStats(): Record<string, {
+    count: number;
+    firstViolation: number;
+    lastViolation: number;
+    paths: string[];
+  }> {
+    const stats: Record<string, any> = {};
+    
+    this.violations.forEach((data, key) => {
+      stats[key] = {
+        count: data.count,
+        firstViolation: data.firstViolation,
+        lastViolation: data.lastViolation,
+        paths: [...data.paths]
+      };
+    });
+    
+    return stats;
+  }
+  
+  /**
+   * Reset violation tracking
+   */
+  resetViolationStats(): void {
+    this.violations.clear();
   }
 }
