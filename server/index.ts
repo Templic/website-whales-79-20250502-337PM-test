@@ -113,6 +113,7 @@ if (config.security.csrfProtection) {
       '/css',
       '/js',
       '/favicon.ico',
+      '/service-worker.js',
       // Vite development routes (using regex patterns)
       '/@vite/**',
       '/@vite/*',
@@ -122,6 +123,10 @@ if (config.security.csrfProtection) {
       '/node_modules/**',
       '/src/**',
       '/src/*',
+      // Taskade integration
+      '/taskade',
+      '/taskade/**',
+      '/embed/taskade/**',
       // Development endpoints (if applicable)
       ...(process.env.NODE_ENV === 'development' ? ['/api/dev'] : [])
     ],
