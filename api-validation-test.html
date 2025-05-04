@@ -3,30 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Validation Test</title>
+  <title>Direct API Validation Test</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: Arial, sans-serif;
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
-      background-color: #f5f5f5;
+      line-height: 1.6;
+    }
+    h1, h2 {
       color: #333;
     }
-    h1 {
-      color: #1a6ea0;
-      text-align: center;
+    .container {
       margin-bottom: 30px;
-    }
-    .card {
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .form-group {
-      margin-bottom: 15px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
     }
     label {
       display: block;
@@ -36,279 +29,151 @@
     input, textarea {
       width: 100%;
       padding: 8px;
-      border: 1px solid #ddd;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
       border-radius: 4px;
-      box-sizing: border-box;
     }
     button {
-      background-color: #1a6ea0;
+      background-color: #4CAF50;
       color: white;
-      border: none;
       padding: 10px 15px;
+      border: none;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 14px;
     }
     button:hover {
-      background-color: #135e8a;
+      background-color: #45a049;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
     }
     .result {
       margin-top: 15px;
-      padding: 15px;
-      border-radius: 4px;
-      white-space: pre-wrap;
-      font-family: monospace;
-      overflow-x: auto;
-    }
-    .success {
-      background-color: #e7f7e7;
-      border: 1px solid #c3e6c3;
-    }
-    .error {
-      background-color: #f8e7e7;
-      border: 1px solid #e6c3c3;
-    }
-    .tabs {
-      display: flex;
-      margin-bottom: 20px;
-    }
-    .tab {
-      padding: 10px 20px;
-      cursor: pointer;
-      border: 1px solid #ddd;
-      background-color: #f1f1f1;
-      margin-right: 5px;
-      border-radius: 4px 4px 0 0;
-    }
-    .tab.active {
-      background-color: white;
-      border-bottom: 1px solid white;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
-    .security-score {
-      font-weight: bold;
-      font-size: 18px;
-    }
-    .score-high {
-      color: #4caf50;
-    }
-    .score-low {
-      color: #f44336;
     }
   </style>
 </head>
 <body>
   <h1>API Validation Test</h1>
+  <p>This page allows you to directly test the API validation endpoints without going through the main application.</p>
   
-  <div class="tabs">
-    <div class="tab active" data-tab="basic">Basic Validation</div>
-    <div class="tab" data-tab="security">Security Validation</div>
-    <div class="tab" data-tab="health">Health Check</div>
+  <div class="container">
+    <h2>API Health Check</h2>
+    <button onclick="checkHealth()">Check API Health</button>
+    <div class="result" id="health-result"></div>
   </div>
   
-  <!-- Basic Validation -->
-  <div id="basic-validation" class="tab-content active card">
+  <div class="container">
     <h2>Basic Validation</h2>
-    <p>Test the schema validation using Zod</p>
-    
-    <form id="basic-form">
-      <div class="form-group">
-        <label for="name">Name (min 2 characters):</label>
-        <input type="text" id="name" name="name">
-      </div>
-      
-      <div class="form-group">
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email">
-      </div>
-      
-      <div class="form-group">
-        <label for="age">Age (positive number):</label>
-        <input type="number" id="age" name="age">
-      </div>
-      
-      <button type="submit">Validate</button>
-    </form>
-    
-    <div id="basic-result" class="result"></div>
+    <div>
+      <label for="name">Name:</label>
+      <input type="text" id="name" value="John Doe">
+    </div>
+    <div>
+      <label for="email">Email:</label>
+      <input type="text" id="email" value="john@example.com">
+    </div>
+    <div>
+      <label for="age">Age:</label>
+      <input type="number" id="age" value="30">
+    </div>
+    <button onclick="testBasicValidation()">Test Basic Validation</button>
+    <div class="result" id="basic-result"></div>
   </div>
   
-  <!-- Security Validation -->
-  <div id="security-validation" class="tab-content card">
+  <div class="container">
     <h2>Security Validation</h2>
-    <p>Test the security validation for SQL injection detection</p>
-    
-    <form id="security-form">
-      <div class="form-group">
-        <label for="query">Query:</label>
-        <textarea id="query" name="query" rows="3"></textarea>
-      </div>
-      
-      <div class="form-group">
-        <label>Try these examples:</label>
-        <button type="button" class="example-btn" data-example="normal user input">Safe Example</button>
-        <button type="button" class="example-btn" data-example="' OR 1=1; DROP TABLE users; --">SQL Injection Example</button>
-      </div>
-      
-      <button type="submit">Validate</button>
-    </form>
-    
-    <div id="security-result" class="result"></div>
-    <div id="security-score" class="security-score"></div>
+    <div>
+      <label for="query">Query:</label>
+      <textarea id="query" rows="4">normal user input</textarea>
+    </div>
+    <button onclick="testSecurityValidation()">Test Security Validation</button>
+    <button onclick="testMaliciousInput()" style="background-color: #ff9800;">Test Malicious Input</button>
+    <div class="result" id="security-result"></div>
   </div>
-  
-  <!-- Health Check -->
-  <div id="health-check" class="tab-content card">
-    <h2>Health Check</h2>
-    <p>Test the API server health</p>
-    
-    <button id="health-btn">Check Health</button>
-    
-    <div id="health-result" class="result"></div>
-  </div>
-  
+
   <script>
-    // API URL (change this to match your environment)
+    // Configuration
     const API_URL = 'http://localhost:4000';
-    
-    // Tab functionality
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        // Hide all tab contents
-        document.querySelectorAll('.tab-content').forEach(content => {
-          content.classList.remove('active');
-        });
-        
-        // Deactivate all tabs
-        document.querySelectorAll('.tab').forEach(t => {
-          t.classList.remove('active');
-        });
-        
-        // Activate current tab
-        tab.classList.add('active');
-        
-        // Show current tab content
-        const tabId = tab.getAttribute('data-tab');
-        document.getElementById(`${tabId}-validation`).classList.add('active');
-        if (tabId === 'health') {
-          document.getElementById(`health-check`).classList.add('active');
-        }
-      });
-    });
-    
-    // Basic Validation Form
-    document.getElementById('basic-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const name = document.getElementById('name').value;
-      const email = document.getElementById('email').value;
-      const age = document.getElementById('age').value ? parseInt(document.getElementById('age').value) : '';
-      
-      const data = { name, email };
-      if (age !== '') {
-        data.age = age;
+
+    // Format JSON with syntax highlighting
+    function formatJSON(json) {
+      if (typeof json !== 'string') {
+        json = JSON.stringify(json, null, 2);
       }
-      
+      return json;
+    }
+
+    // Display result
+    function displayResult(elementId, data, isError = false) {
+      const element = document.getElementById(elementId);
+      if (isError) {
+        element.innerHTML = `<p style="color: red;">Error: ${data}</p>`;
+      } else {
+        element.innerHTML = `<pre>${formatJSON(data)}</pre>`;
+      }
+    }
+
+    // Health check
+    async function checkHealth() {
       try {
+        const response = await fetch(`${API_URL}/api/health`);
+        const data = await response.json();
+        displayResult('health-result', data);
+      } catch (error) {
+        displayResult('health-result', error.message, true);
+      }
+    }
+
+    // Basic validation
+    async function testBasicValidation() {
+      try {
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const age = parseInt(document.getElementById('age').value);
+
         const response = await fetch(`${API_URL}/api/validate/basic`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           },
-          body: JSON.stringify(data)
+          body: JSON.stringify({ name, email, age })
         });
         
-        const result = await response.json();
-        const resultDiv = document.getElementById('basic-result');
-        
-        if (result.success && result.validation.passed) {
-          resultDiv.className = 'result success';
-          resultDiv.innerHTML = 'Validation Passed!\n\n' + JSON.stringify(result, null, 2);
-        } else {
-          resultDiv.className = 'result error';
-          resultDiv.innerHTML = 'Validation Failed:\n\n' + JSON.stringify(result, null, 2);
-        }
-      } catch (err) {
-        document.getElementById('basic-result').className = 'result error';
-        document.getElementById('basic-result').textContent = 'Error: ' + err.message;
+        const data = await response.json();
+        displayResult('basic-result', data);
+      } catch (error) {
+        displayResult('basic-result', error.message, true);
       }
-    });
-    
-    // Security Validation Form
-    document.getElementById('security-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const query = document.getElementById('query').value;
-      
+    }
+
+    // Security validation
+    async function testSecurityValidation() {
       try {
+        const query = document.getElementById('query').value;
+
         const response = await fetch(`${API_URL}/api/validate/security`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({ query })
         });
         
-        const result = await response.json();
-        const resultDiv = document.getElementById('security-result');
-        const scoreDiv = document.getElementById('security-score');
-        
-        if (result.success) {
-          if (result.validation.passed) {
-            resultDiv.className = 'result success';
-            resultDiv.innerHTML = 'Security Validation Passed!\n\n' + JSON.stringify(result, null, 2);
-            
-            if (result.validation.securityScore) {
-              scoreDiv.textContent = `Security Score: ${result.validation.securityScore.toFixed(1)}`;
-              scoreDiv.className = 'security-score score-high';
-            }
-          } else {
-            resultDiv.className = 'result error';
-            resultDiv.innerHTML = 'Security Validation Failed:\n\n' + JSON.stringify(result, null, 2);
-            
-            if (result.validation.securityScore) {
-              scoreDiv.textContent = `Security Score: ${result.validation.securityScore.toFixed(1)}`;
-              scoreDiv.className = 'security-score score-low';
-            }
-          }
-        } else {
-          resultDiv.className = 'result error';
-          resultDiv.innerHTML = 'Error:\n\n' + JSON.stringify(result, null, 2);
-          scoreDiv.textContent = '';
-        }
-      } catch (err) {
-        document.getElementById('security-result').className = 'result error';
-        document.getElementById('security-result').textContent = 'Error: ' + err.message;
-        document.getElementById('security-score').textContent = '';
+        const data = await response.json();
+        displayResult('security-result', data);
+      } catch (error) {
+        displayResult('security-result', error.message, true);
       }
-    });
-    
-    // Example buttons
-    document.querySelectorAll('.example-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const example = btn.getAttribute('data-example');
-        document.getElementById('query').value = example;
-      });
-    });
-    
-    // Health Check
-    document.getElementById('health-btn').addEventListener('click', async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/health`);
-        const result = await response.json();
-        
-        document.getElementById('health-result').className = 'result success';
-        document.getElementById('health-result').innerHTML = JSON.stringify(result, null, 2);
-      } catch (err) {
-        document.getElementById('health-result').className = 'result error';
-        document.getElementById('health-result').textContent = 'Error: ' + err.message;
-      }
-    });
+    }
+
+    // Test with malicious input
+    function testMaliciousInput() {
+      document.getElementById('query').value = "' OR 1=1; DROP TABLE users; --";
+      testSecurityValidation();
+    }
   </script>
 </body>
 </html>
