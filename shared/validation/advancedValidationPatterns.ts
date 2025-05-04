@@ -45,9 +45,11 @@ export const ContextualValidation = {
    */
   contextual: <T extends z.ZodTypeAny>(
     schema: T,
-    contextValidator: (data: z.infer<T>, context: any) => z.ZodIssue[] | null
+    contextValidator: (data: z.infer<T>, additionalContext?: any) => z.ZodIssue[] | null
   ) => schema.superRefine((data, ctx) => {
-    const issues = contextValidator(data, ctx.data);
+    // Pass undefined as the context since ctx.data doesn't exist on RefinementCtx
+    // Any additional context would need to be passed when creating the validator
+    const issues = contextValidator(data, undefined);
     if (issues) {
       issues.forEach(issue => {
         ctx.addIssue(issue);

@@ -8,6 +8,7 @@
 
 import { Response } from 'express';
 import { z } from 'zod';
+
 // Handle security logging with a fallback mechanism to avoid circular dependencies
 function logSecurityEvent(eventData: any): void {
   try {
@@ -85,8 +86,9 @@ export class ValidationErrorHandler {
       payload.details = formattedErrors;
     }
 
-    // Send the response
-    return res.status(mergedOptions.statusCode).json(payload);
+    // Send the response - ensure statusCode is always a number
+    const statusCode = mergedOptions.statusCode ?? 400;
+    return res.status(statusCode).json(payload);
   }
 
   /**
@@ -142,8 +144,9 @@ export class ValidationErrorHandler {
       payload.details = details;
     }
 
-    // Send the response
-    return res.status(mergedOptions.statusCode).json(payload);
+    // Send the response - ensure statusCode is always a number
+    const statusCode = mergedOptions.statusCode ?? 400;
+    return res.status(statusCode).json(payload);
   }
 
   /**
@@ -183,8 +186,9 @@ export class ValidationErrorHandler {
       payload.details = errors;
     }
 
-    // Send the response
-    return res.status(mergedOptions.statusCode).json(payload);
+    // Send the response - ensure statusCode is always a number
+    const statusCode = mergedOptions.statusCode ?? 400;
+    return res.status(statusCode).json(payload);
   }
 
   /**
