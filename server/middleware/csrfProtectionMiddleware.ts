@@ -108,7 +108,7 @@ export function setupCSRFProtection(app: Express): void {
       '/api/metrics',
       '/api/test/csrf-exempt',
       '/api/webhook',
-      '/api/content/key/',  // Content API - critical for development
+      '/api/content/',      // Content API - critical for development
       '/api/csrf-token',     // CSRF token endpoint
       '/api/openai/',        // OpenAI API integration
       '/service-worker.js',  // Service worker
@@ -199,6 +199,11 @@ export function setupCSRFProtection(app: Express): void {
     // Skip exempt routes
     const isExempt = csrfOptions.ignorePaths.some(pattern => {
       if (typeof pattern === 'string') {
+        // For content API paths, add extra logging to debug issues
+        if (req.path.includes('/api/content/') && pattern === '/api/content/') {
+          console.log(`[CSRF Debug] Content API path match check: ${req.path} against ${pattern}`);
+          console.log(`[CSRF Debug] Result: ${req.path === pattern || req.path.startsWith(pattern)}`);
+        }
         return req.path === pattern || req.path.startsWith(pattern);
       } else if (pattern instanceof RegExp) {
         return pattern.test(req.path);
@@ -208,8 +213,11 @@ export function setupCSRFProtection(app: Express): void {
     
     if (isExempt) {
       // Record exempt path in analytics
+      console.log(`[CSRF Debug] Exempting path: ${req.path}`);
       recordCsrfVerification(req, true);
       return next();
+    } else if (req.path.includes('/api/content/')) {
+      console.log(`[CSRF Debug] NOT exempt despite being content path: ${req.path}`);
     }
     
     // Wrap the CSRF Protection with our rate limiting integration
