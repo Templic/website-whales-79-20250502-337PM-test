@@ -231,6 +231,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Rate limit test bypass routes are now registered in server/index.ts
   // before the CSRF middleware is applied to ensure they work correctly
   
+  // Apply content API CSRF bypass middleware BEFORE other middleware to exempt routes
+  app.use(contentApiCsrfBypass);
+  console.log("✅ Content API CSRF bypass middleware initialized successfully");
+  
+  // Apply validation API CSRF bypass middleware BEFORE other middleware to exempt routes
+  app.use(validationApiCsrfBypass);
+  console.log("✅ Validation API CSRF bypass middleware initialized successfully");
+  
   // Apply third-party integration middleware to support embedding external content
   app.use(thirdPartyIntegrationMiddleware);
   app.use(taskadeIntegrationMiddleware);
