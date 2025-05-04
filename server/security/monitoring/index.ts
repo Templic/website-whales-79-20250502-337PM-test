@@ -83,6 +83,7 @@ export function shutdownSecurityMonitoring(): void {
     log('Shutting down security monitoring system', 'security');
     
     // Shutdown components in reverse order
+    breachDetection.shutdown();
     monitoringDashboard.shutdown();
     incidentManager.shutdown();
     eventAggregator.shutdown();
@@ -111,5 +112,6 @@ export function integrateWithExistingSecurity(): void {
 export {
   eventAggregator,
   incidentManager,
-  monitoringDashboard
+  monitoringDashboard,
+  breachDetection
 };

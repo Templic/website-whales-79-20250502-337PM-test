@@ -678,10 +678,21 @@ async function initializeAllServices() {
             initializeLogReviewer(12); // Review logs every 12 hours
             log('Log reviewer initialized successfully', 'security');
             
-            // Finally initialize the security scan queue if needed
+            // Initialize the security scan queue
             import('./security/securityScanQueue').then(({ initializeSecurityScanQueue }) => {
               initializeSecurityScanQueue();
               log('Security scan queue initialized successfully', 'security');
+              
+              // Initialize Phase 3 monitoring system
+              import('./security/monitoring').then(({ initializeSecurityMonitoring }) => {
+                initializeSecurityMonitoring()
+                  .then(() => {
+                    log('PCI Phase 3 security monitoring system initialized successfully', 'security');
+                  })
+                  .catch(error => {
+                    log(`Failed to initialize PCI Phase 3 monitoring: ${error}`, 'error');
+                  });
+              });
             });
           });
         });
@@ -739,16 +750,32 @@ function setupGracefulShutdown() {
     process.on(signal, async () => {
       console.log(`\nReceived ${signal} signal, shutting down gracefully...`);
 
-      // Stop background services first
-      if (config.features.enableBackgroundTasks) {
-        await stopBackgroundServices();
-      }
+      try {
+        // Shutdown security monitoring system if it's running
+        if (config.features.enableSecurityScans) {
+          try {
+            // Dynamically import the monitoring module to avoid circular dependencies
+            const monitoringModule = await import('./security/monitoring');
+            monitoringModule.shutdownSecurityMonitoring();
+            console.log('Security monitoring system shutdown complete');
+          } catch (err) {
+            console.error('Error shutting down security monitoring:', err);
+          }
+        }
 
-      // Close HTTP server to stop accepting new connections
-      if (httpServer) {
-        httpServer.close(() => {
-          console.log('HTTP server closed');
-        });
+        // Stop background services first
+        if (config.features.enableBackgroundTasks) {
+          await stopBackgroundServices();
+        }
+
+        // Close HTTP server to stop accepting new connections
+        if (httpServer) {
+          httpServer.close(() => {
+            console.log('HTTP server closed');
+          });
+        }
+      } catch (err) {
+        console.error('Error during graceful shutdown:', err);
       }
 
       // Give existing connections some time to complete

@@ -1,0 +1,39 @@
+{
+  "category": "authentication",
+  "severity": [
+    "high",
+    "medium"
+  ],
+  "title": "Authentication Security Incident",
+  "description": "Response procedures for authentication and access security incidents",
+  "containmentSteps": [
+    "Lock affected user accounts",
+    "Enable additional logging for authentication systems",
+    "Apply IP blocking for suspicious sources",
+    "Preserve all authentication logs"
+  ],
+  "eradicationSteps": [
+    "Reset credentials for affected accounts",
+    "Review authentication rules and policies",
+    "Apply additional authentication factors if applicable",
+    "Update access control lists"
+  ],
+  "recoverySteps": [
+    "Gradually restore account access with monitoring",
+    "Implement additional authentication monitoring",
+    "Document incident in security knowledge base",
+    "Update security awareness training"
+  ],
+  "requiredEvidence": [
+    "Authentication logs",
+    "Account activity timelines",
+    "IP address information",
+    "User agent details"
+  ],
+  "notificationList": [
+    "Security team",
+    "System administrators",
+    "Affected users",
+    "IT management"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "category": "payment",
+  "severity": [
+    "critical",
+    "high"
+  ],
+  "title": "Payment Processing Incident",
+  "description": "Response procedures for payment processing security incidents",
+  "containmentSteps": [
+    "Suspend affected payment processing channels",
+    "Isolate affected systems",
+    "Preserve evidence including logs and transaction records",
+    "Notify payment processor security team"
+  ],
+  "eradicationSteps": [
+    "Identify root cause of the incident",
+    "Apply necessary patches or fixes",
+    "Reset compromised credentials if applicable",
+    "Conduct security review of affected components"
+  ],
+  "recoverySteps": [
+    "Gradually restore payment processing capabilities",
+    "Monitor closely for any additional anomalies",
+    "Update security rules based on findings",
+    "Document lessons learned"
+  ],
+  "requiredEvidence": [
+    "Transaction logs",
+    "System access logs",
+    "Network traffic logs",
+    "Database query logs"
+  ],
+  "notificationList": [
+    "Security team",
+    "Fraud department",
+    "Payment processor",
+    "Executive management"
+  ]
+}

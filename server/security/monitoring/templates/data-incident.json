@@ -1,0 +1,39 @@
+{
+  "category": "data_modification",
+  "severity": [
+    "critical",
+    "high"
+  ],
+  "title": "Sensitive Data Security Incident",
+  "description": "Response procedures for incidents involving sensitive data modification or access",
+  "containmentSteps": [
+    "Restrict access to affected data systems",
+    "Take database snapshots for forensic analysis",
+    "Enable transaction logging at highest detail level",
+    "Isolate affected application components"
+  ],
+  "eradicationSteps": [
+    "Identify unauthorized modifications",
+    "Restore data from verified backups if needed",
+    "Fix vulnerabilities that allowed the incident",
+    "Review data access controls"
+  ],
+  "recoverySteps": [
+    "Validate data integrity with checksum verification",
+    "Gradually restore service with additional monitoring",
+    "Implement enhanced data access monitoring",
+    "Update data protection procedures"
+  ],
+  "requiredEvidence": [
+    "Database transaction logs",
+    "Data access logs",
+    "API call records",
+    "User session information"
+  ],
+  "notificationList": [
+    "Security team",
+    "Data protection officer",
+    "Legal department",
+    "Executive management"
+  ]
+}

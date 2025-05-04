@@ -1,0 +1,34 @@
+{
+  "timestamp": "2025-05-04T19:32:53.229Z",
+  "overall": {
+    "riskScore": 0,
+    "threatLevel": "low",
+    "activeIncidents": 0,
+    "unresolvedVulnerabilities": 0,
+    "pciComplianceScore": 0
+  },
+  "authentication": {
+    "totalAttempts": 0,
+    "failedAttempts": 0,
+    "successRate": 0,
+    "unusualActivityDetected": false
+  },
+  "payments": {
+    "totalTransactions": 0,
+    "failedTransactions": 0,
+    "averageAmount": 0,
+    "flaggedTransactions": 0
+  },
+  "api": {
+    "totalRequests": 0,
+    "validationFailures": 0,
+    "successRate": 0,
+    "averageResponseTime": 0
+  },
+  "system": {
+    "cpuUtilization": 0,
+    "memoryUtilization": 0,
+    "diskUtilization": 0,
+    "activeUsers": 0
+  }
+}
