@@ -44,33 +44,78 @@ app.use(cookieParser());
 // Set up CSRF protection with exempt paths for Replit Auth
 import { CSRFProtection } from './middleware/csrfProtection';
 
-// Initialize CSRF protection
+// Initialize CSRF protection with deep security features
 if (config.security.csrfProtection) {
-  log('Setting up enhanced CSRF protection with Replit Auth compatibility', 'server');
+  log('Setting up enhanced CSRF protection with deep security features', 'server');
   
-  // Create a CSRF protection instance with additional configuration
+  // Create a CSRF protection instance with comprehensive configuration
   const csrfProtection = new CSRFProtection({
     // Configure cookie properties
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      path: '/'
     },
     
     // Additional exempted paths (beyond the defaults)
     exemptPaths: [
       // API specific exemptions
       '/api/webhook/stripe',
+      '/api/webhook/github',
+      '/api/webhook/analytics',
       '/api/metrics/public',
-      '/api/health-check'
+      '/api/health-check',
+      '/api/status',
+      // Development endpoints (if applicable)
+      ...(process.env.NODE_ENV === 'development' ? ['/api/dev'] : [])
     ],
     
-    // Enable detailed security logging
+    // Core security features
     enableSecurityLogging: true,
+    tokenLength: 64,
+    refreshTokenAutomatically: true,
     
-    // Automatically refresh tokens when they expire
-    refreshTokenAutomatically: true
+    // Deep protection configuration
+    deepProtection: {
+      enabled: true,
+      
+      // Token security
+      tokenBinding: true,
+      tokenSignatures: true,
+      doubleSubmitCheck: true,
+      entropyValidation: true,
+      
+      // Request validation - customize for the application
+      validateOrigin: true,
+      trustedOrigins: [
+        // Replit-specific origins
+        'https://replit.com',
+        'https://*.replit.app',
+        // Application-specific
+        process.env.NODE_ENV === 'production' 
+          ? 'https://*.cosmic-community.com' 
+          : 'http://localhost:*',
+        // Allow null origin in development
+        ...(process.env.NODE_ENV === 'development' ? ['null'] : [])
+      ],
+      
+      // Rate limiting for security failures
+      enableRateLimiting: true,
+      rateLimitThreshold: 5,  // 5 failures within window
+      rateLimitWindowMs: 60 * 1000, // 1 minute window
+      
+      // Advanced security detection
+      anomalyDetection: true,
+      securityHeaderCheck: true,
+      
+      // Token binding configuration
+      tokenBindingMethod: 'session',
+      
+      // Use environment variable for signature secret if available
+      signatureSecret: process.env.CSRF_SIGNATURE_SECRET
+    }
   });
   
   // Apply CSRF middleware
@@ -80,6 +125,7 @@ if (config.security.csrfProtection) {
   csrfProtection.setupTokenEndpoint(app);
   
   // No separate error handler needed - it's integrated into the middleware
+  log('Deep CSRF protection enabled with multiple validation layers', 'security');
 } else {
   // CSRF protection disabled in config
   log('⚠️ CSRF protection disabled in configuration', 'server');
