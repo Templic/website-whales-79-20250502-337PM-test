@@ -241,13 +241,17 @@ Provide a comprehensive analysis with:
 2. Detailed explanation of each vulnerability
 3. Potential exploitation scenarios
 4. Recommended fixes with code examples when applicable
-5. Best practices for prevention`;
+5. Best practices for prevention
+
+IMPORTANT: Analyze all security issues and return your findings as JSON data.
+You must respond with properly formatted JSON data.
+The response must be in JSON format.`;
     
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Please analyze the following ${contentType}:\n\n${content}\n\nAdditional context: ${context}` }
+        { role: 'user', content: `Please analyze the following ${contentType} and respond with JSON data:\n\n${content}\n\nAdditional context: ${context}` }
       ],
       max_tokens: 1500,
       temperature: 0.2,

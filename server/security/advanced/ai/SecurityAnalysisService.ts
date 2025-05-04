@@ -149,6 +149,10 @@ ${detailedAnalysis ? 'Provide a detailed, comprehensive analysis.' : 'Provide a 
 ${includeReferences ? 'Include references to security standards and best practices.' : ''}
 ${includeRemediationCode ? 'Include code examples for remediation when applicable.' : ''}
 
+IMPORTANT: Analyze all security issues and return your findings as JSON data. 
+You must respond with properly formatted JSON data.
+The response must be in JSON format.
+
 Return your analysis in the following JSON format:
 {
   "summary": "Brief overview of all findings",
