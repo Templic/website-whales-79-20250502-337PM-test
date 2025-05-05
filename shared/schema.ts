@@ -407,12 +407,15 @@ export const errorPatterns = pgTable('error_patterns', {
 export const errorFixes = pgTable('error_fixes', {
   id: serial('id').primaryKey(),
   pattern_id: integer('pattern_id'),
+  error_id: integer('error_id'), // Adding error_id field
   fix_title: text('fix_title').notNull(),
   fix_description: text('fix_description').notNull(),
   fix_code: text('fix_code').notNull(),
   fix_type: text('fix_type').notNull(),
   fix_priority: integer('fix_priority').notNull().default(1),
   success_rate: numeric('success_rate'),
+  confidence_score: integer('confidence_score').notNull().default(0),
+  is_ai_generated: boolean('is_ai_generated').notNull().default(false),
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at'),
   created_by: integer('created_by')
@@ -451,6 +454,7 @@ export const scanSecurityAudits = pgTable('scan_security_audits', {
   id: serial('id').primaryKey(),
   fix_id: integer('fix_id').references(() => errorFixes.id).notNull(),
   auditor_id: varchar('auditor_id', { length: 255 }).references(() => users.id),
+  reviewer_id: varchar('reviewer_id', { length: 255 }).references(() => users.id), // Adding reviewer_id field
   audit_date: timestamp('audit_date').defaultNow().notNull(),
   security_score: integer('security_score').notNull(), // 0-100
   issue_type: text('issue_type'),
@@ -654,6 +658,10 @@ export const scanSecurityAuditsRelations = relations(scanSecurityAudits, ({ one 
   }),
   auditor: one(users, {
     fields: [scanSecurityAudits.auditor_id],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [scanSecurityAudits.reviewer_id],
     references: [users.id],
   }),
   approver: one(users, {

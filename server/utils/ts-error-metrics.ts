@@ -136,37 +136,47 @@ export async function getErrorTrends(
     .groupBy(intervalSql)
     .orderBy(intervalSql);
     
-    // Transform the data for the front-end
+    // Transform the data for the front-end with proper type handling
     return metrics.map(m => {
-      const totalErrors = m.total_errors || 0;
-      const fixedErrors = m.fixed_errors || 0;
+      // Ensure all numeric values are properly converted to numbers
+      const totalErrors = Number(m.total_errors || 0);
+      const fixedErrors = Number(m.fixed_errors || 0);
+      const newErrors = Number(m.new_errors || 0);
       
+      // Properly format the date
+      const dateStr = m.date instanceof Date 
+        ? m.date.toISOString().split('T')[0]
+        : typeof m.date === 'string' 
+          ? new Date(m.date).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0];
+      
+      // Create a properly typed ErrorTrend object
       return {
-        date: new Date(m.date).toISOString().split('T')[0],
-        totalErrors,
-        fixedErrors,
-        newErrors: m.new_errors || 0,
+        date: dateStr,
+        totalErrors: totalErrors,
+        fixedErrors: fixedErrors,
+        newErrors: newErrors,
         errorsBySeverity: {
-          CRITICAL: m.errors_critical || 0,
-          HIGH: m.errors_high || 0,
-          MEDIUM: m.errors_medium || 0,
-          LOW: m.errors_low || 0,
-          INFO: m.errors_info || 0
+          CRITICAL: Number(m.errors_critical || 0),
+          HIGH: Number(m.errors_high || 0),
+          MEDIUM: Number(m.errors_medium || 0),
+          LOW: Number(m.errors_low || 0),
+          INFO: Number(m.errors_info || 0)
         },
         errorsByCategory: {
-          TYPE_MISMATCH: m.errors_type_mismatch || 0,
-          MISSING_TYPE: m.errors_missing_type || 0,
-          INVALID_IMPORT: m.errors_invalid_import || 0,
-          SYNTAX_ERROR: m.errors_syntax || 0,
-          MODULE_ERROR: m.errors_module || 0,
-          DEPENDENCY_ERROR: m.errors_dependency || 0,
-          COMPILER_CONFIG: m.errors_compiler || 0,
-          LIBRARY_ERROR: m.errors_library || 0,
-          SECURITY_CONCERN: m.errors_security || 0,
-          OTHER: m.errors_other || 0
+          TYPE_MISMATCH: Number(m.errors_type_mismatch || 0),
+          MISSING_TYPE: Number(m.errors_missing_type || 0),
+          INVALID_IMPORT: Number(m.errors_invalid_import || 0),
+          SYNTAX_ERROR: Number(m.errors_syntax || 0),
+          MODULE_ERROR: Number(m.errors_module || 0),
+          DEPENDENCY_ERROR: Number(m.errors_dependency || 0),
+          COMPILER_CONFIG: Number(m.errors_compiler || 0),
+          LIBRARY_ERROR: Number(m.errors_library || 0),
+          SECURITY_CONCERN: Number(m.errors_security || 0),
+          OTHER: Number(m.errors_other || 0)
         },
         fixRate: totalErrors > 0 ? (fixedErrors / totalErrors) * 100 : 0,
-        avgResolutionTimeHours: m.resolution_time || 0
+        avgResolutionTimeHours: Number(m.resolution_time || 0)
       };
     });
   } catch (error) {
@@ -203,26 +213,26 @@ export async function getPatternStats(): Promise<PatternStats[]> {
       const fixes = await db.select({
         id: errorFixes.id,
         success_rate: errorFixes.success_rate,
-        confidence: errorFixes.confidence,
-        security_approved: errorFixes.security_approved
+        confidence_score: errorFixes.confidence_score,
+        is_ai_generated: errorFixes.is_ai_generated
       })
       .from(errorFixes)
-      .where(eq(errorFixes.pattern_id, pattern.id));
+      .where(eq(errorFixes.pattern_id, pattern.id)); // Using pattern_id which is the correct field
       
-      // Calculate average confidence and success rate
-      const avgConfidence = fixes.reduce((sum, fix) => sum + (fix.confidence || 0), 0) / (fixes.length || 1);
-      const avgSuccessRate = fixes.reduce((sum, fix) => sum + (fix.success_rate || 0), 0) / (fixes.length || 1);
+      // Calculate average confidence and success rate with proper number conversion
+      const avgConfidence = fixes.reduce((sum, fix) => sum + (Number(fix.confidence_score) || 0), 0) / (fixes.length || 1);
+      const avgSuccessRate = fixes.reduce((sum, fix) => sum + (Number(fix.success_rate) || 0), 0) / (fixes.length || 1);
       
       // Get the most common fix ID
       let mostCommonFixId: number | undefined;
       if (fixes.length > 0) {
         mostCommonFixId = fixes.sort((a, b) => 
-          (b.success_rate || 0) - (a.success_rate || 0)
+          (Number(b.success_rate) || 0) - (Number(a.success_rate) || 0)
         )[0].id;
       }
       
-      // Count security issues
-      const securityIssues = fixes.filter(fix => fix.security_approved === false).length;
+      // Count AI-generated fixes
+      const securityIssues = fixes.filter(fix => fix.is_ai_generated === true).length;
       
       return {
         id: pattern.id,
@@ -316,10 +326,9 @@ export async function getUserFixStats(): Promise<UserFixStats[]> {
       };
     }));
     
-    // Filter out null results and sort by total fixes
-    return userStats
-      .filter(Boolean)
-      .sort((a, b) => b.totalFixes - a.totalFixes);
+    // Filter out null results and sort by total fixes with proper null handling
+    const filteredStats = userStats.filter((stat): stat is UserFixStats => stat !== null);
+    return filteredStats.sort((a, b) => b.totalFixes - a.totalFixes);
   } catch (error) {
     console.error('Error getting user fix stats:', error);
     return [];
