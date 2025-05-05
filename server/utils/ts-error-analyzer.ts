@@ -10,6 +10,22 @@ import * as path from 'path';
 import { TypeScriptErrorDetail } from './ts-error-finder';
 
 /**
+ * TypeScript Error interface
+ * This interface is used by the OpenAI enhanced fixer
+ */
+export interface TypeScriptError {
+  errorCode: string;
+  messageText: string;
+  filePath: string;
+  lineNumber: number;
+  columnNumber: number;
+  category: string;
+  severity: string;
+  relatedInformation?: any[];
+  source?: string;
+}
+
+/**
  * Error severity levels
  */
 export enum ErrorSeverity {
@@ -81,8 +97,8 @@ function getFileContext(filePath: string, line: number, contextLines: number = 5
     const after = lines.slice(line, endLine + 1);
     
     return { before, error, after };
-  } catch (error) {
-    return { before: [], error: `[Could not read file: ${error.message}]`, after: [] };
+  } catch (error: any) {
+    return { before: [], error: `[Could not read file: ${error?.message || 'Unknown error'}]`, after: [] };
   }
 }
 
