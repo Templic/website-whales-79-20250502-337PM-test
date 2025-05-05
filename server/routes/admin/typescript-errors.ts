@@ -14,7 +14,7 @@ const requireAdmin = (req: any, res: any, next: any) => {
   console.log('[Auth] Admin access granted to TypeScript error management');
   next();
 };
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import { logSecurityEvent } from '../../security';
 
 // Temporary auditAction function until we create a proper one
@@ -61,7 +61,7 @@ router.get('/scans', async (req, res) => {
   req.__skipCSRF = true;
   
   try {
-    const scans = await db.query(`
+    const { rows: scans } = await pool.query(`
       SELECT id, status, error_count as "errorCount", fixed_count as "fixedCount", 
              ai_enabled as "aiEnabled", start_time as "startTime", end_time as "endTime"
       FROM typescript_scan_results
@@ -81,7 +81,7 @@ router.get('/scans/:id', async (req, res) => {
     const { id } = req.params;
     
     // Get scan details
-    const scan = await db.queryOne(`
+    const { rows: scanRows } = await pool.query(`
       SELECT id, status, error_count as "errorCount", fixed_count as "fixedCount", 
              ai_enabled as "aiEnabled", start_time as "startTime", end_time as "endTime", 
              summary
@@ -89,12 +89,13 @@ router.get('/scans/:id', async (req, res) => {
       WHERE id = $1
     `, [id]);
     
+    const scan = scanRows[0];
     if (!scan) {
       return res.status(404).json({ error: 'Scan not found' });
     }
     
     // Get scan errors
-    const errors = await db.query(`
+    const { rows: errors } = await pool.query(`
       SELECT id, code, message, file, line, column, severity, category, status,
              timestamp, 
              json_build_object(
@@ -175,11 +176,12 @@ router.post('/scans/:scanId/errors/:errorId/fix', errorFixValidation, validate, 
     const { scanId, errorId } = req.params;
     
     // Get error details
-    const error = await db.queryOne(`
+    const { rows: errorRows } = await pool.query(`
       SELECT * FROM typescript_errors
       WHERE id = $1 AND scan_id = $2
     `, [errorId, scanId]);
     
+    const error = errorRows[0];
     if (!error) {
       return res.status(404).json({ error: 'Error not found' });
     }
@@ -200,7 +202,7 @@ router.post('/scans/:scanId/errors/:errorId/fix', errorFixValidation, validate, 
     }
     
     // Update error status
-    await db.query(`
+    await pool.query(`
       UPDATE typescript_errors
       SET status = 'FIXED',
           fix_details = jsonb_set(fix_details, '{appliedAt}', to_jsonb($1::text))
@@ -208,7 +210,7 @@ router.post('/scans/:scanId/errors/:errorId/fix', errorFixValidation, validate, 
     `, [new Date().toISOString(), errorId]);
     
     // Update scan fixed count
-    await db.query(`
+    await pool.query(`
       UPDATE typescript_scan_results
       SET fixed_count = fixed_count + 1
       WHERE id = $1

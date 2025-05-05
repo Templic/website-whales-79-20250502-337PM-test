@@ -21,6 +21,12 @@ declare global {
        * Flag indicating if a rate limit warning should be shown
        */
       rateLimitWarning?: boolean;
+      
+      /**
+       * Flag indicating if CSRF protection should be skipped for this request
+       * Used by the CSRF protection middleware to bypass protection for specific routes
+       */
+      __skipCSRF?: boolean;
     }
   }
 }
