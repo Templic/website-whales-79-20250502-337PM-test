@@ -5,7 +5,7 @@
  * to ensure they're working properly.
  */
 
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 // Configuration
 const API_BASE = 'http://localhost:3000/api/admin/typescript-errors';

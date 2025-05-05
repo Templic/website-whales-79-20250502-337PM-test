@@ -1,0 +1,27 @@
+{
+  "id": "INC-20250505-SYS-M5708",
+  "title": "File integrity changes detected in critical files",
+  "description": "Detected 1 modified and 0 missing critical security files",
+  "severity": "medium",
+  "status": "new",
+  "category": "system",
+  "source": "security_scan",
+  "timestamp": "2025-05-05T05:27:14.575Z",
+  "lastUpdated": "2025-05-05T05:27:14.575Z",
+  "affectedComponents": [
+    "file-integrity",
+    "security-configuration"
+  ],
+  "relatedEvents": [],
+  "actions": [
+    {
+      "id": "INC-20250505-SYS-M5708-det-maan2bgvre",
+      "description": "Incident detected: File integrity changes detected in critical files",
+      "type": "detection",
+      "timestamp": "2025-05-05T05:27:14.575Z",
+      "automaticAction": true
+    }
+  ],
+  "evidenceReferences": [],
+  "integrityHash": "055d8d14bc1cb0f47dbc67ad8d795096806cbde657bba71f7b1e9824d78ed0b4"
+}

@@ -37,6 +37,7 @@ import { nanoid } from 'nanoid';
 import { validate } from './middlewares/validationMiddleware';
 import { body } from 'express-validator'; // Add body to imports
 import { validateDatabaseQuery, sanitizeDatabaseParams } from './middleware/databaseQueryValidator';
+import typescriptErrorsRoutes from './routes/admin/typescript-errors';
 import { 
   contactValidation, 
   newsletterValidation, 
@@ -395,7 +396,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.use('/api/typescript-simple', typescriptErrorSimpleRoutes);
   
   // Use the new TypeScript error management routes for the admin portal
-  app.use('/api/admin/typescript-errors', isAdmin, typescriptErrorRoutes);
+  app.use('/api/admin/typescript-errors', isAdmin, typescriptErrorsRoutes);
 
   // Use secure API routes with comprehensive security checks
   app.use('/api/secure/public', publicRouter);
