@@ -14,7 +14,7 @@ import { nanoid } from 'nanoid';
 import { ErrorCategory, ErrorSeverity, ErrorStatus } from '../../../shared/schema';
 import { findTypeScriptErrors } from '../../utils/ts-error-finder';
 import { analyzeTypeScriptErrors } from '../../utils/ts-error-analyzer';
-import { fixTypeScriptErrorsWithOpenAI, TypeScriptErrorInput } from '../../utils/openai-enhanced-fixer';
+import { fixTypeScriptErrorsWithOpenAI } from '../../utils/openai-enhanced-fixer';
 import fs from 'fs';
 
 // Create router
@@ -493,7 +493,7 @@ async function runScanInBackground(scanId, aiEnabled) {
     ]);
     
     console.log(`[TypeScript Scanner] Scan ${scanId} completed`);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('[TypeScript Scanner] Error running scan:', error);
     
     // Update scan status to failed
@@ -519,36 +519,13 @@ async function runScanInBackground(scanId, aiEnabled) {
   }
 }
 
-// Interface for TypeScript error database row
-interface TypeScriptErrorRow {
-  id: string;
-  scan_id: string;
-  code: string;
-  message: string;
-  file: string;
-  line: number;
-  column: number;
-  severity: string;
-  category: string;
-  status: string;
-  timestamp: Date;
-  fix_details?: {
-    suggestion?: string;
-    explanation?: string;
-    confidence?: number;
-    aiGenerated?: boolean;
-    generatedAt?: string;
-    appliedAt?: string;
-  };
-}
-
 // Helper function to generate AI fix in background
-async function generateAIFixInBackground(scanId: string, errorId: string, error: TypeScriptErrorRow): Promise<void> {
+async function generateAIFixInBackground(scanId, errorId, error) {
   try {
     console.log(`[TypeScript Scanner] Generating AI fix for error ${errorId}`);
     
     // Convert error to format expected by OpenAI fixer
-    const convertedError: TypeScriptErrorInput = {
+    const convertedError = {
       errorCode: error.code,
       messageText: error.message,
       filePath: error.file,
@@ -589,7 +566,7 @@ async function generateAIFixInBackground(scanId: string, errorId: string, error:
     ]);
     
     console.log(`[TypeScript Scanner] AI fix generated for error ${errorId}`);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('[TypeScript Scanner] Error generating AI fix:', error);
     
     // Update error status back to NEW
@@ -611,7 +588,7 @@ async function generateAIFixInBackground(scanId: string, errorId: string, error:
 }
 
 // Helper function to get code context
-function getCodeContext(filePath: string, lineNumber: number, contextLines: number): string {
+function getCodeContext(filePath, lineNumber, contextLines) {
   try {
     if (!fs.existsSync(filePath)) {
       return `[File not found: ${filePath}]`;
@@ -630,14 +607,14 @@ function getCodeContext(filePath: string, lineNumber: number, contextLines: numb
     }
     
     return context;
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Error getting code context for ${filePath}:${lineNumber}:`, error);
     return `[Error reading file: ${error instanceof Error ? error.message : 'Unknown error'}]`;
   }
 }
 
 // Helper function to apply fix to file
-async function applyFixToFile(filePath: string, lineNumber: number, fixedCode: string): Promise<boolean> {
+async function applyFixToFile(filePath, lineNumber, fixedCode) {
   try {
     if (!fs.existsSync(filePath)) {
       console.error(`File not found: ${filePath}`);
@@ -655,7 +632,7 @@ async function applyFixToFile(filePath: string, lineNumber: number, fixedCode: s
     
     console.log(`Fixed error in ${filePath}:${lineNumber}`);
     return true;
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Error applying fix to ${filePath}:${lineNumber}:`, error);
     return false;
   }
