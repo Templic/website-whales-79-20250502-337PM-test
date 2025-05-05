@@ -34,7 +34,7 @@ import {
   ArrowRight,
   RotateCw
 } from "lucide-react";
-import { useAuth } from "../../hooks/use-auth";
+import { useAuth } from "../../hooks/use-auth.tsx";
 import { useAccessibility } from "../../contexts/AccessibilityContext";
 import { motion } from "framer-motion";
 import SacredGeometry from "../../components/ui/sacred-geometry";
