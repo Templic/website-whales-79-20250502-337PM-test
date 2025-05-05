@@ -172,6 +172,7 @@ import { securityDashboardRoutes } from './routes/security/dashboard';
 import securityRoutes from './routes/security';
 import authRoutes from './routes/authRoutes';
 import jwtAuthRoutes from './routes/jwtAuthRoutes';
+import directLoginRoutes from './routes/directLogin';
 import contentRoutes from './routes/content';
 import contentWorkflowRoutes from './routes/content-workflow';
 import contentAIRoutes from './routes/contentAI';
@@ -365,7 +366,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   // Use authRoutes for all /api/auth routes
   app.use('/api/auth', authRoutes);
-
+  
+  // Add direct login endpoint for backward compatibility
+  app.use('/api/auth', directLoginRoutes);
+  
   // Use JWT auth routes for token-based API authentication
   app.use('/api/jwt', jwtAuthRoutes);
 
