@@ -137,10 +137,10 @@ export function MainHeader() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-[#00ebd6] ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-[#0a325c] py-2 shadow-lg"
-          : "bg-[#0a325c] py-4"
+          ? "bg-black/80 backdrop-blur-md py-2 shadow-lg"
+          : "bg-transparent py-4"
       }`}
     >
       <div className="container mx-auto px-4">
@@ -194,6 +194,7 @@ export function MainHeader() {
                 >
                   Dale Loves Whales
                 </CosmicText>
+                <div className="text-xs text-white/70">Harmonic Journeys</div>
               </div>
             </div>
           </Link>
@@ -395,7 +396,7 @@ export function MainHeader() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden bg-[#0a325c] border-t border-[#00ebd6]/30"
+            className="md:hidden bg-black/95 backdrop-blur-lg"
           >
             <motion.div
               variants={containerVariants}
@@ -404,28 +405,30 @@ export function MainHeader() {
               className="container mx-auto px-4 py-4 flex flex-col"
             >
               {/* Search Bar */}
+              <motion.form
+                variants={itemVariants}
+                onSubmit={handleSearch}
+                className="mb-4"
+              >
+                <div className="flex items-center">
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-4 py-2 text-sm bg-black/80 backdrop-blur-lg border border-white/20 rounded-l-md text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                  <Button
+                    type="submit"
+                    variant="default"
+                    className="rounded-l-none"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+              </motion.form>
+              
               <motion.div variants={itemVariants} className="mb-4">
-                <form
-                  onSubmit={handleSearch}
-                  className="mb-2"
-                >
-                  <div className="flex items-center">
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full px-4 py-2 text-sm bg-white/5 border border-white/10 rounded-l-md text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
-                    />
-                    <Button
-                      type="submit"
-                      variant="default"
-                      className="rounded-l-none"
-                    >
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </form>
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -444,18 +447,17 @@ export function MainHeader() {
               <div className="space-y-1">
                 {navigationItems.map((item, index) => (
                   <motion.div key={item.path} variants={itemVariants}>
-                    <Link href={item.path}>
-                      <a
-                        className={`flex items-center px-4 py-3 rounded-md ${
-                          location === item.path
-                            ? "bg-white/10 text-white"
-                            : "text-white/80 hover:bg-white/5 hover:text-white"
-                        }`}
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        {item.icon && <span className="mr-3">{item.icon}</span>}
-                        <span>{item.label}</span>
-                      </a>
+                    <Link 
+                      href={item.path}
+                      className={`flex items-center px-4 py-3 rounded-md ${
+                        location === item.path
+                          ? "bg-white/10 text-white"
+                          : "text-white/80 hover:bg-white/5 hover:text-white"
+                      }`}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {item.icon && <span className="mr-3">{item.icon}</span>}
+                      <span>{item.label}</span>
                     </Link>
                   </motion.div>
                 ))}
@@ -463,28 +465,26 @@ export function MainHeader() {
 
               {/* User Account */}
               <motion.div variants={itemVariants} className="mt-4 pt-4 border-t border-white/10">
-                <Link href="/account">
-                  <a
-                    className="flex items-center px-4 py-3 rounded-md text-white/80 hover:bg-white/5 hover:text-white"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <User className="h-5 w-5 mr-3" />
-                    <span>My Account</span>
-                  </a>
+                <Link 
+                  href="/account"
+                  className="flex items-center px-4 py-3 rounded-md text-white/80 hover:bg-white/5 hover:text-white"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <User className="h-5 w-5 mr-3" />
+                  <span>My Account</span>
                 </Link>
               </motion.div>
 
               {/* Admin Link */}
               {isAdminUser && (
                 <motion.div variants={itemVariants}>
-                  <Link href="/admin">
-                    <a
-                      className="flex items-center px-4 py-3 rounded-md text-white/80 hover:bg-white/5 hover:text-white"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <Settings className="h-5 w-5 mr-3" />
-                      <span>Admin Portal</span>
-                    </a>
+                  <Link 
+                    href="/admin"
+                    className="flex items-center px-4 py-3 rounded-md text-white/80 hover:bg-white/5 hover:text-white"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Settings className="h-5 w-5 mr-3" />
+                    <span>Admin Portal</span>
                   </Link>
                 </motion.div>
               )}
