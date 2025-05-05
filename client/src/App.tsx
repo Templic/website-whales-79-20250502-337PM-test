@@ -274,6 +274,12 @@ function AppRouter() {
           <Route path="/performance" component={PerformanceDemoPage} />
           <Route path="/responsive-demo" component={ResponsiveDemo} />
           <Route path="/responsive-demo2" component={ResponsiveDemo2} />
+          
+          {/* Testing Routes */}
+          <Route path="/test/typescript-errors" component={() => import("./pages/TypeScriptErrorTest").then(module => {
+            const TypeScriptErrorTest = module.default;
+            return <TypeScriptErrorTest />;
+          })} />
           <Route path="/test/binaural-beat-performance" component={
             () => import('./pages/tests/binaural-beat-performance-test').then(module => {
               const Page = module.default;
