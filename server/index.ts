@@ -322,7 +322,7 @@ async function initializeServer() {
       }
     }
     
-    // Security middleware with enhanced Taskade embedding support
+    // Security middleware with enhanced Taskade embedding support and all necessary security headers
     app.use(
       helmet({
         contentSecurityPolicy: {
@@ -415,7 +415,17 @@ async function initializeServer() {
           },
         },
         // Disable X-Frame-Options to allow embedding
-        xFrameOptions: false
+        xFrameOptions: false,
+        // Explicitly enable strict transport security
+        hsts: {
+          maxAge: 31536000, // 1 year in seconds
+          includeSubDomains: true,
+          preload: true
+        },
+        // Ensure other security headers are explicitly enabled
+        xContentTypeOptions: {
+          value: "nosniff"
+        }
       })
     );
 

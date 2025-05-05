@@ -269,7 +269,7 @@ const AdminEditor: React.FC<AdminEditorProps> = ({
           <Label htmlFor="content">Content</Label>
           <div className="border rounded-md">
             <Editor
-              apiKey={process.env.TINYMCE_API_KEY}
+              apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
               onInit={(evt: any, editor: any) => editorRef.current = editor}
               value={content.content}
               onEditorChange={handleEditorChange}

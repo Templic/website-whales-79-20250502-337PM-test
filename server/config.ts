@@ -84,7 +84,7 @@ const startupModes = {
     backgroundServicesDelay: 120000, // 2 minutes
     securityScanDelay: 900000, // 15 minutes
     enableCompression: false, // Disable compression initially for faster startup
-    csrfProtection: false, // Disable CSRF initially for faster startup
+    csrfProtection: true, // Always enable CSRF protection
   },
   minimal: {
     deferBackgroundServices: true,
@@ -175,10 +175,8 @@ const defaultConfig: ServerConfig = {
     enableScans: true,
     scanInterval: 12 * 60 * 60 * 1000, // 12 hours
     enableRateLimiting: true,
-    // Disable CSRF protection if explicitly set to false or if in Replit environment
-    csrfProtection: process.env.SECURITY_CSRF !== 'false' && 
-      (!(process.env.REPLIT_DOMAINS || process.env.REPL_ID || process.env.REPL_SLUG) || 
-       process.env.NODE_ENV === 'production'),
+    // Always enable CSRF protection unless explicitly disabled
+    csrfProtection: process.env.SECURITY_CSRF !== 'false',
     maxPayloadSize: '50mb',
     enableIntegratedSecurity: true // Enable integration between security components
   }
