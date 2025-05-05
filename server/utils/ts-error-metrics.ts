@@ -283,7 +283,7 @@ export async function getUserFixStats(): Promise<UserFixStats[]> {
       .where(
         and(
           eq(typeScriptErrors.user_id, user_id),
-          eq(errorFixes.ai_generated, true)
+          eq(errorFixes.is_ai_generated, true)
         )
       );
       
@@ -499,7 +499,7 @@ export async function getGlobalMetrics(): Promise<GlobalMetrics> {
       avg_rate: sql<number>`AVG(success_rate)`
     })
     .from(errorFixes)
-    .where(eq(errorFixes.ai_generated, true));
+    .where(eq(errorFixes.is_ai_generated, true));
     
     // Get average resolution time
     const [avgResolutionResult] = await db.select({
@@ -536,9 +536,10 @@ export async function getGlobalMetrics(): Promise<GlobalMetrics> {
     // Build top patterns with names
     const topPatterns = topPatternsResult.map(item => {
       const pattern = patterns.find(p => p.id === item.pattern_id);
+      const patternId = item.pattern_id || 0; // Handle null values with a default
       return {
-        id: item.pattern_id,
-        name: pattern?.name || `Pattern #${item.pattern_id}`,
+        id: patternId,
+        name: pattern?.name || `Pattern #${patternId}`,
         count: item.count
       };
     });
