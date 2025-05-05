@@ -1,84 +1,99 @@
-# API Validation Framework
+# API Validation & Navigation Quality Tools
 
-This repository contains a comprehensive API validation framework designed to ensure data integrity and security for your APIs. The system validates incoming requests using multiple strategies including schema validation, security validation, and AI-powered validation.
+This repository contains a comprehensive set of tools for validating APIs and ensuring website navigation quality:
 
-## Quick Start
+1. **API Validation Framework** - Test and validate API inputs against schemas and security requirements
+2. **Dead Link Checker** - Find and fix broken links, missing anchors, and dead-end buttons
 
-To test the API validation system:
+## 🚀 Getting Started
 
-1. Run the simplified validation server:
-   ```bash
-   ./run-simplified-validation.sh
-   ```
+### API Validation Framework
 
-2. Open the test page in your browser:
-   ```bash
-   ./run-api-validation-test.sh
-   ```
+The API validation framework provides robust input validation for your API endpoints, including schema validation, security validation, and more.
 
-3. Try different validation tests:
-   - Valid and invalid schema examples
-   - Safe and malicious security inputs
-   - Custom validation requests
+#### Running the API Validation Test Interface
 
-## Documentation
+```bash
+# Start the standalone API validation server on port 3000
+./run-api-validator.sh 3000
 
-- [API Validation User Guide](API-VALIDATION-USER-GUIDE.md) - Comprehensive guide for using the validation system
-- [API Validation Technical Summary](API-VALIDATION-SUMMARY.md) - Technical overview of the validation framework
+# Open in your browser
+# http://localhost:3000
+```
 
-## Key Features
+#### Features
 
-- **Schema Validation**: Enforce data types, required fields, and value constraints
-- **Security Validation**: Detect and block malicious inputs (SQL injection, XSS)
-- **Advanced Pattern Detection**: Identify suspicious patterns in user input
-- **Method-specific Validation**: Apply different rules based on HTTP method
-- **Conditional Validation**: Dynamic rule selection based on request properties
+- **Schema Validation** - Verify input conforms to expected data structures
+- **Security Validation** - Detect potential security threats (SQL injection, XSS)
+- **Validation Rules Management** - Create and manage validation rules for endpoints
+- **Bypass Modes** - Test how your API behaves with validation disabled
 
-## Files and Components
+### Dead Link Checker
 
-- `simplified-validation-server.cjs` - Standalone server for testing
-- `validation-integration-example.js` - Example of integrating with Express
-- `api-validation-test.html` - Browser-based test UI
-- `run-simplified-validation.sh` - Script to start the standalone server
-- `run-api-validation-test.sh` - Script to run the test UI
-- `disable-test-routes.sh` - Script to disable test routes for production
+The Dead Link Checker helps you find and fix navigation issues on your website.
 
-## Usage in Production
+#### Running the Dead Link Checker
 
-Before deploying to production:
+```bash
+# Start the link checker UI on port 3500
+./run-link-checker.sh 3500
 
-1. Disable test routes:
-   ```bash
-   ./disable-test-routes.sh
-   ```
+# Open in your browser
+# http://localhost:3500
+```
 
-2. Integrate validation middleware with your Express routes:
-   ```javascript
-   app.post('/api/users',
-     validationMiddleware({ rules: ['schema:user', 'security:high'] }),
-     userController.create
-   );
-   ```
+#### Features
 
-3. Add custom validation rules as needed:
-   ```javascript
-   registerValidationRule({
-     id: 'schema:myCustomRule',
-     type: 'schema',
-     schema: myZodSchema
-   });
-   ```
+- **Broken Link Detection** - Find URLs that return errors
+- **Missing Anchor Detection** - Find anchor links that point to non-existent elements
+- **Dead-End Button Detection** - Find buttons that don't have click handlers
+- **API Endpoint Validation** - Find unreachable API endpoints
+- **Progress Reporting** - Monitor scan progress in real-time
+- **Export Results** - Save results as JSON or CSV
 
-## Known Issues
+## 📊 Troubleshooting
 
-- In the Replit environment, the main application UI may not display correctly due to conflicts between the security system and Replit's preview environment.
-- The standalone validation server provides all validation capabilities without these conflicts.
+### Common Issues
 
-## Next Steps
+1. **"Unexpected end of input" errors in Replit preview**
+   - The Replit preview environment has security restrictions that can cause issues with the main application
+   - Use the standalone API validator and link checker tools instead
 
-Future enhancements planned for the API validation system:
+2. **CSRF protection errors**
+   - The API validation framework bypasses CSRF protection for testing
+   - If you see CSRF errors, make sure you're using the correct endpoints
 
-1. Enhanced AI validation with machine learning threat detection
-2. Custom validation rules UI for easy configuration
-3. Validation analytics dashboard
-4. Rule import/export functionality
+3. **Application doesn't load in Replit**
+   - The standalone tools are designed to work reliably even when the main application has issues
+
+## 🛠️ Advanced Usage
+
+### Command-Line Interface
+
+Both tools can be used directly from the command-line:
+
+```bash
+# Run a link check from the command line
+node check-links.js https://example.com
+
+# Run the API validator as a standalone server
+node standalone-api-validator.js 3000
+```
+
+### Integration with Your Application
+
+You can integrate the API validation framework into your application:
+
+1. Import validation rules from the framework
+2. Apply validation to your routes
+3. Customize validation behavior for specific endpoints
+
+See `API-VALIDATION-USER-GUIDE.md` for detailed integration instructions.
+
+## 📝 Documentation
+
+Additional documentation:
+
+- `API-VALIDATION-USER-GUIDE.md` - Detailed usage instructions
+- `API-VALIDATION-SUMMARY.md` - Overview of the API validation framework
+- `agent-deadlinks-report.json` - Sample dead link report
