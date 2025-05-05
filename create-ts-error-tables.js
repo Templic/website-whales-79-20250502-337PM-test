@@ -80,7 +80,7 @@ async function createTables() {
         message TEXT NOT NULL,
         file TEXT NOT NULL,
         line INTEGER NOT NULL,
-        column INTEGER NOT NULL,
+        "column" INTEGER NOT NULL,
         severity TEXT NOT NULL,
         category TEXT NOT NULL,
         status TEXT NOT NULL DEFAULT 'NEW',
@@ -95,7 +95,7 @@ async function createTables() {
     // Create error_fixes table
     const createFixesTable = `
       CREATE TABLE IF NOT EXISTS typescript_error_fixes (
-        id SERIAL PRIMARY KEY,
+        id TEXT PRIMARY KEY,
         error_id TEXT NOT NULL REFERENCES typescript_errors(id),
         fix_version INTEGER NOT NULL,
         fixed_code TEXT NOT NULL,
