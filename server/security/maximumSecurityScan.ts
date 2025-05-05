@@ -7,7 +7,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventSeverity, SecurityEventCategory } from './advanced/blockchain/SecurityEventTypes';
+import { SecurityEventSeverity, SecurityEventCategory } from './advanced/SecurityFabric';
 import { v4 as uuidv4 } from 'uuid';
 
 /**

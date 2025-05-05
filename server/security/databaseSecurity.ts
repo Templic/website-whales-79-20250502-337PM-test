@@ -7,7 +7,7 @@
 
 import crypto from 'crypto';
 import { SecurityFabric, SecurityEventCategory, SecurityEventSeverity } from './advanced/SecurityFabric';
-import { SecurityEventTypes } from './advanced/blockchain/SecurityEventTypes';
+import SecurityEventTypes from './advanced/blockchain/SecurityEventTypes';
 import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
 
 // Default patterns to detect SQL injection attempts

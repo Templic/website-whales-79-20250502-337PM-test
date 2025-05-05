@@ -1,0 +1,18 @@
+{
+  "chain": [
+    {
+      "index": 0,
+      "timestamp": "2025-05-05T02:15:51.629Z",
+      "logs": [
+        {
+          "type": "genesis",
+          "message": "Genesis Block"
+        }
+      ],
+      "previousHash": "0",
+      "hash": "9369597f2ca83db852e1aa9fe52ec12191198ea54068130330aa752521a781e8",
+      "nonce": 0
+    }
+  ],
+  "pendingLogs": []
+}

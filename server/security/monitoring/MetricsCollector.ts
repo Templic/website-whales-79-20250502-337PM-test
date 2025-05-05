@@ -6,8 +6,8 @@
  */
 
 import { logSecurityEvent } from '../advanced/SecurityLogger';
-import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/blockchain/SecurityEventTypes';
-import { ImmutableSecurityLogs } from '../advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/SecurityFabric';
+import { immutableSecurityLogs } from '../advanced/blockchain/ImmutableSecurityLogs';
 
 // Security metrics interface
 export interface SecurityMetrics {
@@ -186,10 +186,9 @@ async function collectSecurityMetrics(): Promise<void> {
     // This prevents metrics from growing out of control
     // In a production system, these would be collected from actual security events
     
-    // Get security score from blockchain logs (dummy for now)
+    // Get security score from blockchain logs
     try {
-      const blockchainLogger = ImmutableSecurityLogs.getInstance();
-      const blockCount = await blockchainLogger.getBlockCount();
+      const blockCount = immutableSecurityLogs.getBlocks().length;
       
       // Adjust anomaly detection score based on blockchain activity
       latestMetrics.score.anomalyDetection = 75 + Math.min(25, blockCount / 4);

@@ -6,7 +6,7 @@
 
 import { Router, Request, Response } from 'express';
 import { immutableSecurityLogs as securityBlockchain } from '../../security/advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventSeverity, SecurityEventCategory } from '../../security/advanced/blockchain/SecurityEventTypes';
+import { SecurityEventSeverity, SecurityEventCategory } from '../../security/advanced/SecurityFabric';
 import { securityScanner, SecurityScanType } from '../../security/maximumSecurityScan';
 
 export const securityDashboardRoutes = Router();

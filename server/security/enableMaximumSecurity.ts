@@ -6,7 +6,7 @@
  */
 
 import { SecurityFabric } from './advanced/SecurityFabric';
-import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
+import { SecurityEventCategory, SecurityEventSeverity } from './advanced/SecurityFabric';
 import { logSecurityEvent } from './advanced/SecurityLogger';
 import { startMetricsCollection } from './monitoring/MetricsCollector';
 import { initializeEventsCollector } from './monitoring/EventsCollector';

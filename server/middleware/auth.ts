@@ -7,7 +7,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
 
 /**
  * Ensure user is authenticated

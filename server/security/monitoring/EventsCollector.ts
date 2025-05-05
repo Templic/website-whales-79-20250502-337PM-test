@@ -6,8 +6,8 @@
  */
 
 import { logSecurityEvent } from '../advanced/SecurityLogger';
-import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/blockchain/SecurityEventTypes';
-import { ImmutableSecurityLogs } from '../advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/SecurityFabric';
+import { immutableSecurityLogs } from '../advanced/blockchain/ImmutableSecurityLogs';
 
 // Security event interface
 export interface SecurityEvent {
@@ -140,8 +140,8 @@ async function getBlockchainEvents(
   limit: number = 100
 ): Promise<SecurityEvent[]> {
   try {
-    // Use the ImmutableSecurityLogs directly as it's an instance already
-    const blockchainLogger = ImmutableSecurityLogs;
+    // Use immutableSecurityLogs directly as it's already an instance
+    const blockchainLogger = immutableSecurityLogs;
     
     // Simulate retrieving events from blockchain
     // In a real implementation, this would call the blockchain logger

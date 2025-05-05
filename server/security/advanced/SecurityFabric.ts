@@ -36,7 +36,14 @@ export enum SecurityEventCategory {
   SECURITY_ERROR = 'security_error',
   REQUEST = 'request',
   AUDIT = 'audit',
-  PRIVACY = 'privacy'
+  PRIVACY = 'privacy',
+  // Additional categories for security scans
+  SECURITY_SCAN = 'security_scan',
+  GENERAL = 'general',
+  DATABASE_SECURITY = 'database_security',
+  WEB_SECURITY = 'web_security',
+  SYSTEM = 'system',
+  CRYPTOGRAPHY = 'cryptography'
 }
 
 // Define severity levels for security events
@@ -239,6 +246,94 @@ export class SecurityFabric {
   private logSecurityEvent(event: SecurityEvent): void {
     // In a real implementation, this would interact with a logging system
     console.log(`[INFO] [Security:${event.category}] ${event.message}`, event.metadata || {});
+  }
+  
+  // Emit a security event
+  public emitSecurityEvent(event: { 
+    type: string;
+    source: string;
+    severity: string;
+    message: string;
+    userId?: string;
+    attributes?: Record<string, any>;
+  }): void {
+    // Map the incoming event to the standard SecurityEvent format
+    const securityEvent: SecurityEvent = {
+      category: this.mapEventTypeToCategory(event.type),
+      severity: this.mapSeverityToSecuritySeverity(event.severity),
+      message: event.message,
+      timestamp: Date.now(),
+      metadata: {
+        type: event.type,
+        source: event.source,
+        userId: event.userId,
+        ...event.attributes
+      }
+    };
+    
+    // Log the event
+    this.logSecurityEvent(securityEvent);
+  }
+  
+  // Map event type to SecurityEventCategory
+  private mapEventTypeToCategory(type: string): SecurityEventCategory {
+    // Simple mapping based on the event type
+    if (type.includes('auth')) {
+      return SecurityEventCategory.AUTHENTICATION;
+    } else if (type.includes('data')) {
+      return SecurityEventCategory.DATA_ENCRYPTION;
+    } else if (type.includes('api')) {
+      return SecurityEventCategory.API_SECURITY;
+    } else if (type.includes('threat') || type.includes('vulnerability')) {
+      return SecurityEventCategory.THREAT_DETECTED;
+    } else if (type.includes('rate_limit')) {
+      return SecurityEventCategory.RATE_LIMITING;
+    } else if (type.includes('csrf')) {
+      return SecurityEventCategory.CSRF;
+    } else if (type.includes('validation')) {
+      return SecurityEventCategory.VALIDATION;
+    } else if (type.includes('encryption')) {
+      return SecurityEventCategory.ENCRYPTION;
+    } else if (type.includes('user')) {
+      return SecurityEventCategory.USER_ACTION;
+    } else if (type.includes('admin')) {
+      return SecurityEventCategory.ADMIN_ACTION;
+    } else if (type.includes('system')) {
+      return SecurityEventCategory.SYSTEM_EVENT;
+    } else if (type.includes('request')) {
+      return SecurityEventCategory.REQUEST;
+    } else if (type.includes('audit')) {
+      return SecurityEventCategory.AUDIT;
+    } else if (type.includes('privacy')) {
+      return SecurityEventCategory.PRIVACY;
+    }
+    
+    // Default category
+    return SecurityEventCategory.SYSTEM_EVENT;
+  }
+  
+  // Map severity string to SecurityEventSeverity
+  private mapSeverityToSecuritySeverity(severity: string): SecurityEventSeverity {
+    switch (severity.toLowerCase()) {
+      case 'debug':
+        return SecurityEventSeverity.DEBUG;
+      case 'info':
+        return SecurityEventSeverity.INFO;
+      case 'low':
+        return SecurityEventSeverity.LOW;
+      case 'medium':
+        return SecurityEventSeverity.MEDIUM;
+      case 'high':
+        return SecurityEventSeverity.HIGH;
+      case 'critical':
+        return SecurityEventSeverity.CRITICAL;
+      case 'warning':
+        return SecurityEventSeverity.WARNING;
+      case 'error':
+        return SecurityEventSeverity.ERROR;
+      default:
+        return SecurityEventSeverity.INFO;
+    }
   }
 }
 

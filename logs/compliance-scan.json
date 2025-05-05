@@ -1,0 +1,37 @@
+{
+  "timestamp": "2025-05-05T02:03:28.809Z",
+  "licenseFindings": [
+    {
+      "file": "LICENSE",
+      "line": 0,
+      "description": "No LICENSE file found",
+      "severity": "high",
+      "recommendation": "Add a LICENSE file with appropriate open source license"
+    }
+  ],
+  "privacyFindings": [
+    {
+      "file": "PRIVACY.md",
+      "line": 0,
+      "description": "No privacy policy file found",
+      "severity": "high",
+      "recommendation": "Add a privacy policy file"
+    }
+  ],
+  "securityFindings": [
+    {
+      "file": "server/index.ts",
+      "line": 0,
+      "description": "Missing security headers: X-Content-Type-Options, Strict-Transport-Security",
+      "severity": "medium",
+      "recommendation": "Implement the missing security headers or use helmet middleware"
+    }
+  ],
+  "summary": {
+    "totalFiles": 0,
+    "licenseIssues": 1,
+    "privacyIssues": 1,
+    "securityIssues": 1,
+    "compliance": false
+  }
+}

@@ -5,9 +5,19 @@
  * that integrates with the blockchain-based immutable logging infrastructure.
  */
 
-// Placeholder for actual blockchain logging
-// In a real implementation, this would import from the blockchain module
+import { immutableSecurityLogs } from './ImmutableSecurityLogs';
+
+// Integrated with blockchain-based immutable logging system
 function recordSecurityEvent(event: Record<string, unknown>): void {
+  immutableSecurityLogs.recordEvent({
+    severity: (event.level as string) || 'INFO',
+    category: (event.type as string) || 'SYSTEM',
+    title: (event.message as string) || (event.type as string) || 'Security Event',
+    description: `Security event from ${event.component || 'system'}`,
+    timestamp: new Date(event.timestamp as number)
+  });
+  
+  // Also log to console for debugging
   console.log(`[BLOCKCHAIN-SECURITY] ${event.level || 'INFO'} - ${event.message || event.type}`, 
                event.details || {});
 }
