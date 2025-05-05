@@ -90,6 +90,15 @@
     "lastUpdated": "2025-05-05T05:11:16.473Z"
   },
   {
+    "id": "INC-20250505-SYS-M3886",
+    "title": "File integrity changes detected in critical files",
+    "severity": "medium",
+    "status": "new",
+    "category": "system",
+    "timestamp": "2025-05-05T05:28:35.232Z",
+    "lastUpdated": "2025-05-05T05:28:35.232Z"
+  },
+  {
     "id": "INC-20250505-SYS-M4977",
     "title": "File integrity changes detected in critical files",
     "severity": "medium",
@@ -108,12 +117,12 @@
     "lastUpdated": "2025-05-05T05:27:14.575Z"
   },
   {
-    "id": "INC-20250505-SYS-M3886",
+    "id": "INC-20250505-SYS-M6757",
     "title": "File integrity changes detected in critical files",
     "severity": "medium",
     "status": "new",
     "category": "system",
-    "timestamp": "2025-05-05T05:28:35.232Z",
-    "lastUpdated": "2025-05-05T05:28:35.232Z"
+    "timestamp": "2025-05-05T14:12:22.880Z",
+    "lastUpdated": "2025-05-05T14:12:22.880Z"
   }
 ]

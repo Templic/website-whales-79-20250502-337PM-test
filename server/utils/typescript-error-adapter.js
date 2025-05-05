@@ -6,9 +6,10 @@
  * the schema defined in shared/schema-typescript-errors.ts and the existing database tables.
  */
 
-import { Pool } from 'pg';
-import { v4 as uuidv4 } from 'uuid';
-import dotenv from 'dotenv';
+const pg = require('pg');
+const { Pool } = pg;
+const { v4: uuidv4 } = require('uuid');
+const dotenv = require('dotenv');
 
 // Load environment variables
 dotenv.config();
@@ -464,4 +465,5 @@ class TypeScriptErrorAdapter {
   }
 }
 
-export default new TypeScriptErrorAdapter();
+const typescriptErrorAdapter = new TypeScriptErrorAdapter();
+module.exports = typescriptErrorAdapter;
