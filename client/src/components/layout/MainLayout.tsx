@@ -1,4 +1,4 @@
-import { Header } from "./Header";
+import { MainNavigation } from "./MainNavigation";
 import { MainFooter } from "./MainFooter";
 import StarBackground from "../cosmic/StarBackground";
 import { useState, useEffect } from "react";
@@ -35,8 +35,8 @@ export function MainLayout({ children }: MainLayoutProps) {
           
           {/* Theme Toggle (fixed position) - Note: ThemeToggle is now handled in App.tsx */}
           
-          {/* Use Header component with Dale Loves Whales branding */}
-          <Header />
+          {/* Use MainNavigation component with Dale Loves Whales branding */}
+          <MainNavigation />
           
           {/* Main Content */}
           <main className={`flex-grow w-full py-16 sm:py-20 lg:py-24 transition-all duration-300 ease-in-out ${isMobile ? 'px-4 sm:px-6' : 'px-8'} z-10 relative`}>
