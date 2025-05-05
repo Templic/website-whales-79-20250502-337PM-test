@@ -15,7 +15,7 @@ const DEFAULT_SCHEDULE = '0 3 * * *';
 /**
  * Initialize the metrics scheduler
  */
-export function initializeMetricsScheduler(schedule: string = DEFAULT_SCHEDULE): void {
+export function initializeMetricsScheduler(schedule: string = DEFAULT_SCHEDULE) {
   try {
     // Schedule the daily metrics collection
     const job = scheduleJob('typescript-error-metrics', schedule, async function() {

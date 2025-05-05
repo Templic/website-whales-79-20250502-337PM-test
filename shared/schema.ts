@@ -645,6 +645,30 @@ export const errorAnalysisRelations = relations(errorAnalysis, ({ one }) => ({
   }),
 }));
 
+// Security audits relation
+export const scanSecurityAuditsRelations = relations(scanSecurityAudits, ({ one }) => ({
+  fix: one(errorFixes, {
+    fields: [scanSecurityAudits.fix_id],
+    references: [errorFixes.id],
+  }),
+  auditor: one(users, {
+    fields: [scanSecurityAudits.auditor_id],
+    references: [users.id],
+  }),
+  approver: one(users, {
+    fields: [scanSecurityAudits.approved_by],
+    references: [users.id],
+  }),
+}));
+
+// TypeScript error metrics relation
+export const typeScriptErrorMetricsRelations = relations(typeScriptErrorMetrics, ({ one }) => ({
+  scan: one(scanResults, {
+    fields: [typeScriptErrorMetrics.scan_id],
+    references: [scanResults.id],
+  }),
+}));
+
 // Music-related relations will be defined after all tables are declared
 
 // Error Fix History table
