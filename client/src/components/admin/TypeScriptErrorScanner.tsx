@@ -1,898 +1,787 @@
-/**
- * TypeScriptErrorScanner Component
- * 
- * A component for scanning the codebase for TypeScript errors and
- * displaying the results in an organized, filterable interface with
- * AI-powered fix suggestions.
- */
-import { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Code,
-  Eye,
-  FileWarning,
-  Loader2,
-  RefreshCw,
-  Shield,
-  XCircle,
-  Zap,
-  ZapOff
-} from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
-import { queryClient } from "@/lib/queryClient";
-import { useQuery, useMutation } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, AlertCircle, CheckCircle, FileWarning, Info, Shield, ExternalLink } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
-// Define TypeScript error interface
-interface TypeScriptError {
+interface ErrorItem {
   id: string;
   code: string;
   message: string;
   file: string;
   line: number;
   column: number;
-  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
   category: string;
-  timestamp: string;
-  status: 'NEW' | 'FIXING' | 'FIXED' | 'IGNORED';
+  status: 'NEW' | 'ANALYZING' | 'FIXING' | 'FIXED' | 'IGNORED' | 'NEEDS_REVIEW' | 'SECURITY_REVIEW';
   fixDetails?: {
     suggestion: string;
-    explanation?: string;
-    confidence: 'high' | 'medium' | 'low';
+    explanation: string;
+    confidence: number;
     aiGenerated: boolean;
     appliedAt?: string;
     generatedAt?: string;
   };
 }
 
-// Define scan result interface
-interface ScanResult {
+interface ScanItem {
   id: string;
-  startTime: string;
-  endTime?: string;
-  status: 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
   errorCount: number;
   fixedCount: number;
-  summary?: string;
   aiEnabled: boolean;
-  errors: TypeScriptError[];
+  startTime: string;
+  endTime?: string;
+  summary?: string;
+  errors?: ErrorItem[];
 }
 
-// Get severity color based on error severity
-function getSeverityColor(severity: TypeScriptError['severity']): string {
-  switch (severity) {
-    case 'CRITICAL':
-      return 'bg-red-500 hover:bg-red-600';
-    case 'HIGH':
-      return 'bg-orange-500 hover:bg-orange-600';
-    case 'MEDIUM':
-      return 'bg-yellow-500 hover:bg-yellow-600';
-    case 'LOW':
-      return 'bg-blue-500 hover:bg-blue-600';
-    default:
-      return 'bg-gray-500 hover:bg-gray-600';
-  }
-}
-
-// Get status color based on error status
-function getStatusColor(status: TypeScriptError['status']): string {
-  switch (status) {
-    case 'FIXED':
-      return 'text-green-500 border-green-500';
-    case 'IGNORED':
-      return 'text-gray-500 border-gray-500';
-    case 'FIXING':
-      return 'text-orange-500 border-orange-500';
-    case 'NEW':
-      return 'text-red-500 border-red-500';
-    default:
-      return 'text-gray-500 border-gray-500';
-  }
-}
-
-// Get status icon based on error status
-function getStatusIcon(status: TypeScriptError['status']) {
-  switch (status) {
-    case 'FIXED':
-      return <CheckCircle className="h-4 w-4 text-green-500" />;
-    case 'IGNORED':
-      return <XCircle className="h-4 w-4 text-gray-500" />;
-    case 'FIXING':
-      return <Clock className="h-4 w-4 text-orange-500" />;
-    case 'NEW':
-      return <AlertTriangle className="h-4 w-4 text-red-500" />;
-    default:
-      return <FileWarning className="h-4 w-4" />;
-  }
-}
-
-// Format date to a readable string
-function formatDate(dateString: string) {
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  } catch (e) {
-    return dateString;
-  }
-}
-
-// Format duration between two dates
-function formatDuration(startTime: string, endTime?: string) {
-  if (!endTime) return 'In Progress';
-  
-  try {
-    const start = new Date(startTime).getTime();
-    const end = new Date(endTime).getTime();
-    const durationMs = end - start;
-    
-    if (durationMs < 1000) return `${durationMs}ms`;
-    if (durationMs < 60000) return `${Math.floor(durationMs / 1000)}s`;
-    
-    const minutes = Math.floor(durationMs / 60000);
-    const seconds = Math.floor((durationMs % 60000) / 1000);
-    return `${minutes}m ${seconds}s`;
-  } catch (e) {
-    return 'Unknown';
-  }
-}
-
-// Main component
-export default function TypeScriptErrorScanner() {
+const TypeScriptErrorScanner: React.FC = () => {
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [selectedScan, setSelectedScan] = useState<string | null>(null);
+  const [selectedError, setSelectedError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [selectedScanId, setSelectedScanId] = useState<string | null>(null);
-  const [selectedTab, setSelectedTab] = useState<string>('overview');
-  const [errorFilter, setErrorFilter] = useState<string>('all');
-  const [selectedError, setSelectedError] = useState<TypeScriptError | null>(null);
-  
-  // Fetch scan history
+  const queryClient = useQueryClient();
+
+  // Fetch scans
   const { 
-    data: scanHistory = [], 
-    isLoading: historyLoading,
-    refetch: refetchHistory
+    data: scans, 
+    isLoading: isLoadingScans,
+    isError: isErrorScans,
+    error: errorScans
   } = useQuery({
-    queryKey: ['typescriptScans'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/typescript-errors/scans');
-      if (!response.ok) {
-        throw new Error('Failed to fetch scan history');
-      }
-      return response.json() as Promise<ScanResult[]>;
-    }
+    queryKey: ['/api/admin/typescript/scans'],
+    retry: 1,
   });
 
   // Fetch selected scan details
-  const { 
-    data: scanDetails, 
-    isLoading: scanDetailsLoading,
-    refetch: refetchScanDetails
+  const {
+    data: scanDetails,
+    isLoading: isLoadingScanDetails,
+    isError: isErrorScanDetails,
   } = useQuery({
-    queryKey: ['typescriptScan', selectedScanId],
-    queryFn: async () => {
-      if (!selectedScanId) return null;
-      
-      const response = await fetch(`/api/admin/typescript-errors/scans/${selectedScanId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch scan details');
-      }
-      return response.json() as Promise<ScanResult>;
-    },
-    enabled: !!selectedScanId
+    queryKey: ['/api/admin/typescript/scans', selectedScan],
+    enabled: !!selectedScan,
+    retry: 1,
   });
 
-  // Start new scan mutation
+  // Start a new scan
   const startScanMutation = useMutation({
-    mutationFn: async (withAI: boolean) => {
-      const response = await fetch('/api/admin/typescript-errors/scans', {
+    mutationFn: async () => {
+      return apiRequest('/api/admin/typescript/scans', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ aiEnabled: withAI })
+        body: JSON.stringify({ aiEnabled }),
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to start scan');
-      }
-      
-      return response.json();
     },
-    onSuccess: (data) => {
-      setSelectedScanId(data.id);
-      setSelectedTab('details');
+    onSuccess: () => {
       toast({
-        title: 'Scan Started',
-        description: `TypeScript scan ${data.aiEnabled ? 'with AI' : ''} initiated successfully`,
+        title: 'Scan started',
+        description: 'The TypeScript error scan is now in progress.',
       });
-      
-      // Refresh data
-      setTimeout(() => {
-        refetchHistory();
-        refetchScanDetails();
-      }, 2000);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/typescript/scans'] });
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       toast({
-        title: 'Scan Failed',
-        description: error.message,
-        variant: 'destructive'
+        title: 'Failed to start scan',
+        description: error.message || 'An error occurred while trying to start the scan.',
+        variant: 'destructive',
       });
-    }
+    },
   });
 
-  // Apply fix mutation
+  // Apply fix to an error
   const applyFixMutation = useMutation({
     mutationFn: async ({ scanId, errorId }: { scanId: string; errorId: string }) => {
-      const response = await fetch(`/api/admin/typescript-errors/scans/${scanId}/errors/${errorId}/fix`, {
-        method: 'POST'
+      return apiRequest(`/api/admin/typescript/scans/${scanId}/errors/${errorId}/fix`, {
+        method: 'POST',
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to apply fix');
-      }
-      
-      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast({
-        title: 'Fix Applied',
-        description: 'Fix has been applied successfully',
+        title: 'Fix applied',
+        description: 'The error has been fixed in the code.',
       });
-      
-      // Refresh data
-      setTimeout(() => {
-        refetchScanDetails();
-      }, 1000);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/typescript/scans', variables.scanId] });
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       toast({
-        title: 'Fix Failed',
-        description: error.message,
-        variant: 'destructive'
+        title: 'Failed to apply fix',
+        description: error.message || 'An error occurred while trying to apply the fix.',
+        variant: 'destructive',
       });
-    }
+    },
   });
 
-  // Ignore error mutation
+  // Ignore an error
   const ignoreErrorMutation = useMutation({
     mutationFn: async ({ scanId, errorId }: { scanId: string; errorId: string }) => {
-      const response = await fetch(`/api/admin/typescript-errors/scans/${scanId}/errors/${errorId}/ignore`, {
-        method: 'POST'
+      return apiRequest(`/api/admin/typescript/scans/${scanId}/errors/${errorId}/ignore`, {
+        method: 'POST',
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to ignore error');
-      }
-      
-      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast({
-        title: 'Error Ignored',
-        description: 'Error has been marked as ignored',
+        title: 'Error ignored',
+        description: 'The error has been marked as ignored.',
       });
-      
-      // Refresh data
-      setTimeout(() => {
-        refetchScanDetails();
-      }, 1000);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/typescript/scans', variables.scanId] });
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       toast({
-        title: 'Failed to Ignore',
-        description: error.message,
-        variant: 'destructive'
+        title: 'Failed to ignore error',
+        description: error.message || 'An error occurred while trying to ignore the error.',
+        variant: 'destructive',
       });
-    }
+    },
   });
 
-  // Generate AI fix mutation
-  const generateAIFixMutation = useMutation({
+  // Generate AI fix for an error
+  const generateAiFixMutation = useMutation({
     mutationFn: async ({ scanId, errorId }: { scanId: string; errorId: string }) => {
-      const response = await fetch(`/api/admin/typescript-errors/scans/${scanId}/errors/${errorId}/ai-fix`, {
-        method: 'POST'
+      return apiRequest(`/api/admin/typescript/scans/${scanId}/errors/${errorId}/ai-fix`, {
+        method: 'POST',
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to generate AI fix');
-      }
-      
-      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast({
-        title: 'AI Fix Generation Started',
-        description: 'The AI is analyzing the error and generating a fix...',
+        title: 'AI fix generation started',
+        description: 'The AI is now generating a fix for this error.',
       });
-      
-      // Refresh data
-      setTimeout(() => {
-        refetchScanDetails();
-      }, 3000);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/typescript/scans', variables.scanId] });
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       toast({
-        title: 'AI Fix Failed',
-        description: error.message,
-        variant: 'destructive'
+        title: 'Failed to generate AI fix',
+        description: error.message || 'An error occurred while trying to generate the AI fix.',
+        variant: 'destructive',
       });
-    }
+    },
   });
 
-  // Select the latest scan automatically
-  useEffect(() => {
-    if (scanHistory.length > 0 && !selectedScanId) {
-      setSelectedScanId(scanHistory[0].id);
+  // Get the selected scan and error
+  const selectedScanData = scanDetails as ScanItem;
+  const selectedErrorData = selectedScanData?.errors?.find(error => error.id === selectedError);
+
+  // Helper function to get severity color
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'CRITICAL':
+        return 'bg-red-500 hover:bg-red-600';
+      case 'HIGH':
+        return 'bg-orange-500 hover:bg-orange-600';
+      case 'MEDIUM':
+        return 'bg-yellow-500 hover:bg-yellow-600';
+      case 'LOW':
+        return 'bg-blue-500 hover:bg-blue-600';
+      case 'INFO':
+        return 'bg-gray-500 hover:bg-gray-600';
+      default:
+        return 'bg-gray-500 hover:bg-gray-600';
     }
-  }, [scanHistory, selectedScanId]);
+  };
 
-  // Filter errors based on selection
-  const filteredErrors = scanDetails?.errors?.filter(error => {
-    if (errorFilter === 'all') return true;
-    if (errorFilter === 'fixed') return error.status === 'FIXED';
-    if (errorFilter === 'new') return error.status === 'NEW';
-    if (errorFilter === 'fixing') return error.status === 'FIXING';
-    if (errorFilter === 'ignored') return error.status === 'IGNORED';
-    if (errorFilter === 'critical') return error.severity === 'CRITICAL';
-    if (errorFilter === 'high') return error.severity === 'HIGH';
-    if (errorFilter === 'medium') return error.severity === 'MEDIUM';
-    if (errorFilter === 'low') return error.severity === 'LOW';
-    return true;
-  }) || [];
+  // Helper function to get status color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'FIXED':
+        return 'bg-green-500 hover:bg-green-600';
+      case 'FIXING':
+        return 'bg-blue-500 hover:bg-blue-600';
+      case 'ANALYZING':
+        return 'bg-yellow-500 hover:bg-yellow-600';
+      case 'IGNORED':
+        return 'bg-gray-500 hover:bg-gray-600';
+      case 'NEEDS_REVIEW':
+        return 'bg-purple-500 hover:bg-purple-600';
+      case 'SECURITY_REVIEW':
+        return 'bg-red-500 hover:bg-red-600';
+      case 'NEW':
+      default:
+        return 'bg-gray-500 hover:bg-gray-600';
+    }
+  };
 
-  // Check if a scan is in progress
-  const isScanInProgress = scanHistory.some(scan => scan.status === 'IN_PROGRESS');
-
-  // Calculate stats for the current scan
-  const currentScanStats = scanDetails ? {
-    total: scanDetails.errorCount || 0,
-    fixed: scanDetails.fixedCount || 0,
-    percent: scanDetails.errorCount > 0 
-      ? Math.round((scanDetails.fixedCount / scanDetails.errorCount) * 100) 
-      : 0
-  } : { total: 0, fixed: 0, percent: 0 };
-
-  // Handle error selection for details view
-  const showErrorDetails = (error: TypeScriptError) => {
-    setSelectedError(error);
+  // Helper function to get error icon
+  const getErrorIcon = (severity: string) => {
+    switch (severity) {
+      case 'CRITICAL':
+        return <AlertCircle className="h-5 w-5 text-red-500" />;
+      case 'HIGH':
+        return <FileWarning className="h-5 w-5 text-orange-500" />;
+      case 'MEDIUM':
+        return <FileWarning className="h-5 w-5 text-yellow-500" />;
+      case 'LOW':
+        return <Info className="h-5 w-5 text-blue-500" />;
+      case 'INFO':
+        return <Info className="h-5 w-5 text-gray-500" />;
+      default:
+        return <Info className="h-5 w-5 text-gray-500" />;
+    }
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>TypeScript Error Management</span>
-          <div className="flex space-x-2">
-            <Button 
-              variant="outline"
-              onClick={() => {
-                refetchHistory();
-                if (selectedScanId) refetchScanDetails();
-              }}
-              disabled={historyLoading || scanDetailsLoading}
+    <div className="container mx-auto py-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">TypeScript Error Scanner</h1>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="aiEnabled" 
+              checked={aiEnabled} 
+              onCheckedChange={(checked) => setAiEnabled(checked as boolean)} 
+            />
+            <label 
+              htmlFor="aiEnabled" 
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-            <Button 
-              onClick={() => startScanMutation.mutate(false)} 
-              disabled={isScanInProgress || startScanMutation.isPending}
-            >
-              {startScanMutation.isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Code className="h-4 w-4 mr-2" />
-              )}
-              Run Scan
-            </Button>
-            <Button 
-              onClick={() => startScanMutation.mutate(true)} 
-              disabled={isScanInProgress || startScanMutation.isPending}
-            >
-              {startScanMutation.isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Zap className="h-4 w-4 mr-2" />
-              )}
-              Run Scan with AI
-            </Button>
+              Enable AI analysis
+            </label>
           </div>
-        </CardTitle>
-        <CardDescription>
-          Scan the codebase for TypeScript errors and manage fixes with AI assistance
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="details" disabled={!selectedScanId}>
-              Scan Details
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Total Scans</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {historyLoading ? (
-                    <Skeleton className="h-8 w-12" />
-                  ) : (
-                    <div className="text-3xl font-bold">{scanHistory.length}</div>
-                  )}
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Active Issues</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {historyLoading ? (
-                    <Skeleton className="h-8 w-12" />
-                  ) : (
-                    <div className="text-3xl font-bold">
-                      {scanHistory.length > 0 ? scanHistory[0].errorCount - scanHistory[0].fixedCount : 0}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Fixed Issues</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {historyLoading ? (
-                    <Skeleton className="h-8 w-12" />
-                  ) : (
-                    <div className="text-3xl font-bold">
-                      {scanHistory.length > 0 ? scanHistory[0].fixedCount : 0}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-            
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Errors</TableHead>
-                    <TableHead>Fixed</TableHead>
-                    <TableHead>Progress</TableHead>
-                    <TableHead>AI</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {historyLoading ? (
-                    Array.from({ length: 3 }).map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-[60px]" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-[30px]" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-[30px]" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-[30px]" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-[50px]" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
-                      </TableRow>
-                    ))
-                  ) : scanHistory.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-4">
-                        No scans found. Run a new scan to get started.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    scanHistory.map((scan) => (
-                      <TableRow key={scan.id} className={scan.id === selectedScanId ? "bg-muted/50" : ""}>
-                        <TableCell>{formatDate(scan.startTime)}</TableCell>
-                        <TableCell>
-                          <Badge variant={scan.status === 'COMPLETED' ? 'default' : scan.status === 'IN_PROGRESS' ? 'outline' : 'destructive'}>
-                            {scan.status === 'IN_PROGRESS' && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                            {scan.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{scan.errorCount}</TableCell>
-                        <TableCell>{scan.fixedCount}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Progress value={scan.errorCount > 0 ? (scan.fixedCount / scan.errorCount) * 100 : 0} className="h-2" />
-                            <span className="text-xs">{scan.errorCount > 0 ? Math.round((scan.fixedCount / scan.errorCount) * 100) : 0}%</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {scan.aiEnabled ? <Zap className="h-4 w-4 text-yellow-500" /> : <ZapOff className="h-4 w-4 text-gray-400" />}
-                        </TableCell>
-                        <TableCell>{formatDuration(scan.startTime, scan.endTime)}</TableCell>
-                        <TableCell>
-                          <Button size="sm" variant="outline" onClick={() => {
-                            setSelectedScanId(scan.id);
-                            setSelectedTab('details');
-                          }}>
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="details" className="space-y-4">
-            {scanDetailsLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-8 w-full" />
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                </div>
-                <Skeleton className="h-64 w-full" />
-              </div>
-            ) : !scanDetails ? (
-              <Alert>
-                <AlertTitle>No scan selected</AlertTitle>
-                <AlertDescription>
-                  Please select a scan from the overview tab or run a new scan.
-                </AlertDescription>
-              </Alert>
-            ) : (
+          <Button 
+            onClick={() => startScanMutation.mutate()} 
+            disabled={startScanMutation.isPending}
+          >
+            {startScanMutation.isPending ? (
               <>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div>
-                    <h3 className="text-lg font-medium">
-                      Scan from {formatDate(scanDetails.startTime)}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {scanDetails.aiEnabled ? 'AI-powered scan' : 'Standard scan'} • 
-                      {scanDetails.status === 'IN_PROGRESS' ? ' In progress...' : ` Completed in ${formatDuration(scanDetails.startTime, scanDetails.endTime)}`}
-                    </p>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => refetchScanDetails()}
-                      disabled={scanDetailsLoading}
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Starting Scan...
+              </>
+            ) : (
+              'Start New Scan'
+            )}
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left column - Scans list */}
+        <div className="lg:col-span-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Scan History</CardTitle>
+              <CardDescription>Previous TypeScript error scans</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingScans ? (
+                <div className="flex justify-center items-center p-6">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : isErrorScans ? (
+                <div className="bg-red-50 p-4 rounded-md text-red-800">
+                  <p className="font-medium">Failed to load scans</p>
+                  <p className="text-sm">{errorScans?.message || 'An error occurred'}</p>
+                </div>
+              ) : !scans || scans.length === 0 ? (
+                <div className="text-center p-6 text-gray-500">
+                  <p>No scans have been run yet.</p>
+                  <p className="text-sm">Start a new scan to find TypeScript errors.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {scans.map((scan: ScanItem) => (
+                    <div 
+                      key={scan.id}
+                      className={`border rounded-md p-3 cursor-pointer transition hover:bg-gray-50 ${
+                        selectedScan === scan.id ? 'border-primary bg-primary/5' : 'border-gray-200'
+                      }`}
+                      onClick={() => setSelectedScan(scan.id)}
                     >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Refresh
-                    </Button>
-                    {scanDetails.status === 'IN_PROGRESS' && (
-                      <Button variant="outline" size="sm" disabled>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Scanning...
-                      </Button>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium">{new Date(scan.startTime).toLocaleString()}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant={scan.status === 'COMPLETED' ? 'success' : scan.status === 'FAILED' ? 'destructive' : 'default'}>
+                              {scan.status}
+                            </Badge>
+                            {scan.aiEnabled && (
+                              <Badge variant="outline" className="bg-blue-50">AI Enabled</Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium">Errors: {scan.errorCount}</p>
+                          <p className="text-sm text-green-600">Fixed: {scan.fixedCount}</p>
+                        </div>
+                      </div>
+                      {scan.status === 'IN_PROGRESS' && (
+                        <div className="mt-3">
+                          <Progress value={scan.fixedCount / (scan.errorCount || 1) * 100} className="h-2" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right column - Scan details and error details */}
+        <div className="lg:col-span-8">
+          {selectedScan ? (
+            isLoadingScanDetails ? (
+              <div className="flex justify-center items-center p-12 bg-white rounded-lg shadow">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading scan details...</span>
+              </div>
+            ) : isErrorScanDetails ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Error</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-red-50 p-4 rounded-md text-red-800">
+                    <p className="font-medium">Failed to load scan details</p>
+                    <p className="text-sm">An error occurred while trying to load the scan details.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between">
+                      <div>
+                        <CardTitle>Scan Details</CardTitle>
+                        <CardDescription>
+                          Started on {new Date(selectedScanData.startTime).toLocaleString()}
+                        </CardDescription>
+                      </div>
+                      <Badge 
+                        variant={
+                          selectedScanData.status === 'COMPLETED' 
+                            ? 'success' 
+                            : selectedScanData.status === 'FAILED' 
+                            ? 'destructive' 
+                            : 'default'
+                        }
+                        className="ml-2"
+                      >
+                        {selectedScanData.status}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Total Errors</p>
+                        <p className="text-2xl font-bold">{selectedScanData.errorCount}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Fixed Errors</p>
+                        <p className="text-2xl font-bold text-green-600">{selectedScanData.fixedCount}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-500 mb-1">Progress</p>
+                      <div className="flex items-center gap-2">
+                        <Progress 
+                          value={selectedScanData.errorCount ? (selectedScanData.fixedCount / selectedScanData.errorCount) * 100 : 0} 
+                          className="h-2 flex-1" 
+                        />
+                        <span className="text-sm font-medium">
+                          {selectedScanData.errorCount 
+                            ? Math.round((selectedScanData.fixedCount / selectedScanData.errorCount) * 100) 
+                            : 0}%
+                        </span>
+                      </div>
+                    </div>
+
+                    {selectedScanData.summary && (
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-500 mb-1">Summary</p>
+                        <p className="text-sm">{selectedScanData.summary}</p>
+                      </div>
                     )}
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Total Errors</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{currentScanStats.total}</div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Fixed</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{currentScanStats.fixed}</div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Remaining</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{currentScanStats.total - currentScanStats.fixed}</div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Progress</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <div className="text-2xl font-bold">{currentScanStats.percent}%</div>
-                      <Progress value={currentScanStats.percent} className="h-2 mt-2" />
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex flex-wrap gap-2">
-                    <Button 
-                      variant={errorFilter === 'all' ? 'default' : 'outline'} 
-                      size="sm"
-                      onClick={() => setErrorFilter('all')}
-                    >
-                      All ({scanDetails.errors?.length || 0})
-                    </Button>
-                    <Button 
-                      variant={errorFilter === 'new' ? 'default' : 'outline'} 
-                      size="sm"
-                      onClick={() => setErrorFilter('new')}
-                    >
-                      New ({scanDetails.errors?.filter(e => e.status === 'NEW').length || 0})
-                    </Button>
-                    <Button 
-                      variant={errorFilter === 'fixing' ? 'default' : 'outline'} 
-                      size="sm"
-                      onClick={() => setErrorFilter('fixing')}
-                    >
-                      Fixing ({scanDetails.errors?.filter(e => e.status === 'FIXING').length || 0})
-                    </Button>
-                    <Button 
-                      variant={errorFilter === 'fixed' ? 'default' : 'outline'} 
-                      size="sm"
-                      onClick={() => setErrorFilter('fixed')}
-                    >
-                      Fixed ({scanDetails.errors?.filter(e => e.status === 'FIXED').length || 0})
-                    </Button>
-                    <Button 
-                      variant={errorFilter === 'ignored' ? 'default' : 'outline'} 
-                      size="sm"
-                      onClick={() => setErrorFilter('ignored')}
-                    >
-                      Ignored ({scanDetails.errors?.filter(e => e.status === 'IGNORED').length || 0})
-                    </Button>
-                  </div>
+                  </CardContent>
+                </Card>
+
+                <Tabs defaultValue="all" className="w-full">
+                  <TabsList className="grid grid-cols-4 mb-4">
+                    <TabsTrigger value="all">All Errors</TabsTrigger>
+                    <TabsTrigger value="unfixed">Unfixed</TabsTrigger>
+                    <TabsTrigger value="fixed">Fixed</TabsTrigger>
+                    <TabsTrigger value="security">Security</TabsTrigger>
+                  </TabsList>
                   
-                  <div className="flex gap-2">
-                    <Button 
-                      variant={errorFilter === 'critical' ? 'default' : 'outline'} 
-                      size="sm"
-                      onClick={() => setErrorFilter('critical')}
-                    >
-                      Critical
-                    </Button>
-                    <Button 
-                      variant={errorFilter === 'high' ? 'default' : 'outline'} 
-                      size="sm"
-                      onClick={() => setErrorFilter('high')}
-                    >
-                      High
-                    </Button>
-                    <Button 
-                      variant={errorFilter === 'medium' ? 'default' : 'outline'} 
-                      size="sm"
-                      onClick={() => setErrorFilter('medium')}
-                    >
-                      Medium
-                    </Button>
-                    <Button 
-                      variant={errorFilter === 'low' ? 'default' : 'outline'} 
-                      size="sm"
-                      onClick={() => setErrorFilter('low')}
-                    >
-                      Low
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col lg:flex-row gap-4">
-                  <div className="lg:w-1/2">
-                    <Card className="h-full">
+                  <TabsContent value="all">
+                    <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">TypeScript Errors</CardTitle>
+                        <CardTitle>All TypeScript Errors</CardTitle>
                         <CardDescription>
-                          {filteredErrors.length} errors found with filter: {errorFilter}
+                          Showing {selectedScanData.errors?.length || 0} total errors
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <ScrollArea className="h-[500px] pr-4">
-                          {filteredErrors.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-64">
-                              <Shield className="h-12 w-12 text-green-500 mb-4" />
-                              <p className="text-center text-muted-foreground">
-                                {errorFilter === 'all' 
-                                  ? "No errors found in this scan!" 
-                                  : `No errors found with filter: ${errorFilter}`}
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="space-y-4">
-                              {filteredErrors.map((error) => (
-                                <div 
-                                  key={error.id} 
-                                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedError?.id === error.id ? 'bg-muted border-primary' : ''}`}
-                                  onClick={() => showErrorDetails(error)}
-                                >
-                                  <div className="flex justify-between items-start">
-                                    <div className="flex items-start gap-3">
-                                      <Badge variant="outline" className={getStatusColor(error.status)}>
-                                        <span className="flex items-center gap-1">
-                                          {getStatusIcon(error.status)}
-                                          {error.status}
-                                        </span>
-                                      </Badge>
-                                      <div>
-                                        <p className="font-medium truncate" title={error.message}>
-                                          {error.message.length > 70 ? error.message.substring(0, 70) + '...' : error.message}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground mt-1">
-                                          {error.file.split('/').pop()} at line {error.line}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <Badge className={getSeverityColor(error.severity)}>
-                                      {error.severity}
-                                    </Badge>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </ScrollArea>
-                      </CardContent>
-                    </Card>
-                  </div>
-                  
-                  <div className="lg:w-1/2">
-                    <Card className="h-full">
-                      <CardHeader>
-                        <CardTitle className="text-lg">Error Details</CardTitle>
-                        <CardDescription>
-                          {selectedError ? `${selectedError.file}:${selectedError.line}` : 'Select an error to view details'}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        {!selectedError ? (
-                          <div className="flex flex-col items-center justify-center h-[400px]">
-                            <Code className="h-12 w-12 text-muted-foreground mb-4" />
-                            <p className="text-center text-muted-foreground">
-                              Select an error from the list to view details
-                            </p>
+                        {!selectedScanData.errors || selectedScanData.errors.length === 0 ? (
+                          <div className="text-center p-6 text-gray-500">
+                            <p>No errors found in this scan.</p>
                           </div>
                         ) : (
-                          <div className="space-y-4">
-                            <div>
-                              <h4 className="font-semibold mb-1">Error</h4>
-                              <p className="text-sm">{selectedError.message}</p>
-                            </div>
-                            
-                            <div>
-                              <h4 className="font-semibold mb-1">Location</h4>
-                              <p className="text-sm">
-                                {selectedError.file}:{selectedError.line}:{selectedError.column}
-                              </p>
-                            </div>
-                            
-                            <div>
-                              <h4 className="font-semibold mb-1">Code</h4>
-                              <p className="text-sm font-mono bg-muted p-2 rounded">
-                                {selectedError.code}
-                              </p>
-                            </div>
-                            
-                            <div>
-                              <h4 className="font-semibold mb-1">Category</h4>
-                              <p className="text-sm">
-                                {selectedError.category}
-                              </p>
-                            </div>
-                            
-                            {selectedError.fixDetails?.suggestion && (
-                              <div>
-                                <h4 className="font-semibold mb-1">Suggested Fix</h4>
-                                <div className="text-sm font-mono bg-muted p-2 rounded">
-                                  {selectedError.fixDetails.suggestion}
-                                </div>
-                                {selectedError.fixDetails.explanation && (
-                                  <div className="mt-2">
-                                    <h4 className="font-semibold mb-1">Explanation</h4>
-                                    <p className="text-sm">
-                                      {selectedError.fixDetails.explanation}
+                          <div className="space-y-3">
+                            {selectedScanData.errors.map(error => (
+                              <div 
+                                key={error.id}
+                                className={`border rounded-md p-3 cursor-pointer hover:bg-gray-50 ${
+                                  selectedError === error.id ? 'border-primary bg-primary/5' : 'border-gray-200'
+                                }`}
+                                onClick={() => setSelectedError(error.id)}
+                              >
+                                <div className="flex items-start gap-3">
+                                  {getErrorIcon(error.severity)}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between">
+                                      <p className="font-mono text-sm">{error.code}</p>
+                                      <div className="flex gap-2">
+                                        <Badge className={getStatusColor(error.status)}>
+                                          {error.status}
+                                        </Badge>
+                                        <Badge variant="outline" className={getSeverityColor(error.severity)}>
+                                          {error.severity}
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                    <p className="text-sm font-medium truncate">{error.message}</p>
+                                    <p className="text-xs text-gray-500 truncate">
+                                      {error.file}:{error.line}:{error.column}
                                     </p>
                                   </div>
-                                )}
-                                <div className="flex items-center gap-2 mt-2">
-                                  <Badge variant="outline">
-                                    {selectedError.fixDetails.aiGenerated ? 'AI Generated' : 'System Generated'}
-                                  </Badge>
-                                  <Badge variant="outline" className={
-                                    selectedError.fixDetails.confidence === 'high' ? 'text-green-500 border-green-500' :
-                                    selectedError.fixDetails.confidence === 'medium' ? 'text-yellow-500 border-yellow-500' :
-                                    'text-red-500 border-red-500'
-                                  }>
-                                    {selectedError.fixDetails.confidence.charAt(0).toUpperCase() + selectedError.fixDetails.confidence.slice(1)} Confidence
-                                  </Badge>
                                 </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="unfixed">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Unfixed Errors</CardTitle>
+                        <CardDescription>
+                          Showing errors that have not been fixed yet
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {!selectedScanData.errors || 
+                         !selectedScanData.errors.filter(e => e.status !== 'FIXED' && e.status !== 'IGNORED').length ? (
+                          <div className="text-center p-6 text-gray-500">
+                            <p>All errors have been fixed or ignored.</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {selectedScanData.errors
+                              .filter(e => e.status !== 'FIXED' && e.status !== 'IGNORED')
+                              .map(error => (
+                                <div 
+                                  key={error.id}
+                                  className={`border rounded-md p-3 cursor-pointer hover:bg-gray-50 ${
+                                    selectedError === error.id ? 'border-primary bg-primary/5' : 'border-gray-200'
+                                  }`}
+                                  onClick={() => setSelectedError(error.id)}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    {getErrorIcon(error.severity)}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between">
+                                        <p className="font-mono text-sm">{error.code}</p>
+                                        <Badge className={getStatusColor(error.status)}>
+                                          {error.status}
+                                        </Badge>
+                                      </div>
+                                      <p className="text-sm font-medium truncate">{error.message}</p>
+                                      <p className="text-xs text-gray-500 truncate">
+                                        {error.file}:{error.line}:{error.column}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="fixed">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Fixed Errors</CardTitle>
+                        <CardDescription>
+                          Showing errors that have been fixed
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {!selectedScanData.errors || 
+                         !selectedScanData.errors.filter(e => e.status === 'FIXED').length ? (
+                          <div className="text-center p-6 text-gray-500">
+                            <p>No errors have been fixed yet.</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {selectedScanData.errors
+                              .filter(e => e.status === 'FIXED')
+                              .map(error => (
+                                <div 
+                                  key={error.id}
+                                  className={`border rounded-md p-3 cursor-pointer hover:bg-gray-50 ${
+                                    selectedError === error.id ? 'border-primary bg-primary/5' : 'border-gray-200'
+                                  }`}
+                                  onClick={() => setSelectedError(error.id)}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <CheckCircle className="h-5 w-5 text-green-500" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between">
+                                        <p className="font-mono text-sm">{error.code}</p>
+                                        <Badge className="bg-green-500 hover:bg-green-600">
+                                          FIXED
+                                        </Badge>
+                                      </div>
+                                      <p className="text-sm font-medium truncate">{error.message}</p>
+                                      <p className="text-xs text-gray-500 truncate">
+                                        {error.file}:{error.line}:{error.column}
+                                      </p>
+                                      {error.fixDetails?.appliedAt && (
+                                        <p className="text-xs text-green-600 mt-1">
+                                          Fixed on {new Date(error.fixDetails.appliedAt).toLocaleString()}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="security">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Security Concerns</CardTitle>
+                        <CardDescription>
+                          Errors that might have security implications
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {!selectedScanData.errors || 
+                         !selectedScanData.errors.filter(e => e.status === 'SECURITY_REVIEW').length ? (
+                          <div className="text-center p-6 text-gray-500">
+                            <p>No security concerns detected.</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {selectedScanData.errors
+                              .filter(e => e.status === 'SECURITY_REVIEW')
+                              .map(error => (
+                                <div 
+                                  key={error.id}
+                                  className={`border border-red-200 rounded-md p-3 cursor-pointer hover:bg-red-50 ${
+                                    selectedError === error.id ? 'bg-red-50' : ''
+                                  }`}
+                                  onClick={() => setSelectedError(error.id)}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <Shield className="h-5 w-5 text-red-500" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between">
+                                        <p className="font-mono text-sm">{error.code}</p>
+                                        <Badge className="bg-red-500 hover:bg-red-600">
+                                          SECURITY REVIEW
+                                        </Badge>
+                                      </div>
+                                      <p className="text-sm font-medium truncate">{error.message}</p>
+                                      <p className="text-xs text-gray-500 truncate">
+                                        {error.file}:{error.line}:{error.column}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
+
+                {/* Error details pane */}
+                {selectedErrorData && (
+                  <Card>
+                    <CardHeader className="border-b">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle>Error Details</CardTitle>
+                          <CardDescription>
+                            {selectedErrorData.file}:{selectedErrorData.line}:{selectedErrorData.column}
+                          </CardDescription>
+                        </div>
+                        <Badge className={getSeverityColor(selectedErrorData.severity)}>
+                          {selectedErrorData.severity}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-500">Error Code</h4>
+                          <p className="font-mono">{selectedErrorData.code}</p>
+                        </div>
+                        
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-500">Message</h4>
+                          <p>{selectedErrorData.message}</p>
+                        </div>
+                        
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-500">Location</h4>
+                          <div className="flex items-center gap-2">
+                            <p className="font-mono text-sm">{selectedErrorData.file}:{selectedErrorData.line}:{selectedErrorData.column}</p>
+                            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              Open
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {selectedErrorData.fixDetails && (
+                          <div className="mt-6 space-y-4">
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-500">Fix Suggestion</h4>
+                              <div className="mt-2 p-3 bg-gray-50 rounded-md border font-mono text-sm whitespace-pre-wrap">
+                                {selectedErrorData.fixDetails.suggestion}
+                              </div>
+                            </div>
+                            
+                            {selectedErrorData.fixDetails.explanation && (
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-500">Explanation</h4>
+                                <p className="text-sm">{selectedErrorData.fixDetails.explanation}</p>
+                              </div>
+                            )}
+                            
+                            {selectedErrorData.fixDetails.confidence && (
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-500">Confidence</h4>
+                                <div className="flex items-center gap-2">
+                                  <Progress 
+                                    value={selectedErrorData.fixDetails.confidence} 
+                                    className="h-2 w-32" 
+                                  />
+                                  <span>{selectedErrorData.fixDetails.confidence}%</span>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {selectedErrorData.fixDetails.aiGenerated && (
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="bg-blue-50">AI Generated</Badge>
+                                {selectedErrorData.fixDetails.generatedAt && (
+                                  <span className="text-xs text-gray-500">
+                                    on {new Date(selectedErrorData.fixDetails.generatedAt).toLocaleString()}
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
                         )}
-                      </CardContent>
-                      {selectedError && (
-                        <CardFooter className="flex justify-end gap-2 pt-2">
-                          {selectedError.status !== 'IGNORED' && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => ignoreErrorMutation.mutate({ 
-                                scanId: scanDetails.id, 
-                                errorId: selectedError.id 
-                              })}
-                              disabled={ignoreErrorMutation.isPending}
-                            >
-                              {ignoreErrorMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                              Ignore Error
-                            </Button>
-                          )}
-                          
-                          {selectedError.status !== 'FIXED' && scanDetails.aiEnabled && !selectedError.fixDetails?.suggestion && (
-                            <Button 
-                              variant="secondary" 
-                              size="sm"
-                              onClick={() => generateAIFixMutation.mutate({ 
-                                scanId: scanDetails.id, 
-                                errorId: selectedError.id 
-                              })}
-                              disabled={generateAIFixMutation.isPending}
-                            >
-                              {generateAIFixMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                              <Zap className="h-4 w-4 mr-2" />
-                              Generate AI Fix
-                            </Button>
-                          )}
-                          
-                          {selectedError.status !== 'FIXED' && selectedError.fixDetails?.suggestion && (
-                            <Button 
-                              size="sm"
-                              onClick={() => applyFixMutation.mutate({ 
-                                scanId: scanDetails.id, 
-                                errorId: selectedError.id 
-                              })}
-                              disabled={applyFixMutation.isPending}
-                            >
-                              {applyFixMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                              Apply Fix
-                            </Button>
-                          )}
-                        </CardFooter>
-                      )}
-                    </Card>
-                  </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-between border-t pt-6">
+                      <Button
+                        variant="outline"
+                        onClick={() => ignoreErrorMutation.mutate({ 
+                          scanId: selectedScan, 
+                          errorId: selectedErrorData.id 
+                        })}
+                        disabled={
+                          selectedErrorData.status === 'FIXED' || 
+                          selectedErrorData.status === 'IGNORED' ||
+                          ignoreErrorMutation.isPending
+                        }
+                      >
+                        {ignoreErrorMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          'Ignore Error'
+                        )}
+                      </Button>
+                      
+                      <div className="space-x-2">
+                        {(!selectedErrorData.fixDetails || !selectedErrorData.fixDetails.suggestion) && 
+                         selectedScanData.aiEnabled && 
+                         selectedErrorData.status !== 'FIXED' && 
+                         selectedErrorData.status !== 'IGNORED' && (
+                          <Button
+                            variant="outline"
+                            onClick={() => generateAiFixMutation.mutate({ 
+                              scanId: selectedScan, 
+                              errorId: selectedErrorData.id 
+                            })}
+                            disabled={generateAiFixMutation.isPending}
+                          >
+                            {generateAiFixMutation.isPending ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              'Generate AI Fix'
+                            )}
+                          </Button>
+                        )}
+                        
+                        {selectedErrorData.fixDetails && 
+                         selectedErrorData.fixDetails.suggestion && 
+                         selectedErrorData.status !== 'FIXED' && 
+                         selectedErrorData.status !== 'IGNORED' && (
+                          <Button
+                            onClick={() => applyFixMutation.mutate({ 
+                              scanId: selectedScan, 
+                              errorId: selectedErrorData.id 
+                            })}
+                            disabled={applyFixMutation.isPending}
+                          >
+                            {applyFixMutation.isPending ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Applying...
+                              </>
+                            ) : (
+                              'Apply Fix'
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </CardFooter>
+                  </Card>
+                )}
+              </div>
+            )
+          ) : (
+            <Card>
+              <CardContent className="pt-6 pb-6">
+                <div className="text-center p-6 text-gray-500">
+                  <h3 className="text-lg font-semibold mb-2">No Scan Selected</h3>
+                  <p>Select a scan from the list or start a new scan.</p>
                 </div>
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
   );
-}
+};
+
+export default TypeScriptErrorScanner;
