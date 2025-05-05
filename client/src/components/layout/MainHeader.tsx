@@ -137,10 +137,10 @@ export function MainHeader() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-[#00ebd6] ${
         isScrolled
-          ? "bg-black/80 backdrop-blur-md py-2 shadow-lg"
-          : "bg-transparent py-4"
+          ? "bg-[#0a325c] py-2 shadow-lg"
+          : "bg-[#0a325c] py-4"
       }`}
     >
       <div className="container mx-auto px-4">
@@ -192,9 +192,8 @@ export function MainHeader() {
                     isScrolled ? "text-white" : "text-white"
                   }`}
                 >
-                  COSMIC SOUNDS
+                  Dale Loves Whales
                 </CosmicText>
-                <div className="text-xs text-white/70">Harmonic Journeys</div>
               </div>
             </div>
           </Link>
@@ -243,23 +242,37 @@ export function MainHeader() {
                     transition={{ duration: 0.2 }}
                     className="absolute right-0 top-0 z-20"
                   >
-                    <form onSubmit={handleSearch} className="flex items-center">
-                      <input
-                        type="text"
-                        placeholder="Search..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        autoFocus
-                        className="w-full px-4 py-2 text-sm bg-black/80 backdrop-blur-lg border border-white/20 rounded-l-md text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                      <Button
-                        type="submit"
-                        variant="default"
-                        className="rounded-l-none"
+                    <div className="flex flex-col">
+                      <form onSubmit={handleSearch} className="flex items-center">
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          autoFocus
+                          className="w-full px-4 py-2 text-sm bg-black/80 backdrop-blur-lg border border-white/20 rounded-l-md text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                        <Button
+                          type="submit"
+                          variant="default"
+                          className="rounded-l-none"
+                        >
+                          <Search className="h-4 w-4" />
+                        </Button>
+                      </form>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="mt-2 text-white/70 hover:text-white"
+                        onClick={() => window.location.reload()}
                       >
-                        <Search className="h-4 w-4" />
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                          <path d="M3 3v5h5"></path>
+                        </svg>
+                        Refresh
                       </Button>
-                    </form>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -382,7 +395,7 @@ export function MainHeader() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden bg-black/95 backdrop-blur-lg"
+            className="md:hidden bg-[#0a325c] border-t border-[#00ebd6]/30"
           >
             <motion.div
               variants={containerVariants}
@@ -391,28 +404,41 @@ export function MainHeader() {
               className="container mx-auto px-4 py-4 flex flex-col"
             >
               {/* Search Bar */}
-              <motion.form
-                variants={itemVariants}
-                onSubmit={handleSearch}
-                className="mb-4"
-              >
-                <div className="flex items-center">
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-4 py-2 text-sm bg-white/5 border border-white/10 rounded-l-md text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
-                  />
-                  <Button
-                    type="submit"
-                    variant="default"
-                    className="rounded-l-none"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-                </div>
-              </motion.form>
+              <motion.div variants={itemVariants} className="mb-4">
+                <form
+                  onSubmit={handleSearch}
+                  className="mb-2"
+                >
+                  <div className="flex items-center">
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full px-4 py-2 text-sm bg-white/5 border border-white/10 rounded-l-md text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
+                    />
+                    <Button
+                      type="submit"
+                      variant="default"
+                      className="rounded-l-none"
+                    >
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </form>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full text-white/70 hover:text-white flex items-center justify-center"
+                  onClick={() => window.location.reload()}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                  </svg>
+                  Refresh
+                </Button>
+              </motion.div>
 
               {/* Navigation Links */}
               <div className="space-y-1">
