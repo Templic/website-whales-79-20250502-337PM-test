@@ -48,7 +48,7 @@ interface NavItem {
 }
 
 export const MainHeader = () => {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
@@ -88,28 +88,24 @@ export const MainHeader = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // First row navigation items
-  const firstRowItems: NavItem[] = [
-    { name: "Home", path: "/", icon: <Home /> },
-    { name: "Music", path: "/music", icon: <Music /> },
-    { name: "Tour", path: "/tour", icon: <Calendar /> },
-    { name: "Shop", path: "/shop", icon: <ShoppingBag /> },
+  // Navigation items aligned with the specification
+  const navigationItems: NavItem[] = [
+    { name: "Home", path: "/", icon: <Home className="h-4 w-4" /> },
+    { name: "About", path: "/about", icon: <Users className="h-4 w-4" /> },
+    { name: "New Music", path: "/music-release", icon: <Music className="h-4 w-4" /> },
+    { name: "Archived Music", path: "/archived-music", icon: <Headphones className="h-4 w-4" /> },
+    { name: "Tour", path: "/tour", icon: <Calendar className="h-4 w-4" /> },
+    { name: "Shop", path: "/shop", icon: <ShoppingBag className="h-4 w-4" /> },
+    { name: "Engage", path: "/engage", icon: <Heart className="h-4 w-4" /> },
+    { name: "Contact", path: "/contact", icon: <Mail className="h-4 w-4" /> }
   ];
 
-  // Second row navigation items
-  const secondRowItems: NavItem[] = [
-    { name: "Blog", path: "/blog", icon: <Newspaper /> },
-    { name: "About", path: "/about", icon: <Info /> },
-    { name: "Community", path: "/community", icon: <Users /> },
-    { name: "Resources", path: "/resources", icon: <HelpCircle /> },
-  ];
-
-  // Third row navigation items
-  const thirdRowItems: NavItem[] = [
-    { name: "Contact", path: "/contact", icon: <Mail /> },
-    { name: "Newsletter", path: "/newsletter", icon: <MessageSquare /> },
-    { name: "Social", path: "/social", icon: <Heart /> },
-    { name: "Settings", path: "/settings", icon: <Settings /> },
+  // Social media links for footer/mobile menu
+  const socialLinks = [
+    { name: "Facebook", icon: <Facebook className="h-5 w-5" aria-hidden="true" />, path: "https://facebook.com/DaleTheWhale", external: true },
+    { name: "Twitter", icon: <Twitter className="h-5 w-5" aria-hidden="true" />, path: "https://twitter.com/DaleTheWhale", external: true },
+    { name: "Instagram", icon: <Instagram className="h-5 w-5" aria-hidden="true" />, path: "https://instagram.com/DaleTheWhale", external: true },
+    { name: "YouTube", icon: <Youtube className="h-5 w-5" aria-hidden="true" />, path: "https://youtube.com/DaleTheWhale", external: true }
   ];
 
   // Handle navigation clicks
@@ -193,71 +189,38 @@ export const MainHeader = () => {
             </span>
           </Link>
 
-          {/* Desktop Navigation Block */}
-          <div className="hidden md:flex flex-col items-center ml-auto">
-            {/* Navigation - First Row */}
-            <div className="flex items-center space-x-8">
-              {firstRowItems.map((item) => (
-                <Link 
-                  key={item.path}
-                  href={item.path}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleNavigationClick(item.path);
-                  }}
-                  className="flex items-center text-white/80 hover:text-white space-x-1 text-sm group relative"
-                >
-                  <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 w-1 h-1 rounded-full bg-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="h-4 w-4 flex-shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
-                    {item.icon}
-                  </div>
+          {/* Desktop Navigation - Following specification */}
+          <nav className="hidden md:flex items-center space-x-1 ml-6">
+            {navigationItems.map((item, index) => (
+              <Link 
+                key={item.path} 
+                href={item.path}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNavigationClick(item.path);
+                }}
+                className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-white ${
+                  location.includes(item.path) && (item.path === "/" ? location === "/" : true)
+                    ? 'text-white' 
+                    : 'text-white/70'
+                }`}
+              >
+                <span className="flex items-center space-x-1">
+                  {item.icon}
                   <span>{item.name}</span>
-                </Link>
-              ))}
-            </div>
-            
-            {/* Navigation - Second Row */}
-            <div className="flex items-center space-x-8 mt-1">
-              {secondRowItems.map((item) => (
-                <Link 
-                  key={item.path}
-                  href={item.path}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleNavigationClick(item.path);
-                  }}
-                  className="flex items-center text-white/80 hover:text-white space-x-1 text-sm group relative"
-                >
-                  <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 w-1 h-1 rounded-full bg-purple-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="h-4 w-4 flex-shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
-                    {item.icon}
-                  </div>
-                  <span>{item.name}</span>
-                </Link>
-              ))}
-            </div>
-            
-            {/* Navigation - Third Row */}
-            <div className="flex items-center space-x-8 mt-1">
-              {thirdRowItems.map((item) => (
-                <Link 
-                  key={item.path}
-                  href={item.path}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleNavigationClick(item.path);
-                  }}
-                  className="flex items-center text-white/80 hover:text-white space-x-1 text-sm group relative"
-                >
-                  <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 w-1 h-1 rounded-full bg-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="h-4 w-4 flex-shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
-                    {item.icon}
-                  </div>
-                  <span>{item.name}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
+                </span>
+                {location.includes(item.path) && (item.path === "/" ? location === "/" : true) && (
+                  <motion.div 
+                    layoutId="nav-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                  />
+                )}
+              </Link>
+            ))}
+          </nav>
           
           {/* Search Bar and Controls */}
           <div className="hidden md:flex items-center ml-8">
@@ -366,56 +329,12 @@ export const MainHeader = () => {
               </div>
             </motion.div>
             
-            {/* Mobile Nav Items - Keep the structure with three rows */}
+            {/* Mobile Navigation Items */}
             <div className="px-4 py-2 border-t border-white/10">
-              <motion.div variants={itemVariants} className="mb-3">
-                <h3 className="text-xs uppercase text-white/50 font-medium mb-2">Main</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {firstRowItems.map((item) => (
-                    <Link 
-                      key={item.path}
-                      href={item.path}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleNavigationClick(item.path);
-                      }}
-                      className="flex items-center text-white/80 hover:text-white space-x-2 py-1"
-                    >
-                      <div className="h-4 w-4 opacity-60">
-                        {item.icon}
-                      </div>
-                      <span>{item.name}</span>
-                    </Link>
-                  ))}
-                </div>
-              </motion.div>
-              
-              <motion.div variants={itemVariants} className="mb-3">
-                <h3 className="text-xs uppercase text-white/50 font-medium mb-2">Content</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {secondRowItems.map((item) => (
-                    <Link 
-                      key={item.path}
-                      href={item.path}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleNavigationClick(item.path);
-                      }}
-                      className="flex items-center text-white/80 hover:text-white space-x-2 py-1"
-                    >
-                      <div className="h-4 w-4 opacity-60">
-                        {item.icon}
-                      </div>
-                      <span>{item.name}</span>
-                    </Link>
-                  ))}
-                </div>
-              </motion.div>
-              
               <motion.div variants={itemVariants}>
-                <h3 className="text-xs uppercase text-white/50 font-medium mb-2">Engage</h3>
+                <h3 className="text-xs uppercase text-white/50 font-medium mb-2">Navigation</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {thirdRowItems.map((item) => (
+                  {navigationItems.map((item) => (
                     <Link 
                       key={item.path}
                       href={item.path}
@@ -430,6 +349,25 @@ export const MainHeader = () => {
                       </div>
                       <span>{item.name}</span>
                     </Link>
+                  ))}
+                </div>
+              </motion.div>
+              
+              {/* Social Links */}
+              <motion.div variants={itemVariants} className="mt-4">
+                <h3 className="text-xs uppercase text-white/50 font-medium mb-2">Connect</h3>
+                <div className="flex space-x-4">
+                  {socialLinks.map((social) => (
+                    <a
+                      key={social.name}
+                      href={social.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-white/70 hover:text-white transition-colors"
+                      aria-label={`Follow us on ${social.name}`}
+                    >
+                      {social.icon}
+                    </a>
                   ))}
                 </div>
               </motion.div>
