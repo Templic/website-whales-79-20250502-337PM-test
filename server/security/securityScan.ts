@@ -169,7 +169,7 @@ async function checkForSecrets(vulnerabilities: SecurityVulnerability[]): Promis
     // Use grep to search for potential API keys and secrets
     // Note: This might produce false positives
     const { stdout } = await execPromise(
-      'grep -r -i -E "(api[_-]?key|secret|password|token|auth[_-]?token|access[_-]?token)[ ]*=[ ]*[\\"\\\'][a-zA-Z0-9_\\-]{16,}[\\"\\\']" --include="*.ts" --include="*.js" --include="*.tsx" --include="*.jsx" --exclude-dir="node_modules" --exclude-dir=".git" ./server ./client ./shared 2>/dev/null || true'
+      'grep -r -i -E \'(api[_-]?key[\s]*=[\s]*[\"\'][a-zA-Z0-9_\-]{16,}[\"\']|secret[\s]*=[\s]*[\"\'][a-zA-Z0-9_\-]{16,}[\"\']|password[\s]*=[\s]*[\"\'][^\"\',]+[\"\']|token[\s]*=[\s]*[\"\'][a-zA-Z0-9_\-.]+[\"\']|access_token[\s]*=[\s]*[\"\'][a-zA-Z0-9_\-.]+[\"\']|authz?[\s]*=[\s]*[\"\'][a-zA-Z0-9_\-.]+[\"\']|bearer[\s]+[a-zA-Z0-9_\-.]+|-----BEGIN\\s+(?:RSA|OPENSSH|DSA|EC)\\s+PRIVATE\\s+KEY-----)\'  --include="*.(js|ts|jsx|tsx|json|env|yaml|yml)$" --exclude-dir="node_modules" --exclude-dir=".git" --exclude-dir="dist" --exclude-dir="build" --exclude-dir="logs" --exclude-dir="coverage" . || true'
     );
     
     if (stdout.trim()) {
