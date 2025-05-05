@@ -5,7 +5,7 @@
  * staggered navigation, and cosmic design elements.
  * 
  * Created: 2025-04-05 - Updated with enhancements
- * Latest Update: Added sacred geometry elements and improved staggered navigation
+ * Latest Update: Complete redesign based on new specifications - May 5, 2025
  */
 
 import { useState, useCallback, useEffect } from "react";
@@ -38,52 +38,52 @@ import { useAuth } from "../../hooks/use-auth";
 import { useAccessibility } from "../../contexts/AccessibilityContext";
 import { motion } from "framer-motion";
 import SacredGeometry from "../../components/ui/sacred-geometry";
-// Remove ThemeToggle import as it's now managed in MainLayout
+
+// Animation variants for navigation items
+const navItemVariants = {
+  initial: { scale: 1 },
+  hover: { scale: 1.05, transition: { duration: 0.2 } }
+};
 
 // Define the navigation items structure
 interface NavItem {
   name: string;
   path: string;
   icon: React.ReactNode;
-  glowColor?: string;
+  glowColor?: 'cyan' | 'purple';
+  external?: boolean;
 }
 
-// First row nav items - main navigation
-const primaryNavItems: NavItem[] = [
-  { name: "Home", path: "/", icon: <Home className="h-4 w-4 mr-1" />, glowColor: "cyan" },
-  { name: "About", path: "/about", icon: <MoonStar className="h-4 w-4 mr-1" />, glowColor: "purple" },
-  { name: "Music", path: "/archived-music", icon: <Music className="h-4 w-4 mr-1" />, glowColor: "cyan" },
-  { name: "Tour", path: "/tour", icon: <Calendar className="h-4 w-4 mr-1" />, glowColor: "purple" }
+// First row navigation items - based on the screenshot
+const firstRowItems: NavItem[] = [
+  { name: "Home", path: "/", icon: <Home className="h-4 w-4" />, glowColor: 'cyan' },
+  { name: "About", path: "/about", icon: <MoonStar className="h-4 w-4" />, glowColor: 'purple' },
+  { name: "Music", path: "/archived-music", icon: <Music className="h-4 w-4" />, glowColor: 'cyan' },
+  { name: "Tour", path: "/tour", icon: <Calendar className="h-4 w-4" />, glowColor: 'purple' }
 ];
 
-// Second row nav items - secondary navigation
-const secondaryNavItems: NavItem[] = [
-  { name: "Shop", path: "/shop", icon: <ShoppingBag className="h-4 w-4 mr-1" />, glowColor: "purple" },
-  { name: "Engage", path: "/engage", icon: <MoonStar className="h-4 w-4 mr-1" />, glowColor: "cyan" },
-  { name: "Blog", path: "/blog", icon: <Headphones className="h-4 w-4 mr-1" />, glowColor: "purple" },
-  { name: "AI Chat", path: "/chat", icon: <MessageSquare className="h-4 w-4 mr-1" />, glowColor: "cyan" }
+// Second row navigation items - based on the screenshot
+const secondRowItems: NavItem[] = [
+  { name: "Shop", path: "/shop", icon: <ShoppingBag className="h-4 w-4" />, glowColor: 'cyan' },
+  { name: "Engage", path: "/engage", icon: <Heart className="h-4 w-4" />, glowColor: 'purple' },
+  { name: "Blog", path: "/blog", icon: <Headphones className="h-4 w-4" />, glowColor: 'cyan' },
+  { name: "AI Chat", path: "/chat", icon: <MessageSquare className="h-4 w-4" />, glowColor: 'purple' }
 ];
 
-// Community links that should be accessible
-const communityLinks: NavItem[] = [
-  { name: "Community Hub", path: "/community", icon: <Users className="h-4 w-4 mr-1" />, glowColor: "purple" },
-  { name: "Newsletter", path: "/newsletter", icon: <Mail className="h-4 w-4 mr-1" />, glowColor: "cyan" },
-  { name: "Collaboration", path: "/collaboration", icon: <Heart className="h-4 w-4 mr-1" />, glowColor: "cyan" },
-  { name: "Contact", path: "/contact", icon: <MessageSquare className="h-4 w-4 mr-1" />, glowColor: "purple" }
-];
-
-// Music links for mobile
-const musicLinks: NavItem[] = [
-  { name: "Music Collection", path: "/archived-music", icon: <Music className="h-4 w-4 mr-1" /> },
-  { name: "Cosmic Connectivity", path: "/cosmic-connectivity", icon: <Music className="h-4 w-4 mr-1" /> }
+// Third row navigation items - based on the screenshot
+const thirdRowItems: NavItem[] = [
+  { name: "Community Hub", path: "/community", icon: <Users className="h-4 w-4" />, glowColor: 'cyan' },
+  { name: "Newsletter", path: "/newsletter", icon: <Mail className="h-4 w-4" />, glowColor: 'purple' },
+  { name: "Collaboration", path: "/collaboration", icon: <Heart className="h-4 w-4" />, glowColor: 'cyan' },
+  { name: "Contact", path: "/contact", icon: <MessageSquare className="h-4 w-4" />, glowColor: 'purple' }
 ];
 
 // Social media links
-const socialLinks = [
-  { name: "Facebook", icon: <Facebook className="h-5 w-5" aria-hidden="true" />, path: "https://facebook.com/DaleTheWhale", external: true },
-  { name: "Twitter", icon: <Twitter className="h-5 w-5" aria-hidden="true" />, path: "https://twitter.com/DaleTheWhale", external: true },
-  { name: "Instagram", icon: <Instagram className="h-5 w-5" aria-hidden="true" />, path: "https://instagram.com/DaleTheWhale", external: true },
-  { name: "YouTube", icon: <Youtube className="h-5 w-5" aria-hidden="true" />, path: "https://youtube.com/DaleTheWhale", external: true }
+const socialLinks: NavItem[] = [
+  { name: "Facebook", icon: <Facebook className="h-5 w-5" />, path: "https://facebook.com/DaleTheWhale", external: true },
+  { name: "Twitter", icon: <Twitter className="h-5 w-5" />, path: "https://twitter.com/DaleTheWhale", external: true },
+  { name: "Instagram", icon: <Instagram className="h-5 w-5" />, path: "https://instagram.com/DaleTheWhale", external: true },
+  { name: "YouTube", icon: <Youtube className="h-5 w-5" />, path: "https://youtube.com/DaleTheWhale", external: true }
 ];
 
 // Define the component as a standard function
@@ -91,87 +91,248 @@ const MainHeader = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { autoHideNav } = useAccessibility();
   const { user } = useAuth();
   const { toast } = useToast();
 
   // Handle scroll event for auto-hiding navigation
   useEffect(() => {
-    let lastScrollY = window.scrollY;
-    
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      setIsScrolled(scrollY > 10);
-      
-      // Auto-hide navigation when scrolling down and show when scrolling up
-      if (autoHideNav && scrollY > 100) {
-        const header = document.querySelector('header');
-        if (header) {
-          if (scrollY > lastScrollY) {
-            // Scrolling down - add class to hide
-            header.classList.add('scrolled-down');
-          } else {
-            // Scrolling up - remove class to show
-            header.classList.remove('scrolled-down');
-          }
-        }
-      }
-      lastScrollY = scrollY;
+      setIsScrolled(window.scrollY > 10);
     };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [autoHideNav]);
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Handle navigation click
   const handleNavigationClick = useCallback((path: string) => {
-    // First scroll to top with smooth behavior
+    navigate(path);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    // Add a small delay to allow the scroll animation to complete
-    setTimeout(() => {
-      setIsMobileMenuOpen(false);
-      navigate(path);
-    }, 300); // 300ms delay to allow for smooth scroll
+    setIsMobileMenuOpen(false);
   }, [navigate]);
 
   // Handle search submit for site-wide search
   const handleSearchSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Navigate to search page with query parameter for site-wide search
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}&type=all`);
-      // Reset search input after submission
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery("");
       
-      // Log search action for analytics
-      console.log(`Site-wide search performed: "${searchQuery.trim()}"`);
-      
-      // Display toast notification
       toast({
-        title: "Searching entire site",
-        description: `Finding results for "${searchQuery.trim()}" across all pages`,
+        title: "Searching",
+        description: `Finding results for "${searchQuery.trim()}"`,
         variant: "default",
       });
     }
   }, [searchQuery, navigate, toast]);
 
-  // Define hover animation variants for nav items
-  const navItemVariants = {
-    initial: { y: 0, opacity: 1 },
-    hover: { y: -3, opacity: 1, transition: { duration: 0.2 } }
-  };
-
   return (
     <header 
-      id="main-navigation"
-      className={`
-        sticky top-0 z-[51] transition-all duration-300
-        ${isScrolled ? 'py-1' : 'py-3'}
-        ${autoHideNav ? 'transition-transform duration-300' : ''}
-      `}
+      className="fixed top-0 z-[100] w-full bg-[#070b1a]/95 backdrop-blur-lg border-b border-white/5 transition-all duration-300"
     >
+      <div className="container mx-auto py-4 relative">
+        {/* Logo and Main Content */}
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                DLW
+              </div>
+              <span className="text-lg font-medium text-blue-100">Dale Loves Whales</span>
+            </Link>
+          </div>
+
+          {/* Search Bar */}
+          <div className="hidden md:flex items-center">
+            <form onSubmit={handleSearchSubmit} className="relative">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-slate-900/60 border border-slate-700 rounded-md px-3 py-1 pl-8 text-white w-48 text-sm"
+              />
+              <Search className="h-4 w-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-slate-400" />
+            </form>
+            
+            {/* Navigation controls */}
+            <div className="flex items-center ml-4 space-x-1">
+              <button 
+                onClick={() => window.history.back()}
+                className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-800/50"
+                aria-label="Back"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <button 
+                onClick={() => window.history.forward()}
+                className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-800/50"
+                aria-label="Forward"
+              >
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <button 
+                onClick={() => window.location.reload()}
+                className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-800/50"
+                aria-label="Reload"
+              >
+                <RotateCw className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          
+          {/* Login Button */}
+          <div>
+            <Link 
+              href="/login" 
+              className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-medium"
+            >
+              Log In
+            </Link>
+          </div>
+        </div>
+        
+        {/* Navigation - First Row */}
+        <div className="mt-6 grid grid-cols-4 gap-4">
+          {firstRowItems.map((item) => (
+            <Link 
+              key={item.path}
+              href={item.path}
+              onClick={(e) => {
+                e.preventDefault();
+                handleNavigationClick(item.path);
+              }}
+              className="flex items-center text-white/80 hover:text-white space-x-1 text-sm"
+            >
+              <div className="h-4 w-4 flex-shrink-0 opacity-60">
+                {item.icon}
+              </div>
+              <span>{item.name}</span>
+            </Link>
+          ))}
+        </div>
+        
+        {/* Navigation - Second Row */}
+        <div className="mt-3 grid grid-cols-4 gap-4">
+          {secondRowItems.map((item) => (
+            <Link 
+              key={item.path}
+              href={item.path}
+              onClick={(e) => {
+                e.preventDefault();
+                handleNavigationClick(item.path);
+              }}
+              className="flex items-center text-white/80 hover:text-white space-x-1 text-sm"
+            >
+              <div className="h-4 w-4 flex-shrink-0 opacity-60">
+                {item.icon}
+              </div>
+              <span>{item.name}</span>
+            </Link>
+          ))}
+        </div>
+        
+        {/* Navigation - Third Row */}
+        <div className="mt-3 grid grid-cols-4 gap-4">
+          {thirdRowItems.map((item) => (
+            <Link 
+              key={item.path}
+              href={item.path}
+              onClick={(e) => {
+                e.preventDefault();
+                handleNavigationClick(item.path);
+              }}
+              className="flex items-center text-white/80 hover:text-white space-x-1 text-sm"
+            >
+              <div className="h-4 w-4 flex-shrink-0 opacity-60">
+                {item.icon}
+              </div>
+              <span>{item.name}</span>
+            </Link>
+          ))}
+        </div>
+        
+        {/* Mobile Menu Button - Only visible on small screens */}
+        <button
+          className="md:hidden absolute top-4 right-4 text-white"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Menu className="h-6 w-6" />
+          )}
+        </button>
+        
+        {/* Sacred Geometry Elements - Left and Right */}
+        <div className="absolute hidden md:block -left-16 top-1/2 transform -translate-y-1/2">
+          <SacredGeometry 
+            variant="merkaba" 
+            size={60} 
+            animated={true}
+            intensity="medium" 
+            className="text-cyan-400" 
+          />
+        </div>
+        
+        <div className="absolute hidden md:block -right-16 top-1/2 transform -translate-y-1/2">
+          <SacredGeometry 
+            variant="merkaba" 
+            size={60} 
+            animated={true}
+            intensity="medium" 
+            className="text-cyan-400" 
+          />
+        </div>
+      </div>
+      
+      {/* Mobile menu - Only visible when open on small screens */}
+      <div 
+        className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden bg-slate-900/95 backdrop-blur-md ${
+          isMobileMenuOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="px-4 py-4 space-y-4">
+          {/* Mobile Search */}
+          <form onSubmit={handleSearchSubmit} className="relative">
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-slate-800/80 border border-slate-700 rounded-md px-3 py-2 pl-10 text-white w-full"
+            />
+            <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+          </form>
+          
+          {/* Mobile Nav Items - Group all items */}
+          <div className="space-y-2">
+            <h3 className="text-xs uppercase text-slate-400 font-medium mb-2">Navigation</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {[...firstRowItems, ...secondRowItems, ...thirdRowItems].map((item) => (
+                <Link 
+                  key={item.path}
+                  href={item.path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigationClick(item.path);
+                  }}
+                  className="flex items-center text-white/80 hover:text-white space-x-2 py-1"
+                >
+                  <div className="h-4 w-4 opacity-60">
+                    {item.icon}
+                  </div>
+                  <span>{item.name}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    
       {/* Background Elements with Sacred Geometry - Centered and sides */}
       <div className="absolute inset-0 overflow-hidden z-0">
         {/* FIRST SET - Sacred geometry circles on outer edges */}
@@ -361,7 +522,7 @@ const MainHeader = () => {
           {/* Primary Navigation - Desktop */}
           <nav className="hidden md:flex items-center space-x-2">
             {/* Map through primary nav items */}
-            {primaryNavItems.map((item) => (
+            {firstRowItems.map((item) => (
               <motion.div
                 key={item.path}
                 variants={navItemVariants}
@@ -447,7 +608,7 @@ const MainHeader = () => {
         <div className="hidden md:flex justify-between items-center">
           {/* Left side - Secondary nav items */}
           <nav className="flex items-center space-x-2">
-            {secondaryNavItems.map((item) => (
+            {secondRowItems.map((item) => (
               <motion.div
                 key={item.path}
                 variants={navItemVariants}
@@ -485,7 +646,7 @@ const MainHeader = () => {
           
           {/* Right side - Community links */}
           <nav className="flex items-center space-x-2">
-            {communityLinks.map((item) => (
+            {thirdRowItems.map((item) => (
               <motion.div
                 key={item.path}
                 variants={navItemVariants}
@@ -552,7 +713,7 @@ const MainHeader = () => {
               <div>
                 <h3 className="text-xs uppercase tracking-wider text-white/40 mb-2">Navigation</h3>
                 <nav className="grid grid-cols-2 gap-2">
-                  {[...primaryNavItems, ...secondaryNavItems].map((item) => (
+                  {[...firstRowItems, ...secondRowItems].map((item) => (
                     <Link
                       key={item.path}
                       href={item.path}
@@ -580,7 +741,7 @@ const MainHeader = () => {
               <div>
                 <h3 className="text-xs uppercase tracking-wider text-white/40 mb-2">Community</h3>
                 <nav className="grid grid-cols-2 gap-2">
-                  {communityLinks.map((item) => (
+                  {thirdRowItems.map((item) => (
                     <Link
                       key={item.path}
                       href={item.path}
@@ -651,7 +812,7 @@ const MainHeader = () => {
       </div>
     </header>
   );
-};
+}
 
-// Export the component
+export default MainHeader;
 export { MainHeader };
