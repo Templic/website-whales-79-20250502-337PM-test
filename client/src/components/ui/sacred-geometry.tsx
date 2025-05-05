@@ -8,14 +8,15 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 
 export interface SacredGeometryProps {
-  variant?: 'cube' | 'tetrahedron' | 'octahedron' | 'icosahedron' | 'dodecahedron' | 'merkaba' | 'pentagon' | 'hexagon' | 'circle' | 'triangle' | 'octagon' | 'heptagon' | 'star' | 'six-pointed-star';
+  variant?: 'cube' | 'tetrahedron' | 'octahedron' | 'icosahedron' | 'dodecahedron' | 'merkaba' | 'pentagon' | 'hexagon' | 'circle' | 'triangle' | 'octagon' | 'heptagon' | 'star' | 'six-pointed-star' | 'flower-of-life' | 'sri-yantra' | 'pentagon-star';
   className?: string;
   strokeWidth?: number;
   fillOpacity?: number;
   animated?: boolean;
+  animationDuration?: number; // Duration of animation in seconds
   size?: 'sm' | 'md' | 'lg' | number;
   intensity?: 'subtle' | 'medium' | 'vivid';
-  type?: 'cube' | 'tetrahedron' | 'octahedron' | 'icosahedron' | 'dodecahedron' | 'merkaba'; // For backward compatibility
+  type?: 'cube' | 'tetrahedron' | 'octahedron' | 'icosahedron' | 'dodecahedron' | 'merkaba' | 'flower-of-life' | 'sri-yantra' | 'pentagon-star'; // For backward compatibility
   color?: string; // Custom color for the geometry
   reversed?: boolean; // Reverse the animation or orientation
 }
@@ -27,6 +28,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
   strokeWidth = 1.5,
   fillOpacity = 0.1,
   animated = true,
+  animationDuration,
   size = 24,
   intensity = 'medium',
   color = 'currentColor',
@@ -50,6 +52,10 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
     "--stroke-width": `${strokeWidth}px`,
     "--fill-opacity": opacityValue,
     "color": color, // Apply the custom color
+    // Apply custom animation duration if provided
+    ...(animated && animationDuration ? {
+      "animationDuration": `${animationDuration}s`
+    } : {})
   } as React.CSSProperties;
 
   // Animation class based on the animated prop
@@ -360,6 +366,62 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
             style={{ pointerEvents: 'none' }}
           />
         </>
+      );
+      
+    case 'flower-of-life':
+      return createSvg(
+        <>
+          {/* Center circle */}
+          <circle 
+            cx="12" 
+            cy="12" 
+            r="4" 
+            stroke="currentColor" 
+            strokeWidth={strokeWidth} 
+            fill="currentColor" 
+            fillOpacity={opacityValue} 
+            style={{ pointerEvents: 'none' }}
+          />
+          {/* Surrounding circles - first ring */}
+          <circle cx="12" cy="6" r="4" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={opacityValue} style={{ pointerEvents: 'none' }} />
+          <circle cx="16.5" cy="9" r="4" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={opacityValue} style={{ pointerEvents: 'none' }} />
+          <circle cx="16.5" cy="15" r="4" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={opacityValue} style={{ pointerEvents: 'none' }} />
+          <circle cx="12" cy="18" r="4" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={opacityValue} style={{ pointerEvents: 'none' }} />
+          <circle cx="7.5" cy="15" r="4" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={opacityValue} style={{ pointerEvents: 'none' }} />
+          <circle cx="7.5" cy="9" r="4" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={opacityValue} style={{ pointerEvents: 'none' }} />
+          {/* Outer circle */}
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="none" style={{ pointerEvents: 'none' }} />
+        </>
+      );
+      
+    case 'sri-yantra':
+      return createSvg(
+        <>
+          {/* Outer square */}
+          <path d="M2 2H22V22H2V2Z" stroke="currentColor" strokeWidth={strokeWidth} fill="none" style={{ pointerEvents: 'none' }} />
+          {/* Outer circle */}
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="none" style={{ pointerEvents: 'none' }} />
+          {/* Triangles */}
+          <path d="M12 3L21 18H3L12 3Z" stroke="currentColor" strokeWidth={strokeWidth} fill="none" style={{ pointerEvents: 'none' }} />
+          <path d="M12 21L3 6H21L12 21Z" stroke="currentColor" strokeWidth={strokeWidth} fill="none" style={{ pointerEvents: 'none' }} />
+          {/* Inner triangles */}
+          <path d="M12 7L17 16H7L12 7Z" stroke="currentColor" strokeWidth={strokeWidth} fill="none" style={{ pointerEvents: 'none' }} />
+          <path d="M12 17L7 8H17L12 17Z" stroke="currentColor" strokeWidth={strokeWidth} fill="none" style={{ pointerEvents: 'none' }} />
+          {/* Central point */}
+          <circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={opacityValue} style={{ pointerEvents: 'none' }} />
+        </>
+      );
+      
+    case 'pentagon-star':
+      return createSvg(
+        <path 
+          d="M12 2L14.5 9.75H22L16 14.5L18.5 22L12 17.25L5.5 22L8 14.5L2 9.75H9.5L12 2Z" 
+          stroke="currentColor" 
+          strokeWidth={strokeWidth} 
+          fill="currentColor" 
+          fillOpacity={opacityValue} 
+          style={{ pointerEvents: 'none' }}
+        />
       );
 
     default:

@@ -1,0 +1,81 @@
+30. Sacred Geometry Integration in Layout
+Decorative Background Patterns
+<header>
+  {/* Absolute positioned background patterns */}
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    {/* Top-right pattern */}
+    <div className="absolute -top-8 -right-8 opacity-5">
+      <SacredGeometry
+        type="flower-of-life"
+        color="rgba(6, 182, 212, 0.5)"
+        size={200}
+        animate={true}
+        animationDuration={120}
+      />
+    </div>
+    
+    {/* Bottom-left pattern */}
+    <div className="absolute -bottom-16 -left-16 opacity-5">
+      <SacredGeometry
+        type="sri-yantra"
+        color="rgba(147, 51, 234, 0.5)"
+        size={300}
+        animate={true}
+        animationDuration={180}
+      />
+    </div>
+    
+    {/* Subtle central pattern */}
+    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-3">
+      <SacredGeometry
+        type="merkaba"
+        color="white"
+        size={400}
+        animate={true}
+        animationDuration={240}
+      />
+    </div>
+  </div>
+  
+  {/* Main header content */}
+  <div className="container relative z-10">
+    {/* Header content */}
+  </div>
+</header>
+Interactive Geometry Elements
+// Add interactive sacred geometry to navigation
+<nav>
+  {navigationItems.map((item, index) => (
+    <Link key={item.path} href={item.path}>
+      <div className="relative group">
+        {/* Background geometry appears on hover */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+          <SacredGeometry
+            type={getGeometryForIndex(index)}
+            color={getColorForIndex(index)}
+            size={40}
+            animate={true}
+          />
+        </div>
+        
+        {/* Link text */}
+        <span className="relative z-10">{item.label}</span>
+      </div>
+    </Link>
+  ))}
+</nav>
+// Helper functions
+function getGeometryForIndex(index) {
+  const types = ['hexagon', 'pentagon-star', 'merkaba', 'sri-yantra', 'flower-of-life'];
+  return types[index % types.length];
+}
+function getColorForIndex(index) {
+  const colors = [
+    'rgba(6, 182, 212, 0.7)',    // cyan
+    'rgba(147, 51, 234, 0.7)',   // purple
+    'rgba(59, 130, 246, 0.7)',   // blue
+    'rgba(236, 72, 153, 0.7)',   // pink
+    'rgba(16, 185, 129, 0.7)',   // emerald
+  ];
+  return colors[index % colors.length];
+}

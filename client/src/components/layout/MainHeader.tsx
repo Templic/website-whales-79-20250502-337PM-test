@@ -139,6 +139,23 @@ export const MainHeader = () => {
     { name: "Engage", path: "/engage", icon: <Heart className="h-4 w-4" /> },
     { name: "Contact", path: "/contact", icon: <Mail className="h-4 w-4" /> }
   ];
+  
+  // Helper functions for navigation item sacred geometry - based on specifications
+  const getGeometryForIndex = (index: number): string => {
+    const types = ['hexagon', 'pentagon-star', 'merkaba', 'sri-yantra', 'flower-of-life'];
+    return types[index % types.length];
+  };
+  
+  const getColorForIndex = (index: number): string => {
+    const colors = [
+      'rgba(6, 182, 212, 0.7)',    // cyan
+      'rgba(147, 51, 234, 0.7)',   // purple
+      'rgba(59, 130, 246, 0.7)',   // blue
+      'rgba(236, 72, 153, 0.7)',   // pink
+      'rgba(16, 185, 129, 0.7)',   // emerald
+    ];
+    return colors[index % colors.length];
+  };
 
   // Social media links for footer/mobile menu
   const socialLinks = [
@@ -179,20 +196,43 @@ export const MainHeader = () => {
         boxShadow: '0 0 20px rgba(0, 235, 214, 0.15), 0 0 40px rgba(111, 76, 255, 0.1)'
       }}
     >
-      {/* Subtle geometric background patterns - with z-index control */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-5 z-background">
-        <SacredGeometry 
-          type="merkaba" 
-          className="absolute -top-20 -right-20 w-64 h-64 text-cyan-400" 
-          animated={true}
-          aria-hidden="true"
-        />
-        <SacredGeometry 
-          type="dodecahedron" 
-          className="absolute -bottom-40 -left-40 w-96 h-96 text-purple-400" 
-          animated={true}
-          aria-hidden="true"
-        />
+      {/* Enhanced geometric background patterns with multiple sacred geometry elements */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-background">
+        {/* Top-right pattern */}
+        <div className="absolute -top-8 -right-8 opacity-5">
+          <SacredGeometry
+            type="flower-of-life"
+            color="rgba(6, 182, 212, 0.5)"
+            size={200}
+            animated={true}
+            animationDuration={120}
+            aria-hidden="true"
+          />
+        </div>
+        
+        {/* Bottom-left pattern */}
+        <div className="absolute -bottom-16 -left-16 opacity-5">
+          <SacredGeometry
+            type="sri-yantra"
+            color="rgba(147, 51, 234, 0.5)"
+            size={300}
+            animated={true}
+            animationDuration={180}
+            aria-hidden="true"
+          />
+        </div>
+        
+        {/* Subtle central pattern */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-[0.03]">
+          <SacredGeometry
+            type="merkaba"
+            color="white"
+            size={400}
+            animated={true}
+            animationDuration={240}
+            aria-hidden="true"
+          />
+        </div>
       </div>
       
       <div className="container mx-auto px-4 h-full relative">
@@ -276,8 +316,19 @@ export const MainHeader = () => {
                   }`}
                   aria-current={location.includes(item.path) && (item.path === "/" ? location === "/" : true) ? "page" : undefined}
                 >
+                  {/* Interactive background geometry appears on hover - based on specifications */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-cosmic-background">
+                    <SacredGeometry
+                      type="merkaba"
+                      color={getColorForIndex(index)}
+                      size={40}
+                      animated={true}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  
                   <motion.span 
-                    className="flex items-center space-x-1"
+                    className="flex items-center space-x-1 relative z-10"
                     whileHover={{ y: -2 }}
                     whileTap={{ y: 0 }}
                     transition={{ type: "spring", stiffness: 400, damping: 17 }}
