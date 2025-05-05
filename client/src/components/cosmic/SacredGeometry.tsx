@@ -2,537 +2,365 @@
  * SacredGeometry.tsx
  * 
  * Component Type: cosmic
- * Migrated from: v0 components
- * Migration Date: 2025-04-05
+ * Migrated from v0 components - Migration 2025-05-05
  */
 
-import React, { useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import React from 'react';
+import { cn } from '../../lib/utils';
 
-interface SacredGeometryProps {
-  type: 'flower-of-life' | 'sri-yantra' | 'metatron-cube' | 'pentagon-star' | 'hexagon' | 'vesica-piscis' | 'golden-spiral';
+export interface SacredGeometryProps {
+  variant?: 'flower-of-life' | 'seed-of-life' | 'tree-of-life' | 'sri-yantra' | 'metatron-cube' | 'vesica-piscis' | 'torus' | 'merkaba';
   size?: number;
-  color?: string;
-  animate?: boolean;
-  animationDuration?: number;
-  lineWidth?: number;
   className?: string;
-  showLabels?: boolean;
-  style?: React.CSSProperties;
+  strokeWidth?: number;
+  fillOpacity?: number;
+  animated?: boolean;
+  rotationSpeed?: 'slow' | 'medium' | 'fast';
+  glowIntensity?: 'none' | 'subtle' | 'medium' | 'strong';
+  glowColor?: string;
+  interactive?: boolean;
 }
 
+/**
+ * SacredGeometry Component
+ * Renders sacred geometry patterns used in cosmic UI elements
+ */
 const SacredGeometry: React.FC<SacredGeometryProps> = ({
-  type,
-  size = 300,
-  color = '#7c3aed',
-  animate = false,
-  animationDuration = 60,
-  lineWidth = 1,
-  className = '',
-  showLabels = false,
-  style = {},
+  variant = 'flower-of-life',
+  size = 200,
+  className,
+  strokeWidth = 1,
+  fillOpacity = 0.1,
+  animated = true,
+  rotationSpeed = 'medium',
+  glowIntensity = 'subtle',
+  glowColor,
+  interactive = false,
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>(0);
-  const rotationRef = useRef<number>(0);
+  // Calculate rotation animation duration based on speed
+  const rotationDuration = rotationSpeed === 'slow' ? '30s' : 
+                          rotationSpeed === 'fast' ? '15s' : '20s';
+                          
+  // Determine animation class based on parameters
+  const animationClass = animated 
+    ? `animate-${rotationSpeed === 'slow' ? 'spin-very-slow' : rotationSpeed === 'fast' ? 'spin-fast' : 'spin-medium'}`
+    : '';
+  
+  // Calculate glow filter based on intensity
+  const glowFilter = glowIntensity !== 'none' 
+    ? `drop-shadow(0 0 ${glowIntensity === 'strong' ? '3px' : glowIntensity === 'medium' ? '2px' : '1px'} ${glowColor || 'rgba(255, 255, 255, 0.7)'})`
+    : '';
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  // Generate component styles
+  const svgStyle: React.CSSProperties = {
+    width: size,
+    height: size,
+    filter: glowFilter,
+    cursor: interactive ? 'pointer' : 'default',
+    transition: 'transform 0.3s ease, filter 0.3s ease',
+  };
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Set canvas size
-    canvas.width = size;
-    canvas.height = size;
-
-    const centerX = size / 2;
-    const centerY = size / 2;
-    const radius = size * 0.4;
-
-    // Function to draw different sacred geometry patterns
-    const drawPattern = (rotation = 0) => {
-      ctx.clearRect(0, 0, size, size);
-      ctx.strokeStyle = color;
-      ctx.lineWidth = lineWidth;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      switch (type) {
-        case 'flower-of-life':
-          drawFlowerOfLife(ctx, centerX, centerY, radius, rotation);
-          break;
-        case 'sri-yantra':
-          drawSriYantra(ctx, centerX, centerY, radius, rotation);
-          break;
-        case 'metatron-cube':
-          drawMetatronCube(ctx, centerX, centerY, radius, rotation);
-          break;
-        case 'pentagon-star':
-          drawPentagonStar(ctx, centerX, centerY, radius, rotation);
-          break;
-        case 'hexagon':
-          drawHexagon(ctx, centerX, centerY, radius, rotation);
-          break;
-        case 'vesica-piscis':
-          drawVesicaPiscis(ctx, centerX, centerY, radius, rotation);
-          break;
-        case 'golden-spiral':
-          drawGoldenSpiral(ctx, centerX, centerY, radius, rotation);
-          break;
-        default:
-          drawFlowerOfLife(ctx, centerX, centerY, radius, rotation);
-      }
-
-      if (showLabels) {
-        drawLabel(ctx, centerX, centerY + radius + 30, type.replace(/-/g, ' '));
-      }
-    };
-
-    // Flower of Life pattern
-    function drawFlowerOfLife(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, rotation: number) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotation);
-      ctx.translate(-cx, -cy);
-
-      const smallerRadius = radius / 2;
-      // Center circle
-      ctx.beginPath();
-      ctx.arc(cx, cy, smallerRadius, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Surrounding circles
-      for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i;
-        const x = cx + smallerRadius * Math.cos(angle);
-        const y = cy + smallerRadius * Math.sin(angle);
-        
-        ctx.beginPath();
-        ctx.arc(x, y, smallerRadius, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // Add second layer of circles
-        for (let j = 0; j < 6; j++) {
-          const innerAngle = (Math.PI / 3) * j;
-          const innerX = x + smallerRadius * Math.cos(innerAngle);
-          const innerY = y + smallerRadius * Math.sin(innerAngle);
-          
-          // Only draw if the circle is within the overall radius
-          const distFromCenter = Math.sqrt(Math.pow(innerX - cx, 2) + Math.pow(innerY - cy, 2));
-          if (distFromCenter <= radius * 1.1) {
-            ctx.beginPath();
-            ctx.arc(innerX, innerY, smallerRadius, 0, Math.PI * 2);
-            ctx.stroke();
-          }
-        }
-      }
-
-      ctx.restore();
+  // Generate hover event handlers if interactive
+  const interactiveProps = interactive ? {
+    onMouseEnter: (e: React.MouseEvent) => {
+      const target = e.currentTarget as HTMLElement;
+      target.style.transform = 'scale(1.05)';
+      target.style.filter = `drop-shadow(0 0 ${glowIntensity === 'strong' ? '5px' : glowIntensity === 'medium' ? '4px' : '3px'} ${glowColor || 'rgba(255, 255, 255, 0.9)'})`;
+    },
+    onMouseLeave: (e: React.MouseEvent) => {
+      const target = e.currentTarget as HTMLElement;
+      target.style.transform = 'scale(1)';
+      target.style.filter = glowFilter;
     }
+  } : {};
 
-    // Sri Yantra pattern
-    function drawSriYantra(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, rotation: number) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotation);
-      ctx.translate(-cx, -cy);
-
-      // Draw triangles
-      // Downward-pointing triangle
-      ctx.beginPath();
-      ctx.moveTo(cx - radius, cy + radius * 0.577);
-      ctx.lineTo(cx + radius, cy + radius * 0.577);
-      ctx.lineTo(cx, cy - radius * 1.155);
-      ctx.closePath();
-      ctx.stroke();
-
-      // Upward-pointing triangle
-      ctx.beginPath();
-      ctx.moveTo(cx - radius, cy - radius * 0.577);
-      ctx.lineTo(cx + radius, cy - radius * 0.577);
-      ctx.lineTo(cx, cy + radius * 1.155);
-      ctx.closePath();
-      ctx.stroke();
-
-      // Inner triangles
-      const innerRadius = radius * 0.8;
-      // Inner downward-pointing triangle
-      ctx.beginPath();
-      ctx.moveTo(cx - innerRadius, cy + innerRadius * 0.577);
-      ctx.lineTo(cx + innerRadius, cy + innerRadius * 0.577);
-      ctx.lineTo(cx, cy - innerRadius * 1.155);
-      ctx.closePath();
-      ctx.stroke();
-
-      // Inner upward-pointing triangle
-      ctx.beginPath();
-      ctx.moveTo(cx - innerRadius, cy - innerRadius * 0.577);
-      ctx.lineTo(cx + innerRadius, cy - innerRadius * 0.577);
-      ctx.lineTo(cx, cy + innerRadius * 1.155);
-      ctx.closePath();
-      ctx.stroke();
-
-      // Smallest triangles
-      const smallestRadius = radius * 0.5;
-      // Smallest downward-pointing triangle
-      ctx.beginPath();
-      ctx.moveTo(cx - smallestRadius, cy + smallestRadius * 0.577);
-      ctx.lineTo(cx + smallestRadius, cy + smallestRadius * 0.577);
-      ctx.lineTo(cx, cy - smallestRadius * 1.155);
-      ctx.closePath();
-      ctx.stroke();
-
-      // Smallest upward-pointing triangle
-      ctx.beginPath();
-      ctx.moveTo(cx - smallestRadius, cy - smallestRadius * 0.577);
-      ctx.lineTo(cx + smallestRadius, cy - smallestRadius * 0.577);
-      ctx.lineTo(cx, cy + smallestRadius * 1.155);
-      ctx.closePath();
-      ctx.stroke();
-
-      // Central dot (bindu)
-      ctx.beginPath();
-      ctx.arc(cx, cy, 3, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
-    }
-
-    // Metatron's Cube pattern
-    function drawMetatronCube(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, rotation: number) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotation);
-      ctx.translate(-cx, -cy);
-
-      // Draw 13 circles representing the 13 spheres of Metatron's Cube
-      const points = [];
-      
-      // Center point
-      points.push({x: cx, y: cy});
-      
-      // First ring: 6 points in a hexagon
-      const innerRadius = radius * 0.5;
-      for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i;
-        points.push({
-          x: cx + innerRadius * Math.cos(angle),
-          y: cy + innerRadius * Math.sin(angle)
-        });
-      }
-      
-      // Second ring: 6 points in a larger hexagon
-      const outerRadius = radius * 0.85;
-      for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i + Math.PI / 6; // Offset by 30 degrees
-        points.push({
-          x: cx + outerRadius * Math.cos(angle),
-          y: cy + outerRadius * Math.sin(angle)
-        });
-      }
-
-      // Draw circles at each point
-      points.forEach(point => {
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Connect all points to create the "cube"
-      for (let i = 0; i < points.length; i++) {
-        for (let j = i + 1; j < points.length; j++) {
-          ctx.beginPath();
-          ctx.moveTo(points[i].x, points[i].y);
-          ctx.lineTo(points[j].x, points[j].y);
-          ctx.stroke();
-        }
-      }
-
-      ctx.restore();
-    }
-
-    // Pentagon star (pentagram)
-    function drawPentagonStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, rotation: number) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotation);
-      ctx.translate(-cx, -cy);
-
-      ctx.beginPath();
-      // Draw a pentagram
-      const points = 5;
-      const angleOffset = Math.PI / 2; // Start from top
-      
-      // First, calculate all the outer points
-      const outerPoints = [];
-      for (let i = 0; i < points; i++) {
-        const angle = angleOffset + (Math.PI * 2 * i) / points;
-        outerPoints.push({
-          x: cx + radius * Math.cos(angle),
-          y: cy + radius * Math.sin(angle)
-        });
-      }
-      
-      // Connect every second point to create the star
-      ctx.moveTo(outerPoints[0].x, outerPoints[0].y);
-      ctx.lineTo(outerPoints[2].x, outerPoints[2].y);
-      ctx.lineTo(outerPoints[4].x, outerPoints[4].y);
-      ctx.lineTo(outerPoints[1].x, outerPoints[1].y);
-      ctx.lineTo(outerPoints[3].x, outerPoints[3].y);
-      ctx.closePath();
-      ctx.stroke();
-
-      // Also draw the pentagon
-      ctx.beginPath();
-      for (let i = 0; i < points; i++) {
-        const angle = angleOffset + (Math.PI * 2 * i) / points;
-        const x = cx + radius * Math.cos(angle);
-        const y = cy + radius * Math.sin(angle);
+  // SVG for Merkaba (Star Tetrahedron)
+  if (variant === 'merkaba') {
+    return (
+      <svg
+        className={cn('text-current', animationClass, className)}
+        style={svgStyle}
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+        {...interactiveProps}
+      >
+        {/* Upward-pointing tetrahedron */}
+        <path
+          d="M50 10 L85 75 L15 75 Z"
+          fill="currentColor"
+          fillOpacity={fillOpacity}
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+        />
         
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      }
-      ctx.closePath();
-      ctx.stroke();
-
-      ctx.restore();
-    }
-
-    // Hexagon
-    function drawHexagon(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, rotation: number) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotation);
-      ctx.translate(-cx, -cy);
-
-      // Draw main hexagon
-      ctx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i;
-        const x = cx + radius * Math.cos(angle);
-        const y = cy + radius * Math.sin(angle);
+        {/* Downward-pointing tetrahedron */}
+        <path
+          d="M50 90 L85 25 L15 25 Z"
+          fill="currentColor"
+          fillOpacity={fillOpacity * 0.8}
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+        />
         
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      }
-      ctx.closePath();
-      ctx.stroke();
-
-      // Draw inner hexagon
-      const innerRadius = radius * 0.7;
-      ctx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i;
-        const x = cx + innerRadius * Math.cos(angle);
-        const y = cy + innerRadius * Math.sin(angle);
+        {/* Center circle */}
+        <circle
+          cx="50"
+          cy="50"
+          r="5"
+          fill="currentColor"
+          fillOpacity={fillOpacity * 1.5}
+          stroke="currentColor"
+          strokeWidth={strokeWidth * 0.5}
+        />
         
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      }
-      ctx.closePath();
-      ctx.stroke();
+        {/* Connecting lines */}
+        <line x1="50" y1="10" x2="50" y2="90" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.6" />
+        <line x1="15" y1="25" x2="85" y2="75" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.6" />
+        <line x1="15" y1="75" x2="85" y2="25" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.6" />
+      </svg>
+    );
+  }
 
-      // Connect vertices to create sacred geometry pattern
-      for (let i = 0; i < 6; i++) {
-        const angle1 = (Math.PI / 3) * i;
-        const x1 = cx + radius * Math.cos(angle1);
-        const y1 = cy + radius * Math.sin(angle1);
+  // SVG for Flower of Life
+  if (variant === 'flower-of-life') {
+    return (
+      <svg
+        className={cn('text-current', animationClass, className)}
+        style={svgStyle}
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+        {...interactiveProps}
+      >
+        {/* Center circle */}
+        <circle cx="50" cy="50" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
         
-        for (let j = 0; j < 6; j++) {
-          if (i !== j && (i + j) % 3 === 0) { // Connect opposite points
-            const angle2 = (Math.PI / 3) * j;
-            const x2 = cx + radius * Math.cos(angle2);
-            const y2 = cy + radius * Math.sin(angle2);
-            
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
-          }
-        }
-      }
-
-      ctx.restore();
-    }
-
-    // Vesica Piscis
-    function drawVesicaPiscis(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, rotation: number) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotation);
-      ctx.translate(-cx, -cy);
-
-      const r = radius * 0.6;
-      const d = r; // Distance between circle centers (equal to radius for Vesica Piscis)
-      
-      // First circle
-      ctx.beginPath();
-      ctx.arc(cx - d/2, cy, r, 0, Math.PI * 2);
-      ctx.stroke();
-      
-      // Second circle
-      ctx.beginPath();
-      ctx.arc(cx + d/2, cy, r, 0, Math.PI * 2);
-      ctx.stroke();
-      
-      // Connecting lines to show the vesica piscis shape
-      const h = Math.sqrt(r*r - (d/2)*(d/2)); // Height of the vesica piscis
-      
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - h);
-      ctx.lineTo(cx, cy + h);
-      ctx.stroke();
-      
-      // Draw the eye-like shape
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - h);
-      ctx.arc(cx - d/2, cy, r, -Math.PI/3, Math.PI/3, false);
-      ctx.arc(cx + d/2, cy, r, Math.PI*2/3, Math.PI*4/3, false);
-      ctx.closePath();
-      ctx.stroke();
-
-      ctx.restore();
-    }
-
-    // Golden Spiral
-    function drawGoldenSpiral(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, rotation: number) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotation);
-      ctx.translate(-cx, -cy);
-
-      const phi = 1.618033988749895; // Golden ratio
-      const maxIterations = 10;
-      const initialSize = radius * 0.7;
-      
-      let currentSize = initialSize;
-      let currentX = cx - currentSize / 2;
-      let currentY = cy - currentSize / 2;
-      
-      // Draw Fibonacci rectangles
-      for (let i = 0; i < maxIterations; i++) {
-        ctx.beginPath();
-        ctx.rect(currentX, currentY, currentSize, currentSize);
-        ctx.stroke();
+        {/* First ring of 6 circles */}
+        <circle cx="50" cy="30" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="67.3" cy="40" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="67.3" cy="60" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="50" cy="70" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="32.7" cy="60" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="32.7" cy="40" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
         
-        // Prepare for next rectangle
-        const nextSize = currentSize / phi;
+        {/* Outer ring of 12 circles */}
+        <circle cx="50" cy="10" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
+        <circle cx="76.6" cy="20" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
+        <circle cx="84.6" cy="50" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
+        <circle cx="76.6" cy="80" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
+        <circle cx="50" cy="90" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
+        <circle cx="23.4" cy="80" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
+        <circle cx="15.4" cy="50" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
+        <circle cx="23.4" cy="20" r="10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
+      </svg>
+    );
+  }
+
+  // SVG for Seed of Life
+  if (variant === 'seed-of-life') {
+    return (
+      <svg
+        className={cn('text-current', animationClass, className)}
+        style={svgStyle}
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+        {...interactiveProps}
+      >
+        {/* Center circle */}
+        <circle cx="50" cy="50" r="15" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
         
-        // Position next rectangle (rotates 90 degrees counter-clockwise each time)
-        if (i % 4 === 0) {
-          currentX = currentX;
-          currentY = currentY - nextSize;
-        } else if (i % 4 === 1) {
-          currentX = currentX - nextSize;
-          currentY = currentY;
-        } else if (i % 4 === 2) {
-          currentX = currentX;
-          currentY = currentY + currentSize - nextSize;
-        } else if (i % 4 === 3) {
-          currentX = currentX + currentSize - nextSize;
-          currentY = currentY;
-        }
+        {/* 6 surrounding circles */}
+        <circle cx="50" cy="25" r="15" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="72" cy="37.5" r="15" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="72" cy="62.5" r="15" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="50" cy="75" r="15" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="28" cy="62.5" r="15" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="28" cy="37.5" r="15" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+      </svg>
+    );
+  }
+
+  // SVG for Metatron's Cube
+  if (variant === 'metatron-cube') {
+    return (
+      <svg
+        className={cn('text-current', animationClass, className)}
+        style={svgStyle}
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+        {...interactiveProps}
+      >
+        {/* 13 circles */}
+        <circle cx="50" cy="50" r="5" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 1.5} />
         
-        currentSize = nextSize;
-      }
-      
-      // Draw the spiral
-      ctx.beginPath();
-      currentSize = initialSize;
-      
-      // Start at the outer edge of the largest square
-      let startX = cx + initialSize / 2;
-      let startY = cy - initialSize / 2;
-      
-      ctx.moveTo(startX, startY);
-      
-      // Draw quarter circles for each rectangle
-      for (let i = 0; i < maxIterations; i++) {
-        let centerX, centerY, startAngle, endAngle;
+        {/* Inner ring */}
+        <circle cx="50" cy="30" r="5" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="70" cy="40" r="5" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="70" cy="60" r="5" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="50" cy="70" r="5" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="30" cy="60" r="5" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="30" cy="40" r="5" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
         
-        if (i % 4 === 0) {
-          centerX = cx + currentSize / 2;
-          centerY = cy + currentSize / 2;
-          startAngle = Math.PI * 3/2;
-          endAngle = Math.PI;
-        } else if (i % 4 === 1) {
-          centerX = cx - currentSize / 2;
-          centerY = cy + currentSize / 2;
-          startAngle = Math.PI;
-          endAngle = Math.PI / 2;
-        } else if (i % 4 === 2) {
-          centerX = cx - currentSize / 2;
-          centerY = cy - currentSize / 2;
-          startAngle = Math.PI / 2;
-          endAngle = 0;
-        } else if (i % 4 === 3) {
-          centerX = cx + currentSize / 2;
-          centerY = cy - currentSize / 2;
-          startAngle = 0;
-          endAngle = Math.PI * 3/2;
-        }
+        {/* Outer ring */}
+        <circle cx="50" cy="10" r="5" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
+        <circle cx="90" cy="30" r="5" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
+        <circle cx="90" cy="70" r="5" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
+        <circle cx="50" cy="90" r="5" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
+        <circle cx="10" cy="70" r="5" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
+        <circle cx="10" cy="30" r="5" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.8} />
         
-        ctx.arc(centerX, centerY, currentSize, startAngle, endAngle, false);
-        currentSize = currentSize / phi;
-      }
-      
-      ctx.stroke();
+        {/* Connection lines - inner hexagon */}
+        <line x1="50" y1="30" x2="70" y2="40" stroke="currentColor" strokeWidth={strokeWidth * 0.7} strokeOpacity="0.7" />
+        <line x1="70" y1="40" x2="70" y2="60" stroke="currentColor" strokeWidth={strokeWidth * 0.7} strokeOpacity="0.7" />
+        <line x1="70" y1="60" x2="50" y2="70" stroke="currentColor" strokeWidth={strokeWidth * 0.7} strokeOpacity="0.7" />
+        <line x1="50" y1="70" x2="30" y2="60" stroke="currentColor" strokeWidth={strokeWidth * 0.7} strokeOpacity="0.7" />
+        <line x1="30" y1="60" x2="30" y2="40" stroke="currentColor" strokeWidth={strokeWidth * 0.7} strokeOpacity="0.7" />
+        <line x1="30" y1="40" x2="50" y2="30" stroke="currentColor" strokeWidth={strokeWidth * 0.7} strokeOpacity="0.7" />
+        
+        {/* Connection lines - to center */}
+        <line x1="50" y1="50" x2="50" y2="30" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.5" />
+        <line x1="50" y1="50" x2="70" y2="40" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.5" />
+        <line x1="50" y1="50" x2="70" y2="60" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.5" />
+        <line x1="50" y1="50" x2="50" y2="70" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.5" />
+        <line x1="50" y1="50" x2="30" y2="60" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.5" />
+        <line x1="50" y1="50" x2="30" y2="40" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.5" />
+        
+        {/* Connection lines - outer edges */}
+        <line x1="50" y1="10" x2="90" y2="30" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.4" />
+        <line x1="90" y1="30" x2="90" y2="70" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.4" />
+        <line x1="90" y1="70" x2="50" y2="90" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.4" />
+        <line x1="50" y1="90" x2="10" y2="70" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.4" />
+        <line x1="10" y1="70" x2="10" y2="30" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.4" />
+        <line x1="10" y1="30" x2="50" y2="10" stroke="currentColor" strokeWidth={strokeWidth * 0.5} strokeOpacity="0.4" />
+      </svg>
+    );
+  }
 
-      ctx.restore();
-    }
+  // SVG for Sri Yantra
+  if (variant === 'sri-yantra') {
+    return (
+      <svg
+        className={cn('text-current', animationClass, className)}
+        style={svgStyle}
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+        {...interactiveProps}
+      >
+        {/* Outer square */}
+        <rect x="10" y="10" width="80" height="80" stroke="currentColor" strokeWidth={strokeWidth} fill="none" />
+        
+        {/* Outer triangle pointing down */}
+        <polygon points="10,30 90,30 50,90" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.5} />
+        
+        {/* Outer triangle pointing up */}
+        <polygon points="10,70 90,70 50,10" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity * 0.5} />
+        
+        {/* Inner triangle pointing down */}
+        <polygon points="25,40 75,40 50,70" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        
+        {/* Inner triangle pointing up */}
+        <polygon points="25,60 75,60 50,30" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        
+        {/* Center dot */}
+        <circle cx="50" cy="50" r="3" fill="currentColor" />
+      </svg>
+    );
+  }
 
-    // Draw label text
-    function drawLabel(ctx: CanvasRenderingContext2D, x: number, y: number, text: string) {
-      ctx.fillStyle = color;
-      ctx.font = '14px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(text, x, y);
-    }
+  // SVG for Vesica Piscis
+  if (variant === 'vesica-piscis') {
+    return (
+      <svg
+        className={cn('text-current', animationClass, className)}
+        style={svgStyle}
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+        {...interactiveProps}
+      >
+        <circle cx="40" cy="50" r="30" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+        <circle cx="60" cy="50" r="30" stroke="currentColor" strokeWidth={strokeWidth} fill="currentColor" fillOpacity={fillOpacity} />
+      </svg>
+    );
+  }
 
-    // Animation loop
-    const animate = () => {
-      if (animate) {
-        rotationRef.current += 0.001; // Adjust rotation speed
-        drawPattern(rotationRef.current);
-        animationRef.current = requestAnimationFrame(animate);
-      } else {
-        drawPattern(0);
-      }
-    };
+  // SVG for Torus
+  if (variant === 'torus') {
+    return (
+      <svg
+        className={cn('text-current', animationClass, className)}
+        style={svgStyle}
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+        {...interactiveProps}
+      >
+        <ellipse cx="50" cy="50" rx="40" ry="15" stroke="currentColor" strokeWidth={strokeWidth} fill="none" />
+        <ellipse cx="50" cy="50" rx="40" ry="15" stroke="currentColor" strokeWidth={strokeWidth} fill="none" transform="rotate(30, 50, 50)" />
+        <ellipse cx="50" cy="50" rx="40" ry="15" stroke="currentColor" strokeWidth={strokeWidth} fill="none" transform="rotate(60, 50, 50)" />
+        <ellipse cx="50" cy="50" rx="40" ry="15" stroke="currentColor" strokeWidth={strokeWidth} fill="none" transform="rotate(90, 50, 50)" />
+        <ellipse cx="50" cy="50" rx="40" ry="15" stroke="currentColor" strokeWidth={strokeWidth} fill="none" transform="rotate(120, 50, 50)" />
+        <ellipse cx="50" cy="50" rx="40" ry="15" stroke="currentColor" strokeWidth={strokeWidth} fill="none" transform="rotate(150, 50, 50)" />
+        
+        <circle cx="50" cy="50" r="5" fill="currentColor" fillOpacity={fillOpacity * 1.5} stroke="currentColor" strokeWidth={strokeWidth * 0.5} />
+      </svg>
+    );
+  }
 
-    animate();
+  // SVG for Tree of Life
+  if (variant === 'tree-of-life') {
+    return (
+      <svg
+        className={cn('text-current', animationClass, className)}
+        style={svgStyle}
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+        {...interactiveProps}
+      >
+        {/* The 10 Sephirot (circles) */}
+        <circle cx="50" cy="10" r="7" fill="currentColor" fillOpacity={fillOpacity} stroke="currentColor" strokeWidth={strokeWidth} /> {/* Keter */}
+        <circle cx="30" cy="25" r="7" fill="currentColor" fillOpacity={fillOpacity} stroke="currentColor" strokeWidth={strokeWidth} /> {/* Chokmah */}
+        <circle cx="70" cy="25" r="7" fill="currentColor" fillOpacity={fillOpacity} stroke="currentColor" strokeWidth={strokeWidth} /> {/* Binah */}
+        <circle cx="50" cy="40" r="7" fill="currentColor" fillOpacity={fillOpacity} stroke="currentColor" strokeWidth={strokeWidth} /> {/* Daat */}
+        <circle cx="30" cy="55" r="7" fill="currentColor" fillOpacity={fillOpacity} stroke="currentColor" strokeWidth={strokeWidth} /> {/* Gevurah */}
+        <circle cx="70" cy="55" r="7" fill="currentColor" fillOpacity={fillOpacity} stroke="currentColor" strokeWidth={strokeWidth} /> {/* Chesed */}
+        <circle cx="50" cy="70" r="7" fill="currentColor" fillOpacity={fillOpacity} stroke="currentColor" strokeWidth={strokeWidth} /> {/* Tiferet */}
+        <circle cx="30" cy="85" r="7" fill="currentColor" fillOpacity={fillOpacity} stroke="currentColor" strokeWidth={strokeWidth} /> {/* Hod */}
+        <circle cx="70" cy="85" r="7" fill="currentColor" fillOpacity={fillOpacity} stroke="currentColor" strokeWidth={strokeWidth} /> {/* Netzach */}
+        <circle cx="50" cy="95" r="7" fill="currentColor" fillOpacity={fillOpacity} stroke="currentColor" strokeWidth={strokeWidth} /> {/* Malkhut */}
+        
+        {/* The 22 connecting lines */}
+        <line x1="50" y1="17" x2="30" y2="25" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="50" y1="17" x2="70" y2="25" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="30" y1="32" x2="70" y2="25" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="30" y1="32" x2="50" y2="40" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="70" y1="32" x2="50" y2="40" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="50" y1="47" x2="30" y2="55" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="50" y1="47" x2="70" y2="55" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="30" y1="62" x2="70" y2="55" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="30" y1="62" x2="50" y2="70" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="70" y1="62" x2="50" y2="70" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="50" y1="77" x2="30" y2="85" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="50" y1="77" x2="70" y2="85" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="30" y1="85" x2="70" y2="85" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="30" y1="85" x2="50" y2="95" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+        <line x1="70" y1="85" x2="50" y2="95" stroke="currentColor" strokeWidth={strokeWidth * 0.7} />
+      </svg>
+    );
+  }
 
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [type, size, color, animate, animationDuration, lineWidth, showLabels]);
-
+  // Default fallback if variant is not recognized
   return (
-    <canvas
-      ref={canvasRef}
-      width={size}
-      height={size}
-      className={cn('sacred-geometry', className)}
-      style={{
-        width: size,
-        height: size,
-        ...style,
-      }}
-      aria-label={`Sacred geometry ${type} pattern`}
-    />
+    <svg
+      className={cn('text-current', animationClass, className)}
+      style={svgStyle}
+      viewBox="0 0 100 100"
+      xmlns="http://www.w3.org/2000/svg"
+      {...interactiveProps}
+    >
+      <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth={strokeWidth} fill="none" />
+      <circle cx="50" cy="50" r="35" stroke="currentColor" strokeWidth={strokeWidth} fill="none" />
+      <circle cx="50" cy="50" r="25" stroke="currentColor" strokeWidth={strokeWidth} fill="none" />
+      <circle cx="50" cy="50" r="15" stroke="currentColor" strokeWidth={strokeWidth} fill="none" />
+      <circle cx="50" cy="50" r="5" fill="currentColor" />
+    </svg>
   );
 };
 

@@ -1,162 +1,159 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+/**
+ * AccessibilityContext.tsx
+ * 
+ * Context provider for accessibility settings across the application.
+ */
 
-type ContrastType = 'default' | 'high' | 'dark';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface AccessibilityContextType {
-  // Accessibility panel state
-  isAccessibilityOpen: boolean;
-  openAccessibilityPanel: () => void;
-  closeAccessibilityPanel: () => void;
+  // Text size preferences
+  textSize: 'normal' | 'large' | 'larger';
+  setTextSize: (size: 'normal' | 'large' | 'larger') => void;
   
-  // Text size
-  textSize: number;
-  setTextSize: (size: number) => void;
+  // Contrast preferences
+  highContrast: boolean;
+  toggleHighContrast: () => void;
   
-  // Contrast
-  contrast: ContrastType;
-  setContrast: (contrast: ContrastType) => void;
-  
-  // Reduced motion
+  // Motion reduction
   reducedMotion: boolean;
-  setReducedMotion: (reducedMotion: boolean) => void;
   toggleReducedMotion: () => void;
   
-  // Voice navigation
-  voiceEnabled: boolean;
-  setVoiceEnabled: (enabled: boolean) => void;
-  
-  // Auto-hide navigation
+  // Navigation preferences
   autoHideNav: boolean;
-  setAutoHideNav: (autoHide: boolean) => void;
+  toggleAutoHideNav: () => void;
+  
+  // Color blindness assistance
+  colorBlindMode: 'normal' | 'protanopia' | 'deuteranopia' | 'tritanopia';
+  setColorBlindMode: (mode: 'normal' | 'protanopia' | 'deuteranopia' | 'tritanopia') => void;
 }
 
-const defaultValues: AccessibilityContextType = {
-  isAccessibilityOpen: false,
-  openAccessibilityPanel: () => {},
-  closeAccessibilityPanel: () => {},
-  
-  textSize: 100,
+// Create the context with default values
+const AccessibilityContext = createContext<AccessibilityContextType>({
+  textSize: 'normal',
   setTextSize: () => {},
-  
-  contrast: 'default',
-  setContrast: () => {},
-  
+  highContrast: false,
+  toggleHighContrast: () => {},
   reducedMotion: false,
-  setReducedMotion: () => {},
   toggleReducedMotion: () => {},
-  
-  voiceEnabled: false,
-  setVoiceEnabled: () => {},
-  
-  autoHideNav: true,
-  setAutoHideNav: () => {},
-};
+  autoHideNav: false,
+  toggleAutoHideNav: () => {},
+  colorBlindMode: 'normal',
+  setColorBlindMode: () => {},
+});
 
-const AccessibilityContext = createContext<AccessibilityContextType>(defaultValues);
+// Create provider component
+export const AccessibilityProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+  // Initialize state with values from localStorage if available
+  const [textSize, setTextSize] = useState<'normal' | 'large' | 'larger'>('normal');
+  const [highContrast, setHighContrast] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [autoHideNav, setAutoHideNav] = useState(false);
+  const [colorBlindMode, setColorBlindMode] = useState<'normal' | 'protanopia' | 'deuteranopia' | 'tritanopia'>('normal');
 
-export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // State
-  const [isAccessibilityOpen, setIsAccessibilityOpen] = useState(false);
-  const [textSize, setTextSizeState] = useState(100);
-  const [contrast, setContrastState] = useState<ContrastType>('default');
-  const [reducedMotion, setReducedMotionState] = useState(false);
-  const [voiceEnabled, setVoiceEnabledState] = useState(false);
-  const [autoHideNav, setAutoHideNavState] = useState(true);
-  
   // Load settings from localStorage on initial render
   useEffect(() => {
     try {
-      const savedSettings = localStorage.getItem('accessibility_settings');
-      if (savedSettings) {
-        const parsed = JSON.parse(savedSettings);
-        if (parsed.textSize) setTextSizeState(parsed.textSize);
-        if (parsed.contrast) setContrastState(parsed.contrast);
-        if (parsed.reducedMotion !== undefined) setReducedMotionState(parsed.reducedMotion);
-        if (parsed.voiceEnabled !== undefined) setVoiceEnabledState(parsed.voiceEnabled);
-        if (parsed.autoHideNav !== undefined) setAutoHideNavState(parsed.autoHideNav);
+      const savedTextSize = localStorage.getItem('accessibility_textSize');
+      if (savedTextSize) {
+        setTextSize(savedTextSize as 'normal' | 'large' | 'larger');
+      }
+      
+      const savedHighContrast = localStorage.getItem('accessibility_highContrast');
+      if (savedHighContrast) {
+        setHighContrast(savedHighContrast === 'true');
+      }
+      
+      const savedReducedMotion = localStorage.getItem('accessibility_reducedMotion');
+      if (savedReducedMotion) {
+        setReducedMotion(savedReducedMotion === 'true');
+      }
+      
+      const savedAutoHideNav = localStorage.getItem('accessibility_autoHideNav');
+      if (savedAutoHideNav) {
+        setAutoHideNav(savedAutoHideNav === 'true');
+      }
+      
+      const savedColorBlindMode = localStorage.getItem('accessibility_colorBlindMode');
+      if (savedColorBlindMode) {
+        setColorBlindMode(savedColorBlindMode as 'normal' | 'protanopia' | 'deuteranopia' | 'tritanopia');
+      }
+      
+      // Check for system preference for reduced motion
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReducedMotion && savedReducedMotion === null) {
+        setReducedMotion(true);
       }
     } catch (error) {
-      console.error('Failed to load accessibility settings:', error);
+      console.error('Error loading accessibility settings:', error);
     }
   }, []);
-  
-  // Save settings to localStorage
+
+  // Save settings to localStorage whenever they change
   useEffect(() => {
     try {
-      localStorage.setItem('accessibility_settings', JSON.stringify({
-        textSize,
-        contrast,
-        reducedMotion,
-        voiceEnabled,
-        autoHideNav,
-      }));
+      localStorage.setItem('accessibility_textSize', textSize);
+      localStorage.setItem('accessibility_highContrast', highContrast.toString());
+      localStorage.setItem('accessibility_reducedMotion', reducedMotion.toString());
+      localStorage.setItem('accessibility_autoHideNav', autoHideNav.toString());
+      localStorage.setItem('accessibility_colorBlindMode', colorBlindMode);
+      
+      // Apply classes to document body based on settings
+      const body = document.body;
+      
+      // Text size classes
+      body.classList.remove('text-size-normal', 'text-size-large', 'text-size-larger');
+      body.classList.add(`text-size-${textSize}`);
+      
+      // High contrast
+      if (highContrast) {
+        body.classList.add('high-contrast');
+      } else {
+        body.classList.remove('high-contrast');
+      }
+      
+      // Reduced motion
+      if (reducedMotion) {
+        body.classList.add('reduced-motion');
+      } else {
+        body.classList.remove('reduced-motion');
+      }
+      
+      // Auto-hide navigation
+      if (autoHideNav) {
+        body.classList.add('nav-auto-hide');
+      } else {
+        body.classList.remove('nav-auto-hide');
+      }
+      
+      // Color blindness
+      body.classList.remove('normal-vision', 'protanopia', 'deuteranopia', 'tritanopia');
+      body.classList.add(colorBlindMode === 'normal' ? 'normal-vision' : colorBlindMode);
+      
     } catch (error) {
-      console.error('Failed to save accessibility settings:', error);
+      console.error('Error saving accessibility settings:', error);
     }
-  }, [textSize, contrast, reducedMotion, voiceEnabled, autoHideNav]);
-  
-  // Panel controls
-  const openAccessibilityPanel = useCallback(() => {
-    setIsAccessibilityOpen(true);
-  }, []);
-  
-  const closeAccessibilityPanel = useCallback(() => {
-    setIsAccessibilityOpen(false);
-  }, []);
-  
-  // Text size control
-  const setTextSize = useCallback((size: number) => {
-    const clamped = Math.min(Math.max(size, 75), 200);
-    setTextSizeState(clamped);
-  }, []);
-  
-  // Contrast control
-  const setContrast = useCallback((value: ContrastType) => {
-    setContrastState(value);
-  }, []);
-  
-  // Reduced motion controls
-  const setReducedMotion = useCallback((value: boolean) => {
-    setReducedMotionState(value);
-  }, []);
-  
-  const toggleReducedMotion = useCallback(() => {
-    setReducedMotionState(prev => !prev);
-  }, []);
-  
-  // Voice control
-  const setVoiceEnabled = useCallback((value: boolean) => {
-    setVoiceEnabledState(value);
-  }, []);
-  
-  // Auto-hide nav control
-  const setAutoHideNav = useCallback((value: boolean) => {
-    setAutoHideNavState(value);
-  }, []);
-  
-  // Accessibility context value
+  }, [textSize, highContrast, reducedMotion, autoHideNav, colorBlindMode]);
+
+  // Toggle functions
+  const toggleHighContrast = () => setHighContrast(prev => !prev);
+  const toggleReducedMotion = () => setReducedMotion(prev => !prev);
+  const toggleAutoHideNav = () => setAutoHideNav(prev => !prev);
+
+  // Context value
   const value = {
-    isAccessibilityOpen,
-    openAccessibilityPanel,
-    closeAccessibilityPanel,
-    
     textSize,
     setTextSize,
-    
-    contrast,
-    setContrast,
-    
+    highContrast,
+    toggleHighContrast,
     reducedMotion,
-    setReducedMotion,
     toggleReducedMotion,
-    
-    voiceEnabled,
-    setVoiceEnabled,
-    
     autoHideNav,
-    setAutoHideNav,
+    toggleAutoHideNav,
+    colorBlindMode,
+    setColorBlindMode,
   };
-  
+
   return (
     <AccessibilityContext.Provider value={value}>
       {children}
@@ -164,4 +161,13 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-export const useAccessibility = () => useContext(AccessibilityContext);
+// Custom hook for using the accessibility context
+export const useAccessibility = () => {
+  const context = useContext(AccessibilityContext);
+  if (context === undefined) {
+    throw new Error('useAccessibility must be used within an AccessibilityProvider');
+  }
+  return context;
+};
+
+export default AccessibilityContext;

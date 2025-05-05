@@ -1,99 +1,62 @@
-// Simple toast implementation for auth notifications
-// This is a minimal implementation to avoid full shadcn dependencies
+/**
+ * use-toast.ts
+ * 
+ * Toast notification hook for displaying message notifications across the app.
+ */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
-export type ToastVariant = 'default' | 'destructive' | 'success';
-
-export interface Toast {
-  id: string;
-  title?: string;
+interface Toast {
+  id?: string;
+  title: string;
   description?: string;
-  variant?: ToastVariant;
+  variant?: 'default' | 'destructive' | 'success';
   duration?: number;
 }
 
-export interface ToastOptions {
-  title?: string;
-  description?: string;
-  variant?: ToastVariant;
-  duration?: number;
-}
-
-// Create a singleton toast service for direct imports
-let toastSingleton: ReturnType<typeof createToastService>;
-
-// Factory function to create the toast service
-function createToastService() {
-  // State will be maintained in this closure
-  let toasts: Toast[] = [];
-  let listeners: Function[] = [];
-
-  const notifyListeners = () => {
-    listeners.forEach(listener => listener(toasts));
-  };
-
-  return {
-    addListener(listener: Function) {
-      listeners.push(listener);
-      return () => {
-        listeners = listeners.filter(l => l !== listener);
-      };
-    },
-    getToasts() {
-      return [...toasts];
-    },
-    toast(options: ToastOptions) {
-      const id = Math.random().toString(36).substring(2, 9);
-      const newToast: Toast = {
-        id,
-        title: options.title,
-        description: options.description,
-        variant: options.variant || 'default',
-        duration: options.duration || 5000,
-      };
-
-      toasts = [...toasts, newToast];
-      notifyListeners();
-
-      // Auto dismiss after duration
-      setTimeout(() => {
-        toasts = toasts.filter(t => t.id !== id);
-        notifyListeners();
-      }, newToast.duration);
-
-      return id;
-    },
-    dismiss(id: string) {
-      toasts = toasts.filter(t => t.id !== id);
-      notifyListeners();
-    }
-  };
-}
-
-// Initialize the singleton if it doesn't exist
-if (!toastSingleton) {
-  toastSingleton = createToastService();
-}
-
-// Export the direct toast function for use in components
-export const toast = (options: ToastOptions) => toastSingleton.toast(options);
-
-// Hook for components that need to display toasts
-export const useToast = () => {
-  const [toasts, setToasts] = useState<Toast[]>(toastSingleton.getToasts());
-
-  // Subscribe to toast changes
-  React.useEffect(() => {
-    const cleanup = toastSingleton.addListener((updatedToasts: Toast[]) => {
-      setToasts([...updatedToasts]);
-    });
-    return cleanup;
-  }, []);
-
-  return {
-    toast: toastSingleton.toast,
-    dismiss: toastSingleton.dismiss,
-    toasts,
-  };
+// Standalone toast function for direct imports
+export const toast = (props: Toast) => {
+  const id = Math.random().toString(36).substring(2, 9);
+  
+  // For now, just show a console message
+  console.log(`Toast: ${props.title} - ${props.description || ''}`);
+  
+  // Simulate removal after duration
+  setTimeout(() => {
+    // This would remove the toast in a real implementation
+  }, props.duration || 5000);
+  
+  return id;
 };
+
+export function useToast() {
+  // In a real implementation, this would manage a queue of toasts
+  // This is a simplified version for compatibility
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const showToast = (props: Toast) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    const newToast = { ...props, id };
+    
+    // In a real implementation, this would add to state and trigger UI
+    setToasts((prev) => [...prev, newToast]);
+    
+    // For now, just show a console message
+    console.log(`Toast: ${props.title} - ${props.description || ''}`);
+    
+    // Simulate removal after duration
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, props.duration || 5000);
+    
+    return id;
+  };
+
+  return {
+    toast: showToast, // Named as toast in the return object for compatibility
+    toasts,
+    dismiss: (id: string) => setToasts((prev) => prev.filter((t) => t.id !== id)),
+  };
+}
+
+export default useToast;

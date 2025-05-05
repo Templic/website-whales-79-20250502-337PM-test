@@ -1,0 +1,311 @@
+Detailed Instructions for Rebuilding the Header
+Overview
+
+This guide provides step-by-step instructions for recreating the "Dale Loves Whales" header with all its components, including sacred geometry elements, navigation, and responsive design aspects.
+1. Basic Header Structure
+File: MainHeader.tsx
+
+import { useState, useCallback, useEffect } from "react";
+import { Link, useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Menu, X, Search, User, Facebook, Twitter, Instagram, Youtube,
+  Music, Headphones, MoonStar, Calendar, ShoppingBag, Home,
+  MessageSquare, Users, Heart, Mail, ArrowLeft, ArrowRight, RotateCw
+} from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useAccessibility } from "@/contexts/AccessibilityContext";
+import { motion } from "framer-motion";
+import SacredGeometry from "../../components/ui/sacred-geometry";
+
+export function MainHeader() {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [, navigate] = useLocation();
+  const { autoHideNav } = useAccessibility();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
+  // Scroll detection
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  return (
+    <header className={`fixed top-0 z-[100] w-full bg-black/80 backdrop-blur-lg border-b border-white/5 transition-all duration-300 ${isScrolled ? 'h-16' : 'h-20'}`}>
+      <div className="container mx-auto px-4 h-full flex items-center justify-between">
+        {/* Logo Component */}
+        {/* Navigation Items */}
+        {/* Search Component */}
+        {/* Mobile Menu Button */}
+      </div>
+      {/* Mobile Menu Panel */}
+    </header>
+  );
+}
+
+2. Logo Implementation
+
+Add inside the header's container div:
+
+{/* Logo */}
+<Link to="/" className="flex items-center space-x-2 group z-10" onClick={() => window.scrollTo(0, 0)}>
+  <div className="relative h-12 w-12">
+    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
+    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
+    <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-xl opacity-20 group-hover:opacity-40 transition-all duration-500"></div>
+    
+    {/* Geometric pattern inside the logo */}
+    <div className="absolute inset-0 opacity-50 group-hover:opacity-80 transition-opacity">
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="w-6 h-6 rotate-45 bg-gradient-to-r from-cyan-500/30 to-purple-600/30 rounded-sm"></div>
+      </div>
+    </div>
+    
+    <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">DLW</span>
+  </div>
+  <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-300 drop-shadow-[0_1px_1px_rgba(0,235,214,0.5)]">
+    Dale Loves Whales
+  </span>
+</Link>
+
+3. Navigation Items
+
+Add this after the logo:
+
+{/* Desktop Navigation */}
+<nav className="hidden md:flex items-center space-x-1 ml-6">
+  {navigationItems.map((item, index) => (
+    <Link 
+      key={item.path} 
+      href={item.path} 
+      className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-white ${
+        location === item.path 
+          ? 'text-white' 
+          : 'text-white/70'
+      }`}
+    >
+      <span>{item.label}</span>
+      {location === item.path && (
+        <motion.div 
+          layoutId="nav-indicator"
+          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+        />
+      )}
+    </Link>
+  ))}
+</nav>
+
+Define navigation items at the top of the file:
+
+const navigationItems = [
+  { path: "/", label: "Home", icon: <Home className="h-4 w-4" /> },
+  { path: "/about", label: "About", icon: <Users className="h-4 w-4" /> },
+  { path: "/music-release", label: "New Music", icon: <Music className="h-4 w-4" /> },
+  { path: "/archived-music", label: "Archived Music", icon: <Headphones className="h-4 w-4" /> },
+  { path: "/tour", label: "Tour", icon: <Calendar className="h-4 w-4" /> },
+  { path: "/shop", label: "Shop", icon: <ShoppingBag className="h-4 w-4" /> },
+  { path: "/engage", label: "Engage", icon: <Heart className="h-4 w-4" /> },
+  { path: "/contact", label: "Contact", icon: <Mail className="h-4 w-4" /> }
+];
+
+const socialLinks = [
+  { name: "Facebook", icon: <Facebook className="h-5 w-5" aria-hidden="true" />, path: "https://facebook.com/DaleTheWhale", external: true },
+  { name: "Twitter", icon: <Twitter className="h-5 w-5" aria-hidden="true" />, path: "https://twitter.com/DaleTheWhale", external: true },
+  { name: "Instagram", icon: <Instagram className="h-5 w-5" aria-hidden="true" />, path: "https://instagram.com/DaleTheWhale", external: true },
+  { name: "YouTube", icon: <Youtube className="h-5 w-5" aria-hidden="true" />, path: "https://youtube.com/DaleTheWhale", external: true }
+];
+
+4. Search Component
+
+Add this to the header's container div:
+
+{/* Search Component */}
+<div className="hidden md:flex items-center ml-auto mr-4">
+  <div className="relative">
+    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <Search className="h-4 w-4 text-white/50" />
+    </div>
+    <input
+      type="text"
+      placeholder="Search..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && searchQuery.trim()) {
+          navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+          setSearchQuery('');
+        }
+      }}
+      className="bg-white/5 border border-white/10 rounded-full py-1.5 pl-10 pr-4 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 transition-all w-48 focus:w-64"
+    />
+  </div>
+</div>
+
+5. Back/Forward Navigation Buttons
+
+Add this before the search component:
+
+{/* Navigation Buttons */}
+<div className="hidden md:flex items-center space-x-1 ml-auto">
+  <button 
+    onClick={() => window.history.back()}
+    className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+    aria-label="Go back"
+  >
+    <ArrowLeft className="h-4 w-4" />
+  </button>
+  <button 
+    onClick={() => window.history.forward()}
+    className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+    aria-label="Go forward"
+  >
+    <ArrowRight className="h-4 w-4" />
+  </button>
+  <button 
+    onClick={() => window.location.reload()}
+    className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+    aria-label="Reload page"
+  >
+    <RotateCw className="h-4 w-4" />
+  </button>
+</div>
+
+6. Mobile Menu Button
+
+Add this after the search component:
+
+{/* Mobile menu button */}
+<button
+  type="button"
+  className="inline-flex md:hidden items-center justify-center p-2 rounded-md text-white hover:text-white focus:outline-none"
+  aria-controls="mobile-menu"
+  aria-expanded={isMobileMenuOpen}
+  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+>
+  <span className="sr-only">Open main menu</span>
+  {isMobileMenuOpen ? (
+    <X className="block h-6 w-6" aria-hidden="true" />
+  ) : (
+    <Menu className="block h-6 w-6" aria-hidden="true" />
+  )}
+</button>
+
+7. Mobile Menu Panel
+
+Add this after the header's container div:
+
+{/* Mobile menu */}
+<div
+  className={`${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'} md:hidden overflow-hidden transition-all duration-300 ease-in-out bg-black/90 backdrop-blur-lg border-t border-white/5`}
+  id="mobile-menu"
+>
+  <div className="px-2 pt-2 pb-4 space-y-1">
+    {navigationItems.map((item) => (
+      <Link
+        key={item.path}
+        href={item.path}
+        className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium ${
+          location === item.path
+            ? 'bg-white/10 text-white'
+            : 'text-white/70 hover:bg-white/5 hover:text-white'
+        }`}
+        onClick={() => {
+          setIsMobileMenuOpen(false);
+          window.scrollTo(0, 0);
+        }}
+      >
+        {item.icon}
+        <span>{item.label}</span>
+      </Link>
+    ))}
+    
+    {/* Mobile Search */}
+    <div className="px-3 py-3">
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-4 w-4 text-white/50" />
+        </div>
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && searchQuery.trim()) {
+              navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+              setSearchQuery('');
+              setIsMobileMenuOpen(false);
+            }
+          }}
+          className="w-full bg-white/5 border border-white/10 rounded-md py-2 pl-10 pr-4 text-white placeholder-white/50 focus:outline-none focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400"
+        />
+      </div>
+    </div>
+    
+    {/* Social Links */}
+    <div className="px-3 py-2 border-t border-white/10">
+      <h3 className="text-sm font-medium text-white/50 mb-2">Connect With Us</h3>
+      <div className="flex space-x-4">
+        {socialLinks.map((social) => (
+          <a
+            key={social.name}
+            href={social.path}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/70 hover:text-white transition-colors"
+            aria-label={`Follow us on ${social.name}`}
+          >
+            {social.icon}
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+
+8. Sacred Geometry Components
+File: sacred-geometry.tsx
+
+import React, { useState, useEffect } from 'react';
+
+type GeometryType = 'flower-of-life' | 'sri-yantra' | 'metatron-cube' | 'pentagon-star' | 'hexagon' | 'vesica-piscis' | 'golden-spiral' | 'merkaba';
+
+interface SacredGeometryProps {
+  type: GeometryType;
+  size?: number;
+  color?: string;
+  animate?: boolean;
+  animationDuration?: number;
+  lineWidth?: number;
+  className?: string;
+  showLabels?: boolean;
+  style?: React.CSSProperties;
+}
+
+const SacredGeometry: React.FC<SacredGeometryProps> = ({
+  type,
+  size = 100,
+  color = 'currentColor',
+  animate = false,
+  animationDuration = 20,
+  lineWidth = 1,
+  className = '',
+  showLabels = false,
+  style,
+}) => {
+  const [rotation, setRotation] = useState(0);
+
+  useEffect(() => {
+    if (!animate) return;
+    
+    const interval = setInterval(() =>

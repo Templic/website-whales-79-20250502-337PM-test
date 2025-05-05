@@ -5,12 +5,12 @@
  * staggered navigation, and cosmic design elements.
  * 
  * Created: 2025-04-05 - Updated with enhancements
- * Latest Update: Added 8 rotating merkaba shapes (4 sets of 2) with sacred geometry elements
+ * Latest Update: Added sacred geometry elements and improved staggered navigation
  */
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "../../hooks/use-toast";
 import { 
   Menu, 
   X, 
@@ -18,743 +18,619 @@ import {
   User, 
   Facebook, 
   Twitter, 
-  Instagram,
+  Instagram, 
   Youtube,
   Music,
+  Headphones,
+  MoonStar,
   Calendar,
-  Send,
-  BookOpen,
+  ShoppingBag,
+  Home,
+  MessageSquare,
   Users,
-  MessageCircle,
-  Settings,
+  Heart,
+  Mail,
+  ArrowLeft,
+  ArrowRight,
+  RotateCw
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { animateScroll as scroll } from "react-scroll";
-import { CosmicText } from "@/components/ui/cosmic-text";
-import { Button } from "@/components/ui/button";
-import { 
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
-import { ShoppingCart } from "@/components/features/shop/ShoppingCart";
+import { useAuth } from "../../hooks/use-auth";
+import { useAccessibility } from "../../contexts/AccessibilityContext";
+import { motion } from "framer-motion";
+import SacredGeometry from "../../components/ui/sacred-geometry";
+// Remove ThemeToggle import as it's now managed in MainLayout
 
-// Define types for the Merkaba component props
-interface MerkabaProps {
-  position: {
-    top?: string;
-    left?: string;
-    right?: string;
-    bottom?: string;
-  };
-  size?: number;
-  rotationSpeed?: number;
-  reverse?: boolean;
-  delay?: number;
-  foregroundColor?: string;
-  backgroundColor?: string;
-  glowIntensity?: number;
+// Define the navigation items structure
+interface NavItem {
+  name: string;
+  path: string;
+  icon: React.ReactNode;
+  glowColor?: string;
 }
 
-// Merkaba component for sacred geometry visualization
-const Merkaba: React.FC<MerkabaProps> = ({ 
-  position, 
-  size = 60, 
-  rotationSpeed = 1, 
-  reverse = false, 
-  delay = 0,
-  foregroundColor = "rgba(180, 210, 255, 0.6)",
-  backgroundColor = "rgba(120, 155, 255, 0.3)",
-  glowIntensity = 0.5
-}) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const animationRef = useRef<number>(0);
-  const [rotation, setRotation] = useState(delay);
+// First row nav items - main navigation
+const primaryNavItems: NavItem[] = [
+  { name: "Home", path: "/", icon: <Home className="h-4 w-4 mr-1" />, glowColor: "cyan" },
+  { name: "About", path: "/about", icon: <MoonStar className="h-4 w-4 mr-1" />, glowColor: "purple" },
+  { name: "Music", path: "/archived-music", icon: <Music className="h-4 w-4 mr-1" />, glowColor: "cyan" },
+  { name: "Tour", path: "/tour", icon: <Calendar className="h-4 w-4 mr-1" />, glowColor: "purple" }
+];
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+// Second row nav items - secondary navigation
+const secondaryNavItems: NavItem[] = [
+  { name: "Shop", path: "/shop", icon: <ShoppingBag className="h-4 w-4 mr-1" />, glowColor: "purple" },
+  { name: "Engage", path: "/engage", icon: <MoonStar className="h-4 w-4 mr-1" />, glowColor: "cyan" },
+  { name: "Blog", path: "/blog", icon: <Headphones className="h-4 w-4 mr-1" />, glowColor: "purple" },
+  { name: "AI Chat", path: "/chat", icon: <MessageSquare className="h-4 w-4 mr-1" />, glowColor: "cyan" }
+];
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+// Community links that should be accessible
+const communityLinks: NavItem[] = [
+  { name: "Community Hub", path: "/community", icon: <Users className="h-4 w-4 mr-1" />, glowColor: "purple" },
+  { name: "Newsletter", path: "/newsletter", icon: <Mail className="h-4 w-4 mr-1" />, glowColor: "cyan" },
+  { name: "Collaboration", path: "/collaboration", icon: <Heart className="h-4 w-4 mr-1" />, glowColor: "cyan" },
+  { name: "Contact", path: "/contact", icon: <MessageSquare className="h-4 w-4 mr-1" />, glowColor: "purple" }
+];
 
-    // Set canvas size
-    canvas.width = size;
-    canvas.height = size;
+// Music links for mobile
+const musicLinks: NavItem[] = [
+  { name: "Music Collection", path: "/archived-music", icon: <Music className="h-4 w-4 mr-1" /> },
+  { name: "Cosmic Connectivity", path: "/cosmic-connectivity", icon: <Music className="h-4 w-4 mr-1" /> }
+];
 
-    const centerX = size / 2;
-    const centerY = size / 2;
-    const radius = size * 0.4;
+// Social media links
+const socialLinks = [
+  { name: "Facebook", icon: <Facebook className="h-5 w-5" aria-hidden="true" />, path: "https://facebook.com/DaleTheWhale", external: true },
+  { name: "Twitter", icon: <Twitter className="h-5 w-5" aria-hidden="true" />, path: "https://twitter.com/DaleTheWhale", external: true },
+  { name: "Instagram", icon: <Instagram className="h-5 w-5" aria-hidden="true" />, path: "https://instagram.com/DaleTheWhale", external: true },
+  { name: "YouTube", icon: <Youtube className="h-5 w-5" aria-hidden="true" />, path: "https://youtube.com/DaleTheWhale", external: true }
+];
 
-    // Animation loop
-    const animate = () => {
-      setRotation(prev => (prev + rotationSpeed / 100) % (Math.PI * 2));
-      animationRef.current = requestAnimationFrame(animate);
-    };
-    
-    animate();
-    
-    return () => {
-      cancelAnimationFrame(animationRef.current);
-    };
-  }, [size, rotationSpeed, reverse, foregroundColor, backgroundColor, glowIntensity]);
-
-  // Draw the merkaba when rotation changes
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const centerX = size / 2;
-    const centerY = size / 2;
-    const radius = size * 0.4;
-
-    // Clear previous drawing
-    ctx.clearRect(0, 0, size, size);
-    
-    // Set shadow for glow effect
-    ctx.shadowColor = foregroundColor;
-    ctx.shadowBlur = 15 * glowIntensity;
-    
-    // Save the canvas state
-    ctx.save();
-    
-    // Move to center and apply rotation
-    ctx.translate(centerX, centerY);
-    ctx.rotate(rotation * (reverse ? -1 : 1));
-    
-    // First tetrahedron (pointing up)
-    ctx.beginPath();
-    for (let i = 0; i < 3; i++) {
-      const angle = (i / 3) * Math.PI * 2;
-      const x = Math.cos(angle) * radius;
-      const y = Math.sin(angle) * radius;
-      
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    }
-    ctx.closePath();
-    ctx.fillStyle = foregroundColor;
-    ctx.fill();
-    ctx.strokeStyle = foregroundColor;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    
-    // Second tetrahedron (pointing down)
-    ctx.beginPath();
-    for (let i = 0; i < 3; i++) {
-      const angle = ((i + 0.5) / 3) * Math.PI * 2;
-      const x = Math.cos(angle) * radius;
-      const y = Math.sin(angle) * radius;
-      
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    }
-    ctx.closePath();
-    ctx.fillStyle = backgroundColor;
-    ctx.fill();
-    ctx.strokeStyle = backgroundColor;
-    ctx.stroke();
-    
-    // Draw star pattern
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const angle1 = (i / 6) * Math.PI * 2;
-      const angle2 = ((i + 3) / 6) * Math.PI * 2;
-      
-      const x1 = Math.cos(angle1) * radius;
-      const y1 = Math.sin(angle1) * radius;
-      const x2 = Math.cos(angle2) * radius;
-      const y2 = Math.sin(angle2) * radius;
-      
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-    }
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.lineWidth = 0.75;
-    ctx.stroke();
-
-    // Restore the canvas state
-    ctx.restore();
-  }, [rotation, size, reverse, foregroundColor, backgroundColor, glowIntensity]);
-
-  return (
-    <div 
-      className="absolute pointer-events-none" 
-      style={{
-        ...position,
-        width: size,
-        height: size,
-        opacity: 0.8,
-        zIndex: -1
-      }}
-    >
-      <canvas
-        ref={canvasRef}
-        width={size}
-        height={size}
-        className="sacred-geometry w-full h-full"
-      />
-    </div>
-  );
-};
-
-export function MainHeader() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+// Define the component as a standard function
+const MainHeader = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [location] = useLocation();
+  const [, navigate] = useLocation();
+  const { autoHideNav } = useAccessibility();
+  const { user } = useAuth();
   const { toast } = useToast();
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // Basic search validation
-      if (searchQuery.length < 2) {
-        toast({
-          title: "Search query too short",
-          description: "Please enter at least 2 characters to search",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // For demonstration purposes, just show a toast
-      toast({
-        title: "Search initiated",
-        description: `Searching for "${searchQuery}"`,
-      });
-      
-      // Close search bar after search is submitted
-      setIsSearchOpen(false);
-      setSearchQuery("");
-    }
-  };
-
-  const scrollToTop = () => {
-    scroll.scrollToTop({
-      duration: 500,
-      smooth: "easeInOutQuart",
-    });
-  };
-
-  // Handle scroll events to change header appearance
+  // Handle scroll event for auto-hiding navigation
   useEffect(() => {
+    let lastScrollY = window.scrollY;
+    
     const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 50);
+      const scrollY = window.scrollY;
+      setIsScrolled(scrollY > 10);
+      
+      // Auto-hide navigation when scrolling down and show when scrolling up
+      if (autoHideNav && scrollY > 100) {
+        const header = document.querySelector('header');
+        if (header) {
+          if (scrollY > lastScrollY) {
+            // Scrolling down - add class to hide
+            header.classList.add('scrolled-down');
+          } else {
+            // Scrolling up - remove class to show
+            header.classList.remove('scrolled-down');
+          }
+        }
+      }
+      lastScrollY = scrollY;
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [autoHideNav]);
 
-  // Navigation items
-  const navigationItems = [
-    { path: "/", label: "Home" },
-    { path: "/music", label: "Music", icon: <Music className="h-5 w-5" /> },
-    { path: "/tour", label: "Tour", icon: <Calendar className="h-5 w-5" /> },
-    { path: "/engage", label: "Engage", icon: <Send className="h-5 w-5" /> },
-    { path: "/blog", label: "Blog", icon: <BookOpen className="h-5 w-5" /> },
-    { path: "/community", label: "Community", icon: <Users className="h-5 w-5" /> },
-    { path: "/contact", label: "Contact", icon: <MessageCircle className="h-5 w-5" /> },
-  ];
+  // Handle navigation click
+  const handleNavigationClick = useCallback((path: string) => {
+    // First scroll to top with smooth behavior
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // Staggered animation for mobile menu items
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
+    // Add a small delay to allow the scroll animation to complete
+    setTimeout(() => {
+      setIsMobileMenuOpen(false);
+      navigate(path);
+    }, 300); // 300ms delay to allow for smooth scroll
+  }, [navigate]);
+
+  // Handle search submit for site-wide search
+  const handleSearchSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // Navigate to search page with query parameter for site-wide search
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}&type=all`);
+      // Reset search input after submission
+      setSearchQuery("");
+      
+      // Log search action for analytics
+      console.log(`Site-wide search performed: "${searchQuery.trim()}"`);
+      
+      // Display toast notification
+      toast({
+        title: "Searching entire site",
+        description: `Finding results for "${searchQuery.trim()}" across all pages`,
+        variant: "default",
+      });
+    }
+  }, [searchQuery, navigate, toast]);
+
+  // Define hover animation variants for nav items
+  const navItemVariants = {
+    initial: { y: 0, opacity: 1 },
+    hover: { y: -3, opacity: 1, transition: { duration: 0.2 } }
   };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 24,
-      },
-    },
-  };
-
-  const isAdminUser = true; // This would normally be determined by auth state
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-black/80 backdrop-blur-md py-2 shadow-lg"
-          : "bg-transparent py-4"
-      }`}
+    <header 
+      id="main-navigation"
+      className={`
+        sticky top-0 z-[51] transition-all duration-300
+        ${isScrolled ? 'py-1' : 'py-3'}
+        ${autoHideNav ? 'transition-transform duration-300' : ''}
+      `}
     >
-      {/* Sacred Geometry Merkaba Elements (4 sets of 2 = 8 total) */}
-      <div className="relative w-full h-full overflow-hidden">
-        {/* Left side merkaba pairs */}
-        <Merkaba 
-          position={{ top: '5px', left: '5%' }} 
-          size={65} 
-          rotationSpeed={0.8} 
-          foregroundColor="rgba(180, 210, 255, 0.5)"
-          backgroundColor="rgba(120, 140, 255, 0.3)"
-          delay={0}
-        />
-        <Merkaba 
-          position={{ top: '15px', left: 'calc(5% + 50px)' }} 
-          size={45} 
-          rotationSpeed={1.2} 
-          reverse={true}
-          foregroundColor="rgba(200, 230, 255, 0.4)"
-          backgroundColor="rgba(140, 180, 255, 0.25)"
-          delay={Math.PI/4}
-        />
-        
-        <Merkaba 
-          position={{ bottom: '15px', left: '10%' }} 
-          size={55} 
-          rotationSpeed={0.9}
-          foregroundColor="rgba(170, 200, 255, 0.5)"
-          backgroundColor="rgba(110, 140, 235, 0.3)"
-          delay={Math.PI/2}
-        />
-        <Merkaba 
-          position={{ bottom: '30px', left: 'calc(10% + 45px)' }} 
-          size={40} 
-          rotationSpeed={1.1} 
-          reverse={true}
-          foregroundColor="rgba(190, 220, 255, 0.4)"
-          backgroundColor="rgba(130, 170, 245, 0.25)"
-          delay={Math.PI/3}
-        />
-        
-        {/* Right side merkaba pairs */}
-        <Merkaba 
-          position={{ top: '5px', right: '5%' }} 
-          size={65} 
-          rotationSpeed={0.8} 
-          foregroundColor="rgba(180, 210, 255, 0.5)"
-          backgroundColor="rgba(120, 140, 255, 0.3)"
-          delay={Math.PI/6}
-        />
-        <Merkaba 
-          position={{ top: '15px', right: 'calc(5% + 50px)' }} 
-          size={45} 
-          rotationSpeed={1.2} 
-          reverse={true}
-          foregroundColor="rgba(200, 230, 255, 0.4)"
-          backgroundColor="rgba(140, 180, 255, 0.25)"
-          delay={Math.PI/8}
-        />
-        
-        <Merkaba 
-          position={{ bottom: '15px', right: '10%' }} 
-          size={55} 
-          rotationSpeed={0.9}
-          foregroundColor="rgba(170, 200, 255, 0.5)"
-          backgroundColor="rgba(110, 140, 235, 0.3)"
-          delay={Math.PI/5}
-        />
-        <Merkaba 
-          position={{ bottom: '30px', right: 'calc(10% + 45px)' }} 
-          size={40} 
-          rotationSpeed={1.1} 
-          reverse={true}
-          foregroundColor="rgba(190, 220, 255, 0.4)"
-          backgroundColor="rgba(130, 170, 245, 0.25)"
-          delay={Math.PI/7}
-        />
-      </div>
-      
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/">
-            <div className="flex items-center cursor-pointer" onClick={scrollToTop}>
-              <div className="relative w-12 h-12 mr-3">
-                <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse"></div>
-                <div className="relative flex items-center justify-center w-full h-full">
-                  <div className="w-8 h-8 text-primary flex items-center justify-center">
-                    {/* Logo Icon - Simplified Sacred Geometry */}
-                    <svg
-                      width="32"
-                      height="32"
-                      viewBox="0 0 32 32"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="text-white"
-                    >
-                      <path
-                        d="M16 2L30 16L16 30L2 16L16 2Z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M16 10L22 16L16 22L10 16L16 10Z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <circle
-                        cx="16"
-                        cy="16"
-                        r="2"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <CosmicText
-                  variant="gradient"
-                  className={`text-xl font-bold transition-all duration-300 ${
-                    isScrolled ? "text-white" : "text-white"
-                  }`}
-                >
-                  Dale Loves Whales
-                </CosmicText>
-                <div className="text-xs text-white/70">Harmonic Journeys</div>
-              </div>
-            </div>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
-            <NavigationMenu>
-              <NavigationMenuList>
-                {navigationItems.map((item) => (
-                  <NavigationMenuItem key={item.path}>
-                    <Link href={item.path}>
-                      <NavigationMenuLink
-                        className={`px-3 py-2 text-sm rounded-md inline-flex items-center transition-colors hover:bg-white/10 focus:bg-white/10 ${
-                          location === item.path
-                            ? "bg-white/10 text-white"
-                            : "text-white/80 hover:text-white"
-                        }`}
-                      >
-                        {item.icon && <span className="mr-1.5">{item.icon}</span>}
-                        {item.label}
-                      </NavigationMenuLink>
-                    </Link>
-                  </NavigationMenuItem>
-                ))}
-              </NavigationMenuList>
-            </NavigationMenu>
-
-            {/* Search button */}
-            <div className="relative ml-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="text-white/80 hover:text-white hover:bg-white/10"
-              >
-                <Search className="h-5 w-5" />
-              </Button>
-
-              {/* Search input */}
-              <AnimatePresence>
-                {isSearchOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "300px" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 top-0 z-20"
-                  >
-                    <div className="flex flex-col">
-                      <form onSubmit={handleSearch} className="flex items-center">
-                        <input
-                          type="text"
-                          placeholder="Search..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          autoFocus
-                          className="w-full px-4 py-2 text-sm bg-black/80 backdrop-blur-lg border border-white/20 rounded-l-md text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                        <Button
-                          type="submit"
-                          variant="default"
-                          className="rounded-l-none"
-                        >
-                          <Search className="h-4 w-4" />
-                        </Button>
-                      </form>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="mt-2 text-white/70 hover:text-white"
-                        onClick={() => window.location.reload()}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                          <path d="M3 3v5h5"></path>
-                        </svg>
-                        Refresh
-                      </Button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* User and Cart */}
-            <div className="flex items-center ml-2 space-x-1">
-              <ShoppingCart />
-              
-              <NavigationMenu>
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger
-                      className="text-white/80 hover:text-white bg-transparent hover:bg-white/10 focus:bg-white/10"
-                    >
-                      <User className="h-5 w-5" />
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <ul className="grid w-[200px] gap-1 p-2 bg-black/90 backdrop-blur-xl border border-white/10 rounded-md shadow-xl">
-                        <li>
-                          <Link href="/account">
-                            <NavigationMenuLink className="flex items-center w-full p-2 text-white/90 rounded-md hover:bg-white/10">
-                              <User className="h-4 w-4 mr-2" />
-                              <span>My Account</span>
-                            </NavigationMenuLink>
-                          </Link>
-                        </li>
-                        <li>
-                          <Link href="/orders">
-                            <NavigationMenuLink className="flex items-center w-full p-2 text-white/90 rounded-md hover:bg-white/10">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="mr-2"
-                              >
-                                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-                                <rect x="9" y="3" width="6" height="4" rx="2" />
-                                <path d="M9 14h.01" />
-                                <path d="M13 14h.01" />
-                                <path d="M9 18h.01" />
-                                <path d="M13 18h.01" />
-                              </svg>
-                              <span>My Orders</span>
-                            </NavigationMenuLink>
-                          </Link>
-                        </li>
-                        {isAdminUser && (
-                          <li>
-                            <Link href="/admin">
-                              <NavigationMenuLink className="flex items-center w-full p-2 text-white/90 rounded-md hover:bg-white/10">
-                                <Settings className="h-4 w-4 mr-2" />
-                                <span>Admin Portal</span>
-                              </NavigationMenuLink>
-                            </Link>
-                          </li>
-                        )}
-                        <li className="mt-1 pt-1 border-t border-white/10">
-                          <Link href="/auth/login">
-                            <NavigationMenuLink className="flex items-center w-full p-2 text-white/90 rounded-md hover:bg-white/10">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="mr-2"
-                              >
-                                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                                <polyline points="10 17 15 12 10 7" />
-                                <line x1="15" y1="12" x2="3" y2="12" />
-                              </svg>
-                              <span>Sign Out</span>
-                            </NavigationMenuLink>
-                          </Link>
-                        </li>
-                      </ul>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
-            </div>
-          </nav>
-
-          {/* Mobile Menu Button */}
-          <div className="flex items-center md:hidden space-x-2">
-            <ShoppingCart />
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleMenu}
-              className="text-white hover:bg-white/10"
-            >
-              {isMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </Button>
+      {/* Background Elements with Sacred Geometry - Centered and sides */}
+      <div className="absolute inset-0 overflow-hidden z-0">
+        {/* FIRST SET - Sacred geometry circles on outer edges */}
+        {/* Left circle foreground - first set */}
+        <div className="absolute top-1/2 left-[8%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-20">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={90} 
+              animated={false} 
+              intensity="medium" 
+              className="text-cyan-300" 
+            />
           </div>
+        </div>
+
+        {/* Left circle background/shadow - first set */}
+        <div className="absolute top-1/2 left-[8%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-10">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '22s', animationDirection: 'reverse' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={110} 
+              animated={false} 
+              intensity="subtle" 
+              className="text-purple-500/50" 
+            />
+          </div>
+        </div>
+
+        {/* SECOND SET - Sacred geometry circles on outer edges */}
+        {/* Right circle foreground - second set */}
+        <div className="absolute top-1/2 right-[8%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-20">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '18s' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={90} 
+              animated={false} 
+              intensity="medium" 
+              className="text-cyan-300" 
+            />
+          </div>
+        </div>
+
+        {/* Right circle background/shadow - second set */}
+        <div className="absolute top-1/2 right-[8%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-10">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '25s', animationDirection: 'reverse' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={110} 
+              animated={false} 
+              intensity="subtle" 
+              className="text-purple-500/50" 
+            />
+          </div>
+        </div>
+
+        {/* THIRD SET - Sacred geometry circles on outer edges */}
+        {/* Left circle foreground - third set (lower) */}
+        <div className="absolute bottom-[10%] left-[15%] transform -translate-x-1/2 hidden md:block z-20">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '20s' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={70} 
+              animated={false} 
+              intensity="medium" 
+              className="text-cyan-300" 
+            />
+          </div>
+        </div>
+
+        {/* Left circle background/shadow - third set (lower) */}
+        <div className="absolute bottom-[10%] left-[15%] transform -translate-x-1/2 hidden md:block z-10">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '28s', animationDirection: 'reverse' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={85} 
+              animated={false} 
+              intensity="subtle" 
+              className="text-purple-500/50" 
+            />
+          </div>
+        </div>
+
+        {/* FOURTH SET - Sacred geometry circles on outer edges */}
+        {/* Right circle foreground - fourth set (lower) */}
+        <div className="absolute bottom-[10%] right-[15%] transform translate-x-1/2 hidden md:block z-20">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '22s' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={70} 
+              animated={false} 
+              intensity="medium" 
+              className="text-cyan-300" 
+            />
+          </div>
+        </div>
+
+        {/* Right circle background/shadow - fourth set (lower) */}
+        <div className="absolute bottom-[10%] right-[15%] transform translate-x-1/2 hidden md:block z-10">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '30s', animationDirection: 'reverse' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={85} 
+              animated={false} 
+              intensity="subtle" 
+              className="text-purple-500/50" 
+            />
+          </div>
+        </div>
+
+        {/* Additional geometric accents */}
+        <div className="absolute inset-0 hidden md:block">
+          {/* Center subtle glow */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[80px] bg-gradient-to-r from-cyan-500/5 via-purple-500/10 to-cyan-500/5 blur-2xl"></div>
+          
+          {/* Top edge accent */}
+          <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent"></div>
+          
+          {/* Bottom edge accent */}
+          <div className="absolute bottom-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/30 to-transparent"></div>
         </div>
       </div>
 
-      {/* Mobile Navigation */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden bg-black/95 backdrop-blur-lg"
+      {/* Semi-transparent overlay for better text contrast */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-0 pointer-events-none"></div>
+
+      {/* Main header content */}
+      <div className="container mx-auto relative z-10">
+        {/* Top navigation bar with logo and primary navigation */}
+        <div className="flex items-center justify-between mb-1">
+          {/* Logo */}
+          <Link 
+            href="/" 
+            onClick={(e) => {
+              e.preventDefault();
+              handleNavigationClick('/');
+            }}
+            className="flex items-center group"
           >
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="container mx-auto px-4 py-4 flex flex-col"
-            >
-              {/* Search Bar */}
-              <motion.form
-                variants={itemVariants}
-                onSubmit={handleSearch}
-                className="mb-4"
-              >
-                <div className="flex items-center">
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-4 py-2 text-sm bg-black/80 backdrop-blur-lg border border-white/20 rounded-l-md text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                  <Button
-                    type="submit"
-                    variant="default"
-                    className="rounded-l-none"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-                </div>
-              </motion.form>
+            {/* Logo container with glow effects */}
+            <div className="relative w-12 h-12 mr-3">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500/40 to-purple-600/40 opacity-90 group-hover:opacity-100 transition-all duration-300"></div>
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500/30 to-purple-600/30 blur-md opacity-70 group-hover:opacity-90 group-hover:scale-110 transition-all duration-500"></div>
               
-              <motion.div variants={itemVariants} className="mb-4">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="w-full text-white/70 hover:text-white flex items-center justify-center"
-                  onClick={() => window.location.reload()}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                    <path d="M3 3v5h5"></path>
-                  </svg>
-                  Refresh
-                </Button>
-              </motion.div>
-
-              {/* Navigation Links */}
-              <div className="space-y-1">
-                {navigationItems.map((item, index) => (
-                  <motion.div key={item.path} variants={itemVariants}>
-                    <Link 
-                      href={item.path}
-                      className={`flex items-center px-4 py-3 rounded-md ${
-                        location === item.path
-                          ? "bg-white/10 text-white"
-                          : "text-white/80 hover:bg-white/5 hover:text-white"
-                      }`}
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.icon && <span className="mr-3">{item.icon}</span>}
-                      <span>{item.label}</span>
-                    </Link>
-                  </motion.div>
-                ))}
+              {/* Logo shape */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <SacredGeometry 
+                  variant="merkaba" 
+                  size={32} 
+                  animated={true} 
+                  className="text-white" 
+                  intensity="vivid"
+                />
               </div>
-
-              {/* User Account */}
-              <motion.div variants={itemVariants} className="mt-4 pt-4 border-t border-white/10">
-                <Link 
-                  href="/account"
-                  className="flex items-center px-4 py-3 rounded-md text-white/80 hover:bg-white/5 hover:text-white"
-                  onClick={() => setIsMenuOpen(false)}
+            </div>
+            
+            {/* Site title */}
+            <div>
+              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
+                Dale Loves Whales
+              </h1>
+              <div className="text-xs text-white/70">Cosmic Harmonies</div>
+            </div>
+          </Link>
+          
+          {/* Primary Navigation - Desktop */}
+          <nav className="hidden md:flex items-center space-x-2">
+            {/* Map through primary nav items */}
+            {primaryNavItems.map((item) => (
+              <motion.div
+                key={item.path}
+                variants={navItemVariants}
+                initial="initial"
+                whileHover="hover"
+              >
+                <Link
+                  href={item.path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigationClick(item.path);
+                  }}
+                  className={`
+                    px-3 py-1.5 text-sm rounded-md flex items-center
+                    transition-colors duration-300 relative group
+                    ${item.path === window.location.pathname
+                      ? 'text-white bg-gradient-to-r from-cyan-600/30 to-purple-600/30 border border-white/10'
+                      : 'text-white/80 hover:text-white border border-transparent hover:border-white/10 hover:bg-white/5'
+                    }
+                  `}
                 >
-                  <User className="h-5 w-5 mr-3" />
-                  <span>My Account</span>
+                  {/* Glow effect for active items */}
+                  {item.path === window.location.pathname && (
+                    <div className={`absolute inset-0 rounded-md ${
+                      item.glowColor === 'cyan' ? 'bg-cyan-600/20' : 'bg-purple-600/20'
+                    } blur-sm -z-10`}></div>
+                  )}
+                  
+                  {item.icon}
+                  <span>{item.name}</span>
                 </Link>
               </motion.div>
-
-              {/* Admin Link */}
-              {isAdminUser && (
-                <motion.div variants={itemVariants}>
-                  <Link 
-                    href="/admin"
-                    className="flex items-center px-4 py-3 rounded-md text-white/80 hover:bg-white/5 hover:text-white"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Settings className="h-5 w-5 mr-3" />
-                    <span>Admin Portal</span>
-                  </Link>
-                </motion.div>
-              )}
-
-              {/* Social Links */}
-              <motion.div variants={itemVariants} className="mt-4 pt-4 border-t border-white/10">
-                <div className="flex items-center justify-center space-x-4 py-3">
-                  <a href="https://facebook.com" className="text-white/70 hover:text-white" target="_blank" rel="noopener noreferrer">
-                    <Facebook className="h-6 w-6" />
-                  </a>
-                  <a href="https://twitter.com" className="text-white/70 hover:text-white" target="_blank" rel="noopener noreferrer">
-                    <Twitter className="h-6 w-6" />
-                  </a>
-                  <a href="https://instagram.com" className="text-white/70 hover:text-white" target="_blank" rel="noopener noreferrer">
-                    <Instagram className="h-6 w-6" />
-                  </a>
-                  <a href="https://youtube.com" className="text-white/70 hover:text-white" target="_blank" rel="noopener noreferrer">
-                    <Youtube className="h-6 w-6" />
-                  </a>
-                </div>
+            ))}
+          </nav>
+          
+          {/* Right side items - Desktop */}
+          <div className="hidden md:flex items-center space-x-2">
+            {/* Search form */}
+            <form 
+              onSubmit={handleSearchSubmit}
+              className="relative mr-2"
+            >
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-40 h-8 px-3 pl-8 text-sm bg-black/30 border border-white/10 rounded-md text-white"
+              />
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/40" />
+            </form>
+            
+            {/* User Menu / Login Button */}
+            {user ? (
+              <button className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500/80 to-purple-600/80 flex items-center justify-center text-white text-sm">
+                {user.name.charAt(0).toUpperCase()}
+              </button>
+            ) : (
+              <Link 
+                href="/login"
+                className="px-3 py-1.5 text-sm rounded-md bg-gradient-to-r from-cyan-600 to-purple-600 text-white hover:from-cyan-500 hover:to-purple-500 transition-colors"
+              >
+                Login
+              </Link>
+            )}
+          </div>
+          
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden p-1.5 rounded-md text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
+        </div>
+        
+        {/* Secondary Navigation - Desktop */}
+        <div className="hidden md:flex justify-between items-center">
+          {/* Left side - Secondary nav items */}
+          <nav className="flex items-center space-x-2">
+            {secondaryNavItems.map((item) => (
+              <motion.div
+                key={item.path}
+                variants={navItemVariants}
+                initial="initial"
+                whileHover="hover"
+              >
+                <Link
+                  href={item.path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigationClick(item.path);
+                  }}
+                  className={`
+                    px-3 py-1.5 text-sm rounded-md flex items-center
+                    transition-colors duration-300 relative group
+                    ${item.path === window.location.pathname
+                      ? 'text-white bg-gradient-to-r from-cyan-600/30 to-purple-600/30 border border-white/10'
+                      : 'text-white/70 hover:text-white/90 border border-transparent hover:border-white/10 hover:bg-white/5'
+                    }
+                  `}
+                >
+                  {/* Glow effect */}
+                  {item.path === window.location.pathname && (
+                    <div className={`absolute inset-0 rounded-md ${
+                      item.glowColor === 'cyan' ? 'bg-cyan-600/20' : 'bg-purple-600/20'
+                    } blur-sm -z-10`}></div>
+                  )}
+                  
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
               </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            ))}
+          </nav>
+          
+          {/* Right side - Community links */}
+          <nav className="flex items-center space-x-2">
+            {communityLinks.map((item) => (
+              <motion.div
+                key={item.path}
+                variants={navItemVariants}
+                initial="initial"
+                whileHover="hover"
+              >
+                <Link
+                  href={item.path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigationClick(item.path);
+                  }}
+                  className={`
+                    px-2 py-1 text-xs rounded-md flex items-center
+                    transition-colors duration-300 relative group
+                    ${item.path === window.location.pathname
+                      ? 'text-white bg-gradient-to-r from-cyan-600/20 to-purple-600/20 border border-white/10'
+                      : 'text-white/60 hover:text-white/80 border border-transparent hover:border-white/5 hover:bg-white/5'
+                    }
+                  `}
+                >
+                  {/* Subtle glow */}
+                  {item.path === window.location.pathname && (
+                    <div className={`absolute inset-0 rounded-md ${
+                      item.glowColor === 'cyan' ? 'bg-cyan-600/10' : 'bg-purple-600/10'
+                    } blur-sm -z-10`}></div>
+                  )}
+                  
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              </motion.div>
+            ))}
+          </nav>
+        </div>
+        
+        {/* Mobile Navigation Menu */}
+        <div 
+          className={`
+            md:hidden fixed inset-x-0 top-[60px] bg-black/90 backdrop-blur-lg border-t border-white/10
+            transform transition-transform duration-300 ease-in-out z-50
+            ${isMobileMenuOpen ? 'translate-y-0' : '-translate-y-full'}
+          `}
+        >
+          <div className="container mx-auto py-4 px-5">
+            {/* Mobile Search */}
+            <form 
+              onSubmit={handleSearchSubmit}
+              className="relative mb-4"
+            >
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-10 px-3 pl-10 text-sm bg-black/30 border border-white/10 rounded-md text-white"
+              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/40" />
+            </form>
+            
+            {/* Navigation sections */}
+            <div className="space-y-6">
+              {/* Primary Navigation */}
+              <div>
+                <h3 className="text-xs uppercase tracking-wider text-white/40 mb-2">Navigation</h3>
+                <nav className="grid grid-cols-2 gap-2">
+                  {[...primaryNavItems, ...secondaryNavItems].map((item) => (
+                    <Link
+                      key={item.path}
+                      href={item.path}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleNavigationClick(item.path);
+                      }}
+                      className={`
+                        px-3 py-2.5 text-sm rounded-md flex items-center
+                        transition-colors duration-300 relative
+                        ${item.path === window.location.pathname
+                          ? 'text-white bg-gradient-to-r from-cyan-600/30 to-purple-600/30 border border-white/10'
+                          : 'text-white/80 border border-white/5 hover:border-white/20 hover:bg-white/5'
+                        }
+                      `}
+                    >
+                      {item.icon}
+                      <span className="ml-2">{item.name}</span>
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+              
+              {/* Community Links */}
+              <div>
+                <h3 className="text-xs uppercase tracking-wider text-white/40 mb-2">Community</h3>
+                <nav className="grid grid-cols-2 gap-2">
+                  {communityLinks.map((item) => (
+                    <Link
+                      key={item.path}
+                      href={item.path}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleNavigationClick(item.path);
+                      }}
+                      className={`
+                        px-3 py-2.5 text-sm rounded-md flex items-center
+                        transition-colors duration-300 relative
+                        ${item.path === window.location.pathname
+                          ? 'text-white bg-gradient-to-r from-cyan-600/20 to-purple-600/20 border border-white/10'
+                          : 'text-white/70 border border-white/5 hover:border-white/10 hover:bg-white/5'
+                        }
+                      `}
+                    >
+                      {item.icon}
+                      <span className="ml-2">{item.name}</span>
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+              
+              {/* Social Media */}
+              <div>
+                <h3 className="text-xs uppercase tracking-wider text-white/40 mb-2">Connect</h3>
+                <div className="flex space-x-3">
+                  {socialLinks.map((social) => (
+                    <a
+                      key={social.name}
+                      href={social.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full flex items-center justify-center border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                      aria-label={social.name}
+                    >
+                      {social.icon}
+                    </a>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Login/User */}
+              <div className="pt-2 border-t border-white/10">
+                {user ? (
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center text-white">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-white">{user.name}</div>
+                      <button className="text-xs text-white/60 hover:text-white/80">Sign Out</button>
+                    </div>
+                  </div>
+                ) : (
+                  <Link 
+                    href="/login"
+                    className="w-full py-2.5 text-sm rounded-md bg-gradient-to-r from-cyan-600 to-purple-600 text-white flex items-center justify-center hover:from-cyan-500 hover:to-purple-500 transition-colors"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Login to your account
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </header>
   );
-}
+};
+
+// Export the component
+export { MainHeader };
