@@ -132,13 +132,27 @@ export const MainHeader = () => {
 
   return (
     <header 
-      className={`fixed top-0 z-[100] w-full bg-black/80 backdrop-blur-lg border-b border-white/5 transition-all duration-300 ${
-        isScrolled ? 'h-16' : 'h-20'
+      className={`fixed top-0 z-[100] w-full backdrop-blur-lg border-b border-white/5 transition-all duration-300 ease-in-out ${
+        isScrolled ? 'h-16 bg-black/90' : 'h-20 bg-black/80'
       }`}
       style={{
         boxShadow: '0 0 20px rgba(0, 235, 214, 0.15), 0 0 40px rgba(111, 76, 255, 0.1)'
       }}
     >
+      {/* Subtle geometric background patterns */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-5">
+        <SacredGeometry 
+          type="merkaba" 
+          className="absolute -top-20 -right-20 w-64 h-64 text-cyan-400" 
+          animated={true}
+        />
+        <SacredGeometry 
+          type="dodecahedron" 
+          className="absolute -bottom-40 -left-40 w-96 h-96 text-purple-400" 
+          animated={true}
+        />
+      </div>
+      
       <div className="container mx-auto px-4 h-full relative">
         {/* Sacred Geometry Elements - Left Side */}
         <div className="absolute left-4 top-1/2 transform -translate-y-1/2 hidden md:block">
@@ -147,7 +161,7 @@ export const MainHeader = () => {
             size={32} 
             color="cyan" 
             animated={true} 
-            className="opacity-60 hover:opacity-90 transition-opacity duration-500" 
+            className="opacity-60 hover:opacity-90 transition-opacity duration-500 cosmic-glow-cyan" 
           />
         </div>
         
@@ -159,7 +173,7 @@ export const MainHeader = () => {
             color="purple" 
             animated={true}
             reversed={true}
-            className="opacity-60 hover:opacity-90 transition-opacity duration-500" 
+            className="opacity-60 hover:opacity-90 transition-opacity duration-500 cosmic-glow-purple" 
           />
         </div>
 
@@ -199,16 +213,22 @@ export const MainHeader = () => {
                   e.preventDefault();
                   handleNavigationClick(item.path);
                 }}
-                className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-white ${
+                className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-white nav-link ${
                   location.includes(item.path) && (item.path === "/" ? location === "/" : true)
                     ? 'text-white' 
                     : 'text-white/70'
                 }`}
+                aria-current={location.includes(item.path) && (item.path === "/" ? location === "/" : true) ? "page" : undefined}
               >
-                <span className="flex items-center space-x-1">
+                <motion.span 
+                  className="flex items-center space-x-1"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ y: 0 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
                   {item.icon}
                   <span>{item.name}</span>
-                </span>
+                </motion.span>
                 {location.includes(item.path) && (item.path === "/" ? location === "/" : true) && (
                   <motion.div 
                     layoutId="nav-indicator"
@@ -238,7 +258,7 @@ export const MainHeader = () => {
                     handleSearchSubmit(e as any);
                   }
                 }}
-                className="bg-white/5 border border-white/10 rounded-full py-1.5 pl-10 pr-4 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 transition-all w-48 focus:w-64"
+                className="bg-white/5 border border-white/10 rounded-full py-1.5 pl-10 pr-4 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 transition-all w-48 focus:w-64 search-input"
               />
             </div>
             
@@ -280,9 +300,12 @@ export const MainHeader = () => {
           
           {/* Mobile Menu Button - Only visible on small screens */}
           <button
-            className="md:hidden ml-4 p-2 text-white/80 hover:text-white focus:outline-none"
+            type="button"
+            className="md:hidden ml-4 p-2 text-white/80 hover:text-white focus:outline-none inline-flex items-center justify-center rounded-md"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-controls="mobile-menu"
+            aria-expanded={isMobileMenuOpen}
+            aria-label="Toggle navigation menu"
           >
             {isMobileMenuOpen ? (
               <X className="h-6 w-6" />
@@ -342,7 +365,8 @@ export const MainHeader = () => {
                         e.preventDefault();
                         handleNavigationClick(item.path);
                       }}
-                      className="flex items-center text-white/80 hover:text-white space-x-2 py-1"
+                      className="flex items-center text-white/80 hover:text-white space-x-2 py-1 nav-link"
+                      aria-current={location.includes(item.path) && (item.path === "/" ? location === "/" : true) ? "page" : undefined}
                     >
                       <div className="h-4 w-4 opacity-60">
                         {item.icon}
