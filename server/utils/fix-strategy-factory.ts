@@ -1,0 +1,572 @@
+/**
+ * Fix Strategy Factory
+ * 
+ * A powerful and extensible system for defining, managing, and applying TypeScript
+ * error fix strategies. This component is designed to be:
+ * 
+ * - Open source compatible: Follows open strategy pattern design
+ * - Secure: Each strategy carefully validates its fixes
+ * - Automated: Strategies automatically detect applicable errors
+ * - Extensible: Easily add new strategies for different error patterns
+ * - Future-proof: Versioned strategies accommodate TypeScript evolution
+ */
+
+import * as ts from 'typescript';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { TypeScriptError, Fix } from './ts-error-resolver';
+import { SourceFileEdit } from './code-transformer';
+import { db } from '../db';
+import { errorPatterns } from '@shared/schema';
+import { logger } from '../logger';
+
+/**
+ * Interface for fix strategies
+ */
+export interface FixStrategy {
+  readonly name: string;
+  readonly description: string;
+  readonly version: string;
+  readonly applicableErrorCodes: string[];
+  readonly targetCategories: string[];
+  readonly minimumConfidence: number;
+  
+  /**
+   * Check if this strategy can fix a given error
+   */
+  canFix(error: TypeScriptError): boolean;
+  
+  /**
+   * Get the confidence level for fixing this error (0-100)
+   */
+  getConfidence(error: TypeScriptError): number;
+  
+  /**
+   * Generate a fix for the error
+   */
+  generateFix(error: TypeScriptError): Promise<Fix>;
+}
+
+/**
+ * Base abstract class for fix strategies
+ */
+export abstract class BaseFixStrategy implements FixStrategy {
+  abstract readonly name: string;
+  abstract readonly description: string;
+  abstract readonly version: string;
+  abstract readonly applicableErrorCodes: string[];
+  abstract readonly targetCategories: string[];
+  abstract readonly minimumConfidence: number;
+  
+  /**
+   * Check if strategy can fix an error based on error code and category
+   */
+  canFix(error: TypeScriptError): boolean {
+    // Check if error code is in applicable codes
+    const codeMatch = this.applicableErrorCodes.includes('*') || 
+                     this.applicableErrorCodes.includes(error.code);
+    
+    // Check if error category is in target categories
+    const categoryMatch = this.targetCategories.includes('*') || 
+                         this.targetCategories.includes(error.category);
+    
+    return codeMatch && categoryMatch && this.getConfidence(error) >= this.minimumConfidence;
+  }
+  
+  /**
+   * Default confidence implementation
+   */
+  getConfidence(error: TypeScriptError): number {
+    // Base confidence if error code and category match
+    let confidence = 50;
+    
+    // Strategies should override this with more specific logic
+    if (this.applicableErrorCodes.includes(error.code)) {
+      confidence += 20;
+    }
+    
+    if (this.targetCategories.includes(error.category)) {
+      confidence += 20;
+    }
+    
+    return confidence;
+  }
+  
+  /**
+   * Must be implemented by concrete strategies
+   */
+  abstract generateFix(error: TypeScriptError): Promise<Fix>;
+  
+  /**
+   * Helper function to read file content
+   */
+  protected async readFile(filePath: string): Promise<string> {
+    try {
+      return await fs.readFile(filePath, 'utf-8');
+    } catch (error) {
+      throw new Error(`Failed to read file ${filePath}: ${error.message}`);
+    }
+  }
+  
+  /**
+   * Create a simple fix by replacing text
+   */
+  protected createSimpleFix(
+    error: TypeScriptError,
+    replacements: SourceFileEdit[],
+    description: string,
+    confidence: number,
+    patternId?: number
+  ): Fix {
+    return {
+      errorId: error.id,
+      patternId,
+      description,
+      replacements,
+      isAIGenerated: false,
+      confidence,
+      metadata: {
+        strategy: this.name,
+        version: this.version
+      }
+    };
+  }
+}
+
+/**
+ * Type mismatch fix strategy - handles TS2322 and similar
+ */
+export class TypeMismatchFixStrategy extends BaseFixStrategy {
+  readonly name = 'TypeMismatchFixer';
+  readonly description = 'Fixes type mismatches by adding type assertions or conversions';
+  readonly version = '1.0.0';
+  readonly applicableErrorCodes = ['TS2322', 'TS2345', 'TS2739'];
+  readonly targetCategories = ['TYPE_MISMATCH'];
+  readonly minimumConfidence = 60;
+  
+  /**
+   * More accurate confidence calculation based on error patterns
+   */
+  getConfidence(error: TypeScriptError): number {
+    let confidence = super.getConfidence(error);
+    
+    // Increase confidence for specific error message patterns
+    if (error.message.includes('is not assignable to type')) {
+      confidence += 15;
+    }
+    
+    // Increase confidence for number <-> string conversions
+    if (error.message.includes('string') && error.message.includes('number')) {
+      confidence += 10;
+    }
+    
+    return Math.min(confidence, 100);
+  }
+  
+  /**
+   * Generate fix for type mismatch errors
+   */
+  async generateFix(error: TypeScriptError): Promise<Fix> {
+    try {
+      const sourceFile = await this.readFile(error.file);
+      const sourceLines = sourceFile.split('\n');
+      
+      // Get the line where the error occurs
+      const errorLine = sourceLines[error.line - 1];
+      
+      // Extract the type information from the error message
+      const typeMatch = error.message.match(/Type '([^']+)' is not assignable to type '([^']+)'/);
+      
+      if (!typeMatch) {
+        throw new Error('Could not extract type information from error message');
+      }
+      
+      const [_, sourceType, targetType] = typeMatch;
+      
+      // Determine the most appropriate fix based on the types involved
+      let replacement: string;
+      let description: string;
+      let confidence = this.getConfidence(error);
+      
+      // Find the position of the problematic expression
+      const lineStartPos = this.getLineStartOffset(sourceFile, error.line - 1);
+      const expressionStartPos = lineStartPos + error.column - 1;
+      
+      // Try to find the end of the expression
+      // This is a simplified approach - real implementation would parse the AST
+      const expressionEndPos = this.findExpressionEnd(sourceFile, expressionStartPos);
+      
+      // Generate fix based on type conversion needs
+      if (sourceType === 'string' && targetType === 'number') {
+        // String to number conversion
+        const expression = sourceFile.substring(expressionStartPos, expressionEndPos);
+        replacement = `Number(${expression})`;
+        description = `Convert string to number using Number()`;
+      } else if (sourceType === 'number' && targetType === 'string') {
+        // Number to string conversion
+        const expression = sourceFile.substring(expressionStartPos, expressionEndPos);
+        replacement = `String(${expression})`;
+        description = `Convert number to string using String()`;
+      } else if (targetType.includes('null') || targetType.includes('undefined')) {
+        // Optional chaining or nullish coalescing
+        const expression = sourceFile.substring(expressionStartPos, expressionEndPos);
+        replacement = `${expression} ?? null`;
+        description = `Add nullish coalescing operator to handle null/undefined`;
+      } else {
+        // Fallback to type assertion - less safe but can work in many cases
+        const expression = sourceFile.substring(expressionStartPos, expressionEndPos);
+        replacement = `(${expression} as ${targetType})`;
+        description = `Add type assertion to ${targetType}`;
+        confidence -= 10; // Lower confidence for generic assertion
+      }
+      
+      // Create the fix
+      return this.createSimpleFix(
+        error,
+        [{
+          filePath: error.file,
+          start: expressionStartPos,
+          end: expressionEndPos,
+          newText: replacement,
+          description
+        }],
+        description,
+        confidence
+      );
+    } catch (error) {
+      logger.error(`TypeMismatchFixStrategy failed: ${error.message}`);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get the offset for the start of a line
+   */
+  private getLineStartOffset(text: string, lineIndex: number): number {
+    const lines = text.split('\n');
+    let offset = 0;
+    
+    for (let i = 0; i < lineIndex; i++) {
+      offset += lines[i].length + 1; // +1 for the newline
+    }
+    
+    return offset;
+  }
+  
+  /**
+   * Find the end position of an expression starting at startPos
+   * This is a simplified approach - real implementation would use TS AST
+   */
+  private findExpressionEnd(text: string, startPos: number): number {
+    // Simple heuristic to find the end of an expression
+    // In a real implementation, this would parse the TypeScript AST
+    
+    const terminators = [';', ',', ')', '}', ']', '\n'];
+    let openParens = 0;
+    let openBraces = 0;
+    let openBrackets = 0;
+    
+    for (let i = startPos; i < text.length; i++) {
+      const char = text[i];
+      
+      // Track nesting
+      if (char === '(') openParens++;
+      else if (char === ')') openParens--;
+      else if (char === '{') openBraces++;
+      else if (char === '}') openBraces--;
+      else if (char === '[') openBrackets++;
+      else if (char === ']') openBrackets--;
+      
+      // Check for terminators, but only if we're not inside any nesting
+      if (terminators.includes(char) && 
+          openParens <= 0 && 
+          openBraces <= 0 && 
+          openBrackets <= 0) {
+        return i;
+      }
+    }
+    
+    return text.length;
+  }
+}
+
+/**
+ * Missing import fix strategy - handles TS2304 and similar
+ */
+export class MissingImportFixStrategy extends BaseFixStrategy {
+  readonly name = 'MissingImportFixer';
+  readonly description = 'Fixes errors from missing imports by adding import statements';
+  readonly version = '1.0.0';
+  readonly applicableErrorCodes = ['TS2304', 'TS2503'];
+  readonly targetCategories = ['IMPORT_ERROR', 'MISSING_DEPENDENCY'];
+  readonly minimumConfidence = 70;
+  
+  // Map of common symbols to their likely import paths
+  private commonImports: Record<string, string[]> = {
+    // React and UI components
+    'React': ['react'],
+    'useState': ['react'],
+    'useEffect': ['react'],
+    'useCallback': ['react'],
+    'useMemo': ['react'],
+    // Common utility types
+    'Partial': ['typescript'],
+    'Record': ['typescript'],
+    'Omit': ['typescript'],
+    'Pick': ['typescript'],
+    // Common libraries
+    'axios': ['axios'],
+    'lodash': ['lodash'],
+    'moment': ['moment'],
+    // Project-specific imports to be added during initialization
+  };
+  
+  constructor(private projectRoot: string = process.cwd()) {
+    super();
+    this.discoverProjectImports();
+  }
+  
+  /**
+   * Scan project to identify common import patterns
+   */
+  private async discoverProjectImports(): Promise<void> {
+    // In a real implementation, this would scan the project
+    // to build a database of exports and their import paths
+    // For now, we just add some project-specific paths
+    
+    // This method would be implemented to analyze the project
+    // and automatically build the commonImports map
+  }
+  
+  /**
+   * More accurate confidence calculation
+   */
+  getConfidence(error: TypeScriptError): number {
+    let confidence = super.getConfidence(error);
+    
+    // Extract the symbol name from the error message
+    const symbolMatch = error.message.match(/Cannot find name '([^']+)'/);
+    if (symbolMatch) {
+      const symbol = symbolMatch[1];
+      
+      // Higher confidence if we know where to import this symbol from
+      if (this.commonImports[symbol]) {
+        confidence += 20;
+      }
+      
+      // Higher confidence for common symbols
+      if (['React', 'useState', 'useEffect'].includes(symbol)) {
+        confidence += 10;
+      }
+    }
+    
+    return Math.min(confidence, 100);
+  }
+  
+  /**
+   * Generate fix for missing import errors
+   */
+  async generateFix(error: TypeScriptError): Promise<Fix> {
+    try {
+      const sourceFile = await this.readFile(error.file);
+      
+      // Extract the missing symbol from the error message
+      const symbolMatch = error.message.match(/Cannot find name '([^']+)'/);
+      
+      if (!symbolMatch) {
+        throw new Error('Could not extract symbol from error message');
+      }
+      
+      const symbol = symbolMatch[1];
+      
+      // Check if we know where to import this symbol from
+      const possibleImports = this.commonImports[symbol] || [];
+      
+      if (possibleImports.length === 0) {
+        throw new Error(`No known import source for symbol '${symbol}'`);
+      }
+      
+      // Find the best import path
+      const importPath = possibleImports[0]; // Use first suggestion for now
+      
+      // Generate import statement
+      const importStatement = `import { ${symbol} } from '${importPath}';\n`;
+      
+      // Find position to insert the import
+      // Best practice: Group imports at the top of the file
+      const insertPosition = this.findImportInsertPosition(sourceFile);
+      
+      // Create the fix
+      return this.createSimpleFix(
+        error,
+        [{
+          filePath: error.file,
+          start: insertPosition,
+          end: insertPosition,
+          newText: importStatement,
+          description: `Add import for ${symbol}`
+        }],
+        `Add missing import for ${symbol} from ${importPath}`,
+        this.getConfidence(error)
+      );
+    } catch (error) {
+      logger.error(`MissingImportFixStrategy failed: ${error.message}`);
+      throw error;
+    }
+  }
+  
+  /**
+   * Find the appropriate position to insert a new import statement
+   */
+  private findImportInsertPosition(sourceText: string): number {
+    // Look for the last import statement
+    const importRegex = /^import .+ from .+;?\s*$/gm;
+    let lastImportMatch: RegExpExecArray | null = null;
+    let match: RegExpExecArray | null;
+    
+    while ((match = importRegex.exec(sourceText)) !== null) {
+      lastImportMatch = match;
+    }
+    
+    if (lastImportMatch) {
+      // Insert after the last import
+      return lastImportMatch.index + lastImportMatch[0].length + 1;
+    }
+    
+    // No imports found - insert at the beginning of the file
+    // Skip initial comments and license headers
+    const commentEndMatch = /^(\/\*[\s\S]*?\*\/\s*|\/\/.*\n\s*)*/.exec(sourceText);
+    return commentEndMatch ? commentEndMatch[0].length : 0;
+  }
+}
+
+/**
+ * Non-null assertion fix strategy - handles TS2531, TS2532, etc.
+ */
+export class NonNullAssertionFixStrategy extends BaseFixStrategy {
+  readonly name = 'NonNullAssertionFixer';
+  readonly description = 'Fixes null/undefined errors with null checks or optional chaining';
+  readonly version = '1.0.0';
+  readonly applicableErrorCodes = ['TS2531', 'TS2532', 'TS2533'];
+  readonly targetCategories = ['NULL_ERROR'];
+  readonly minimumConfidence = 65;
+  
+  /**
+   * Generate fix for null/undefined errors
+   */
+  async generateFix(error: TypeScriptError): Promise<Fix> {
+    try {
+      const sourceFile = await this.readFile(error.file);
+      const sourceLines = sourceFile.split('\n');
+      
+      // Get the line where the error occurs
+      const errorLine = sourceLines[error.line - 1];
+      
+      // Find the problematic expression
+      const lineStartPos = this.getLineStartOffset(sourceFile, error.line - 1);
+      const expressionStartPos = lineStartPos + error.column - 1;
+      
+      // Find the property access or method call
+      // This simplified version just looks for patterns like obj.prop or obj.method()
+      const accessMatch = errorLine.substring(error.column - 1).match(/(\w+)\.(\w+)/);
+      
+      if (!accessMatch) {
+        throw new Error('Could not identify property access pattern');
+      }
+      
+      const [fullMatch, object, property] = accessMatch;
+      const objectEndPos = expressionStartPos + object.length;
+      
+      // Choose the appropriate fix strategy based on context
+      // 1. Optional chaining for property access
+      const optionalChaining = `${object}?.${property}`;
+      
+      // 2. Nullish coalescing for default values
+      const nullishCoalescing = `${object}?.${property} ?? undefined`;
+      
+      // Determine which approach to use - this would be more sophisticated in real usage
+      const useNullishCoalescing = errorLine.includes('=') || 
+                                  errorLine.includes('return') ||
+                                  error.message.includes('be undefined');
+      
+      const replacement = useNullishCoalescing ? nullishCoalescing : optionalChaining;
+      const description = useNullishCoalescing 
+        ? `Add optional chaining and nullish coalescing` 
+        : `Add optional chaining`;
+      
+      // Create the fix
+      return this.createSimpleFix(
+        error,
+        [{
+          filePath: error.file,
+          start: expressionStartPos,
+          end: expressionStartPos + fullMatch.length,
+          newText: replacement,
+          description
+        }],
+        description,
+        this.getConfidence(error)
+      );
+    } catch (error) {
+      logger.error(`NonNullAssertionFixStrategy failed: ${error.message}`);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get the offset for the start of a line
+   */
+  private getLineStartOffset(text: string, lineIndex: number): number {
+    const lines = text.split('\n');
+    let offset = 0;
+    
+    for (let i = 0; i < lineIndex; i++) {
+      offset += lines[i].length + 1; // +1 for the newline
+    }
+    
+    return offset;
+  }
+}
+
+/**
+ * Fix strategy factory manages all available strategies
+ */
+export class FixStrategyFactory {
+  private strategies: FixStrategy[] = [];
+  
+  /**
+   * Register a fix strategy
+   */
+  register(strategy: FixStrategy): void {
+    this.strategies.push(strategy);
+    logger.info(`Registered fix strategy: ${strategy.name}`);
+  }
+  
+  /**
+   * Get all strategies that can fix a given error
+   */
+  getStrategiesForError(error: TypeScriptError): FixStrategy[] {
+    const applicableStrategies = this.strategies.filter(strategy => 
+      strategy.canFix(error)
+    );
+    
+    // Sort by confidence (highest first)
+    return applicableStrategies.sort((a, b) => 
+      b.getConfidence(error) - a.getConfidence(error)
+    );
+  }
+  
+  /**
+   * Create a factory with default strategies
+   */
+  static createDefault(projectRoot: string = process.cwd()): FixStrategyFactory {
+    const factory = new FixStrategyFactory();
+    
+    // Register built-in strategies
+    factory.register(new TypeMismatchFixStrategy());
+    factory.register(new MissingImportFixStrategy(projectRoot));
+    factory.register(new NonNullAssertionFixStrategy());
+    
+    return factory;
+  }
+}

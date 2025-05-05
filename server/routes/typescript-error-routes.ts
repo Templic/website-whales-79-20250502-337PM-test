@@ -1,313 +1,383 @@
-import express from 'express';
-import { body, param, query } from 'express-validator';
-import { validate } from '../middlewares/validationMiddleware';
-import { tsErrorStorage } from '../tsErrorStorage';
-import { ErrorCategory, ErrorSeverity, ErrorStatus, FixMethod } from '../../shared/schema';
+/**
+ * TypeScript Error Management API Routes
+ * 
+ * This module provides API endpoints for the TypeScript error management system,
+ * allowing frontend components to interact with the error detection, analysis,
+ * and resolution functionality.
+ * 
+ * Features:
+ * - RESTful API design
+ * - Secure validation of all inputs
+ * - Comprehensive error handling
+ * - Open source compatible implementations
+ * - Auditable request/response logging
+ */
 
-const router = express.Router();
+import { Router } from 'express';
+import { body, query, param, validationResult } from 'express-validator';
+import { TypeScriptErrorManagement } from '../utils/ts-error-management';
+import { db } from '../db';
+import { typeScriptErrors, errorFixes, errorPatterns } from '@shared/schema';
+import { eq, and, or, not, isNull, sql, desc, count } from 'drizzle-orm';
+import { logger } from '../logger';
 
-// Validation middleware 
-const createErrorValidation = [
-  body('message').notEmpty().withMessage('Error message is required'),
-  body('filePath').notEmpty().withMessage('File path is required'),
-  body('line').isInt({ min: 1 }).withMessage('Line must be a positive integer'),
-  body('column').isInt({ min: 0 }).withMessage('Column must be a non-negative integer'),
-  body('severity')
-    .isIn(Object.values(ErrorSeverity))
-    .withMessage(`Severity must be one of: ${Object.values(ErrorSeverity).join(', ')}`),
-  body('category')
-    .isIn(Object.values(ErrorCategory))
-    .withMessage(`Category must be one of: ${Object.values(ErrorCategory).join(', ')}`),
-  body('code').optional().isString(),
-  body('stackTrace').optional().isString(),
-  body('rawErrorText').optional().isString(),
-];
+// Create router
+const router = Router();
 
-const createPatternValidation = [
-  body('regex').notEmpty().withMessage('Regex pattern is required'),
-  body('description').notEmpty().withMessage('Description is required'),
-  body('category')
-    .isIn(Object.values(ErrorCategory))
-    .withMessage(`Category must be one of: ${Object.values(ErrorCategory).join(', ')}`),
-  body('priority').isInt({ min: 1, max: 10 }).withMessage('Priority must be between 1 and 10'),
-  body('hasAutoFix').isBoolean(),
-  body('autoFixStrategy').optional().isString(),
-];
-
-const createFixValidation = [
-  body('patternId').isInt({ min: 1 }).withMessage('Pattern ID must be a positive integer'),
-  body('replacementTemplate').notEmpty().withMessage('Replacement template is required'),
-  body('description').notEmpty().withMessage('Description is required'),
-  body('method')
-    .isIn(Object.values(FixMethod))
-    .withMessage(`Method must be one of: ${Object.values(FixMethod).join(', ')}`),
-];
-
-// Error routes
-router.post('/errors', createErrorValidation, validate, async (req, res) => {
-  try {
-    const error = await tsErrorStorage.createTypescriptError({
-      ...req.body,
-      status: ErrorStatus.PENDING,
-      discoveredAt: new Date(),
-      updatedAt: new Date(),
-    });
-    res.status(201).json(error);
-  } catch (err) {
-    console.error('Error creating TypeScript error:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.get('/errors', async (req, res) => {
-  try {
-    const filters = {
-      status: req.query.status as string | undefined,
-      severity: req.query.severity as string | undefined,
-      category: req.query.category as string | undefined,
-      filePath: req.query.filePath as string | undefined,
-      fromDate: req.query.fromDate ? new Date(req.query.fromDate as string) : undefined,
-      toDate: req.query.toDate ? new Date(req.query.toDate as string) : undefined,
-    };
-    
-    const errors = await tsErrorStorage.getAllTypescriptErrors(filters);
-    res.json(errors);
-  } catch (err) {
-    console.error('Error fetching TypeScript errors:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.get('/errors/stats', async (req, res) => {
-  try {
-    const fromDate = req.query.fromDate ? new Date(req.query.fromDate as string) : undefined;
-    const toDate = req.query.toDate ? new Date(req.query.toDate as string) : undefined;
-    
-    const stats = await tsErrorStorage.getTypescriptErrorStats(fromDate, toDate);
-    res.json(stats);
-  } catch (err) {
-    console.error('Error fetching TypeScript error stats:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.get('/errors/:id', param('id').isInt({ min: 1 }), validate, async (req, res) => {
-  try {
-    const error = await tsErrorStorage.getTypescriptErrorById(parseInt(req.params.id));
-    if (!error) {
-      return res.status(404).json({ message: 'Error not found' });
-    }
-    res.json(error);
-  } catch (err) {
-    console.error('Error fetching TypeScript error:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.patch('/errors/:id', 
-  [
-    param('id').isInt({ min: 1 }),
-    body('status').optional().isIn(Object.values(ErrorStatus)),
-    body('severity').optional().isIn(Object.values(ErrorSeverity)),
-    body('category').optional().isIn(Object.values(ErrorCategory)),
-    body('fixId').optional().isInt({ min: 1 }),
-  ], 
-  validate, 
-  async (req, res) => {
-    try {
-      const error = await tsErrorStorage.updateTypescriptError(parseInt(req.params.id), {
-        ...req.body,
-        updatedAt: new Date(),
-        ...(req.body.status === 'fixed' ? { fixedAt: new Date() } : {}),
-      });
-      res.json(error);
-    } catch (err) {
-      console.error('Error updating TypeScript error:', err);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  }
+// Initialize error management system
+const errorManagement = new TypeScriptErrorManagement(
+  process.env.OPENAI_API_KEY
 );
 
-router.post('/errors/:id/fix', 
-  [
-    param('id').isInt({ min: 1 }),
-    body('fixId').isInt({ min: 1 }),
-    body('userId').isInt({ min: 1 }),
-  ], 
-  validate, 
+/**
+ * GET /api/typescript/errors
+ * Retrieve all TypeScript errors with optional filtering
+ */
+router.get('/errors', 
+  query('severity').optional().isString(),
+  query('category').optional().isString(),
+  query('status').optional().isString(),
+  query('search').optional().isString(),
+  query('page').optional().isInt({ min: 1 }).toInt(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
   async (req, res) => {
     try {
-      const error = await tsErrorStorage.markErrorAsFixed(
-        parseInt(req.params.id),
-        parseInt(req.body.fixId),
-        parseInt(req.body.userId)
+      // Validate request
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      
+      // Parse query parameters
+      const severity = req.query.severity ? (req.query.severity as string).split(',') : [];
+      const category = req.query.category ? (req.query.category as string).split(',') : [];
+      const status = req.query.status ? (req.query.status as string).split(',') : [];
+      const search = req.query.search as string;
+      const page = req.query.page ? Number(req.query.page) : 1;
+      const limit = req.query.limit ? Number(req.query.limit) : 50;
+      
+      // Build query
+      let query = db.select().from(typeScriptErrors);
+      
+      // Apply filters
+      if (severity.length > 0) {
+        query = query.where(sql`${typeScriptErrors.severity} = ANY(${severity})`);
+      }
+      
+      if (category.length > 0) {
+        query = query.where(sql`${typeScriptErrors.category} = ANY(${category})`);
+      }
+      
+      if (status.length > 0) {
+        query = query.where(sql`${typeScriptErrors.status} = ANY(${status})`);
+      }
+      
+      if (search) {
+        query = query.where(
+          or(
+            sql`${typeScriptErrors.message} ILIKE ${'%' + search + '%'}`,
+            sql`${typeScriptErrors.file_path} ILIKE ${'%' + search + '%'}`,
+            sql`${typeScriptErrors.code} ILIKE ${'%' + search + '%'}`
+          )
+        );
+      }
+      
+      // Add pagination
+      const offset = (page - 1) * limit;
+      query = query.limit(limit).offset(offset).orderBy(desc(typeScriptErrors.detected_at));
+      
+      // Execute query
+      const results = await query;
+      
+      // Transform results to camelCase format for frontend
+      const transformedResults = results.map(error => ({
+        id: error.id,
+        code: error.code,
+        message: error.message,
+        filePath: error.file_path,
+        line: error.line,
+        column: error.column,
+        severity: error.severity,
+        category: error.category,
+        status: error.status,
+        patternId: error.pattern_id,
+        fixId: error.fix_id,
+        detectedAt: error.detected_at,
+        resolvedAt: error.resolved_at,
+        userId: error.user_id
+      }));
+      
+      res.json(transformedResults);
+    } catch (error) {
+      logger.error(`Error getting TypeScript errors: ${error.message}`);
+      res.status(500).json({ error: 'Failed to retrieve TypeScript errors' });
+    }
+});
+
+/**
+ * GET /api/typescript/errors/:id
+ * Get details of a specific TypeScript error
+ */
+router.get('/errors/:id',
+  param('id').isInt({ min: 1 }).toInt(),
+  async (req, res) => {
+    try {
+      // Validate request
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      
+      const errorId = Number(req.params.id);
+      
+      // Get error from database
+      const [error] = await db.select()
+        .from(typeScriptErrors)
+        .where(eq(typeScriptErrors.id, errorId));
+      
+      if (!error) {
+        return res.status(404).json({ error: 'TypeScript error not found' });
+      }
+      
+      // Transform to camelCase
+      const result = {
+        id: error.id,
+        code: error.code,
+        message: error.message,
+        filePath: error.file_path,
+        line: error.line,
+        column: error.column,
+        severity: error.severity,
+        category: error.category,
+        status: error.status,
+        patternId: error.pattern_id,
+        fixId: error.fix_id,
+        detectedAt: error.detected_at,
+        resolvedAt: error.resolved_at,
+        userId: error.user_id
+      };
+      
+      res.json(result);
+    } catch (error) {
+      logger.error(`Error getting TypeScript error ${req.params.id}: ${error.message}`);
+      res.status(500).json({ error: 'Failed to retrieve TypeScript error' });
+    }
+});
+
+/**
+ * GET /api/typescript/errors/:id/fixes
+ * Get available fixes for a TypeScript error
+ */
+router.get('/errors/:id/fixes',
+  param('id').isInt({ min: 1 }).toInt(),
+  async (req, res) => {
+    try {
+      // Validate request
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      
+      const errorId = Number(req.params.id);
+      
+      // Check if error exists
+      const [error] = await db.select({ id: typeScriptErrors.id })
+        .from(typeScriptErrors)
+        .where(eq(typeScriptErrors.id, errorId));
+      
+      if (!error) {
+        return res.status(404).json({ error: 'TypeScript error not found' });
+      }
+      
+      // Get fixes for this error
+      const fixes = await db.select()
+        .from(errorFixes)
+        .where(eq(errorFixes.error_id, errorId))
+        .orderBy(desc(errorFixes.confidence_score));
+      
+      // Transform to camelCase
+      const results = fixes.map(fix => ({
+        id: fix.id,
+        errorId: fix.error_id,
+        patternId: fix.pattern_id,
+        description: fix.description,
+        replacements: fix.fix_text ? JSON.parse(fix.fix_text) : [],
+        isAIGenerated: fix.is_ai_generated,
+        confidence: fix.confidence_score,
+        successRate: fix.success_rate,
+        userId: fix.user_id,
+        createdAt: fix.created_at
+      }));
+      
+      res.json(results);
+    } catch (error) {
+      logger.error(`Error getting fixes for error ${req.params.id}: ${error.message}`);
+      res.status(500).json({ error: 'Failed to retrieve fixes' });
+    }
+});
+
+/**
+ * POST /api/typescript/errors/:id/resolve
+ * Resolve a TypeScript error (apply a fix)
+ */
+router.post('/errors/:id/resolve',
+  param('id').isInt({ min: 1 }).toInt(),
+  body('fixId').optional().isInt({ min: 1 }),
+  body('applyImmediately').optional().isBoolean(),
+  body('useAI').optional().isBoolean(),
+  body('userId').optional().isString(),
+  async (req, res) => {
+    try {
+      // Validate request
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      
+      const errorId = Number(req.params.id);
+      const { fixId, applyImmediately = true, useAI = true, userId } = req.body;
+      
+      // Resolve the error
+      const result = await errorManagement.resolveError(errorId, {
+        applyImmediately,
+        useAI,
+        userId
+      });
+      
+      res.json(result);
+    } catch (error) {
+      logger.error(`Error resolving error ${req.params.id}: ${error.message}`);
+      res.status(500).json({ error: 'Failed to resolve error' });
+    }
+});
+
+/**
+ * POST /api/typescript/scan
+ * Run a TypeScript error scan
+ */
+router.post('/scan',
+  body('includeDirs').isArray(),
+  body('excludeDirs').optional().isArray(),
+  body('maxErrors').optional().isInt({ min: 1 }),
+  body('autoFix').optional().isBoolean(),
+  async (req, res) => {
+    try {
+      // Validate request
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      
+      const { includeDirs, excludeDirs, maxErrors, autoFix } = req.body;
+      
+      // Run the scan
+      const result = await errorManagement.runFullErrorProcessingCycle({
+        includeDirs,
+        excludeDirs,
+        maxErrors,
+        autoFix,
+        resolution: {
+          applyImmediately: true,
+          useAI: true
+        }
+      });
+      
+      res.json(result);
+    } catch (error) {
+      logger.error(`Error running TypeScript scan: ${error.message}`);
+      res.status(500).json({ error: 'Failed to run TypeScript scan' });
+    }
+});
+
+/**
+ * GET /api/typescript/metrics
+ * Get TypeScript error metrics
+ */
+router.get('/metrics', async (req, res) => {
+  try {
+    const metrics = await errorManagement.getMetrics();
+    res.json(metrics);
+  } catch (error) {
+    logger.error(`Error getting TypeScript metrics: ${error.message}`);
+    res.status(500).json({ error: 'Failed to retrieve TypeScript metrics' });
+  }
+});
+
+/**
+ * GET /api/typescript/patterns
+ * Get TypeScript error patterns
+ */
+router.get('/patterns',
+  query('page').optional().isInt({ min: 1 }).toInt(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+  async (req, res) => {
+    try {
+      // Validate request
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      
+      const page = req.query.page ? Number(req.query.page) : 1;
+      const limit = req.query.limit ? Number(req.query.limit) : 50;
+      
+      // Get patterns with error count
+      const patterns = await db.select({
+        id: errorPatterns.id,
+        name: errorPatterns.name,
+        category: errorPatterns.category,
+        errorCode: errorPatterns.error_code,
+        autoFixable: errorPatterns.auto_fixable,
+        createdAt: errorPatterns.created_at,
+        frequency: sql<number>`(
+          SELECT COUNT(*) FROM typescript_errors 
+          WHERE pattern_id = ${errorPatterns.id}
+        )`
+      })
+      .from(errorPatterns)
+      .limit(limit)
+      .offset((page - 1) * limit)
+      .orderBy(desc(errorPatterns.id));
+      
+      res.json(patterns);
+    } catch (error) {
+      logger.error(`Error getting TypeScript patterns: ${error.message}`);
+      res.status(500).json({ error: 'Failed to retrieve TypeScript patterns' });
+    }
+});
+
+/**
+ * POST /api/typescript/feedback
+ * Submit feedback for a fix
+ */
+router.post('/feedback',
+  body('fixId').isInt({ min: 1 }),
+  body('userId').isString(),
+  body('rating').isInt({ min: 1, max: 5 }),
+  body('comment').optional().isString(),
+  async (req, res) => {
+    try {
+      // Validate request
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      
+      const { fixId, userId, rating, comment } = req.body;
+      
+      // Submit feedback
+      await errorManagement.metricsService.recordFixFeedback(
+        fixId,
+        userId,
+        rating,
+        comment
       );
-      res.json(error);
-    } catch (err) {
-      console.error('Error marking TypeScript error as fixed:', err);
-      res.status(500).json({ message: 'Internal server error' });
+      
+      res.json({ success: true });
+    } catch (error) {
+      logger.error(`Error submitting fix feedback: ${error.message}`);
+      res.status(500).json({ error: 'Failed to submit feedback' });
     }
-  }
-);
-
-// Pattern routes
-router.post('/patterns', createPatternValidation, validate, async (req, res) => {
-  try {
-    const pattern = await tsErrorStorage.createErrorPattern({
-      ...req.body,
-      detectionCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    res.status(201).json(pattern);
-  } catch (err) {
-    console.error('Error creating error pattern:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
 });
-
-router.get('/patterns', async (req, res) => {
-  try {
-    const patterns = await tsErrorStorage.getAllErrorPatterns();
-    res.json(patterns);
-  } catch (err) {
-    console.error('Error fetching error patterns:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.get('/patterns/category/:category', param('category').isString(), validate, async (req, res) => {
-  try {
-    const patterns = await tsErrorStorage.getErrorPatternsByCategory(req.params.category);
-    res.json(patterns);
-  } catch (err) {
-    console.error('Error fetching error patterns by category:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.get('/patterns/autofixable', async (req, res) => {
-  try {
-    const patterns = await tsErrorStorage.getAutoFixablePatterns();
-    res.json(patterns);
-  } catch (err) {
-    console.error('Error fetching auto-fixable patterns:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.get('/patterns/:id', param('id').isInt({ min: 1 }), validate, async (req, res) => {
-  try {
-    const pattern = await tsErrorStorage.getErrorPatternById(parseInt(req.params.id));
-    if (!pattern) {
-      return res.status(404).json({ message: 'Pattern not found' });
-    }
-    res.json(pattern);
-  } catch (err) {
-    console.error('Error fetching error pattern:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.patch('/patterns/:id', 
-  [
-    param('id').isInt({ min: 1 }),
-    body('regex').optional().isString(),
-    body('description').optional().isString(),
-    body('category').optional().isIn(Object.values(ErrorCategory)),
-    body('priority').optional().isInt({ min: 1, max: 10 }),
-    body('hasAutoFix').optional().isBoolean(),
-    body('autoFixStrategy').optional().isString(),
-  ], 
-  validate, 
-  async (req, res) => {
-    try {
-      const pattern = await tsErrorStorage.updateErrorPattern(parseInt(req.params.id), {
-        ...req.body,
-        updatedAt: new Date(),
-      });
-      res.json(pattern);
-    } catch (err) {
-      console.error('Error updating error pattern:', err);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  }
-);
-
-// Fix routes
-router.post('/fixes', createFixValidation, validate, async (req, res) => {
-  try {
-    const fix = await tsErrorStorage.createErrorFix({
-      ...req.body,
-      successRate: 0,
-      usageCount: 0,
-      successCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    res.status(201).json(fix);
-  } catch (err) {
-    console.error('Error creating fix:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.get('/fixes', async (req, res) => {
-  try {
-    const fixes = await tsErrorStorage.getAllErrorFixes();
-    res.json(fixes);
-  } catch (err) {
-    console.error('Error fetching fixes:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.get('/fixes/pattern/:patternId', param('patternId').isInt({ min: 1 }), validate, async (req, res) => {
-  try {
-    const fixes = await tsErrorStorage.getFixesByPatternId(parseInt(req.params.patternId));
-    res.json(fixes);
-  } catch (err) {
-    console.error('Error fetching fixes by pattern:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.get('/fixes/:id', param('id').isInt({ min: 1 }), validate, async (req, res) => {
-  try {
-    const fix = await tsErrorStorage.getErrorFixById(parseInt(req.params.id));
-    if (!fix) {
-      return res.status(404).json({ message: 'Fix not found' });
-    }
-    res.json(fix);
-  } catch (err) {
-    console.error('Error fetching fix:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.patch('/fixes/:id', 
-  [
-    param('id').isInt({ min: 1 }),
-    body('replacementTemplate').optional().isString(),
-    body('description').optional().isString(),
-    body('method').optional().isIn(Object.values(FixMethod)),
-    body('successRate').optional().isNumeric(),
-    body('usageCount').optional().isInt({ min: 0 }),
-    body('successCount').optional().isInt({ min: 0 }),
-  ], 
-  validate, 
-  async (req, res) => {
-    try {
-      const fix = await tsErrorStorage.updateErrorFix(parseInt(req.params.id), {
-        ...req.body,
-        updatedAt: new Date(),
-      });
-      res.json(fix);
-    } catch (err) {
-      console.error('Error updating fix:', err);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  }
-);
 
 export default router;

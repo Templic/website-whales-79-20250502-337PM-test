@@ -421,6 +421,30 @@ export const errorFixes = pgTable('error_fixes', {
   created_by: integer('created_by')
 });
 
+// Fix application logs table to track metrics for fix attempts
+export const fixApplicationLogs = pgTable('fix_application_logs', {
+  id: serial('id').primaryKey(),
+  error_id: integer('error_id').notNull().references(() => typeScriptErrors.id),
+  fix_id: integer('fix_id').references(() => errorFixes.id),
+  strategy_name: text('strategy_name').notNull(),
+  success: boolean('success').notNull(),
+  time_ms: integer('time_ms').notNull(),
+  validation_result: json('validation_result'),
+  metadata: json('metadata'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  user_id: varchar('user_id', { length: 255 })
+});
+
+// Fix feedback table to collect user feedback on fixes
+export const fixFeedback = pgTable('fix_feedback', {
+  id: serial('id').primaryKey(),
+  fix_id: integer('fix_id').notNull().references(() => errorFixes.id),
+  user_id: varchar('user_id', { length: 255 }),
+  rating: integer('rating').notNull(),
+  comment: text('comment'),
+  created_at: timestamp('created_at').defaultNow().notNull()
+});
+
 export const errorAnalysis = pgTable('error_analysis', {
   id: serial('id').primaryKey(),
   error_id: integer('error_id').notNull().references(() => typeScriptErrors.id),
@@ -630,13 +654,15 @@ export const themeAnalyticsRelations = relations(themeAnalytics, ({ one }) => ({
 // TypeScript error management relations
 export const typeScriptErrorsRelations = relations(typeScriptErrors, ({ many }) => ({
   analyses: many(errorAnalysis),
+  applicationLogs: many(fixApplicationLogs)
 }));
 
-export const errorFixesRelations = relations(errorFixes, ({ one }) => ({
+export const errorFixesRelations = relations(errorFixes, ({ one, many }) => ({
   pattern: one(errorPatterns, {
     fields: [errorFixes.pattern_id],
     references: [errorPatterns.id],
   }),
+  feedback: many(fixFeedback)
 }));
 
 export const errorPatternsRelations = relations(errorPatterns, ({ many }) => ({
@@ -668,6 +694,26 @@ export const scanSecurityAuditsRelations = relations(scanSecurityAudits, ({ one 
     fields: [scanSecurityAudits.approved_by],
     references: [users.id],
   }),
+}));
+
+// Fix application logs relations
+export const fixApplicationLogsRelations = relations(fixApplicationLogs, ({ one }) => ({
+  error: one(typeScriptErrors, {
+    fields: [fixApplicationLogs.error_id],
+    references: [typeScriptErrors.id],
+  }),
+  fix: one(errorFixes, {
+    fields: [fixApplicationLogs.fix_id],
+    references: [errorFixes.id],
+  })
+}));
+
+// Fix feedback relations
+export const fixFeedbackRelations = relations(fixFeedback, ({ one }) => ({
+  fix: one(errorFixes, {
+    fields: [fixFeedback.fix_id],
+    references: [errorFixes.id],
+  })
 }));
 
 // TypeScript error metrics relation - no relations needed in current database structure
@@ -1031,6 +1077,16 @@ export const insertScanResultSchema = createInsertSchema(scanResults).omit({
   createdAt: true,
 });
 
+export const insertFixApplicationLogsSchema = createInsertSchema(fixApplicationLogs).omit({
+  id: true,
+  created_at: true,
+});
+
+export const insertFixFeedbackSchema = createInsertSchema(fixFeedback).omit({
+  id: true,
+  created_at: true,
+});
+
 // Additional insert schemas for the new tables
 export const insertErrorFixHistorySchema = createInsertSchema(errorFixHistory).omit({
   id: true,
@@ -1212,6 +1268,12 @@ export type InsertErrorAnalysis = z.infer<typeof insertErrorAnalysisSchema>;
 
 export type ScanResult = typeof scanResults.$inferSelect;
 export type InsertScanResult = z.infer<typeof insertScanResultSchema>;
+
+export type FixApplicationLog = typeof fixApplicationLogs.$inferSelect;
+export type InsertFixApplicationLog = z.infer<typeof insertFixApplicationLogsSchema>;
+
+export type FixFeedback = typeof fixFeedback.$inferSelect;
+export type InsertFixFeedback = z.infer<typeof insertFixFeedbackSchema>;
 
 // Types for the new tables
 export type ErrorFixHistory = typeof errorFixHistory.$inferSelect;

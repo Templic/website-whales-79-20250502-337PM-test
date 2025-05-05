@@ -1,0 +1,27 @@
+{
+  "id": "INC-20250505-SYS-M8518",
+  "title": "File integrity changes detected in critical files",
+  "description": "Detected 1 modified and 0 missing critical security files",
+  "severity": "medium",
+  "status": "new",
+  "category": "system",
+  "source": "security_scan",
+  "timestamp": "2025-05-05T17:26:44.689Z",
+  "lastUpdated": "2025-05-05T17:26:44.689Z",
+  "affectedComponents": [
+    "file-integrity",
+    "security-configuration"
+  ],
+  "relatedEvents": [],
+  "actions": [
+    {
+      "id": "INC-20250505-SYS-M8518-det-mabcrlqp3",
+      "description": "Incident detected: File integrity changes detected in critical files",
+      "type": "detection",
+      "timestamp": "2025-05-05T17:26:44.689Z",
+      "automaticAction": true
+    }
+  ],
+  "evidenceReferences": [],
+  "integrityHash": "8428efe8864a0d0fd3c19209c9262889731e7168b5147f832317d569948479a2"
+}

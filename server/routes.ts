@@ -62,6 +62,7 @@ import { verifyApiSecurity } from './security/apiSecurityVerification';
 import { enhancedCsrfProtection } from './security/middleware/enhancedCsrfProtection';
 import typescriptErrorRoutes from './routes/typescript-error-routes';
 import typescriptErrorSimpleRoutes from './routes/typescript-error-simple-routes';
+import typescriptErrorManagementRoutes from './routes/typescript-error-routes';
 import adminRoutes from './admin-routes';
 import adminApiRoutes from './routes/admin';
 import aiThemeGeneratorRoutes from './routes/ai-theme-generator';
@@ -395,6 +396,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   // Use simplified TypeScript error management routes for better performance
   app.use('/api/typescript-simple', typescriptErrorSimpleRoutes);
+  
+  // Use the new enhanced TypeScript error management routes (Phase 3)
+  app.use('/api/typescript', typescriptErrorManagementRoutes);
   
   // Use the new TypeScript error management routes for the admin portal
   // Using noCSRF middleware for development testing purposes only
