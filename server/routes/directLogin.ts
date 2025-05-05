@@ -14,7 +14,6 @@ import { db } from '../db';
 import { users } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 import { logSecurityEvent } from '../security/security';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
 
 // Constants
 const MAX_ATTEMPTS = 5;

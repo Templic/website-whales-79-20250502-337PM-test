@@ -457,35 +457,280 @@ async function checkCSRFProtection(vulnerabilities: SecurityVulnerability[]): Pr
  */
 async function checkInputValidation(vulnerabilities: SecurityVulnerability[]): Promise<void> {
   const serverFiles = [
-    path.join(process.cwd(), 'server', 'routes.ts')
+    path.join(process.cwd(), 'server', 'routes.ts'),
+    path.join(process.cwd(), 'server', 'routes'),  // Routes directory
+    path.join(process.cwd(), 'server', 'controllers'), // Controllers directory, if present
+    path.join(process.cwd(), 'server', 'api') // API directory, if present
   ];
   
-  let foundInputValidation = false;
+  type FileInfo = {
+    file: string;
+    endpointCount: number;
+  };
   
-  for (const file of serverFiles) {
-    if (fs.existsSync(file)) {
-      const content = fs.readFileSync(file, 'utf8');
+  let validationStats = {
+    totalEndpoints: 0,
+    validatedEndpoints: 0,
+    validationFrameworks: {
+      zod: false,
+      joi: false,
+      yup: false,
+      expressValidator: false,
+      classValidator: false,
+      ajv: false,
+      custom: false
+    },
+    routesWithoutValidation: [] as FileInfo[]
+  };
+  
+  const validationPatterns = [
+    { name: 'zod', regex: /\bz\.(object|string|number|boolean|array|date|any|enum|tuple)\(/i },
+    { name: 'zod schema', regex: /\b\w+Schema\.safeParse\(|\b\w+Schema\.parse\(/i },
+    { name: 'joi', regex: /\bJoi\.(object|string|number|boolean|array|date|any)\(/i },
+    { name: 'yup', regex: /\byup\.(object|string|number|boolean|array|date|mixed)\(/i },
+    { name: 'express-validator', regex: /\b(body|param|query)\((.*?)\)\.isLength|\b(body|param|query)\((.*?)\)\.isEmail|\bvalidationResult\(/i },
+    { name: 'class-validator', regex: /@(IsString|IsNumber|IsEmail|IsOptional|IsDate|Min|Max|Length)\(/i },
+    { name: 'ajv', regex: /\bajv\.validate\(|\bnew Ajv\(/i },
+    { name: 'custom validation', regex: /\bvalidate[A-Z]\w+|\bvalidation\.\w+|\bisValid[A-Z]\w+|\bsanitize[A-Z]\w+/i }
+  ];
+
+  // Recursively check files in a directory
+  async function checkDirectory(dirPath: string, isRootDir: boolean = false) {
+    if (!fs.existsSync(dirPath)) return;
+    
+    if (fs.statSync(dirPath).isDirectory()) {
+      const files = fs.readdirSync(dirPath);
       
-      // Check for input validation
-      if (
-        content.includes('validator') || 
-        content.includes('joi') || 
-        content.includes('zod') || 
-        content.includes('express-validator') || 
-        content.includes('validateRequest')
-      ) {
-        foundInputValidation = true;
-        break;
+      for (const file of files) {
+        const filePath = path.join(dirPath, file);
+        
+        if (fs.statSync(filePath).isDirectory()) {
+          await checkDirectory(filePath);
+        } else if (file.endsWith('.ts') || file.endsWith('.js')) {
+          await checkFile(filePath, isRootDir && file === 'routes.ts');
+        }
       }
+    } else {
+      await checkFile(dirPath, path.basename(dirPath) === 'routes.ts');
     }
   }
   
-  if (!foundInputValidation) {
+  // Check a single file for validation
+  async function checkFile(filePath: string, isMainRouteFile: boolean = false) {
+    const content = fs.readFileSync(filePath, 'utf8');
+    
+    // Count potential API endpoints in this file
+    const routeMatches = content.match(/\.(get|post|put|patch|delete)\s*\(/gi) || [];
+    const endpointCount = routeMatches.length;
+    validationStats.totalEndpoints += endpointCount;
+    
+    // Check if file contains validation
+    let hasValidation = false;
+    
+    for (const pattern of validationPatterns) {
+      if (pattern.regex.test(content)) {
+        hasValidation = true;
+        validationStats.validationFrameworks[pattern.name.split(' ')[0].toLowerCase() as keyof typeof validationStats.validationFrameworks] = true;
+      }
+    }
+    
+    if (hasValidation) {
+      // Estimate how many endpoints might be validated
+      // This is a rough estimation based on validation patterns proximity to route handlers
+      const lines = content.split('\n');
+      let validatedCount = 0;
+      
+      routeMatches.forEach(match => {
+        const matchIndex = content.indexOf(match);
+        const context = content.substring(Math.max(0, matchIndex - 500), Math.min(content.length, matchIndex + 500));
+        
+        // Check if there's validation near the route handler
+        for (const pattern of validationPatterns) {
+          if (pattern.regex.test(context)) {
+            validatedCount++;
+            break;
+          }
+        }
+      });
+      
+      validationStats.validatedEndpoints += validatedCount;
+    } else if (endpointCount > 0) {
+      // Track files with routes but no validation
+      validationStats.routesWithoutValidation.push({
+        file: path.basename(filePath),
+        endpointCount
+      });
+    }
+  }
+  
+  // Check all server files
+  for (const filePath of serverFiles) {
+    if (fs.existsSync(filePath)) {
+      await checkDirectory(filePath, true);
+    }
+  }
+  
+  // Add vulnerabilities based on findings
+  if (validationStats.totalEndpoints === 0) {
+    // Could not detect any endpoints - add a note about this
     vulnerabilities.push({
       id: uuidv4(),
-      severity: 'high',
-      description: 'No comprehensive input validation found',
-      recommendation: 'Implement input validation for all API endpoints'
+      severity: 'low',
+      description: 'Could not detect API endpoints for input validation analysis',
+      recommendation: 'Implement robust input validation for all API endpoints using a validation library like Zod, Joi, or express-validator'
+    });
+  } else {
+    const validationRatio = validationStats.validatedEndpoints / validationStats.totalEndpoints;
+    
+    // No input validation found at all
+    if (validationStats.validatedEndpoints === 0) {
+      vulnerabilities.push({
+        id: uuidv4(),
+        severity: 'high',
+        description: `No input validation found for ${validationStats.totalEndpoints} detected API endpoints`,
+        recommendation: 'Implement robust input validation for all API endpoints using a validation library like Zod, Joi, or express-validator'
+      });
+    } 
+    // Partial input validation (less than 75%)
+    else if (validationRatio < 0.75) {
+      vulnerabilities.push({
+        id: uuidv4(),
+        severity: 'medium',
+        description: `Only ${Math.round(validationRatio * 100)}% of API endpoints appear to be validated (${validationStats.validatedEndpoints}/${validationStats.totalEndpoints})`,
+        recommendation: 'Ensure all API endpoints validate input data to prevent injection attacks and unexpected behavior'
+      });
+      
+      // Add specific entry for each unvalidated file
+      if (validationStats.routesWithoutValidation.length > 0) {
+        validationStats.routesWithoutValidation.forEach(fileInfo => {
+          vulnerabilities.push({
+            id: uuidv4(),
+            severity: 'medium',
+            description: `No validation detected in route file: ${fileInfo.file} (${fileInfo.endpointCount} endpoints)`,
+            location: fileInfo.file,
+            recommendation: 'Add input validation using Zod, Joi, or express-validator'
+          });
+        });
+      }
+    }
+    
+    // Make recommendations for improving validation if it exists but could be better
+    if (validationStats.validatedEndpoints > 0 && validationRatio < 1.0) {
+      vulnerabilities.push({
+        id: uuidv4(),
+        severity: 'low',
+        description: 'Input validation could be improved to cover all API endpoints',
+        recommendation: 'Consider implementing a middleware that enforces validation for all routes'
+      });
+    }
+  }
+  
+  // Check for proper error handling of validation failures
+  await checkValidationErrorHandling(vulnerabilities);
+}
+
+/**
+ * Check for proper error handling of validation failures
+ */
+async function checkValidationErrorHandling(vulnerabilities: SecurityVulnerability[]): Promise<void> {
+  const serverFiles = [
+    path.join(process.cwd(), 'server', 'routes.ts'),
+    path.join(process.cwd(), 'server', 'routes'),
+    path.join(process.cwd(), 'server', 'middleware.ts'),
+    path.join(process.cwd(), 'server', 'middlewares')
+  ];
+  
+  let foundErrorHandling = false;
+  let hasCentralizedValidation = false;
+  
+  // Patterns that indicate proper validation error handling
+  const errorHandlingPatterns = [
+    /catch\s*\([^)]*\)\s*\{[^}]*status\s*\(\s*4\d\d\s*\)/i,  // Try-catch with 4xx status
+    /validation.*?fail.*?res\.status\s*\(\s*4\d\d\s*\)/i,    // Validation failure with 4xx status
+    /\.error\s*\([^)]*\)\s*.*?status\s*\(\s*400\s*\)/i,      // Error method with 400 status
+    /invalid.*?input.*?status\s*\(\s*400\s*\)/i,             // Invalid input with 400 status
+    /if\s*\([^)]*valid[^)]*\)\s*\{[^}]*status\s*\(\s*4\d\d\s*\)/i, // If valid check with 4xx
+    /!valid.*?status\s*\(\s*4\d\d\s*\)/i                    // Not valid with 4xx status
+  ];
+  
+  // Patterns that indicate centralized validation
+  const centralizedValidationPatterns = [
+    /function\s+validate[A-Z]\w+\s*\([^)]*\)/i,              // Validation function
+    /const\s+validate[A-Z]\w+\s*=\s*function/i,              // Validation const function
+    /const\s+validate[A-Z]\w+\s*=\s*\([^)]*\)\s*=>/i,        // Validation arrow function
+    /middleware.*?validation/i,                               // Validation middleware
+    /app\.use\([^)]*valid[^)]*\)/i,                          // App-level validation middleware
+    /router\.use\([^)]*valid[^)]*\)/i                        // Router-level validation middleware
+  ];
+  
+  // Check files
+  for (const filePath of serverFiles) {
+    if (!fs.existsSync(filePath)) continue;
+    
+    if (fs.statSync(filePath).isDirectory()) {
+      const files = fs.readdirSync(filePath);
+      for (const file of files) {
+        if (!file.endsWith('.ts') && !file.endsWith('.js')) continue;
+        
+        const content = fs.readFileSync(path.join(filePath, file), 'utf8');
+        
+        // Check for error handling patterns
+        for (const pattern of errorHandlingPatterns) {
+          if (pattern.test(content)) {
+            foundErrorHandling = true;
+            break;
+          }
+        }
+        
+        // Check for centralized validation patterns
+        for (const pattern of centralizedValidationPatterns) {
+          if (pattern.test(content)) {
+            hasCentralizedValidation = true;
+            break;
+          }
+        }
+        
+        if (foundErrorHandling && hasCentralizedValidation) break;
+      }
+    } else if (filePath.endsWith('.ts') || filePath.endsWith('.js')) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      
+      // Check for error handling patterns
+      for (const pattern of errorHandlingPatterns) {
+        if (pattern.test(content)) {
+          foundErrorHandling = true;
+          break;
+        }
+      }
+      
+      // Check for centralized validation patterns
+      for (const pattern of centralizedValidationPatterns) {
+        if (pattern.test(content)) {
+          hasCentralizedValidation = true;
+          break;
+        }
+      }
+    }
+    
+    if (foundErrorHandling && hasCentralizedValidation) break;
+  }
+  
+  // Report issues
+  if (!foundErrorHandling) {
+    vulnerabilities.push({
+      id: uuidv4(),
+      severity: 'medium',
+      description: 'No proper validation error handling detected',
+      recommendation: 'Implement consistent error handling for validation failures with appropriate HTTP status codes (400) and error messages'
+    });
+  }
+  
+  if (!hasCentralizedValidation) {
+    vulnerabilities.push({
+      id: uuidv4(),
+      severity: 'low',
+      description: 'No centralized validation approach detected',
+      recommendation: 'Consider implementing a centralized validation middleware or helper functions to ensure consistent validation across all endpoints'
     });
   }
 }
