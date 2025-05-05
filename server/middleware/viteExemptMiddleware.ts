@@ -21,7 +21,30 @@ const VITE_PATH_PATTERNS = [
   /^\/src\//,         // Source files loaded by Vite
   /^\/assets\//,      // Assets loaded by Vite
   /^\/\?t=/,          // Timestamp query parameter often used by Vite
-  /^\/favicon\.ico$/  // Favicon requests
+  /^\/favicon\.ico$/,  // Favicon requests
+  /^\/\?v=/,          // Version query parameter
+  /^\/\?import=/,     // Import query parameter
+  /^\/static\//,      // Static files
+  /^\/public\//,      // Public files
+  /^\/css\//,         // CSS files
+  /^\/js\//,          // JS files
+  /^\/images\//,      // Image files
+  /^\/fonts\//,       // Font files
+  /^\/icons\//,       // Icon files
+  /\.js(\?.*)?$/,     // Any JS file
+  /\.css(\?.*)?$/,    // Any CSS file
+  /\.svg(\?.*)?$/,    // Any SVG file
+  /\.png(\?.*)?$/,    // Any PNG file
+  /\.jpg(\?.*)?$/,    // Any JPG file
+  /\.jpeg(\?.*)?$/,   // Any JPEG file
+  /\.gif(\?.*)?$/,    // Any GIF file
+  /\.woff(\?.*)?$/,   // Any WOFF font file
+  /\.woff2(\?.*)?$/,  // Any WOFF2 font file
+  /\.ttf(\?.*)?$/,    // Any TTF font file
+  /\.eot(\?.*)?$/,    // Any EOT font file
+  /\.map(\?.*)?$/,    // Any map file
+  /^\/index\.html(\?.*)?$/, // Main HTML file
+  /^\/$/ // Root path
 ];
 
 /**
@@ -37,6 +60,16 @@ export function isViteResource(path: string): boolean {
 export function viteExemptMiddleware(req: Request, res: Response, next: NextFunction): void {
   if (process.env.NODE_ENV === 'production') {
     // Skip in production mode
+    return next();
+  }
+
+  // Check if we're in Replit environment
+  const isReplitEnv = !!(process.env.REPLIT_DOMAINS || process.env.REPL_ID || process.env.REPL_SLUG);
+  
+  // In Replit dev environment, exempt most requests from security for frontend development
+  if (isReplitEnv && process.env.NODE_ENV !== 'production') {
+    // Skip security for all assets and frontend resources in Replit
+    (req as any).__isViteResource = true;
     return next();
   }
 
