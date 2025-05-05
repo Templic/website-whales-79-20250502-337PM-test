@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { ShoppingCart } from "@/components/features/shop/ShoppingCart";
 
-export function MainHeader() {
+export function CosmicMainHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
