@@ -17,6 +17,7 @@ import {
   getQueueStatus
 } from './security/securityScanQueue';
 import { initializeSystemMonitor } from './lib/systemMonitor';
+import { initializeMetricsScheduler, checkAndRunInitialMetrics } from './scheduled-tasks/ts-error-metrics-scheduler';
 
 // Track active background services
 interface ServiceStatus {
