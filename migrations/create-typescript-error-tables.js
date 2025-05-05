@@ -167,10 +167,10 @@ async function createErrorsTable() {
     );
   `);
   
-  // Create indexes separately
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_typescript_errors_scan_id ON typescript_errors(scan_id);`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_typescript_errors_file ON typescript_errors(file);`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_typescript_errors_pattern_id ON typescript_errors(pattern_id);`);
+  // Create indexes separately - need to use double quotes for column names
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_typescript_errors_scan_id ON typescript_errors("scan_id");`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_typescript_errors_file ON typescript_errors("file");`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_typescript_errors_pattern_id ON typescript_errors("pattern_id");`);
   
   console.log('typescript_errors table created');
 }
@@ -190,7 +190,7 @@ async function createAnalysisTable() {
     );
   `);
   
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_error_analysis_error_id ON error_analysis(error_id);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_error_analysis_error_id ON error_analysis("error_id");`);
   
   console.log('error_analysis table created');
 }
@@ -215,7 +215,7 @@ async function createFixHistoryTable() {
     );
   `);
   
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_error_fix_history_error_id ON error_fix_history(error_id);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_error_fix_history_error_id ON error_fix_history("error_id");`);
   
   console.log('error_fix_history table created');
 }
@@ -237,9 +237,9 @@ async function createFixesTable() {
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
-    
-    CREATE INDEX IF NOT EXISTS idx_error_fixes_pattern_id ON error_fixes(pattern_id);
   `);
+  
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_error_fixes_pattern_id ON error_fixes("pattern_id");`);
   
   console.log('error_fixes table created');
 }
@@ -261,9 +261,9 @@ async function createSecurityAuditsTable() {
       status TEXT NOT NULL,
       metadata JSONB
     );
-    
-    CREATE INDEX IF NOT EXISTS idx_scan_security_audits_scan_id ON scan_security_audits(scan_id);
   `);
+  
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_scan_security_audits_scan_id ON scan_security_audits("scan_id");`);
   
   console.log('scan_security_audits table created');
 }
