@@ -42,7 +42,7 @@ import { contentApiCsrfBypass } from './middleware/contentApiCsrfBypass';
 import { thirdPartyIntegrationMiddleware, taskadeIntegrationMiddleware } from './middleware/thirdPartyIntegrationMiddleware';
 import { noSecurityMiddleware } from './middleware/noSecurityMiddleware';
 import directValidationTestRoutes from './routes/direct-validation-test-routes';
-import replitBypassMiddleware, { isReplitEnvironment } from './middleware/replitBypassMiddleware';
+// Replit environment is detected via environment variables when needed
 
 // Start time tracking
 const startTime = Date.now();
@@ -56,10 +56,9 @@ const httpServer = createServer(app);
 app.use(cookieParser());
 
 // Check if we're in Replit environment
-if (isReplitEnvironment() && process.env.NODE_ENV !== 'production') {
-  log('Replit development environment detected - applying Replit-specific middleware', 'server');
-  app.use(replitBypassMiddleware);
-  log('✅ Replit bypass middleware registered for development environment', 'server');
+const isReplitEnv = !!(process.env.REPLIT_DOMAINS || process.env.REPL_ID || process.env.REPL_SLUG);
+if (isReplitEnv && process.env.NODE_ENV !== 'production') {
+  log('Replit development environment detected - using standalone tools for API validation', 'server');
 }
 
 // Set up Vite exemption middleware to allow Vite resources to bypass CSRF protection

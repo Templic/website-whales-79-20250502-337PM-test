@@ -1,232 +1,96 @@
-# API Validation System User Guide
+# API Validation & Navigation Tools User Guide
 
-## Overview
+This guide explains how to use the standalone API validation and dead link checker tools that are designed to work reliably in the Replit environment.
 
-The API Validation System is a comprehensive solution for validating API requests through multiple validation strategies:
+## Why Standalone Tools?
 
-1. **Schema Validation**: Enforces data types, required fields, and value constraints
-2. **Security Validation**: Detects and blocks malicious inputs like SQL injection and XSS attacks
-3. **Advanced Pattern Detection**: Identifies suspicious patterns in user input
+The Replit preview environment has security restrictions that can cause issues with complex web applications, particularly those with advanced security middleware. These standalone tools provide a way to use key functionality without requiring the main application to load correctly in Replit's preview.
 
-## Getting Started
+## Running the API Validation Tool
 
-### Running the Standalone Validation Server
-
-For a quick demonstration of the API validation capabilities, run:
+### Starting the Server
 
 ```bash
-./run-simplified-validation.sh
+# Start on default port 3000
+./run-api-validator.sh
+
+# Start on custom port
+./run-api-validator.sh 4000
 ```
 
-This starts a standalone server on port 8080 that you can access via:
-- http://localhost:8080 
-- Through the Replit Web tab
+### Using the API Validation Interface
 
-### Testing API Validation
+1. Open your browser to the server URL (e.g., http://localhost:3000)
+2. Select an endpoint to test from the dropdown menu
+3. Modify the request body as needed
+4. Click "Validate Input" to test schema validation
+5. Click "Security Check" to scan for potential security threats
 
-The standalone server provides a simple UI with three main validation tests:
+### Available Validation Types
 
-1. **Health Check**: Verifies the server is running correctly
-2. **Basic Validation**: Tests schema validation for user data
-3. **Security Validation**: Tests threat detection for potentially malicious input
+- **Schema Validation**: Checks if the input conforms to the expected data structure
+- **Security Validation**: Analyzes input for potential security threats like SQL injection
+- **AI Validation**: Uses pattern recognition to identify suspicious inputs (if available)
 
-Click the "Test Malicious Input" button to see how the system identifies SQL injection attempts.
+## Running the Dead Link Checker
 
-## API Endpoints
+### Starting the Server
 
-The validation system exposes the following endpoints:
+```bash
+# Start on default port 3500
+./run-link-checker.sh
 
-### Health Check
-```
-GET /health
-```
-Returns: Server status information
-
-### Basic Schema Validation
-```
-POST /validate/basic
-```
-Request Body:
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "age": 30
-}
-```
-Returns: Validation results and errors if any
-
-### Security Validation
-```
-POST /validate/security
-```
-Request Body:
-```json
-{
-  "query": "user input to validate"
-}
-```
-Returns: Security score and threat assessment
-
-## Understanding Validation Results
-
-### Schema Validation Results
-
-```json
-{
-  "valid": true,
-  "validatedData": {
-    "name": "John Doe",
-    "email": "john@example.com",
-    "age": 30
-  },
-  "message": "Input data is valid"
-}
+# Start on custom port
+./run-link-checker.sh 4500
 ```
 
-If validation fails:
-```json
-{
-  "valid": false,
-  "errors": [
-    "Name must be at least 2 characters",
-    "Valid email is required"
-  ]
-}
-```
+### Using the Link Checker Interface
 
-### Security Validation Results
+1. Open your browser to the server URL (e.g., http://localhost:3500)
+2. Enter the URL you want to scan (e.g., http://localhost:3000)
+3. Set the scan depth (1-3 recommended for most sites)
+4. Click "Start Scan" to begin checking for issues
+5. View results in real-time as they are discovered
+6. Download the report when the scan is complete
 
-```json
-{
-  "valid": true,
-  "securityScore": 0.9,
-  "threatAssessment": {
-    "input": "normal user input",
-    "score": 0.9,
-    "threats": ["No threats detected"],
-    "recommendation": "Accept"
-  }
-}
-```
+### Understanding Link Checker Results
 
-For potentially malicious input:
-```json
-{
-  "valid": false,
-  "securityScore": 0.2,
-  "threatAssessment": {
-    "input": "' OR 1=1; DROP TABLE users; --",
-    "score": 0.2,
-    "threats": ["Potential SQL injection detected"],
-    "recommendation": "Reject"
-  }
-}
-```
+- **Broken Links**: URLs that return HTTP errors (404, 500, etc.)
+- **Missing Anchors**: Fragment identifiers (#section) that don't exist on the page
+- **Dead-End Buttons**: Interactive elements with no click handlers
+- **Unreachable API Endpoints**: API endpoints referenced in code but not accessible
 
-## Integration with Main Application
+## Command-Line Usage
 
-To integrate the validation system with your application:
+Both tools can be used directly from the command line for automation or scripting:
 
-1. Import the validation middleware:
-```javascript
-import { validationMiddleware } from './server/validation/ValidationEngine';
-```
+```bash
+# Run link checker via command line
+node check-links.js https://example.com
 
-2. Apply validation rules to endpoints:
-```javascript
-app.post('/api/users', 
-  validationMiddleware({ rules: ['schema:user', 'security:high'] }), 
-  (req, res) => {
-    // Handle validated request
-    res.json({ success: true });
-  }
-);
-```
-
-## Production Configuration
-
-Before deploying to production, ensure validation test routes are disabled:
-
-```
-API_VALIDATION_TEST_MODE=false
-API_VALIDATION_BYPASS_SECURITY=false
-ENABLE_DIRECT_VALIDATION=false
-CSRF_PROTECTION=true
-```
-
-You can use the `disable-test-routes.sh` script to update these settings automatically.
-
-## Advanced Usage
-
-### Custom Validation Rules
-
-You can create custom validation rules by defining them in `apiValidationRules.ts`:
-
-```javascript
-const customRule = {
-  id: 'schema:custom',
-  type: 'schema',
-  schema: {
-    // Zod schema or validation definition
-  }
-};
-
-registerValidationRule(customRule);
-```
-
-### Method-Specific Validation
-
-Apply different validation rules based on HTTP method:
-
-```javascript
-app.use('/api/resources',
-  validationMiddleware({
-    byMethod: {
-      GET: ['security:low'],
-      POST: ['schema:resource', 'security:high'],
-      PUT: ['schema:resourceUpdate', 'security:high'],
-      DELETE: ['security:high']
-    }
-  }),
-  resourceHandler
-);
-```
-
-### Conditional Validation
-
-Apply validation based on request properties:
-
-```javascript
-validationMiddleware({
-  getRules: (req) => {
-    if (req.needsStrictValidation) {
-      return ['schema:user', 'security:high'];
-    }
-    return ['schema:user', 'security:low'];
-  }
-})
+# Run API validator as a standalone server
+node standalone-api-validator.js 3000
 ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-#### CSRF Errors
-If you encounter CSRF-related errors, ensure proper headers are included in requests or apply the CSRF exemption to test endpoints.
+1. **"Connection refused" error**
+   - Make sure your server is running on the specified port
+   - Check for any firewall restrictions
 
-#### Schema Validation Failures
-Review validation error messages for details on which fields failed validation and why.
+2. **"Invalid URL" error**
+   - Ensure URLs include the protocol (http:// or https://)
+   - Verify there are no spaces or special characters in the URL
 
-#### Security Validation Failures
-Examine the `threatAssessment` object in the response for specific details about detected threats.
+3. **No results from link checker**
+   - Try increasing the scan depth
+   - Check if the site uses client-side routing that might hide links
 
-## Known Limitations
+## Best Practices
 
-- In the Replit environment, the main application UI may not display correctly due to conflicts between the security system and Replit's preview environment.
-- The standalone validation server provides all validation capabilities without these conflicts.
-
-## Further Reading
-
-- `API-VALIDATION-SUMMARY.md`: Technical overview of the validation system
-- `validation-integration-example.js`: Examples of integrating validation with Express
+1. **Regular Scanning**: Run the link checker regularly to catch issues early
+2. **Validation Before Deployment**: Use the API validator to test endpoints before deploying
+3. **Export & Save Reports**: Download scan results for comparison over time
+4. **Focus on High-Risk Inputs**: Prioritize validation for user input fields that handle sensitive data
