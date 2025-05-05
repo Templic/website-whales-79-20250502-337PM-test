@@ -4,31 +4,11 @@
  * API endpoints for managing TypeScript errors through the admin portal.
  */
 
-import express, { Request, Response, NextFunction } from 'express';
+import express from 'express';
 import { body, param } from 'express-validator';
 import { validate } from '../../middlewares/validationMiddleware';
-
-// Import TypedResponse interface for properly typed route handlers
-interface TypedResponse<T> extends Response {
-  json(body: T): TypedResponse<T>;
-  status(code: number): TypedResponse<T>;
-  send(body: T): TypedResponse<T>;
-}
-
-// Create a temporary requireAdmin middleware
-const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
-  // For development purposes, we'll allow all access
-  // In production, this would check if the user has admin privileges
-  console.log('[Auth] Admin access granted to TypeScript error management');
-  next();
-};
 import { db, pool } from '../../db';
 import { logSecurityEvent } from '../../security';
-
-// Temporary auditAction function until we create a proper one
-function auditAction(data: any): void {
-  console.log(`[AUDIT] ${data.action} - Target: ${data.targetId} - User: ${data.userId}`);
-}
 import path from 'path';
 import { nanoid } from 'nanoid';
 import { ErrorCategory, ErrorSeverity, ErrorStatus } from '../../../shared/schema';
@@ -37,10 +17,24 @@ import { analyzeTypeScriptErrors } from '../../utils/ts-error-analyzer';
 import { fixTypeScriptErrorsWithOpenAI, TypeScriptErrorInput } from '../../utils/openai-enhanced-fixer';
 import fs from 'fs';
 
+// Create router
 const router = express.Router();
 
+// Create a temporary requireAdmin middleware
+const requireAdmin = (req, res, next) => {
+  // For development purposes, we'll allow all access
+  // In production, this would check if the user has admin privileges
+  console.log('[Auth] Admin access granted to TypeScript error management');
+  next();
+};
+
+// Temporary auditAction function until we create a proper one
+function auditAction(data) {
+  console.log(`[AUDIT] ${data.action} - Target: ${data.targetId} - User: ${data.userId}`);
+}
+
 // Simple test endpoint that doesn't require any validation or database access
-router.get('/test', (req: Request, res: Response) => {
+router.get('/test', (req, res) => {
   // Set special flag to skip CSRF validation (similar to the Content API)
   req.__skipCSRF = true;
   
@@ -64,7 +58,7 @@ const errorFixValidation = [
 ];
 
 // Get all scans
-router.get('/scans', async (req: Request, res: Response) => {
+router.get('/scans', async (req, res) => {
   // Set special flag to skip CSRF validation
   req.__skipCSRF = true;
   
@@ -84,7 +78,7 @@ router.get('/scans', async (req: Request, res: Response) => {
 });
 
 // Get scan by ID
-router.get('/scans/:id', async (req: Request, res: Response) => {
+router.get('/scans/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -131,7 +125,7 @@ router.get('/scans/:id', async (req: Request, res: Response) => {
 });
 
 // Create a new scan
-router.post('/scans', scanValidation, validate, async (req: Request, res: Response) => {
+router.post('/scans', scanValidation, validate, async (req, res) => {
   // Set special flag to skip CSRF validation
   req.__skipCSRF = true;
   
@@ -358,7 +352,7 @@ router.post('/scans/:scanId/errors/:errorId/ai-fix', errorFixValidation, validat
 });
 
 // Helper function to run scan in background
-async function runScanInBackground(scanId: string, aiEnabled: boolean) {
+async function runScanInBackground(scanId, aiEnabled) {
   try {
     console.log(`[TypeScript Scanner] Starting scan ${scanId}${aiEnabled ? ' with AI' : ''}`);
     
@@ -525,8 +519,31 @@ async function runScanInBackground(scanId: string, aiEnabled: boolean) {
   }
 }
 
+// Interface for TypeScript error database row
+interface TypeScriptErrorRow {
+  id: string;
+  scan_id: string;
+  code: string;
+  message: string;
+  file: string;
+  line: number;
+  column: number;
+  severity: string;
+  category: string;
+  status: string;
+  timestamp: Date;
+  fix_details?: {
+    suggestion?: string;
+    explanation?: string;
+    confidence?: number;
+    aiGenerated?: boolean;
+    generatedAt?: string;
+    appliedAt?: string;
+  };
+}
+
 // Helper function to generate AI fix in background
-async function generateAIFixInBackground(scanId: string, errorId: string, error: any) {
+async function generateAIFixInBackground(scanId: string, errorId: string, error: TypeScriptErrorRow): Promise<void> {
   try {
     console.log(`[TypeScript Scanner] Generating AI fix for error ${errorId}`);
     
