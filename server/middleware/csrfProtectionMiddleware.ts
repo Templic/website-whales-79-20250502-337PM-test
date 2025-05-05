@@ -29,10 +29,19 @@ function isVitePath(path: string): boolean {
   const vitePatterns = [
     /^\/@vite\//,       // Vite internal modules
     /^\/@vite$/,        // Vite client entry
+    /^\/@vite-client/,  // Vite client modules
     /^\/@react-refresh/,// React refresh runtime
     /^\/@fs\//,         // Vite file system access
     /^\/node_modules\//, // Node modules accessed by Vite
-    /^\/src\//          // Source files loaded by Vite
+    /^\/src\//,         // Source files loaded by Vite
+    /^\/assets\//,      // Asset files
+    /\.(js|jsx|ts|tsx|css|json|map)$/, // All JavaScript and related files
+    /^\/_hmr\//,        // HMR updates
+    /^\/index\.html$/,  // Main HTML
+    /^\/main\.[^\/]+\.js$/, // Main bundled JS
+    /^\/main\.css$/,    // Main CSS
+    /^\/components\//,  // Component directory
+    /^\/styles\//       // Styles directory
   ];
   
   return vitePatterns.some(pattern => pattern.test(path));
@@ -184,11 +193,19 @@ export function setupCSRFProtection(app: Express): void {
     res.json({ csrfToken: token });
   });
 
-  // Apply CSRF token setter to all GET requests, but exempt content API routes
+  // Apply CSRF token setter to all GET requests, but exempt content API routes and Vite resources
   app.get('*', (req, res, next) => {
     // Skip CSRF token setter for content API paths
     if (req.path.includes('/api/content/')) {
       console.log(`[CSRF Debug] Exempting content API path from token setter: ${req.path}`);
+      // Record exempt path in analytics
+      recordCsrfVerification(req, true);
+      return next();
+    }
+    
+    // Skip CSRF token setter for Vite resources in development mode
+    if (isDevMode() && isVitePath(req.path)) {
+      console.log(`[vite] Exempting Vite resource from security checks: ${req.path}`);
       // Record exempt path in analytics
       recordCsrfVerification(req, true);
       return next();
@@ -298,6 +315,10 @@ export function setupCSRFProtection(app: Express): void {
       
       // For development routes that fail CSRF, always allow access in development
       // This ensures the app functions normally during development
+      
+      // Check if it's a Vite resource that should be exempted
+      const isViteResource = isDevMode() && isVitePath(req.path);
+      
       if (
         // These paths should never require CSRF protection
         req.path === '/' || 
@@ -349,17 +370,25 @@ export function setupCSRFProtection(app: Express): void {
         req.path.includes('googleusercontent.com') ||
         req.path.includes('doubleclick.net') ||
         req.path.includes('googletagmanager.com') ||
-        // Vite development routes
+        // Vite development routes (legacy pattern matching)
         req.path.startsWith('/@vite') ||
         req.path.startsWith('/@fs/') ||
         req.path.startsWith('/@react-refresh') ||
         req.path.startsWith('/src/') ||
         req.path.startsWith('/assets/') ||
         req.path.startsWith('/node_modules/') ||
+        // Advanced Vite path detection using the isVitePath function
+        isViteResource ||
         // Rate limit test routes
         req.path.startsWith('/rate-limit-test')
       ) {
-        console.log('[Security] Allowing Flask app access despite CSRF error for path:', req.path);
+        // If it's a Vite resource, use a special log
+        if (isViteResource) {
+          console.log(`[vite] Exempting Vite resource from security checks: ${req.path}`);
+        } else {
+          console.log('[Security] Allowing Flask app access despite CSRF error for path:', req.path);
+        }
+        
         // Set a fresh CSRF token to recover and allow the request to proceed
         CSRFTokenSetter(req, res, () => {
           return next();
