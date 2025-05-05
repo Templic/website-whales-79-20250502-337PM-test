@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-05-05T03:00:14.260Z",
+  "licenseFindings": [],
+  "privacyFindings": [],
+  "securityFindings": [],
+  "summary": {
+    "totalFiles": 0,
+    "licenseIssues": 0,
+    "privacyIssues": 0,
+    "securityIssues": 0,
+    "compliance": true
+  }
+}
