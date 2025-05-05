@@ -492,6 +492,14 @@ svg[aria-hidden="true"] {
                 inset 0 0 15px rgba(0, 235, 214, 0.2);
   }
 
+  /* Z-index layering system */
+  .z-base { z-index: 1; }             /* Base elements */
+  .z-content { z-index: 10; }         /* Content elements */
+  .z-overlay { z-index: 20; }         /* Overlays like dropdowns */
+  .z-important { z-index: 50; }       /* Critical UI elements */
+  .z-fixed-header { z-index: 100; }   /* Header itself */
+  .z-modal { z-index: 1000; }         /* Modal dialogs */
+
   /* Cosmic hover glow effect for buttons and interactive elements */
   .cosmic-hover-glow {
     position: relative;
