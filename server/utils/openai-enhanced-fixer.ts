@@ -1,407 +1,447 @@
 /**
- * OpenAI Enhanced TypeScript Fixer
+ * OpenAI Enhanced TypeScript Error Fixer
  * 
- * A utility that uses OpenAI to generate fix suggestions for TypeScript errors.
- * Part of the TypeScript error management system (Resolution phase).
+ * This utility uses OpenAI's GPT models to analyze TypeScript errors and
+ * suggest fixes with explanations. It provides intelligent error resolution
+ * by understanding the context of the error and the surrounding code.
  */
 
 import fs from 'fs';
 import path from 'path';
 import OpenAI from 'openai';
+import { logSecurityEvent } from '../security';
 
-// The newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const MODEL = 'gpt-4o';
+// Types for our OpenAI fixer
+export interface ErrorContext {
+  code: string;
+  message: string;
+  file: string;
+  line: number;
+  column: number;
+  severity: string;
+  category: string;
+  codeSnippet?: string;
+  surroundingCode?: string;
+}
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+export interface FixSuggestion {
+  fixedCode: string;
+  explanation: string;
+  confidence: number;
+  aiGenerated: boolean;
+  alternativeFixes?: FixSuggestion[];
+}
+
+export interface FixerOptions {
+  maxTokens?: number;
+  temperature?: number;
+  includeAlternatives?: boolean;
+  maxAlternatives?: number;
+  useCache?: boolean;
+  maxRetries?: number;
+  retryDelay?: number;
+}
+
+// Default options
+const defaultOptions: FixerOptions = {
+  maxTokens: 1000,
+  temperature: 0.2,  // Lower temperature for more deterministic outputs
+  includeAlternatives: false,
+  maxAlternatives: 2,
+  useCache: true,
+  maxRetries: 3,
+  retryDelay: 1000,
+};
+
+// Simple in-memory cache for fix suggestions
+const fixCache = new Map<string, FixSuggestion>();
 
 /**
- * Error information to be sent to OpenAI
+ * Creates an error context key for caching
  */
-export interface ErrorInfo {
+function createErrorContextKey(error: ErrorContext): string {
+  return `${error.file}:${error.line}:${error.column}:${error.code}`;
+}
+
+/**
+ * Gets code context surrounding an error location
+ */
+function getCodeContext(filePath: string, lineNumber: number, contextLines: number = 5): string {
+  try {
+    if (!fs.existsSync(filePath)) {
+      return '';
+    }
+
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    const lines = fileContent.split('\n');
+    
+    const startLine = Math.max(0, lineNumber - contextLines - 1);
+    const endLine = Math.min(lines.length - 1, lineNumber + contextLines);
+    
+    return lines.slice(startLine, endLine + 1)
+      .map((line, index) => `${startLine + index + 1}${startLine + index + 1 === lineNumber ? ' >' : '  '} ${line}`)
+      .join('\n');
+  } catch (error) {
+    console.error(`Error getting code context for ${filePath}:${lineNumber}`, error);
+    return '';
+  }
+}
+
+/**
+ * OpenAI Enhanced TypeScript Error Fixer class
+ */
+export class OpenAIEnhancedFixer {
+  private openai: OpenAI | null = null;
+  private options: FixerOptions = { ...defaultOptions };
+  private isReady: boolean = false;
+
+  constructor(options: FixerOptions = {}) {
+    // Ensure OPENAI_API_KEY is available
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      console.error('OPENAI_API_KEY environment variable is not set');
+      this.isReady = false;
+      return;
+    }
+
+    this.openai = new OpenAI({ apiKey });
+    this.options = { ...defaultOptions, ...options };
+    this.isReady = true;
+  }
+
+  /**
+   * Check if the fixer is ready to use
+   */
+  public isFixerReady(): boolean {
+    return this.isReady;
+  }
+
+  /**
+   * Generate a fix suggestion for a TypeScript error
+   */
+  public async generateFixSuggestion(error: ErrorContext): Promise<FixSuggestion | null> {
+    if (!this.isReady) {
+      console.error('OpenAI Enhanced Fixer is not ready (API key missing)');
+      return null;
+    }
+
+    // Check cache if enabled
+    const cacheKey = createErrorContextKey(error);
+    if (this.options.useCache && fixCache.has(cacheKey)) {
+      return fixCache.get(cacheKey)!;
+    }
+
+    try {
+      // If the error context doesn't include surrounding code, fetch it
+      if (!error.surroundingCode && error.file) {
+        error.surroundingCode = getCodeContext(error.file, error.line);
+      }
+
+      // Create the prompt for OpenAI
+      const prompt = this.createFixPrompt(error);
+      
+      // Call OpenAI with retries
+      let attempt = 0;
+      let lastError: Error | null = null;
+
+      while (attempt < (this.options.maxRetries || 1)) {
+        try {
+          // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+          if (!this.openai) {
+            throw new Error('OpenAI client is not initialized');
+          }
+          const response = await this.openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: "You are an expert TypeScript programmer specializing in fixing TypeScript errors with minimal, precise changes. Provide fixes that address the root cause without changing functionality. Keep fixes minimal and provide clear explanations of what went wrong."
+              },
+              {
+                role: "user",
+                content: prompt
+              }
+            ],
+            max_tokens: this.options.maxTokens,
+            temperature: this.options.temperature,
+            response_format: { type: "json_object" }
+          });
+
+          // Parse the response
+          const content = response.choices[0].message.content;
+          if (!content) {
+            throw new Error('Empty response from OpenAI API');
+          }
+
+          try {
+            const result = JSON.parse(content);
+            
+            // Create fix suggestion
+            const fixSuggestion: FixSuggestion = {
+              fixedCode: result.fixedCode || '',
+              explanation: result.explanation || 'No explanation provided',
+              confidence: result.confidence || 70,
+              aiGenerated: true,
+              alternativeFixes: result.alternatives || []
+            };
+
+            // Cache the result if caching is enabled
+            if (this.options.useCache) {
+              fixCache.set(cacheKey, fixSuggestion);
+            }
+
+            // Log success
+            logSecurityEvent('AI TypeScript fix generated', 'info', { 
+              file: error.file, 
+              errorCode: error.code,
+              line: String(error.line) 
+            });
+
+            return fixSuggestion;
+          } catch (parseError) {
+            console.error('Error parsing OpenAI response:', parseError);
+            throw new Error('Invalid JSON response from OpenAI API');
+          }
+        } catch (callError) {
+          lastError = callError as Error;
+          attempt++;
+          if (attempt < (this.options.maxRetries || 1)) {
+            await new Promise(resolve => setTimeout(resolve, this.options.retryDelay || 1000));
+          }
+        }
+      }
+
+      // If we get here, all retries failed
+      console.error(`Failed to generate fix suggestion after ${this.options.maxRetries} attempts:`, lastError);
+      
+      // Log error
+      logSecurityEvent('AI TypeScript fix generation failed', 'error', { 
+        file: error.file, 
+        errorCode: error.code,
+        errorMessage: lastError ? lastError.message : 'Unknown error'
+      });
+      
+      return null;
+    } catch (error) {
+      console.error('Error generating fix suggestion:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Create a prompt for OpenAI to fix the TypeScript error
+   */
+  private createFixPrompt(error: ErrorContext): string {
+    return `
+I need help fixing a TypeScript error in my code:
+
+Error Code: ${error.code}
+Error Message: ${error.message}
+File: ${error.file}
+Line: ${error.line}
+Column: ${error.column}
+Severity: ${error.severity}
+Category: ${error.category}
+
+Here's the code with the error (the line with the error is marked with >):
+
+\`\`\`typescript
+${error.surroundingCode || 'No code context available'}
+\`\`\`
+
+Please analyze this error and provide a fix. Return your response in JSON format with the following fields:
+1. "fixedCode" - Just the code for the corrected line without any line numbers or markers
+2. "explanation" - A clear explanation of what caused the error and how your fix resolves it
+3. "confidence" - A number between 0-100 representing your confidence in this fix
+${this.options.includeAlternatives ? '4. "alternatives" - An array of alternative fixes if applicable (each with fixedCode, explanation, and confidence)' : ''}
+
+Your goal is to fix the issue with minimal changes to maintain the original code's intent.
+`;
+  }
+
+  /**
+   * Apply a fix to a file
+   */
+  public async applyFixToFile(filePath: string, lineNumber: number, fixedCode: string): Promise<boolean> {
+    try {
+      // Ensure file exists
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`File not found: ${filePath}`);
+      }
+
+      // Read file content
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      const lines = fileContent.split('\n');
+
+      // Ensure line number is valid
+      if (lineNumber < 1 || lineNumber > lines.length) {
+        throw new Error(`Invalid line number: ${lineNumber}`);
+      }
+
+      // Create backup of the file
+      const backupPath = `${filePath}.bak`;
+      fs.writeFileSync(backupPath, fileContent);
+
+      // Replace the line
+      lines[lineNumber - 1] = fixedCode;
+
+      // Write the file back
+      fs.writeFileSync(filePath, lines.join('\n'));
+
+      // Log success
+      logSecurityEvent('Applied TypeScript fix to file', 'info', { 
+        file: filePath, 
+        line: String(lineNumber)
+      });
+
+      return true;
+    } catch (error) {
+      console.error(`Failed to apply fix to ${filePath}:${lineNumber}:`, error);
+      
+      // Log error
+      logSecurityEvent('Failed to apply TypeScript fix', 'error', { 
+        file: filePath, 
+        line: String(lineNumber),
+        errorMessage: (error as Error).message
+      });
+      
+      return false;
+    }
+  }
+
+  /**
+   * Clear the fix cache
+   */
+  public clearCache(): void {
+    fixCache.clear();
+  }
+}
+
+// Create and export a singleton instance with default options
+export const openAIEnhancedFixer = new OpenAIEnhancedFixer();
+
+// Export a function to get a fixer instance with custom options
+export function createOpenAIEnhancedFixer(options: FixerOptions = {}): OpenAIEnhancedFixer {
+  return new OpenAIEnhancedFixer(options);
+}
+
+// Interface for the error input to fixTypeScriptErrorsWithOpenAI
+export interface TypeScriptErrorInput {
   errorCode: string;
   messageText: string;
   filePath: string;
   lineNumber: number;
   columnNumber: number;
-  category?: string;
-  severity?: string;
+  category: string;
+  severity: string;
   source?: string;
 }
 
-/**
- * Fix result from OpenAI
- */
-export interface ErrorFixResult {
-  error: ErrorInfo;
-  fixedCode: string;
-  explanation?: string;
-  confidence: 'high' | 'medium' | 'low';
-  warnings?: string[];
-  relatedFiles?: Array<{
-    filePath: string;
-    changes?: Array<{
-      code: string;
-      lineNumber: number;
-    }>;
-  }>;
-}
-
-/**
- * Options for error fixing
- */
-export interface ErrorFixOptions {
+// Interface for the fix option parameters
+export interface FixOptions {
   maxContextLines?: number;
-  includeImports?: boolean;
   enableExplanation?: boolean;
-  suggestRelatedChanges?: boolean;
-  codeStyle?: 'maintainOriginal' | 'optimize' | 'improveReadability';
-  verbose?: boolean;
+  temperature?: number;
+  maxRetries?: number;
 }
 
-// Default options
-const defaultOptions: ErrorFixOptions = {
-  maxContextLines: 10,
-  includeImports: true,
-  enableExplanation: true,
-  suggestRelatedChanges: false,
-  codeStyle: 'maintainOriginal',
-  verbose: false,
-};
+// Interface for the fix result
+export interface FixResult {
+  error: TypeScriptErrorInput;
+  fixedCode: string;
+  explanation: string;
+  confidence: number;
+  success: boolean;
+}
 
 /**
  * Fix TypeScript errors using OpenAI
+ * 
+ * @param errors Array of TypeScript errors to fix
+ * @param options Configuration options for the fix process
+ * @returns Array of fixes with explanations
  */
 export async function fixTypeScriptErrorsWithOpenAI(
-  errors: ErrorInfo[],
-  options: ErrorFixOptions = {}
-): Promise<ErrorFixResult[]> {
-  const mergedOptions = { ...defaultOptions, ...options };
-  const results: ErrorFixResult[] = [];
-
+  errors: TypeScriptErrorInput[],
+  options: FixOptions = {}
+): Promise<FixResult[]> {
+  const fixes: FixResult[] = [];
+  const fixer = openAIEnhancedFixer;
+  
+  // Check if fixer is ready
+  if (!fixer.isFixerReady()) {
+    console.error('OpenAI Enhanced Fixer is not ready (API key missing)');
+    logSecurityEvent('OpenAI TypeScript fixer not ready', 'error', { 
+      reason: 'API key missing'
+    });
+    return [];
+  }
+  
+  // Get context lines
+  const contextLines = options.maxContextLines || 10;
+  
+  // Process each error
   for (const error of errors) {
     try {
-      // Skip errors without file path or line number
+      // Skip if missing required fields
       if (!error.filePath || !error.lineNumber) {
-        console.warn('Skipping error with missing file path or line number:', error);
         continue;
       }
-
-      // Verify the file exists
-      if (!fs.existsSync(error.filePath)) {
-        console.warn(`File not found: ${error.filePath}`);
-        continue;
-      }
-
-      // Get code context
-      const context = getCodeContext(
-        error.filePath,
-        error.lineNumber,
-        mergedOptions.maxContextLines || 10,
-        mergedOptions.includeImports || false
-      );
-
-      // Generate fix using OpenAI
-      const fixResult = await generateFix(error, context, mergedOptions);
-      results.push(fixResult);
-
-      if (mergedOptions.verbose) {
-        console.log(`Generated fix for error in ${error.filePath}:${error.lineNumber}`);
-        console.log(`Original error: ${error.messageText}`);
-        console.log(`Fix confidence: ${fixResult.confidence}`);
+      
+      // Convert to our internal error context format
+      const errorContext: ErrorContext = {
+        code: error.errorCode,
+        message: error.messageText,
+        file: error.filePath,
+        line: error.lineNumber,
+        column: error.columnNumber,
+        severity: error.severity,
+        category: error.category,
+        // If source is provided, use it, otherwise get context from file
+        surroundingCode: error.source || getCodeContext(error.filePath, error.lineNumber, contextLines)
+      };
+      
+      // Generate fix suggestion
+      const fixSuggestion = await fixer.generateFixSuggestion(errorContext);
+      
+      if (fixSuggestion) {
+        // Create fix result
+        const fixResult: FixResult = {
+          error,
+          fixedCode: fixSuggestion.fixedCode,
+          explanation: fixSuggestion.explanation,
+          confidence: fixSuggestion.confidence,
+          success: true
+        };
+        
+        fixes.push(fixResult);
+        
+        // Log success
+        logSecurityEvent('Generated TypeScript fix', 'info', { 
+          file: error.filePath, 
+          line: String(error.lineNumber),
+          errorCode: error.errorCode
+        });
+      } else {
+        // Log failure
+        logSecurityEvent('Failed to generate TypeScript fix', 'error', { 
+          file: error.filePath, 
+          line: String(error.lineNumber),
+          errorCode: error.errorCode
+        });
       }
     } catch (err) {
       console.error(`Error fixing TypeScript error in ${error.filePath}:${error.lineNumber}:`, err);
-    }
-  }
-
-  return results;
-}
-
-/**
- * Get code context from the file
- */
-function getCodeContext(
-  filePath: string,
-  lineNumber: number,
-  contextLines: number,
-  includeImports: boolean
-): string {
-  try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n');
-    
-    let startLine = Math.max(0, lineNumber - contextLines - 1);
-    let endLine = Math.min(lines.length - 1, lineNumber + contextLines - 1);
-    
-    // If includeImports is true, scan for imports at the top of the file
-    if (includeImports && startLine > 0) {
-      const importLines: number[] = [];
       
-      // Find all import statements at the top of the file
-      for (let i = 0; i < Math.min(50, startLine); i++) {
-        if (lines[i].trim().startsWith('import ') || lines[i].trim().startsWith('export ')) {
-          importLines.push(i);
-        } else if (lines[i].trim() !== '' && !lines[i].trim().startsWith('//')) {
-          // Stop when we hit non-import code (excluding empty lines and comments)
-          break;
-        }
-      }
-      
-      // If we found imports, include them in the context
-      if (importLines.length > 0) {
-        const importContext = importLines.map(i => `${i + 1}: ${lines[i]}`).join('\n');
-        return `// Import statements\n${importContext}\n\n// Error context (line ${lineNumber} is the error location)\n` +
-               lines.slice(startLine, endLine + 1).map((line, i) => 
-                 `${startLine + i + 1}${startLine + i + 1 === lineNumber ? ' (ERROR) →' : ':'} ${line}`
-               ).join('\n');
-      }
-    }
-    
-    // Return regular context
-    return lines.slice(startLine, endLine + 1).map((line, i) => 
-      `${startLine + i + 1}${startLine + i + 1 === lineNumber ? ' (ERROR) →' : ':'} ${line}`
-    ).join('\n');
-  } catch (err) {
-    console.error(`Error reading file ${filePath}:`, err);
-    return '[Error reading file]';
-  }
-}
-
-/**
- * Generate a fix using OpenAI
- */
-async function generateFix(
-  error: ErrorInfo,
-  context: string,
-  options: ErrorFixOptions
-): Promise<ErrorFixResult> {
-  // Construct a prompt for OpenAI
-  const prompt = createFixPrompt(error, context, options);
-  
-  try {
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: `You are an expert TypeScript developer specializing in fixing TypeScript errors.
-Your task is to fix the TypeScript error described and provide explanations.
-Focus ONLY on fixing the specific error described. Do not modify code style or make unrelated changes.
-Always respond with JSON in the specified format.`
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.1,
-      response_format: { type: 'json_object' }
-    });
-    
-    // Parse the response
-    const responseContent = completion.choices[0].message.content;
-    
-    if (!responseContent) {
-      throw new Error('Empty response from OpenAI');
-    }
-    
-    try {
-      const parsedResponse = JSON.parse(responseContent);
-      
-      // Ensure the response has the expected structure
-      const fixResult: ErrorFixResult = {
-        error,
-        fixedCode: parsedResponse.fixedCode || '',
-        explanation: parsedResponse.explanation,
-        confidence: parsedResponse.confidence || 'medium',
-        warnings: parsedResponse.warnings,
-        relatedFiles: parsedResponse.relatedFiles
-      };
-      
-      return fixResult;
-    } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError);
-      console.error('Response content:', responseContent);
-      
-      // Fallback to a simple result
-      return {
-        error,
-        fixedCode: '',
-        explanation: 'Failed to parse OpenAI response.',
-        confidence: 'low'
-      };
-    }
-  } catch (openAiError) {
-    console.error('Error calling OpenAI API:', openAiError);
-    
-    // Return error result
-    return {
-      error,
-      fixedCode: '',
-      explanation: `Error calling OpenAI API: ${openAiError.message || 'Unknown error'}`,
-      confidence: 'low'
-    };
-  }
-}
-
-/**
- * Create a prompt for OpenAI to fix the error
- */
-function createFixPrompt(
-  error: ErrorInfo,
-  context: string,
-  options: ErrorFixOptions
-): string {
-  const promptParts = [
-    `# TypeScript Error Fix Request`,
-    
-    `## Error Details`,
-    `- Error Code: ${error.errorCode}`,
-    `- Message: ${error.messageText}`,
-    `- File: ${path.basename(error.filePath)}`,
-    `- Line: ${error.lineNumber}`,
-    `- Column: ${error.columnNumber}`,
-    error.category ? `- Category: ${error.category}` : '',
-    error.severity ? `- Severity: ${error.severity}` : '',
-    
-    `## Code Context`,
-    `\`\`\`typescript`,
-    context,
-    `\`\`\``,
-    
-    `## Instructions`,
-    `1. Analyze the error and the code context.`,
-    `2. Provide a fixed version of the code.`,
-    `3. Focus ONLY on fixing the specific error on line ${error.lineNumber}.`,
-    `4. Maintain the original code style and formatting.`,
-    `5. Do not make unrelated changes.`,
-    
-    options.enableExplanation ? 
-      `6. Explain why the error occurred and how your fix resolves it.` : '',
-    
-    options.suggestRelatedChanges ? 
-      `7. If fixing this error requires changes in other files, specify those changes.` : '',
-    
-    `## Response Format`,
-    `Respond with a JSON object with the following structure:`,
-    `\`\`\`json`,
-    `{`,
-    `  "fixedCode": "string", // The fixed code for the error line ONLY`,
-    `  "explanation": "string", // Explanation of the error and fix`,
-    `  "confidence": "high|medium|low", // Your confidence in this fix`,
-    `  "warnings": ["string"], // Optional array of warnings about the fix`,
-    `  "relatedFiles": [ // Optional array of related files that need changes`,
-    `    {`,
-    `      "filePath": "string",`,
-    `      "changes": [`,
-    `        {`,
-    `          "code": "string",`,
-    `          "lineNumber": number`,
-    `        }`,
-    `      ]`,
-    `    }`,
-    `  ]`,
-    `}`,
-    `\`\`\``,
-    
-    `Focus specifically on the error line. Your fixedCode should ONLY include the fixed line of code, not the entire file.`
-  ].filter(Boolean).join('\n\n');
-  
-  return promptParts;
-}
-
-/**
- * Apply a fix to a file
- */
-export function applyFixToFile(
-  filePath: string,
-  lineNumber: number,
-  fixedCode: string
-): boolean {
-  try {
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      console.error(`File not found: ${filePath}`);
-      return false;
-    }
-    
-    // Read file content
-    const content = fs.readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n');
-    
-    // Validate line number
-    if (lineNumber < 1 || lineNumber > lines.length) {
-      console.error(`Invalid line number ${lineNumber} for file ${filePath} (1-${lines.length})`);
-      return false;
-    }
-    
-    // Replace the line
-    lines[lineNumber - 1] = fixedCode;
-    
-    // Write back to file
-    fs.writeFileSync(filePath, lines.join('\n'));
-    
-    return true;
-  } catch (err) {
-    console.error(`Error applying fix to ${filePath}:${lineNumber}:`, err);
-    return false;
-  }
-}
-
-/**
- * Apply fixes to multiple files
- */
-export function applyMultipleFixesToFiles(
-  fixes: ErrorFixResult[]
-): { success: number; failed: number } {
-  let success = 0;
-  let failed = 0;
-  
-  for (const fix of fixes) {
-    if (!fix.fixedCode) {
-      failed++;
-      continue;
-    }
-    
-    const result = applyFixToFile(
-      fix.error.filePath,
-      fix.error.lineNumber,
-      fix.fixedCode
-    );
-    
-    if (result) {
-      success++;
-    } else {
-      failed++;
-    }
-    
-    // Apply related file changes if present
-    if (fix.relatedFiles) {
-      for (const relatedFile of fix.relatedFiles) {
-        if (!relatedFile.filePath || !relatedFile.changes) continue;
-        
-        for (const change of relatedFile.changes) {
-          if (!change.code || !change.lineNumber) continue;
-          
-          const relatedResult = applyFixToFile(
-            relatedFile.filePath,
-            change.lineNumber,
-            change.code
-          );
-          
-          if (relatedResult) {
-            success++;
-          } else {
-            failed++;
-          }
-        }
-      }
+      // Log error
+      logSecurityEvent('Error fixing TypeScript code', 'error', { 
+        file: error.filePath, 
+        line: String(error.lineNumber),
+        errorCode: error.errorCode,
+        errorMessage: (err as Error).message
+      });
     }
   }
   
-  return { success, failed };
+  return fixes;
 }

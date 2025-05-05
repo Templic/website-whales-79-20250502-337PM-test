@@ -1,658 +1,721 @@
 /**
  * TypeScript Error Analyzer
  * 
- * A utility for analyzing TypeScript errors for patterns and relationships.
- * Part of the TypeScript error management system (Analysis phase).
+ * This utility analyzes TypeScript errors, categorizes them, finds relationships
+ * between errors, and provides insights to help prioritize and fix them effectively.
  */
 
-import * as ts from 'typescript';
-import * as fs from 'fs';
-import * as path from 'path';
-import { TypeScriptErrorDetail, ErrorCategory, ErrorSeverity } from './ts-error-finder';
+import { 
+  TypeScriptErrorDetail, 
+  ErrorCategory, 
+  ErrorSeverity, 
+  ErrorFindingResult 
+} from './ts-error-finder';
+import { logSecurityEvent } from '../security';
 
-/**
- * Options for error analysis
- */
-export interface ErrorAnalysisOptions {
-  // Pattern detection options
-  detectPatterns?: boolean;
-  patternThreshold?: number;
-  
-  // Context options
-  includeFileContext?: boolean;
-  contextLines?: number;
-  
-  // Error relationship options
-  findRelatedErrors?: boolean;
-  maxRelatedErrors?: number;
-  similarityThreshold?: number;
-  
-  // Code quality options
-  suggestImprovements?: boolean;
-  
-  // Processing options
-  verbose?: boolean;
+// Types for our error analyzer
+export interface ErrorAnalysisResult {
+  rootCauses: RootCauseAnalysis[];
+  errorGroups: ErrorGroup[];
+  patternFrequency: Record<string, number>;
+  suggestedFixOrder: TypeScriptErrorDetail[];
+  impactAssessment: ImpactAssessment;
+  summary: string;
 }
 
-/**
- * Pattern information
- */
-export interface ErrorPattern {
+export interface RootCauseAnalysis {
+  category: ErrorCategory;
+  pattern: string;
+  affectedFiles: number;
+  totalErrors: number;
+  examples: TypeScriptErrorDetail[];
+  suggestedFix?: string;
+}
+
+export interface ErrorGroup {
   id: string;
   name: string;
   description: string;
-  regex: string;
-  category: ErrorCategory;
+  errors: TypeScriptErrorDetail[];
+  rootError?: TypeScriptErrorDetail;
   severity: ErrorSeverity;
-  occurrence: number;
-  files: string[];
-  exampleErrors: TypeScriptErrorDetail[];
-  suggestedFix?: string;
-  isAutoFixable: boolean;
+  fixPriority: number;
 }
 
-/**
- * Detailed error analysis
- */
-export interface ErrorAnalysisDetail {
-  error: TypeScriptErrorDetail;
-  context?: string;
-  relatedErrors?: TypeScriptErrorDetail[];
-  matchedPatterns?: ErrorPattern[];
-  impact?: {
-    criticalPaths: boolean;
-    userFacing: boolean;
-    securityImpact: boolean;
-    dataHandling: boolean;
-    complexity: 'low' | 'medium' | 'high';
-  };
-  fixPriority: 'low' | 'medium' | 'high' | 'critical';
-  suggestedApproach?: string;
+export interface ImpactAssessment {
+  criticalFiles: string[];
+  errorDensity: Record<string, number>;
+  highImpactErrors: TypeScriptErrorDetail[];
+  blockerCount: number;
+  estimatedFixTime: number; // in minutes
 }
 
-/**
- * Full analysis result
- */
-export interface ErrorAnalysisResult {
-  errors: ErrorAnalysisDetail[];
-  patterns: ErrorPattern[];
-  summary: {
-    totalErrors: number;
-    patternCount: number;
-    errorsByCategory: Record<string, number>;
-    errorsBySeverity: Record<string, number>;
-    highestImpactFiles: string[];
-    recommendedFixOrder: TypeScriptErrorDetail[];
-  };
+export interface ErrorAnalyzerOptions {
+  maxGroupSize?: number;
+  minPatternFrequency?: number;
+  detailedAnalysis?: boolean;
+  includeLowSeverity?: boolean;
+  groupSimilarErrors?: boolean;
+  similarityThreshold?: number;
+  maxExamplesPerPattern?: number;
+  verbose?: boolean;
+  includeFileContext?: boolean;
+  contextLines?: number;
 }
 
-// Default options for error analysis
-const defaultOptions: ErrorAnalysisOptions = {
-  detectPatterns: true,
-  patternThreshold: 3,
-  includeFileContext: true,
-  contextLines: 5,
-  findRelatedErrors: true,
-  maxRelatedErrors: 5,
+// Default options
+const defaultOptions: ErrorAnalyzerOptions = {
+  maxGroupSize: 10,
+  minPatternFrequency: 2,
+  detailedAnalysis: true,
+  includeLowSeverity: false,
+  groupSimilarErrors: true,
   similarityThreshold: 0.7,
-  suggestImprovements: true,
+  maxExamplesPerPattern: 3,
   verbose: false
 };
 
 /**
- * Main function to analyze TypeScript errors
+ * Analyze TypeScript errors
  */
 export async function analyzeTypeScriptErrors(
-  errors: TypeScriptErrorDetail[],
-  options: ErrorAnalysisOptions = {}
+  errors: TypeScriptErrorDetail[] | ErrorFindingResult,
+  options: ErrorAnalyzerOptions = {}
 ): Promise<ErrorAnalysisResult> {
+  const startTime = Date.now();
   const mergedOptions = { ...defaultOptions, ...options };
   
-  // Initialize result
-  const result: ErrorAnalysisResult = {
-    errors: [],
-    patterns: [],
-    summary: {
-      totalErrors: errors.length,
-      patternCount: 0,
-      errorsByCategory: {},
-      errorsBySeverity: {},
-      highestImpactFiles: [],
-      recommendedFixOrder: []
-    }
-  };
-  
-  // Count errors by category and severity
-  for (const error of errors) {
-    result.summary.errorsByCategory[error.category] = 
-      (result.summary.errorsByCategory[error.category] || 0) + 1;
-    
-    result.summary.errorsBySeverity[error.severity] = 
-      (result.summary.errorsBySeverity[error.severity] || 0) + 1;
-  }
-  
-  // Analyze file impact
-  const fileImpact: Record<string, number> = {};
-  for (const error of errors) {
-    fileImpact[error.file] = (fileImpact[error.file] || 0) + getSeverityWeight(error.severity);
-  }
-  
-  // Find highest impact files
-  const fileImpactEntries = Object.entries(fileImpact);
-  fileImpactEntries.sort((a, b) => b[1] - a[1]);
-  result.summary.highestImpactFiles = fileImpactEntries
-    .slice(0, 5)
-    .map(([file]) => file);
-  
-  // Detect error patterns if enabled
-  if (mergedOptions.detectPatterns) {
-    result.patterns = detectErrorPatterns(errors, mergedOptions.patternThreshold || 3);
-    result.summary.patternCount = result.patterns.length;
-  }
-  
-  // Analyze each error in detail
-  for (const error of errors) {
-    const analysisDetail: ErrorAnalysisDetail = {
-      error,
-      fixPriority: 'medium'
-    };
-    
-    // Get file context if enabled
-    if (mergedOptions.includeFileContext) {
-      analysisDetail.context = getFileContext(
-        error.file, 
-        error.line, 
-        mergedOptions.contextLines || 5
-      );
-    }
-    
-    // Find related errors if enabled
-    if (mergedOptions.findRelatedErrors) {
-      analysisDetail.relatedErrors = findRelatedErrors(
-        error, 
-        errors, 
-        mergedOptions.maxRelatedErrors || 5, 
-        mergedOptions.similarityThreshold || 0.7
-      );
-    }
-    
-    // Match error to patterns
-    if (result.patterns.length > 0) {
-      analysisDetail.matchedPatterns = result.patterns.filter(pattern => 
-        new RegExp(pattern.regex).test(error.message)
-      );
-    }
-    
-    // Determine error impact
-    analysisDetail.impact = determineErrorImpact(error);
-    
-    // Determine fix priority
-    analysisDetail.fixPriority = determineFixPriority(
-      error, 
-      analysisDetail.impact, 
-      fileImpact[error.file] || 0
-    );
-    
-    // Suggest an approach for fixing
-    if (mergedOptions.suggestImprovements) {
-      analysisDetail.suggestedApproach = suggestFixApproach(error, analysisDetail);
-    }
-    
-    result.errors.push(analysisDetail);
-  }
-  
-  // Determine recommended fix order
-  result.summary.recommendedFixOrder = [...errors].sort((a, b) => {
-    const aAnalysis = result.errors.find(e => 
-      e.error.file === a.file && e.error.line === a.line
-    );
-    const bAnalysis = result.errors.find(e => 
-      e.error.file === b.file && e.error.line === b.line
-    );
-    
-    const aPriority = priorityWeight(aAnalysis?.fixPriority || 'medium');
-    const bPriority = priorityWeight(bAnalysis?.fixPriority || 'medium');
-    
-    if (aPriority !== bPriority) {
-      return bPriority - aPriority; // Higher priority first
-    }
-    
-    // If same priority, sort by impact then severity
-    const aImpact = fileImpact[a.file] || 0;
-    const bImpact = fileImpact[b.file] || 0;
-    
-    if (aImpact !== bImpact) {
-      return bImpact - aImpact; // Higher impact first
-    }
-    
-    return getSeverityWeight(b.severity) - getSeverityWeight(a.severity);
-  });
-  
-  return result;
-}
-
-/**
- * Get context lines from a file
- */
-function getFileContext(filePath: string, lineNumber: number, contextLines: number): string {
   try {
-    if (!fs.existsSync(filePath)) {
-      return `[File not found: ${filePath}]`;
+    // Convert errors array to ErrorFindingResult format if needed
+    const result: ErrorFindingResult = Array.isArray(errors) 
+      ? {
+          totalErrors: errors.filter(e => e.severity === ErrorSeverity.Error).length,
+          totalWarnings: errors.filter(e => e.severity === ErrorSeverity.Warning).length,
+          errorsByFile: errors.reduce((acc, error) => {
+            acc[error.file] = (acc[error.file] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>),
+          errorsByCategory: errors.reduce((acc, error) => {
+            acc[error.category] = (acc[error.category] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>),
+          errorsByCode: errors.reduce((acc, error) => {
+            acc[error.code] = (acc[error.code] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>),
+          errors: errors,
+          fileCount: Object.keys(errors.reduce((acc, error) => {
+            acc[error.file] = true;
+            return acc;
+          }, {} as Record<string, boolean>)).length,
+          scannedLineCount: 0,
+          processingTimeMs: 0,
+          summary: `Analyzing ${errors.length} errors`
+        }
+      : errors;
+    
+    // Initialize analysis result
+    const analysis: ErrorAnalysisResult = {
+      rootCauses: [],
+      errorGroups: [],
+      patternFrequency: {},
+      suggestedFixOrder: [],
+      impactAssessment: {
+        criticalFiles: [],
+        errorDensity: {},
+        highImpactErrors: [],
+        blockerCount: 0,
+        estimatedFixTime: 0
+      },
+      summary: ''
+    };
+
+    // Skip analysis if no errors
+    if (result.errors.length === 0) {
+      analysis.summary = 'No errors to analyze.';
+      return analysis;
     }
-    
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const lines = fileContent.split('\n');
-    
-    const startLine = Math.max(0, lineNumber - contextLines - 1);
-    const endLine = Math.min(lines.length - 1, lineNumber + contextLines - 1);
-    
-    let context = '';
-    for (let i = startLine; i <= endLine; i++) {
-      const prefix = i === lineNumber - 1 ? '> ' : '  ';
-      context += `${prefix}${i + 1}: ${lines[i]}\n`;
+
+    if (mergedOptions.verbose) {
+      console.log(`Analyzing ${result.errors.length} TypeScript errors...`);
     }
-    
-    return context;
+
+    // Find error patterns and frequencies
+    const patternFrequency = findErrorPatterns(result.errors);
+    analysis.patternFrequency = patternFrequency;
+
+    // Identify root causes
+    analysis.rootCauses = identifyRootCauses(
+      result.errors,
+      patternFrequency,
+      mergedOptions
+    );
+
+    // Group similar errors
+    if (mergedOptions.groupSimilarErrors) {
+      analysis.errorGroups = groupSimilarErrors(
+        result.errors,
+        mergedOptions.similarityThreshold!,
+        mergedOptions.maxGroupSize!
+      );
+    }
+
+    // Determine fix order
+    analysis.suggestedFixOrder = determineSuggestedFixOrder(result.errors);
+
+    // Assess impact
+    analysis.impactAssessment = assessImpact(result);
+
+    // Generate summary
+    analysis.summary = generateAnalysisSummary(analysis, result);
+
+    // Log success
+    logSecurityEvent('TypeScript error analysis completed', 'info', { 
+      errorCount: String(result.totalErrors),
+      rootCauseCount: String(analysis.rootCauses.length),
+      groupCount: String(analysis.errorGroups.length)
+    });
+
+    return analysis;
   } catch (error) {
-    return `[Error reading file: ${error.message || 'Unknown error'}]`;
+    console.error('Error analyzing TypeScript errors:', error);
+    
+    // Log error
+    logSecurityEvent('TypeScript error analysis failed', 'error', { 
+      errorMessage: (error as Error).message
+    });
+    
+    // Return partial result
+    return {
+      rootCauses: [],
+      errorGroups: [],
+      patternFrequency: {},
+      suggestedFixOrder: [],
+      impactAssessment: {
+        criticalFiles: [],
+        errorDensity: {},
+        highImpactErrors: [],
+        blockerCount: 0,
+        estimatedFixTime: 0
+      },
+      summary: `Error during analysis: ${(error as Error).message}`
+    };
   }
 }
 
 /**
- * Find errors related to the given error
+ * Find error patterns and their frequencies
  */
-function findRelatedErrors(
-  error: TypeScriptErrorDetail,
-  allErrors: TypeScriptErrorDetail[],
-  maxRelated: number,
-  threshold: number
-): TypeScriptErrorDetail[] {
-  // Calculate similarity scores
-  const similarities: Array<{ error: TypeScriptErrorDetail; score: number }> = [];
+function findErrorPatterns(errors: TypeScriptErrorDetail[]): Record<string, number> {
+  const patterns: Record<string, number> = {};
   
-  for (const otherError of allErrors) {
-    // Skip comparing to self
-    if (
-      otherError.file === error.file &&
-      otherError.line === error.line &&
-      otherError.column === error.column
-    ) {
+  for (const error of errors) {
+    // Extract pattern from error code and message
+    const pattern = extractErrorPattern(error);
+    
+    // Increment pattern count
+    patterns[pattern] = (patterns[pattern] || 0) + 1;
+  }
+  
+  return patterns;
+}
+
+/**
+ * Extract a pattern from an error
+ */
+function extractErrorPattern(error: TypeScriptErrorDetail): string {
+  // Extract error code
+  const code = error.code;
+  
+  // Simplify error message to create a pattern
+  let message = error.message;
+  
+  // Replace specific identifiers with placeholders
+  message = message.replace(/'[^']+'/g, "'IDENTIFIER'")
+                 .replace(/"[^"]+"/g, '"IDENTIFIER"')
+                 .replace(/\b[A-Za-z0-9_]+\b/g, (match) => {
+                    // Don't replace common keywords
+                    const keywords = ['type', 'interface', 'class', 'function', 'const', 'let', 'var'];
+                    return keywords.includes(match) ? match : 'IDENTIFIER';
+                 })
+                 .replace(/\d+/g, 'N');
+  
+  return `${code}: ${message}`;
+}
+
+/**
+ * Identify root causes of errors
+ */
+function identifyRootCauses(
+  errors: TypeScriptErrorDetail[],
+  patternFrequency: Record<string, number>,
+  options: ErrorAnalyzerOptions
+): RootCauseAnalysis[] {
+  const rootCauses: RootCauseAnalysis[] = [];
+  const minFrequency = options.minPatternFrequency || 2;
+  const maxExamples = options.maxExamplesPerPattern || 3;
+  
+  // Track files affected by each pattern
+  const patternToFiles: Record<string, Set<string>> = {};
+  
+  // Map errors to patterns
+  const patternToErrors: Record<string, TypeScriptErrorDetail[]> = {};
+  
+  for (const error of errors) {
+    const pattern = extractErrorPattern(error);
+    
+    // Skip patterns below minimum frequency
+    if (patternFrequency[pattern] < minFrequency) {
       continue;
     }
     
-    // Calculate similarity score
-    const score = calculateErrorSimilarity(error, otherError);
-    
-    if (score >= threshold) {
-      similarities.push({ error: otherError, score });
+    // Track files
+    if (!patternToFiles[pattern]) {
+      patternToFiles[pattern] = new Set<string>();
     }
+    patternToFiles[pattern].add(error.file);
+    
+    // Track errors
+    if (!patternToErrors[pattern]) {
+      patternToErrors[pattern] = [];
+    }
+    patternToErrors[pattern].push(error);
   }
   
-  // Sort by similarity score
-  similarities.sort((a, b) => b.score - a.score);
+  // Create root cause analysis for each significant pattern
+  for (const pattern in patternToErrors) {
+    const relatedErrors = patternToErrors[pattern];
+    const affectedFiles = patternToFiles[pattern].size;
+    
+    // Skip patterns with only one affected file if not doing detailed analysis
+    if (affectedFiles <= 1 && !options.detailedAnalysis) {
+      continue;
+    }
+    
+    // Get examples (limit to max)
+    const examples = relatedErrors.slice(0, maxExamples);
+    
+    // Determine common category
+    const categories = relatedErrors.map(e => e.category);
+    const categoryCounts: Record<string, number> = {};
+    
+    for (const category of categories) {
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    }
+    
+    const category = Object.entries(categoryCounts)
+      .sort((a, b) => b[1] - a[1])[0][0] as ErrorCategory;
+    
+    // Create root cause analysis
+    rootCauses.push({
+      category,
+      pattern,
+      affectedFiles,
+      totalErrors: relatedErrors.length,
+      examples,
+      suggestedFix: examples[0].suggestedFix
+    });
+  }
   
-  // Return top N related errors
-  return similarities.slice(0, maxRelated).map(s => s.error);
+  // Sort root causes by total errors (descending)
+  rootCauses.sort((a, b) => b.totalErrors - a.totalErrors);
+  
+  return rootCauses;
 }
 
 /**
- * Calculate similarity between two errors
+ * Group similar errors together
  */
-function calculateErrorSimilarity(a: TypeScriptErrorDetail, b: TypeScriptErrorDetail): number {
-  let score = 0;
-  
-  // Same error code is a strong signal
-  if (a.code === b.code) {
-    score += 0.4;
-  }
-  
-  // Same category is a moderate signal
-  if (a.category === b.category) {
-    score += 0.2;
-  }
-  
-  // Same file is a weak signal
-  if (a.file === b.file) {
-    score += 0.1;
-  }
-  
-  // Message similarity
-  const messageSimilarity = calculateTextSimilarity(a.message, b.message);
-  score += messageSimilarity * 0.3;
-  
-  return Math.min(1, score);
-}
-
-/**
- * Calculate text similarity (very simple implementation)
- */
-function calculateTextSimilarity(a: string, b: string): number {
-  // Normalize strings
-  const normA = a.toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
-  const normB = b.toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
-  
-  // Get words
-  const wordsA = normA.split(' ');
-  const wordsB = normB.split(' ');
-  
-  // Count common words
-  const commonWords = wordsA.filter(word => wordsB.includes(word));
-  
-  // Calculate Jaccard similarity
-  const union = new Set([...wordsA, ...wordsB]);
-  return commonWords.length / union.size;
-}
-
-/**
- * Detect common error patterns
- */
-function detectErrorPatterns(
+function groupSimilarErrors(
   errors: TypeScriptErrorDetail[],
-  threshold: number
-): ErrorPattern[] {
-  // Count error messages and group by similarity
-  const messageGroups: Record<string, TypeScriptErrorDetail[]> = {};
+  similarityThreshold: number,
+  maxGroupSize: number
+): ErrorGroup[] {
+  const groups: ErrorGroup[] = [];
+  const processedErrors = new Set<string>();
   
-  for (const error of errors) {
-    // Generate a normalized key for the error message
-    const key = normalizeErrorMessage(error.message, error.code);
-    
-    if (!messageGroups[key]) {
-      messageGroups[key] = [];
-    }
-    
-    messageGroups[key].push(error);
+  // Create a unique ID for an error
+  function createErrorId(error: TypeScriptErrorDetail): string {
+    return `${error.file}:${error.line}:${error.column}:${error.code}`;
   }
   
-  // Keep only groups that meet the threshold
-  const patterns: ErrorPattern[] = [];
-  let patternId = 1;
-  
-  for (const [key, errorGroup] of Object.entries(messageGroups)) {
-    if (errorGroup.length >= threshold) {
-      // Create a pattern for this group
-      const firstError = errorGroup[0];
-      
-      // Get unique files containing this pattern
-      const files = [...new Set(errorGroup.map(error => error.file))];
-      
-      // Create a regex from the normalized message
-      const regex = createPatternRegex(key, firstError.code);
-      
-      // Take a few example errors (up to 3)
-      const examples = errorGroup.slice(0, 3);
-      
-      // Determine if the pattern is auto-fixable
-      const isAutoFixable = determineIfAutoFixable(firstError.code, firstError.message);
-      
-      patterns.push({
-        id: `PATTERN-${patternId++}`,
-        name: generatePatternName(key, firstError.category),
-        description: generatePatternDescription(firstError, errorGroup.length),
-        regex,
-        category: firstError.category,
-        severity: firstError.severity,
-        occurrence: errorGroup.length,
-        files,
-        exampleErrors: examples,
-        suggestedFix: firstError.suggestedFix,
-        isAutoFixable
-      });
-    }
-  }
-  
-  return patterns.sort((a, b) => b.occurrence - a.occurrence);
-}
-
-/**
- * Normalize error message for pattern detection
- */
-function normalizeErrorMessage(message: string, code: string): string {
-  // Remove variable parts
-  let normalized = message
-    .replace(/['"]\w+['"]/g, 'IDENTIFIER')  // Replace quoted identifiers
-    .replace(/\b\d+\b/g, 'NUMBER')          // Replace numbers
-    .replace(/\b(\/[^\s]+)\b/g, 'PATH');    // Replace paths
-  
-  // Handle specific error codes differently
-  if (code.startsWith('TS2')) {
-    // Type errors - keep more structure
-    normalized = normalized
-      .replace(/Type '[^']+'/g, "Type 'TYPE'")
-      .replace(/type '[^']+'/g, "type 'TYPE'");
-  }
-  
-  return normalized.trim();
-}
-
-/**
- * Create a pattern regex from a normalized message
- */
-function createPatternRegex(normalizedMessage: string, code: string): string {
-  // Escape regex special characters
-  let regex = normalizedMessage
-    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    .replace(/IDENTIFIER/g, '[\'"][\\w-]+[\'"]')
-    .replace(/NUMBER/g, '\\d+')
-    .replace(/PATH/g, '(?:\\/[\\w\\.-]+)+')
-    .replace(/TYPE/g, '[\\w\\.<>\\[\\]\\(\\),\\s\\|]+');
-  
-  return `^${regex}$`;
-}
-
-/**
- * Generate a name for the error pattern
- */
-function generatePatternName(normalizedMessage: string, category: ErrorCategory): string {
-  // Create a short name based on category and key parts of the message
-  const key = normalizedMessage.slice(0, 40).trim();
-  const words = key.split(' ').slice(0, 6).join(' ');
-  return `${category}: ${words}...`;
-}
-
-/**
- * Generate a description for the error pattern
- */
-function generatePatternDescription(
-  error: TypeScriptErrorDetail,
-  count: number
-): string {
-  return `This pattern appears ${count} times across the codebase. It's a ${error.severity.toLowerCase()} severity ${error.category.toLowerCase()} issue. The error is: ${error.message}`;
-}
-
-/**
- * Determine if an error is likely auto-fixable
- */
-function determineIfAutoFixable(code: string, message: string): boolean {
-  // Simple check for auto-fixable errors
-  const simpleFixes = [
-    // Missing semicolons, parentheses, brackets
-    message.includes('Expected'),
-    message.includes('Missing'),
-    
-    // Import errors that can be auto-fixed
-    code === 'TS2307' && message.includes('Cannot find module'),
-    
-    // Unused variables
-    code === 'TS6133' && message.includes('is declared but its value is never read'),
-    
-    // Missing properties in object literals
-    code === 'TS2739' && message.includes('Missing required properties'),
-    
-    // Type assertion errors that can be corrected
-    code === 'TS2352' && message.includes('Type')
-  ];
-  
-  return simpleFixes.some(Boolean);
-}
-
-/**
- * Determine the impact of an error
- */
-function determineErrorImpact(error: TypeScriptErrorDetail): ErrorAnalysisDetail['impact'] {
-  // Analyze the file path to determine if it's a critical path
-  const isCriticalPath = 
-    error.file.includes('/server/') ||
-    error.file.includes('/core/') ||
-    error.file.includes('/shared/') ||
-    error.file.includes('/api/') ||
-    error.file.includes('/auth/') ||
-    error.file.includes('/security/');
-  
-  // Analyze if the error might affect user-facing components
-  const isUserFacing = 
-    error.file.includes('/components/') ||
-    error.file.includes('/pages/') ||
-    error.file.includes('/views/') ||
-    error.file.includes('/ui/');
-  
-  // Analyze if the error might have security implications
-  const hasSecurityImpact = 
-    error.file.includes('/auth/') ||
-    error.file.includes('/security/') ||
-    error.message.toLowerCase().includes('null') ||
-    error.message.toLowerCase().includes('undefined') ||
-    error.category === ErrorCategory.TYPE_MISMATCH;
-  
-  // Analyze if the error is in code that handles data
-  const involvesDataHandling = 
-    error.file.includes('/data/') ||
-    error.file.includes('/models/') ||
-    error.file.includes('/schema/') ||
-    error.file.includes('/store/') ||
-    error.file.includes('/storage/') ||
-    error.file.includes('/db/');
-  
-  // Determine complexity based on error type and location
-  let complexity: 'low' | 'medium' | 'high' = 'medium';
-  
-  if (
-    error.severity === ErrorSeverity.CRITICAL ||
-    (error.severity === ErrorSeverity.HIGH && hasSecurityImpact)
-  ) {
-    complexity = 'high';
-  } else if (
-    error.severity === ErrorSeverity.LOW &&
-    error.category !== ErrorCategory.TYPE_MISMATCH
-  ) {
-    complexity = 'low';
-  }
-  
-  return {
-    criticalPaths: isCriticalPath,
-    userFacing: isUserFacing,
-    securityImpact: hasSecurityImpact,
-    dataHandling: involvesDataHandling,
-    complexity
-  };
-}
-
-/**
- * Determine the priority for fixing an error
- */
-function determineFixPriority(
-  error: TypeScriptErrorDetail,
-  impact: ErrorAnalysisDetail['impact'],
-  fileImpact: number
-): 'low' | 'medium' | 'high' | 'critical' {
-  // Critical priority errors
-  if (
-    error.severity === ErrorSeverity.CRITICAL ||
-    (impact.securityImpact && impact.criticalPaths) ||
-    (error.severity === ErrorSeverity.HIGH && impact.dataHandling && impact.criticalPaths)
-  ) {
-    return 'critical';
-  }
-  
-  // High priority errors
-  if (
-    error.severity === ErrorSeverity.HIGH ||
-    (error.severity === ErrorSeverity.MEDIUM && impact.userFacing) ||
-    (impact.criticalPaths && fileImpact > 10) ||
-    (impact.complexity === 'high')
-  ) {
-    return 'high';
-  }
-  
-  // Low priority errors
-  if (
-    error.severity === ErrorSeverity.LOW &&
-    !impact.criticalPaths &&
-    !impact.userFacing &&
-    !impact.securityImpact &&
-    !impact.dataHandling
-  ) {
-    return 'low';
-  }
-  
-  // Default to medium priority
-  return 'medium';
-}
-
-/**
- * Suggest an approach for fixing the error
- */
-function suggestFixApproach(
-  error: TypeScriptErrorDetail,
-  analysis: ErrorAnalysisDetail
-): string {
-  // Different suggestions based on error category
-  switch (error.category) {
-    case ErrorCategory.TYPE_MISMATCH:
-      return "Examine the type definitions and ensure they match. Consider using type assertions or modifying function parameters to match expected types.";
-    
-    case ErrorCategory.SYNTAX_ERROR:
-      return "Fix the syntax error by carefully examining the code against TypeScript syntax rules. Check for missing or misplaced brackets, parentheses, or semicolons.";
-    
-    case ErrorCategory.MODULE_RESOLUTION:
-      return "Ensure the module path is correct and the module is installed. Check import statements and tsconfig.json configuration for proper path resolution.";
-    
-    case ErrorCategory.IMPORT_ERROR:
-      return "Verify that the import statement matches the export from the module. Check for case sensitivity and ensure the export actually exists in the imported file.";
-    
-    case ErrorCategory.PROPERTY_ERROR:
-      return "Check the object type definition to ensure the property exists. You may need to update the interface or type definition, or use optional chaining (?) for potentially undefined properties.";
-    
-    case ErrorCategory.REACT_ERROR:
-      return "Review the React component props and ensure all required props are provided. Check JSX syntax and component usage against React guidelines.";
-    
-    case ErrorCategory.HOOK_ERROR:
-      return "Ensure hooks are called at the top level of your component and follow React's rules of hooks. Check the order and conditions around hook calls.";
-    
-    default:
-      // Consider the matched patterns if available
-      if (analysis.matchedPatterns && analysis.matchedPatterns.length > 0) {
-        return analysis.matchedPatterns[0].suggestedFix || 
-          "Use the suggested fix for this common error pattern.";
+  // Check if two errors are similar
+  function areSimilar(a: TypeScriptErrorDetail, b: TypeScriptErrorDetail): boolean {
+    // Same code is a strong indicator
+    if (a.code === b.code) {
+      // If in same file, likely related
+      if (a.file === b.file) {
+        return true;
       }
       
-      return error.suggestedFix || 
-        "Review the error message carefully and address the specific issue mentioned.";
+      // Check message similarity
+      const similarity = calculateStringSimilarity(a.message, b.message);
+      return similarity >= similarityThreshold;
+    }
+    
+    // Different codes, check if they're in the same file and close to each other
+    if (a.file === b.file) {
+      const lineDifference = Math.abs(a.line - b.line);
+      if (lineDifference <= 5) {
+        // Close proximity errors are often related
+        return true;
+      }
+    }
+    
+    return false;
   }
+  
+  // For each error, find similar errors and create groups
+  for (const error of errors) {
+    const errorId = createErrorId(error);
+    
+    // Skip if already processed
+    if (processedErrors.has(errorId)) {
+      continue;
+    }
+    
+    // Mark as processed
+    processedErrors.add(errorId);
+    
+    // Find similar errors
+    const similarErrors: TypeScriptErrorDetail[] = [error];
+    
+    for (const otherError of errors) {
+      const otherId = createErrorId(otherError);
+      
+      // Skip if same error or already processed
+      if (errorId === otherId || processedErrors.has(otherId)) {
+        continue;
+      }
+      
+      // Check similarity
+      if (areSimilar(error, otherError)) {
+        similarErrors.push(otherError);
+        processedErrors.add(otherId);
+        
+        // Limit group size
+        if (similarErrors.length >= maxGroupSize) {
+          break;
+        }
+      }
+    }
+    
+    // Only create groups with at least 2 errors
+    if (similarErrors.length > 1) {
+      // Determine root error (usually the one with the lowest line number)
+      similarErrors.sort((a, b) => {
+        // First sort by file
+        if (a.file !== b.file) {
+          return a.file.localeCompare(b.file);
+        }
+        // Then by line number
+        return a.line - b.line;
+      });
+      
+      const rootError = similarErrors[0];
+      
+      // Create group
+      const group: ErrorGroup = {
+        id: `group-${groups.length + 1}`,
+        name: `Error Group: ${rootError.code}`,
+        description: `Group of ${similarErrors.length} similar errors related to ${rootError.code}`,
+        errors: similarErrors,
+        rootError,
+        severity: rootError.severity,
+        fixPriority: calculateFixPriority(rootError)
+      };
+      
+      groups.push(group);
+    }
+  }
+  
+  // Sort groups by fix priority (descending)
+  groups.sort((a, b) => b.fixPriority - a.fixPriority);
+  
+  return groups;
 }
 
 /**
- * Convert severity to numeric weight
+ * Calculate string similarity (Levenshtein distance based)
  */
-function getSeverityWeight(severity: ErrorSeverity): number {
-  switch (severity) {
-    case ErrorSeverity.CRITICAL: return 4;
-    case ErrorSeverity.HIGH: return 3;
-    case ErrorSeverity.MEDIUM: return 2;
-    case ErrorSeverity.LOW: return 1;
-    default: return 0;
+function calculateStringSimilarity(a: string, b: string): number {
+  // For long strings, just compare first 100 chars
+  if (a.length > 100 || b.length > 100) {
+    a = a.substring(0, 100);
+    b = b.substring(0, 100);
   }
+  
+  // Calculate Levenshtein distance
+  const matrix: number[][] = [];
+  
+  // Initialize matrix
+  for (let i = 0; i <= a.length; i++) {
+    matrix[i] = [i];
+  }
+  
+  for (let j = 0; j <= b.length; j++) {
+    matrix[0][j] = j;
+  }
+  
+  // Fill matrix
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1, // deletion
+        matrix[i][j - 1] + 1, // insertion
+        matrix[i - 1][j - 1] + cost // substitution
+      );
+    }
+  }
+  
+  // Calculate similarity (0 to 1)
+  const distance = matrix[a.length][b.length];
+  const maxLength = Math.max(a.length, b.length);
+  
+  return maxLength === 0 ? 1 : 1 - distance / maxLength;
 }
 
 /**
- * Convert priority to numeric weight
+ * Calculate fix priority for an error
  */
-function priorityWeight(priority: 'low' | 'medium' | 'high' | 'critical'): number {
-  switch (priority) {
-    case 'critical': return 4;
-    case 'high': return 3;
-    case 'medium': return 2;
-    case 'low': return 1;
-    default: return 0;
+function calculateFixPriority(error: TypeScriptErrorDetail): number {
+  // Base priority on severity
+  let priority = 0;
+  
+  switch (error.severity) {
+    case ErrorSeverity.Error:
+      priority = 100;
+      break;
+    case ErrorSeverity.Warning:
+      priority = 50;
+      break;
+    case ErrorSeverity.Suggestion:
+      priority = 25;
+      break;
+    case ErrorSeverity.Message:
+      priority = 10;
+      break;
   }
+  
+  // Adjust based on category
+  switch (error.category) {
+    case ErrorCategory.Type:
+      priority += 10;
+      break;
+    case ErrorCategory.Syntax:
+      priority += 15;
+      break;
+    case ErrorCategory.Import:
+      priority += 12;
+      break;
+    case ErrorCategory.Declaration:
+      priority += 8;
+      break;
+    case ErrorCategory.Security:
+      priority += 20;
+      break;
+    case ErrorCategory.Performance:
+      priority += 5;
+      break;
+  }
+  
+  // Errors blocking other errors should be fixed first
+  if (error.message.includes('cannot find') || 
+      error.message.includes('undefined') ||
+      error.message.includes('missing')) {
+    priority += 15;
+  }
+  
+  return priority;
 }
+
+/**
+ * Determine suggested fix order for errors
+ */
+function determineSuggestedFixOrder(errors: TypeScriptErrorDetail[]): TypeScriptErrorDetail[] {
+  // Clone errors to avoid modifying original
+  const sortedErrors = [...errors];
+  
+  // Calculate priority for each error
+  const errorPriorities = new Map<TypeScriptErrorDetail, number>();
+  
+  for (const error of sortedErrors) {
+    const priority = calculateFixPriority(error);
+    errorPriorities.set(error, priority);
+  }
+  
+  // Sort by priority (descending)
+  sortedErrors.sort((a, b) => {
+    const priorityA = errorPriorities.get(a) || 0;
+    const priorityB = errorPriorities.get(b) || 0;
+    
+    if (priorityA !== priorityB) {
+      return priorityB - priorityA;
+    }
+    
+    // If same priority, group by file
+    if (a.file !== b.file) {
+      return a.file.localeCompare(b.file);
+    }
+    
+    // Then by line number
+    return a.line - b.line;
+  });
+  
+  return sortedErrors;
+}
+
+/**
+ * Assess impact of errors
+ */
+function assessImpact(result: ErrorFindingResult): ImpactAssessment {
+  const assessment: ImpactAssessment = {
+    criticalFiles: [],
+    errorDensity: {},
+    highImpactErrors: [],
+    blockerCount: 0,
+    estimatedFixTime: 0
+  };
+  
+  // Calculate error density by file
+  const fileErrors: Record<string, TypeScriptErrorDetail[]> = {};
+  
+  for (const error of result.errors) {
+    if (!fileErrors[error.file]) {
+      fileErrors[error.file] = [];
+    }
+    fileErrors[error.file].push(error);
+  }
+  
+  // Calculate density
+  for (const file in fileErrors) {
+    const errors = fileErrors[file];
+    assessment.errorDensity[file] = errors.length;
+    
+    // Identify critical files (high error density)
+    if (errors.length >= 5) {
+      assessment.criticalFiles.push(file);
+    }
+  }
+  
+  // Sort critical files by error count (descending)
+  assessment.criticalFiles.sort((a, b) => 
+    assessment.errorDensity[b] - assessment.errorDensity[a]
+  );
+  
+  // Limit to top 10 critical files
+  assessment.criticalFiles = assessment.criticalFiles.slice(0, 10);
+  
+  // Identify high impact errors
+  for (const error of result.errors) {
+    if (error.severity === ErrorSeverity.Error) {
+      if (error.message.includes('cannot find') ||
+          error.message.includes('undefined') ||
+          error.message.includes('missing') ||
+          error.message.includes('required') ||
+          error.message.includes('expected')) {
+        assessment.highImpactErrors.push(error);
+        
+        // Count blockers
+        if (error.message.includes('cannot find') ||
+            error.message.includes('undefined') ||
+            error.message.includes('missing')) {
+          assessment.blockerCount++;
+        }
+      }
+    }
+  }
+  
+  // Limit to top 20 high impact errors
+  assessment.highImpactErrors = assessment.highImpactErrors.slice(0, 20);
+  
+  // Estimate fix time (very rough estimate)
+  // Assume: 2 min for simple errors, 5 min for normal, 15 min for complex
+  let totalTime = 0;
+  
+  for (const error of result.errors) {
+    if (error.severity === ErrorSeverity.Error) {
+      if (error.category === ErrorCategory.Syntax || 
+          error.category === ErrorCategory.Import) {
+        totalTime += 2; // Simple errors
+      } else if (error.category === ErrorCategory.Type || 
+                error.category === ErrorCategory.Declaration) {
+        totalTime += 5; // Normal errors
+      } else {
+        totalTime += 15; // Complex errors
+      }
+    } else {
+      totalTime += 2; // Warnings and suggestions
+    }
+  }
+  
+  // Cap at 8 hours (480 minutes) to avoid unrealistic estimates
+  assessment.estimatedFixTime = Math.min(totalTime, 480);
+  
+  return assessment;
+}
+
+/**
+ * Generate a summary of the analysis
+ */
+function generateAnalysisSummary(
+  analysis: ErrorAnalysisResult,
+  result: ErrorFindingResult
+): string {
+  const rootCauses = analysis.rootCauses.length;
+  const errorGroups = analysis.errorGroups.length;
+  const blockerCount = analysis.impactAssessment.blockerCount;
+  const criticalFiles = analysis.impactAssessment.criticalFiles.length;
+  const estimatedFixTime = analysis.impactAssessment.estimatedFixTime;
+  
+  let summary = `# TypeScript Error Analysis\n\n`;
+  
+  summary += `Found ${result.totalErrors} errors and ${result.totalWarnings} warnings.\n`;
+  summary += `Identified ${rootCauses} root causes and ${errorGroups} error groups.\n\n`;
+  
+  if (rootCauses > 0) {
+    summary += `## Top Root Causes:\n`;
+    
+    for (let i = 0; i < Math.min(3, analysis.rootCauses.length); i++) {
+      const cause = analysis.rootCauses[i];
+      summary += `${i + 1}. ${cause.pattern} (${cause.totalErrors} errors in ${cause.affectedFiles} files)\n`;
+    }
+    
+    summary += `\n`;
+  }
+  
+  summary += `## Impact Assessment:\n`;
+  summary += `- Blocker errors: ${blockerCount}\n`;
+  summary += `- Critical files: ${criticalFiles}\n`;
+  summary += `- Estimated fix time: ${Math.round(estimatedFixTime / 60 * 10) / 10} hours\n\n`;
+  
+  if (criticalFiles > 0) {
+    summary += `## Critical Files:\n`;
+    
+    for (let i = 0; i < Math.min(5, analysis.impactAssessment.criticalFiles.length); i++) {
+      const file = analysis.impactAssessment.criticalFiles[i];
+      const errorCount = analysis.impactAssessment.errorDensity[file];
+      summary += `- ${file} (${errorCount} errors)\n`;
+    }
+    
+    summary += `\n`;
+  }
+  
+  if (analysis.suggestedFixOrder.length > 0) {
+    summary += `## Suggested First Fixes:\n`;
+    
+    for (let i = 0; i < Math.min(5, analysis.suggestedFixOrder.length); i++) {
+      const error = analysis.suggestedFixOrder[i];
+      summary += `- ${error.file}:${error.line} - ${error.code}: ${error.message.substring(0, 100)}${error.message.length > 100 ? '...' : ''}\n`;
+    }
+  }
+  
+  return summary;
+}
+
+// Export a singleton instance
+export const tsErrorAnalyzer = {
+  analyzeErrors: (errors: TypeScriptErrorDetail[] | ErrorFindingResult, options: ErrorAnalyzerOptions = {}) => 
+    analyzeTypeScriptErrors(errors, options)
+};

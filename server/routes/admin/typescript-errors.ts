@@ -15,7 +15,7 @@ const requireAdmin = (req: any, res: any, next: any) => {
   next();
 };
 import { db } from '../../db';
-import { logSecurityEvent } from '../../security/security';
+import { logSecurityEvent } from '../../security';
 
 // Temporary auditAction function until we create a proper one
 function auditAction(data: any): void {
@@ -26,7 +26,7 @@ import { nanoid } from 'nanoid';
 import { ErrorCategory, ErrorSeverity, ErrorStatus } from '../../../shared/schema';
 import { findTypeScriptErrors } from '../../utils/ts-error-finder';
 import { analyzeTypeScriptErrors } from '../../utils/ts-error-analyzer';
-import { fixTypeScriptErrorsWithOpenAI } from '../../utils/openai-enhanced-fixer';
+import { fixTypeScriptErrorsWithOpenAI, TypeScriptErrorInput } from '../../utils/openai-enhanced-fixer';
 import fs from 'fs';
 
 const router = express.Router();
@@ -144,12 +144,11 @@ router.post('/scans', scanValidation, validate, async (req, res) => {
     `, [scanId, 'IN_PROGRESS', 0, 0, aiEnabled, startTime]);
     
     // Log security event
-    logSecurityEvent({
-      type: 'SCAN_INITIATED',
-      severity: 'INFO',
+    logSecurityEvent('SCAN_INITIATED', 'info', {
       source: 'typescript-error-scanner',
       message: `TypeScript error scan initiated${aiEnabled ? ' with AI' : ''}`,
-      details: { scanId, aiEnabled }
+      scanId,
+      aiEnabled: String(aiEnabled)
     });
     
     // Start scan in background
@@ -216,12 +215,13 @@ router.post('/scans/:scanId/errors/:errorId/fix', errorFixValidation, validate, 
     `, [scanId]);
     
     // Log security event
-    logSecurityEvent({
-      type: 'ERROR_FIXED',
-      severity: 'INFO',
+    logSecurityEvent('ERROR_FIXED', 'info', {
       source: 'typescript-error-scanner',
       message: `TypeScript error fixed: ${error.file}:${error.line}`,
-      details: { scanId, errorId, file: error.file, line: error.line }
+      scanId,
+      errorId,
+      file: String(error.file),
+      line: String(error.line)
     });
     
     // Audit the action
@@ -274,12 +274,13 @@ router.post('/scans/:scanId/errors/:errorId/ignore', errorFixValidation, validat
     `, [errorId]);
     
     // Log security event
-    logSecurityEvent({
-      type: 'ERROR_IGNORED',
-      severity: 'INFO',
+    logSecurityEvent('ERROR_IGNORED', 'info', {
       source: 'typescript-error-scanner',
       message: `TypeScript error ignored: ${error.file}:${error.line}`,
-      details: { scanId, errorId, file: error.file, line: error.line }
+      scanId,
+      errorId,
+      file: String(error.file),
+      line: String(error.line)
     });
     
     res.json({
@@ -501,12 +502,11 @@ async function runScanInBackground(scanId: string, aiEnabled: boolean) {
     ]);
     
     // Log security event
-    logSecurityEvent({
-      type: 'SCAN_FAILED',
-      severity: 'ERROR',
+    logSecurityEvent('SCAN_FAILED', 'error', {
       source: 'typescript-error-scanner',
-      message: `TypeScript error scan failed: ${error.message || 'Unknown error'}`,
-      details: { scanId, error: error.stack || error.message }
+      message: `TypeScript error scan failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      scanId,
+      errorStack: error instanceof Error ? error.stack || '' : 'Unknown error'
     });
   }
 }
@@ -517,19 +517,16 @@ async function generateAIFixInBackground(scanId: string, errorId: string, error:
     console.log(`[TypeScript Scanner] Generating AI fix for error ${errorId}`);
     
     // Convert error to format expected by OpenAI fixer
-    const convertedError = {
+    const convertedError: TypeScriptErrorInput = {
       errorCode: error.code,
       messageText: error.message,
       filePath: error.file,
       lineNumber: error.line,
       columnNumber: error.column,
       category: error.category,
-      severity: error.severity
+      severity: error.severity,
+      source: getCodeContext(error.file, error.line, 15) // Get code context
     };
-    
-    // Get code context
-    const context = getCodeContext(error.file, error.line, 15);
-    convertedError['source'] = context;
     
     // Get fix suggestion from OpenAI
     const fixes = await fixTypeScriptErrorsWithOpenAI([convertedError], {
@@ -572,12 +569,12 @@ async function generateAIFixInBackground(scanId: string, errorId: string, error:
     `, [errorId]);
     
     // Log security event
-    logSecurityEvent({
-      type: 'AI_FIX_FAILED',
-      severity: 'ERROR',
+    logSecurityEvent('AI_FIX_FAILED', 'error', {
       source: 'typescript-error-scanner',
-      message: `AI fix generation failed: ${error.message || 'Unknown error'}`,
-      details: { scanId, errorId, error: error.stack || error.message }
+      message: `AI fix generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      scanId,
+      errorId,
+      errorStack: error instanceof Error ? error.stack || '' : 'Unknown error'
     });
   }
 }
@@ -604,7 +601,7 @@ function getCodeContext(filePath: string, lineNumber: number, contextLines: numb
     return context;
   } catch (error) {
     console.error(`Error getting code context for ${filePath}:${lineNumber}:`, error);
-    return `[Error reading file: ${error.message || 'Unknown error'}]`;
+    return `[Error reading file: ${error instanceof Error ? error.message : 'Unknown error'}]`;
   }
 }
 

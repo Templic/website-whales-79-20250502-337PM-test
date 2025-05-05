@@ -17,11 +17,13 @@ if (!fs.existsSync(securityLogsDir)) {
 const securityLogFile = path.join(securityLogsDir, 'security.log');
 
 // Function to write security logs to file
-export function logSecurityEvent(event): void {
+export function logSecurityEvent(type: string, level: 'info' | 'warn' | 'error', details?: Record<string, string>): void {
   const timestamp = new Date().toISOString();
   const logEntry = {
     timestamp,
-    ...event,
+    type,
+    level,
+    details: details || {}
   };
   
   const logLine = JSON.stringify(logEntry) + '\n';
@@ -33,56 +35,50 @@ export function logSecurityEvent(event): void {
   }
   
   // Also log to console for monitoring
-  console.log(`[SECURITY] ${timestamp} - ${event.type || 'EVENT'}: ${JSON.stringify(event)}`);
+  console.log(`[SECURITY] ${timestamp} - ${level.toUpperCase()}: ${type} ${details ? JSON.stringify(details) : ''}`);
 }
 
 // Handler for the security log API endpoint
 export function handleSecurityLog(req: Request, res: Response): void;
-export function handleSecurityLog(event): void;
-export function handleSecurityLog(reqOrEvent: Request | any, res?: Response): void {
+export function handleSecurityLog(type: string, level: 'info' | 'warn' | 'error', details?: Record<string, string>): void;
+export function handleSecurityLog(reqOrEvent: Request | string, resOrLevel?: Response | 'info' | 'warn' | 'error', details?: Record<string, string>): void {
   try {
-    // If this is a direct event object (not a request)
-    if (!res) {
+    // If this is a direct event call with type and level
+    if (typeof reqOrEvent === 'string' && typeof resOrLevel === 'string') {
       // Log the security event directly
-      logSecurityEvent(reqOrEvent);
+      logSecurityEvent(reqOrEvent, resOrLevel as 'info' | 'warn' | 'error', details);
       return;
     }
     
+    // This is a request
     const req = reqOrEvent as Request;
+    const res = resOrLevel as Response;
     
     // Validate user is authenticated (if applicable)
     if (req.isAuthenticated && !req.isAuthenticated()) {
       // Still log the attempt, but mark it as unauthorized
-      const logData = {
-        ...req.body,
-        type: 'UNAUTHORIZED_ATTEMPT',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-      };
+      logSecurityEvent('UNAUTHORIZED_ATTEMPT', 'warn', {
+        ip: req.ip || 'unknown',
+        userAgent: req.headers['user-agent'] ? String(req.headers['user-agent']) : 'unknown'
+      });
       
-      logSecurityEvent(logData);
       res.status(403).json({ message: 'Unauthorized' });
       return;
     }
     
-    // Get event data from request body
-    const eventData = {
-      ...req.body,
-      type: 'SECURITY_SETTING_CHANGE',
-      ip: req.ip,
-      userAgent: req.headers['user-agent'],
-      userId: req.user?.id,
-      userRole: req.user?.role,
-    };
-    
-    // Log the security event
-    logSecurityEvent(eventData);
+    // Log the security event from request body
+    logSecurityEvent('SECURITY_SETTING_CHANGE', 'info', {
+      ip: req.ip || 'unknown',
+      userAgent: req.headers['user-agent'] ? String(req.headers['user-agent']) : 'unknown',
+      userId: req.user?.id ? String(req.user.id) : 'unknown',
+      userRole: req.user?.role ? String(req.user.role) : 'unknown'
+    });
     
     res.status(200).json({ message: 'Security event logged successfully' });
   } catch (error) {
     console.error('Error handling security log:', error);
-    if (res) {
-      res.status(500).json({ message: 'Failed to log security event' });
+    if (resOrLevel && typeof resOrLevel !== 'string') {
+      resOrLevel.status(500).json({ message: 'Failed to log security event' });
     }
   }
 }
@@ -102,9 +98,8 @@ export function rotateSecurityLogs(): void {
         fs.renameSync(securityLogFile, rotatedLogFile);
         
         // Create a new log file with initialization entry
-        logSecurityEvent({
-          type: 'LOG_ROTATION',
-          message: `Log file rotated from ${securityLogFile} to ${rotatedLogFile}`,
+        logSecurityEvent('LOG_ROTATION', 'info', {
+          message: `Log file rotated from ${securityLogFile} to ${rotatedLogFile}`
         });
         
         // Clean up old log files (keep only the 5 most recent)
