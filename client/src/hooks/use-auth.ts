@@ -1,21 +1,44 @@
 /**
  * use-auth.ts
  * 
- * Authentication hook for managing user state and authentication actions.
+ * Authentication hook and context for managing user state and authentication actions.
  */
 
-import { useState } from 'react';
+import React from 'react';
+import { createContext, useState, useContext } from 'react';
 
-interface User {
+export interface User {
   id: string;
-  name: string;
   email: string;
   role: 'user' | 'admin';
 }
 
-export function useAuth() {
-  // In a real implementation, this would check local storage or a token
-  // This is a simplified version for compatibility
+interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  register: (name: string, email: string, password: string) => Promise<void>;
+  isAuthenticated: boolean;
+}
+
+// Default context value
+const defaultContextValue: AuthContextType = {
+  user: null,
+  isLoading: false,
+  error: null,
+  login: async () => {},
+  logout: () => {},
+  register: async () => {},
+  isAuthenticated: false,
+};
+
+// Create the auth context
+const AuthContext = createContext<AuthContextType>(defaultContextValue);
+
+// Auth provider component
+export function AuthProvider(props: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +55,6 @@ export function useAuth() {
       setTimeout(() => {
         const mockUser: User = {
           id: '123',
-          name: 'Demo User',
           email: email,
           role: 'user'
         };
@@ -62,7 +84,6 @@ export function useAuth() {
       setTimeout(() => {
         const mockUser: User = {
           id: '456',
-          name: name,
           email: email,
           role: 'user'
         };
@@ -76,7 +97,8 @@ export function useAuth() {
     }
   };
 
-  return {
+  // Create context value object
+  const contextValue: AuthContextType = {
     user,
     isLoading,
     error,
@@ -85,6 +107,18 @@ export function useAuth() {
     register,
     isAuthenticated: !!user
   };
+
+  // Return the provider with context value and children
+  return React.createElement(
+    AuthContext.Provider,
+    { value: contextValue },
+    props.children
+  );
+}
+
+// Custom hook to use the auth context
+export function useAuth() {
+  return useContext(AuthContext);
 }
 
 export default useAuth;

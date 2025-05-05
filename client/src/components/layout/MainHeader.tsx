@@ -34,7 +34,7 @@ import {
   ArrowRight,
   RotateCw
 } from "lucide-react";
-import { useAuth } from "../../hooks/use-auth.tsx";
+import { useAuth } from "../../hooks/use-auth";
 import { useAccessibility } from "../../contexts/AccessibilityContext";
 import { motion } from "framer-motion";
 import SacredGeometry from "../../components/ui/sacred-geometry";
@@ -175,110 +175,118 @@ const MainHeader = () => {
       {/* Background Elements with Sacred Geometry - Centered and sides */}
       <div className="absolute inset-0 overflow-hidden z-0">
         {/* FIRST SET - Sacred geometry circles on outer edges */}
-        {/* Left circle foreground - first set */}
-        <div className="absolute top-1/2 left-[8%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-20">
-          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
-            <SacredGeometry 
-              variant="merkaba" 
-              size={90} 
-              animated={false} 
-              intensity="medium" 
-              className="text-cyan-300" 
-            />
+        <div className="first-merkaba-set">
+          {/* Left circle foreground - first set */}
+          <div className="absolute top-1/2 left-[8%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-20">
+            <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
+              <SacredGeometry 
+                variant="merkaba" 
+                size={90} 
+                animated={false} 
+                intensity="medium" 
+                className="text-cyan-300" 
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Left circle background/shadow - first set */}
-        <div className="absolute top-1/2 left-[8%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-10">
-          <div className="animate-spin-very-slow" style={{ animationDuration: '22s', animationDirection: 'reverse' }}>
-            <SacredGeometry 
-              variant="merkaba" 
-              size={110} 
-              animated={false} 
-              intensity="subtle" 
-              className="text-purple-500/50" 
-            />
+          {/* Left circle background/shadow - first set */}
+          <div className="absolute top-1/2 left-[8%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-10">
+            <div className="animate-spin-very-slow" style={{ animationDuration: '15s', animationDirection: 'reverse' }}>
+              <SacredGeometry 
+                variant="merkaba" 
+                size={110} 
+                animated={false} 
+                intensity="subtle" 
+                className="text-purple-500/50" 
+              />
+            </div>
           </div>
         </div>
 
         {/* SECOND SET - Sacred geometry circles on outer edges */}
-        {/* Right circle foreground - second set */}
-        <div className="absolute top-1/2 right-[8%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-20">
-          <div className="animate-spin-very-slow" style={{ animationDuration: '18s' }}>
-            <SacredGeometry 
-              variant="merkaba" 
-              size={90} 
-              animated={false} 
-              intensity="medium" 
-              className="text-cyan-300" 
-            />
+        <div className="second-merkaba-set">
+          {/* Right circle foreground - second set */}
+          <div className="absolute top-1/2 right-[8%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-20">
+            <div className="animate-spin-very-slow" style={{ animationDuration: '22s' }}>
+              <SacredGeometry 
+                variant="merkaba" 
+                size={90} 
+                animated={false} 
+                intensity="medium" 
+                className="text-cyan-300" 
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Right circle background/shadow - second set */}
-        <div className="absolute top-1/2 right-[8%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-10">
-          <div className="animate-spin-very-slow" style={{ animationDuration: '25s', animationDirection: 'reverse' }}>
-            <SacredGeometry 
-              variant="merkaba" 
-              size={110} 
-              animated={false} 
-              intensity="subtle" 
-              className="text-purple-500/50" 
-            />
+          {/* Right circle background/shadow - second set */}
+          <div className="absolute top-1/2 right-[8%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-10">
+            <div className="animate-spin-very-slow" style={{ animationDuration: '22s', animationDirection: 'reverse' }}>
+              <SacredGeometry 
+                variant="merkaba" 
+                size={110} 
+                animated={false} 
+                intensity="subtle" 
+                className="text-purple-500/50" 
+              />
+            </div>
           </div>
         </div>
 
         {/* THIRD SET - Sacred geometry circles on outer edges */}
-        {/* Left circle foreground - third set (lower) */}
-        <div className="absolute bottom-[10%] left-[15%] transform -translate-x-1/2 hidden md:block z-20">
-          <div className="animate-spin-very-slow" style={{ animationDuration: '20s' }}>
-            <SacredGeometry 
-              variant="merkaba" 
-              size={70} 
-              animated={false} 
-              intensity="medium" 
-              className="text-cyan-300" 
-            />
+        <div className="third-merkaba-set">
+          {/* Left circle foreground - third set (lower) */}
+          <div className="absolute bottom-[10%] left-[15%] transform -translate-x-1/2 hidden md:block z-20">
+            <div className="animate-spin-very-slow" style={{ animationDuration: '18s' }}>
+              <SacredGeometry 
+                variant="merkaba" 
+                size={70} 
+                animated={false} 
+                intensity="medium" 
+                className="text-cyan-300" 
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Left circle background/shadow - third set (lower) */}
-        <div className="absolute bottom-[10%] left-[15%] transform -translate-x-1/2 hidden md:block z-10">
-          <div className="animate-spin-very-slow" style={{ animationDuration: '28s', animationDirection: 'reverse' }}>
-            <SacredGeometry 
-              variant="merkaba" 
-              size={85} 
-              animated={false} 
-              intensity="subtle" 
-              className="text-purple-500/50" 
-            />
+          {/* Left circle background/shadow - third set (lower) */}
+          <div className="absolute bottom-[10%] left-[15%] transform -translate-x-1/2 hidden md:block z-10">
+            <div className="animate-spin-very-slow" style={{ animationDuration: '18s', animationDirection: 'reverse' }}>
+              <SacredGeometry 
+                variant="merkaba" 
+                size={85} 
+                animated={false} 
+                intensity="subtle" 
+                className="text-purple-500/50" 
+              />
+            </div>
           </div>
         </div>
 
         {/* FOURTH SET - Sacred geometry circles on outer edges */}
-        {/* Right circle foreground - fourth set (lower) */}
-        <div className="absolute bottom-[10%] right-[15%] transform translate-x-1/2 hidden md:block z-20">
-          <div className="animate-spin-very-slow" style={{ animationDuration: '22s' }}>
-            <SacredGeometry 
-              variant="merkaba" 
-              size={70} 
-              animated={false} 
-              intensity="medium" 
-              className="text-cyan-300" 
-            />
+        <div className="fourth-merkaba-set">
+          {/* Right circle foreground - fourth set (lower) */}
+          <div className="absolute bottom-[10%] right-[15%] transform translate-x-1/2 hidden md:block z-20">
+            <div className="animate-spin-very-slow" style={{ animationDuration: '25s' }}>
+              <SacredGeometry 
+                variant="merkaba" 
+                size={70} 
+                animated={false} 
+                intensity="medium" 
+                className="text-cyan-300" 
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Right circle background/shadow - fourth set (lower) */}
-        <div className="absolute bottom-[10%] right-[15%] transform translate-x-1/2 hidden md:block z-10">
-          <div className="animate-spin-very-slow" style={{ animationDuration: '30s', animationDirection: 'reverse' }}>
-            <SacredGeometry 
-              variant="merkaba" 
-              size={85} 
-              animated={false} 
-              intensity="subtle" 
-              className="text-purple-500/50" 
-            />
+          {/* Right circle background/shadow - fourth set (lower) */}
+          <div className="absolute bottom-[10%] right-[15%] transform translate-x-1/2 hidden md:block z-10">
+            <div className="animate-spin-very-slow" style={{ animationDuration: '25s', animationDirection: 'reverse' }}>
+              <SacredGeometry 
+                variant="merkaba" 
+                size={85} 
+                animated={false} 
+                intensity="subtle" 
+                className="text-purple-500/50" 
+              />
+            </div>
           </div>
         </div>
 
@@ -286,6 +294,19 @@ const MainHeader = () => {
         <div className="absolute inset-0 hidden md:block">
           {/* Center subtle glow */}
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[80px] bg-gradient-to-r from-cyan-500/5 via-purple-500/10 to-cyan-500/5 blur-2xl"></div>
+          
+          {/* Sacred geometry elements in center */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-10">
+            <div className="animate-pulse-slow" style={{ animationDuration: '8s' }}>
+              <SacredGeometry 
+                variant="hexagon" 
+                size={200} 
+                animated={false} 
+                intensity="subtle" 
+                className="text-white" 
+              />
+            </div>
+          </div>
           
           {/* Top edge accent */}
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent"></div>
@@ -396,7 +417,7 @@ const MainHeader = () => {
             {/* User Menu / Login Button */}
             {user ? (
               <button className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500/80 to-purple-600/80 flex items-center justify-center text-white text-sm">
-                {user.name.charAt(0).toUpperCase()}
+                {user.email ? user.email.charAt(0).toUpperCase() : "U"}
               </button>
             ) : (
               <Link 
@@ -607,10 +628,10 @@ const MainHeader = () => {
                 {user ? (
                   <div className="flex items-center space-x-3">
                     <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center text-white">
-                      {user.name.charAt(0).toUpperCase()}
+                      {user.email ? user.email.charAt(0).toUpperCase() : "U"}
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-white">{user.name}</div>
+                      <div className="text-sm font-medium text-white">{user.email || "User"}</div>
                       <button className="text-xs text-white/60 hover:text-white/80">Sign Out</button>
                     </div>
                   </div>
