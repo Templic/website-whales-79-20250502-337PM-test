@@ -71,11 +71,30 @@ export class TypeScriptErrorManagement {
     maxErrors?: number;
     autoFix?: boolean;
     resolution?: Partial<ResolutionOptions>;
+    prioritization?: {
+      strategy: 'severity' | 'impact' | 'frequency' | 'dependencies' | 'feedback' | 'custom';
+      thresholds?: {
+        high: number;
+        medium: number;
+        low: number;
+      };
+    };
+    concurrentProcessing?: boolean;
+    maxConcurrentFixes?: number;
+    batchSize?: number;
   }): Promise<{
     detectedErrors: number;
     analyzedErrors: number;
     resolvedErrors: number;
     totalTimeMs: number;
+    priorityMetrics?: {
+      highPriorityFixed: number;
+      mediumPriorityFixed: number;
+      lowPriorityFixed: number;
+      highPriorityTotal: number;
+      mediumPriorityTotal: number;
+      lowPriorityTotal: number;
+    };
   }> {
     const startTime = Date.now();
     logger.info('Starting full TypeScript error processing cycle');
@@ -105,15 +124,45 @@ export class TypeScriptErrorManagement {
       
       // 4. Resolve errors if autoFix is enabled
       let resolvedErrors = 0;
+      let priorityMetrics;
+      
       if (options.autoFix) {
         logger.info('Phase 3: Error Resolution');
+        
+        // Configure resolution options with prioritization if specified
+        const resolutionOptions: Partial<ResolutionOptions> = {
+          ...options.resolution,
+          // Add prioritization configuration if provided
+          prioritizationStrategy: options.prioritization?.strategy,
+          priorityThresholds: options.prioritization?.thresholds,
+          concurrentFixes: options.concurrentProcessing,
+          maxConcurrency: options.maxConcurrentFixes,
+          batchSize: options.batchSize
+        };
+        
+        logger.info(`Using prioritization strategy: ${resolutionOptions.prioritizationStrategy || 'default (severity)'}`);
+        
+        if (resolutionOptions.concurrentFixes) {
+          logger.info(`Using concurrent processing with max concurrency: ${resolutionOptions.maxConcurrency}`);
+        }
+        
         const resolutionResults = await this.batchResolveErrors(
           storedErrors, 
-          options.resolution || {}
+          resolutionOptions
         );
         
         resolvedErrors = resolutionResults.successfulFixes;
-        logger.info(`Resolved ${resolvedErrors} out of ${storedErrors.length} errors`);
+        priorityMetrics = resolutionResults.priorityMetrics;
+        
+        const fixRate = (resolvedErrors / storedErrors.length * 100).toFixed(1);
+        logger.info(`Resolved ${resolvedErrors} out of ${storedErrors.length} errors (${fixRate}% success rate)`);
+        
+        // Log detailed metrics by error type
+        const errorTypeMetrics = await this.metricsService.getErrorTypeSuccessRates();
+        logger.info('Fix success rates by error type:');
+        errorTypeMetrics.forEach(metric => {
+          logger.info(`- ${metric.errorType}: ${metric.successRate.toFixed(1)}% (${metric.successCount}/${metric.totalCount})`);
+        });
       }
       
       // 5. Return summary
@@ -124,7 +173,8 @@ export class TypeScriptErrorManagement {
         detectedErrors: detectionResult.errors.length,
         analyzedErrors: analyzedErrors.length,
         resolvedErrors,
-        totalTimeMs
+        totalTimeMs,
+        priorityMetrics
       };
     } catch (error) {
       logger.error(`Error in full processing cycle: ${error.message}`);
@@ -197,7 +247,7 @@ export class TypeScriptErrorManagement {
   }
   
   /**
-   * Resolve multiple errors in batch
+   * Resolve multiple errors in batch with prioritization
    */
   async batchResolveErrors(
     errors: any[], 
@@ -206,6 +256,14 @@ export class TypeScriptErrorManagement {
     totalErrors: number;
     successfulFixes: number;
     timeMs: number;
+    priorityMetrics?: {
+      highPriorityFixed: number;
+      mediumPriorityFixed: number;
+      lowPriorityFixed: number;
+      highPriorityTotal: number;
+      mediumPriorityTotal: number;
+      lowPriorityTotal: number;
+    };
   }> {
     try {
       // Convert database errors to resolver format
@@ -226,13 +284,61 @@ export class TypeScriptErrorManagement {
         userId: error.user_id
       }));
       
-      // Batch resolve errors
-      const batchResult = await this.resolver.batchResolve(resolverErrors, options);
+      // Get user feedback for prioritization if available
+      let userFeedback: Record<number, number> = {};
+      if (options?.prioritizationStrategy === 'feedback') {
+        try {
+          // Fetch user feedback from database for fix patterns
+          const feedbackData = await db.select({
+            pattern_id: errorFixes.pattern_id,
+            avg_rating: sql`AVG(user_rating)`.as('avg_rating')
+          })
+          .from(errorFixes)
+          .where(
+            and(
+              not(isNull(errorFixes.user_rating)),
+              not(isNull(errorFixes.pattern_id))
+            )
+          )
+          .groupBy(errorFixes.pattern_id);
+          
+          // Convert to a map of pattern_id -> avg_rating
+          userFeedback = feedbackData.reduce((acc, item) => {
+            acc[item.pattern_id] = Number(item.avg_rating);
+            return acc;
+          }, {} as Record<number, number>);
+          
+          logger.info(`Using user feedback for ${Object.keys(userFeedback).length} error patterns`);
+        } catch (dbError) {
+          logger.error(`Error fetching user feedback: ${dbError.message}`);
+        }
+      }
+      
+      // Setup enhanced options
+      const enhancedOptions: Partial<ResolutionOptions> = {
+        ...options,
+        context: {
+          ...options?.context,
+          userFeedback // Add user feedback data for prioritization
+        }
+      };
+      
+      // Batch resolve errors with enhanced options
+      const batchResult = await this.resolver.batchResolve(resolverErrors, enhancedOptions);
+      
+      // Log priority metrics if available
+      if (batchResult.priorityMetrics) {
+        logger.info(`Priority metrics for batch resolution:
+          - High priority: Fixed ${batchResult.priorityMetrics.highPriorityFixed}/${batchResult.priorityMetrics.highPriorityTotal} (${Math.round(batchResult.priorityMetrics.highPriorityFixed / batchResult.priorityMetrics.highPriorityTotal * 100)}%)
+          - Medium priority: Fixed ${batchResult.priorityMetrics.mediumPriorityFixed}/${batchResult.priorityMetrics.mediumPriorityTotal} (${Math.round(batchResult.priorityMetrics.mediumPriorityFixed / batchResult.priorityMetrics.mediumPriorityTotal * 100)}%)
+          - Low priority: Fixed ${batchResult.priorityMetrics.lowPriorityFixed}/${batchResult.priorityMetrics.lowPriorityTotal} (${Math.round(batchResult.priorityMetrics.lowPriorityFixed / batchResult.priorityMetrics.lowPriorityTotal * 100)}%)`);
+      }
       
       return {
         totalErrors: batchResult.totalErrors,
         successfulFixes: batchResult.successfulFixes,
-        timeMs: batchResult.timeMs
+        timeMs: batchResult.timeMs,
+        priorityMetrics: batchResult.priorityMetrics
       };
     } catch (error) {
       logger.error(`Error in batch resolution: ${error.message}`);

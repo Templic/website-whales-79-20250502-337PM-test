@@ -253,13 +253,22 @@ router.post('/errors/:id/resolve',
 
 /**
  * POST /api/typescript/scan
- * Run a TypeScript error scan
+ * Run a TypeScript error scan with priority-based processing
  */
 router.post('/scan',
   body('includeDirs').isArray(),
   body('excludeDirs').optional().isArray(),
   body('maxErrors').optional().isInt({ min: 1 }),
   body('autoFix').optional().isBoolean(),
+  body('prioritization').optional().isObject(),
+  body('prioritization.strategy').optional().isIn(['severity', 'impact', 'frequency', 'dependencies', 'feedback', 'custom']),
+  body('prioritization.thresholds').optional().isObject(),
+  body('prioritization.thresholds.high').optional().isInt({ min: 0, max: 100 }),
+  body('prioritization.thresholds.medium').optional().isInt({ min: 0, max: 100 }),
+  body('prioritization.thresholds.low').optional().isInt({ min: 0, max: 100 }),
+  body('concurrentProcessing').optional().isBoolean(),
+  body('maxConcurrentFixes').optional().isInt({ min: 1, max: 10 }),
+  body('batchSize').optional().isInt({ min: 1 }),
   async (req, res) => {
     try {
       // Validate request
@@ -268,9 +277,20 @@ router.post('/scan',
         return res.status(400).json({ errors: errors.array() });
       }
       
-      const { includeDirs, excludeDirs, maxErrors, autoFix } = req.body;
+      const { 
+        includeDirs, 
+        excludeDirs, 
+        maxErrors, 
+        autoFix,
+        prioritization,
+        concurrentProcessing,
+        maxConcurrentFixes,
+        batchSize
+      } = req.body;
       
-      // Run the scan
+      logger.info(`Starting TypeScript scan with prioritization: ${prioritization?.strategy || 'default'}`);
+      
+      // Run the scan with priority-based processing
       const result = await errorManagement.runFullErrorProcessingCycle({
         includeDirs,
         excludeDirs,
@@ -279,7 +299,11 @@ router.post('/scan',
         resolution: {
           applyImmediately: true,
           useAI: true
-        }
+        },
+        prioritization,
+        concurrentProcessing,
+        maxConcurrentFixes,
+        batchSize
       });
       
       res.json(result);
@@ -377,6 +401,76 @@ router.post('/feedback',
     } catch (error) {
       logger.error(`Error submitting fix feedback: ${error.message}`);
       res.status(500).json({ error: 'Failed to submit feedback' });
+    }
+});
+
+/**
+ * POST /api/typescript/batch-process
+ * Process multiple TypeScript errors in a single batch with priority-based processing
+ */
+router.post('/batch-process',
+  body('errorIds').isArray(),
+  body('prioritization').optional().isObject(),
+  body('prioritization.strategy').optional().isIn(['severity', 'impact', 'frequency', 'dependencies', 'feedback', 'custom']),
+  body('prioritization.thresholds').optional().isObject(),
+  body('concurrentProcessing').optional().isBoolean(),
+  body('maxConcurrentFixes').optional().isInt({ min: 1, max: 10 }),
+  body('batchSize').optional().isInt({ min: 1 }),
+  body('userId').optional().isString(),
+  async (req, res) => {
+    try {
+      // Validate request
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      
+      const { 
+        errorIds, 
+        prioritization,
+        concurrentProcessing,
+        maxConcurrentFixes,
+        batchSize,
+        userId
+      } = req.body;
+      
+      // Get errors from database
+      const dbErrors = await db.select()
+        .from(typeScriptErrors)
+        .where(sql`${typeScriptErrors.id} = ANY(${errorIds})`)
+        .orderBy(typeScriptErrors.id);
+      
+      logger.info(`Starting batch processing for ${dbErrors.length} errors with prioritization strategy: ${prioritization?.strategy || 'default'}`);
+      
+      // Process errors as a batch
+      const result = await errorManagement.batchResolveErrors(
+        dbErrors,
+        {
+          applyImmediately: true,
+          useAI: true,
+          userId,
+          prioritizationStrategy: prioritization?.strategy,
+          priorityThresholds: prioritization?.thresholds,
+          concurrentFixes: concurrentProcessing,
+          maxConcurrency: maxConcurrentFixes,
+          batchSize
+        }
+      );
+      
+      // Format the response with more details
+      const response = {
+        totalErrors: result.totalErrors,
+        successfulFixes: result.successfulFixes,
+        successRate: ((result.successfulFixes / result.totalErrors) * 100).toFixed(1) + '%',
+        timeMs: result.timeMs,
+        processingSpeed: ((result.timeMs / result.totalErrors) / 1000).toFixed(2) + ' sec/error',
+        priorityMetrics: result.priorityMetrics
+      };
+      
+      res.json(response);
+    } catch (error) {
+      logger.error(`Error in batch processing: ${error.message}`);
+      res.status(500).json({ error: 'Failed to process errors in batch' });
     }
 });
 

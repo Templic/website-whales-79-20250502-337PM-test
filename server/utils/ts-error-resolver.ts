@@ -347,24 +347,113 @@ export class TypeScriptErrorResolver {
     const startTime = Date.now();
     const results: ResolutionResult[] = [];
     const errorsByType: Record<string, number> = {};
+    const mergedOptions = { ...this.defaultOptions, ...options };
     
-    // Sort errors by dependency to resolve issues without creating new ones
-    const sortedErrors = await this.sortErrorsByDependency(errors);
+    // Initialize priority metrics
+    const priorityMetrics = {
+      highPriorityFixed: 0,
+      mediumPriorityFixed: 0,
+      lowPriorityFixed: 0,
+      highPriorityTotal: 0,
+      mediumPriorityTotal: 0,
+      lowPriorityTotal: 0
+    };
     
-    // Process errors sequentially to avoid race conditions
+    // 1. First, sort errors by dependency to resolve issues without creating new ones
+    let sortedErrors = await this.sortErrorsByDependency(errors);
+    
+    // 2. Then, apply prioritization based on the selected strategy
+    if (mergedOptions.prioritizationStrategy) {
+      sortedErrors = this.prioritizeErrors(sortedErrors, mergedOptions);
+    }
+    
+    // Calculate priority counts for metrics
     for (const error of sortedErrors) {
-      // Track error types for reporting
-      errorsByType[error.category] = (errorsByType[error.category] || 0) + 1;
+      const priority = this.calculateErrorPriority(error, mergedOptions);
+      if (priority === 'high') {
+        priorityMetrics.highPriorityTotal++;
+      } else if (priority === 'medium') {
+        priorityMetrics.mediumPriorityTotal++;
+      } else {
+        priorityMetrics.lowPriorityTotal++;
+      }
+    }
+    
+    // 3. Process errors in batches if configured
+    const batchSize = mergedOptions.batchSize || sortedErrors.length;
+    
+    // Slice the sorted errors into batches
+    for (let i = 0; i < sortedErrors.length; i += batchSize) {
+      const batch = sortedErrors.slice(i, i + batchSize);
       
-      // Resolve each error
-      const result = await this.resolveError(error, options);
-      results.push(result);
-      
-      // If this fix introduced new errors, refresh the error list
-      if (result.success && result.appliedFix && result.validationResult?.newErrorsIntroduced > 0) {
-        // In a real implementation, you might want to re-scan the file for new errors
-        // and add them to the processing queue
-        logger.info(`Fix for error ${error.id} introduced ${result.validationResult.newErrorsIntroduced} new errors`);
+      // Process batch
+      if (mergedOptions.concurrentFixes && mergedOptions.maxConcurrency > 1) {
+        // Process batch concurrently with limited concurrency
+        const batchPromises = [];
+        const maxConcurrent = Math.min(mergedOptions.maxConcurrency, batch.length);
+        
+        // Process in chunks to limit concurrency
+        for (let j = 0; j < batch.length; j += maxConcurrent) {
+          const concurrentBatch = batch.slice(j, j + maxConcurrent);
+          
+          // Process concurrently
+          const concurrentResults = await Promise.all(
+            concurrentBatch.map(async (error) => {
+              // Track error types for reporting
+              errorsByType[error.category] = (errorsByType[error.category] || 0) + 1;
+              
+              // Resolve each error
+              return this.resolveError(error, options);
+            })
+          );
+          
+          results.push(...concurrentResults);
+          
+          // Update priority metrics for this batch
+          for (let k = 0; k < concurrentResults.length; k++) {
+            const result = concurrentResults[k];
+            if (result.success && result.appliedFix) {
+              const error = concurrentBatch[k];
+              const priority = this.calculateErrorPriority(error, mergedOptions);
+              if (priority === 'high') {
+                priorityMetrics.highPriorityFixed++;
+              } else if (priority === 'medium') {
+                priorityMetrics.mediumPriorityFixed++;
+              } else {
+                priorityMetrics.lowPriorityFixed++;
+              }
+            }
+          }
+        }
+      } else {
+        // Process batch sequentially
+        for (const error of batch) {
+          // Track error types for reporting
+          errorsByType[error.category] = (errorsByType[error.category] || 0) + 1;
+          
+          // Resolve each error
+          const result = await this.resolveError(error, options);
+          results.push(result);
+          
+          // If this fix introduced new errors, refresh the error list
+          if (result.success && result.appliedFix && result.validationResult?.newErrorsIntroduced > 0) {
+            // In a real implementation, you might want to re-scan the file for new errors
+            // and add them to the processing queue
+            logger.info(`Fix for error ${error.id} introduced ${result.validationResult.newErrorsIntroduced} new errors`);
+          }
+          
+          // Update priority metrics
+          if (result.success && result.appliedFix) {
+            const priority = this.calculateErrorPriority(error, mergedOptions);
+            if (priority === 'high') {
+              priorityMetrics.highPriorityFixed++;
+            } else if (priority === 'medium') {
+              priorityMetrics.mediumPriorityFixed++;
+            } else {
+              priorityMetrics.lowPriorityFixed++;
+            }
+          }
+        }
       }
     }
     
@@ -376,8 +465,223 @@ export class TypeScriptErrorResolver {
       skippedErrors: errors.length - results.length,
       results,
       timeMs: Date.now() - startTime,
-      errorsByType
+      errorsByType,
+      priorityMetrics
     };
+  }
+  
+  /**
+   * Prioritize errors based on the selected strategy
+   */
+  private prioritizeErrors(errors: TypeScriptError[], options: ResolutionOptions): TypeScriptError[] {
+    const strategy = options.prioritizationStrategy || 'severity';
+    
+    switch (strategy) {
+      case 'severity':
+        // Sort by severity (critical > high > medium > low)
+        return errors.sort((a, b) => {
+          const priorityA = this.getSeverityScore(a.severity);
+          const priorityB = this.getSeverityScore(b.severity);
+          return priorityB - priorityA; // Higher severity first
+        });
+        
+      case 'impact':
+        // Sort by potential impact (based on file importance, error type, etc.)
+        return errors.sort((a, b) => {
+          const impactA = this.calculateImpactScore(a);
+          const impactB = this.calculateImpactScore(b);
+          return impactB - impactA; // Higher impact first
+        });
+        
+      case 'frequency':
+        // Sort by frequency of error pattern or code
+        return errors.sort((a, b) => {
+          const freqA = errorsByType[a.category] || 0;
+          const freqB = errorsByType[b.category] || 0;
+          return freqB - freqA; // More frequent error types first
+        });
+        
+      case 'dependencies':
+        // Already sorted by dependency earlier, return as is
+        return errors;
+        
+      case 'feedback':
+        // Sort based on user feedback if available
+        return this.sortByUserFeedback(errors, options.context?.userFeedback || {});
+        
+      case 'custom':
+        // Use a combination of strategies
+        return this.customPrioritization(errors, options);
+        
+      default:
+        return errors;
+    }
+  }
+  
+  /**
+   * Calculate error priority level (high, medium, low)
+   */
+  private calculateErrorPriority(error: TypeScriptError, options: ResolutionOptions): 'high' | 'medium' | 'low' {
+    const thresholds = options.priorityThresholds || { high: 80, medium: 50, low: 20 };
+    
+    // Combine various factors to calculate priority score
+    let score = 0;
+    
+    // Factor 1: Severity
+    score += this.getSeverityScore(error.severity) * 30; // 0-30 points
+    
+    // Factor 2: Error category importance
+    score += this.getCategoryScore(error.category) * 25; // 0-25 points
+    
+    // Factor 3: Fix confidence
+    const strategies = this.getApplicableStrategies(error);
+    const confidence = strategies.length > 0 ? strategies[0].getConfidence(error) : 0;
+    score += (confidence / 100) * 25; // 0-25 points
+    
+    // Factor 4: File importance
+    score += this.getFileImportanceScore(error.file) * 20; // 0-20 points
+    
+    // Determine priority level based on score and thresholds
+    if (score >= thresholds.high) {
+      return 'high';
+    } else if (score >= thresholds.medium) {
+      return 'medium';
+    } else {
+      return 'low';
+    }
+  }
+  
+  /**
+   * Get a numeric score for severity level
+   */
+  private getSeverityScore(severity: string): number {
+    switch (severity.toLowerCase()) {
+      case 'critical': return 1.0;
+      case 'high': return 0.8;
+      case 'medium': return 0.5;
+      case 'low': return 0.2;
+      default: return 0.1;
+    }
+  }
+  
+  /**
+   * Get a score based on error category
+   */
+  private getCategoryScore(category: string): number {
+    // Higher scores for more important categories
+    switch (category.toLowerCase()) {
+      case 'type_mismatch': return 0.7; // Important for correctness
+      case 'null_reference': return 0.9; // Can cause runtime errors
+      case 'import_error': return 0.8; // Can break dependencies
+      case 'interface_mismatch': return 0.7; // API correctness issues
+      case 'syntax_error': return 1.0; // Prevents compilation
+      default: return 0.5;
+    }
+  }
+  
+  /**
+   * Calculate a score for the potential impact of an error
+   */
+  private calculateImpactScore(error: TypeScriptError): number {
+    let score = 0;
+    
+    // Check if error affects core files
+    if (error.file.includes('core') || error.file.includes('index')) {
+      score += 30;
+    }
+    
+    // Check if error affects shared components or utilities
+    if (error.file.includes('shared') || error.file.includes('utils') || error.file.includes('components')) {
+      score += 25;
+    }
+    
+    // Check if error is in a test file (lower priority)
+    if (error.file.includes('test') || error.file.includes('spec')) {
+      score -= 15;
+    }
+    
+    // Consider error code importance
+    if (error.code.startsWith('TS2')) {
+      score += 15; // Type errors
+    }
+    if (error.code.startsWith('TS1')) {
+      score += 20; // Syntax errors
+    }
+    
+    return score;
+  }
+  
+  /**
+   * Score file importance based on its path
+   */
+  private getFileImportanceScore(filePath: string): number {
+    // Core or configuration files are most important
+    if (filePath.includes('config') || filePath.includes('core')) {
+      return 1.0;
+    }
+    
+    // Shared components and utilities are next
+    if (filePath.includes('shared') || filePath.includes('utils') || filePath.includes('common')) {
+      return 0.8;
+    }
+    
+    // Feature components
+    if (filePath.includes('components') || filePath.includes('pages')) {
+      return 0.6;
+    }
+    
+    // Test files less important for immediate fixes
+    if (filePath.includes('test') || filePath.includes('spec')) {
+      return 0.3;
+    }
+    
+    // Default importance
+    return 0.5;
+  }
+  
+  /**
+   * Sort errors based on user feedback
+   */
+  private sortByUserFeedback(errors: TypeScriptError[], feedback: Record<number, number>): TypeScriptError[] {
+    // Sort by user feedback ratings if available, otherwise by severity
+    return errors.sort((a, b) => {
+      // Get pattern IDs for both errors (return 0 if not available)
+      const patternA = a.patternId || 0;
+      const patternB = b.patternId || 0;
+      
+      // Get feedback scores for both patterns (default to 0 if not available)
+      const scoreA = feedback[patternA] || 0;
+      const scoreB = feedback[patternB] || 0;
+      
+      if (scoreA !== scoreB) {
+        return scoreB - scoreA; // Higher feedback scores first
+      }
+      
+      // If feedback scores are equal, sort by severity
+      const sevA = this.getSeverityScore(a.severity);
+      const sevB = this.getSeverityScore(b.severity);
+      return sevB - sevA;
+    });
+  }
+  
+  /**
+   * Custom prioritization strategy that combines multiple factors
+   */
+  private customPrioritization(errors: TypeScriptError[], options: ResolutionOptions): TypeScriptError[] {
+    return errors.sort((a, b) => {
+      // Combine multiple scoring factors
+      const aScore = 
+        this.getSeverityScore(a.severity) * 0.4 + 
+        this.getCategoryScore(a.category) * 0.3 +
+        this.getFileImportanceScore(a.file) * 0.3;
+        
+      const bScore = 
+        this.getSeverityScore(b.severity) * 0.4 + 
+        this.getCategoryScore(b.category) * 0.3 +
+        this.getFileImportanceScore(b.file) * 0.3;
+      
+      return bScore - aScore; // Higher scores first
+    });
   }
 
   /**
