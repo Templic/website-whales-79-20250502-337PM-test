@@ -393,6 +393,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   // Use simplified TypeScript error management routes for better performance
   app.use('/api/typescript-simple', typescriptErrorSimpleRoutes);
+  
+  // Use the new TypeScript error management routes for the admin portal
+  app.use('/api/admin/typescript-errors', isAdmin, typescriptErrorRoutes);
 
   // Use secure API routes with comprehensive security checks
   app.use('/api/secure/public', publicRouter);

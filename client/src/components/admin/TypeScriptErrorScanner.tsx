@@ -168,14 +168,14 @@ export default function TypeScriptErrorScanner() {
     data: scanHistory = [], 
     isLoading: historyLoading,
     refetch: refetchHistory
-  } = useQuery<ScanResult[]>({
+  } = useQuery({
     queryKey: ['typescriptScans'],
     queryFn: async () => {
       const response = await fetch('/api/admin/typescript-errors/scans');
       if (!response.ok) {
         throw new Error('Failed to fetch scan history');
       }
-      return response.json();
+      return response.json() as Promise<ScanResult[]>;
     }
   });
 
@@ -184,7 +184,7 @@ export default function TypeScriptErrorScanner() {
     data: scanDetails, 
     isLoading: scanDetailsLoading,
     refetch: refetchScanDetails
-  } = useQuery<ScanResult>({
+  } = useQuery({
     queryKey: ['typescriptScan', selectedScanId],
     queryFn: async () => {
       if (!selectedScanId) return null;
@@ -193,7 +193,7 @@ export default function TypeScriptErrorScanner() {
       if (!response.ok) {
         throw new Error('Failed to fetch scan details');
       }
-      return response.json();
+      return response.json() as Promise<ScanResult>;
     },
     enabled: !!selectedScanId
   });
@@ -339,7 +339,7 @@ export default function TypeScriptErrorScanner() {
 
   // Select the latest scan automatically
   useEffect(() => {
-    if (scanHistory?.length > 0 && !selectedScanId) {
+    if (scanHistory.length > 0 && !selectedScanId) {
       setSelectedScanId(scanHistory[0].id);
     }
   }, [scanHistory, selectedScanId]);

@@ -38,6 +38,7 @@ import ContactPage from "@/pages/ContactPage";
 import AuthPage from "@/pages/AuthPage";
 import AdminPortalPage from "@/pages/admin/AdminPortalPage";
 import AnalyticsPage from "@/pages/admin/AnalyticsPage";
+import TypeScriptErrorsPage from "@/pages/admin/TypeScriptErrorsPage";
 import EnhancedAnalyticsPage from "@/pages/admin/EnhancedAnalyticsPage";
 import SecuritySettingsPage from "@/pages/admin/SecuritySettingsPage";
 import SecurityAlertsPage from "@/pages/admin/SecurityAlertsPage";
@@ -232,7 +233,8 @@ function AppRouter() {
           <ProtectedRoute path="/admin/media/video" component={VideoPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/media/audio" component={AudioPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/edit-button" component={EditButtonPage} requiredRole="admin" />
-          <ProtectedRoute path="/admin/typescript-errors" component={TypeScriptErrorDashboard} requiredRole="super_admin" />
+          <ProtectedRoute path="/admin/typescript-errors" component={TypeScriptErrorsPage} requiredRole="super_admin" />
+          <ProtectedRoute path="/admin/typescript-errors/dashboard" component={TypeScriptErrorDashboard} requiredRole="super_admin" />
           <ProtectedRoute path="/admin/deadlinks" component={DeadLinkCheckerPage} requiredRole="admin" />
 
           {/* Resource Pages */}
