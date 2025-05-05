@@ -1,180 +1,161 @@
 # TypeScript Error Management System
 
-A comprehensive system for detecting, analyzing, and automatically fixing TypeScript errors in large codebases.
+A comprehensive system for detecting, analyzing, and fixing TypeScript errors in your codebase.
 
 ## Overview
 
-This TypeScript Error Management System provides an end-to-end solution for handling TypeScript errors through three key phases:
+The TypeScript Error Management System is a sophisticated three-phase approach to handling TypeScript errors:
 
-1. **Detection**: Scanning the codebase to identify, categorize, and prioritize TypeScript errors
-2. **Intelligent Analysis**: Using OpenAI's language models to understand errors in context and suggest appropriate fixes
-3. **Prevention**: Automatically applying fixes with safeguards to prevent cascading issues
+1. **Detection** - Find TypeScript errors in your codebase
+2. **Analysis** - Analyze errors for patterns and root causes
+3. **Resolution** - Apply fixes automatically or with guidance
 
-## Features
+## Key Components
 
-- **Error Scanning**: Comprehensive scanning with incremental and deep scan modes
-- **Error Classification**: Automatic categorization by type, severity, and fix complexity
-- **AI-Powered Analysis**: Intelligent error analysis using OpenAI GPT models
-- **Pattern Recognition**: Identification of recurring error patterns
-- **Automatic Fixing**: Smart application of targeted fixes
-- **Fix Validation**: Verification of fixes to prevent cascading errors
-- **Statistics & Reporting**: Comprehensive error metrics and reporting
+### Error Detection
 
-## Components
+- `ts-error-finder.ts` - Core detection engine that finds TypeScript errors
+- `advanced-ts-error-finder.ts` - Enhanced detection with more detailed error information
 
-The system consists of several key components:
+### Error Analysis
 
-- **`ts-scanner.ts`**: Detects and catalogs TypeScript errors
-- **`openai-integration.ts`**: Provides AI-powered error analysis
-- **`ts-error-fixer.ts`**: Applies automated fixes to TypeScript errors
-- **`ts-analyzer-cli.ts`**: Command-line interface for the entire system
-- **`ts-intelligent-fixer.ts`**: Main entry point for the utility
+- `ts-error-analyzer.ts` - Analyzes errors for patterns and categorizes them
+- `ts-batch-fixer.ts` - Builds dependency graphs between errors to identify root causes
 
-## Getting Started
+### Error Resolution
 
-### Prerequisites
+- `ts-error-fixer.ts` - Applies pattern-based fixes to errors
+- `openai-enhanced-fixer.ts` - Uses OpenAI to generate fixes for complex errors
+- `error-patterns/advanced-patterns.ts` - Collection of common error patterns and fixes
 
-- Node.js 16+ and npm
-- TypeScript 4.5+
-- OpenAI API key (for AI-powered analysis)
+### Security Integration
 
-### Installation
+- `security/integration/typescript-security-scanner.ts` - Integrates with security infrastructure
 
-Clone the repository and install dependencies:
+## Usage
+
+### Command Line Interface
+
+The main interface for the error management system is through the CLI tools:
 
 ```bash
-npm install
+# Run the enhanced error fixer
+ts-node run-enhanced-fixer.ts --project ./your-project
+
+# Run with automated fixing
+ts-node run-enhanced-fixer.ts --project ./your-project --fix
+
+# Run security-focused scan
+ts-node run-enhanced-fixer.ts --project ./your-project --security-only
+
+# Use AI-powered analysis
+ts-node run-enhanced-fixer.ts --project ./your-project --ai
 ```
 
-Set up your OpenAI API key as an environment variable:
+### Options
+
+- `--project <dir>` - Project directory to scan (default: current directory)
+- `--security-only` - Only scan for security-related TypeScript issues
+- `--fix` - Automatically apply fixes (default: false)
+- `--pattern <pattern>` - Apply specific pattern fixes by ID (e.g. "type-assertion-1")
+- `--ai` - Use OpenAI for advanced error analysis and fixing
+- `--report` - Generate detailed Markdown report
+- `--deep` - Perform deep error analysis with dependency tracking
+- `--watch` - Watch for file changes and fix errors as they occur
+- `--max-errors <num>` - Maximum number of errors to fix (default: 50)
+- `--exclude <paths>` - Comma-separated list of directories/files to exclude
+- `--verbose` - Show detailed output
+
+## Advanced Error Patterns
+
+The system includes an extensive library of advanced error patterns in `error-patterns/advanced-patterns.ts`. Each pattern includes:
+
+- Pattern detection regex
+- Multiple fix strategies based on context
+- Security implications (if applicable)
+- Examples of before/after code
+
+## OpenAI Integration
+
+The system can use OpenAI to analyze and fix complex TypeScript errors. This feature requires:
+
+1. An OpenAI API key set as `OPENAI_API_KEY` environment variable
+2. Running with the `--ai` flag
+
+The AI integration can:
+
+- Analyze errors with full context
+- Generate precise fixes
+- Provide explanations of the error cause
+- Suggest alternative approaches
+
+## Security Focus
+
+The system integrates with the application's security infrastructure through:
+
+1. Identifying security-critical TypeScript errors
+2. Prioritizing fixes for security issues
+3. Registering with the security scan queue
+4. Producing security reports
+
+Run a security-focused scan with:
 
 ```bash
-export OPENAI_API_KEY=your-api-key
+ts-node run-enhanced-fixer.ts --security-only
 ```
 
-### Basic Usage
+## Reports
 
-1. **Scan for errors**:
+Generate detailed reports with:
 
 ```bash
-npx ts-node ts-intelligent-fixer.ts scan
+ts-node run-enhanced-fixer.ts --report
 ```
 
-2. **Analyze errors with AI**:
+Reports include:
+- Error counts by category
+- Security issues
+- Applied fixes
+- Recommendations
 
-```bash
-npx ts-node ts-intelligent-fixer.ts analyze
+## Extending the System
+
+### Adding New Error Patterns
+
+To add new error patterns, edit `error-patterns/advanced-patterns.ts` and add entries following the pattern:
+
+```typescript
+{
+  id: 'your-pattern-id',
+  name: 'Human-readable name',
+  description: 'Description of the error pattern',
+  category: ErrorCategory.TYPE_MISMATCH, // Use appropriate category
+  severity: ErrorSeverity.MEDIUM, // Set appropriate severity
+  regex: 'Regular expression to match error message',
+  fixes: [
+    {
+      description: 'Description of the fix',
+      applicability: 'When to apply this fix',
+      example: {
+        before: "Code before fix",
+        after: "Code after fix"
+      },
+      automated: true // Whether this can be applied automatically
+    }
+  ],
+  securityImplications: {
+    hasSecurity: true, // Set to true if this has security implications
+    severity: 'medium', // Set security severity
+    description: 'Description of security implications',
+    cwe: 'CWE-ID' // Common Weakness Enumeration ID if applicable
+  }
+}
 ```
 
-3. **Fix errors automatically**:
+## Troubleshooting
 
-```bash
-npx ts-node ts-intelligent-fixer.ts fix
-```
+### Common Issues
 
-4. **Get error statistics**:
-
-```bash
-npx ts-node ts-intelligent-fixer.ts stats
-```
-
-## Advanced Usage
-
-### Scanning Options
-
-```bash
-# Deep scan (more thorough but slower)
-npx ts-node ts-intelligent-fixer.ts scan --deep
-
-# Incremental scan (only stores new errors)
-npx ts-node ts-intelligent-fixer.ts scan --incremental
-
-# Scan with AI enhancement
-npx ts-node ts-intelligent-fixer.ts scan --ai
-
-# Scan specific files
-npx ts-node ts-intelligent-fixer.ts scan --files src/components/*.tsx
-```
-
-### Analysis Options
-
-```bash
-# Analyze specific error by ID
-npx ts-node ts-intelligent-fixer.ts analyze --error 123
-
-# Analyze errors with specific code
-npx ts-node ts-intelligent-fixer.ts analyze --code TS2322
-
-# Analyze errors in a specific file
-npx ts-node ts-intelligent-fixer.ts analyze --file src/components/Button.tsx
-
-# Use a specific OpenAI model
-npx ts-node ts-intelligent-fixer.ts analyze --model gpt-4o
-```
-
-### Fix Options
-
-```bash
-# Fix specific error by ID
-npx ts-node ts-intelligent-fixer.ts fix --error 123
-
-# Fix errors with specific code
-npx ts-node ts-intelligent-fixer.ts fix --code TS2322
-
-# Fix errors in a specific file
-npx ts-node ts-intelligent-fixer.ts fix --file src/components/Button.tsx
-
-# Dry run (show what would be fixed without making changes)
-npx ts-node ts-intelligent-fixer.ts fix --dry-run
-```
-
-### Utility Commands
-
-```bash
-# List all errors
-npx ts-node ts-intelligent-fixer.ts list
-
-# Mark an error as fixed
-npx ts-node ts-intelligent-fixer.ts mark 123 fixed
-
-# Export errors to a JSON file
-npx ts-node ts-intelligent-fixer.ts export errors.json
-```
-
-## Architecture
-
-The TypeScript Error Management System follows a three-phase approach:
-
-1. **Detection Phase**:
-   - Scan codebase using TypeScript compiler
-   - Categorize errors by type and severity
-   - Store errors in database with metadata
-
-2. **Analysis Phase**:
-   - Analyze errors using OpenAI models
-   - Classify errors into patterns
-   - Generate suggested fixes
-
-3. **Fix Phase**:
-   - Apply fixes automatically where possible
-   - Create backups of modified files
-   - Verify fixes don't introduce new errors
-
-## Database Schema
-
-The system uses a PostgreSQL database with the following schema:
-
-- `typescript_errors`: Stores individual TypeScript errors
-- `error_patterns`: Stores recognized error patterns
-- `error_fixes`: Stores fixes for error patterns
-- `error_analysis`: Stores AI-generated error analyses
-- `scan_results`: Stores results of scan operations
-- `error_fix_history`: Tracks history of fix attempts
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+- **Error: Cannot find module 'typescript'** - Install TypeScript: `npm install -g typescript`
+- **Error: OpenAI API key not found** - Set the `OPENAI_API_KEY` environment variable
+- **No results or empty scan** - Check project configuration and tsconfig.json
