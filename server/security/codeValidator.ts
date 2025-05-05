@@ -5,7 +5,7 @@
  * and ensures they meet quality standards before being applied.
  */
 
-import { logSecurityEvent } from '../security';
+import { logger } from '../logger';
 
 // Security risk patterns to check for
 const SECURITY_RISK_PATTERNS = [
@@ -194,12 +194,12 @@ export function validateCodeFix(
         
         // Log security event for high severity issues
         if (pattern.severity === 'high') {
-          logSecurityEvent('CODE_VALIDATION_ISSUE', 'warning', {
+          logger.warn(`[Security] Detected ${pattern.severity} security issue in code fix: ${pattern.description}`, {
             source: 'typescript-error-fix-validator',
-            message: `Detected ${pattern.severity} security issue in code fix: ${pattern.description}`,
             pattern: pattern.pattern.toString(),
             wasInOriginal: String(wasInOriginal),
-            userId
+            userId,
+            type: 'CODE_VALIDATION_ISSUE'
           });
         }
       }

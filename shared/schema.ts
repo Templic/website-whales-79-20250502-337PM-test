@@ -446,6 +446,42 @@ export const scanResults = pgTable('scan_results', {
   created_by: integer('created_by')
 });
 
+// Security audits for TypeScript error fixes
+export const scanSecurityAudits = pgTable('scan_security_audits', {
+  id: serial('id').primaryKey(),
+  fix_id: integer('fix_id').references(() => errorFixes.id).notNull(),
+  auditor_id: varchar('auditor_id', { length: 255 }).references(() => users.id),
+  audit_date: timestamp('audit_date').defaultNow().notNull(),
+  security_score: integer('security_score').notNull(), // 0-100
+  issue_type: text('issue_type'),
+  issue_severity: text('issue_severity', { enum: ['low', 'medium', 'high'] }),
+  issue_description: text('issue_description'),
+  recommendation: text('recommendation'),
+  is_approved: boolean('is_approved').default(false),
+  approved_by: varchar('approved_by', { length: 255 }).references(() => users.id),
+  approval_date: timestamp('approval_date'),
+  notes: text('notes'),
+  review_status: text('review_status', { enum: ['pending', 'reviewed', 'rejected'] }).default('pending'),
+});
+
+// Error metrics data for tracking trends over time
+export const typeScriptErrorMetrics = pgTable('typescript_error_metrics', {
+  id: serial('id').primaryKey(),
+  date: timestamp('date').defaultNow().notNull(),
+  total_errors: integer('total_errors').notNull().default(0),
+  fixed_errors: integer('fixed_errors').notNull().default(0),
+  new_errors: integer('new_errors').notNull().default(0),
+  by_severity: json('by_severity').$type<Record<string, number>>(),
+  by_category: json('by_category').$type<Record<string, number>>(),
+  fix_rate: numeric('fix_rate').notNull().default(0),
+  avg_resolution_time: numeric('avg_resolution_time'),
+  ai_fixes: integer('ai_fixes').notNull().default(0),
+  manual_fixes: integer('manual_fixes').notNull().default(0),
+  pattern_fixes: integer('pattern_fixes').notNull().default(0),
+  metrics_period: text('metrics_period', { enum: ['daily', 'weekly', 'monthly'] }).notNull().default('daily'),
+  scan_id: integer('scan_id').references(() => scanResults.id)
+});
+
 // ===================================================================
 // Relations
 // ===================================================================

@@ -186,6 +186,27 @@ async function initMetricsCollection(): Promise<void> {
       backgroundServices.metricsCollection.lastRunTime = Date.now();
     }, metricsInterval);
     
+    // Initialize TypeScript error metrics scheduler
+    if (config.features.enableTypeScriptErrorManagement) {
+      try {
+        log('Initializing TypeScript error metrics scheduler...', 'background');
+        
+        // Initialize the scheduler with daily collection at 3 AM
+        initializeMetricsScheduler('0 3 * * *');
+        
+        // Run an initial metrics collection to establish baseline
+        setTimeout(async () => {
+          log('Running initial TypeScript error metrics collection...', 'background');
+          await checkAndRunInitialMetrics();
+        }, 2 * 60 * 1000); // Run after 2 minutes to let the system stabilize
+        
+        log('TypeScript error metrics scheduler initialized successfully', 'background');
+      } catch (tsError) {
+        log(`Failed to initialize TypeScript error metrics scheduler: ${tsError}`, 'background');
+        console.error('TypeScript metrics scheduler error:', tsError);
+      }
+    }
+    
     // Update service status
     backgroundServices.metricsCollection = {
       name: 'Metrics Collection',

@@ -42,6 +42,7 @@ export interface FeatureFlags {
   enableRateLimiting: boolean;
   enableExtraLogging: boolean;
   enableContentScheduling: boolean;
+  enableTypeScriptErrorManagement: boolean;
 }
 
 export interface ServerConfig {
@@ -78,7 +79,8 @@ const startupModes = {
       enableWebSockets: true,
       enableRateLimiting: false,
       enableExtraLogging: false,
-      enableContentScheduling: false
+      enableContentScheduling: false,
+      enableTypeScriptErrorManagement: false
     },
     maintenanceDelay: 300000, // 5 minutes
     backgroundServicesDelay: 120000, // 2 minutes
@@ -95,7 +97,8 @@ const startupModes = {
       enableWebSockets: true,
       enableRateLimiting: false,
       enableExtraLogging: false,
-      enableContentScheduling: false
+      enableContentScheduling: false,
+      enableTypeScriptErrorManagement: false
     },
     maintenanceDelay: 60000, // 1 minute
     backgroundServicesDelay: 30000, // 30 seconds
@@ -157,7 +160,8 @@ const defaultConfig: ServerConfig = {
     enableWebSockets: true,
     enableRateLimiting: true,
     enableExtraLogging: process.env.EXTRA_LOGGING === 'true',
-    enableContentScheduling: true
+    enableContentScheduling: true,
+    enableTypeScriptErrorManagement: true
   },
   
   // Database configuration
