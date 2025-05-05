@@ -28,110 +28,107 @@ import {
   MessageSquare,
   Users,
   Heart,
+  Info,
   Mail,
+  Newspaper,
   ArrowLeft,
   ArrowRight,
-  RotateCw
+  RotateCw,
+  Settings,
+  HelpCircle
 } from "lucide-react";
-import { useAuth } from "../../hooks/use-auth";
-import { useAccessibility } from "../../contexts/AccessibilityContext";
 import { motion, AnimatePresence } from "framer-motion";
 import SacredGeometry from "../ui/sacred-geometry";
 
-// Animation variants for mobile menu
-const containerVariants = {
-  hidden: { opacity: 0, height: 0 },
-  visible: { 
-    opacity: 1, 
-    height: "auto",
-    transition: { 
-      duration: 0.3,
-      staggerChildren: 0.05
-    }
-  },
-  exit: { 
-    opacity: 0, 
-    height: 0,
-    transition: { 
-      duration: 0.3, 
-      when: "afterChildren"
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
-};
-
-// Define the navigation items structure
+// Define navigation items
 interface NavItem {
   name: string;
   path: string;
   icon: React.ReactNode;
 }
 
-// First row navigation items - based on the screenshot
-const firstRowItems: NavItem[] = [
-  { name: "Home", path: "/", icon: <Home className="h-4 w-4" /> },
-  { name: "About", path: "/about", icon: <Users className="h-4 w-4" /> },
-  { name: "Music", path: "/archived-music", icon: <Music className="h-4 w-4" /> },
-  { name: "Tour", path: "/tour", icon: <Calendar className="h-4 w-4" /> }
-];
-
-// Second row navigation items - based on the screenshot
-const secondRowItems: NavItem[] = [
-  { name: "Shop", path: "/shop", icon: <ShoppingBag className="h-4 w-4" /> },
-  { name: "Engage", path: "/engage", icon: <Heart className="h-4 w-4" /> },
-  { name: "Blog", path: "/blog", icon: <Headphones className="h-4 w-4" /> },
-  { name: "AI Chat", path: "/chat", icon: <MessageSquare className="h-4 w-4" /> }
-];
-
-// Third row navigation items - based on the screenshot
-const thirdRowItems: NavItem[] = [
-  { name: "Community Hub", path: "/community", icon: <Users className="h-4 w-4" /> },
-  { name: "Newsletter", path: "/newsletter", icon: <Mail className="h-4 w-4" /> },
-  { name: "Collaboration", path: "/collaboration", icon: <Heart className="h-4 w-4" /> },
-  { name: "Contact", path: "/contact", icon: <MessageSquare className="h-4 w-4" /> }
-];
-
-// Define the component as a named export
 export const MainHeader = () => {
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [location, navigate] = useLocation();
-  const { autoHideNav } = useAccessibility();
-  const { user } = useAuth();
-  const { toast } = useToast();
+  
+  // Animation variants for mobile menu
+  const containerVariants = {
+    hidden: { height: 0, opacity: 0 },
+    visible: { 
+      height: 'auto', 
+      opacity: 1,
+      transition: { 
+        duration: 0.3,
+        staggerChildren: 0.1
+      }
+    },
+    exit: { 
+      height: 0, 
+      opacity: 0,
+      transition: { duration: 0.2 }
+    }
+  };
 
-  // Handle scroll event for auto-hiding navigation
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 }
+  };
+
+  // Check scroll position to adjust header appearance
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+      setIsScrolled(window.scrollY > 20);
     };
     
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Handle navigation click
+  // First row navigation items
+  const firstRowItems: NavItem[] = [
+    { name: "Home", path: "/", icon: <Home /> },
+    { name: "Music", path: "/music", icon: <Music /> },
+    { name: "Tour", path: "/tour", icon: <Calendar /> },
+    { name: "Shop", path: "/shop", icon: <ShoppingBag /> },
+  ];
+
+  // Second row navigation items
+  const secondRowItems: NavItem[] = [
+    { name: "Blog", path: "/blog", icon: <Newspaper /> },
+    { name: "About", path: "/about", icon: <Info /> },
+    { name: "Community", path: "/community", icon: <Users /> },
+    { name: "Resources", path: "/resources", icon: <HelpCircle /> },
+  ];
+
+  // Third row navigation items
+  const thirdRowItems: NavItem[] = [
+    { name: "Contact", path: "/contact", icon: <Mail /> },
+    { name: "Newsletter", path: "/newsletter", icon: <MessageSquare /> },
+    { name: "Social", path: "/social", icon: <Heart /> },
+    { name: "Settings", path: "/settings", icon: <Settings /> },
+  ];
+
+  // Handle navigation clicks
   const handleNavigationClick = useCallback((path: string) => {
     navigate(path);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     setIsMobileMenuOpen(false);
   }, [navigate]);
 
-  // Handle search submit for site-wide search
+  // Handle search submission
   const handleSearchSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery("");
       
+      // Show search initiated toast
       toast({
-        title: "Searching",
-        description: `Finding results for "${searchQuery.trim()}"`,
+        title: "Search Initiated",
+        description: `Searching for "${searchQuery.trim()}"`,
         variant: "default",
       });
     }
@@ -139,37 +136,37 @@ export const MainHeader = () => {
 
   return (
     <header 
-      className={`fixed top-0 z-[100] mx-auto left-0 right-0 max-w-[1400px] bg-[#070b1a]/90 backdrop-blur-lg border border-white/10 rounded-b-xl transition-all duration-300 ${
+      className={`fixed top-0 z-[100] w-full bg-black/80 backdrop-blur-lg border-b border-white/5 transition-all duration-300 ${
         isScrolled ? 'h-16' : 'h-20'
       }`}
       style={{
         boxShadow: '0 0 20px rgba(0, 235, 214, 0.15), 0 0 40px rgba(111, 76, 255, 0.1)'
       }}
     >
-      {/* Sacred Geometry Elements - Left Side */}
-      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 hidden md:block">
-        <SacredGeometry 
-          type="merkaba" 
-          size={32} 
-          color="cyan" 
-          animated={true} 
-          className="opacity-60 hover:opacity-90 transition-opacity duration-500" 
-        />
-      </div>
-      
-      {/* Sacred Geometry Elements - Right Side */}
-      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 hidden md:block">
-        <SacredGeometry 
-          type="merkaba" 
-          size={32} 
-          color="purple" 
-          animated={true}
-          reversed={true}
-          className="opacity-60 hover:opacity-90 transition-opacity duration-500" 
-        />
-      </div>
-      
-      <div className="container mx-auto px-4 h-full">
+      <div className="container mx-auto px-4 h-full relative">
+        {/* Sacred Geometry Elements - Left Side */}
+        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 hidden md:block">
+          <SacredGeometry 
+            type="merkaba" 
+            size={32} 
+            color="cyan" 
+            animated={true} 
+            className="opacity-60 hover:opacity-90 transition-opacity duration-500" 
+          />
+        </div>
+        
+        {/* Sacred Geometry Elements - Right Side */}
+        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 hidden md:block">
+          <SacredGeometry 
+            type="merkaba" 
+            size={32} 
+            color="purple" 
+            animated={true}
+            reversed={true}
+            className="opacity-60 hover:opacity-90 transition-opacity duration-500" 
+          />
+        </div>
+
         <div className="flex items-center justify-between h-full relative">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
@@ -416,7 +413,7 @@ export const MainHeader = () => {
               </motion.div>
               
               <motion.div variants={itemVariants}>
-                <h3 className="text-xs uppercase text-white/50 font-medium mb-2">Connect</h3>
+                <h3 className="text-xs uppercase text-white/50 font-medium mb-2">Engage</h3>
                 <div className="grid grid-cols-2 gap-3">
                   {thirdRowItems.map((item) => (
                     <Link 
@@ -437,33 +434,48 @@ export const MainHeader = () => {
                 </div>
               </motion.div>
             </div>
+            
+            {/* Mobile Navigation Controls */}
+            <motion.div 
+              variants={itemVariants}
+              className="px-4 py-3 border-t border-white/10 flex justify-between"
+            >
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => window.history.back()}
+                  className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                  aria-label="Go back"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+                <button 
+                  onClick={() => window.history.forward()}
+                  className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                  aria-label="Go forward"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                  aria-label="Reload page"
+                >
+                  <RotateCw className="h-4 w-4" />
+                </button>
+              </div>
+              
+              <Link 
+                href="/login" 
+                className="bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 transition-colors text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Log In
+              </Link>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-      
-      {/* Sacred Geometry Elements - Positioned at outside edges of the header */}
-      <div className="absolute hidden md:block -left-16 top-1/2 transform -translate-y-1/2">
-        <SacredGeometry 
-          variant="merkaba" 
-          size={60} 
-          animated={true}
-          intensity="medium" 
-          className="text-cyan-400" 
-        />
-      </div>
-      
-      <div className="absolute hidden md:block -right-16 top-1/2 transform -translate-y-1/2">
-        <SacredGeometry 
-          variant="merkaba" 
-          size={60} 
-          animated={true}
-          intensity="medium" 
-          className="text-cyan-400" 
-        />
-      </div>
     </header>
   );
-}
+};
 
-// Also export as default for backward compatibility
 export default MainHeader;

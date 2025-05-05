@@ -49,10 +49,13 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
   const svgStyle = {
     "--stroke-width": `${strokeWidth}px`,
     "--fill-opacity": opacityValue,
+    "color": color, // Apply the custom color
   } as React.CSSProperties;
 
   // Animation class based on the animated prop
-  const animationClass = animated ? 'animate-spin-very-slow' : '';
+  const animationClass = animated 
+    ? `animate-spin-very-slow ${reversed ? 'animate-reverse' : ''}` 
+    : '';
 
   // Helper function to create SVG with consistent props
   const createSvg = (children: React.ReactNode) => (

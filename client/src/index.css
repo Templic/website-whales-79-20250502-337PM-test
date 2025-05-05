@@ -476,4 +476,9 @@ svg[aria-hidden="true"] {
     grid-template-rows: auto 1fr auto;
     height: 100%;
   }
+  
+  /* Reverse animation direction */
+  .animate-reverse {
+    animation-direction: reverse;
+  }
 }
