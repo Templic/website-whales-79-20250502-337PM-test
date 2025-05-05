@@ -4,14 +4,14 @@
  * Component Type: feature
  * Migrated as part of the repository reorganization.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { Product } from '@/pages/shop/ShopPage';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ShoppingCart as ShoppingCartIcon } from 'lucide-react';
 import CosmicButton from '@/components/features/cosmic/cosmic-button';
-import {useLocation} from 'wouter'; // Using wouter instead of react-router-dom
+import { useLocation } from 'wouter'; // Using wouter instead of react-router-dom
 
 interface CartItem {
   product: Product;
@@ -19,19 +19,36 @@ interface CartItem {
 }
 
 interface ShoppingCartProps {
-  cartItems: CartItem[];
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemoveItem: (productId: string) => void;
-  onCheckout: () => void;
-  total: number;
+  cartItems?: CartItem[];
+  onUpdateQuantity?: (productId: string, quantity: number) => void;
+  onRemoveItem?: (productId: string) => void;
+  onCheckout?: () => void;
+  total?: number;
 }
 
-const ShoppingCart: React.FC<ShoppingCartProps> = ({
-  cartItems,
-  onUpdateQuantity,
-  onRemoveItem,
-  onCheckout,
-  total
+// Export a simple ShoppingCart icon component for use in headers
+export function ShoppingCart() {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <Button 
+      variant="ghost" 
+      size="icon" 
+      className="text-white/80 hover:text-white hover:bg-white/10"
+      onClick={() => setIsOpen(!isOpen)}
+    >
+      <ShoppingCartIcon className="h-5 w-5" />
+    </Button>
+  );
+}
+
+// Export the full ShoppingCart component
+export const FullShoppingCart: React.FC<ShoppingCartProps> = ({
+  cartItems = [],
+  onUpdateQuantity = () => {},
+  onRemoveItem = () => {},
+  onCheckout = () => {},
+  total = 0
 }) => {
   // Format currency
   const formatCurrency = (amount: number) => {
