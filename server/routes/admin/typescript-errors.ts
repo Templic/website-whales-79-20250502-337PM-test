@@ -4,11 +4,19 @@
  * API endpoints for managing TypeScript errors through the admin portal.
  */
 
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { body, param } from 'express-validator';
 import { validate } from '../../middlewares/validationMiddleware';
+
+// Import TypedResponse interface for properly typed route handlers
+interface TypedResponse<T> extends Response {
+  json(body: T): TypedResponse<T>;
+  status(code: number): TypedResponse<T>;
+  send(body: T): TypedResponse<T>;
+}
+
 // Create a temporary requireAdmin middleware
-const requireAdmin = (req: any, res: any, next: any) => {
+const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
   // For development purposes, we'll allow all access
   // In production, this would check if the user has admin privileges
   console.log('[Auth] Admin access granted to TypeScript error management');
@@ -32,7 +40,7 @@ import fs from 'fs';
 const router = express.Router();
 
 // Simple test endpoint that doesn't require any validation or database access
-router.get('/test', (req, res) => {
+router.get('/test', (req: Request, res: Response) => {
   // Set special flag to skip CSRF validation (similar to the Content API)
   req.__skipCSRF = true;
   
@@ -56,7 +64,7 @@ const errorFixValidation = [
 ];
 
 // Get all scans
-router.get('/scans', async (req, res) => {
+router.get('/scans', async (req: Request, res: Response) => {
   // Set special flag to skip CSRF validation
   req.__skipCSRF = true;
   
@@ -76,7 +84,7 @@ router.get('/scans', async (req, res) => {
 });
 
 // Get scan by ID
-router.get('/scans/:id', async (req, res) => {
+router.get('/scans/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
@@ -123,7 +131,7 @@ router.get('/scans/:id', async (req, res) => {
 });
 
 // Create a new scan
-router.post('/scans', scanValidation, validate, async (req, res) => {
+router.post('/scans', scanValidation, validate, async (req: Request, res: Response) => {
   // Set special flag to skip CSRF validation
   req.__skipCSRF = true;
   
@@ -138,7 +146,7 @@ router.post('/scans', scanValidation, validate, async (req, res) => {
     // Skip database operations for testing
     /*
     // Create scan record
-    await db.query(`
+    await pool.query(`
       INSERT INTO typescript_scan_results (
         id, status, error_count, fixed_count, ai_enabled, start_time
       ) VALUES ($1, $2, $3, $4, $5, $6)
@@ -255,11 +263,12 @@ router.post('/scans/:scanId/errors/:errorId/ignore', errorFixValidation, validat
     const { scanId, errorId } = req.params;
     
     // Get error details
-    const error = await db.queryOne(`
+    const { rows: errorRows } = await pool.query(`
       SELECT * FROM typescript_errors
       WHERE id = $1 AND scan_id = $2
     `, [errorId, scanId]);
     
+    const error = errorRows[0];
     if (!error) {
       return res.status(404).json({ error: 'Error not found' });
     }
@@ -269,7 +278,7 @@ router.post('/scans/:scanId/errors/:errorId/ignore', errorFixValidation, validat
     }
     
     // Update error status
-    await db.query(`
+    await pool.query(`
       UPDATE typescript_errors
       SET status = 'IGNORED'
       WHERE id = $1
@@ -302,11 +311,12 @@ router.post('/scans/:scanId/errors/:errorId/ai-fix', errorFixValidation, validat
     const { scanId, errorId } = req.params;
     
     // Get error details
-    const error = await db.queryOne(`
+    const { rows: errorRows } = await pool.query(`
       SELECT * FROM typescript_errors
       WHERE id = $1 AND scan_id = $2
     `, [errorId, scanId]);
     
+    const error = errorRows[0];
     if (!error) {
       return res.status(404).json({ error: 'Error not found' });
     }
@@ -316,17 +326,18 @@ router.post('/scans/:scanId/errors/:errorId/ai-fix', errorFixValidation, validat
     }
     
     // Check if scan has AI enabled
-    const scan = await db.queryOne(`
+    const { rows: scanRows } = await pool.query(`
       SELECT ai_enabled FROM typescript_scan_results
       WHERE id = $1
     `, [scanId]);
     
+    const scan = scanRows[0];
     if (!scan || !scan.ai_enabled) {
       return res.status(400).json({ error: 'AI is not enabled for this scan' });
     }
     
     // Update error status to FIXING
-    await db.query(`
+    await pool.query(`
       UPDATE typescript_errors
       SET status = 'FIXING'
       WHERE id = $1
@@ -362,7 +373,7 @@ async function runScanInBackground(scanId: string, aiEnabled: boolean) {
     
     // Save errors to database
     for (const error of errorResults.errors) {
-      await db.query(`
+      await pool.query(`
         INSERT INTO typescript_errors (
           id, scan_id, code, message, file, line, column, severity, category, status, timestamp
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -443,17 +454,18 @@ async function runScanInBackground(scanId: string, aiEnabled: boolean) {
           }
           
           // Find the error in the database
-          const dbError = await db.queryOne(`
+          const { rows: dbErrorRows } = await pool.query(`
             SELECT id FROM typescript_errors
             WHERE scan_id = $1 AND file = $2 AND line = $3
           `, [scanId, fix.error.filePath, fix.error.lineNumber]);
           
+          const dbError = dbErrorRows[0];
           if (!dbError) {
             continue;
           }
           
           // Save fix details
-          await db.query(`
+          await pool.query(`
             UPDATE typescript_errors
             SET fix_details = $1
             WHERE id = $2
@@ -472,7 +484,7 @@ async function runScanInBackground(scanId: string, aiEnabled: boolean) {
     }
     
     // Update scan status to completed
-    await db.query(`
+    await pool.query(`
       UPDATE typescript_scan_results
       SET status = 'COMPLETED',
           error_count = $1,
@@ -491,7 +503,7 @@ async function runScanInBackground(scanId: string, aiEnabled: boolean) {
     console.error('[TypeScript Scanner] Error running scan:', error);
     
     // Update scan status to failed
-    await db.query(`
+    await pool.query(`
       UPDATE typescript_scan_results
       SET status = 'FAILED',
           end_time = $1,
@@ -543,7 +555,7 @@ async function generateAIFixInBackground(scanId: string, errorId: string, error:
     const fix = fixes[0];
     
     // Save fix details
-    await db.query(`
+    await pool.query(`
       UPDATE typescript_errors
       SET fix_details = $1,
           status = 'NEW'
@@ -564,7 +576,7 @@ async function generateAIFixInBackground(scanId: string, errorId: string, error:
     console.error('[TypeScript Scanner] Error generating AI fix:', error);
     
     // Update error status back to NEW
-    await db.query(`
+    await pool.query(`
       UPDATE typescript_errors
       SET status = 'NEW'
       WHERE id = $1
