@@ -54,6 +54,46 @@ export const MainHeader = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  // Implement the responsive layout hook from specifications for advanced adaptability
+  const [layout, setLayout] = useState({
+    logoSize: 'h-12 w-12',
+    navSpacing: 'space-x-4',
+    showSearchInHeader: true,
+    showSocialLinks: false,
+  });
+  
+  // Update layout based on screen width
+  useEffect(() => {
+    function updateLayout() {
+      if (window.innerWidth < 640) {
+        setLayout({
+          logoSize: 'h-8 w-8',
+          navSpacing: 'space-x-1',
+          showSearchInHeader: false,
+          showSocialLinks: false,
+        });
+      } else if (window.innerWidth < 1024) {
+        setLayout({
+          logoSize: 'h-10 w-10',
+          navSpacing: 'space-x-2',
+          showSearchInHeader: true,
+          showSocialLinks: false,
+        });
+      } else {
+        setLayout({
+          logoSize: 'h-12 w-12',
+          navSpacing: 'space-x-4',
+          showSearchInHeader: true,
+          showSocialLinks: true,
+        });
+      }
+    }
+    
+    updateLayout();
+    window.addEventListener('resize', updateLayout);
+    return () => window.removeEventListener('resize', updateLayout);
+  }, []);
+  
   // Animation variants for mobile menu
   const containerVariants = {
     hidden: { height: 0, opacity: 0 },
@@ -181,106 +221,114 @@ export const MainHeader = () => {
           />
         </div>
 
-        <div className="flex items-center justify-between h-full relative">
-          {/* Logo with Precise Positioning */}
-          <Link href="/" className="flex items-center space-x-2 group z-important">
-            <div className="relative h-12 w-12 flex items-center justify-center">
-              {/* Main circle with gradient */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 opacity-80 group-hover:opacity-100 transition-opacity duration-300"></div>
-              
-              {/* Outer glow effect */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-[2px] opacity-60 group-hover:opacity-80 group-hover:blur-[3px] transition-all duration-300 group-hover:scale-110"></div>
-              <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-xl opacity-20 group-hover:opacity-40 transition-all duration-300"></div>
-              
-              {/* Inner geometric pattern - exact positioning */}
-              <div className="absolute inset-0 opacity-80 group-hover:opacity-100 transition-opacity">
-                <div className="w-full h-full flex items-center justify-center">
-                  <div 
-                    className="w-6 h-6 bg-gradient-to-r from-cyan-500/30 to-purple-600/30 rounded-sm"
-                    style={{
-                      transform: "rotate(45deg) scale(0.75)",
-                      transformOrigin: "center",
-                    }}
-                  ></div>
+        {/* Implement the Advanced Header Layout Grid System per specifications */}
+        <div className="grid grid-cols-12 gap-2 items-center h-full relative">
+          {/* Logo spans 3 columns on desktop, 6 on mobile */}
+          <div className="col-span-6 md:col-span-3 z-important">
+            <Link href="/" className="flex items-center space-x-2 group">
+              <div className={`relative ${layout.logoSize} flex items-center justify-center`}>
+                {/* Main circle with gradient */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 opacity-80 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                {/* Outer glow effect */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-[2px] opacity-60 group-hover:opacity-80 group-hover:blur-[3px] transition-all duration-300 group-hover:scale-110"></div>
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-xl opacity-20 group-hover:opacity-40 transition-all duration-300"></div>
+                
+                {/* Inner geometric pattern - exact positioning */}
+                <div className="absolute inset-0 opacity-80 group-hover:opacity-100 transition-opacity">
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div 
+                      className="w-6 h-6 bg-gradient-to-r from-cyan-500/30 to-purple-600/30 rounded-sm"
+                      style={{
+                        transform: "rotate(45deg) scale(0.75)",
+                        transformOrigin: "center",
+                      }}
+                    ></div>
+                  </div>
                 </div>
+                
+                {/* Text logo positioning */}
+                <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm tracking-wider">
+                  DLW
+                </span>
               </div>
-              
-              {/* Text logo positioning */}
-              <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm tracking-wider">
-                DLW
+              <span className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-300 drop-shadow-[0_1px_1px_rgba(0,235,214,0.5)]">
+                Dale Loves Whales
               </span>
-            </div>
-            <span className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-300 drop-shadow-[0_1px_1px_rgba(0,235,214,0.5)]">
-              Dale Loves Whales
-            </span>
-          </Link>
+            </Link>
+          </div>
 
-          {/* Desktop Navigation - Following specification */}
-          <nav className="hidden md:grid grid-flow-col auto-cols-max gap-x-1 ml-6 z-content">
-            {navigationItems.map((item, index) => (
-              <Link 
-                key={item.path} 
-                href={item.path}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleNavigationClick(item.path);
-                }}
-                className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-white nav-link ${
-                  location.includes(item.path) && (item.path === "/" ? location === "/" : true)
-                    ? 'text-white' 
-                    : 'text-white/70'
-                }`}
-                aria-current={location.includes(item.path) && (item.path === "/" ? location === "/" : true) ? "page" : undefined}
-              >
-                <motion.span 
-                  className="flex items-center space-x-1"
-                  whileHover={{ y: -2 }}
-                  whileTap={{ y: 0 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          {/* Desktop Navigation spans 6 columns, only on desktop */}
+          <nav className="hidden md:block md:col-span-6 z-content">
+            <div className="grid grid-flow-col auto-cols-max gap-x-1">
+              {navigationItems.map((item, index) => (
+                <Link 
+                  key={item.path} 
+                  href={item.path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigationClick(item.path);
+                  }}
+                  className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-white nav-link ${
+                    location.includes(item.path) && (item.path === "/" ? location === "/" : true)
+                      ? 'text-white' 
+                      : 'text-white/70'
+                  }`}
+                  aria-current={location.includes(item.path) && (item.path === "/" ? location === "/" : true) ? "page" : undefined}
                 >
-                  {item.icon}
-                  <span>{item.name}</span>
-                </motion.span>
-                {location.includes(item.path) && (item.path === "/" ? location === "/" : true) && (
-                  <motion.div 
-                    layoutId="nav-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.2 }}
-                  />
-                )}
-              </Link>
-            ))}
+                  <motion.span 
+                    className="flex items-center space-x-1"
+                    whileHover={{ y: -2 }}
+                    whileTap={{ y: 0 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    {item.icon}
+                    <span>{item.name}</span>
+                  </motion.span>
+                  {location.includes(item.path) && (item.path === "/" ? location === "/" : true) && (
+                    <motion.div 
+                      layoutId="nav-indicator"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                    />
+                  )}
+                </Link>
+              ))}
+            </div>
           </nav>
           
-          {/* Search Bar and Controls - With Z-indexing and precise positioning */}
-          <div className="hidden md:flex items-center ml-8 z-content">
-            <div className="relative group" role="search">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-white/50 group-hover:text-cyan-400 group-focus-within:text-cyan-400 transition-colors duration-200" />
+          {/* Search & Controls spans 3 columns on desktop, 6 on mobile */}
+          <div className="col-span-6 md:col-span-3 flex justify-end items-center z-content">
+            {/* Search Bar - Only visible on desktop if showSearchInHeader is true */}
+            {layout.showSearchInHeader && (
+              <div className="hidden md:block relative group mr-2" role="search">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-white/50 group-hover:text-cyan-400 group-focus-within:text-cyan-400 transition-colors duration-200" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && searchQuery.trim()) {
+                      handleSearchSubmit(e as any);
+                    }
+                  }}
+                  aria-label="Search site content"
+                  className="bg-white/5 border border-white/10 rounded-full py-1.5 pl-10 pr-4 text-sm text-white placeholder-white/50 
+                  focus:outline-none focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 transition-all w-40 focus:w-56 
+                  hover:bg-white/7 hover:border-white/15 search-input z-interactive"
+                />
+                <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-30 group-focus-within:opacity-40 
+                bg-gradient-to-r from-cyan-700/10 to-purple-700/10 blur-sm transition-opacity duration-300 -z-10"></div>
               </div>
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && searchQuery.trim()) {
-                    handleSearchSubmit(e as any);
-                  }
-                }}
-                aria-label="Search site content"
-                className="bg-white/5 border border-white/10 rounded-full py-1.5 pl-10 pr-4 text-sm text-white placeholder-white/50 
-                focus:outline-none focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 transition-all w-48 focus:w-64 
-                hover:bg-white/7 hover:border-white/15 search-input z-interactive"
-              />
-              <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-30 group-focus-within:opacity-40 
-              bg-gradient-to-r from-cyan-700/10 to-purple-700/10 blur-sm transition-opacity duration-300 -z-10"></div>
-            </div>
+            )}
             
-            {/* Navigation controls with improved accessibility and visual effects */}
-            <div className="flex items-center space-x-1.5 ml-4">
+            {/* Navigation controls on desktop */}
+            <div className="hidden md:flex items-center space-x-1.5 ml-2">
               <button 
                 onClick={() => window.history.back()}
                 className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors
@@ -315,15 +363,13 @@ export const MainHeader = () => {
                 bg-gradient-to-br from-cyan-400 to-purple-400 transition-opacity duration-200"></div>
               </button>
             </div>
-          </div>
-          
-          {/* Login Button - Enhanced with cosmic glow and precise positioning */}
-          <div className="ml-4 z-important">
+            
+            {/* Login Button */}
             <Link 
               href="/login" 
               className="relative overflow-hidden bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 
-              transition-all duration-300 text-white px-5 py-2 rounded-md text-sm font-medium 
-              focus:outline-none focus:ring-2 focus:ring-cyan-400/50 group z-interactive"
+              transition-all duration-300 text-white px-3 md:px-5 py-2 rounded-md text-sm font-medium 
+              focus:outline-none focus:ring-2 focus:ring-cyan-400/50 group z-interactive ml-2"
             >
               <span className="relative z-10">Log In</span>
               
@@ -336,29 +382,29 @@ export const MainHeader = () => {
               bg-gradient-to-r from-cyan-400 to-purple-500 blur-[6px] transition-all duration-300 
               scale-105 group-hover:scale-110"></div>
             </Link>
-          </div>
-          
-          {/* Mobile Menu Button - Only visible on small screens - With enhanced styling */}
-          <button
-            type="button"
-            className="md:hidden ml-4 p-2 text-white/80 hover:text-white 
-            focus:outline-none focus:ring-2 focus:ring-cyan-400/30 
-            inline-flex items-center justify-center rounded-md
-            relative overflow-hidden group z-important"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-controls="mobile-menu"
-            aria-expanded={isMobileMenuOpen}
-            aria-label="Toggle navigation menu"
-          >
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-20 group-focus:opacity-30 
-            bg-gradient-to-br from-cyan-400 to-purple-400 rounded-md transition-opacity duration-200"></div>
             
-            {isMobileMenuOpen ? (
-              <X className="h-6 w-6 relative z-10" />
-            ) : (
-              <Menu className="h-6 w-6 relative z-10" />
-            )}
-          </button>
+            {/* Mobile Menu Button - Only visible on small screens */}
+            <button
+              type="button"
+              className="md:hidden ml-2 p-2 text-white/80 hover:text-white 
+              focus:outline-none focus:ring-2 focus:ring-cyan-400/30 
+              inline-flex items-center justify-center rounded-md
+              relative overflow-hidden group z-important"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-controls="mobile-menu"
+              aria-expanded={isMobileMenuOpen}
+              aria-label="Toggle navigation menu"
+            >
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-20 group-focus:opacity-30 
+              bg-gradient-to-br from-cyan-400 to-purple-400 rounded-md transition-opacity duration-200"></div>
+              
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6 relative z-10" />
+              ) : (
+                <Menu className="h-6 w-6 relative z-10" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
       

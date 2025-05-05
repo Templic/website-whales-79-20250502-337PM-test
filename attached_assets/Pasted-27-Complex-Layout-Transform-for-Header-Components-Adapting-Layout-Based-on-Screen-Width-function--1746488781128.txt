@@ -1,0 +1,150 @@
+27. Complex Layout Transform for Header Components
+Adapting Layout Based on Screen Width
+function useResponsiveLayout() {
+  const [layout, setLayout] = useState({
+    logoSize: 'h-12 w-12',
+    navSpacing: 'space-x-4',
+    showSearchInHeader: true,
+    showSocialLinks: false,
+  });
+  
+  useEffect(() => {
+    function updateLayout() {
+      if (window.innerWidth < 640) {
+        setLayout({
+          logoSize: 'h-8 w-8',
+          navSpacing: 'space-x-1',
+          showSearchInHeader: false,
+          showSocialLinks: false,
+        });
+      } else if (window.innerWidth < 1024) {
+        setLayout({
+          logoSize: 'h-10 w-10',
+          navSpacing: 'space-x-2',
+          showSearchInHeader: true,
+          showSocialLinks: false,
+        });
+      } else {
+        setLayout({
+          logoSize: 'h-12 w-12',
+          navSpacing: 'space-x-4',
+          showSearchInHeader: true,
+          showSocialLinks: true,
+        });
+      }
+    }
+    
+    updateLayout();
+    window.addEventListener('resize', updateLayout);
+    return () => window.removeEventListener('resize', updateLayout);
+  }, []);
+  
+  return layout;
+}
+Dynamic Component Order Based on Device
+// Reorder components based on screen size
+const { isMobile, isTablet, isDesktop } = useDeviceDetection();
+return (
+  <header>
+    <div className="container mx-auto px-4 flex items-center">
+      {/* Logo always first */}
+      <Logo />
+      
+      {/* Navigation order changes based on device */}
+      {isDesktop && (
+        <>
+          <MainNav />
+          <SearchComponent />
+          <UserMenu />
+        </>
+      )}
+      
+      {isTablet && (
+        <>
+          <SearchComponent />
+          <MainNav />
+          <UserMenu />
+        </>
+      )}
+      
+      {isMobile && (
+        <>
+          <MobileMenuButton />
+          {/* Other elements in mobile menu */}
+        </>
+      )}
+    </div>
+  </header>
+);
+28. Animation Curve Specifications
+// Animation presets for consistent motion
+const animations = {
+  // Smooth entrance for navigation items
+  fadeIn: {
+    initial: { opacity: 0, y: -10 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1.0] }
+  },
+  
+  // Subtle hover effect for buttons
+  buttonHover: {
+    whileHover: { scale: 1.05 },
+    whileTap: { scale: 0.95 },
+    transition: { type: "spring", stiffness: 400, damping: 17 }
+  },
+  
+  // Accordion-like expansion for mobile menu
+  expand: {
+    initial: { height: 0, opacity: 0 },
+    animate: { height: "auto", opacity: 1 },
+    exit: { height: 0, opacity: 0 },
+    transition: { 
+      height: {
+        duration: 0.3,
+        ease: [0.33, 1, 0.68, 1] // Custom cubic-bezier
+      },
+      opacity: {
+        duration: 0.2,
+        delay: 0.1
+      }
+    }
+  },
+  
+  // Smooth rotation for icons
+  rotate: {
+    initial: { rotate: 0 },
+    animate: { rotate: 180 },
+    transition: { duration: 0.3, ease: "easeInOut" }
+  }
+};
+// Usage in components
+<motion.div {...animations.fadeIn}>
+  {/* Content */}
+</motion.div>
+<motion.button {...animations.buttonHover}>
+  {/* Button content */}
+</motion.button>
+29. Advanced Header Layout Grid System
+<header>
+  <div className="container mx-auto px-4">
+    {/* CSS Grid layout for header items */}
+    <div className="grid grid-cols-12 gap-2 items-center h-full">
+      {/* Logo spans 3 columns on desktop, 6 on mobile */}
+      <div className="col-span-6 md:col-span-3">
+        <Logo />
+      </div>
+      
+      {/* Navigation spans 6 columns, only on desktop */}
+      <nav className="hidden md:block md:col-span-6">
+        <MainNav />
+      </nav>
+      
+      {/* Search & user spans 3 columns on desktop, 6 on mobile */}
+      <div className="col-span-6 md:col-span-3 flex justify-end items-center">
+        <SearchComponent className="hidden md:block mr-2" />
+        <UserMenu />
+        <MobileMenuButton className="md:hidden ml-2" />
+      </div>
+    </div>
+  </div>
+</header>
