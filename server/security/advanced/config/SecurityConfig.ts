@@ -160,6 +160,16 @@ export class SecurityConfig {
    * Apply environment variables to configuration
    */
   private applyEnvironmentVariables(): void {
+    // Check if we're on Replit
+    const isReplit = !!process.env.REPLIT_DOMAINS || !!process.env.REPL_ID || !!process.env.REPL_SLUG;
+    
+    // When in Replit development environment, automatically disable CSRF protection
+    // This ensures the development experience works correctly
+    if (isReplit && process.env.NODE_ENV !== 'production') {
+      console.log('[Security] Replit development environment detected - automatically disabling CSRF protection for development');
+      this.features.csrfProtection = false;
+    }
+    
     // Check for environment-based overrides
     if (process.env.SECURITY_VALIDATION === 'false') {
       this.features.validation = false;
