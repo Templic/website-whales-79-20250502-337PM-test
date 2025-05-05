@@ -479,8 +479,8 @@ export const typeScriptErrorMetrics = pgTable('typescript_error_metrics', {
   security_impact_score: integer('security_impact_score').default(0),
   most_common_category: text('most_common_category'),
   most_error_prone_file: text('most_error_prone_file'),
-  metadata: json('metadata').$type<Record<string, any>>(),
-  scan_id: integer('scan_id').references(() => scanResults.id)
+  metadata: json('metadata').$type<Record<string, any>>()
+  // scan_id field has been removed since it doesn't exist in the actual database
 });
 
 // ===================================================================
@@ -662,13 +662,9 @@ export const scanSecurityAuditsRelations = relations(scanSecurityAudits, ({ one 
   }),
 }));
 
-// TypeScript error metrics relation
-export const typeScriptErrorMetricsRelations = relations(typeScriptErrorMetrics, ({ one }) => ({
-  scan: one(scanResults, {
-    fields: [typeScriptErrorMetrics.scan_id],
-    references: [scanResults.id],
-  }),
-}));
+// TypeScript error metrics relation - no relations needed in current database structure
+// Relations have been removed since scan_id field doesn't exist in the actual database
+export const typeScriptErrorMetricsRelations = relations(typeScriptErrorMetrics, ({}) => ({}));
 
 // Music-related relations will be defined after all tables are declared
 

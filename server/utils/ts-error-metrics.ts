@@ -272,7 +272,7 @@ export async function getUserFixStats(): Promise<UserFixStats[]> {
       
       // Count different types of fixes
       const totalFixes = fixes.length;
-      const successfulFixes = fixes.filter(fix => fix.status === 'FIXED').length;
+      const successfulFixes = fixes.filter(fix => fix.status === 'fixed').length;
       
       // Get AI vs manual fixes ratio (need to join with fixes table)
       const aiFixesResult = await db.select({
@@ -337,13 +337,13 @@ export async function getSecurityStats(): Promise<SecurityStats> {
     })
     .from(scanSecurityAudits);
     
-    // Get issues by risk level
+    // Get issues by risk level (using issue_severity instead of risk_level)
     const issuesByRiskResult = await db.select({
-      risk_level: scanSecurityAudits.risk_level,
+      risk_level: scanSecurityAudits.issue_severity,
       count: count()
     })
     .from(scanSecurityAudits)
-    .groupBy(scanSecurityAudits.risk_level);
+    .groupBy(scanSecurityAudits.issue_severity);
     
     // Get top issue categories
     const topCategoriesResult = await db.select({
@@ -359,13 +359,13 @@ export async function getSecurityStats(): Promise<SecurityStats> {
       count: count()
     })
     .from(scanSecurityAudits)
-    .where(eq(scanSecurityAudits.status, 'RESOLVED'));
+    .where(eq(scanSecurityAudits.status, 'resolved'));
     
     const [pendingResult] = await db.select({
       count: count()
     })
     .from(scanSecurityAudits)
-    .where(eq(scanSecurityAudits.status, 'PENDING_REVIEW'));
+    .where(eq(scanSecurityAudits.status, 'pending_review'));
     
     // Get average time to resolve
     const [avgTimeResult] = await db.select({
@@ -375,7 +375,7 @@ export async function getSecurityStats(): Promise<SecurityStats> {
     .where(
       and(
         not(isNull(scanSecurityAudits.resolved_at)),
-        eq(scanSecurityAudits.status, 'RESOLVED')
+        eq(scanSecurityAudits.status, 'resolved')
       )
     );
     
@@ -507,7 +507,7 @@ export async function getGlobalMetrics(): Promise<GlobalMetrics> {
     .where(
       and(
         not(isNull(typeScriptErrors.resolved_at)),
-        eq(typeScriptErrors.status, 'FIXED')
+        eq(typeScriptErrors.status, 'fixed')
       )
     );
     
@@ -543,11 +543,11 @@ export async function getGlobalMetrics(): Promise<GlobalMetrics> {
     
     return {
       totalErrorsDetected: totalErrorsResult?.count || 0,
-      totalErrorsFixed: countByStatus('FIXED'),
-      totalErrorsIgnored: countByStatus('IGNORED'),
-      totalPendingReview: countByStatus('NEEDS_REVIEW') + countByStatus('SECURITY_REVIEW'),
+      totalErrorsFixed: countByStatus('fixed'),
+      totalErrorsIgnored: countByStatus('ignored'),
+      totalPendingReview: countByStatus('pending') + countByStatus('security_review'),
       overallFixRate: totalErrorsResult?.count > 0 
-        ? (countByStatus('FIXED') / totalErrorsResult.count) * 100 
+        ? (countByStatus('fixed') / totalErrorsResult.count) * 100 
         : 0,
       avgResolutionTimeHours: avgResolutionResult?.avg_time || 0,
       errorsBySeverity,
