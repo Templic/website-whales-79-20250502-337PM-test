@@ -129,6 +129,13 @@ interface ResolutionResult {
   timeMs: number;
 }
 
+interface FeedbackData {
+  fixId: number;
+  userId: string;
+  rating: number;
+  comment?: string;
+}
+
 interface MetricsData {
   strategyRates: Array<{
     strategyName: string;
@@ -208,6 +215,10 @@ const TypeScriptErrorDashboard: React.FC = () => {
   const [fixDialogOpen, setFixDialogOpen] = useState(false);
   const [resolutionDialogOpen, setResolutionDialogOpen] = useState(false);
   const [resolutionResult, setResolutionResult] = useState<ResolutionResult | null>(null);
+  
+  // Feedback states
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
   
   // Auto-fix options
   const [autoFixEnabled, setAutoFixEnabled] = useState(false);
@@ -335,6 +346,36 @@ const TypeScriptErrorDashboard: React.FC = () => {
     }
   });
   
+  // Submit feedback for a fix
+  const feedbackSubmitMutation = useMutation({
+    mutationFn: (data: FeedbackData) => 
+      apiRequest('/api/typescript/feedback', { 
+        method: 'POST',
+        body: JSON.stringify(data)
+      }),
+    onSuccess: () => {
+      setSnackbar({
+        open: true,
+        message: 'Feedback submitted successfully. Thank you!',
+        severity: 'success'
+      });
+      
+      // Reset feedback form
+      setFeedbackRating(0);
+      setFeedbackComment('');
+      
+      // Invalidate metrics query to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/typescript/metrics'] });
+    },
+    onError: (error) => {
+      setSnackbar({
+        open: true,
+        message: `Error submitting feedback: ${error.message}`,
+        severity: 'error'
+      });
+    }
+  });
+  
   // Apply selected fix
   const handleApplyFix = () => {
     if (!selectedError) return;
@@ -350,6 +391,27 @@ const TypeScriptErrorDashboard: React.FC = () => {
     runScanMutation.mutate({
       includeDirs: ['./'],
       autoFix: autoFixEnabled
+    });
+  };
+  
+  // Submit feedback for a fix
+  const handleSubmitFeedback = (fixId: number) => {
+    // Simple validation
+    if (feedbackRating < 1) {
+      setSnackbar({
+        open: true,
+        message: 'Please provide a rating before submitting feedback',
+        severity: 'warning'
+      });
+      return;
+    }
+    
+    // Submit feedback
+    feedbackSubmitMutation.mutate({
+      fixId: fixId,
+      userId: 'current-user', // In a real app, this would be the current authenticated user's ID
+      rating: feedbackRating,
+      comment: feedbackComment.trim() || undefined
     });
   };
   
@@ -877,6 +939,64 @@ const TypeScriptErrorDashboard: React.FC = () => {
                   {resolutionResult.diagnostics.join('\n')}
                 </Typography>
               </Box>
+              
+              {resolutionResult.success && resolutionResult.fixId && (
+                <>
+                  <Divider sx={{ my: 2 }} />
+                  <Typography variant="h6" gutterBottom>
+                    Provide Feedback
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    Your feedback helps improve the quality of automated fixes.
+                  </Typography>
+                  
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Rate this fix:
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      {[1, 2, 3, 4, 5].map((rating) => (
+                        <IconButton 
+                          key={rating}
+                          onClick={() => setFeedbackRating(rating)}
+                          color={feedbackRating >= rating ? "primary" : "default"}
+                          size="large"
+                        >
+                          {rating <= feedbackRating ? (
+                            <span role="img" aria-label={`${rating} stars`}>★</span>
+                          ) : (
+                            <span role="img" aria-label={`${rating} stars`}>☆</span>
+                          )}
+                        </IconButton>
+                      ))}
+                    </Box>
+                    
+                    <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+                      Comments (optional):
+                    </Typography>
+                    <TextField
+                      multiline
+                      rows={2}
+                      fullWidth
+                      placeholder="What worked well or could be improved about this fix?"
+                      value={feedbackComment}
+                      onChange={(e) => setFeedbackComment(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                    />
+                    
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      sx={{ mt: 2 }}
+                      disabled={!feedbackRating || feedbackSubmitMutation.isPending}
+                      onClick={() => handleSubmitFeedback(resolutionResult.fixId!)}
+                    >
+                      {feedbackSubmitMutation.isPending ? 'Submitting...' : 'Submit Feedback'}
+                    </Button>
+                  </Box>
+                </>
+              )}
             </>
           )}
         </DialogContent>
@@ -886,6 +1006,8 @@ const TypeScriptErrorDashboard: React.FC = () => {
             onClick={() => {
               setResolutionDialogOpen(false);
               setFixDialogOpen(false);
+              setFeedbackRating(0);
+              setFeedbackComment('');
               // Refresh data
               refetchErrors();
               refetchMetrics();
