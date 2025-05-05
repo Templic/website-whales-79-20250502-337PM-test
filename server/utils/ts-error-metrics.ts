@@ -347,11 +347,11 @@ export async function getSecurityStats(): Promise<SecurityStats> {
     
     // Get top issue categories
     const topCategoriesResult = await db.select({
-      category: scanSecurityAudits.category,
+      category: scanSecurityAudits.issue_type, // use issue_type instead of category
       count: count()
     })
     .from(scanSecurityAudits)
-    .groupBy(scanSecurityAudits.category)
+    .groupBy(scanSecurityAudits.issue_type)
     .orderBy(desc(count()));
     
     // Get resolved vs pending
@@ -359,37 +359,39 @@ export async function getSecurityStats(): Promise<SecurityStats> {
       count: count()
     })
     .from(scanSecurityAudits)
-    .where(eq(scanSecurityAudits.status, 'resolved'));
+    .where(eq(scanSecurityAudits.review_status, 'reviewed')); // Using review_status instead of status
     
     const [pendingResult] = await db.select({
       count: count()
     })
     .from(scanSecurityAudits)
-    .where(eq(scanSecurityAudits.status, 'pending_review'));
+    .where(eq(scanSecurityAudits.review_status, 'pending')); // Using review_status instead of status
     
     // Get average time to resolve
     const [avgTimeResult] = await db.select({
-      avg_time: sql<number>`AVG(EXTRACT(EPOCH FROM (${scanSecurityAudits.resolved_at} - ${scanSecurityAudits.created_at})) / 3600)`
+      avg_time: sql<number>`AVG(EXTRACT(EPOCH FROM (${scanSecurityAudits.approval_date} - ${scanSecurityAudits.audit_date})) / 3600)`
     })
     .from(scanSecurityAudits)
     .where(
       and(
-        not(isNull(scanSecurityAudits.resolved_at)),
-        eq(scanSecurityAudits.status, 'resolved')
+        not(isNull(scanSecurityAudits.approval_date)),
+        eq(scanSecurityAudits.review_status, 'reviewed')
       )
     );
     
     // Build issues by risk map
     const issuesByRisk: Record<string, number> = {};
     issuesByRiskResult.forEach(item => {
-      issuesByRisk[item.risk_level] = item.count;
+      if (item.risk_level) { // Check for null values
+        issuesByRisk[item.risk_level] = item.count;
+      }
     });
     
     return {
       totalIssuesFound: totalIssuesResult?.count || 0,
       issuesByRisk,
       topCategories: topCategoriesResult.map(item => ({
-        category: item.category,
+        category: item.category || 'unknown',
         count: item.count
       })),
       resolvedIssues: resolvedResult?.count || 0,
