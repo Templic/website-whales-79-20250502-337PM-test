@@ -566,7 +566,568 @@ export class FixStrategyFactory {
     factory.register(new TypeMismatchFixStrategy());
     factory.register(new MissingImportFixStrategy(projectRoot));
     factory.register(new NonNullAssertionFixStrategy());
+    factory.register(new UnusedVariableFixStrategy());
+    factory.register(new ObjectLiteralFixStrategy());
+    factory.register(new InterfaceMismatchFixStrategy());
+    factory.register(new FunctionSignatureFixStrategy());
     
     return factory;
+  }
+}
+
+/**
+ * Unused Variable Fix Strategy - handles TS6133
+ */
+export class UnusedVariableFixStrategy extends BaseFixStrategy {
+  readonly name = 'UnusedVariableFixer';
+  readonly description = 'Fixes unused variable warnings by prefixing with underscore or removing';
+  readonly version = '1.0.0';
+  readonly applicableErrorCodes = ['TS6133'];
+  readonly targetCategories = ['DEAD_CODE'];
+  readonly minimumConfidence = 75;
+  
+  /**
+   * Calculate confidence based on context
+   */
+  getConfidence(error: TypeScriptError): number {
+    let confidence = this.minimumConfidence;
+    
+    if (error.message.includes("is declared but its value is never read")) {
+      confidence += 20;
+    }
+    
+    return Math.min(confidence, 100);
+  }
+  
+  /**
+   * Generate fix for unused variable errors
+   */
+  async generateFix(error: TypeScriptError): Promise<Fix> {
+    try {
+      const sourceFile = await this.readFile(error.file);
+      const sourceLines = sourceFile.split('\n');
+      
+      // Get the line where the error occurs
+      const errorLine = sourceLines[error.line - 1];
+      
+      // Extract variable name from error message
+      const variableMatch = error.message.match(/'([^']+)'/);
+      if (!variableMatch) {
+        throw new Error('Could not extract variable name from error message');
+      }
+      
+      const variableName = variableMatch[1];
+      
+      // Determine if this is a variable declaration or a function parameter
+      const isParameter = errorLine.includes('(') && errorLine.includes(')');
+      
+      let replacement: string;
+      if (isParameter) {
+        // For parameters, prefix with underscore to indicate it's intentionally unused
+        const regex = new RegExp(`\\b${variableName}\\b(?![\\w$])`);
+        replacement = errorLine.replace(regex, `_${variableName}`);
+      } else {
+        // For regular variable declarations, identify and find the full declaration
+        // This is a simplified approach - in practice, you might need to use the TypeScript
+        // compiler API to more accurately transform the source
+        const declarationRegex = new RegExp(`(const|let|var)\\s+${variableName}\\s*=.*?[;,]`);
+        const declarationMatch = errorLine.match(declarationRegex);
+        
+        if (declarationMatch) {
+          // If it's a simple variable declaration, handle removal or prefixing
+          if (errorLine.includes(',')) {
+            // For declarations with multiple variables, just prefix with underscore
+            const regex = new RegExp(`\\b${variableName}\\b(?![\\w$])`);
+            replacement = errorLine.replace(regex, `_${variableName}`);
+          } else {
+            // For standalone declarations, consider commenting it out 
+            // instead of removing to preserve code history
+            replacement = `// ${errorLine} /* Unused variable removed */`;
+          }
+        } else {
+          // For more complex cases (e.g., destructuring), prefix with underscore
+          const regex = new RegExp(`\\b${variableName}\\b(?![\\w$])`);
+          replacement = errorLine.replace(regex, `_${variableName}`);
+        }
+      }
+      
+      const lineStartPos = this.getLineStartOffset(sourceFile, error.line - 1);
+      const replacements: SourceFileEdit[] = [
+        {
+          file: error.file,
+          startPos: lineStartPos,
+          endPos: lineStartPos + errorLine.length,
+          replacement: replacement
+        }
+      ];
+      
+      return this.createSimpleFix(
+        error,
+        replacements,
+        `Prefixed unused variable '${variableName}' with underscore or removed declaration`,
+        this.getConfidence(error)
+      );
+    } catch (error) {
+      logger.error(`Error in UnusedVariableFixStrategy: ${error.message}`);
+      throw error;
+    }
+  }
+}
+
+/**
+ * Object Literal Fix Strategy - handles TS2559, TS2741, etc.
+ */
+export class ObjectLiteralFixStrategy extends BaseFixStrategy {
+  readonly name = 'ObjectLiteralFixer';
+  readonly description = 'Fixes object literal type errors such as excess or missing properties';
+  readonly version = '1.0.0';
+  readonly applicableErrorCodes = ['TS2559', 'TS2741', 'TS2345', 'TS2739'];
+  readonly targetCategories = ['TYPE_MISMATCH', 'INTERFACE_MISMATCH'];
+  readonly minimumConfidence = 65;
+  
+  /**
+   * Calculate confidence based on error message patterns
+   */
+  getConfidence(error: TypeScriptError): number {
+    let confidence = this.minimumConfidence;
+    
+    if (error.message.includes("excess property") || error.message.includes("Object literal")) {
+      confidence += 15;
+    }
+    
+    if (error.message.includes("is missing the following properties")) {
+      confidence += 20;
+    }
+    
+    return Math.min(confidence, 100);
+  }
+  
+  /**
+   * Generate fix for object literal errors
+   */
+  async generateFix(error: TypeScriptError): Promise<Fix> {
+    try {
+      const sourceFile = await this.readFile(error.file);
+      const sourceLines = sourceFile.split('\n');
+      const errorLine = sourceLines[error.line - 1];
+      
+      // Extract property names from error message
+      let fixDescription: string;
+      let replacement: string;
+      
+      if (error.message.includes("excess property")) {
+        // Handle excess property errors (TS2559, TS2741)
+        const propertyMatch = error.message.match(/Object literal may only specify known properties, and '([^']+)'/);
+        if (!propertyMatch) {
+          throw new Error('Could not extract property name from error message');
+        }
+        
+        const propertyName = propertyMatch[1];
+        
+        // Remove the property or convert to type assertion
+        // This is a simplified approach - in practice, you might need to handle
+        // more complex object literal expressions
+        
+        // Simple strategy: Use type assertion
+        const typeMatch = error.message.match(/type '([^']+)'/);
+        const targetType = typeMatch ? typeMatch[1] : 'any';
+        
+        // Look for the object literal starting on the error line
+        // and potentially continuing to subsequent lines
+        let objectLiteral = errorLine;
+        let lineIndex = error.line;
+        let openBraces = (objectLiteral.match(/{/g) || []).length;
+        let closeBraces = (objectLiteral.match(/}/g) || []).length;
+        
+        // If the object literal continues across lines, gather all parts
+        while (openBraces > closeBraces && lineIndex < sourceLines.length) {
+          lineIndex++;
+          objectLiteral += '\n' + sourceLines[lineIndex - 1];
+          openBraces += (sourceLines[lineIndex - 1].match(/{/g) || []).length;
+          closeBraces += (sourceLines[lineIndex - 1].match(/}/g) || []).length;
+        }
+        
+        // Find the pattern: propertyName: value,
+        const propertyRegex = new RegExp(`\\b${propertyName}\\s*:\\s*[^,}]*[,}]`);
+        const propertyMatch2 = objectLiteral.match(propertyRegex);
+        
+        if (propertyMatch2) {
+          // Comment out the excess property
+          replacement = objectLiteral.replace(
+            propertyRegex, 
+            `/* Excess property removed: ${propertyMatch2[0]} */`
+          );
+          
+          fixDescription = `Removed excess property '${propertyName}' from object literal`;
+        } else {
+          // If we can't find the property pattern, just add type assertion
+          // Find the end of the object literal
+          const lastBraceIndex = objectLiteral.lastIndexOf('}');
+          
+          if (lastBraceIndex !== -1) {
+            replacement = objectLiteral.substring(0, lastBraceIndex + 1) + 
+                         ` as ${targetType}` + 
+                         objectLiteral.substring(lastBraceIndex + 1);
+            
+            fixDescription = `Added type assertion to '${targetType}' for object literal`;
+          } else {
+            throw new Error('Could not find object literal boundaries');
+          }
+        }
+      } else if (error.message.includes("is missing the following properties")) {
+        // Handle missing property errors
+        const propertiesMatch = error.message.match(/is missing the following properties from type '[^']+': ([^']+)/);
+        if (!propertiesMatch) {
+          throw new Error('Could not extract missing properties from error message');
+        }
+        
+        const missingProperties = propertiesMatch[1].split(', ');
+        
+        // Look for the object literal
+        // Simple approach: Find the last closing brace in the error line
+        const lastBraceIndex = errorLine.lastIndexOf('}');
+        
+        if (lastBraceIndex !== -1) {
+          // Add missing properties with placeholder values
+          const missingPropsText = missingProperties
+            .map(prop => `${prop}: undefined /* TODO: Add proper value */`)
+            .join(', ');
+          
+          // If there are already properties, add a comma before adding new ones
+          const hasExistingProps = errorLine.includes('{') && 
+                                  errorLine.substring(errorLine.indexOf('{') + 1, lastBraceIndex).trim().length > 0;
+          
+          replacement = errorLine.substring(0, lastBraceIndex) + 
+                       (hasExistingProps ? ', ' : '') + 
+                       missingPropsText + 
+                       errorLine.substring(lastBraceIndex);
+          
+          fixDescription = `Added missing properties: ${missingProperties.join(', ')}`;
+        } else {
+          throw new Error('Could not find object literal boundaries');
+        }
+      } else {
+        // For other object literal type errors, add a type assertion
+        const typeMatch = error.message.match(/Type '[^']+' is not assignable to type '([^']+)'/);
+        const targetType = typeMatch ? typeMatch[1] : 'any';
+        
+        // Find the end of the object literal or expression
+        const lastChar = errorLine.indexOf(';') !== -1 ? errorLine.indexOf(';') : errorLine.length;
+        
+        replacement = errorLine.substring(0, lastChar) + 
+                     ` as ${targetType}` + 
+                     errorLine.substring(lastChar);
+        
+        fixDescription = `Added type assertion to '${targetType}'`;
+      }
+      
+      const lineStartPos = this.getLineStartOffset(sourceFile, error.line - 1);
+      const replacements: SourceFileEdit[] = [
+        {
+          file: error.file,
+          startPos: lineStartPos,
+          endPos: lineStartPos + errorLine.length,
+          replacement: replacement
+        }
+      ];
+      
+      return this.createSimpleFix(
+        error,
+        replacements,
+        fixDescription,
+        this.getConfidence(error)
+      );
+    } catch (error) {
+      logger.error(`Error in ObjectLiteralFixStrategy: ${error.message}`);
+      throw error;
+    }
+  }
+}
+
+/**
+ * Interface Mismatch Fix Strategy - handles TS2420, TS2559, etc.
+ */
+export class InterfaceMismatchFixStrategy extends BaseFixStrategy {
+  readonly name = 'InterfaceMismatchFixer';
+  readonly description = 'Fixes interface implementation errors like missing methods or properties';
+  readonly version = '1.0.0';
+  readonly applicableErrorCodes = ['TS2420', 'TS2559', 'TS2515'];
+  readonly targetCategories = ['INTERFACE_MISMATCH'];
+  readonly minimumConfidence = 70;
+  
+  /**
+   * Calculate confidence for interface mismatch errors
+   */
+  getConfidence(error: TypeScriptError): number {
+    let confidence = this.minimumConfidence;
+    
+    if (error.message.includes("is missing the following properties from type")) {
+      confidence += 20;
+    }
+    
+    if (error.message.includes("Class") && error.message.includes("incorrectly implements interface")) {
+      confidence += 25;
+    }
+    
+    return Math.min(confidence, 100);
+  }
+  
+  /**
+   * Generate fix for interface mismatch errors
+   */
+  async generateFix(error: TypeScriptError): Promise<Fix> {
+    try {
+      const sourceFile = await this.readFile(error.file);
+      const sourceLines = sourceFile.split('\n');
+      
+      // Extract missing properties from error message
+      const propertiesMatch = error.message.match(/is missing the following properties from type '[^']+': ([^']+)/);
+      if (!propertiesMatch) {
+        throw new Error('Could not extract missing properties from error message');
+      }
+      
+      const missingProperties = propertiesMatch[1].split(', ');
+      
+      // Find the class or type definition
+      // (This is a simplified approach - in practice, you would use the TypeScript
+      // compiler API to properly locate the class or interface definition)
+      
+      // Look for class declaration in preceding lines
+      let classStartLine = error.line - 1;
+      let classEndLine = error.line - 1;
+      let foundClassStart = false;
+      let indentation = '';
+      
+      // Search backwards to find class declaration
+      while (classStartLine >= 0) {
+        const line = sourceLines[classStartLine];
+        if (line.includes('class ') || line.includes('interface ')) {
+          foundClassStart = true;
+          // Extract indentation
+          indentation = line.match(/^\s*/)?.[0] || '';
+          break;
+        }
+        classStartLine--;
+      }
+      
+      if (!foundClassStart) {
+        throw new Error('Could not find class or interface declaration');
+      }
+      
+      // Search forward to find closing brace of the class
+      let openBraces = 1; // Start with 1 for the opening brace of the class
+      classEndLine = classStartLine + 1;
+      
+      while (classEndLine < sourceLines.length && openBraces > 0) {
+        const line = sourceLines[classEndLine];
+        openBraces += (line.match(/{/g) || []).length;
+        openBraces -= (line.match(/}/g) || []).length;
+        
+        if (openBraces === 0) {
+          break;
+        }
+        
+        classEndLine++;
+      }
+      
+      // Generate implementation stubs for missing properties
+      const propertyStubs = missingProperties.map(prop => {
+        return `${indentation}  ${prop}: any; // TODO: Implement this property`;
+      }).join('\n');
+      
+      // Insert the stubs before the closing brace of the class
+      const closingBraceLine = sourceLines[classEndLine];
+      const closingBraceIndent = closingBraceLine.match(/^\s*/)?.[0] || '';
+      
+      const replacement = `${propertyStubs}\n${closingBraceIndent}`;
+      
+      // Calculate position for insertion (just before the closing brace)
+      const insertPos = this.getLineStartOffset(sourceFile, classEndLine);
+      
+      const replacements: SourceFileEdit[] = [
+        {
+          file: error.file,
+          startPos: insertPos,
+          endPos: insertPos,
+          replacement: replacement
+        }
+      ];
+      
+      return this.createSimpleFix(
+        error,
+        replacements,
+        `Added missing properties to match interface: ${missingProperties.join(', ')}`,
+        this.getConfidence(error)
+      );
+    } catch (error) {
+      logger.error(`Error in InterfaceMismatchFixStrategy: ${error.message}`);
+      throw error;
+    }
+  }
+}
+
+/**
+ * Function Signature Fix Strategy - handles TS2345, TS2554, etc.
+ */
+export class FunctionSignatureFixStrategy extends BaseFixStrategy {
+  readonly name = 'FunctionSignatureFixer';
+  readonly description = 'Fixes function call argument errors';
+  readonly version = '1.0.0';
+  readonly applicableErrorCodes = ['TS2345', 'TS2554'];
+  readonly targetCategories = ['TYPE_MISMATCH', 'FUNCTION_ERROR'];
+  readonly minimumConfidence = 65;
+  
+  /**
+   * Calculate confidence for function signature errors
+   */
+  getConfidence(error: TypeScriptError): number {
+    let confidence = this.minimumConfidence;
+    
+    if (error.message.includes("Expected") && error.message.includes("arguments, but got")) {
+      confidence += 20;
+    }
+    
+    if (error.message.includes("Argument of type") && error.message.includes("is not assignable to parameter of type")) {
+      confidence += 15;
+    }
+    
+    return Math.min(confidence, 100);
+  }
+  
+  /**
+   * Generate fix for function signature errors
+   */
+  async generateFix(error: TypeScriptError): Promise<Fix> {
+    try {
+      const sourceFile = await this.readFile(error.file);
+      const sourceLines = sourceFile.split('\n');
+      const errorLine = sourceLines[error.line - 1];
+      
+      let fixDescription: string;
+      let replacement: string;
+      
+      // Handle different types of function signature errors
+      if (error.message.includes("Expected") && error.message.includes("arguments, but got")) {
+        // Missing or excess arguments error
+        const argMatch = error.message.match(/Expected (\d+) arguments, but got (\d+)/);
+        if (!argMatch) {
+          throw new Error('Could not extract argument counts from error message');
+        }
+        
+        const expectedArgs = parseInt(argMatch[1], 10);
+        const actualArgs = parseInt(argMatch[2], 10);
+        
+        // Find the function call
+        const functionCallMatch = errorLine.match(/(\w+)\s*\((.*)\)/);
+        if (!functionCallMatch) {
+          throw new Error('Could not locate function call in error line');
+        }
+        
+        const [fullCall, functionName, argList] = functionCallMatch;
+        const args = argList.split(',').map(arg => arg.trim());
+        
+        if (actualArgs > expectedArgs) {
+          // Too many arguments - remove excess ones
+          const trimmedArgs = args.slice(0, expectedArgs).join(', ');
+          replacement = errorLine.replace(
+            fullCall,
+            `${functionName}(${trimmedArgs})`
+          );
+          fixDescription = `Removed excess arguments from ${functionName}() call`;
+        } else {
+          // Too few arguments - add undefined placeholders
+          const additionalArgs = Array(expectedArgs - actualArgs).fill('undefined /* TODO: Add proper value */');
+          const newArgs = args.concat(additionalArgs).join(', ');
+          replacement = errorLine.replace(
+            fullCall,
+            `${functionName}(${newArgs})`
+          );
+          fixDescription = `Added placeholder arguments to ${functionName}() call`;
+        }
+      } else if (error.message.includes("Argument of type") && error.message.includes("is not assignable to parameter of type")) {
+        // Type mismatch in argument
+        const typeMatch = error.message.match(/Argument of type '([^']+)' is not assignable to parameter of type '([^']+)'/);
+        if (!typeMatch) {
+          throw new Error('Could not extract type information from error message');
+        }
+        
+        const [_, sourceType, targetType] = typeMatch;
+        
+        // Find the argument at the error position
+        // (This is a simplified approach - in practice, you would use the TypeScript compiler API)
+        
+        // Identify the function call
+        const functionCallRegex = /\w+\s*\([^)]*\)/g;
+        const functionCalls = [];
+        let match;
+        while ((match = functionCallRegex.exec(errorLine)) !== null) {
+          functionCalls.push({
+            call: match[0],
+            start: match.index,
+            end: match.index + match[0].length
+          });
+        }
+        
+        // Find the call containing the error position
+        const column = error.column - 1; // 0-based column
+        const relevantCall = functionCalls.find(call => 
+          column >= call.start && column <= call.end
+        );
+        
+        if (!relevantCall) {
+          throw new Error('Could not locate relevant function call');
+        }
+        
+        // Simple type cast approach
+        if (targetType === 'number' && sourceType === 'string') {
+          // Convert string to number
+          replacement = errorLine.replace(
+            relevantCall.call,
+            relevantCall.call.replace(/(['"])([^'"]*)['"]/g, 'Number($1$2$1)')
+          );
+          fixDescription = 'Added Number() conversion for string parameter';
+        } else if (targetType === 'string' && sourceType === 'number') {
+          // Convert number to string
+          const numberRegex = /\b\d+\.?\d*\b/g;
+          replacement = errorLine.replace(
+            relevantCall.call,
+            relevantCall.call.replace(numberRegex, 'String($&)')
+          );
+          fixDescription = 'Added String() conversion for number parameter';
+        } else {
+          // Add a type assertion
+          replacement = errorLine.replace(
+            relevantCall.call,
+            relevantCall.call + ` as unknown as ${targetType}`
+          );
+          fixDescription = `Added type assertion to ${targetType}`;
+        }
+      } else {
+        // Handle other function signature errors with a generic approach
+        // Add a comment to highlight the issue
+        replacement = `${errorLine} // TODO: Fix function signature error: ${error.message}`;
+        fixDescription = 'Highlighted function signature error with a comment';
+      }
+      
+      const lineStartPos = this.getLineStartOffset(sourceFile, error.line - 1);
+      const replacements: SourceFileEdit[] = [
+        {
+          file: error.file,
+          startPos: lineStartPos,
+          endPos: lineStartPos + errorLine.length,
+          replacement: replacement
+        }
+      ];
+      
+      return this.createSimpleFix(
+        error,
+        replacements,
+        fixDescription,
+        this.getConfidence(error)
+      );
+    } catch (error) {
+      logger.error(`Error in FunctionSignatureFixStrategy: ${error.message}`);
+      throw error;
+    }
   }
 }

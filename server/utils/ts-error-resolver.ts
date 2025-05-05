@@ -30,10 +30,20 @@ export interface ResolutionOptions {
   securityCheck?: boolean;
   useAI?: boolean;
   userId?: string;
+  prioritizationStrategy?: 'severity' | 'impact' | 'frequency' | 'dependencies' | 'feedback' | 'custom';
+  priorityThresholds?: {
+    high: number;
+    medium: number;
+    low: number;
+  };
+  batchSize?: number;
+  concurrentFixes?: boolean;
+  maxConcurrency?: number;
   context?: {
     recentFiles?: string[];
     projectTsConfig?: any;
     additionalContext?: string;
+    userFeedback?: Record<number, number>; // Maps fix IDs to user ratings
   }
 }
 
@@ -96,6 +106,14 @@ export interface BatchResolutionResult {
   results: ResolutionResult[];
   timeMs: number;
   errorsByType: Record<string, number>;
+  priorityMetrics?: {
+    highPriorityFixed: number;
+    mediumPriorityFixed: number;
+    lowPriorityFixed: number;
+    highPriorityTotal: number;
+    mediumPriorityTotal: number;
+    lowPriorityTotal: number;
+  };
 }
 
 /**
@@ -108,7 +126,16 @@ export class TypeScriptErrorResolver {
     validateFixes: true,
     applyImmediately: false,
     securityCheck: true,
-    useAI: true
+    useAI: true,
+    prioritizationStrategy: 'severity',
+    priorityThresholds: {
+      high: 80,
+      medium: 50,
+      low: 20
+    },
+    batchSize: 25,
+    concurrentFixes: false,
+    maxConcurrency: 1
   };
 
   constructor(
