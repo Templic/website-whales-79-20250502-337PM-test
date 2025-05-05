@@ -1,498 +1,343 @@
 /**
  * TypeScript Error Fixer
  * 
- * This module provides utilities for automatically fixing TypeScript errors
- * using pattern-based solutions, AI-generated fixes, and best practices.
+ * This utility applies fixes to TypeScript errors based on patterns.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { TypeScriptError, ErrorFix, InsertErrorFix, ErrorFixHistory, InsertErrorFixHistory } from '../tsErrorStorage';
-import { tsErrorStorage } from '../tsErrorStorage';
-import { db } from '../db';
-import { errorFixes, ErrorStatus, FixMethod } from '../../shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import * as fs from 'fs';
+import * as path from 'path';
+import { TypeScriptErrorDetail } from './ts-error-finder';
+import advancedErrorPatterns from './error-patterns/advanced-patterns';
 
 /**
- * Configuration options for the error fixer
- */
-export interface ErrorFixerOptions {
-  dryRun?: boolean;
-  backupFiles?: boolean;
-  maxConsecutiveFixes?: number;
-  maxErrorsToFix?: number;
-  skipErrorCodes?: string[];
-  onlyErrorCodes?: string[];
-  applyStrategy?: 'safe' | 'aggressive' | 'balanced';
-  fixMethod?: FixMethod;
-}
-
-/**
- * Default configuration for the error fixer
- */
-const DEFAULT_OPTIONS: ErrorFixerOptions = {
-  dryRun: false,
-  backupFiles: true,
-  maxConsecutiveFixes: 5,
-  maxErrorsToFix: 100,
-  applyStrategy: 'balanced',
-  fixMethod: FixMethod.AUTOMATIC
-};
-
-/**
- * Result of a fix attempt
+ * Fix result interface
  */
 export interface FixResult {
-  error: TypeScriptError;
+  fixed: Array<{
+    id: string;
+    file: string;
+    line: number;
+    column: number;
+    error: string;
+    pattern: string;
+    description: string;
+  }>;
+  notFixed: TypeScriptErrorDetail[];
   success: boolean;
-  fixApplied: ErrorFix | null;
-  message: string;
-  originalCode?: string;
-  fixedCode?: string;
 }
 
 /**
- * Create a backup of a file before modifying it
- * 
- * @param filePath Path to the file to backup
- * @returns Path to the backup file or null if backup failed
+ * Apply pattern-based fixes to TypeScript errors
  */
-function createFileBackup(filePath: string): string | null {
-  try {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupDir = path.join(path.dirname(filePath), '.ts-error-backups');
-    const fileName = path.basename(filePath);
-    const backupPath = path.join(backupDir, `${fileName}.${timestamp}.bak`);
-    
-    // Create backup directory if it doesn't exist
-    if (!fs.existsSync(backupDir)) {
-      fs.mkdirSync(backupDir, { recursive: true });
-    }
-    
-    // Create the backup
-    fs.copyFileSync(filePath, backupPath);
-    return backupPath;
-  } catch (err) {
-    console.error(`Failed to create backup of ${filePath}:`, err);
-    return null;
-  }
-}
-
-/**
- * Find the best available fix for a TypeScript error
- * 
- * @param error The TypeScript error to fix
- * @param options Configuration options
- * @returns The best fix to apply, or null if no suitable fix is found
- */
-export async function findBestFix(
-  error: TypeScriptError,
-  options: ErrorFixerOptions = {}
-): Promise<ErrorFix | null> {
-  try {
-    // Check if there's a pattern-matched fix
-    if (error.pattern_id) {
-      const patternFixes = await tsErrorStorage.getFixesForPattern(error.pattern_id);
-      if (patternFixes && patternFixes.length > 0) {
-        // Sort by success rate and priority
-        const bestPatternFix = patternFixes.sort((a, b) => {
-          // Primary sort by success rate (highest first)
-          if (b.success_rate !== a.success_rate) {
-            return (b.success_rate || 0) - (a.success_rate || 0);
-          }
-          // Secondary sort by priority (highest first)
-          return b.fix_priority - a.fix_priority;
-        })[0];
-        
-        return bestPatternFix;
-      }
-    }
-    
-    // Check if there's an AI-generated fix from analysis
-    const errorAnalysis = await tsErrorStorage.getAnalysisForError(error.id);
-    if (errorAnalysis && errorAnalysis.suggested_fix) {
-      // Create a fix object from the analysis
-      const aiGeneratedFix: ErrorFix = {
-        id: 0, // Temporary ID, will be replaced when saved
-        fix_title: `AI-generated fix for ${error.error_code}`,
-        fix_description: `Automatically generated fix for error in ${error.file_path}`,
-        fix_code: errorAnalysis.suggested_fix,
-        fix_type: 'code_replacement',
-        fix_priority: 1,
-        pattern_id: error.pattern_id || null,
-        success_rate: errorAnalysis.confidence_score ? errorAnalysis.confidence_score / 100 : 0.5,
-        created_at: new Date(),
-        created_by: null
-      };
-      
-      return aiGeneratedFix;
-    }
-    
-    // Check for generic fixes based on error code
-    const genericFixes = await tsErrorStorage.getFixesForErrorCode(error.error_code);
-    if (genericFixes && genericFixes.length > 0) {
-      // Sort by success rate and priority
-      return genericFixes.sort((a, b) => {
-        if (b.success_rate !== a.success_rate) {
-          return (b.success_rate || 0) - (a.success_rate || 0);
-        }
-        return b.fix_priority - a.fix_priority;
-      })[0];
-    }
-    
-    return null;
-  } catch (err) {
-    console.error(`Failed to find best fix for error ${error.id}:`, err);
-    return null;
-  }
-}
-
-/**
- * Apply a fix to a TypeScript error
- * 
- * @param error The TypeScript error to fix
- * @param fix The fix to apply
- * @param options Configuration options
- * @returns The result of the fix attempt
- */
-export async function applyFix(
-  error: TypeScriptError,
-  fix: ErrorFix,
-  options: ErrorFixerOptions = {}
+export async function fixErrorsWithPattern(
+  errors: TypeScriptErrorDetail[],
+  patternId: string,
+  projectRoot: string = process.cwd()
 ): Promise<FixResult> {
-  const config = { ...DEFAULT_OPTIONS, ...options };
-  const result: FixResult = {
-    error,
-    success: false,
-    fixApplied: null,
-    message: ''
-  };
+  console.log(`Applying fixes for pattern: ${patternId}`);
   
-  try {
-    // Check if file exists
-    if (!fs.existsSync(error.file_path)) {
-      result.message = `File not found: ${error.file_path}`;
-      return result;
-    }
-    
-    // Read the file content
-    const fileContent = fs.readFileSync(error.file_path, 'utf8');
-    result.originalCode = fileContent;
-    
-    // Create backup if enabled
-    let backupPath: string | null = null;
-    if (config.backupFiles && !config.dryRun) {
-      backupPath = createFileBackup(error.file_path);
-      if (!backupPath) {
-        console.warn(`Failed to create backup for ${error.file_path}, continuing anyway`);
-      }
-    }
-    
-    let fixedContent = fileContent;
-    const lineArray = fileContent.split('\n');
-    
-    // Determine the fix type and apply it
-    if (fix.fix_type === 'code_replacement') {
-      // Get the error context (a few lines around the error)
-      const contextStart = Math.max(0, error.line_number - 3);
-      const contextEnd = Math.min(lineArray.length, error.line_number + 3);
-      const contextLines = lineArray.slice(contextStart, contextEnd).join('\n');
-      
-      // Apply the fix by replacing the context with the fixed code
-      fixedContent = fileContent.replace(contextLines, fix.fix_code);
-      
-      if (fixedContent === fileContent) {
-        // If direct replacement didn't work, try to replace just the error line
-        const errorLine = lineArray[error.line_number - 1];
-        fixedContent = fileContent.replace(errorLine, fix.fix_code);
-      }
-    } else if (fix.fix_type === 'line_replacement') {
-      // Replace just the error line
-      lineArray[error.line_number - 1] = fix.fix_code;
-      fixedContent = lineArray.join('\n');
-    } else if (fix.fix_type === 'insertion') {
-      // Insert code at the error line
-      lineArray.splice(error.line_number - 1, 0, fix.fix_code);
-      fixedContent = lineArray.join('\n');
-    } else if (fix.fix_type === 'deletion') {
-      // Delete the error line
-      lineArray.splice(error.line_number - 1, 1);
-      fixedContent = lineArray.join('\n');
-    }
-    
-    result.fixedCode = fixedContent;
-    
-    // If this is not a dry run, write the changes back to the file
-    if (!config.dryRun) {
-      fs.writeFileSync(error.file_path, fixedContent, 'utf8');
-      
-      // Update the error status in the database
-      await tsErrorStorage.updateTypeScriptError(error.id, {
-        status: ErrorStatus.FIXED,
-        resolved_at: new Date(),
-        fix_id: fix.id > 0 ? fix.id : null // Only set if we have a real fix ID
-      });
-      
-      // Record the fix history
-      const fixHistory: InsertErrorFixHistory = {
-        error_id: error.id,
-        fix_id: fix.id > 0 ? fix.id : null,
-        fix_method: options.fixMethod || FixMethod.AUTOMATIC,
-        applied_at: new Date(),
-        success: true,
-        fix_details: {
-          fixType: fix.fix_type,
-          errorLine: error.line_number,
-          originalCode: result.originalCode,
-          fixedCode: result.fixedCode
-        }
-      };
-      
-      await tsErrorStorage.createErrorFixHistory(fixHistory);
-      
-      // If this was an AI-generated fix that isn't already saved, save it
-      if (fix.id <= 0) {
-        const savedFix = await tsErrorStorage.createErrorFix({
-          pattern_id: error.pattern_id,
-          fix_title: fix.fix_title,
-          fix_description: fix.fix_description,
-          fix_code: fix.fix_code,
-          fix_type: fix.fix_type,
-          fix_priority: fix.fix_priority,
-          success_rate: fix.success_rate
-        });
-        
-        result.fixApplied = savedFix;
-      } else {
-        result.fixApplied = fix;
-      }
-    } else {
-      // For dry runs, still record the applied fix
-      result.fixApplied = fix;
-    }
-    
-    result.success = true;
-    result.message = config.dryRun 
-      ? `Fix would be applied to ${error.file_path} (dry run)`
-      : `Successfully applied fix to ${error.file_path}`;
-    
-    return result;
-  } catch (err) {
-    result.message = `Failed to apply fix: ${err.message}`;
-    console.error(`Failed to apply fix for error ${error.id}:`, err);
-    
-    // Record the failed fix attempt
-    if (!config.dryRun) {
-      const fixHistory: InsertErrorFixHistory = {
-        error_id: error.id,
-        fix_id: fix.id > 0 ? fix.id : null,
-        fix_method: options.fixMethod || FixMethod.AUTOMATIC,
-        applied_at: new Date(),
-        success: false,
-        fix_details: {
-          fixType: fix.fix_type,
-          errorLine: error.line_number,
-          error: err.message
-        }
-      };
-      
-      await tsErrorStorage.createErrorFixHistory(fixHistory);
-    }
-    
-    return result;
-  }
-}
-
-/**
- * Fix a single TypeScript error
- * 
- * @param errorId ID of the TypeScript error to fix
- * @param options Configuration options
- * @returns The result of the fix attempt
- */
-export async function fixError(
-  errorId: number,
-  options: ErrorFixerOptions = {}
-): Promise<FixResult> {
-  try {
-    // Get the error details
-    const error = await tsErrorStorage.getTypeScriptErrorById(errorId);
-    if (!error) {
-      return {
-        error: null,
-        success: false,
-        fixApplied: null,
-        message: `Error with ID ${errorId} not found`
-      };
-    }
-    
-    // Check if error is already fixed
-    if (error.status === ErrorStatus.FIXED) {
-      return {
-        error,
-        success: false,
-        fixApplied: null,
-        message: `Error ${errorId} is already fixed`
-      };
-    }
-    
-    // Check if error is ignored
-    if (error.status === ErrorStatus.IGNORED) {
-      return {
-        error,
-        success: false,
-        fixApplied: null,
-        message: `Error ${errorId} is marked as ignored`
-      };
-    }
-    
-    // Find the best fix for this error
-    const bestFix = await findBestFix(error, options);
-    if (!bestFix) {
-      return {
-        error,
-        success: false,
-        fixApplied: null,
-        message: `No suitable fix found for error ${errorId}`
-      };
-    }
-    
-    // Apply the fix
-    return await applyFix(error, bestFix, options);
-  } catch (err) {
-    console.error(`Failed to fix error ${errorId}:`, err);
+  // Find the error pattern
+  const pattern = advancedErrorPatterns.find(p => p.id === patternId);
+  
+  if (!pattern) {
+    console.error(`Pattern not found: ${patternId}`);
     return {
-      error: null,
-      success: false,
-      fixApplied: null,
-      message: `Failed to fix error ${errorId}: ${err.message}`
+      fixed: [],
+      notFixed: errors,
+      success: false
     };
   }
-}
-
-/**
- * Fix multiple TypeScript errors
- * 
- * @param errorIds IDs of the TypeScript errors to fix
- * @param options Configuration options
- * @returns The results of the fix attempts
- */
-export async function fixErrors(
-  errorIds: number[],
-  options: ErrorFixerOptions = {}
-): Promise<FixResult[]> {
-  const config = { ...DEFAULT_OPTIONS, ...options };
-  const results: FixResult[] = [];
   
-  // Limit the number of errors to fix
-  const limitedErrorIds = errorIds.slice(0, config.maxErrorsToFix);
-  
-  for (const errorId of limitedErrorIds) {
-    const result = await fixError(errorId, config);
-    results.push(result);
+  // Find errors that match the pattern
+  const matchingErrors = errors.filter(error => {
+    const regex = new RegExp(pattern.regex, 'i');
+    const matches = regex.test(error.message);
     
-    // If we've had too many consecutive failures, stop
-    const recentResults = results.slice(-config.maxConsecutiveFixes);
-    if (recentResults.length === config.maxConsecutiveFixes && 
-        recentResults.every(r => !r.success)) {
-      console.warn(`Stopping after ${config.maxConsecutiveFixes} consecutive failures`);
-      break;
+    // Check context pattern if available
+    if (matches && pattern.contextPattern && error.context) {
+      const contextRegex = new RegExp(pattern.contextPattern, 'i');
+      return contextRegex.test(error.context);
+    }
+    
+    return matches;
+  });
+  
+  console.log(`Found ${matchingErrors.length} errors matching pattern ${patternId}`);
+  
+  // Find automated fixes
+  const automatedFixes = pattern.fixes.filter(fix => fix.automated);
+  
+  if (automatedFixes.length === 0) {
+    console.log(`No automated fixes available for pattern ${patternId}`);
+    return {
+      fixed: [],
+      notFixed: errors,
+      success: false
+    };
+  }
+  
+  // Apply fixes
+  const fixed: Array<{
+    id: string;
+    file: string;
+    line: number;
+    column: number;
+    error: string;
+    pattern: string;
+    description: string;
+  }> = [];
+  
+  const notFixed: TypeScriptErrorDetail[] = [...errors];
+  
+  for (const error of matchingErrors) {
+    const filePath = path.resolve(projectRoot, error.file);
+    
+    if (!fs.existsSync(filePath)) {
+      console.error(`File not found: ${filePath}`);
+      continue;
+    }
+    
+    // Choose the first automated fix for the error
+    const fix = automatedFixes[0];
+    
+    try {
+      // Read file
+      const content = fs.readFileSync(filePath, 'utf8');
+      const lines = content.split('\n');
+      
+      // Get error line
+      const errorLine = lines[error.line - 1];
+      
+      // Create a simple fix by applying a regex replacement
+      // In a real implementation, this would be more sophisticated
+      const regex = new RegExp(pattern.regex, 'i');
+      let fixedLine = errorLine;
+      
+      // Use pattern examples to perform a replacement
+      // This is a simple approach and would be more complex in real implementation
+      const beforeExample = fix.example.before.split('\n')[0];
+      const afterExample = fix.example.after.split('\n')[0];
+      
+      if (beforeExample && afterExample) {
+        // Extract common patterns between error line and example
+        const commonPattern = findCommonPattern(errorLine, beforeExample);
+        
+        if (commonPattern) {
+          // Apply the same transformation from example to the error line
+          fixedLine = applyTransformation(errorLine, beforeExample, afterExample, commonPattern);
+        }
+      }
+      
+      // If we couldn't create a transformed line, use a simple regex replacement
+      if (fixedLine === errorLine) {
+        fixedLine = errorLine.replace(regex, match => {
+          // Simple fix logic - this would be much more sophisticated in practice
+          if (pattern.id.includes('type-assertion')) {
+            return match.replace('as any', 'as unknown');
+          }
+          
+          if (pattern.id.includes('null-handling')) {
+            return match.replace('.', '?.');
+          }
+          
+          return match;
+        });
+      }
+      
+      // Don't apply fix if nothing changed
+      if (fixedLine === errorLine) {
+        continue;
+      }
+      
+      // Update line
+      lines[error.line - 1] = fixedLine;
+      
+      // Write file
+      fs.writeFileSync(filePath, lines.join('\n'));
+      
+      // Record fix
+      fixed.push({
+        id: error.id,
+        file: error.file,
+        line: error.line,
+        column: error.column,
+        error: error.message,
+        pattern: patternId,
+        description: fix.description
+      });
+      
+      // Remove from notFixed
+      const index = notFixed.findIndex(e => e.id === error.id);
+      if (index !== -1) {
+        notFixed.splice(index, 1);
+      }
+      
+      console.log(`Fixed ${error.file}:${error.line} with pattern ${patternId}`);
+    } catch (error) {
+      console.error(`Error applying fix to ${filePath}:${error.line}: ${error.message}`);
     }
   }
   
-  return results;
+  return {
+    fixed,
+    notFixed,
+    success: fixed.length > 0
+  };
 }
 
 /**
- * Fix all pending TypeScript errors of a specific type
- * 
- * @param errorCode TypeScript error code to fix (e.g., 'TS2322')
- * @param options Configuration options
- * @returns The results of the fix attempts
+ * Find a common pattern between two strings
  */
-export async function fixErrorsByCode(
-  errorCode: string,
-  options: ErrorFixerOptions = {}
-): Promise<FixResult[]> {
-  // Find all pending errors with this code
-  const errors = await tsErrorStorage.getTypeScriptErrorsByCode(errorCode, ErrorStatus.PENDING);
+function findCommonPattern(str1: string, str2: string): string | null {
+  // Simple pattern matching - would be more sophisticated in practice
+  const words1 = str1.split(/\s+/);
+  const words2 = str2.split(/\s+/);
   
-  // Extract the error IDs
-  const errorIds = errors.map(error => error.id);
+  const minLength = Math.min(words1.length, words2.length);
   
-  // Fix the errors
-  return await fixErrors(errorIds, options);
+  // Look for common word sequences
+  for (let len = minLength; len > 0; len--) {
+    for (let i = 0; i <= words1.length - len; i++) {
+      const pattern = words1.slice(i, i + len).join(' ');
+      
+      if (str2.includes(pattern) && pattern.length > 5) {
+        return pattern;
+      }
+    }
+  }
+  
+  return null;
 }
 
 /**
- * Fix all pending TypeScript errors in a specific file
- * 
- * @param filePath Path to the file to fix
- * @param options Configuration options
- * @returns The results of the fix attempts
+ * Apply a transformation from example to target
  */
-export async function fixErrorsInFile(
-  filePath: string,
-  options: ErrorFixerOptions = {}
-): Promise<FixResult[]> {
-  // Find all pending errors in this file
-  const errors = await tsErrorStorage.getTypeScriptErrorsByFile(filePath, ErrorStatus.PENDING);
+function applyTransformation(
+  target: string, 
+  beforeExample: string, 
+  afterExample: string, 
+  commonPattern: string
+): string {
+  // Find what changed in the example
+  const beforeIndex = beforeExample.indexOf(commonPattern);
+  const afterIndex = afterExample.indexOf(commonPattern);
   
-  // Extract the error IDs
-  const errorIds = errors.map(error => error.id);
+  // If pattern is not in after example, can't transform
+  if (afterIndex === -1) {
+    return target;
+  }
   
-  // Fix the errors
-  return await fixErrors(errorIds, options);
+  // Analyze modifications: what was added before/after the pattern
+  const beforePrefix = beforeExample.substring(0, beforeIndex);
+  const afterPrefix = afterExample.substring(0, afterIndex);
+  
+  const beforeSuffix = beforeExample.substring(beforeIndex + commonPattern.length);
+  const afterSuffix = afterExample.substring(afterIndex + commonPattern.length);
+  
+  // Apply same modifications to target
+  const targetIndex = target.indexOf(commonPattern);
+  
+  if (targetIndex === -1) {
+    return target;
+  }
+  
+  const targetPrefix = target.substring(0, targetIndex);
+  const targetSuffix = target.substring(targetIndex + commonPattern.length);
+  
+  // Calculate the new prefix and suffix
+  let newPrefix = targetPrefix;
+  if (beforePrefix !== afterPrefix) {
+    newPrefix = targetPrefix.replace(beforePrefix, afterPrefix);
+  }
+  
+  let newSuffix = targetSuffix;
+  if (beforeSuffix !== afterSuffix) {
+    newSuffix = targetSuffix.replace(beforeSuffix, afterSuffix);
+  }
+  
+  return newPrefix + commonPattern + newSuffix;
 }
 
 /**
- * Fix all pending TypeScript errors of a specific severity
- * 
- * @param severity Severity level to fix
- * @param options Configuration options
- * @returns The results of the fix attempts
+ * Build dependency graph between errors
  */
-export async function fixErrorsBySeverity(
-  severity: string,
-  options: ErrorFixerOptions = {}
-): Promise<FixResult[]> {
-  // Find all pending errors with this severity
-  const errors = await tsErrorStorage.getTypeScriptErrorsBySeverity(severity, ErrorStatus.PENDING);
+export function buildErrorDependencyGraph(
+  errors: TypeScriptErrorDetail[]
+): Record<string, string[]> {
+  const graph: Record<string, string[]> = {};
   
-  // Extract the error IDs
-  const errorIds = errors.map(error => error.id);
+  // Initialize graph
+  for (const error of errors) {
+    const errorId = error.id;
+    graph[errorId] = [];
+  }
   
-  // Fix the errors
-  return await fixErrors(errorIds, options);
+  // Build relationships (this would be more sophisticated in practice)
+  for (const error of errors) {
+    const errorId = error.id;
+    const errorFile = error.file;
+    
+    // Find other errors in the same file
+    const sameFileErrors = errors.filter(e => 
+      e.id !== errorId && 
+      e.file === errorFile &&
+      e.line < error.line
+    );
+    
+    // Add dependencies
+    for (const dependency of sameFileErrors) {
+      graph[errorId].push(dependency.id);
+    }
+  }
+  
+  return graph;
 }
 
 /**
- * Fix all pending TypeScript errors in batch mode
- * 
- * @param options Configuration options
- * @returns The results of the fix attempts
+ * Topological sort of errors to fix root causes first
  */
-export async function fixAllErrors(
-  options: ErrorFixerOptions = {}
-): Promise<FixResult[]> {
-  // Find all pending errors
-  const errors = await tsErrorStorage.getAllTypeScriptErrors({ status: ErrorStatus.PENDING });
+export function topologicalSortErrors(
+  graph: Record<string, string[]>
+): string[] {
+  const result: string[] = [];
+  const visited: Record<string, boolean> = {};
+  const temp: Record<string, boolean> = {};
   
-  // Extract the error IDs
-  const errorIds = errors.map(error => error.id);
+  function visit(node: string) {
+    // Skip if already in result
+    if (visited[node]) {
+      return;
+    }
+    
+    // Check for cycles
+    if (temp[node]) {
+      return; // Skip cycles
+    }
+    
+    temp[node] = true;
+    
+    // Visit dependencies
+    for (const dependency of graph[node]) {
+      visit(dependency);
+    }
+    
+    temp[node] = false;
+    visited[node] = true;
+    result.push(node);
+  }
   
-  // Fix the errors
-  return await fixErrors(errorIds, options);
+  // Visit each node
+  for (const node of Object.keys(graph)) {
+    if (!visited[node]) {
+      visit(node);
+    }
+  }
+  
+  return result;
 }
 
-// Export the module
 export default {
-  fixError,
-  fixErrors,
-  fixErrorsByCode,
-  fixErrorsInFile,
-  fixErrorsBySeverity,
-  fixAllErrors,
-  findBestFix,
-  applyFix
+  fixErrorsWithPattern,
+  buildErrorDependencyGraph,
+  topologicalSortErrors
 };

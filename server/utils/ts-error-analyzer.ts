@@ -1,322 +1,222 @@
 /**
  * TypeScript Error Analyzer
  * 
- * This module analyzes TypeScript errors to categorize them, identify patterns,
- * and suggest fixes based on common error patterns.
+ * This utility analyzes TypeScript errors to categorize and provide insights
+ * for the TypeScript error management system.
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
+import { TypeScriptErrorDetail } from './ts-error-finder';
+
 /**
- * Severity level of TypeScript errors
+ * Error severity levels
  */
 export enum ErrorSeverity {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  CRITICAL = 'critical'
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  CRITICAL = 'CRITICAL'
 }
 
 /**
- * Category of TypeScript errors
+ * Error categories
  */
 export enum ErrorCategory {
-  TYPE_MISMATCH = 'type_mismatch',
-  SYNTAX_ERROR = 'syntax_error',
-  MISSING_PROPERTY = 'missing_property',
-  UNDEFINED_VARIABLE = 'undefined_variable',
-  NULL_REFERENCE = 'null_reference',
-  IMPORT_ERROR = 'import_error',
-  CONFIGURATION_ERROR = 'configuration_error',
-  DECLARATION_ERROR = 'declaration_error',
-  FUNCTION_ERROR = 'function_error',
-  GENERIC_ERROR = 'generic_error',
-  OTHER = 'other'
+  SYNTAX_ERROR = 'SYNTAX_ERROR',
+  TYPE_MISMATCH = 'TYPE_MISMATCH',
+  FUNCTION_ERROR = 'FUNCTION_ERROR',
+  IMPORT_ERROR = 'IMPORT_ERROR',
+  DECLARATION_ERROR = 'DECLARATION_ERROR',
+  NULL_REFERENCE = 'NULL_REFERENCE',
+  SECURITY = 'SECURITY', // Added SECURITY category for security-related issues
+  UNKNOWN = 'UNKNOWN'
 }
 
 /**
- * Detailed representation of a TypeScript error
+ * Analysis options
  */
-export interface TypeScriptErrorDetail {
-  code: string;
-  message: string;
-  file: string;
-  line: number;
-  column: number;
-  severity: ErrorSeverity;
-  category: ErrorCategory;
-  context?: string;
-  snippet?: string;
-  suggestedFix?: string;
-  relatedErrors?: number[];
+export interface AnalysisOptions {
+  includeDependencies?: boolean;
+  includeFileContext?: boolean;
+  contextLines?: number;
+  maxErrors?: number;
 }
 
 /**
- * Suggestion for fixing a TypeScript error
- */
-export interface FixSuggestion {
-  explanation: string;
-  suggestedFix: string;
-  relatedErrors: string[];
-  impact: string;
-  confidence: number;
-  alternatives: string[];
-}
-
-/**
- * Result of error analysis
+ * Error analysis result
  */
 export interface ErrorAnalysisResult {
-  analyzedErrors: string[];
-  fixSuggestions: Record<string, FixSuggestion>;
-  aiEnabled: boolean;
-  processingTimeMs: number;
+  errors: TypeScriptErrorDetail[];
+  categorized: Record<string, TypeScriptErrorDetail[]>;
+  severityBreakdown: Record<string, number>;
+  dependencyGraph?: Record<string, string[]>;
+  contextMap?: Record<string, {
+    before: string[];
+    error: string;
+    after: string[];
+  }>;
   summary: string;
 }
 
 /**
- * Analyze TypeScript errors to categorize them and identify patterns
+ * Get context around an error
  */
-export function analyzeErrors(errors: TypeScriptErrorDetail[]): ErrorAnalysisResult {
-  console.log(`Analyzing ${errors.length} TypeScript errors...`);
-  
-  const startTime = performance.now();
-  const fixSuggestions: Record<string, FixSuggestion> = {};
-  
-  // Group errors by category
-  const errorsByCategory: Record<string, TypeScriptErrorDetail[]> = {};
-  errors.forEach(error => {
-    const category = error.category;
-    if (!errorsByCategory[category]) {
-      errorsByCategory[category] = [];
-    }
-    errorsByCategory[category].push(error);
-  });
-  
-  // Process each category
-  Object.entries(errorsByCategory).forEach(([category, categoryErrors]) => {
-    console.log(`Processing ${categoryErrors.length} errors in category: ${category}`);
-    
-    // Find patterns within category
-    const patterns = findErrorPatterns(categoryErrors);
-    
-    // Generate fix suggestions for each pattern
-    patterns.forEach(pattern => {
-      pattern.errors.forEach(error => {
-        const errorCode = error.code;
-        fixSuggestions[errorCode] = {
-          explanation: pattern.explanation,
-          suggestedFix: pattern.suggestedFix,
-          relatedErrors: pattern.relatedErrors,
-          impact: pattern.impact,
-          confidence: pattern.confidence,
-          alternatives: pattern.alternatives
-        };
-      });
-    });
-  });
-  
-  const endTime = performance.now();
-  const processingTimeMs = endTime - startTime;
-  
-  return {
-    analyzedErrors: errors.map(error => error.code),
-    fixSuggestions,
-    aiEnabled: false,
-    processingTimeMs,
-    summary: `Analyzed ${errors.length} errors in ${processingTimeMs.toFixed(2)}ms`
-  };
-}
-
-/**
- * Find patterns in TypeScript errors
- */
-function findErrorPatterns(errors: TypeScriptErrorDetail[]): Array<{
-  pattern: string;
-  explanation: string;
-  suggestedFix: string;
-  errors: TypeScriptErrorDetail[];
-  relatedErrors: string[];
-  impact: string;
-  confidence: number;
-  alternatives: string[];
-}> {
-  // This is a simplified implementation
-  // In a real system, this would use more sophisticated pattern matching
-  
-  const patterns: Array<{
-    pattern: string;
-    explanation: string;
-    suggestedFix: string;
-    errors: TypeScriptErrorDetail[];
-    relatedErrors: string[];
-    impact: string;
-    confidence: number;
-    alternatives: string[];
-  }> = [];
-  
-  // Example pattern: Type 'any' is not assignable to...
-  const anyTypeErrors = errors.filter(error => 
-    error.message.includes("Type 'any'") && 
-    error.message.includes("is not assignable to")
-  );
-  
-  if (anyTypeErrors.length > 0) {
-    patterns.push({
-      pattern: "Type 'any' is not assignable",
-      explanation: "Using 'any' type is not compatible with more specific types. TypeScript prevents implicit assignment from 'any' to specific types for type safety.",
-      suggestedFix: "Replace 'any' with a more specific type or use 'unknown' and add type guards.",
-      errors: anyTypeErrors,
-      relatedErrors: ["TS2322", "TS2304"],
-      impact: "type safety",
-      confidence: 0.9,
-      alternatives: [
-        "Use a specific interface or type",
-        "Use type guards with 'unknown'"
-      ]
-    });
-  }
-  
-  // Example pattern: Property does not exist on type
-  const missingPropertyErrors = errors.filter(error => 
-    error.message.includes("Property") && 
-    error.message.includes("does not exist on type")
-  );
-  
-  if (missingPropertyErrors.length > 0) {
-    patterns.push({
-      pattern: "Property does not exist on type",
-      explanation: "Accessing a property that doesn't exist on the type definition.",
-      suggestedFix: "Add the property to the interface/type or fix the property name.",
-      errors: missingPropertyErrors,
-      relatedErrors: ["TS2339", "TS2551"],
-      impact: "runtime error",
-      confidence: 0.8,
-      alternatives: [
-        "Use optional chaining (?.)",
-        "Add a type guard",
-        "Update the interface definition"
-      ]
-    });
-  }
-  
-  return patterns;
-}
-
-/**
- * Categorize a TypeScript error based on its code and message
- */
-export function categorizeError(code: string, message: string): ErrorCategory {
-  if (message.includes("Type") && (message.includes("is not assignable") || message.includes("is not compatible"))) {
-    return ErrorCategory.TYPE_MISMATCH;
-  }
-  
-  if (message.includes("Property") && message.includes("does not exist on type")) {
-    return ErrorCategory.MISSING_PROPERTY;
-  }
-  
-  if (message.includes("Cannot find") || message.includes("not found")) {
-    return ErrorCategory.UNDEFINED_VARIABLE;
-  }
-  
-  if (message.includes("Object is possibly 'null'") || message.includes("Object is possibly 'undefined'")) {
-    return ErrorCategory.NULL_REFERENCE;
-  }
-  
-  if (message.includes("Cannot find module") || message.includes("No exported member")) {
-    return ErrorCategory.IMPORT_ERROR;
-  }
-  
-  if (message.includes("Declaration") || message.includes("declare")) {
-    return ErrorCategory.DECLARATION_ERROR;
-  }
-  
-  if (message.includes("function") || message.includes("method") || message.includes("parameter")) {
-    return ErrorCategory.FUNCTION_ERROR;
-  }
-  
-  if (message.includes("Expected") || message.includes("syntax")) {
-    return ErrorCategory.SYNTAX_ERROR;
-  }
-  
-  return ErrorCategory.OTHER;
-}
-
-/**
- * Determine the severity of a TypeScript error
- */
-export function determineSeverity(code: string, message: string): ErrorSeverity {
-  // Critical errors - likely to cause runtime failures
-  if (
-    message.includes("Object is possibly 'null'") || 
-    message.includes("Object is possibly 'undefined'") ||
-    message.includes("Cannot read property") ||
-    message.includes("is not a function")
-  ) {
-    return ErrorSeverity.CRITICAL;
-  }
-  
-  // High severity - type safety issues that could lead to bugs
-  if (
-    message.includes("Type") && 
-    (message.includes("is not assignable") || message.includes("is not compatible"))
-  ) {
-    return ErrorSeverity.HIGH;
-  }
-  
-  // Medium severity - missing declarations, imports
-  if (
-    message.includes("Cannot find") || 
-    message.includes("not found") ||
-    message.includes("No exported member")
-  ) {
-    return ErrorSeverity.MEDIUM;
-  }
-  
-  // Low severity - everything else
-  return ErrorSeverity.LOW;
-}
-
-/**
- * Analyze TypeScript error dependencies to find root causes
- */
-export function analyzeErrorDependencies(errors: TypeScriptErrorDetail[]): {
-  rootCauses: TypeScriptErrorDetail[];
-  dependencyGraph: Record<string, string[]>;
+function getFileContext(filePath: string, line: number, contextLines: number = 5): { 
+  before: string[]; 
+  error: string; 
+  after: string[];
 } {
-  const dependencyGraph: Record<string, string[]> = {};
-  
-  // Build a simple dependency graph based on files and line numbers
-  errors.forEach(error => {
-    const errorId = error.code;
-    dependencyGraph[errorId] = [];
+  try {
+    // Read the file and get lines around the error
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    const lines = fileContent.split('\n');
     
-    // Find related errors in the same file
-    const sameFileErrors = errors.filter(e => 
-      e.file === error.file && 
-      e.code !== error.code &&
-      // Assume errors above this one might be dependencies
-      e.line <= error.line
-    );
+    // Calculate the range of lines to include
+    const startLine = Math.max(0, line - contextLines - 1);
+    const endLine = Math.min(lines.length - 1, line + contextLines - 1);
     
-    // Add to dependency graph
-    dependencyGraph[errorId] = sameFileErrors.map(e => e.code);
-  });
+    const before = lines.slice(startLine, line - 1);
+    const error = lines[line - 1];
+    const after = lines.slice(line, endLine + 1);
+    
+    return { before, error, after };
+  } catch (error) {
+    return { before: [], error: `[Could not read file: ${error.message}]`, after: [] };
+  }
+}
+
+/**
+ * Analyze TypeScript errors and provide categorized insights
+ */
+export async function analyzeTypeScriptErrors(
+  errors: TypeScriptErrorDetail[],
+  options: AnalysisOptions = {}
+): Promise<ErrorAnalysisResult> {
+  // Default options
+  const opts = {
+    includeDependencies: false,
+    includeFileContext: false,
+    contextLines: 5,
+    maxErrors: 500,
+    ...options
+  };
   
-  // Find root causes (errors with no dependencies)
-  const rootCauses = errors.filter(error => 
-    dependencyGraph[error.code].length === 0
-  );
+  // Limit the number of errors to process
+  const limitedErrors = errors.slice(0, opts.maxErrors);
+  
+  // Categorize errors
+  const categorized: Record<string, TypeScriptErrorDetail[]> = {};
+  const severityBreakdown: Record<string, number> = {};
+  
+  // Context map if requested
+  const contextMap: Record<string, {
+    before: string[];
+    error: string;
+    after: string[];
+  }> = {};
+  
+  // Process each error
+  for (const error of limitedErrors) {
+    // Update category counts
+    if (!categorized[error.category]) {
+      categorized[error.category] = [];
+    }
+    categorized[error.category].push(error);
+    
+    // Update severity breakdown
+    if (!severityBreakdown[error.severity]) {
+      severityBreakdown[error.severity] = 0;
+    }
+    severityBreakdown[error.severity]++;
+    
+    // Add file context if requested
+    if (opts.includeFileContext) {
+      const errorKey = `${error.file}:${error.line}`;
+      contextMap[errorKey] = getFileContext(
+        error.file,
+        error.line,
+        opts.contextLines
+      );
+    }
+  }
+  
+  // Build dependency graph if requested
+  let dependencyGraph: Record<string, string[]> | undefined;
+  if (opts.includeDependencies) {
+    dependencyGraph = {};
+    // In a real implementation, this would analyze error dependencies
+    // For now, just create a placeholder
+    for (const error of limitedErrors) {
+      const errorKey = `${error.file}:${error.line}`;
+      dependencyGraph[errorKey] = [];
+    }
+  }
+  
+  // Generate summary
+  const summary = generateSummary(limitedErrors, categorized, severityBreakdown);
   
   return {
-    rootCauses,
-    dependencyGraph
+    errors: limitedErrors,
+    categorized,
+    severityBreakdown,
+    dependencyGraph,
+    contextMap: opts.includeFileContext ? contextMap : undefined,
+    summary
   };
+}
+
+/**
+ * Generate a summary of the analysis
+ */
+function generateSummary(
+  errors: TypeScriptErrorDetail[],
+  categorized: Record<string, TypeScriptErrorDetail[]>,
+  severityBreakdown: Record<string, number>
+): string {
+  const lines: string[] = [];
+  
+  lines.push(`TypeScript Error Analysis Results`);
+  lines.push(`===========================\n`);
+  lines.push(`Total errors: ${errors.length}\n`);
+  
+  // Add severity breakdown
+  lines.push(`Severity breakdown:`);
+  for (const [severity, count] of Object.entries(severityBreakdown)) {
+    lines.push(`  ${severity}: ${count}`);
+  }
+  lines.push('');
+  
+  // Add category breakdown
+  lines.push(`Category breakdown:`);
+  for (const [category, categoryErrors] of Object.entries(categorized)) {
+    lines.push(`  ${category}: ${categoryErrors.length}`);
+  }
+  lines.push('');
+  
+  // Add files with most errors (top 5)
+  const fileErrorCounts: Record<string, number> = {};
+  for (const error of errors) {
+    if (!fileErrorCounts[error.file]) {
+      fileErrorCounts[error.file] = 0;
+    }
+    fileErrorCounts[error.file]++;
+  }
+  
+  const filesSorted = Object.entries(fileErrorCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  
+  lines.push(`Top files with errors:`);
+  for (const [file, count] of filesSorted) {
+    lines.push(`  ${file}: ${count}`);
+  }
+  
+  return lines.join('\n');
 }
 
 export default {
-  analyzeErrors,
-  categorizeError,
-  determineSeverity,
-  analyzeErrorDependencies,
+  analyzeTypeScriptErrors,
   ErrorCategory,
   ErrorSeverity
 };

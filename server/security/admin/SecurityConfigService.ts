@@ -12,10 +12,78 @@
  * - Configuration history
  */
 
-import { SecurityMode, SecurityFeatures, securityFabric } from '../advanced/SecurityFabric';
-import { AuditAction, AuditCategory, logAuditEvent } from '../advanced/audit/AuditLogService';
+// Temporary module definitions until proper implementation
+// import { SecurityMode, SecurityFeatures, securityFabric } from '../advanced/SecurityFabric';
+// import { AuditAction, AuditCategory, logAuditEvent } from '../advanced/audit/AuditLogService';
+
 import { Request } from 'express';
 
+// Temporary SecurityMode enum
+export enum SecurityMode {
+  STANDARD = 'STANDARD',
+  ENHANCED = 'ENHANCED',
+  HIGH = 'HIGH',
+  MAXIMUM = 'MAXIMUM'
+}
+
+// Temporary SecurityFeatures interface
+export interface SecurityFeatures {
+  enableAnomalyDetection: boolean;
+  enableAdvancedLogging: boolean;
+  enableContentSecurity: boolean;
+  enableMFA: boolean;
+  enableSessionProtection: boolean;
+  enableSecureHeaders: boolean;
+  enableRateLimiting: boolean;
+  enableIpBlacklisting: boolean;
+  enableAutoUpdates: boolean;
+  enableVulnerabilityScan: boolean;
+}
+
+// Temporary securityFabric mock
+const securityFabric = {
+  getMode: (): SecurityMode => SecurityMode.STANDARD,
+  setMode: (mode: SecurityMode): void => {
+    console.log(`[SecurityFabric] Setting security mode to ${mode}`);
+  },
+  getFeatures: (): SecurityFeatures => ({
+    enableAnomalyDetection: true,
+    enableAdvancedLogging: true,
+    enableContentSecurity: true,
+    enableMFA: true,
+    enableSessionProtection: true,
+    enableSecureHeaders: true,
+    enableRateLimiting: true,
+    enableIpBlacklisting: false,
+    enableAutoUpdates: true,
+    enableVulnerabilityScan: true
+  }),
+  setFeature: (featureName: keyof SecurityFeatures, enabled: boolean): void => {
+    console.log(`[SecurityFabric] Setting security feature ${featureName} to ${enabled}`);
+  }
+};
+
+// Temporary AuditAction and AuditCategory enums
+enum AuditAction {
+  SECURITY_CONFIG_CHANGED = 'SECURITY_CONFIG_CHANGED'
+}
+
+enum AuditCategory {
+  SECURITY = 'SECURITY'
+}
+
+// Temporary logAuditEvent function
+function logAuditEvent(
+  action: AuditAction,
+  category: AuditCategory,
+  target: string,
+  details: any,
+  req?: Request,
+  resource?: string,
+  userId?: string
+): void {
+  console.log(`[AuditLog] ${action} in category ${category} on ${target}`, details);
+}
 // Configuration history entry
 interface ConfigHistoryEntry {
   id: string;

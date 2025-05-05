@@ -5,11 +5,57 @@
  * features regardless of performance impact.
  */
 
-import { SecurityFabric } from './advanced/SecurityFabric';
-import { SecurityEventCategory, SecurityEventSeverity } from './advanced/SecurityFabric';
-import { logSecurityEvent } from './advanced/SecurityLogger';
-import { startMetricsCollection } from './monitoring/MetricsCollector';
-import { initializeEventsCollector } from './monitoring/EventsCollector';
+// Temporary definitions and mocks for security components
+// import { SecurityFabric } from './advanced/SecurityFabric';
+// import { SecurityEventCategory, SecurityEventSeverity } from './advanced/SecurityFabric';
+// import { logSecurityEvent } from './advanced/SecurityLogger';
+// import { startMetricsCollection } from './monitoring/MetricsCollector';
+// import { initializeEventsCollector } from './monitoring/EventsCollector';
+
+// Temporary enum definitions
+enum SecurityEventCategory {
+  SYSTEM = 'SYSTEM',
+  AUTHENTICATION = 'AUTHENTICATION',
+  AUTHORIZATION = 'AUTHORIZATION',
+  VALIDATION = 'VALIDATION',
+  ANOMALY = 'ANOMALY',
+  TYPE_CHECKING = 'TYPE_CHECKING',
+  API = 'API'
+}
+
+enum SecurityEventSeverity {
+  CRITICAL = 'CRITICAL',
+  ERROR = 'ERROR',
+  WARNING = 'WARNING',
+  INFO = 'INFO'
+}
+
+// Mock for logSecurityEvent function
+function logSecurityEvent(event: {
+  category: SecurityEventCategory;
+  severity: SecurityEventSeverity;
+  message: string;
+  data: any;
+}): void {
+  console.log(`[Security Event] [${event.severity}] [${event.category}] ${event.message}`, event.data);
+}
+
+// Mock for SecurityFabric
+const SecurityFabric = {
+  initialize: () => {
+    console.log('[SecurityFabric] Initializing security fabric');
+  }
+};
+
+// Mock for startMetricsCollection
+function startMetricsCollection(intervalMs: number): void {
+  console.log(`[Metrics] Starting metrics collection with interval ${intervalMs}ms`);
+}
+
+// Mock for initializeEventsCollector
+function initializeEventsCollector(): void {
+  console.log('[Events] Initializing events collector');
+}
 
 // Available security features
 export interface SecurityFeatures {

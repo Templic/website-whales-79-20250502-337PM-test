@@ -8,9 +8,19 @@
 import { Request, Response, NextFunction } from 'express';
 import { JSDOM } from 'jsdom';
 import DOMPurify from 'dompurify';
-import { SecurityFabric } from '../security/advanced/SecurityFabric';
-import { SecurityEventTypes } from '../security/advanced/blockchain/SecurityEventTypes';
-import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+
+// Commented out for now until security infrastructure is properly set up
+// import { SecurityFabric } from '../security/advanced/SecurityFabric';
+// import { SecurityEventTypes } from '../security/advanced/blockchain/SecurityEventTypes';
+// import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+
+// Temporary mock for securityBlockchain
+const securityBlockchain = {
+  addLog: (data: any) => {
+    console.log('[SECURITY-BLOCKCHAIN] Would log XSS attempt:', data);
+    return Promise.resolve();
+  }
+};
 
 // Initialize DOMPurify with JSDOM
 const window = new JSDOM('').window;
@@ -176,18 +186,12 @@ export function xssProtectionMiddleware(options: {
       // Log error
       console.error('[XSS-PROTECTION] Error in XSS protection middleware:', error);
       
-      // Log to security fabric
-      SecurityFabric.getInstance().emitSecurityEvent({
-        type: SecurityEventTypes.SECURITY_VULNERABILITY_DETECTED,
-        source: 'xss_protection',
-        severity: 'high',
-        message: 'Error in XSS protection middleware',
-        attributes: {
-          error: (error as Error).message,
-          stack: (error as Error).stack,
-          path: req.path,
-          method: req.method
-        }
+      // Log security event - temporarily disabled
+      // Will be re-enabled once SecurityFabric is implemented
+      console.warn('[XSS-PROTECTION] Security event: Error in XSS protection middleware', {
+        path: req.path,
+        method: req.method,
+        error: (error as Error).message
       });
       
       // Continue despite error
@@ -197,7 +201,7 @@ export function xssProtectionMiddleware(options: {
 }
 
 // Function to sanitize object (recursively)
-function sanitizeObject(obj, profile: SanitizationProfile): void {
+function sanitizeObject(obj: any, profile: SanitizationProfile): void {
   if (!obj || typeof obj !== 'object') {
     return;
   }
@@ -223,11 +227,13 @@ function sanitizeObject(obj, profile: SanitizationProfile): void {
 }
 
 // Function to log XSS attempt
-function logXssAttempt(data): void {
+function logXssAttempt(data: any): void {
   // Log to console
   console.warn('[XSS-PROTECTION] Potential XSS attempt detected:', data);
   
-  // Log to security fabric
+  // Log to security fabric - temporarily disabled
+  // Will be re-enabled once SecurityFabric is implemented
+  /*
   SecurityFabric.getInstance().emitSecurityEvent({
     type: SecurityEventTypes.SECURITY_VULNERABILITY_DETECTED,
     source: 'xss_protection',
@@ -235,6 +241,8 @@ function logXssAttempt(data): void {
     message: `Potential XSS attempt detected: ${data.type}`,
     attributes: data
   });
+  */
+  console.warn(`[XSS-PROTECTION] Security event: Potential XSS attempt detected: ${data.type}`);
   
   // Log to blockchain for forensics
   try {

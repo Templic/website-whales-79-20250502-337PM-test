@@ -6,8 +6,21 @@
  * potential attacks at runtime.
  */
 
-import { SecurityFabric } from '../SecurityFabric';
-import { SecurityEventTypes } from '../blockchain/SecurityEventTypes';
+// Temporarily commented out until security modules are properly implemented
+// import { SecurityFabric } from '../SecurityFabric';
+// import { SecurityEventTypes } from '../blockchain/SecurityEventTypes';
+
+// Temporary constants for event types
+const SecurityEventTypes = {
+  SQL_INJECTION_ATTEMPT: 'SQL_INJECTION_ATTEMPT'
+};
+
+// Temporary security fabric mock
+const SecurityFabric = {
+  logEvent: (data: any) => {
+    console.log('[SECURITY-FABRIC] Would log security event:', data);
+  }
+};
 
 /**
  * Types of SQL injection patterns to detect

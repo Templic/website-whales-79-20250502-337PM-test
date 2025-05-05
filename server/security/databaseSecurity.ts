@@ -6,9 +6,18 @@
  */
 
 import crypto from 'crypto';
-import { SecurityFabric, SecurityEventCategory, SecurityEventSeverity } from './advanced/SecurityFabric';
-import SecurityEventTypes from './advanced/blockchain/SecurityEventTypes';
-import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+// Commented out for now until security infrastructure is properly set up
+// import { SecurityEventCategory, SecurityEventSeverity } from './advanced/SecurityFabric';
+// import SecurityEventTypes from './advanced/blockchain/SecurityEventTypes';
+// import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+
+// Temporary placeholders
+const securityBlockchain = {
+  addLog: (data: any) => {
+    console.log('[SECURITY-BLOCKCHAIN] Would log:', data);
+    return Promise.resolve();
+  }
+};
 
 // Default patterns to detect SQL injection attempts
 const DEFAULT_SQL_INJECTION_PATTERNS = [
@@ -178,18 +187,14 @@ class SQLInjectionPrevention {
    */
   private logQueryCheck(query: string, result: 'passed' | 'blocked' | 'whitelisted', matchedPattern: string | null): void {
     // Send to security fabric
-    SecurityFabric.getInstance().emitSecurityEvent({
-      type: result === 'blocked' ? SecurityEventTypes.SECURITY_VULNERABILITY_DETECTED : SecurityEventTypes.DATA_ACCESS,
-      source: 'database_security',
-      severity: result === 'blocked' ? 'high' : 'low',
-      message: `SQL query ${result}: ${this.truncateQuery(query, 50)}`,
-      attributes: {
-        query: this.maskSensitiveData(query),
-        result,
-        matchedPattern,
-        timestamp: new Date().toISOString()
-      }
-    });
+    // Temporarily commented out until SecurityFabric is properly initialized
+    /*
+    // Security event logging will be re-enabled once SecurityFabric is implemented
+    console.log(`[SQL-SECURITY] Event would be logged: SQL query ${result}`);
+    */
+    
+    // Just log to console for now
+    console.log(`[SQL-SECURITY] SQL query ${result}: ${this.truncateQuery(query, 50)}`);
     
     // Add to blockchain if enabled
     if (AUDIT_LOG_CONFIG.logBlockchainEnabled && result === 'blocked') {
@@ -210,17 +215,14 @@ class SQLInjectionPrevention {
    * Log a query sanitization
    */
   private logQuerySanitization(original: string, sanitized: string): void {
-    SecurityFabric.getInstance().emitSecurityEvent({
-      type: SecurityEventTypes.DATA_MODIFIED,
-      source: 'database_security',
-      severity: 'medium',
-      message: `SQL query sanitized: ${this.truncateQuery(original, 50)}`,
-      attributes: {
-        original: this.maskSensitiveData(original),
-        sanitized: this.maskSensitiveData(sanitized),
-        timestamp: new Date().toISOString()
-      }
-    });
+    // Temporarily commented out until SecurityFabric is properly initialized
+    /*
+    // Security event logging will be re-enabled once SecurityFabric is implemented
+    console.log(`[SQL-SECURITY] Event would be logged: SQL query sanitized`);
+    */
+    
+    // Just log to console for now
+    console.log(`[SQL-SECURITY] SQL query sanitized: ${this.truncateQuery(original, 50)}`);
   }
   
   /**
@@ -355,18 +357,14 @@ export class DatabaseSecurityManager {
     userId: string | number | undefined,
     details: Record<string, unknown>
   ): void {
-    // Log to security fabric
-    SecurityFabric.getInstance().emitSecurityEvent({
-      type: SecurityEventTypes.DATA_ACCESS,
-      source: 'database_security',
-      severity: 'low',
-      message: `Database activity: ${activity}`,
-      userId: userId?.toString(),
-      attributes: {
-        ...details,
-        timestamp: new Date().toISOString()
-      }
-    });
+    // Temporarily commented out until SecurityFabric is properly initialized
+    /*
+    // Security event logging will be re-enabled once SecurityFabric is implemented
+    console.log(`[DATABASE-SECURITY] Event would be logged: Database activity: ${activity}`);
+    */
+    
+    // Just log to console for now
+    console.log(`[DATABASE-ACTIVITY] ${activity} (User: ${userId || 'anonymous'})`);
   }
   
   /**

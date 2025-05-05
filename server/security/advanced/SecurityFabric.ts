@@ -1,65 +1,43 @@
 /**
  * Security Fabric
  * 
- * This module provides a centralized configuration and management interface
- * for all security features in the application. It integrates all security
- * components and maintains security-wide configuration.
- * 
- * Features:
- * - Security levels configuration
- * - Event categorization
- * - Severity levels
- * - Security feature management and tracking
+ * Core security enums and interfaces for the security integration system.
  */
 
-// Define security event categories
+/**
+ * Security event categories
+ */
 export enum SecurityEventCategory {
-  AUTHENTICATION = 'authentication',
-  AUTHORIZATION = 'authorization',
-  VALIDATION = 'validation',
-  ATTACK_ATTEMPT = 'attack_attempt',
-  RATE_LIMITING = 'rate_limiting',
-  API_SECURITY = 'api_security',
-  MIDDLEWARE = 'middleware',
-  CSRF = 'csrf',
-  IP_WHITELIST = 'ip_whitelist',
-  QUANTUM_ENCRYPTION = 'quantum_encryption',
-  DATA_ENCRYPTION = 'data_encryption',
-  ENCRYPTION = 'encryption',
-  RUNTIME_PROTECTION = 'runtime_protection',
-  ANOMALY_DETECTION = 'anomaly_detection',
-  USER_ACTION = 'user_action',
-  ADMIN_ACTION = 'admin_action',
-  SYSTEM_EVENT = 'system_event',
-  THREAT_DETECTED = 'threat_detected',
-  SECURITY_INITIALIZATION = 'security_initialization',
-  SECURITY_ERROR = 'security_error',
-  REQUEST = 'request',
-  AUDIT = 'audit',
-  PRIVACY = 'privacy',
-  // Additional categories for security scans
-  SECURITY_SCAN = 'security_scan',
-  GENERAL = 'general',
-  DATABASE_SECURITY = 'database_security',
-  WEB_SECURITY = 'web_security',
-  SYSTEM = 'system',
-  CRYPTOGRAPHY = 'cryptography'
+  ACCESS_CONTROL = 'ACCESS_CONTROL',
+  AUTHENTICATION = 'AUTHENTICATION',
+  AUTHORIZATION = 'AUTHORIZATION',
+  CRYPTOGRAPHY = 'CRYPTOGRAPHY',
+  INJECTION = 'INJECTION',
+  INPUT_VALIDATION = 'INPUT_VALIDATION',
+  OUTPUT_ENCODING = 'OUTPUT_ENCODING',
+  SENSITIVE_DATA = 'SENSITIVE_DATA',
+  SESSION_MANAGEMENT = 'SESSION_MANAGEMENT',
+  CONFIGURATION = 'CONFIGURATION',
+  NETWORK_SECURITY = 'NETWORK_SECURITY',
+  TYPE_CHECKING = 'TYPE_CHECKING', // Added for TypeScript security integration
+  UNKNOWN = 'UNKNOWN'
 }
 
-// Define severity levels for security events
+/**
+ * Security event severities
+ */
 export enum SecurityEventSeverity {
-  DEBUG = 'debug',
-  INFO = 'info',
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  CRITICAL = 'critical',
-  WARNING = 'warning',
-  ERROR = 'error'
+  CRITICAL = 'CRITICAL',
+  ERROR = 'ERROR',
+  WARNING = 'WARNING',
+  INFO = 'INFO'
 }
 
-// Interface for security events
+/**
+ * Security event interface
+ */
 export interface SecurityEvent {
+  id?: string;
   category: SecurityEventCategory;
   severity: SecurityEventSeverity;
   message: string;
@@ -67,297 +45,39 @@ export interface SecurityEvent {
   metadata?: Record<string, any>;
 }
 
-// Interface for security feature flags and configuration
-export interface SecurityFeatures {
-  quantumResistance: boolean;
-  mlAnomalyDetection: boolean;
-  blockchainLogging: boolean;
-  mfa: boolean;
-  csrf: boolean;
-  inputValidation: boolean;
-  apiSecurity: boolean;
-  realTimeMonitoring: boolean;
-  bruteForceProtection: boolean;
-  rateLimiting: boolean;
-  deepScanning: boolean;
+/**
+ * Security scan interface
+ */
+export interface SecurityScan {
+  id: string;
+  name: string;
+  description?: string;
+  type: string;
+  status: string;
+  startTime?: number;
+  endTime?: number;
+  results?: any;
+  metadata?: Record<string, any>;
 }
 
-// Security modes - from basic to maximum
-export enum SecurityMode {
-  BASIC = 'basic',
-  STANDARD = 'standard',
-  ENHANCED = 'enhanced',
-  HIGH = 'high',
-  MAXIMUM = 'maximum'
-}
-
-// Security feature configurations by mode
-const securityModeFeatures: Record<SecurityMode, SecurityFeatures> = {
-  [SecurityMode.BASIC]: {
-    quantumResistance: false,
-    mlAnomalyDetection: false,
-    blockchainLogging: false,
-    mfa: false,
-    csrf: true,
-    inputValidation: true,
-    apiSecurity: true,
-    realTimeMonitoring: false,
-    bruteForceProtection: true,
-    rateLimiting: true,
-    deepScanning: false
-  },
-  [SecurityMode.STANDARD]: {
-    quantumResistance: false,
-    mlAnomalyDetection: false,
-    blockchainLogging: true,
-    mfa: false,
-    csrf: true,
-    inputValidation: true,
-    apiSecurity: true,
-    realTimeMonitoring: true,
-    bruteForceProtection: true,
-    rateLimiting: true,
-    deepScanning: false
-  },
-  [SecurityMode.ENHANCED]: {
-    quantumResistance: true,
-    mlAnomalyDetection: false,
-    blockchainLogging: true,
-    mfa: true,
-    csrf: true,
-    inputValidation: true,
-    apiSecurity: true,
-    realTimeMonitoring: true,
-    bruteForceProtection: true,
-    rateLimiting: true,
-    deepScanning: false
-  },
-  [SecurityMode.HIGH]: {
-    quantumResistance: true,
-    mlAnomalyDetection: true,
-    blockchainLogging: true,
-    mfa: true,
-    csrf: true,
-    inputValidation: true,
-    apiSecurity: true,
-    realTimeMonitoring: true,
-    bruteForceProtection: true,
-    rateLimiting: true,
-    deepScanning: false
-  },
-  [SecurityMode.MAXIMUM]: {
-    quantumResistance: true,
-    mlAnomalyDetection: true,
-    blockchainLogging: true,
-    mfa: true,
-    csrf: true,
-    inputValidation: true,
-    apiSecurity: true,
-    realTimeMonitoring: true,
-    bruteForceProtection: true,
-    rateLimiting: true,
-    deepScanning: true
-  }
-};
-
-// Security Fabric class
-export class SecurityFabric {
-  private mode: SecurityMode;
-  private features: SecurityFeatures;
-  private static instance: SecurityFabric;
-
-  private constructor(mode: SecurityMode = SecurityMode.STANDARD) {
-    this.mode = mode;
-    this.features = { ...securityModeFeatures[mode] };
-    
-    // Announce the security fabric initialization
-    console.log(`[SECURITY] Security fabric initialized in ${mode} mode`);
-  }
-
-  // Get the singleton instance
-  public static getInstance(mode?: SecurityMode): SecurityFabric {
-    if (!SecurityFabric.instance) {
-      SecurityFabric.instance = new SecurityFabric(mode);
-    } else if (mode && SecurityFabric.instance.mode !== mode) {
-      SecurityFabric.instance.setMode(mode);
-    }
-    return SecurityFabric.instance;
-  }
-  
-  // Initialize the security fabric with specific settings
-  public static initialize(mode: SecurityMode = SecurityMode.MAXIMUM): SecurityFabric {
-    return SecurityFabric.getInstance(mode);
-  }
-
-  // Set security mode
-  public setMode(mode: SecurityMode): void {
-    this.mode = mode;
-    this.features = { ...securityModeFeatures[mode] };
-    
-    console.log(`[SECURITY] Security mode set to ${mode}`);
-    
-    // Log the mode change
-    this.logSecurityEvent({
-      category: SecurityEventCategory.SECURITY_INITIALIZATION,
-      severity: SecurityEventSeverity.INFO,
-      message: `${mode} security mode activated`,
-      timestamp: Date.now(),
-      metadata: {
-        features: this.features
-      }
-    });
-  }
-
-  // Get current security mode
-  public getMode(): SecurityMode {
-    return this.mode;
-  }
-
-  // Get current feature configuration
-  public getFeatures(): SecurityFeatures {
-    return { ...this.features };
-  }
-
-  // Enable or disable a specific feature
-  public setFeature(featureName: keyof SecurityFeatures, enabled: boolean): void {
-    if (featureName in this.features) {
-      this.features[featureName] = enabled;
-      
-      // Log the feature change
-      this.logSecurityEvent({
-        category: SecurityEventCategory.SECURITY_INITIALIZATION,
-        severity: SecurityEventSeverity.INFO,
-        message: `Security feature updated: ${featureName} ${enabled ? 'enabled' : 'disabled'}`,
-        timestamp: Date.now(),
-        metadata: {
-          feature: featureName,
-          enabled
-        }
-      });
-    }
-  }
-
-  // Check if a feature is enabled
-  public isFeatureEnabled(featureName: keyof SecurityFeatures): boolean {
-    return this.features[featureName] === true;
-  }
-
-  // Log a security event
-  private logSecurityEvent(event: SecurityEvent): void {
-    // In a real implementation, this would interact with a logging system
-    console.log(`[INFO] [Security:${event.category}] ${event.message}`, event.metadata || {});
-  }
-  
-  // Emit a security event
-  public emitSecurityEvent(event: { 
-    type: string;
-    source: string;
-    severity: string;
-    message: string;
-    userId?: string;
-    attributes?: Record<string, any>;
-  }): void {
-    // Map the incoming event to the standard SecurityEvent format
-    const securityEvent: SecurityEvent = {
-      category: this.mapEventTypeToCategory(event.type),
-      severity: this.mapSeverityToSecuritySeverity(event.severity),
-      message: event.message,
-      timestamp: Date.now(),
-      metadata: {
-        type: event.type,
-        source: event.source,
-        userId: event.userId,
-        ...event.attributes
-      }
-    };
-    
-    // Log the event
-    this.logSecurityEvent(securityEvent);
-  }
-  
-  // Map event type to SecurityEventCategory
-  private mapEventTypeToCategory(type: string): SecurityEventCategory {
-    // Simple mapping based on the event type
-    if (type.includes('auth')) {
-      return SecurityEventCategory.AUTHENTICATION;
-    } else if (type.includes('data')) {
-      return SecurityEventCategory.DATA_ENCRYPTION;
-    } else if (type.includes('api')) {
-      return SecurityEventCategory.API_SECURITY;
-    } else if (type.includes('threat') || type.includes('vulnerability')) {
-      return SecurityEventCategory.THREAT_DETECTED;
-    } else if (type.includes('rate_limit')) {
-      return SecurityEventCategory.RATE_LIMITING;
-    } else if (type.includes('csrf')) {
-      return SecurityEventCategory.CSRF;
-    } else if (type.includes('validation')) {
-      return SecurityEventCategory.VALIDATION;
-    } else if (type.includes('encryption')) {
-      return SecurityEventCategory.ENCRYPTION;
-    } else if (type.includes('user')) {
-      return SecurityEventCategory.USER_ACTION;
-    } else if (type.includes('admin')) {
-      return SecurityEventCategory.ADMIN_ACTION;
-    } else if (type.includes('system')) {
-      return SecurityEventCategory.SYSTEM_EVENT;
-    } else if (type.includes('request')) {
-      return SecurityEventCategory.REQUEST;
-    } else if (type.includes('audit')) {
-      return SecurityEventCategory.AUDIT;
-    } else if (type.includes('privacy')) {
-      return SecurityEventCategory.PRIVACY;
-    }
-    
-    // Default category
-    return SecurityEventCategory.SYSTEM_EVENT;
-  }
-  
-  // Map severity string to SecurityEventSeverity
-  private mapSeverityToSecuritySeverity(severity: string): SecurityEventSeverity {
-    switch (severity.toLowerCase()) {
-      case 'debug':
-        return SecurityEventSeverity.DEBUG;
-      case 'info':
-        return SecurityEventSeverity.INFO;
-      case 'low':
-        return SecurityEventSeverity.LOW;
-      case 'medium':
-        return SecurityEventSeverity.MEDIUM;
-      case 'high':
-        return SecurityEventSeverity.HIGH;
-      case 'critical':
-        return SecurityEventSeverity.CRITICAL;
-      case 'warning':
-        return SecurityEventSeverity.WARNING;
-      case 'error':
-        return SecurityEventSeverity.ERROR;
-      default:
-        return SecurityEventSeverity.INFO;
-    }
-  }
-}
-
-// Create and export the default security fabric instance
-export const securityFabric = SecurityFabric.getInstance(SecurityMode.MAXIMUM);
-
-// Export a convenience function for logging security events
-export function logSecurityEvent(event: SecurityEvent): void {
-  // In a real implementation, this would interact with a logging system
-  console.log(`[INFO] [SECURITY-EVENT] ${event.category} ${JSON.stringify({
-    eventId: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
-    type: event.category,
-    source: 'security_logger',
-    severity: event.severity,
-    ...(event.metadata || {})
-  })}`);
+/**
+ * Security incident interface
+ */
+export interface SecurityIncident {
+  id: string;
+  title: string;
+  description: string;
+  severity: SecurityEventSeverity;
+  status: 'open' | 'investigating' | 'mitigated' | 'resolved';
+  createdAt: number;
+  updatedAt: number;
+  relatedEvents: string[];
+  assignedTo?: string;
+  resolution?: string;
+  metadata?: Record<string, any>;
 }
 
 export default {
   SecurityEventCategory,
-  SecurityEventSeverity,
-  SecurityMode,
-  SecurityFabric,
-  securityFabric,
-  logSecurityEvent,
-  initialize: SecurityFabric.initialize
+  SecurityEventSeverity
 };

@@ -6,8 +6,9 @@
  */
 
 import { Request, Response } from 'express';
-import { SecurityMode, SecurityFeatures } from '../advanced/SecurityFabric';
+// Import from SecurityConfigService instead where we've created temporary types
 import * as SecurityConfigService from './SecurityConfigService';
+import { SecurityMode, SecurityFeatures } from './SecurityConfigService';
 
 /**
  * Get current security configuration

@@ -1,529 +1,395 @@
 /**
- * @file ts-error-finder.ts
- * @description Utility for finding TypeScript errors in the codebase
+ * TypeScript Error Finder
  * 
- * This module provides functionality for scanning a TypeScript project for errors
- * and adding them to the error management system.
+ * This utility finds TypeScript errors in a project by running the TypeScript compiler
+ * and processing the diagnostics.
  */
 
-import * as ts from 'typescript';
-import * as path from 'path';
 import * as fs from 'fs';
-import { glob } from 'glob';
-import { ErrorCategory, ErrorSeverity, ErrorStatus, InsertTypeScriptError } from '../types/core/error-types';
-import * as tsErrorStorage from '../tsErrorStorage';
-import { findTypeScriptFiles } from './ts-type-analyzer';
+import * as path from 'path';
+import * as ts from 'typescript';
+import { ErrorCategory, ErrorSeverity } from './ts-error-analyzer';
 
 /**
- * Options for the error finding process
+ * Options for the error finder
  */
 export interface ErrorFinderOptions {
   projectRoot: string;
   tsconfigPath?: string;
   includeNodeModules?: boolean;
-  severity?: ErrorSeverity;
-  concurrency?: number;
+  maxErrors?: number;
+  excludePatterns?: string[];
 }
 
 /**
- * Default options for error finding
+ * TypeScript error detail
+ */
+export interface TypeScriptErrorDetail {
+  id: string;
+  code: string;
+  message: string;
+  file: string;
+  line: number;
+  column: number;
+  severity: ErrorSeverity;
+  category: ErrorCategory;
+  context?: string;
+  snippet?: string;
+  suggestedFix?: string;
+}
+
+/**
+ * Result of error finding
+ */
+export interface ErrorFindingResult {
+  errors: TypeScriptErrorDetail[];
+  errorsByFile: Record<string, number>;
+  errorsByCategory: Record<string, number>;
+  errorsByCode: Record<string, number>;
+  totalErrors: number;
+  totalWarnings: number;
+  processingTimeMs: number;
+  fileCount: number;
+  scannedLineCount: number;
+  summary: string;
+}
+
+/**
+ * Default options
  */
 const defaultOptions: ErrorFinderOptions = {
-  projectRoot: '.',
+  projectRoot: process.cwd(),
   includeNodeModules: false,
-  severity: 'high',
-  concurrency: 4
+  maxErrors: 1000,
+  excludePatterns: []
 };
 
 /**
- * Result of the error finding process
- */
-export interface ErrorFindingResult {
-  errorCount: number;
-  warningCount: number;
-  errorsByFile: Record<string, number>;
-  fileCount: number;
-  processingTimeMs: number;
-  addedErrors: {
-    id: number;
-    filePath: string;
-    errorMessage: string;
-  }[];
-}
-
-/**
- * Scans a TypeScript project for errors
- * 
- * @param options Options for the error finding process
- * @returns Results of the error finding process
+ * Find TypeScript errors in a project
  */
 export async function findTypeScriptErrors(
   options: Partial<ErrorFinderOptions> = {}
 ): Promise<ErrorFindingResult> {
   const startTime = Date.now();
-  const opts = { ...defaultOptions, ...options };
   
-  // Resolve tsconfig path
-  const tsconfigPath = opts.tsconfigPath || ts.findConfigFile(
-    opts.projectRoot,
-    ts.sys.fileExists,
-    'tsconfig.json'
-  );
+  // Merge options with defaults
+  const opts: ErrorFinderOptions = {
+    ...defaultOptions,
+    ...options
+  };
   
-  if (!tsconfigPath) {
-    throw new Error(`Could not find tsconfig.json in ${opts.projectRoot}`);
+  // Find tsconfig.json
+  const tsconfigPath = opts.tsconfigPath || path.join(opts.projectRoot, 'tsconfig.json');
+  
+  // Check if tsconfig.json exists
+  if (!fs.existsSync(tsconfigPath)) {
+    throw new Error(`tsconfig.json not found at ${tsconfigPath}`);
   }
   
-  // Read the config file
+  // Parse tsconfig.json
   const configFile = ts.readConfigFile(tsconfigPath, ts.sys.readFile);
+  
   if (configFile.error) {
     throw new Error(`Error reading tsconfig.json: ${configFile.error.messageText}`);
   }
   
+  // Parse the config
   const parsedConfig = ts.parseJsonConfigFileContent(
     configFile.config,
     ts.sys,
     path.dirname(tsconfigPath)
   );
   
+  if (parsedConfig.errors.length > 0) {
+    throw new Error(`Error parsing tsconfig.json: ${parsedConfig.errors[0].messageText}`);
+  }
+  
   // Find TypeScript files
-  const files = await findTypeScriptFiles(opts.projectRoot);
+  const tsFiles = await findTypeScriptFiles(opts.projectRoot, opts.includeNodeModules, opts.excludePatterns);
   
-  // Filter out node_modules if requested
-  const filteredFiles = opts.includeNodeModules 
-    ? files 
-    : files.filter(file => !file.includes('node_modules'));
+  // Create program
+  const program = ts.createProgram({
+    rootNames: tsFiles,
+    options: parsedConfig.options
+  });
   
-  // Create a program instance
-  const program = ts.createProgram(filteredFiles, parsedConfig.options);
-  const checker = program.getTypeChecker();
-  
-  // Get all diagnostics
-  const syntacticDiagnostics = program.getSyntacticDiagnostics();
-  const semanticDiagnostics = program.getSemanticDiagnostics();
-  const declarationDiagnostics = program.getDeclarationDiagnostics();
-  
-  const allDiagnostics = [
-    ...syntacticDiagnostics,
-    ...semanticDiagnostics,
-    ...declarationDiagnostics
+  // Get diagnostics
+  const diagnostics = [
+    ...program.getSemanticDiagnostics(),
+    ...program.getSyntacticDiagnostics(),
+    ...program.getGlobalDiagnostics()
   ];
   
-  // Process the diagnostics
-  const result: ErrorFindingResult = {
-    errorCount: 0,
-    warningCount: 0,
-    errorsByFile: {},
-    fileCount: filteredFiles.length,
-    processingTimeMs: 0,
-    addedErrors: []
-  };
+  // Process diagnostics
+  const errors: TypeScriptErrorDetail[] = [];
+  const errorsByFile: Record<string, number> = {};
+  const errorsByCategory: Record<string, number> = {};
+  const errorsByCode: Record<string, number> = {};
+  let totalWarnings = 0;
+  let scannedLineCount = 0;
   
-  for (const diagnostic of allDiagnostics) {
-    if (!diagnostic.file) continue;
-    
-    const filePath = diagnostic.file.fileName;
-    
-    // Increment error count by file
-    result.errorsByFile[filePath] = (result.errorsByFile[filePath] || 0) + 1;
-    
-    // Determine if it's an error or warning
-    if (diagnostic.category === ts.DiagnosticCategory.Error) {
-      result.errorCount++;
-    } else if (diagnostic.category === ts.DiagnosticCategory.Warning) {
-      result.warningCount++;
-    }
-    
-    // Get line and character position
-    const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
-    
-    // Get the error message
-    const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-    
-    // Get error code
-    const code = `TS${diagnostic.code}`;
-    
-    // Get error context (lines around the error)
-    const fileContent = diagnostic.file.text;
-    const lineStart = getLineStart(fileContent, diagnostic.start!);
-    const lineEnd = getLineEnd(fileContent, diagnostic.start!);
-    const errorLine = fileContent.substring(lineStart, lineEnd);
-    
-    // Get a few lines before and after for context
-    const contextStart = getPositionOfLineN(fileContent, Math.max(1, line - 3));
-    const contextEnd = getPositionOfLineN(fileContent, line + 3);
-    const context = fileContent.substring(contextStart, contextEnd);
-    
-    // Determine category and severity
-    const category = mapToDiagnosticCategory(diagnostic.category, diagnostic.code, message);
-    const severity = mapToSeverity(diagnostic.category, opts.severity);
-    
-    // Create an error object
-    const error: InsertTypeScriptError = {
-      errorCode: code,
-      filePath,
-      lineNumber: line + 1, // convert to 1-based
-      columnNumber: character + 1, // convert to 1-based
-      errorMessage: message,
-      errorContext: context,
-      category,
-      severity,
-      status: 'detected',
-      metadata: {
-        tscVersion: ts.version,
-        compiler_options: parsedConfig.options
-      }
-    };
-    
+  // Count lines in scanned files
+  for (const file of tsFiles) {
     try {
-      // Add the error to the database
-      const addedError = await tsErrorStorage.addTypescriptError(error);
-      
-      // Add to results
-      result.addedErrors.push({
-        id: addedError.id,
-        filePath: addedError.filePath,
-        errorMessage: addedError.errorMessage
-      });
-    } catch (err) {
-      console.error(`Failed to add error to database: ${err instanceof Error ? err.message : String(err)}`);
+      const content = fs.readFileSync(file, 'utf8');
+      scannedLineCount += content.split('\n').length;
+    } catch (error) {
+      console.error(`Error reading file ${file}: ${error.message}`);
     }
   }
   
-  result.processingTimeMs = Date.now() - startTime;
+  // Process each diagnostic
+  for (const diagnostic of diagnostics) {
+    if (errors.length >= opts.maxErrors) {
+      break;
+    }
+    
+    if (!diagnostic.file) {
+      continue;
+    }
+    
+    const fileName = diagnostic.file.fileName;
+    const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
+    const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
+    const code = `TS${diagnostic.code}`;
+    
+    // Determine error category and severity
+    const category = categorizeError(diagnostic.code, message);
+    const severity = determineSeverity(diagnostic.category, diagnostic.code, message);
+    
+    // Update counts
+    if (!errorsByFile[fileName]) {
+      errorsByFile[fileName] = 0;
+    }
+    errorsByFile[fileName]++;
+    
+    if (!errorsByCategory[category]) {
+      errorsByCategory[category] = 0;
+    }
+    errorsByCategory[category]++;
+    
+    if (!errorsByCode[code]) {
+      errorsByCode[code] = 0;
+    }
+    errorsByCode[code]++;
+    
+    if (diagnostic.category === ts.DiagnosticCategory.Warning) {
+      totalWarnings++;
+    }
+    
+    // Add error
+    errors.push({
+      id: `${fileName}:${line}:${character}:${code}`,
+      code,
+      message,
+      file: fileName,
+      line: line + 1,
+      column: character + 1,
+      severity,
+      category,
+      context: getLineContext(diagnostic.file, diagnostic.start!, diagnostic.length!),
+      snippet: getCodeSnippet(diagnostic.file, line)
+    });
+  }
   
-  return result;
+  const processingTimeMs = Date.now() - startTime;
+  
+  // Generate summary
+  const summary = generateSummary(errors, errorsByFile, errorsByCategory, processingTimeMs, tsFiles.length, scannedLineCount);
+  
+  return {
+    errors,
+    errorsByFile,
+    errorsByCategory,
+    errorsByCode,
+    totalErrors: errors.length,
+    totalWarnings,
+    processingTimeMs,
+    fileCount: tsFiles.length,
+    scannedLineCount,
+    summary
+  };
 }
 
 /**
- * Maps a TypeScript diagnostic category to our ErrorCategory
+ * Find all TypeScript files in a directory
  */
-function mapToDiagnosticCategory(
-  category: ts.DiagnosticCategory,
-  code: number,
-  message: string
-): ErrorCategory {
-  // Determine category based on the error code and message
-  if (message.includes('Type') && message.includes('is not assignable')) {
-    return 'type_mismatch';
+async function findTypeScriptFiles(
+  dir: string,
+  includeNodeModules = false,
+  excludePatterns: string[] = []
+): Promise<string[]> {
+  const files: string[] = [];
+  
+  async function traverseDirectory(currentDir: string) {
+    const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = path.join(currentDir, entry.name);
+      
+      // Check exclude patterns
+      if (excludePatterns.some(pattern => new RegExp(pattern).test(fullPath))) {
+        continue;
+      }
+      
+      if (entry.isDirectory()) {
+        // Skip node_modules unless explicitly included
+        if (entry.name === 'node_modules' && !includeNodeModules) {
+          continue;
+        }
+        
+        // Skip common directories to avoid
+        if (['dist', 'build', '.git', '.vscode'].includes(entry.name)) {
+          continue;
+        }
+        
+        await traverseDirectory(fullPath);
+      } else if (entry.isFile() && /\.(ts|tsx)$/.test(entry.name)) {
+        files.push(fullPath);
+      }
+    }
   }
   
-  if (message.includes('Cannot find') || message.includes('does not exist')) {
-    if (message.includes('type') || message.includes('interface')) {
-      return 'missing_type';
-    } else {
-      return 'undefined_variable';
-    }
+  await traverseDirectory(dir);
+  return files;
+}
+
+/**
+ * Get line context for an error
+ */
+function getLineContext(file: ts.SourceFile, start: number, length: number): string {
+  const text = file.text;
+  const startPos = Math.max(0, start - 20);
+  const endPos = Math.min(text.length, start + length + 20);
+  
+  return text.substring(startPos, endPos);
+}
+
+/**
+ * Get code snippet for an error
+ */
+function getCodeSnippet(file: ts.SourceFile, line: number): string {
+  const lines = file.text.split('\n');
+  const startLine = Math.max(0, line - 2);
+  const endLine = Math.min(lines.length - 1, line + 2);
+  
+  return lines.slice(startLine, endLine + 1).map((l, i) => {
+    const lineNum = startLine + i + 1;
+    const prefix = lineNum === line + 1 ? '> ' : '  ';
+    return `${prefix}${lineNum}: ${l}`;
+  }).join('\n');
+}
+
+/**
+ * Categorize error by code and message
+ */
+function categorizeError(code: number, message: string): ErrorCategory {
+  if (message.includes('syntax') || message.includes('expected')) {
+    return ErrorCategory.SYNTAX_ERROR;
+  }
+  
+  if (message.includes('type') && (message.includes('not assignable') || message.includes('expected'))) {
+    return ErrorCategory.TYPE_MISMATCH;
+  }
+  
+  if (message.includes('cannot find module') || message.includes('cannot find name')) {
+    return ErrorCategory.IMPORT_ERROR;
+  }
+  
+  if (message.includes('function') || message.includes('call') || message.includes('argument')) {
+    return ErrorCategory.FUNCTION_ERROR;
+  }
+  
+  if (message.includes('declared') || message.includes('declaration')) {
+    return ErrorCategory.DECLARATION_ERROR;
   }
   
   if (message.includes('null') || message.includes('undefined')) {
-    return 'null_reference';
+    return ErrorCategory.NULL_REFERENCE;
   }
   
-  if (message.includes('interface') && message.includes('implement')) {
-    return 'interface_mismatch';
+  if (message.toLowerCase().includes('security') || 
+      message.toLowerCase().includes('vulnerability') ||
+      code === 2335 || // Do not use private members in type annotations
+      code === 2539) { // Cannot assign to 'X' because it is not a variable.
+    return ErrorCategory.SECURITY;
   }
   
-  if (message.includes('Cannot find module') || message.includes('import')) {
-    return 'import_error';
-  }
-  
-  if (category === ts.DiagnosticCategory.Error && (code < 2000 || message.includes('Syntax'))) {
-    return 'syntax_error';
-  }
-  
-  if (message.includes('constraint') || message.includes('generic')) {
-    return 'generic_constraint';
-  }
-  
-  if (message.includes('declare') || message.includes('declaration')) {
-    return 'declaration_error';
-  }
-  
-  return 'other';
+  return ErrorCategory.UNKNOWN;
 }
 
 /**
- * Maps a TypeScript diagnostic category to our ErrorSeverity
+ * Determine error severity
  */
-function mapToSeverity(
-  category: ts.DiagnosticCategory,
-  defaultSeverity: ErrorSeverity = 'high'
-): ErrorSeverity {
-  switch (category) {
-    case ts.DiagnosticCategory.Error:
-      return 'high';
-    case ts.DiagnosticCategory.Warning:
-      return 'medium';
-    case ts.DiagnosticCategory.Suggestion:
-      return 'low';
-    case ts.DiagnosticCategory.Message:
-      return 'low';
-    default:
-      return defaultSeverity;
+function determineSeverity(category: ts.DiagnosticCategory, code: number, message: string): ErrorSeverity {
+  // Security-related errors are critical
+  if (message.toLowerCase().includes('security') || 
+      message.toLowerCase().includes('vulnerability')) {
+    return ErrorSeverity.CRITICAL;
   }
+  
+  // Syntax errors and type errors that prevent compilation are high severity
+  if (category === ts.DiagnosticCategory.Error) {
+    if (message.includes('syntax') || 
+        message.includes('expected') || 
+        message.includes('cannot find') ||
+        code === 2554) { // Expected X arguments, but got Y
+      return ErrorSeverity.HIGH;
+    }
+    return ErrorSeverity.MEDIUM;
+  }
+  
+  // Warnings are low severity
+  if (category === ts.DiagnosticCategory.Warning) {
+    return ErrorSeverity.LOW;
+  }
+  
+  // Suggestions are low severity
+  if (category === ts.DiagnosticCategory.Suggestion) {
+    return ErrorSeverity.LOW;
+  }
+  
+  return ErrorSeverity.MEDIUM;
 }
 
 /**
- * Gets the start position of the line containing the position
+ * Generate a summary of the findings
  */
-function getLineStart(text: string, position: number): number {
-  for (let i = position; i >= 0; i--) {
-    if (text[i] === '\n') {
-      return i + 1;
-    }
+function generateSummary(
+  errors: TypeScriptErrorDetail[],
+  errorsByFile: Record<string, number>,
+  errorsByCategory: Record<string, number>,
+  processingTimeMs: number,
+  fileCount: number,
+  scannedLineCount: number
+): string {
+  const lines: string[] = [];
+  
+  lines.push(`TypeScript Error Finder Results`);
+  lines.push(`===========================\n`);
+  lines.push(`Found ${errors.length} errors in ${fileCount} files (${scannedLineCount} lines of code)`);
+  lines.push(`Scan completed in ${(processingTimeMs / 1000).toFixed(2)} seconds\n`);
+  
+  // Add category breakdown
+  lines.push(`Errors by category:`);
+  for (const [category, count] of Object.entries(errorsByCategory)) {
+    lines.push(`  ${category}: ${count}`);
   }
-  return 0;
+  lines.push('');
+  
+  // Add top files with errors
+  const filesSorted = Object.entries(errorsByFile)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  
+  lines.push(`Top files with errors:`);
+  for (const [file, count] of filesSorted) {
+    lines.push(`  ${file}: ${count}`);
+  }
+  
+  return lines.join('\n');
 }
 
-/**
- * Gets the end position of the line containing the position
- */
-function getLineEnd(text: string, position: number): number {
-  for (let i = position; i < text.length; i++) {
-    if (text[i] === '\n') {
-      return i;
-    }
-  }
-  return text.length;
-}
-
-/**
- * Gets the position of the Nth line (0-based)
- */
-function getPositionOfLineN(text: string, lineNumber: number): number {
-  let line = 0;
-  let pos = 0;
-  
-  while (line < lineNumber && pos < text.length) {
-    if (text[pos] === '\n') {
-      line++;
-    }
-    pos++;
-  }
-  
-  return pos;
-}
-
-/**
- * Creates a project-wide analysis based on error finding results
- * 
- * @param result Error finding results
- * @returns The project analysis ID
- */
-export async function createProjectAnalysis(
-  result: ErrorFindingResult,
-  userId?: number
-): Promise<number> {
-  const analysis = await tsErrorStorage.addProjectAnalysis({
-    projectId: 1, // Default project ID
-    errorCount: result.errorCount,
-    warningCount: result.warningCount,
-    fixedCount: 0, // No fixes applied yet
-    status: 'completed',
-    duration: result.processingTimeMs,
-    executedBy: userId || null,
-    analysisData: {
-      errorHotspots: {
-        files: result.errorsByFile,
-        components: {} // Empty components object to satisfy type requirements
-      },
-      stats: {
-        fileCount: result.fileCount,
-        filesWithErrors: Object.keys(result.errorsByFile).length,
-      }
-    }
-  });
-  
-  return analysis.id;
-}
-
-/**
- * Scans a specific file for TypeScript errors
- * 
- * @param filePath Path to the file to scan
- * @param options Options for the error finding process
- * @returns Results of the error finding process
- */
-export async function findErrorsInFile(
-  filePath: string,
-  options: Partial<ErrorFinderOptions> = {}
-): Promise<ErrorFindingResult> {
-  const opts = { ...defaultOptions, ...options };
-  
-  // Resolve tsconfig path
-  const tsconfigPath = opts.tsconfigPath || ts.findConfigFile(
-    opts.projectRoot,
-    ts.sys.fileExists,
-    'tsconfig.json'
-  );
-  
-  if (!tsconfigPath) {
-    throw new Error(`Could not find tsconfig.json in ${opts.projectRoot}`);
-  }
-  
-  // Create a program just for this file
-  const program = ts.createProgram([filePath], {
-    target: ts.ScriptTarget.ES2020,
-    module: ts.ModuleKind.ESNext,
-    strict: true,
-    esModuleInterop: true,
-    skipLibCheck: true,
-    forceConsistentCasingInFileNames: true,
-  });
-  
-  // Get diagnostics for this file
-  const syntacticDiagnostics = program.getSyntacticDiagnostics();
-  const semanticDiagnostics = program.getSemanticDiagnostics();
-  
-  const allDiagnostics = [
-    ...syntacticDiagnostics,
-    ...semanticDiagnostics
-  ];
-  
-  // Initialize result object
-  const result: ErrorFindingResult = {
-    errorCount: 0,
-    warningCount: 0,
-    errorsByFile: {},
-    fileCount: 1,
-    processingTimeMs: 0,
-    addedErrors: []
-  };
-  
-  const startTime = Date.now();
-  
-  // Process diagnostics
-  for (const diagnostic of allDiagnostics) {
-    if (!diagnostic.file) continue;
-    
-    // Only process diagnostics for the target file
-    if (diagnostic.file.fileName !== filePath) continue;
-    
-    // Process this diagnostic same as in findTypeScriptErrors
-    result.errorsByFile[filePath] = (result.errorsByFile[filePath] || 0) + 1;
-    
-    if (diagnostic.category === ts.DiagnosticCategory.Error) {
-      result.errorCount++;
-    } else if (diagnostic.category === ts.DiagnosticCategory.Warning) {
-      result.warningCount++;
-    }
-    
-    const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
-    const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-    const code = `TS${diagnostic.code}`;
-    
-    const fileContent = diagnostic.file.text;
-    const lineStart = getLineStart(fileContent, diagnostic.start!);
-    const lineEnd = getLineEnd(fileContent, diagnostic.start!);
-    const errorLine = fileContent.substring(lineStart, lineEnd);
-    
-    const contextStart = getPositionOfLineN(fileContent, Math.max(1, line - 3));
-    const contextEnd = getPositionOfLineN(fileContent, line + 3);
-    const context = fileContent.substring(contextStart, contextEnd);
-    
-    const category = mapToDiagnosticCategory(diagnostic.category, diagnostic.code, message);
-    const severity = mapToSeverity(diagnostic.category, opts.severity);
-    
-    const error: InsertTypeScriptError = {
-      errorCode: code,
-      filePath,
-      lineNumber: line + 1,
-      columnNumber: character + 1,
-      errorMessage: message,
-      errorContext: context,
-      category,
-      severity,
-      status: 'detected',
-      metadata: {
-        tscVersion: ts.version
-      }
-    };
-    
-    try {
-      const addedError = await tsErrorStorage.addTypescriptError(error);
-      
-      result.addedErrors.push({
-        id: addedError.id,
-        filePath: addedError.filePath,
-        errorMessage: addedError.errorMessage
-      });
-    } catch (err) {
-      console.error(`Failed to add error to database: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }
-  
-  result.processingTimeMs = Date.now() - startTime;
-  
-  return result;
-}
-
-/**
- * Gets the current project compilation status
- * 
- * @param options Options for the error finding process
- * @returns Object with error and warning counts
- */
-export async function getProjectCompilationStatus(
-  options: Partial<ErrorFinderOptions> = {}
-): Promise<{
-  success: boolean;
-  errorCount: number;
-  warningCount: number;
-  timeMs: number;
-}> {
-  const startTime = Date.now();
-  const opts = { ...defaultOptions, ...options };
-  
-  // Resolve tsconfig path
-  const tsconfigPath = opts.tsconfigPath || ts.findConfigFile(
-    opts.projectRoot,
-    ts.sys.fileExists,
-    'tsconfig.json'
-  );
-  
-  if (!tsconfigPath) {
-    throw new Error(`Could not find tsconfig.json in ${opts.projectRoot}`);
-  }
-  
-  // Read the config file
-  const configFile = ts.readConfigFile(tsconfigPath, ts.sys.readFile);
-  if (configFile.error) {
-    throw new Error(`Error reading tsconfig.json: ${configFile.error.messageText}`);
-  }
-  
-  const parsedConfig = ts.parseJsonConfigFileContent(
-    configFile.config,
-    ts.sys,
-    path.dirname(tsconfigPath)
-  );
-  
-  // Create a program instance
-  const program = ts.createProgram(
-    parsedConfig.fileNames,
-    parsedConfig.options
-  );
-  
-  // Get diagnostics
-  const syntacticDiagnostics = program.getSyntacticDiagnostics();
-  const semanticDiagnostics = program.getSemanticDiagnostics();
-  
-  // Count errors and warnings
-  let errorCount = 0;
-  let warningCount = 0;
-  
-  for (const diagnostic of [...syntacticDiagnostics, ...semanticDiagnostics]) {
-    if (diagnostic.category === ts.DiagnosticCategory.Error) {
-      errorCount++;
-    } else if (diagnostic.category === ts.DiagnosticCategory.Warning) {
-      warningCount++;
-    }
-  }
-  
-  return {
-    success: errorCount === 0,
-    errorCount,
-    warningCount,
-    timeMs: Date.now() - startTime
-  };
-}
+export default {
+  findTypeScriptErrors
+};
