@@ -57,14 +57,13 @@ router.post('/login', async (req: Request, res: Response) => {
         
         // Log this security event
         logSecurityEvent({
-          category: SecurityEventCategory.AUTHENTICATION,
-          severity: SecurityEventSeverity.MEDIUM,
-          message: 'Login attempted on locked account',
-          data: { 
-            username: req.body.username,
-            remaining_lockout_minutes: remainingTime,
-            ip: req.ip
-          }
+          type: 'LOGIN_ATTEMPT_LOCKED_ACCOUNT',
+          details: 'Login attempted on locked account',
+          severity: 'medium',
+          userId: userRecord?.id,
+          username: req.body.username,
+          remaining_lockout_minutes: remainingTime,
+          ip: req.ip
         });
         
         return res.status(401).json({
@@ -101,15 +100,14 @@ router.post('/login', async (req: Request, res: Response) => {
             
             // Log this security event
             logSecurityEvent({
-              category: SecurityEventCategory.AUTHENTICATION,
-              severity: SecurityEventSeverity.HIGH,
-              message: 'Account locked due to too many failed login attempts',
-              data: { 
-                username: req.body.username,
-                attempts: updatedAttempts,
-                lockout_duration_minutes: LOCKOUT_DURATION_MS / 60000,
-                ip: req.ip
-              }
+              type: 'ACCOUNT_LOCKED',
+              details: 'Account locked due to too many failed login attempts',
+              severity: 'high',
+              userId: userRecord.id,
+              username: req.body.username,
+              attempts: updatedAttempts,
+              lockout_duration_minutes: LOCKOUT_DURATION_MS / 60000,
+              ip: req.ip
             });
           }
           
@@ -129,14 +127,12 @@ router.post('/login', async (req: Request, res: Response) => {
         
         // Log this security event
         logSecurityEvent({
-          category: SecurityEventCategory.AUTHENTICATION,
-          severity: SecurityEventSeverity.MEDIUM,
-          message: 'Failed login attempt',
-          data: { 
-            username: req.body.username,
-            reason: info?.message || 'Invalid credentials',
-            ip: req.ip
-          }
+          type: 'LOGIN_FAILURE',
+          details: 'Failed login attempt',
+          severity: 'medium',
+          username: req.body.username,
+          reason: info?.message || 'Invalid credentials',
+          ip: req.ip
         });
         
         return res.status(401).json({
@@ -166,15 +162,13 @@ router.post('/login', async (req: Request, res: Response) => {
         
         // Log this security event
         logSecurityEvent({
-          category: SecurityEventCategory.AUTHENTICATION,
-          severity: SecurityEventSeverity.INFO,
-          message: 'Successful login',
-          data: { 
-            userId: user.id,
-            username: user.username,
-            method: '2FA', 
-            ip: req.ip
-          }
+          type: 'LOGIN_SUCCESS',
+          details: 'Successful login',
+          severity: 'low',
+          userId: user.id,
+          username: user.username,
+          method: '2FA', 
+          ip: req.ip
         });
         
         // Success response
@@ -197,13 +191,10 @@ router.post('/login', async (req: Request, res: Response) => {
     
     // Log this security event
     logSecurityEvent({
-      category: SecurityEventCategory.AUTHENTICATION,
-      severity: SecurityEventSeverity.ERROR,
-      message: 'Error during login process',
-      data: { 
-        details: `An error occurred during login: ${(error as Error).message}`,
-        ip: req.ip
-      }
+      type: 'LOGIN_ERROR',
+      details: `An error occurred during login: ${(error as Error).message}`,
+      severity: 'high',
+      ip: req.ip
     });
     
     res.status(500).json({
