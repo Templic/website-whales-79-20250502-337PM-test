@@ -706,6 +706,7 @@ export async function recordDailyMetrics(): Promise<void> {
             ? (fixedErrorsResult?.count || 0) / totalErrorsResult.count * 100 
             : 0
         }
+        // scan_id is omitted since it doesn't exist in the database
       });
     
     console.log('Recorded daily TypeScript error metrics');
