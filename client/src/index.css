@@ -242,7 +242,39 @@ svg[aria-hidden="true"] {
     --font-almendra: 'Almendra', serif;
     --font-cormorant-garamond: 'Cormorant Garamond', serif;
     --font-nebula: sans-serif;
+    
+    /* Z-index layering system */
+    --z-background: -10;
+    --z-base: 0;
+    --z-content: 10;
+    --z-interactive: 20;
+    --z-overlay: 30;
+    --z-modal: 40;
+    --z-popup: 50;
+    --z-important: 60;
+    --z-tooltip: 70;
+    --z-fixed-header: 100;
+    --z-floating-menu: 110;
+    --z-cosmic-highlight: 120;
+    --z-notification: 130;
+    --z-max: 9999;
   }
+  
+  /* Z-index utility classes - Organized layering system */
+  .z-background { z-index: var(--z-background); }
+  .z-base { z-index: var(--z-base); }
+  .z-content { z-index: var(--z-content); }
+  .z-interactive { z-index: var(--z-interactive); }
+  .z-overlay { z-index: var(--z-overlay); }
+  .z-modal { z-index: var(--z-modal); }
+  .z-popup { z-index: var(--z-popup); }
+  .z-important { z-index: var(--z-important); }
+  .z-tooltip { z-index: var(--z-tooltip); }
+  .z-fixed-header { z-index: var(--z-fixed-header); }
+  .z-floating-menu { z-index: var(--z-floating-menu); }
+  .z-cosmic-highlight { z-index: var(--z-cosmic-highlight); }
+  .z-notification { z-index: var(--z-notification); }
+  .z-max { z-index: var(--z-max); }
   
   /* Nav link focus styles */
   .nav-link:focus-visible {

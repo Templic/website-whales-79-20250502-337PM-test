@@ -139,41 +139,45 @@ export const MainHeader = () => {
         boxShadow: '0 0 20px rgba(0, 235, 214, 0.15), 0 0 40px rgba(111, 76, 255, 0.1)'
       }}
     >
-      {/* Subtle geometric background patterns */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-5">
+      {/* Subtle geometric background patterns - with z-index control */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-5 z-background">
         <SacredGeometry 
           type="merkaba" 
           className="absolute -top-20 -right-20 w-64 h-64 text-cyan-400" 
           animated={true}
+          aria-hidden="true"
         />
         <SacredGeometry 
           type="dodecahedron" 
           className="absolute -bottom-40 -left-40 w-96 h-96 text-purple-400" 
           animated={true}
+          aria-hidden="true"
         />
       </div>
       
       <div className="container mx-auto px-4 h-full relative">
-        {/* Sacred Geometry Elements - Left Side */}
-        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 hidden md:block">
+        {/* Sacred Geometry Elements - Left Side - with z-index layering system */}
+        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 hidden md:block z-content">
           <SacredGeometry 
             type="merkaba" 
             size={32} 
             color="cyan" 
             animated={true} 
-            className="opacity-60 hover:opacity-90 transition-opacity duration-500 cosmic-glow-cyan" 
+            className="opacity-60 hover:opacity-90 transition-opacity duration-500 cosmic-glow-cyan z-cosmic-highlight" 
+            aria-hidden="true"
           />
         </div>
         
-        {/* Sacred Geometry Elements - Right Side */}
-        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 hidden md:block">
+        {/* Sacred Geometry Elements - Right Side - with z-index layering system */}
+        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 hidden md:block z-content">
           <SacredGeometry 
             type="merkaba" 
             size={32} 
             color="purple" 
             animated={true}
             reversed={true}
-            className="opacity-60 hover:opacity-90 transition-opacity duration-500 cosmic-glow-purple" 
+            className="opacity-60 hover:opacity-90 transition-opacity duration-500 cosmic-glow-purple z-cosmic-highlight" 
+            aria-hidden="true"
           />
         </div>
 
@@ -358,7 +362,7 @@ export const MainHeader = () => {
         </div>
       </div>
       
-      {/* Mobile menu - Only visible when open on small screens */}
+      {/* Mobile menu - Only visible when open on small screens - with z-index system */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -366,7 +370,7 @@ export const MainHeader = () => {
             animate="visible"
             exit="exit"
             variants={containerVariants}
-            className="md:hidden overflow-hidden bg-black/90 backdrop-blur-md border-t border-white/5"
+            className="md:hidden overflow-hidden bg-black/90 backdrop-blur-md border-t border-white/5 z-floating-menu"
           >
             <motion.div 
               variants={itemVariants}
