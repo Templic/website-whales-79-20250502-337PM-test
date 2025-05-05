@@ -166,36 +166,170 @@ async function checkDependencies(vulnerabilities: SecurityVulnerability[]): Prom
  */
 async function checkForSecrets(vulnerabilities: SecurityVulnerability[]): Promise<void> {
   try {
-    // Use grep to search for potential API keys and secrets
-    // Note: This might produce false positives
-    const { stdout } = await execPromise(
-      'grep -r -i -E \'(api[_-]?key[\s]*=[\s]*[\"\'][a-zA-Z0-9_\-]{16,}[\"\']|secret[\s]*=[\s]*[\"\'][a-zA-Z0-9_\-]{16,}[\"\']|password[\s]*=[\s]*[\"\'][^\"\',]+[\"\']|token[\s]*=[\s]*[\"\'][a-zA-Z0-9_\-.]+[\"\']|access_token[\s]*=[\s]*[\"\'][a-zA-Z0-9_\-.]+[\"\']|authz?[\s]*=[\s]*[\"\'][a-zA-Z0-9_\-.]+[\"\']|bearer[\s]+[a-zA-Z0-9_\-.]+|-----BEGIN\\s+(?:RSA|OPENSSH|DSA|EC)\\s+PRIVATE\\s+KEY-----)\'  --include="*.(js|ts|jsx|tsx|json|env|yaml|yml)$" --exclude-dir="node_modules" --exclude-dir=".git" --exclude-dir="dist" --exclude-dir="build" --exclude-dir="logs" --exclude-dir="coverage" . || true'
-    );
+    // Define patterns for different types of secrets with specific formats
+    const secretPatterns = [
+      // API Keys and Tokens
+      {
+        type: 'API Key',
+        severity: 'critical',
+        regex: '(api[_-]?key|api_token|api_secret)[\s]*=[\s]*[\"\']([a-zA-Z0-9_\\-]{16,})[\"\']',
+        recommendation: 'Move API keys to environment variables and use a secret management system'
+      },
+      // Generic secrets
+      {
+        type: 'Secret key',
+        severity: 'high',
+        regex: '(secret|private_key|private[-_]token)[\s]*=[\s]*[\"\']([a-zA-Z0-9_\\-]{8,})[\"\']',
+        recommendation: 'Store secrets in environment variables or a vault system'
+      },
+      // Authentication tokens
+      {
+        type: 'Authentication token',
+        severity: 'high',
+        regex: '(auth[-_]?token|access[-_]?token|bearer)[\s]*=[\s]*[\"\']([a-zA-Z0-9_\\-.]{8,})[\"\']',
+        recommendation: 'Use a token management system and avoid hardcoding tokens'
+      },
+      // Cloud provider credentials (AWS, GCP, Azure)
+      {
+        type: 'Cloud credentials',
+        severity: 'critical',
+        regex: '(aws_access_key|aws_secret|AKIA[A-Z0-9]{16}|gcp_key|azure_key)[\s]*=[\s]*[\"\']([a-zA-Z0-9/+]{8,})[\"\']',
+        recommendation: 'Use IAM roles or environment-based authentication instead of hardcoded credentials'
+      },
+      // Database credentials
+      {
+        type: 'Database credentials',
+        severity: 'critical',
+        regex: '(db_password|database_pass|mongodb+srv:|postgres://|mysql://)[\s]*[\"\'=]([^\"\']+)[\"\']',
+        recommendation: 'Use environment variables for database connections and consider connection pooling for security'
+      },
+      // Private keys and certificates
+      {
+        type: 'Private key',
+        severity: 'critical',
+        regex: '-----BEGIN\\s+(?:RSA|OPENSSH|DSA|EC)\\s+PRIVATE\\s+KEY-----',
+        recommendation: 'Store private keys in a secure key management system, never in code'
+      },
+      // OAuth credentials
+      {
+        type: 'OAuth credentials',
+        severity: 'high',
+        regex: '(client_secret|consumer_secret)[\s]*=[\s]*[\"\']([a-zA-Z0-9_\\-]{8,})[\"\']',
+        recommendation: 'Use a secure credential management system for OAuth secrets'
+      },
+      // Webhooks and webhook secrets
+      {
+        type: 'Webhook secret',
+        severity: 'high',
+        regex: '(webhook[-_]?secret|webhook[-_]?token)[\s]*=[\s]*[\"\']([a-zA-Z0-9_\\-]{8,})[\"\']',
+        recommendation: 'Store webhook secrets in environment variables'
+      },
+      // JWT secrets
+      {
+        type: 'JWT secret',
+        severity: 'high',
+        regex: '(jwt[-_]?secret|jwt[-_]?key)[\s]*=[\s]*[\"\']([a-zA-Z0-9_\\-]{8,})[\"\']',
+        recommendation: 'Use environment variables for JWT secrets and consider using asymmetric keys'
+      }
+    ];
     
-    if (stdout.trim()) {
-      const results = stdout.split('\n').filter(line => line.trim() !== '');
-      
-      // Create a vulnerability for each detected secret
-      for (const result of results) {
-        const [file, ...contentParts] = result.split(':');
-        const content = contentParts.join(':');
+    // Excluded directories to avoid scanning
+    const excludedDirs = [
+      'node_modules',
+      '.git',
+      'dist',
+      'build',
+      'logs',
+      'coverage',
+      'tmp',
+      'temp',
+      '.next',
+      '.nuxt',
+      '__tests__'
+    ].map(dir => `--exclude-dir="${dir}"`).join(' ');
+    
+    // File patterns to include in scan
+    const includePatterns = [
+      'js', 'ts', 'jsx', 'tsx', 'json', 'env', 'yaml', 'yml', 'config', 'ini', 'xml', 'pem', 'key'
+    ].map(ext => `--include="*.${ext}"`).join(' ');
+    
+    // Find potential secrets for each pattern
+    for (const pattern of secretPatterns) {
+      try {
+        const cmd = `grep -r -i -E '${pattern.regex}' ${includePatterns} ${excludedDirs} . || true`;
+        const { stdout } = await execPromise(cmd);
         
-        if (file && content) {
-          // Check if this is in an example file or test code
-          const isExample = file.includes('example') || file.includes('test') || file.includes('demo');
+        if (stdout.trim()) {
+          const results = stdout.split('\n').filter(line => line.trim() !== '');
           
-          vulnerabilities.push({
-            id: uuidv4(),
-            severity: isExample ? 'low' : 'high',
-            description: 'Potential hardcoded secret or API key detected',
-            location: file,
-            recommendation: 'Move secrets to environment variables or a secure secret management system'
-          });
+          // Add vulnerabilities for each result
+          for (const result of results) {
+            const [file, ...contentParts] = result.split(':');
+            const content = contentParts.join(':');
+            
+            if (file && content) {
+              // Check if this is in an example or test file (lower severity)
+              const isExample = file.toLowerCase().includes('example') || 
+                               file.toLowerCase().includes('test') || 
+                               file.toLowerCase().includes('demo') ||
+                               file.toLowerCase().includes('sample');
+              
+              // Determine actual content that matched (for better reporting)
+              const matches = content.match(new RegExp(pattern.regex, 'i'));
+              const matchedContent = matches ? matches[0] : 'Secret pattern detected';
+              
+              vulnerabilities.push({
+                id: uuidv4(),
+                severity: isExample ? 'low' : pattern.severity as 'low' | 'medium' | 'high' | 'critical',
+                description: `${pattern.type} detected: ${matchedContent.substring(0, 30)}...`,
+                location: file,
+                recommendation: pattern.recommendation
+              });
+            }
+          }
         }
+      } catch (error) {
+        console.error(`Error checking for ${pattern.type}:`, error);
       }
     }
+    
+    // Special check for GitHub-specific tokens
+    try {
+      // GitHub tokens and PATs have specific formats
+      const { stdout: githubTokens } = await execPromise(
+        `grep -r -i -E 'github_token|gh[a-z0-9_]*token|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|ghu_[a-zA-Z0-9]{36}|ghs_[a-zA-Z0-9]{36}|ghr_[a-zA-Z0-9]{36}' ${includePatterns} ${excludedDirs} . || true`
+      );
+      
+      if (githubTokens.trim()) {
+        const results = githubTokens.split('\n').filter(line => line.trim() !== '');
+        
+        for (const result of results) {
+          const [file, ...contentParts] = result.split(':');
+          const content = contentParts.join(':');
+          
+          if (file && content) {
+            vulnerabilities.push({
+              id: uuidv4(),
+              severity: 'critical',
+              description: 'GitHub token or Personal Access Token detected',
+              location: file,
+              recommendation: 'Remove GitHub tokens from code and use GitHub Actions secrets instead'
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking for GitHub tokens:', error);
+    }
+    
   } catch (error) {
     console.error('Error checking for secrets:', error);
+    vulnerabilities.push({
+      id: uuidv4(),
+      severity: 'medium',
+      description: 'Error occurred while checking for hardcoded secrets',
+      recommendation: 'Run a manual security audit to check for hardcoded secrets'
+    });
   }
 }
 

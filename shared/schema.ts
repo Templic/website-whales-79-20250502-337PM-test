@@ -66,6 +66,7 @@ export const users = pgTable("users", {
   bio: text("bio"),
   profileImageUrl: text("profile_image_url"),
   lastLogin: timestamp("last_login"),
+  loginAttempts: integer("login_attempts").default(0), // Track failed login attempts
   lockedUntil: timestamp("locked_until"), // Added for account lockout functionality
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
