@@ -139,29 +139,59 @@ export const MainHeader = () => {
 
   return (
     <header 
-      className={`fixed top-0 z-[100] w-full bg-black/80 backdrop-blur-lg border-b border-white/5 transition-all duration-300 ${
+      className={`fixed top-0 z-[100] mx-auto left-0 right-0 max-w-[1400px] bg-[#070b1a]/90 backdrop-blur-lg border border-white/10 rounded-b-xl transition-all duration-300 ${
         isScrolled ? 'h-16' : 'h-20'
       }`}
+      style={{
+        boxShadow: '0 0 20px rgba(0, 235, 214, 0.15), 0 0 40px rgba(111, 76, 255, 0.1)'
+      }}
     >
+      {/* Sacred Geometry Elements - Left Side */}
+      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 hidden md:block">
+        <SacredGeometry 
+          type="merkaba" 
+          size={32} 
+          color="cyan" 
+          animated={true} 
+          className="opacity-60 hover:opacity-90 transition-opacity duration-500" 
+        />
+      </div>
+      
+      {/* Sacred Geometry Elements - Right Side */}
+      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 hidden md:block">
+        <SacredGeometry 
+          type="merkaba" 
+          size={32} 
+          color="purple" 
+          animated={true}
+          reversed={true}
+          className="opacity-60 hover:opacity-90 transition-opacity duration-500" 
+        />
+      </div>
+      
       <div className="container mx-auto px-4 h-full">
         <div className="flex items-center justify-between h-full relative">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
-            <div className="relative h-12 w-12">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
-              <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-xl opacity-20 group-hover:opacity-40 transition-all duration-500"></div>
+            <div className="relative h-10 w-10">
+              {/* Main circle with gradient */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 opacity-80 group-hover:opacity-100 transition-opacity duration-300"></div>
               
-              {/* Geometric pattern inside the logo */}
-              <div className="absolute inset-0 opacity-50 group-hover:opacity-80 transition-opacity">
+              {/* Outer glow effect */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-[2px] opacity-60 group-hover:opacity-80 group-hover:blur-[3px] transition-all duration-300 group-hover:scale-110"></div>
+              <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-xl opacity-20 group-hover:opacity-40 transition-all duration-300"></div>
+              
+              {/* Inner geometric pattern */}
+              <div className="absolute inset-0 opacity-80 group-hover:opacity-100 transition-opacity">
                 <div className="w-full h-full flex items-center justify-center">
-                  <div className="w-6 h-6 rotate-45 bg-gradient-to-r from-cyan-500/30 to-purple-600/30 rounded-sm"></div>
+                  <div className="w-4 h-4 rotate-45 bg-gradient-to-r from-cyan-500/40 to-purple-600/40 rounded-sm"></div>
                 </div>
               </div>
               
-              <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">DLW</span>
+              {/* Text logo */}
+              <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-[11px]">DLW</span>
             </div>
-            <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-300 drop-shadow-[0_1px_1px_rgba(0,235,214,0.5)]">
+            <span className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-300 drop-shadow-[0_1px_1px_rgba(0,235,214,0.5)]">
               Dale Loves Whales
             </span>
           </Link>

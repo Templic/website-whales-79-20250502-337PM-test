@@ -16,6 +16,8 @@ export interface SacredGeometryProps {
   size?: 'sm' | 'md' | 'lg' | number;
   intensity?: 'subtle' | 'medium' | 'vivid';
   type?: 'cube' | 'tetrahedron' | 'octahedron' | 'icosahedron' | 'dodecahedron' | 'merkaba'; // For backward compatibility
+  color?: string; // Custom color for the geometry
+  reversed?: boolean; // Reverse the animation or orientation
 }
 
 const SacredGeometry: React.FC<SacredGeometryProps> = ({
