@@ -1,31 +1,73 @@
 /**
  * TypeScript Error Finder
  * 
- * This utility finds TypeScript errors in a project by running the TypeScript compiler
- * and processing the diagnostics.
+ * A utility for finding TypeScript errors in a codebase using the TypeScript Compiler API.
+ * Part of the TypeScript error management system (Detection phase).
  */
 
+import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as ts from 'typescript';
-import { ErrorCategory, ErrorSeverity } from './ts-error-analyzer';
+import { EventEmitter } from 'events';
 
 /**
- * Options for the error finder
+ * Configurable options for the error finder
  */
 export interface ErrorFinderOptions {
+  // Core options
   projectRoot: string;
   tsconfigPath?: string;
+  
+  // Filtering options
   includeNodeModules?: boolean;
   maxErrors?: number;
+  includeWarnings?: boolean;
+  minSeverity?: ErrorSeverity;
+  filePatterns?: string[];
   excludePatterns?: string[];
+  
+  // Processing options
+  concurrent?: boolean;
+  concurrencyLimit?: number;
+  useColors?: boolean;
+  verbose?: boolean;
 }
 
 /**
- * TypeScript error detail
+ * Error severity levels
+ */
+export enum ErrorSeverity {
+  CRITICAL = 'CRITICAL',
+  HIGH = 'HIGH',
+  MEDIUM = 'MEDIUM',
+  LOW = 'LOW'
+}
+
+/**
+ * Error categories for organizing errors
+ */
+export enum ErrorCategory {
+  TYPE_MISMATCH = 'TYPE_MISMATCH',
+  SYNTAX_ERROR = 'SYNTAX_ERROR',
+  MISSING_DECLARATION = 'MISSING_DECLARATION',
+  MODULE_RESOLUTION = 'MODULE_RESOLUTION',
+  IMPORT_ERROR = 'IMPORT_ERROR',
+  PROPERTY_ERROR = 'PROPERTY_ERROR',
+  INITIALIZATION_ERROR = 'INITIALIZATION_ERROR',
+  API_USAGE_ERROR = 'API_USAGE_ERROR',
+  RUNTIME_ERROR = 'RUNTIME_ERROR',
+  COMPILATION_ERROR = 'COMPILATION_ERROR',
+  CONFIG_ERROR = 'CONFIG_ERROR',
+  LINT_ERROR = 'LINT_ERROR',
+  REACT_ERROR = 'REACT_ERROR',
+  HOOK_ERROR = 'HOOK_ERROR',
+  UNKNOWN = 'UNKNOWN'
+}
+
+/**
+ * Detailed information about a TypeScript error
  */
 export interface TypeScriptErrorDetail {
-  id: string;
   code: string;
   message: string;
   file: string;
@@ -36,64 +78,80 @@ export interface TypeScriptErrorDetail {
   context?: string;
   snippet?: string;
   suggestedFix?: string;
+  relatedErrors?: number[];
 }
 
 /**
- * Result of error finding
+ * Result of error finding process
  */
 export interface ErrorFindingResult {
-  errors: TypeScriptErrorDetail[];
+  totalErrors: number;
+  totalWarnings: number;
   errorsByFile: Record<string, number>;
   errorsByCategory: Record<string, number>;
   errorsByCode: Record<string, number>;
-  totalErrors: number;
-  totalWarnings: number;
   processingTimeMs: number;
   fileCount: number;
   scannedLineCount: number;
+  errors: TypeScriptErrorDetail[];
   summary: string;
 }
 
-/**
- * Default options
- */
+// Default options for the error finder
 const defaultOptions: ErrorFinderOptions = {
   projectRoot: process.cwd(),
   includeNodeModules: false,
-  maxErrors: 1000,
-  excludePatterns: []
+  maxErrors: 100,
+  includeWarnings: true,
+  minSeverity: ErrorSeverity.LOW,
+  concurrent: false,
+  concurrencyLimit: 4,
+  useColors: true,
+  verbose: false
 };
 
+// Events emitted during error finding
+export interface ErrorFinderEvents {
+  'file:start': (filePath: string) => void;
+  'file:end': (filePath: string, errorCount: number) => void;
+  'error:found': (error: TypeScriptErrorDetail) => void;
+  'progress': (processed: number, total: number) => void;
+  'complete': (result: ErrorFindingResult) => void;
+}
+
+// Create a typed event emitter for error finding
+export interface TypedEventEmitter<T> {
+  on<K extends keyof T>(event: K, listener: T[K]): this;
+  once<K extends keyof T>(event: K, listener: T[K]): this;
+  emit<K extends keyof T>(event: K, ...args: Parameters<T[K]>): boolean;
+  removeListener<K extends keyof T>(event: K, listener: T[K]): this;
+}
+
 /**
- * Find TypeScript errors in a project
+ * Main function to find TypeScript errors in a project
  */
 export async function findTypeScriptErrors(
-  options: Partial<ErrorFinderOptions> = {}
+  options: ErrorFinderOptions = defaultOptions
 ): Promise<ErrorFindingResult> {
   const startTime = Date.now();
+  const emitter = new EventEmitter() as TypedEventEmitter<ErrorFinderEvents>;
+  const mergedOptions = { ...defaultOptions, ...options };
   
-  // Merge options with defaults
-  const opts: ErrorFinderOptions = {
-    ...defaultOptions,
-    ...options
-  };
+  // Find tsconfig.json if not specified
+  const tsconfigPath = mergedOptions.tsconfigPath || 
+    path.join(mergedOptions.projectRoot, 'tsconfig.json');
   
-  // Find tsconfig.json
-  const tsconfigPath = opts.tsconfigPath || path.join(opts.projectRoot, 'tsconfig.json');
-  
-  // Check if tsconfig.json exists
   if (!fs.existsSync(tsconfigPath)) {
-    throw new Error(`tsconfig.json not found at ${tsconfigPath}`);
+    throw new Error(`TypeScript configuration file not found: ${tsconfigPath}`);
   }
   
   // Parse tsconfig.json
   const configFile = ts.readConfigFile(tsconfigPath, ts.sys.readFile);
-  
   if (configFile.error) {
     throw new Error(`Error reading tsconfig.json: ${configFile.error.messageText}`);
   }
   
-  // Parse the config
+  // Parse and convert tsconfig.json content
   const parsedConfig = ts.parseJsonConfigFileContent(
     configFile.config,
     ts.sys,
@@ -105,148 +163,212 @@ export async function findTypeScriptErrors(
   }
   
   // Find TypeScript files
-  const tsFiles = await findTypeScriptFiles(opts.projectRoot, opts.includeNodeModules, opts.excludePatterns);
+  const filePatterns = mergedOptions.filePatterns || parsedConfig.fileNames;
+  const files = await findTypeScriptFiles(mergedOptions.projectRoot);
   
-  // Create program
-  const program = ts.createProgram({
-    rootNames: tsFiles,
-    options: parsedConfig.options
-  });
-  
-  // Get diagnostics
-  const diagnostics = [
-    ...program.getSemanticDiagnostics(),
-    ...program.getSyntacticDiagnostics(),
-    ...program.getGlobalDiagnostics()
-  ];
-  
-  // Process diagnostics
-  const errors: TypeScriptErrorDetail[] = [];
-  const errorsByFile: Record<string, number> = {};
-  const errorsByCategory: Record<string, number> = {};
-  const errorsByCode: Record<string, number> = {};
-  let totalWarnings = 0;
-  let scannedLineCount = 0;
-  
-  // Count lines in scanned files
-  for (const file of tsFiles) {
-    try {
-      const content = fs.readFileSync(file, 'utf8');
-      scannedLineCount += content.split('\n').length;
-    } catch (error) {
-      console.error(`Error reading file ${file}: ${error.message}`);
-    }
-  }
-  
-  // Process each diagnostic
-  for (const diagnostic of diagnostics) {
-    if (errors.length >= opts.maxErrors) {
-      break;
+  // Apply include/exclude patterns
+  const filteredFiles = files.filter(file => {
+    // Skip node_modules if not explicitly included
+    if (!mergedOptions.includeNodeModules && file.includes('node_modules')) {
+      return false;
     }
     
-    if (!diagnostic.file) {
+    // Apply include patterns if specified
+    if (mergedOptions.filePatterns && mergedOptions.filePatterns.length > 0) {
+      return mergedOptions.filePatterns.some(pattern => 
+        new RegExp(pattern).test(file)
+      );
+    }
+    
+    // Apply exclude patterns if specified
+    if (mergedOptions.excludePatterns && mergedOptions.excludePatterns.length > 0) {
+      return !mergedOptions.excludePatterns.some(pattern => 
+        new RegExp(pattern).test(file)
+      );
+    }
+    
+    return true;
+  });
+  
+  // Initialize error tracking
+  const result: ErrorFindingResult = {
+    totalErrors: 0,
+    totalWarnings: 0,
+    errorsByFile: {},
+    errorsByCategory: {},
+    errorsByCode: {},
+    processingTimeMs: 0,
+    fileCount: filteredFiles.length,
+    scannedLineCount: 0,
+    errors: [],
+    summary: ''
+  };
+  
+  // Create TypeScript program
+  const program = ts.createProgram(filteredFiles, parsedConfig.options);
+  const checker = program.getTypeChecker();
+  
+  // Get all source files
+  const sourceFiles = program.getSourceFiles();
+  
+  // Process each source file
+  for (const sourceFile of sourceFiles) {
+    // Skip lib files
+    if (sourceFile.fileName.includes('node_modules') && !mergedOptions.includeNodeModules) {
       continue;
     }
     
-    const fileName = diagnostic.file.fileName;
-    const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
-    const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-    const code = `TS${diagnostic.code}`;
-    
-    // Determine error category and severity
-    const category = categorizeError(diagnostic.code, message);
-    const severity = determineSeverity(diagnostic.category, diagnostic.code, message);
-    
-    // Update counts
-    if (!errorsByFile[fileName]) {
-      errorsByFile[fileName] = 0;
-    }
-    errorsByFile[fileName]++;
-    
-    if (!errorsByCategory[category]) {
-      errorsByCategory[category] = 0;
-    }
-    errorsByCategory[category]++;
-    
-    if (!errorsByCode[code]) {
-      errorsByCode[code] = 0;
-    }
-    errorsByCode[code]++;
-    
-    if (diagnostic.category === ts.DiagnosticCategory.Warning) {
-      totalWarnings++;
+    // Skip declaration files unless explicitly included
+    if (sourceFile.fileName.endsWith('.d.ts') && !mergedOptions.filePatterns?.some(p => p.includes('.d.ts'))) {
+      continue;
     }
     
-    // Add error
-    errors.push({
-      id: `${fileName}:${line}:${character}:${code}`,
-      code,
-      message,
-      file: fileName,
-      line: line + 1,
-      column: character + 1,
-      severity,
-      category,
-      context: getLineContext(diagnostic.file, diagnostic.start!, diagnostic.length!),
-      snippet: getCodeSnippet(diagnostic.file, line)
-    });
+    // Count lines in the file
+    const fileContent = sourceFile.getFullText();
+    const lineCount = fileContent.split('\n').length;
+    result.scannedLineCount += lineCount;
+    
+    emitter.emit('file:start', sourceFile.fileName);
+    
+    // Get diagnostics for the file
+    const syntaxDiagnostics = program.getSyntacticDiagnostics(sourceFile);
+    const semanticDiagnostics = program.getSemanticDiagnostics(sourceFile);
+    
+    // Process all diagnostics
+    const allDiagnostics = [
+      ...syntaxDiagnostics,
+      ...semanticDiagnostics
+    ];
+    
+    let fileErrorCount = 0;
+    
+    for (const diagnostic of allDiagnostics) {
+      // Skip if max errors reached
+      if (mergedOptions.maxErrors && result.errors.length >= mergedOptions.maxErrors) {
+        break;
+      }
+      
+      // Skip warnings if not including warnings
+      if (!mergedOptions.includeWarnings && 
+          diagnostic.category === ts.DiagnosticCategory.Warning) {
+        continue;
+      }
+      
+      const severity = determineSeverity(
+        diagnostic.category, 
+        diagnostic.code, 
+        ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')
+      );
+      
+      // Skip if below minimum severity
+      if (severityLevel(severity) < severityLevel(mergedOptions.minSeverity)) {
+        continue;
+      }
+      
+      const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
+      const category = categorizeError(diagnostic.code, message);
+      
+      // Get location information
+      let line = 0;
+      let column = 0;
+      let file = sourceFile.fileName;
+      
+      if (diagnostic.file && diagnostic.start !== undefined) {
+        const { line: lineNum, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+        line = lineNum + 1; // Convert to 1-based
+        column = character + 1; // Convert to 1-based
+        file = diagnostic.file.fileName;
+      }
+      
+      // Get code snippet
+      let snippet = '';
+      if (diagnostic.file && diagnostic.start !== undefined && diagnostic.length !== undefined) {
+        const start = Math.max(0, diagnostic.start - 40);
+        const end = Math.min(diagnostic.file.text.length, diagnostic.start + diagnostic.length + 40);
+        snippet = diagnostic.file.text.slice(start, end);
+      }
+      
+      // Create error detail
+      const error: TypeScriptErrorDetail = {
+        code: `TS${diagnostic.code}`,
+        message,
+        file,
+        line,
+        column,
+        severity,
+        category,
+        snippet,
+        suggestedFix: getSuggestedFix(`TS${diagnostic.code}`, message, category)
+      };
+      
+      // Update statistics
+      result.errors.push(error);
+      result.totalErrors++;
+      if (diagnostic.category === ts.DiagnosticCategory.Warning) {
+        result.totalWarnings++;
+      }
+      
+      // Update error counts by file
+      result.errorsByFile[file] = (result.errorsByFile[file] || 0) + 1;
+      
+      // Update error counts by category
+      result.errorsByCategory[category] = (result.errorsByCategory[category] || 0) + 1;
+      
+      // Update error counts by code
+      result.errorsByCode[`TS${diagnostic.code}`] = (result.errorsByCode[`TS${diagnostic.code}`] || 0) + 1;
+      
+      fileErrorCount++;
+      
+      // Emit error found event
+      emitter.emit('error:found', error);
+    }
+    
+    emitter.emit('file:end', sourceFile.fileName, fileErrorCount);
   }
   
-  const processingTimeMs = Date.now() - startTime;
+  // Sort errors by severity
+  sortErrors(result.errors, 'severity');
+  
+  // Calculate processing time
+  result.processingTimeMs = Date.now() - startTime;
   
   // Generate summary
-  const summary = generateSummary(errors, errorsByFile, errorsByCategory, processingTimeMs, tsFiles.length, scannedLineCount);
+  result.summary = generateSummary(result);
   
-  return {
-    errors,
-    errorsByFile,
-    errorsByCategory,
-    errorsByCode,
-    totalErrors: errors.length,
-    totalWarnings,
-    processingTimeMs,
-    fileCount: tsFiles.length,
-    scannedLineCount,
-    summary
-  };
+  // Emit complete event
+  emitter.emit('complete', result);
+  
+  return result;
 }
 
 /**
  * Find all TypeScript files in a directory
  */
-async function findTypeScriptFiles(
-  dir: string,
-  includeNodeModules = false,
-  excludePatterns: string[] = []
-): Promise<string[]> {
+async function findTypeScriptFiles(dir: string): Promise<string[]> {
   const files: string[] = [];
   
   async function traverseDirectory(currentDir: string) {
-    const entries = fs.readdirSync(currentDir, { withFileTypes: true });
-    
-    for (const entry of entries) {
-      const fullPath = path.join(currentDir, entry.name);
+    try {
+      const entries = fs.readdirSync(currentDir, { withFileTypes: true });
       
-      // Check exclude patterns
-      if (excludePatterns.some(pattern => new RegExp(pattern).test(fullPath))) {
-        continue;
-      }
-      
-      if (entry.isDirectory()) {
-        // Skip node_modules unless explicitly included
-        if (entry.name === 'node_modules' && !includeNodeModules) {
-          continue;
-        }
+      for (const entry of entries) {
+        const fullPath = path.join(currentDir, entry.name);
         
-        // Skip common directories to avoid
-        if (['dist', 'build', '.git', '.vscode'].includes(entry.name)) {
-          continue;
+        if (entry.isDirectory()) {
+          // Skip node_modules and hidden directories
+          if (entry.name !== 'node_modules' && !entry.name.startsWith('.')) {
+            await traverseDirectory(fullPath);
+          }
+        } else if (
+          entry.isFile() && 
+          (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) &&
+          !entry.name.endsWith('.d.ts')
+        ) {
+          files.push(fullPath);
         }
-        
-        await traverseDirectory(fullPath);
-      } else if (entry.isFile() && /\.(ts|tsx)$/.test(entry.name)) {
-        files.push(fullPath);
       }
+    } catch (error) {
+      console.error(`Error traversing directory ${currentDir}:`, error);
     }
   }
   
@@ -255,64 +377,133 @@ async function findTypeScriptFiles(
 }
 
 /**
- * Get line context for an error
+ * Gets the start position of the line containing the position
  */
-function getLineContext(file: ts.SourceFile, start: number, length: number): string {
-  const text = file.text;
-  const startPos = Math.max(0, start - 20);
-  const endPos = Math.min(text.length, start + length + 20);
-  
-  return text.substring(startPos, endPos);
+function getLineStart(text: string, position: number): number {
+  for (let i = position; i >= 0; i--) {
+    if (text[i] === '\n') {
+      return i + 1;
+    }
+  }
+  return 0;
 }
 
 /**
- * Get code snippet for an error
+ * Gets the end position of the line containing the position
  */
-function getCodeSnippet(file: ts.SourceFile, line: number): string {
-  const lines = file.text.split('\n');
-  const startLine = Math.max(0, line - 2);
-  const endLine = Math.min(lines.length - 1, line + 2);
-  
-  return lines.slice(startLine, endLine + 1).map((l, i) => {
-    const lineNum = startLine + i + 1;
-    const prefix = lineNum === line + 1 ? '> ' : '  ';
-    return `${prefix}${lineNum}: ${l}`;
-  }).join('\n');
+function getLineEnd(text: string, position: number): number {
+  for (let i = position; i < text.length; i++) {
+    if (text[i] === '\n') {
+      return i;
+    }
+  }
+  return text.length;
 }
 
 /**
- * Categorize error by code and message
+ * Gets the position of the Nth line (0-based)
  */
-function categorizeError(code: number, message: string): ErrorCategory {
-  if (message.includes('syntax') || message.includes('expected')) {
-    return ErrorCategory.SYNTAX_ERROR;
+function getPositionOfLineN(text: string, lineNumber: number): number {
+  if (lineNumber <= 0) return 0;
+  
+  let count = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '\n') {
+      count++;
+      if (count === lineNumber) {
+        return i + 1;
+      }
+    }
   }
   
-  if (message.includes('type') && (message.includes('not assignable') || message.includes('expected'))) {
+  return text.length;
+}
+
+/**
+ * Categorize TypeScript errors
+ */
+function categorizeError(code: number, message: string): ErrorCategory {
+  const codeStr = `TS${code}`;
+  const msg = message.toLowerCase();
+  
+  // Type errors
+  if (
+    msg.includes('type') && 
+    (msg.includes('not assignable') || msg.includes('is incompatible'))
+  ) {
     return ErrorCategory.TYPE_MISMATCH;
   }
   
-  if (message.includes('cannot find module') || message.includes('cannot find name')) {
+  // Syntax errors
+  if (code >= 1000 && code < 1999) {
+    return ErrorCategory.SYNTAX_ERROR;
+  }
+  
+  // Module resolution errors
+  if (
+    msg.includes('cannot find module') || 
+    msg.includes('cannot find name') ||
+    msg.includes('has no exported member')
+  ) {
+    return ErrorCategory.MODULE_RESOLUTION;
+  }
+  
+  // Import errors
+  if (
+    msg.includes('import') || 
+    msg.includes('export') || 
+    msg.includes('require')
+  ) {
     return ErrorCategory.IMPORT_ERROR;
   }
   
-  if (message.includes('function') || message.includes('call') || message.includes('argument')) {
-    return ErrorCategory.FUNCTION_ERROR;
+  // Property errors
+  if (
+    msg.includes('property') || 
+    msg.includes('does not exist on type')
+  ) {
+    return ErrorCategory.PROPERTY_ERROR;
   }
   
-  if (message.includes('declared') || message.includes('declaration')) {
-    return ErrorCategory.DECLARATION_ERROR;
+  // Initialization errors
+  if (
+    msg.includes('initialized') || 
+    msg.includes('constructor')
+  ) {
+    return ErrorCategory.INITIALIZATION_ERROR;
   }
   
-  if (message.includes('null') || message.includes('undefined')) {
-    return ErrorCategory.NULL_REFERENCE;
+  // React errors
+  if (
+    msg.includes('jsx') || 
+    msg.includes('react') || 
+    msg.includes('component') ||
+    msg.includes('props') ||
+    msg.includes('children')
+  ) {
+    return ErrorCategory.REACT_ERROR;
   }
   
-  if (message.toLowerCase().includes('security') || 
-      message.toLowerCase().includes('vulnerability') ||
-      code === 2335 || // Do not use private members in type annotations
-      code === 2539) { // Cannot assign to 'X' because it is not a variable.
-    return ErrorCategory.SECURITY;
+  // Hook errors
+  if (msg.includes('hook')) {
+    return ErrorCategory.HOOK_ERROR;
+  }
+  
+  // API usage errors
+  if (
+    msg.includes('argument') || 
+    msg.includes('parameter') || 
+    msg.includes('expected')
+  ) {
+    return ErrorCategory.API_USAGE_ERROR;
+  }
+  
+  // Config errors
+  if (
+    msg.includes('config') || 
+    msg.includes('tsconfig')
+  ) {
+    return ErrorCategory.CONFIG_ERROR;
   }
   
   return ErrorCategory.UNKNOWN;
@@ -321,75 +512,224 @@ function categorizeError(code: number, message: string): ErrorCategory {
 /**
  * Determine error severity
  */
-function determineSeverity(category: ts.DiagnosticCategory, code: number, message: string): ErrorSeverity {
-  // Security-related errors are critical
-  if (message.toLowerCase().includes('security') || 
-      message.toLowerCase().includes('vulnerability')) {
-    return ErrorSeverity.CRITICAL;
-  }
-  
-  // Syntax errors and type errors that prevent compilation are high severity
+function determineSeverity(
+  category: ts.DiagnosticCategory, 
+  code: number, 
+  message: string
+): ErrorSeverity {
+  // Errors that break the build
   if (category === ts.DiagnosticCategory.Error) {
-    if (message.includes('syntax') || 
-        message.includes('expected') || 
-        message.includes('cannot find') ||
-        code === 2554) { // Expected X arguments, but got Y
+    // Critical errors
+    if (
+      // Null reference errors
+      message.toLowerCase().includes('null') ||
+      message.toLowerCase().includes('undefined') ||
+      // Type assertions that are likely to fail at runtime
+      message.toLowerCase().includes('assertion') ||
+      // Likely runtime errors
+      code === 2454 || // Value will be 'undefined' at runtime
+      code === 2533  // Object is possibly 'null' or 'undefined'
+    ) {
+      return ErrorSeverity.CRITICAL;
+    }
+    
+    // High severity errors
+    if (
+      // Type mismatches that affect functionality
+      (message.toLowerCase().includes('type') && message.toLowerCase().includes('not assignable')) ||
+      // Missing required properties
+      message.toLowerCase().includes('missing required property') ||
+      // React-specific severe errors
+      message.toLowerCase().includes('jsx element type') ||
+      // Function argument errors
+      message.toLowerCase().includes('argument') ||
+      // Incorrect API usage
+      message.toLowerCase().includes('no overload matches')
+    ) {
       return ErrorSeverity.HIGH;
     }
+    
+    // Default for errors
     return ErrorSeverity.MEDIUM;
   }
   
-  // Warnings are low severity
+  // Warnings
   if (category === ts.DiagnosticCategory.Warning) {
+    // Medium severity warnings
+    if (
+      // Unreachable code
+      message.toLowerCase().includes('unreachable') ||
+      // Unused variables
+      message.toLowerCase().includes('unused') ||
+      // Fallthrough cases
+      message.toLowerCase().includes('fallthrough')
+    ) {
+      return ErrorSeverity.MEDIUM;
+    }
+    
+    // Default for warnings
     return ErrorSeverity.LOW;
   }
   
-  // Suggestions are low severity
-  if (category === ts.DiagnosticCategory.Suggestion) {
-    return ErrorSeverity.LOW;
+  // Default for suggestions
+  return ErrorSeverity.LOW;
+}
+
+/**
+ * Get a suggested fix based on error type
+ */
+function getSuggestedFix(
+  code: string, 
+  message: string, 
+  category: ErrorCategory
+): string | undefined {
+  const msg = message.toLowerCase();
+  
+  // Module resolution errors
+  if (category === ErrorCategory.MODULE_RESOLUTION) {
+    if (msg.includes('cannot find module')) {
+      return 'Check the module path and make sure the module is installed.';
+    }
+    
+    if (msg.includes('cannot find name')) {
+      return 'Make sure the identifier is defined or import it from the appropriate module.';
+    }
+    
+    if (msg.includes('has no exported member')) {
+      return 'Verify the export name in the module or update the import statement.';
+    }
   }
   
-  return ErrorSeverity.MEDIUM;
+  // Type mismatch errors
+  if (category === ErrorCategory.TYPE_MISMATCH) {
+    return 'Update the type annotation or cast the value appropriately.';
+  }
+  
+  // Property errors
+  if (category === ErrorCategory.PROPERTY_ERROR) {
+    return 'Check the object type definition to ensure the property exists.';
+  }
+  
+  // React errors
+  if (category === ErrorCategory.REACT_ERROR) {
+    if (msg.includes('jsx')) {
+      return 'Verify the JSX syntax and component properties.';
+    }
+    
+    if (msg.includes('props')) {
+      return 'Check the component props interface and ensure all required props are provided.';
+    }
+  }
+  
+  // Hook errors
+  if (category === ErrorCategory.HOOK_ERROR) {
+    return 'Make sure hooks are called at the top level of your component.';
+  }
+  
+  // Generic suggestion
+  return 'Review the error message and fix the issue accordingly.';
+}
+
+/**
+ * Sort errors based on specified criteria
+ */
+function sortErrors(errors: TypeScriptErrorDetail[], sortBy: string): void {
+  if (sortBy === 'severity') {
+    errors.sort((a, b) => {
+      return severityLevel(b.severity) - severityLevel(a.severity);
+    });
+  } else if (sortBy === 'file') {
+    errors.sort((a, b) => {
+      if (a.file === b.file) {
+        return a.line - b.line;
+      }
+      return a.file.localeCompare(b.file);
+    });
+  } else if (sortBy === 'category') {
+    errors.sort((a, b) => {
+      return a.category.localeCompare(b.category);
+    });
+  } else if (sortBy === 'code') {
+    errors.sort((a, b) => {
+      return a.code.localeCompare(b.code);
+    });
+  }
+}
+
+/**
+ * Convert severity to numeric level for comparison
+ */
+function severityLevel(severity: ErrorSeverity): number {
+  switch (severity) {
+    case ErrorSeverity.CRITICAL:
+      return 4;
+    case ErrorSeverity.HIGH:
+      return 3;
+    case ErrorSeverity.MEDIUM:
+      return 2;
+    case ErrorSeverity.LOW:
+      return 1;
+    default:
+      return 0;
+  }
 }
 
 /**
  * Generate a summary of the findings
  */
-function generateSummary(
-  errors: TypeScriptErrorDetail[],
-  errorsByFile: Record<string, number>,
-  errorsByCategory: Record<string, number>,
-  processingTimeMs: number,
-  fileCount: number,
-  scannedLineCount: number
-): string {
-  const lines: string[] = [];
+function generateSummary(result: ErrorFindingResult): string {
+  // Generate error statistics
+  const criticalCount = result.errors.filter(e => e.severity === ErrorSeverity.CRITICAL).length;
+  const highCount = result.errors.filter(e => e.severity === ErrorSeverity.HIGH).length;
+  const mediumCount = result.errors.filter(e => e.severity === ErrorSeverity.MEDIUM).length;
+  const lowCount = result.errors.filter(e => e.severity === ErrorSeverity.LOW).length;
   
-  lines.push(`TypeScript Error Finder Results`);
-  lines.push(`===========================\n`);
-  lines.push(`Found ${errors.length} errors in ${fileCount} files (${scannedLineCount} lines of code)`);
-  lines.push(`Scan completed in ${(processingTimeMs / 1000).toFixed(2)} seconds\n`);
+  // Get top error categories
+  const categoryEntries = Object.entries(result.errorsByCategory);
+  categoryEntries.sort((a, b) => b[1] - a[1]);
+  const topCategories = categoryEntries.slice(0, 3);
   
-  // Add category breakdown
-  lines.push(`Errors by category:`);
-  for (const [category, count] of Object.entries(errorsByCategory)) {
-    lines.push(`  ${category}: ${count}`);
+  // Get top error files
+  const fileEntries = Object.entries(result.errorsByFile);
+  fileEntries.sort((a, b) => b[1] - a[1]);
+  const topFiles = fileEntries.slice(0, 3);
+  
+  // Generate summary text
+  let summary = `Found ${result.totalErrors} TypeScript ${result.totalErrors === 1 ? 'error' : 'errors'} in ${result.fileCount} ${result.fileCount === 1 ? 'file' : 'files'} (${result.scannedLineCount} lines scanned).\n\n`;
+  
+  // Add severity breakdown
+  summary += `Severity breakdown:\n`;
+  summary += `- CRITICAL: ${criticalCount}\n`;
+  summary += `- HIGH: ${highCount}\n`;
+  summary += `- MEDIUM: ${mediumCount}\n`;
+  summary += `- LOW: ${lowCount}\n\n`;
+  
+  // Add top categories
+  if (topCategories.length > 0) {
+    summary += `Top error categories:\n`;
+    topCategories.forEach(([category, count]) => {
+      summary += `- ${category}: ${count}\n`;
+    });
+    summary += '\n';
   }
-  lines.push('');
   
-  // Add top files with errors
-  const filesSorted = Object.entries(errorsByFile)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
-  
-  lines.push(`Top files with errors:`);
-  for (const [file, count] of filesSorted) {
-    lines.push(`  ${file}: ${count}`);
+  // Add top files
+  if (topFiles.length > 0) {
+    summary += `Top files with errors:\n`;
+    topFiles.forEach(([file, count]) => {
+      const filename = path.basename(file);
+      summary += `- ${filename} (${count} ${count === 1 ? 'error' : 'errors'})\n`;
+    });
+    summary += '\n';
   }
   
-  return lines.join('\n');
+  // Add recommendations
+  if (criticalCount > 0) {
+    summary += `⚠️ You have ${criticalCount} critical errors that should be addressed immediately.\n`;
+  }
+  
+  // Processing time
+  summary += `\nProcessing completed in ${(result.processingTimeMs / 1000).toFixed(2)} seconds.`;
+  
+  return summary;
 }
-
-export default {
-  findTypeScriptErrors
-};
