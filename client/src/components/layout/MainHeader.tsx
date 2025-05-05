@@ -8,7 +8,7 @@
  * Latest Update: Complete redesign based on new specifications - May 5, 2025
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "../../hooks/use-toast";
 import { 
@@ -53,6 +53,7 @@ export const MainHeader = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchResultsMessage, setSearchResultsMessage] = useState('');
   
   // Implement the responsive layout hook from specifications for advanced adaptability
   const [layout, setLayout] = useState({
@@ -61,6 +62,11 @@ export const MainHeader = () => {
     showSearchInHeader: true,
     showSocialLinks: false,
   });
+  
+  // Header shadow effect based on scroll position
+  const headerShadow = isScrolled
+    ? '0 4px 20px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(6, 182, 212, 0.1)'
+    : 'none';
   
   // Update layout based on screen width
   useEffect(() => {
@@ -119,14 +125,54 @@ export const MainHeader = () => {
   };
 
   // Check scroll position to adjust header appearance
+  const lastScrollY = useRef(0);
+  const [isHeaderHidden, setIsHeaderHidden] = useState(false);
+  const [headerStyles, setHeaderStyles] = useState<React.CSSProperties>({
+    backdropFilter: 'blur(5px)',
+    WebkitBackdropFilter: 'blur(5px)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+  });
+  
   useEffect(() => {
+    const SCROLL_THRESHOLD = 100;
+    const HEADER_HEIGHT = 80;
+    const autoHideNav = true;
+    
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      const scrollY = window.scrollY;
+      
+      // Determine if header should be visible or hidden (for hide-on-scroll)
+      if (autoHideNav) {
+        // Hide header when scrolling down, show when scrolling up
+        const currentScrollY = window.scrollY;
+        const isScrollingDown = currentScrollY > lastScrollY.current;
+        
+        if (isScrollingDown && currentScrollY > HEADER_HEIGHT && !isHeaderHidden) {
+          setIsHeaderHidden(true);
+        } else if (!isScrollingDown && isHeaderHidden) {
+          setIsHeaderHidden(false);
+        }
+        
+        lastScrollY.current = currentScrollY;
+      }
+      
+      // Basic scrolled state
+      setIsScrolled(scrollY > 20);
+      
+      // Apply blur and opacity based on scroll position
+      const blurAmount = Math.min(10, scrollY / 10);
+      const opacityAmount = Math.min(0.9, 0.5 + (scrollY / SCROLL_THRESHOLD) * 0.4);
+      
+      setHeaderStyles({
+        backdropFilter: `blur(${blurAmount}px)`,
+        WebkitBackdropFilter: `blur(${blurAmount}px)`,  // Safari support
+        backgroundColor: `rgba(0, 0, 0, ${opacityAmount})`
+      });
     };
     
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isHeaderHidden]);
 
   // Navigation items aligned with the specification
   const navigationItems: NavItem[] = [
@@ -165,17 +211,36 @@ export const MainHeader = () => {
     { name: "YouTube", icon: <Youtube className="h-5 w-5" aria-hidden="true" />, path: "https://youtube.com/DaleTheWhale", external: true }
   ];
 
+  // Handle keyboard navigation for menu items
+  const handleKeyboardNav = useCallback((e: React.KeyboardEvent, index: number) => {
+    // Arrow key navigation for menu items
+    if (e.key === 'ArrowRight') {
+      const nextItem = document.querySelector(`[data-nav-index="${index + 1}"]`) as HTMLElement;
+      nextItem?.focus();
+    } else if (e.key === 'ArrowLeft') {
+      const prevItem = document.querySelector(`[data-nav-index="${index - 1}"]`) as HTMLElement;
+      prevItem?.focus();
+    }
+  }, []);
+
   // Handle navigation clicks
   const handleNavigationClick = useCallback((path: string) => {
     navigate(path);
     setIsMobileMenuOpen(false);
-  }, [navigate]);
+    
+    // Update ARIA live region with current page
+    const currentPage = navigationItems.find(item => item.path === path)?.name || 'Page';
+    setSearchResultsMessage(`Navigated to ${currentPage}`);
+  }, [navigate, navigationItems]);
 
   // Handle search submission
   const handleSearchSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      
+      // Update ARIA live region with search query
+      setSearchResultsMessage(`Searching for "${searchQuery.trim()}". Results loading.`);
       setSearchQuery("");
       
       // Show search initiated toast
@@ -189,13 +254,22 @@ export const MainHeader = () => {
 
   return (
     <header 
-      className={`fixed top-0 z-fixed-header w-full backdrop-blur-lg border-b border-white/5 transition-all duration-300 ease-in-out ${
-        isScrolled ? 'h-16 bg-black/90' : 'h-20 bg-black/80'
-      }`}
+      className={`fixed z-fixed-header w-full border-b border-white/5 transition-all duration-300 ease-in-out ${
+        isScrolled ? 'h-16' : 'h-20'
+      } ${isHeaderHidden ? '-translate-y-full' : 'translate-y-0'}`}
       style={{
-        boxShadow: '0 0 20px rgba(0, 235, 214, 0.15), 0 0 40px rgba(111, 76, 255, 0.1)'
+        ...headerStyles,
+        boxShadow: headerShadow || '0 0 20px rgba(0, 235, 214, 0.15), 0 0 40px rgba(111, 76, 255, 0.1)'
       }}
     >
+      {/* ARIA live region for accessibility - screen reader announcements */}
+      <div 
+        aria-live="polite" 
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {searchResultsMessage}
+      </div>
       {/* Enhanced geometric background patterns with multiple sacred geometry elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-background">
         {/* Top-right pattern */}
@@ -305,16 +379,19 @@ export const MainHeader = () => {
                 <Link 
                   key={item.path} 
                   href={item.path}
+                  data-nav-index={index}
                   onClick={(e) => {
                     e.preventDefault();
                     handleNavigationClick(item.path);
                   }}
-                  className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-white nav-link ${
+                  onKeyDown={(e) => handleKeyboardNav(e, index)}
+                  className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-white nav-link group ${
                     location.includes(item.path) && (item.path === "/" ? location === "/" : true)
                       ? 'text-white' 
                       : 'text-white/70'
                   }`}
                   aria-current={location.includes(item.path) && (item.path === "/" ? location === "/" : true) ? "page" : undefined}
+                  tabIndex={0}
                 >
                   {/* Interactive background geometry appears on hover - based on specifications */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-cosmic-background">
@@ -508,8 +585,15 @@ export const MainHeader = () => {
                         e.preventDefault();
                         handleNavigationClick(item.path);
                       }}
-                      className="flex items-center text-white/80 hover:text-white space-x-2 py-1 nav-link"
+                      className="flex items-center text-white/80 hover:text-white space-x-2 py-1 nav-link group"
                       aria-current={location.includes(item.path) && (item.path === "/" ? location === "/" : true) ? "page" : undefined}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleNavigationClick(item.path);
+                        }
+                      }}
                     >
                       <div className="h-4 w-4 opacity-60">
                         {item.icon}
@@ -530,10 +614,21 @@ export const MainHeader = () => {
                       href={social.path}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-white/70 hover:text-white transition-colors"
+                      className="text-white/70 hover:text-white transition-colors focus:outline-none focus:ring-2 
+                      focus:ring-cyan-400/50 p-2 rounded-full relative overflow-hidden group"
                       aria-label={`Follow us on ${social.name}`}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          window.open(social.path, '_blank', 'noopener,noreferrer');
+                        }
+                      }}
                     >
-                      {social.icon}
+                      <span className="relative z-10">{social.icon}</span>
+                      {/* Hover and focus glow effect */}
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-20 group-focus:opacity-30 
+                      bg-gradient-to-br from-cyan-400 to-purple-400 rounded-full transition-opacity duration-200"></div>
                     </a>
                   ))}
                 </div>
