@@ -5,10 +5,10 @@
  * staggered navigation, and cosmic design elements.
  * 
  * Created: 2025-04-05 - Updated with enhancements
- * Latest Update: Added sacred geometry elements and improved staggered navigation
+ * Latest Update: Added 8 rotating merkaba shapes (4 sets of 2) with sacred geometry elements
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -41,6 +41,174 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { ShoppingCart } from "@/components/features/shop/ShoppingCart";
+
+// Define types for the Merkaba component props
+interface MerkabaProps {
+  position: {
+    top?: string;
+    left?: string;
+    right?: string;
+    bottom?: string;
+  };
+  size?: number;
+  rotationSpeed?: number;
+  reverse?: boolean;
+  delay?: number;
+  foregroundColor?: string;
+  backgroundColor?: string;
+  glowIntensity?: number;
+}
+
+// Merkaba component for sacred geometry visualization
+const Merkaba: React.FC<MerkabaProps> = ({ 
+  position, 
+  size = 60, 
+  rotationSpeed = 1, 
+  reverse = false, 
+  delay = 0,
+  foregroundColor = "rgba(180, 210, 255, 0.6)",
+  backgroundColor = "rgba(120, 155, 255, 0.3)",
+  glowIntensity = 0.5
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const animationRef = useRef<number>(0);
+  const [rotation, setRotation] = useState(delay);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size
+    canvas.width = size;
+    canvas.height = size;
+
+    const centerX = size / 2;
+    const centerY = size / 2;
+    const radius = size * 0.4;
+
+    // Animation loop
+    const animate = () => {
+      setRotation(prev => (prev + rotationSpeed / 100) % (Math.PI * 2));
+      animationRef.current = requestAnimationFrame(animate);
+    };
+    
+    animate();
+    
+    return () => {
+      cancelAnimationFrame(animationRef.current);
+    };
+  }, [size, rotationSpeed, reverse, foregroundColor, backgroundColor, glowIntensity]);
+
+  // Draw the merkaba when rotation changes
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const centerX = size / 2;
+    const centerY = size / 2;
+    const radius = size * 0.4;
+
+    // Clear previous drawing
+    ctx.clearRect(0, 0, size, size);
+    
+    // Set shadow for glow effect
+    ctx.shadowColor = foregroundColor;
+    ctx.shadowBlur = 15 * glowIntensity;
+    
+    // Save the canvas state
+    ctx.save();
+    
+    // Move to center and apply rotation
+    ctx.translate(centerX, centerY);
+    ctx.rotate(rotation * (reverse ? -1 : 1));
+    
+    // First tetrahedron (pointing up)
+    ctx.beginPath();
+    for (let i = 0; i < 3; i++) {
+      const angle = (i / 3) * Math.PI * 2;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+      
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.closePath();
+    ctx.fillStyle = foregroundColor;
+    ctx.fill();
+    ctx.strokeStyle = foregroundColor;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    
+    // Second tetrahedron (pointing down)
+    ctx.beginPath();
+    for (let i = 0; i < 3; i++) {
+      const angle = ((i + 0.5) / 3) * Math.PI * 2;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+      
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.closePath();
+    ctx.fillStyle = backgroundColor;
+    ctx.fill();
+    ctx.strokeStyle = backgroundColor;
+    ctx.stroke();
+    
+    // Draw star pattern
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle1 = (i / 6) * Math.PI * 2;
+      const angle2 = ((i + 3) / 6) * Math.PI * 2;
+      
+      const x1 = Math.cos(angle1) * radius;
+      const y1 = Math.sin(angle1) * radius;
+      const x2 = Math.cos(angle2) * radius;
+      const y2 = Math.sin(angle2) * radius;
+      
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+    }
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.lineWidth = 0.75;
+    ctx.stroke();
+
+    // Restore the canvas state
+    ctx.restore();
+  }, [rotation, size, reverse, foregroundColor, backgroundColor, glowIntensity]);
+
+  return (
+    <div 
+      className="absolute pointer-events-none" 
+      style={{
+        ...position,
+        width: size,
+        height: size,
+        opacity: 0.8,
+        zIndex: -1
+      }}
+    >
+      <canvas
+        ref={canvasRef}
+        width={size}
+        height={size}
+        className="sacred-geometry w-full h-full"
+      />
+    </div>
+  );
+};
 
 export function MainHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -143,6 +311,83 @@ export function MainHeader() {
           : "bg-transparent py-4"
       }`}
     >
+      {/* Sacred Geometry Merkaba Elements (4 sets of 2 = 8 total) */}
+      <div className="relative w-full h-full overflow-hidden">
+        {/* Left side merkaba pairs */}
+        <Merkaba 
+          position={{ top: '5px', left: '5%' }} 
+          size={65} 
+          rotationSpeed={0.8} 
+          foregroundColor="rgba(180, 210, 255, 0.5)"
+          backgroundColor="rgba(120, 140, 255, 0.3)"
+          delay={0}
+        />
+        <Merkaba 
+          position={{ top: '15px', left: 'calc(5% + 50px)' }} 
+          size={45} 
+          rotationSpeed={1.2} 
+          reverse={true}
+          foregroundColor="rgba(200, 230, 255, 0.4)"
+          backgroundColor="rgba(140, 180, 255, 0.25)"
+          delay={Math.PI/4}
+        />
+        
+        <Merkaba 
+          position={{ bottom: '15px', left: '10%' }} 
+          size={55} 
+          rotationSpeed={0.9}
+          foregroundColor="rgba(170, 200, 255, 0.5)"
+          backgroundColor="rgba(110, 140, 235, 0.3)"
+          delay={Math.PI/2}
+        />
+        <Merkaba 
+          position={{ bottom: '30px', left: 'calc(10% + 45px)' }} 
+          size={40} 
+          rotationSpeed={1.1} 
+          reverse={true}
+          foregroundColor="rgba(190, 220, 255, 0.4)"
+          backgroundColor="rgba(130, 170, 245, 0.25)"
+          delay={Math.PI/3}
+        />
+        
+        {/* Right side merkaba pairs */}
+        <Merkaba 
+          position={{ top: '5px', right: '5%' }} 
+          size={65} 
+          rotationSpeed={0.8} 
+          foregroundColor="rgba(180, 210, 255, 0.5)"
+          backgroundColor="rgba(120, 140, 255, 0.3)"
+          delay={Math.PI/6}
+        />
+        <Merkaba 
+          position={{ top: '15px', right: 'calc(5% + 50px)' }} 
+          size={45} 
+          rotationSpeed={1.2} 
+          reverse={true}
+          foregroundColor="rgba(200, 230, 255, 0.4)"
+          backgroundColor="rgba(140, 180, 255, 0.25)"
+          delay={Math.PI/8}
+        />
+        
+        <Merkaba 
+          position={{ bottom: '15px', right: '10%' }} 
+          size={55} 
+          rotationSpeed={0.9}
+          foregroundColor="rgba(170, 200, 255, 0.5)"
+          backgroundColor="rgba(110, 140, 235, 0.3)"
+          delay={Math.PI/5}
+        />
+        <Merkaba 
+          position={{ bottom: '30px', right: 'calc(10% + 45px)' }} 
+          size={40} 
+          rotationSpeed={1.1} 
+          reverse={true}
+          foregroundColor="rgba(190, 220, 255, 0.4)"
+          backgroundColor="rgba(130, 170, 245, 0.25)"
+          delay={Math.PI/7}
+        />
+      </div>
+      
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
