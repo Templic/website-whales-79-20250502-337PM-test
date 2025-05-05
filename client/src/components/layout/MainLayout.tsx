@@ -1,12 +1,12 @@
-import { MainHeader } from "./MainHeader";
+import { Header } from "./Header";
 import { MainFooter } from "./MainFooter";
-import StarBackground from "@/components/cosmic/StarBackground";
+import StarBackground from "../cosmic/StarBackground";
 import { useState, useEffect } from "react";
-import { CosmicFonts } from "@/components/common/cosmic-fonts";
-import ChatWidget from "@/components/chat/ChatWidget";
-import { ChatProvider } from "@/contexts/ChatContext";
-import { AccessibilityControls } from "@/components/common/accessibility-controls";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { CosmicFonts } from "../common/cosmic-fonts";
+import ChatWidget from "../chat/ChatWidget";
+import { ChatProvider } from "../../contexts/ChatContext";
+import { AccessibilityControls } from "../common/accessibility-controls";
+import { ThemeToggle } from "../ui/ThemeToggle";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -35,8 +35,8 @@ export function MainLayout({ children }: MainLayoutProps) {
           
           {/* Theme Toggle (fixed position) - Note: ThemeToggle is now handled in App.tsx */}
           
-          {/* Use consolidated MainHeader component */}
-          <MainHeader />
+          {/* Use Header component with Dale Loves Whales branding */}
+          <Header />
           
           {/* Main Content */}
           <main className={`flex-grow w-full py-16 sm:py-20 lg:py-24 transition-all duration-300 ease-in-out ${isMobile ? 'px-4 sm:px-6' : 'px-8'} z-10 relative`}>
