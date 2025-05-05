@@ -610,7 +610,7 @@ export async function recordDailyMetrics(): Promise<void> {
       count: count()
     })
     .from(typeScriptErrors)
-    .where(eq(typeScriptErrors.status, 'FIXED'));
+    .where(eq(typeScriptErrors.status, 'fixed'));
     
     // Get new errors in the last 24 hours
     const yesterday = new Date(today);
@@ -646,7 +646,7 @@ export async function recordDailyMetrics(): Promise<void> {
     .where(
       and(
         not(isNull(typeScriptErrors.resolved_at)),
-        eq(typeScriptErrors.status, 'FIXED'),
+        eq(typeScriptErrors.status, 'fixed'),
         gte(typeScriptErrors.resolved_at, yesterday)
       )
     );
@@ -662,21 +662,50 @@ export async function recordDailyMetrics(): Promise<void> {
       errorsByCategory[item.category] = item.count;
     });
     
-    // Insert the daily metrics
+    // Calculate severity counts based on severity distribution
+    const criticalErrors = errorsBySeverity['CRITICAL'] || 0;
+    const highErrors = errorsBySeverity['HIGH'] || 0;
+    const mediumErrors = errorsBySeverity['MEDIUM'] || 0;
+    const lowErrors = errorsBySeverity['LOW'] || 0;
+    
+    // Find the most common category
+    let mostCommonCategory = 'unknown';
+    let maxCount = 0;
+    Object.entries(errorsByCategory).forEach(([category, count]) => {
+      if (count > maxCount) {
+        maxCount = count as number;
+        mostCommonCategory = category;
+      }
+    });
+    
+    // Calculate AI fix success rate (placeholder - would need actual AI fix data)
+    const aiFixSuccessRate = 0;
+    
+    // Placeholder for most error-prone file (would need file distribution data)
+    const mostErrorProneFile = 'unknown';
+    
+    // Insert the daily metrics matching the actual database structure
     await db.insert(typeScriptErrorMetrics)
       .values({
         date: today,
         total_errors: totalErrorsResult?.count || 0,
         fixed_errors: fixedErrorsResult?.count || 0,
-        new_errors: newErrorsResult?.count || 0,
-        errors_by_severity: errorsBySeverity,
-        errors_by_category: errorsByCategory,
-        fix_rate: totalErrorsResult?.count > 0 
-          ? (fixedErrorsResult?.count || 0) / totalErrorsResult.count * 100 
-          : 0,
-        avg_resolution_time_hours: avgResolutionResult?.avg_time || 0,
-        created_at: new Date(),
-        updated_at: new Date()
+        critical_errors: criticalErrors,
+        high_errors: highErrors,
+        medium_errors: mediumErrors,
+        low_errors: lowErrors,
+        average_fix_time: Math.round(avgResolutionResult?.avg_time || 0),
+        ai_fix_success_rate: aiFixSuccessRate,
+        most_common_category: mostCommonCategory,
+        most_error_prone_file: mostErrorProneFile,
+        security_impact_score: 0, // Placeholder
+        metadata: {
+          errorsByCategory,
+          errorsBySeverity,
+          fixRate: totalErrorsResult?.count > 0 
+            ? (fixedErrorsResult?.count || 0) / totalErrorsResult.count * 100 
+            : 0
+        }
       });
     
     console.log('Recorded daily TypeScript error metrics');
