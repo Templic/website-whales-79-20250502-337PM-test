@@ -58,13 +58,21 @@ The Dead Link Checker helps you find and fix navigation issues on your website.
 1. **"Unexpected end of input" errors in Replit preview**
    - The Replit preview environment has security restrictions that can cause issues with the main application
    - Use the standalone API validator and link checker tools instead
+   - According to [Replit's documentation](https://docs.replit.com/programming-ide/troubleshooting-ide), modifying core configuration files can lead to these errors
 
 2. **CSRF protection errors**
    - The API validation framework bypasses CSRF protection for testing
    - If you see CSRF errors, make sure you're using the correct endpoints
+   - Replit's [security documentation](https://docs.replit.com/teams-pro/programming-environment/securing-applications) notes that their preview has specific security constraints
 
 3. **Application doesn't load in Replit**
    - The standalone tools are designed to work reliably even when the main application has issues
+   - This follows Replit's [best practices](https://docs.replit.com/programming-ide/configuring-repl) of creating separate utilities for specialized functions
+   
+4. **Middleware errors in Replit environment**
+   - Never modify core Replit configuration files like `server/vite.ts` or `vite.config.ts`
+   - Per [Replit guidelines](https://docs.replit.com/teams-pro/developing-on-replit): "Do not modify core configuration files directly."
+   - Use standalone tools as recommended by [Replit's troubleshooting guide](https://docs.replit.com/programming-ide/troubleshooting-ide)
 
 ## 🛠️ Advanced Usage
 

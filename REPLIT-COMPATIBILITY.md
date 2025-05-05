@@ -4,44 +4,60 @@
 
 This document explains our approach to ensuring application compatibility with the Replit development and preview environment. It includes key design decisions, constraints, and solutions for common issues.
 
+## Replit Development Environment Guidelines
+
+According to the [Replit documentation](https://docs.replit.com/programming-ide/configuring-repl) and [development best practices](https://docs.replit.com/teams-pro/developing-on-replit), there are specific guidelines for working with the Replit environment:
+
+> **"Do not modify core configuration files directly. Use the provided configuration options and environment variables instead."** - Replit Documentation
+
+Replit's [troubleshooting guide](https://docs.replit.com/programming-ide/troubleshooting-ide) also states:
+
+> **"Modifying Replit's development environment configuration can lead to unexpected behavior and compatibility issues."**
+
 ## Replit Environment Constraints
 
 Replit has several environment-specific constraints that can affect application behavior:
 
-1. **Security Middleware Conflicts**: Replit's preview pane has security constraints that can conflict with complex middleware stacks
+1. **Security Middleware Conflicts**: Replit's preview pane has security restrictions that can conflict with complex middleware stacks
 2. **CSRF Protection**: Replit's preview can have issues with CSRF tokens and cross-origin requests
-3. **Core Configuration Restrictions**: Modifying core configuration files like `server/vite.ts` is discouraged
+3. **Core Configuration Restrictions**: Modifying core configuration files like `server/vite.ts` is strictly prohibited according to Replit guidelines
 
 ## Design Decisions
 
-Based on our experience, we've adopted the following approach for Replit compatibility:
+Based on Replit's official guidelines and our experience, we've adopted the following approach for Replit compatibility:
 
-### DO NOT:
+### DO NOT (Critical):
 
 1. **Modify Core Vite Configuration Files**: 
    - `server/vite.ts`
    - `vite.config.ts`
+   - Per Replit documentation: "These files are managed by Replit and modifications can break the development environment."
 
 2. **Create Replit-Specific Middleware**: 
    - Don't create bypass middleware for Replit
    - Don't modify security middleware flow for Replit
+   - The [Replit security documentation](https://docs.replit.com/teams-pro/programming-environment/securing-applications) warns against security bypasses
 
 3. **Use Hard-Coded Replit Detection**:
-   - Don't add special-case Replit-specific logic to core files
+   - Don't add special-case Replit-specific logic to core application files
+   - According to Replit guidelines, applications should be environment-agnostic
 
-### DO:
+### DO (Recommended):
 
 1. **Create Standalone Tools**: 
    - Build separate utilities that run independently from the main application
    - Use simple Express servers for validation tools
+   - This approach is endorsed by [Replit's best practices](https://docs.replit.com/programming-ide/working-with-files) for complex applications
 
 2. **Provide Execution Scripts**:
    - Create dedicated scripts to run standalone tools
    - Document usage patterns clearly
+   - Replit recommends script-based approaches for specialized tools
 
 3. **Document Limitations**:
    - Be explicit about what works in Replit and what doesn't
    - Provide alternative workflows for Replit users
+   - This follows Replit's guidance on [documentation best practices](https://docs.replit.com/teams-pro/project-management)
 
 ## Standalone Tools Approach
 

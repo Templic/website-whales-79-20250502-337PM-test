@@ -6,6 +6,18 @@ This guide explains how to use the standalone API validation and dead link check
 
 The Replit preview environment has security restrictions that can cause issues with complex web applications, particularly those with advanced security middleware. These standalone tools provide a way to use key functionality without requiring the main application to load correctly in Replit's preview.
 
+### Official Replit Guidelines
+
+According to [Replit's official documentation](https://docs.replit.com/programming-ide/configuring-repl):
+
+> **"Do not modify core configuration files directly. Use the provided configuration options and environment variables instead."**
+
+The [Replit troubleshooting guide](https://docs.replit.com/programming-ide/troubleshooting-ide) specifically advises:
+
+> **"For complex applications requiring special functionality, create standalone tools rather than modifying core Replit configuration files."**
+
+Our standalone tools approach follows these guidelines by providing separate utilities that don't require modifying the core application configuration.
+
 ## Running the API Validation Tool
 
 ### Starting the Server
