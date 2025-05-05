@@ -106,5 +106,14 @@
     "category": "system",
     "timestamp": "2025-05-05T05:27:14.575Z",
     "lastUpdated": "2025-05-05T05:27:14.575Z"
+  },
+  {
+    "id": "INC-20250505-SYS-M3886",
+    "title": "File integrity changes detected in critical files",
+    "severity": "medium",
+    "status": "new",
+    "category": "system",
+    "timestamp": "2025-05-05T05:28:35.232Z",
+    "lastUpdated": "2025-05-05T05:28:35.232Z"
   }
 ]

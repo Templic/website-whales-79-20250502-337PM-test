@@ -8,7 +8,7 @@
 import fetch from 'node-fetch';
 
 // Configuration
-const API_BASE = 'http://localhost:3000/api/admin/typescript-errors';
+const API_BASE = 'http://localhost:5000/api/admin/typescript-errors';
 
 /**
  * Test the TypeScript errors API

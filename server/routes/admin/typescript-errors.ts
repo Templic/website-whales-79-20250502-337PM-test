@@ -31,6 +31,16 @@ import fs from 'fs';
 
 const router = express.Router();
 
+// Simple test endpoint that doesn't require any validation or database access
+router.get('/test', (req, res) => {
+  console.log('[TypeScript Errors API] Test endpoint called');
+  res.json({
+    success: true,
+    message: 'TypeScript Errors API is working',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Validation middleware
 const scanValidation = [
   body('aiEnabled').isBoolean().optional()
