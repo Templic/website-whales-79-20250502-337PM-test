@@ -342,6 +342,68 @@ export class RateLimitingSystem {
   }
   
   /**
+   * Create a dedicated rate limiter for authentication endpoints
+   * This provides stricter rate limiting for login/registration to prevent brute force attacks
+   * 
+   * @returns Express middleware for auth endpoints
+   */
+  public createAuthLimiter(): (req: Request, res: Response, next: NextFunction) => void {
+    return (req: Request, res: Response, next: NextFunction) => {
+      try {
+        // Get client IP
+        const clientIp = getClientIp(req);
+        
+        // Get username from request if available
+        const username = req.body?.username || 'unknown';
+        
+        // Create a key that combines IP and username
+        const key = `${clientIp}:${username}`;
+        
+        // Use the auth limiter
+        const limiter = this.rateLimiters.auth;
+        
+        // Default cost is higher for auth endpoints
+        const cost = 2;
+        
+        // Check if client has enough tokens
+        if (!limiter.consumeTokens(key, cost)) {
+          // Client is rate limited
+          const retryAfter = limiter.getRetryAfterMs(key);
+          
+          // Set headers
+          res.setHeader('Retry-After', Math.ceil(retryAfter / 1000).toString());
+          res.setHeader('X-RateLimit-Limit', limiter.getCapacity().toString());
+          res.setHeader('X-RateLimit-Remaining', '0');
+          res.setHeader('X-RateLimit-Reset', String(Math.floor((Date.now() + retryAfter) / 1000)));
+          
+          // Log rate limiting
+          log(`Rate limited auth attempt from ${clientIp} for user ${username}`, 'security');
+          
+          // Return rate limiting response
+          return res.status(429).json({
+            error: 'Too many attempts',
+            message: 'Please try again later',
+            retryAfter: Math.ceil(retryAfter / 1000)
+          });
+        }
+        
+        // Set rate limit headers
+        res.setHeader('X-RateLimit-Limit', limiter.getCapacity().toString());
+        res.setHeader('X-RateLimit-Remaining', limiter.getAvailableTokens(key).toString());
+        
+        // Continue to next middleware
+        next();
+      } catch (error) {
+        // Log error
+        log(`Error in auth rate limit middleware: ${error}`, 'error');
+        
+        // Continue to next middleware (fail open)
+        next();
+      }
+    };
+  }
+  
+  /**
    * Create middleware for rate limiting
    * 
    * @returns Express middleware

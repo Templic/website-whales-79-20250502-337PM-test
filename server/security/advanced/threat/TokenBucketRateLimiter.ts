@@ -446,6 +446,43 @@ export class TokenBucketRateLimiter {
   }
   
   /**
+   * Get the retry after time for a key
+   * This is used to tell clients when they can retry
+   * 
+   * @param key Bucket key
+   * @returns Time to wait in milliseconds
+   */
+  public getRetryAfterMs(key: string): number {
+    try {
+      const now = Date.now();
+      const bucket = this.buckets.get(key);
+      
+      // If bucket doesn't exist, no retry needed
+      if (!bucket) {
+        return 0;
+      }
+      
+      // Refill tokens to get current state
+      this.refillTokens(bucket, now);
+      
+      // If tokens available, no retry needed
+      if (bucket.tokens > 0) {
+        return 0;
+      }
+      
+      // Calculate time to next token
+      const timeToNextToken = this.getTimeToNextToken(bucket, now);
+      
+      // Add a small buffer to ensure a token will be available
+      return timeToNextToken + 100; // 100ms buffer
+    } catch (error) {
+      log(`Error getting retry after time: ${error}`, 'error');
+      // Default to 1 second if error
+      return 1000;
+    }
+  }
+
+  /**
    * Consume tokens without context and adaptivity
    * This is a simplified version of the consume method
    * 

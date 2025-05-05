@@ -8,6 +8,7 @@ import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { logSecurityEvent } from "./security/security";
 import { sessionMonitor, passwordChangeRequired } from "./security/sessionMonitor";
+import { rateLimitingSystem } from "./security/advanced/threat/RateLimitingSystem";
 
 // Extend session type to include our custom properties
 declare module 'express-session' {
@@ -192,39 +193,133 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/register", async (req, res, next) => {
+  // Create a dedicated rate limiter for auth endpoints
+  const authRateLimiter = rateLimitingSystem.createAuthLimiter();
+  
+  // Add rate limiting to registration endpoint
+  app.post("/api/register", authRateLimiter, async (req, res, next) => {
     try {
+      // Log registration attempt
+      logSecurityEvent({
+        type: 'REGISTRATION_ATTEMPT',
+        details: `Registration attempt with username ${req.body.username}`,
+        severity: 'info',
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+      
+      // Enhanced password strength validation
+      const { password } = req.body;
+      
+      if (!password || password.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters long" });
+      }
+      
+      if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+        return res.status(400).json({ 
+          message: "Password must contain at least one uppercase letter, one lowercase letter, and one number" 
+        });
+      }
+      
+      // Additional special character requirement
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        return res.status(400).json({ 
+          message: "Password must contain at least one special character" 
+        });
+      }
+      
       // Check for existing username
       const existingUsername = await storage.getUserByUsername(req.body.username);
       if (existingUsername) {
+        logSecurityEvent({
+          type: 'REGISTRATION_FAILED',
+          details: `Registration failed - username ${req.body.username} already exists`,
+          severity: 'low',
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        });
         return res.status(400).json({ message: "Username already exists" });
       }
 
       // Check for existing email
       const existingEmail = await storage.getUserByEmail(req.body.email);
       if (existingEmail) {
+        logSecurityEvent({
+          type: 'REGISTRATION_FAILED',
+          details: `Registration failed - email ${req.body.email} already in use`,
+          severity: 'low',
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        });
         return res.status(400).json({ message: "Email address already in use" });
       }
 
+      // Hash password with scrypt
+      const hashedPassword = await hashPassword(req.body.password);
+      
+      // Create user with enhanced security
       const user = await storage.createUser({
         ...req.body,
-        password: await hashPassword(req.body.password)
+        password: hashedPassword
       });
 
       req.login(user, (err) => {
         if (err) return next(err);
+        
+        // Log successful registration
+        logSecurityEvent({
+          type: 'REGISTRATION_SUCCESS',
+          details: `Successfully registered user ${user.username}`,
+          severity: 'info',
+          userId: user.id,
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        });
+        
         res.status(201).json(user);
       });
     } catch (err) {
       console.error("Registration error:", err);
+      
+      // Log registration error
+      logSecurityEvent({
+        type: 'REGISTRATION_ERROR',
+        details: `Registration error: ${err}`,
+        severity: 'medium',
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+      
       next(err);
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
+  // Apply rate limiting to login endpoint
+  app.post("/api/login", authRateLimiter, (req, res, next) => {
+    // Record login attempt for security monitoring
+    logSecurityEvent({
+      type: 'LOGIN_ATTEMPT',
+      details: `Login attempt for user ${req.body.username}`,
+      severity: 'info',
+      ip: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
     passport.authenticate("local", (err: Error | null, user: SelectUser | false, info: { message: string }) => {
       if (err) return next(err);
-      if (!user) return res.status(401).json(info);
+      
+      if (!user) {
+        // Log failed login attempt
+        logSecurityEvent({
+          type: 'LOGIN_FAILED',
+          details: `Failed login attempt for user ${req.body.username}`,
+          severity: 'medium',
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        });
+        
+        return res.status(401).json(info);
+      }
 
       // Handle remember-me functionality
       const rememberMe = req.body.rememberMe === true;
@@ -234,6 +329,17 @@ export function setupAuth(app: Express) {
 
       req.login(user, (err) => {
         if (err) return next(err);
+        
+        // Log successful login
+        logSecurityEvent({
+          type: 'LOGIN_SUCCESS',
+          details: `Successful login for user ${user.username}`,
+          severity: 'info',
+          userId: user.id,
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        });
+        
         res.json(user);
       });
     })(req, res, next);
