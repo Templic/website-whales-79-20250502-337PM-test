@@ -29,6 +29,8 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
   animated = true,
   size = 24,
   intensity = 'medium',
+  color = 'currentColor',
+  reversed = false,
 }) => {
   // Use variant if provided, otherwise fall back to type for backward compatibility
   const shapeType = variant || type || 'cube';
