@@ -485,7 +485,7 @@ async function runScanInBackground(scanId: string, aiEnabled: boolean) {
     ]);
     
     console.log(`[TypeScript Scanner] Scan ${scanId} completed`);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('[TypeScript Scanner] Error running scan:', error);
     
     // Update scan status to failed
@@ -497,7 +497,7 @@ async function runScanInBackground(scanId: string, aiEnabled: boolean) {
       WHERE id = $3
     `, [
       new Date(),
-      `Scan failed: ${error.message || 'Unknown error'}`,
+      `Scan failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       scanId
     ]);
     
@@ -558,7 +558,7 @@ async function generateAIFixInBackground(scanId: string, errorId: string, error:
     ]);
     
     console.log(`[TypeScript Scanner] AI fix generated for error ${errorId}`);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('[TypeScript Scanner] Error generating AI fix:', error);
     
     // Update error status back to NEW
@@ -599,7 +599,7 @@ function getCodeContext(filePath: string, lineNumber: number, contextLines: numb
     }
     
     return context;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Error getting code context for ${filePath}:${lineNumber}:`, error);
     return `[Error reading file: ${error instanceof Error ? error.message : 'Unknown error'}]`;
   }
@@ -624,7 +624,7 @@ async function applyFixToFile(filePath: string, lineNumber: number, fixedCode: s
     
     console.log(`Fixed error in ${filePath}:${lineNumber}`);
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Error applying fix to ${filePath}:${lineNumber}:`, error);
     return false;
   }
