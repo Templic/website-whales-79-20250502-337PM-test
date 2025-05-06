@@ -1,0 +1,199 @@
+8. Sacred Geometry Components
+File: sacred-geometry.tsx
+import React, { useState, useEffect } from 'react';
+type GeometryType = 'flower-of-life' | 'sri-yantra' | 'metatron-cube' | 'pentagon-star' | 'hexagon' | 'vesica-piscis' | 'golden-spiral' | 'merkaba';
+interface SacredGeometryProps {
+  type: GeometryType;
+  size?: number;
+  color?: string;
+  animate?: boolean;
+  animationDuration?: number;
+  lineWidth?: number;
+  className?: string;
+  showLabels?: boolean;
+  style?: React.CSSProperties;
+}
+const SacredGeometry: React.FC<SacredGeometryProps> = ({
+  type,
+  size = 100,
+  color = 'currentColor',
+  animate = false,
+  animationDuration = 20,
+  lineWidth = 1,
+  className = '',
+  showLabels = false,
+  style,
+}) => {
+  const [rotation, setRotation] = useState(0);
+  useEffect(() => {
+    if (!animate) return;
+    
+    const interval = setInterval(() => {
+      setRotation(prev => (prev + 0.5) % 360);
+    }, 50);
+    
+    return () => clearInterval(interval);
+  }, [animate]);
+  const renderGeometry = () => {
+    switch (type) {
+      case 'merkaba':
+        return renderMerkaba();
+      case 'hexagon':
+        return renderHexagon();
+      // Add other geometry types here...
+      default:
+        return null;
+    }
+  };
+  // Implementation for Merkaba
+  const renderMerkaba = () => {
+    return (
+      <svg 
+        viewBox="0 0 100 100" 
+        style={{
+          ...style,
+          transform: animate ? `rotate(${rotation}deg)` : undefined,
+          transition: animate ? `transform ${animationDuration}s linear` : undefined,
+        }} 
+        className={className}
+      >
+        {/* First tetrahedron pointing upward */}
+        <g>
+          <path 
+            d="M50,20 L20,70 L80,70 Z" 
+            fill="none" 
+            stroke={color} 
+            strokeWidth={lineWidth}
+            opacity="0.8"
+          />
+          <path 
+            d="M50,20 L20,70 L50,40 Z" 
+            fill="none" 
+            stroke={color} 
+            strokeWidth={lineWidth}
+            opacity="0.6"
+          />
+          <path 
+            d="M50,20 L80,70 L50,40 Z" 
+            fill="none" 
+            stroke={color} 
+            strokeWidth={lineWidth}
+            opacity="0.6"
+          />
+          <path 
+            d="M20,70 L80,70 L50,40 Z" 
+            fill="none" 
+            stroke={color} 
+            strokeWidth={lineWidth}
+            opacity="0.6"
+          />
+        </g>
+        
+        {/* Second tetrahedron pointing downward */}
+        <g>
+          <path 
+            d="M50,80 L20,30 L80,30 Z" 
+            fill="none" 
+            stroke={color} 
+            strokeWidth={lineWidth}
+            opacity="0.8"
+          />
+          <path 
+            d="M50,80 L20,30 L50,60 Z" 
+            fill="none" 
+            stroke={color} 
+            strokeWidth={lineWidth}
+            opacity="0.6"
+          />
+          <path 
+            d="M50,80 L80,30 L50,60 Z" 
+            fill="none" 
+            stroke={color} 
+            strokeWidth={lineWidth}
+            opacity="0.6"
+          />
+          <path 
+            d="M20,30 L80,30 L50,60 Z" 
+            fill="none" 
+            stroke={color} 
+            strokeWidth={lineWidth}
+            opacity="0.6"
+          />
+        </g>
+        
+        {/* Central hexagon */}
+        <path 
+          d="M50,40 L30,50 L30,70 L50,80 L70,70 L70,50 Z" 
+          fill="none" 
+          stroke={color} 
+          strokeWidth={lineWidth}
+          opacity="0.9"
+        />
+        
+        {showLabels && (
+          <text 
+            x="50" 
+            y="95" 
+            textAnchor="middle" 
+            fill={color} 
+            fontSize="4"
+          >
+            Merkaba
+          </text>
+        )}
+      </svg>
+    );
+  };
+  // Implementation for Hexagon
+  const renderHexagon = () => {
+    return (
+      <svg 
+        viewBox="0 0 100 100" 
+        style={{
+          ...style,
+          transform: animate ? `rotate(${rotation}deg)` : undefined,
+          transition: animate ? `transform ${animationDuration}s linear` : undefined,
+        }} 
+        className={className}
+      >
+        <path 
+          d="M50,10 L90,30 L90,70 L50,90 L10,70 L10,30 Z" 
+          fill="none" 
+          stroke={color} 
+          strokeWidth={lineWidth}
+        />
+        
+        {/* Inner structures */}
+        <path 
+          d="M50,30 L70,40 L70,60 L50,70 L30,60 L30,40 Z" 
+          fill="none" 
+          stroke={color} 
+          strokeWidth={lineWidth}
+          opacity="0.7"
+        />
+        
+        {/* Connection lines */}
+        <line x1="50" y1="10" x2="50" y2="30" stroke={color} strokeWidth={lineWidth * 0.7} opacity="0.5" />
+        <line x1="90" y1="30" x2="70" y2="40" stroke={color} strokeWidth={lineWidth * 0.7} opacity="0.5" />
+        <line x1="90" y1="70" x2="70" y2="60" stroke={color} strokeWidth={lineWidth * 0.7} opacity="0.5" />
+        <line x1="50" y1="90" x2="50" y2="70" stroke={color} strokeWidth={lineWidth * 0.7} opacity="0.5" />
+        <line x1="10" y1="70" x2="30" y2="60" stroke={color} strokeWidth={lineWidth * 0.7} opacity="0.5" />
+        <line x1="10" y1="30" x2="30" y2="40" stroke={color} strokeWidth={lineWidth * 0.7} opacity="0.5" />
+        
+        {showLabels && (
+          <text 
+            x="50" 
+            y="95" 
+            textAnchor="middle" 
+            fill={color} 
+            fontSize="4"
+          >
+            Hexagon
+          </text>
+        )}
+      </svg>
+    );
+  };
+  return renderGeometry();
+};
+export default SacredGeometry;

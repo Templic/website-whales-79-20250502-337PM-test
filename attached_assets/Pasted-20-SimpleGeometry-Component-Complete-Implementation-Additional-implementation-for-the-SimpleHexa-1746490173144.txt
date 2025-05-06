@@ -1,0 +1,149 @@
+20. SimpleGeometry Component - Complete Implementation
+Additional implementation for the SimpleHexagon component content:
+{/* Background pattern */}
+<div className="absolute inset-0 opacity-10" style={{ zIndex: -1 }}>
+  <svg
+    width="100%"
+    height="100%"
+    viewBox="0 0 100 100"
+    preserveAspectRatio="none"
+    className="opacity-20"
+  >
+    <path
+      d="M25 0 L75 0 L100 50 L75 100 L25 100 L0 50 Z"
+      stroke="white"
+      strokeWidth="0.5"
+      fill="none"
+    />
+    <path
+      d="M35 20 L65 20 L80 50 L65 80 L35 80 L20 50 Z"
+      stroke="white"
+      strokeWidth="0.5"
+      fill="none"
+    />
+  </svg>
+</div>
+{/* Content Container - ensure content stays within hexagon boundaries */}
+<div className="absolute inset-[8%] flex flex-col justify-center items-center">
+  {/* Title - adaptive sizing */}
+  {heading && (
+    <div className="text-center mb-0">
+      {React.isValidElement(heading) && 
+        typeof heading.type === 'string' && 
+        ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(heading.type) ? 
+        React.cloneElement(heading as React.ReactElement, {
+          className: cn(fontSize.heading, 'font-medium leading-none m-0', (heading.props as any).className || ''),
+        }) : heading
+      }
+    </div>
+  )}
+  
+  {/* Divider */}
+  <ShapeDivider width="50%" opacity={30} margin="0" />
+  
+  {/* Content - kept away from edges with adaptive sizing */}
+  <div className="w-full max-w-[80%] flex-grow flex flex-col justify-center items-center overflow-y-auto text-center m-0 p-0">
+    {content.map((item, index) => {
+      if (React.isValidElement(item) && item.type === 'p') {
+        return React.cloneElement(item as React.ReactElement, {
+          className: cn(fontSize.content, 'm-0 leading-tight', (item.props as any).className || ''),
+          key: `hexagon-content-${index}`
+        });
+      }
+      return item;
+    })}
+  </div>
+  
+  {/* Button - hexagon shaped to match container */}
+  {button && (
+    <div className="mt-0 mb-0 flex justify-center items-center">
+      {React.isValidElement(button) && button.type === 'button' ? 
+        React.cloneElement(button as React.ReactElement, {
+          className: cn(fontSize.button, 'text-center', (button.props as any).className || ''),
+          style: {
+            clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
+            padding: "0.5rem 1rem",
+            background: (button.props as any).className?.includes('bg-') 
+              ? undefined 
+              : "rgba(0, 100, 255, 0.8)",
+            border: "1px solid rgba(255, 255, 255, 0.5)",
+            boxShadow: "0 0 8px rgba(0, 100, 255, 0.5)",
+            textAlign: "center",
+            lineHeight: "1"
+          }
+        }) : button
+      }
+    </div>
+  )}
+</div>
+21. DynamicContent Component - Error Prevention
+To prevent nesting errors like the one shown in the console logs:
+const renderTextContent = (textContent: string) => {
+  // Check if we need to wrap in another element to prevent nesting errors
+  const needsWrapper = parentElementType === 'p';
+  
+  if (needsWrapper) {
+    return <span className={className}>{textContent}</span>;
+  }
+  
+  // If not inside a paragraph, we can use the normal span
+  return <span className={className}>{textContent}</span>;
+};
+22. Custom Hook for Responsive Shape Content
+function useResponsiveShape(adaptiveScaling = true) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [fontSize, setFontSize] = useState<{ heading: string; content: string; button: string }>({
+    heading: 'text-base',
+    content: 'text-xs',
+    button: 'text-xs'
+  });
+  
+  useEffect(() => {
+    if (!adaptiveScaling) return;
+    
+    function updateFontSizes() {
+      if (!containerRef.current) return;
+      
+      const containerWidth = containerRef.current.offsetWidth;
+      
+      // Adaptive font sizing based on container width
+      if (containerWidth < 150) {
+        setFontSize({
+          heading: 'text-xs',
+          content: 'text-[10px]',
+          button: 'text-[9px]'
+        });
+      } else if (containerWidth < 250) {
+        setFontSize({
+          heading: 'text-sm',
+          content: 'text-xs',
+          button: 'text-xs'
+        });
+      } else if (containerWidth < 350) {
+        setFontSize({
+          heading: 'text-base',
+          content: 'text-xs',
+          button: 'text-xs'
+        });
+      } else {
+        setFontSize({
+          heading: 'text-lg',
+          content: 'text-sm',
+          button: 'text-xs'
+        });
+      }
+    }
+    
+    // Initial sizing
+    updateFontSizes();
+    
+    // Add resize listener
+    window.addEventListener('resize', updateFontSizes);
+    
+    return () => {
+      window.removeEventListener('resize', updateFontSizes);
+    };
+  }, [adaptiveScaling]);
+  
+  return { containerRef, fontSize };
+}

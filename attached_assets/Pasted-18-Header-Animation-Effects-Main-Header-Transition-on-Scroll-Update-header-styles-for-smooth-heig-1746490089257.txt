@@ -1,0 +1,52 @@
+18. Header Animation Effects
+Main Header Transition on Scroll
+Update header styles for smooth height transition:
+<header 
+  className={`
+    fixed top-0 z-[100] w-full 
+    backdrop-blur-lg border-b border-white/5 
+    transition-all duration-300 ease-in-out
+    ${isScrolled ? 'h-16 bg-black/90' : 'h-20 bg-black/50'}
+  `}
+>
+  {/* Header content */}
+</header>
+Logo Animation
+Enhance the logo animation:
+const LogoAnimation = () => {
+  return (
+    <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 opacity-70 group-hover:opacity-100 transition-all duration-500"></div>
+      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
+      <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-xl opacity-20 group-hover:opacity-40 transition-all duration-500"></div>
+      
+      {/* Ambient light pulse animation */}
+      <div className="absolute inset-0 rounded-full bg-cyan-500/30 animate-pulse"></div>
+    </div>
+  );
+};
+19. Custom Navigation Effects with Framer Motion
+For more advanced navigation effects:
+import { motion, AnimatePresence } from "framer-motion";
+// Inside the desktop navigation
+{navigationItems.map((item, index) => (
+  <Link key={item.path} href={item.path}>
+    <motion.div 
+      className="..."
+      whileHover={{ y: -2 }}
+      whileTap={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+    >
+      <span>{item.label}</span>
+      {location === item.path && (
+        <motion.div 
+          layoutId="nav-indicator"
+          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+        />
+      )}
+    </motion.div>
+  </Link>
+))}

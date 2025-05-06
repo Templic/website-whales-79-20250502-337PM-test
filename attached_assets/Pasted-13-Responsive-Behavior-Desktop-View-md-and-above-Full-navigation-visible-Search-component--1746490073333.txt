@@ -1,0 +1,88 @@
+13. Responsive Behavior
+Desktop View (md and above)
+•	Full navigation visible
+•	Search component visible in header
+•	Back/forward navigation buttons visible
+Mobile View (below md)
+•	Navigation hidden behind menu button
+•	Search integrated into mobile menu
+•	Compact header with just logo and menu button
+14. Animation & Transitions
+•	Logo Hover: Scale and opacity transitions (duration-500)
+•	Navigation Indicator: Animated with framer-motion
+•	Mobile Menu: Height and opacity transitions (duration-300)
+•	Header Height: Changes on scroll (duration-300)
+This comprehensive guide provides all the necessary details to rebuild the header with its exact styling, components, and responsive behavior.
+15. Accessibility Enhancements
+ARIA Attributes
+// Mobile Menu Button
+<button
+  type="button"
+  className="inline-flex md:hidden items-center justify-center p-2 rounded-md text-white"
+  aria-controls="mobile-menu"
+  aria-expanded={isMobileMenuOpen}
+  aria-label="Toggle navigation menu"
+>
+  {/* Button content */}
+</button>
+// Navigation links
+<Link
+  key={item.path}
+  href={item.path}
+  aria-current={location === item.path ? "page" : undefined}
+>
+  {/* Link content */}
+</Link>
+Focus States
+/* Add these styles to your CSS */
+.nav-link:focus-visible {
+  outline: 2px solid #06b6d4; /* cyan-500 */
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+.search-input:focus-visible {
+  outline: none;
+  ring-offset-2;
+  ring-2;
+  ring-cyan-400;
+}
+16. Sacred Geometry Background
+Add to the header for subtle geometric patterns:
+<div className="absolute inset-0 pointer-events-none overflow-hidden opacity-5">
+  <SacredGeometry 
+    type="merkaba" 
+    className="absolute -top-20 -right-20 w-64 h-64 text-cyan-400" 
+    animate={true}
+  />
+  <SacredGeometry 
+    type="flower-of-life" 
+    className="absolute -bottom-40 -left-40 w-96 h-96 text-purple-400" 
+    animate={true}
+  />
+</div>
+17. User Menu Component
+Add this after the search component:
+{/* User Menu */}
+{user ? (
+  <div className="relative ml-2">
+    <button
+      className="flex items-center space-x-1 focus:outline-none"
+      aria-expanded="false"
+      aria-haspopup="true"
+      onClick={() => {/* Toggle user menu */}}
+    >
+      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center text-white">
+        {user.name.charAt(0).toUpperCase()}
+      </div>
+    </button>
+    
+    {/* User dropdown menu here */}
+  </div>
+) : (
+  <button 
+    className="ml-2 px-3 py-1.5 rounded-md bg-gradient-to-r from-cyan-500 to-purple-600 text-white text-sm font-medium hover:from-cyan-600 hover:to-purple-700 transition-colors"
+    onClick={() => navigate('/login')}
+  >
+    Login
+  </button>
+)}
