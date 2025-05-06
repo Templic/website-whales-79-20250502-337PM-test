@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from "react";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ProductFilter } from "@/components/shop/ProductFilter";
-import { ShopHeader } from "@/components/shop/ShopHeader";
+// ShopHeader removed to prevent duplicate headers
 import { useRoute } from "wouter";
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import EnhancedShoppingExperience from "@/components/shop/EnhancedShoppingExperience";
@@ -354,28 +354,22 @@ const ShopPage: React.FC = () => {
         )}
 
         <div className="max-w-7xl mx-auto">
-          <ShopHeader 
-            onSearch={(query) => {
-              setSearchQuery(query);
-              // Additional search logic if needed
-            }}
-            onVoiceSearch={(transcript) => {
-              setSearchQuery(transcript);
-              // Additional voice search logic if needed
-            }}
-            cartItemCount={cart.length}
-            searchQuery={searchQuery} 
-            setSearchQuery={setSearchQuery} 
-            allCategories={allCategories} 
-            categoryFilter={filters.category} 
-            setCategoryFilter={(cat: string[]) => handleFilterChange({ category: cat })}
-            priceRange={filters.priceRange}
-            setPriceRange={(range: [number, number]) => handleFilterChange({ priceRange: range })}
-            sortOrder={filters.sortBy}
-            setSortOrder={(sort: string) => handleFilterChange({ sortBy: sort })}
-            viewType={viewType}
-            setViewType={setViewType}
-          />
+          {/* ShopHeader removed to prevent duplicate headers - main page header is used instead */}
+          <div className="mb-6 flex flex-col gap-4">
+            <h1 className="text-3xl font-bold text-white">Cosmic Shop</h1>
+            <div className="flex flex-wrap gap-3 items-center">
+              <div className="relative flex-grow max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
+                <input 
+                  type="text"
+                  placeholder="Search cosmic products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white"
+                />
+              </div>
+            </div>
+          </div>
 
           {/* Enhanced Shopping Components - Order adjusted per request */}
           <div className="mt-4">
