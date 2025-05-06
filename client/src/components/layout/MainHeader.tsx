@@ -1,703 +1,148 @@
-/**
- * MainHeader.tsx
- * 
- * This is the primary header component for the website, featuring sacred geometry,
- * staggered navigation, and cosmic design elements.
- * 
- * Created: 2025-04-05 - Updated with enhancements
- * Latest Update: Complete redesign based on new specifications - May 5, 2025
- */
+import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { Logo } from '../cosmic/Logo';
+import { Navigation } from './Navigation';
+import { SearchBar } from './SearchBar';
+import { HeaderControls } from './HeaderControls';
+import { UserMenu } from './UserMenu';
+import { HexagramMerkaba } from '../cosmic/HexagramMerkaba';
+import { GlowEffects } from '../ui/GlowEffects';
 
-import { useState, useCallback, useEffect, useRef } from "react";
-import { Link, useLocation } from "wouter";
-import { useToast } from "../../hooks/use-toast";
-import { 
-  Menu, 
-  X, 
-  Search, 
-  User, 
-  Facebook, 
-  Twitter, 
-  Instagram, 
-  Youtube,
-  Music,
-  Headphones,
-  Calendar,
-  ShoppingBag,
-  Home,
-  MessageSquare,
-  Users,
-  Heart,
-  Info,
-  Mail,
-  Newspaper,
-  ArrowLeft,
-  ArrowRight,
-  RotateCw,
-  Settings,
-  HelpCircle
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import SacredGeometry from "../ui/sacred-geometry";
-
-// Define navigation items
-interface NavItem {
-  name: string;
-  path: string;
-  icon: React.ReactNode;
-}
-
-export const MainHeader = () => {
-  const [location, navigate] = useLocation();
-  const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
+export const MainHeader: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [searchResultsMessage, setSearchResultsMessage] = useState('');
-  
-  // Implement the responsive layout hook from specifications for advanced adaptability
-  const [layout, setLayout] = useState({
-    logoSize: 'h-12 w-12',
-    navSpacing: 'space-x-4',
-    showSearchInHeader: true,
-    showSocialLinks: false,
-  });
-  
-  // Header shadow effect based on scroll position
-  const headerShadow = isScrolled
-    ? '0 4px 20px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(6, 182, 212, 0.1)'
-    : 'none';
-  
-  // Update layout based on screen width
-  useEffect(() => {
-    function updateLayout() {
-      if (window.innerWidth < 640) {
-        setLayout({
-          logoSize: 'h-8 w-8',
-          navSpacing: 'space-x-1',
-          showSearchInHeader: false,
-          showSocialLinks: false,
-        });
-      } else if (window.innerWidth < 1024) {
-        setLayout({
-          logoSize: 'h-10 w-10',
-          navSpacing: 'space-x-2',
-          showSearchInHeader: true,
-          showSocialLinks: false,
-        });
-      } else {
-        setLayout({
-          logoSize: 'h-12 w-12',
-          navSpacing: 'space-x-4',
-          showSearchInHeader: true,
-          showSocialLinks: true,
-        });
-      }
-    }
-    
-    updateLayout();
-    window.addEventListener('resize', updateLayout);
-    return () => window.removeEventListener('resize', updateLayout);
-  }, []);
-  
-  // Animation variants for mobile menu
-  const containerVariants = {
-    hidden: { height: 0, opacity: 0 },
-    visible: { 
-      height: 'auto', 
-      opacity: 1,
-      transition: { 
-        duration: 0.3,
-        staggerChildren: 0.1
-      }
-    },
-    exit: { 
-      height: 0, 
-      opacity: 0,
-      transition: { duration: 0.2 }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -20 }
-  };
-
-  // Check scroll position to adjust header appearance
+  const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
-  const [isHeaderHidden, setIsHeaderHidden] = useState(false);
-  const [headerStyles, setHeaderStyles] = useState<React.CSSProperties>({
-    backdropFilter: 'blur(5px)',
-    WebkitBackdropFilter: 'blur(5px)',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)'
-  });
   
+  // Handle scroll events with throttling
   useEffect(() => {
-    const SCROLL_THRESHOLD = 100;
-    const HEADER_HEIGHT = 80;
-    const autoHideNav = true;
-    
     const handleScroll = () => {
-      const scrollY = window.scrollY;
+      const currentScrollY = window.scrollY;
       
-      // Determine if header should be visible or hidden (for hide-on-scroll)
-      if (autoHideNav) {
-        // Hide header when scrolling down, show when scrolling up
-        const currentScrollY = window.scrollY;
-        const isScrollingDown = currentScrollY > lastScrollY.current;
-        
-        if (isScrollingDown && currentScrollY > HEADER_HEIGHT && !isHeaderHidden) {
-          setIsHeaderHidden(true);
-        } else if (!isScrollingDown && isHeaderHidden) {
-          setIsHeaderHidden(false);
-        }
-        
-        lastScrollY.current = currentScrollY;
+      // Update header compact state
+      setIsScrolled(currentScrollY > 100);
+      
+      // Handle hide-on-scroll behavior
+      if (currentScrollY > 60 && currentScrollY > lastScrollY.current + 10) {
+        setIsVisible(false);
+      } else if (currentScrollY < lastScrollY.current - 10 || currentScrollY < 10) {
+        setIsVisible(true);
       }
       
-      // Basic scrolled state
-      setIsScrolled(scrollY > 20);
-      
-      // Apply blur and opacity based on scroll position
-      const blurAmount = Math.min(10, scrollY / 10);
-      const opacityAmount = Math.min(0.9, 0.5 + (scrollY / SCROLL_THRESHOLD) * 0.4);
-      
-      setHeaderStyles({
-        backdropFilter: `blur(${blurAmount}px)`,
-        WebkitBackdropFilter: `blur(${blurAmount}px)`,  // Safari support
-        backgroundColor: `rgba(0, 0, 0, ${opacityAmount})`
-      });
+      lastScrollY.current = currentScrollY;
     };
     
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHeaderHidden]);
-
-  // Navigation items aligned with the specification
-  const navigationItems: NavItem[] = [
-    { name: "Home", path: "/", icon: <Home className="h-4 w-4" /> },
-    { name: "About", path: "/about", icon: <Users className="h-4 w-4" /> },
-    { name: "New Music", path: "/music-release", icon: <Music className="h-4 w-4" /> },
-    { name: "Archived Music", path: "/archived-music", icon: <Headphones className="h-4 w-4" /> },
-    { name: "Tour", path: "/tour", icon: <Calendar className="h-4 w-4" /> },
-    { name: "Shop", path: "/shop", icon: <ShoppingBag className="h-4 w-4" /> },
-    { name: "Engage", path: "/engage", icon: <Heart className="h-4 w-4" /> },
-    { name: "Contact", path: "/contact", icon: <Mail className="h-4 w-4" /> }
-  ];
-  
-  // Helper functions for navigation item sacred geometry - based on specifications
-  const getGeometryForIndex = (index: number): string => {
-    const types = ['hexagon', 'pentagon-star', 'merkaba', 'sri-yantra', 'flower-of-life'];
-    return types[index % types.length];
-  };
-  
-  const getColorForIndex = (index: number): string => {
-    const colors = [
-      'rgba(6, 182, 212, 0.7)',    // cyan
-      'rgba(147, 51, 234, 0.7)',   // purple
-      'rgba(59, 130, 246, 0.7)',   // blue
-      'rgba(236, 72, 153, 0.7)',   // pink
-      'rgba(16, 185, 129, 0.7)',   // emerald
-    ];
-    return colors[index % colors.length];
-  };
-
-  // Social media links for footer/mobile menu
-  const socialLinks = [
-    { name: "Facebook", icon: <Facebook className="h-5 w-5" aria-hidden="true" />, path: "https://facebook.com/DaleTheWhale", external: true },
-    { name: "Twitter", icon: <Twitter className="h-5 w-5" aria-hidden="true" />, path: "https://twitter.com/DaleTheWhale", external: true },
-    { name: "Instagram", icon: <Instagram className="h-5 w-5" aria-hidden="true" />, path: "https://instagram.com/DaleTheWhale", external: true },
-    { name: "YouTube", icon: <Youtube className="h-5 w-5" aria-hidden="true" />, path: "https://youtube.com/DaleTheWhale", external: true }
-  ];
-
-  // Handle keyboard navigation for menu items
-  const handleKeyboardNav = useCallback((e: React.KeyboardEvent, index: number) => {
-    // Arrow key navigation for menu items
-    if (e.key === 'ArrowRight') {
-      const nextItem = document.querySelector(`[data-nav-index="${index + 1}"]`) as HTMLElement;
-      nextItem?.focus();
-    } else if (e.key === 'ArrowLeft') {
-      const prevItem = document.querySelector(`[data-nav-index="${index - 1}"]`) as HTMLElement;
-      prevItem?.focus();
-    }
-  }, []);
-
-  // Handle navigation clicks
-  const handleNavigationClick = useCallback((path: string) => {
-    navigate(path);
-    setIsMobileMenuOpen(false);
+    // Use throttled event listener for better performance
+    let scrollTimeout: number;
+    const throttledScroll = () => {
+      if (!scrollTimeout) {
+        scrollTimeout = window.setTimeout(() => {
+          handleScroll();
+          scrollTimeout = 0;
+        }, 100);
+      }
+    };
     
-    // Update ARIA live region with current page
-    const currentPage = navigationItems.find(item => item.path === path)?.name || 'Page';
-    setSearchResultsMessage(`Navigated to ${currentPage}`);
-  }, [navigate, navigationItems]);
-
-  // Handle search submission
-  const handleSearchSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      
-      // Update ARIA live region with search query
-      setSearchResultsMessage(`Searching for "${searchQuery.trim()}". Results loading.`);
-      setSearchQuery("");
-      
-      // Show search initiated toast
-      toast({
-        title: "Search Initiated",
-        description: `Searching for "${searchQuery.trim()}"`,
-        variant: "default",
-      });
-    }
-  }, [searchQuery, navigate, toast]);
-
+    window.addEventListener('scroll', throttledScroll, { passive: true });
+    return () => window.removeEventListener('scroll', throttledScroll);
+  }, []);
+  
   return (
-    <header 
-      className={`fixed z-fixed-header w-full border-b border-white/5 transition-all duration-300 ease-in-out ${
-        isScrolled ? 'h-16' : 'h-20'
-      } ${isHeaderHidden ? '-translate-y-full' : 'translate-y-0'}`}
-      style={{
-        ...headerStyles,
-        boxShadow: headerShadow || '0 0 20px rgba(0, 235, 214, 0.15), 0 0 40px rgba(111, 76, 255, 0.1)'
-      }}
-    >
-      {/* ARIA live region for accessibility - screen reader announcements */}
-      <div 
-        aria-live="polite" 
-        aria-atomic="true"
-        className="sr-only"
+    <>
+      {/* SVG filters for glow effects */}
+      <GlowEffects />
+      
+      {/* Main header */}
+      <header 
+        className={`
+          fixed top-0 left-0 right-0 flex justify-center items-center z-[100]
+          transition-all duration-300 ease-in-out py-2
+          ${isVisible ? 'translate-y-0' : '-translate-y-full'}
+        `}
       >
-        {searchResultsMessage}
-      </div>
-      {/* Enhanced geometric background patterns with multiple sacred geometry elements */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-background">
-        {/* Top-right pattern */}
-        <div className="absolute -top-8 -right-8 opacity-5">
-          <SacredGeometry
-            type="flower-of-life"
-            color="rgba(6, 182, 212, 0.5)"
-            size={200}
-            animated={true}
-            animationDuration={120}
-            aria-hidden="true"
-          />
-        </div>
-        
-        {/* Bottom-left pattern */}
-        <div className="absolute -bottom-16 -left-16 opacity-5">
-          <SacredGeometry
-            type="sri-yantra"
-            color="rgba(147, 51, 234, 0.5)"
-            size={300}
-            animated={true}
-            animationDuration={180}
-            aria-hidden="true"
-          />
-        </div>
-        
-        {/* Subtle central pattern */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-[0.03]">
-          <SacredGeometry
-            type="merkaba"
-            color="white"
-            size={400}
-            animated={true}
-            animationDuration={240}
-            aria-hidden="true"
-          />
-        </div>
-      </div>
-      
-      <div className="container mx-auto px-4 h-full relative">
-        {/* Sacred Geometry Elements - Left Side - with z-index layering system */}
-        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 hidden md:block z-content">
-          <SacredGeometry 
-            type="merkaba" 
-            size={32} 
-            color="cyan" 
-            animated={true} 
-            className="opacity-60 hover:opacity-90 transition-opacity duration-500 cosmic-glow-cyan z-cosmic-highlight" 
-            aria-hidden="true"
-          />
-        </div>
-        
-        {/* Sacred Geometry Elements - Right Side - with z-index layering system */}
-        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 hidden md:block z-content">
-          <SacredGeometry 
-            type="merkaba" 
-            size={32} 
-            color="purple" 
-            animated={true}
-            reversed={true}
-            className="opacity-60 hover:opacity-90 transition-opacity duration-500 cosmic-glow-purple z-cosmic-highlight" 
-            aria-hidden="true"
-          />
-        </div>
-
-        {/* Implement the Advanced Header Layout Grid System per specifications */}
-        <div className="grid grid-cols-12 gap-2 items-center h-full relative">
-          {/* Logo spans 3 columns on desktop, 6 on mobile */}
-          <div className="col-span-6 md:col-span-3 z-important">
-            <Link href="/" className="flex items-center space-x-2 group">
-              <div className={`relative ${layout.logoSize} flex items-center justify-center`}>
-                {/* Main circle with gradient */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 opacity-80 group-hover:opacity-100 transition-opacity duration-300"></div>
-                
-                {/* Outer glow effect */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-[2px] opacity-60 group-hover:opacity-80 group-hover:blur-[3px] transition-all duration-300 group-hover:scale-110"></div>
-                <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-xl opacity-20 group-hover:opacity-40 transition-all duration-300"></div>
-                
-                {/* Inner geometric pattern - exact positioning */}
-                <div className="absolute inset-0 opacity-80 group-hover:opacity-100 transition-opacity">
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div 
-                      className="w-6 h-6 bg-gradient-to-r from-cyan-500/30 to-purple-600/30 rounded-sm"
-                      style={{
-                        transform: "rotate(45deg) scale(0.75)",
-                        transformOrigin: "center",
-                      }}
-                    ></div>
-                  </div>
-                </div>
-                
-                {/* Text logo positioning */}
-                <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm tracking-wider">
-                  DLW
-                </span>
-              </div>
-              <span className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-300 drop-shadow-[0_1px_1px_rgba(0,235,214,0.5)]">
-                Dale Loves Whales
-              </span>
-            </Link>
-          </div>
-
-          {/* Desktop Navigation spans 6 columns, only on desktop */}
-          <nav className="hidden md:block md:col-span-6 z-content">
-            <div className="grid grid-flow-col auto-cols-max gap-x-1">
-              {navigationItems.map((item, index) => (
-                <Link 
-                  key={item.path} 
-                  href={item.path}
-                  data-nav-index={index}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleNavigationClick(item.path);
-                  }}
-                  onKeyDown={(e) => handleKeyboardNav(e, index)}
-                  className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-white nav-link group ${
-                    location.includes(item.path) && (item.path === "/" ? location === "/" : true)
-                      ? 'text-white' 
-                      : 'text-white/70'
-                  }`}
-                  aria-current={location.includes(item.path) && (item.path === "/" ? location === "/" : true) ? "page" : undefined}
-                  tabIndex={0}
-                >
-                  {/* Interactive background geometry appears on hover - based on specifications */}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-cosmic-background">
-                    <SacredGeometry
-                      type="merkaba"
-                      color={getColorForIndex(index)}
-                      size={40}
-                      animated={true}
-                      aria-hidden="true"
-                    />
-                  </div>
-                  
-                  <motion.span 
-                    className="flex items-center space-x-1 relative z-10"
-                    whileHover={{ y: -2 }}
-                    whileTap={{ y: 0 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  >
-                    {item.icon}
-                    <span>{item.name}</span>
-                  </motion.span>
-                  {location.includes(item.path) && (item.path === "/" ? location === "/" : true) && (
-                    <motion.div 
-                      layoutId="nav-indicator"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.2 }}
-                    />
-                  )}
-                </Link>
-              ))}
-            </div>
-          </nav>
-          
-          {/* Search & Controls spans 3 columns on desktop, 6 on mobile */}
-          <div className="col-span-6 md:col-span-3 flex justify-end items-center z-content">
-            {/* Search Bar - Only visible on desktop if showSearchInHeader is true */}
-            {layout.showSearchInHeader && (
-              <div className="hidden md:block relative group mr-2" role="search">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-white/50 group-hover:text-cyan-400 group-focus-within:text-cyan-400 transition-colors duration-200" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && searchQuery.trim()) {
-                      handleSearchSubmit(e as any);
-                    }
-                  }}
-                  aria-label="Search site content"
-                  className="bg-white/5 border border-white/10 rounded-full py-1.5 pl-10 pr-4 text-sm text-white placeholder-white/50 
-                  focus:outline-none focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 transition-all w-40 focus:w-56 
-                  hover:bg-white/7 hover:border-white/15 search-input z-interactive"
-                />
-                <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-30 group-focus-within:opacity-40 
-                bg-gradient-to-r from-cyan-700/10 to-purple-700/10 blur-sm transition-opacity duration-300 -z-10"></div>
-              </div>
-            )}
-            
-            {/* Navigation controls on desktop */}
-            <div className="hidden md:flex items-center space-x-1.5 ml-2">
-              <button 
-                onClick={() => window.history.back()}
-                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors
-                focus:outline-none focus:ring-2 focus:ring-cyan-400/30 focus-visible:ring-2 focus-visible:ring-cyan-400/50
-                relative overflow-hidden group z-interactive"
-                aria-label="Go back"
-              >
-                <ArrowLeft className="h-4 w-4 relative z-10" />
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-20 group-focus:opacity-30 
-                bg-gradient-to-br from-cyan-400 to-purple-400 transition-opacity duration-200"></div>
-              </button>
-              <button 
-                onClick={() => window.history.forward()}
-                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors
-                focus:outline-none focus:ring-2 focus:ring-cyan-400/30 focus-visible:ring-2 focus-visible:ring-cyan-400/50
-                relative overflow-hidden group z-interactive"
-                aria-label="Go forward"
-              >
-                <ArrowRight className="h-4 w-4 relative z-10" />
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-20 group-focus:opacity-30 
-                bg-gradient-to-br from-cyan-400 to-purple-400 transition-opacity duration-200"></div>
-              </button>
-              <button 
-                onClick={() => window.location.reload()}
-                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors
-                focus:outline-none focus:ring-2 focus:ring-cyan-400/30 focus-visible:ring-2 focus-visible:ring-cyan-400/50
-                relative overflow-hidden group z-interactive"
-                aria-label="Reload page"
-              >
-                <RotateCw className="h-4 w-4 relative z-10" />
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-20 group-focus:opacity-30 
-                bg-gradient-to-br from-cyan-400 to-purple-400 transition-opacity duration-200"></div>
-              </button>
+        <div 
+          className={`
+            w-[85%] mx-auto rounded-2xl
+            bg-[rgba(30,58,138,0.8)] backdrop-blur-md
+            border-b border-[rgba(6,224,224,0.5)]
+            transition-all duration-300 ease-in-out
+            ${isScrolled ? 'h-16' : 'h-[90px]'}
+          `}
+          style={{
+            boxShadow: '0 0 15px rgba(6, 224, 224, 0.3)',
+          }}
+        >
+          {/* Header content grid */}
+          <div className="grid grid-cols-12 h-full items-center px-4">
+            {/* Logo area */}
+            <div className="col-span-3 md:col-span-2 lg:col-span-3">
+              <Logo />
             </div>
             
-            {/* Login Button */}
-            <Link 
-              href="/login" 
-              className="relative overflow-hidden bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 
-              transition-all duration-300 text-white px-3 md:px-5 py-2 rounded-md text-sm font-medium 
-              focus:outline-none focus:ring-2 focus:ring-cyan-400/50 group z-interactive ml-2"
-            >
-              <span className="relative z-10">Log In</span>
-              
-              {/* Inner glow effect */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-30 group-focus:opacity-40 
-              bg-gradient-to-r from-white/20 to-white/5 transition-opacity duration-300"></div>
-              
-              {/* Outer glow effect - positioned precisely */}
-              <div className="absolute -inset-[2px] rounded-lg opacity-0 group-hover:opacity-50 group-focus:opacity-70 
-              bg-gradient-to-r from-cyan-400 to-purple-500 blur-[6px] transition-all duration-300 
-              scale-105 group-hover:scale-110"></div>
-            </Link>
+            {/* Navigation area */}
+            <div className="hidden md:block col-span-6 md:col-span-8 lg:col-span-6">
+              <Navigation />
+            </div>
             
-            {/* Mobile Menu Button - Only visible on small screens */}
-            <button
-              type="button"
-              className="md:hidden ml-2 p-2 text-white/80 hover:text-white 
-              focus:outline-none focus:ring-2 focus:ring-cyan-400/30 
-              inline-flex items-center justify-center rounded-md
-              relative overflow-hidden group z-important"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-controls="mobile-menu"
-              aria-expanded={isMobileMenuOpen}
-              aria-label="Toggle navigation menu"
-            >
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-20 group-focus:opacity-30 
-              bg-gradient-to-br from-cyan-400 to-purple-400 rounded-md transition-opacity duration-200"></div>
-              
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6 relative z-10" />
-              ) : (
-                <Menu className="h-6 w-6 relative z-10" />
-              )}
-            </button>
+            {/* Right side controls */}
+            <div className="col-span-9 md:col-span-2 lg:col-span-3 flex flex-col items-end justify-center">
+              <div className="hidden md:block mb-1">
+                <SearchBar />
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="hidden md:flex">
+                  <HeaderControls />
+                </div>
+                <UserMenu />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      
-      {/* Mobile menu - Only visible when open on small screens - with z-index system */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={containerVariants}
-            className="md:hidden overflow-hidden bg-black/90 backdrop-blur-md border-t border-white/5 z-floating-menu"
-          >
-            <motion.div 
-              variants={itemVariants}
-              className="px-4 py-3"
-            >
-              {/* Mobile Search */}
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-white/50" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && searchQuery.trim()) {
-                      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                      setSearchQuery('');
-                      setIsMobileMenuOpen(false);
-                    }
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-md py-2 pl-10 pr-4 text-white placeholder-white/50 focus:outline-none focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400"
-                />
-              </div>
-            </motion.div>
-            
-            {/* Mobile Navigation Items */}
-            <div className="px-4 py-2 border-t border-white/10">
-              <motion.div variants={itemVariants}>
-                <h3 className="text-xs uppercase text-white/50 font-medium mb-2">Navigation</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {navigationItems.map((item) => (
-                    <Link 
-                      key={item.path}
-                      href={item.path}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleNavigationClick(item.path);
-                      }}
-                      className="flex items-center text-white/80 hover:text-white space-x-2 py-1 nav-link group"
-                      aria-current={location.includes(item.path) && (item.path === "/" ? location === "/" : true) ? "page" : undefined}
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleNavigationClick(item.path);
-                        }
-                      }}
-                    >
-                      <div className="h-4 w-4 opacity-60">
-                        {item.icon}
-                      </div>
-                      <span>{item.name}</span>
-                    </Link>
-                  ))}
-                </div>
-              </motion.div>
-              
-              {/* Social Links */}
-              <motion.div variants={itemVariants} className="mt-4">
-                <h3 className="text-xs uppercase text-white/50 font-medium mb-2">Connect</h3>
-                <div className="flex space-x-4">
-                  {socialLinks.map((social) => (
-                    <a
-                      key={social.name}
-                      href={social.path}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white/70 hover:text-white transition-colors focus:outline-none focus:ring-2 
-                      focus:ring-cyan-400/50 p-2 rounded-full relative overflow-hidden group"
-                      aria-label={`Follow us on ${social.name}`}
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          window.open(social.path, '_blank', 'noopener,noreferrer');
-                        }
-                      }}
-                    >
-                      <span className="relative z-10">{social.icon}</span>
-                      {/* Hover and focus glow effect */}
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-20 group-focus:opacity-30 
-                      bg-gradient-to-br from-cyan-400 to-purple-400 rounded-full transition-opacity duration-200"></div>
-                    </a>
-                  ))}
-                </div>
-              </motion.div>
+        
+        {/* Left side merkaba shapes */}
+        <div className="absolute -left-20 top-1/2 transform -translate-y-1/2 pointer-events-none">
+          <div className="relative">
+            {/* Background merkaba */}
+            <div className="absolute" style={{ filter: 'blur(1.5px)' }}>
+              <HexagramMerkaba 
+                size={96}
+                opacity={0.4}
+                rotationSpeed={60}
+                rotationDirection="clockwise"
+              />
             </div>
             
-            {/* Mobile Navigation Controls */}
-            <motion.div 
-              variants={itemVariants}
-              className="px-4 py-3 border-t border-white/10 flex justify-between"
-            >
-              <div className="flex space-x-2">
-                <button 
-                  onClick={() => window.history.back()}
-                  className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white 
-                  transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400/30 
-                  relative overflow-hidden group"
-                  aria-label="Go back"
-                >
-                  <ArrowLeft className="h-4 w-4 relative z-10" />
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-20 group-focus:opacity-30 
-                  bg-gradient-to-br from-cyan-400 to-purple-400 rounded-full transition-opacity duration-200"></div>
-                </button>
-                <button 
-                  onClick={() => window.history.forward()}
-                  className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white 
-                  transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400/30 
-                  relative overflow-hidden group"
-                  aria-label="Go forward"
-                >
-                  <ArrowRight className="h-4 w-4 relative z-10" />
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-20 group-focus:opacity-30 
-                  bg-gradient-to-br from-cyan-400 to-purple-400 rounded-full transition-opacity duration-200"></div>
-                </button>
-                <button 
-                  onClick={() => window.location.reload()}
-                  className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white 
-                  transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400/30 
-                  relative overflow-hidden group"
-                  aria-label="Reload page"
-                >
-                  <RotateCw className="h-4 w-4 relative z-10" />
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-20 group-focus:opacity-30 
-                  bg-gradient-to-br from-cyan-400 to-purple-400 rounded-full transition-opacity duration-200"></div>
-                </button>
-              </div>
-              
-              <Link 
-                href="/login" 
-                className="relative overflow-hidden bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 
-                transition-all duration-300 text-white px-4 py-2 rounded-md text-sm font-medium 
-                focus:outline-none focus:ring-2 focus:ring-cyan-400/50 group z-interactive"
-              >
-                <span className="relative z-10">Log In</span>
-                
-                {/* Inner glow effect */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-30 group-focus:opacity-40 
-                bg-gradient-to-r from-white/20 to-white/5 transition-opacity duration-300"></div>
-                
-                {/* Outer glow effect */}
-                <div className="absolute -inset-[2px] rounded-lg opacity-0 group-hover:opacity-50 group-focus:opacity-70 
-                bg-gradient-to-r from-cyan-400 to-purple-500 blur-[6px] transition-all duration-300 
-                scale-105 group-hover:scale-110"></div>
-              </Link>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
+            {/* Foreground merkaba */}
+            <HexagramMerkaba 
+              size={96}
+              rotationSpeed={50}
+              rotationDirection="counterclockwise"
+            />
+          </div>
+        </div>
+        
+        {/* Right side merkaba shapes */}
+        <div className="absolute -right-20 top-1/2 transform -translate-y-1/2 pointer-events-none">
+          <div className="relative">
+            {/* Background merkaba */}
+            <div className="absolute" style={{ filter: 'blur(1.5px)' }}>
+              <HexagramMerkaba 
+                size={96}
+                opacity={0.4}
+                rotationSpeed={60}
+                rotationDirection="counterclockwise"
+              />
+            </div>
+            
+            {/* Foreground merkaba */}
+            <HexagramMerkaba 
+              size={96}
+              rotationSpeed={50}
+              rotationDirection="clockwise"
+            />
+          </div>
+        </div>
+      </header>
+    </>
   );
 };
 
