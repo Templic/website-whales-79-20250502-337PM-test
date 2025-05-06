@@ -1,7 +1,11 @@
 /**
- * @deprecated This component has been consolidated with site-header.tsx.
- * Please use the component from ../common/site-header instead.
+ * @deprecated This component has been replaced by MainHeader.tsx.
+ * Please use MainHeader from the layout folder instead.
+ * This file is now just a proxy that imports and exports MainHeader to avoid breaking existing code.
  */
-import { SiteHeader } from '../common/site-header';
-export { SiteHeader };
-export default SiteHeader;
+
+import { MainHeader } from './MainHeader';
+
+// Re-export MainHeader as SiteHeader for backward compatibility
+export { MainHeader as SiteHeader };
+export default MainHeader;

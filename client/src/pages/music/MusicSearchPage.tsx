@@ -40,12 +40,7 @@ interface Track {
 // Filter types
 type SearchFilterType = 'title' | 'artist' | 'frequency' | 'description' | 'all';
 
-export default import { MainHeader } from '@/components/layout/MainHeader';
-
 function MusicSearchPage() {
-  return (
-    <>
-      <MainHeader />
   // Get search parameters from URL
   const [location] = useLocation();
   const queryParams = new URLSearchParams(location.split('?')[1] || '');
@@ -327,3 +322,5 @@ function MusicSearchPage() {
     </div>
   );
 }
+
+export default MusicSearchPage;

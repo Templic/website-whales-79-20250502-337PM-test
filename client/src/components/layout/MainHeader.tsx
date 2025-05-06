@@ -139,48 +139,83 @@ export const MainHeader = ({
     ? '0 4px 20px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(6, 182, 212, 0.1)'
     : '0 0 20px rgba(0, 235, 214, 0.15), 0 0 40px rgba(111, 76, 255, 0.1)';
   
-  // Update layout based on screen width
+  // Enhanced updateLayout function for advanced auto-resize and auto-scale functionality
   useEffect(() => {
+    // Define the advanced layout update function with dynamic scaling
     function updateLayout() {
-      if (window.innerWidth < 640) {
+      // Get viewport dimensions for precise scaling calculations
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const aspectRatio = viewportWidth / viewportHeight;
+      
+      // Calculate dynamic sizes based on viewport
+      // This creates a more fluid responsive experience than fixed breakpoints
+      const dynamicLogoSize = Math.max(9, Math.min(12, viewportWidth / 100));
+      const dynamicSpacing = Math.max(2, Math.min(5, viewportWidth / 300));
+      const dynamicMerkabaSize = Math.max(50, Math.min(110, viewportWidth / 12));
+      
+      // Scale header width more intelligently based on aspect ratio
+      // This ensures better layout on ultrawide monitors and mobile devices
+      const dynamicHeaderWidth = aspectRatio > 1.8 
+        ? Math.max(75, Math.min(90, 100 - (aspectRatio * 5))) 
+        : Math.max(85, Math.min(95, 100 - (viewportWidth / 100)));
+        
+      // Determine if certain elements should be shown based on screen real estate
+      const shouldShowSearch = viewportWidth >= 768;
+      const shouldShowMerkaba = viewportWidth >= 480;
+      
+      // Apply dynamic styles with continuous scaling rather than discrete breakpoints
+      if (viewportWidth < 640) {
         setLayout({
-          logoSize: 'h-9 w-9',
-          navSpacing: 'space-x-2',
-          showSearchInHeader: false,
+          logoSize: `h-${Math.round(dynamicLogoSize)} w-${Math.round(dynamicLogoSize)}`,
+          navSpacing: `space-x-${Math.round(dynamicSpacing)}`,
+          showSearchInHeader: shouldShowSearch,
           showSocialLinks: true,
-          merkabaSize: 70,
+          merkabaSize: shouldShowMerkaba ? dynamicMerkabaSize : 0,
           merkabaOffset: -15,
-          headerWidth: 'w-[92%]',
-          showMerkaba: true
+          headerWidth: `w-[${Math.round(dynamicHeaderWidth)}%]`,
+          showMerkaba: shouldShowMerkaba
         });
-      } else if (window.innerWidth < 1024) {
+      } else if (viewportWidth < 1024) {
         setLayout({
-          logoSize: 'h-10 w-10',
-          navSpacing: 'space-x-3',
-          showSearchInHeader: true,
+          logoSize: `h-${Math.round(dynamicLogoSize)} w-${Math.round(dynamicLogoSize)}`,
+          navSpacing: `space-x-${Math.round(dynamicSpacing)}`,
+          showSearchInHeader: shouldShowSearch,
           showSocialLinks: true,
-          merkabaSize: 80,
+          merkabaSize: dynamicMerkabaSize,
           merkabaOffset: -15,
-          headerWidth: 'w-[90%]',
+          headerWidth: `w-[${Math.round(dynamicHeaderWidth)}%]`,
           showMerkaba: true
         });
       } else {
         setLayout({
-          logoSize: 'h-12 w-12',
-          navSpacing: 'space-x-4',
+          logoSize: `h-${Math.round(dynamicLogoSize)} w-${Math.round(dynamicLogoSize)}`,
+          navSpacing: `space-x-${Math.round(dynamicSpacing)}`,
           showSearchInHeader: true,
           showSocialLinks: true,
-          merkabaSize: 96,
+          merkabaSize: dynamicMerkabaSize,
           merkabaOffset: -20,
-          headerWidth: 'w-[85%]',
+          headerWidth: `w-[${Math.round(dynamicHeaderWidth)}%]`,
           showMerkaba: true
         });
       }
     }
     
+    // Initialize layout
     updateLayout();
-    window.addEventListener('resize', updateLayout);
-    return () => window.removeEventListener('resize', updateLayout);
+    
+    // Add a throttled resize listener for better performance
+    let resizeTimeout: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(updateLayout, 100);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      clearTimeout(resizeTimeout);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
   
   // Animation variants for mobile menu
@@ -216,44 +251,80 @@ export const MainHeader = ({
     backgroundColor: 'rgba(0, 0, 0, 0.5)'
   });
   
+  // Enhanced scroll behavior for performance and smoother transitions
   useEffect(() => {
     const SCROLL_THRESHOLD = 100;
     const HEADER_HEIGHT = 80;
+    const SCROLL_DELAY = 50; // ms for throttling
     const autoHideNav = true;
     
+    // Using requestAnimationFrame for better performance
+    let ticking = false;
+    let lastScrollTime = 0;
+    
     const handleScroll = () => {
-      const scrollY = window.scrollY;
+      const now = Date.now();
       
-      // Determine if header should be visible or hidden (for hide-on-scroll)
-      if (autoHideNav) {
-        // Hide header when scrolling down, show when scrolling up
-        const currentScrollY = window.scrollY;
-        const isScrollingDown = currentScrollY > lastScrollY.current;
+      // Throttle scroll events for better performance
+      if (now - lastScrollTime < SCROLL_DELAY) return;
+      lastScrollTime = now;
+      
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          
+          // Determine if header should be visible or hidden (for hide-on-scroll)
+          if (autoHideNav) {
+            // Hide header when scrolling down, show when scrolling up
+            const currentScrollY = window.scrollY;
+            const isScrollingDown = currentScrollY > lastScrollY.current;
+            
+            // Add a threshold for tiny scroll movements to prevent jitter
+            const scrollDifference = Math.abs(currentScrollY - lastScrollY.current);
+            
+            if (isScrollingDown && currentScrollY > HEADER_HEIGHT && !isHeaderHidden && scrollDifference > 10) {
+              setIsHeaderHidden(true);
+            } else if (!isScrollingDown && isHeaderHidden && scrollDifference > 5) {
+              setIsHeaderHidden(false);
+            }
+            
+            lastScrollY.current = currentScrollY;
+          }
+          
+          // Basic scrolled state with smoother threshold detection
+          setIsScrolled(scrollY > 20);
+          
+          // Apply blur and opacity based on scroll position with cubic easing for smoother transitions
+          const scrollProgress = Math.min(1, scrollY / SCROLL_THRESHOLD);
+          const easeInOutCubic = scrollProgress < 0.5 
+            ? 4 * scrollProgress * scrollProgress * scrollProgress
+            : 1 - Math.pow(-2 * scrollProgress + 2, 3) / 2;
+          
+          const blurAmount = Math.min(15, easeInOutCubic * 15);
+          const opacityAmount = Math.min(0.95, 0.5 + easeInOutCubic * 0.45);
+          
+          setHeaderStyles({
+            backdropFilter: `blur(${blurAmount}px)`,
+            WebkitBackdropFilter: `blur(${blurAmount}px)`,  // Safari support
+            backgroundColor: `rgba(30, 58, 138, ${opacityAmount})`, // Match header background color
+            boxShadow: scrollY > 50 
+              ? '0 4px 20px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(6, 182, 212, 0.15)'
+              : '0 0 20px rgba(0, 235, 214, 0.15), 0 0 40px rgba(111, 76, 255, 0.1)'
+          });
+          
+          ticking = false;
+        });
         
-        if (isScrollingDown && currentScrollY > HEADER_HEIGHT && !isHeaderHidden) {
-          setIsHeaderHidden(true);
-        } else if (!isScrollingDown && isHeaderHidden) {
-          setIsHeaderHidden(false);
-        }
-        
-        lastScrollY.current = currentScrollY;
+        ticking = true;
       }
-      
-      // Basic scrolled state
-      setIsScrolled(scrollY > 20);
-      
-      // Apply blur and opacity based on scroll position
-      const blurAmount = Math.min(10, scrollY / 10);
-      const opacityAmount = Math.min(0.9, 0.5 + (scrollY / SCROLL_THRESHOLD) * 0.4);
-      
-      setHeaderStyles({
-        backdropFilter: `blur(${blurAmount}px)`,
-        WebkitBackdropFilter: `blur(${blurAmount}px)`,  // Safari support
-        backgroundColor: `rgba(0, 0, 0, ${opacityAmount})`
-      });
     };
     
+    // Use passive event listener for better performance
     window.addEventListener("scroll", handleScroll, { passive: true });
+    
+    // Run once on initial render
+    handleScroll();
+    
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isHeaderHidden]);
 
