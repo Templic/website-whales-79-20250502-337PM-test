@@ -21,7 +21,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({ className = "" }) => {
             aria-haspopup="true"
           >
             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center text-white">
-              {user.name.charAt(0).toUpperCase()}
+              {user && typeof user === 'object' && 'name' in user && typeof user.name === 'string' 
+                ? user.name.charAt(0).toUpperCase() 
+                : 'U'}
             </div>
           </button>
           
