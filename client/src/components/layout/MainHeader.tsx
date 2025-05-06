@@ -12,6 +12,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "../../hooks/use-toast";
+import { useHeader } from "../../contexts/HeaderContext";
 import {
   Menu,
   X,
@@ -62,15 +63,25 @@ export interface MainHeaderProps {
 }
 
 export const MainHeader = ({
-  title,
-  actions = [],
-  showSearch = true,
-  showLogo = true,
-  variant = 'default',
-  className = ''
+  title: propTitle,
+  actions: propActions = [],
+  showSearch: propShowSearch = true,
+  showLogo: propShowLogo = true,
+  variant: propVariant = 'default',
+  className: propClassName = ''
 }: MainHeaderProps = {}) => {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
+  const { headerConfig } = useHeader();
+  
+  // Merge props with context values, giving priority to props
+  const title = propTitle || headerConfig.title || '';
+  const actions = propActions.length > 0 ? propActions : headerConfig.actions;
+  const showSearch = propShowSearch !== undefined ? propShowSearch : headerConfig.showSearch;
+  const showLogo = propShowLogo !== undefined ? propShowLogo : headerConfig.showLogo;
+  const variant = propVariant || headerConfig.variant || 'default';
+  const className = propClassName || headerConfig.className || '';
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

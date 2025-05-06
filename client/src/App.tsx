@@ -129,6 +129,7 @@ import ResponsiveDemo from "./pages/ResponsiveDemo";
 import ResponsiveDemo2 from "./pages/ResponsiveDemo2";
 import ContentAIDemo from "@/pages/ContentAIDemo";
 import ContentRecommendationsDemo from "@/pages/ContentRecommendationsDemo";
+import HeaderDemoPage from "@/pages/HeaderDemoPage";
 
 // MainHeader is now included in MainLayout, no longer needed here
 
@@ -274,6 +275,7 @@ function AppRouter() {
           <Route path="/performance" component={PerformanceDemoPage} />
           <Route path="/responsive-demo" component={ResponsiveDemo} />
           <Route path="/responsive-demo2" component={ResponsiveDemo2} />
+          <Route path="/header-demo" component={HeaderDemoPage} />
           
           {/* Testing Routes */}
           <Route path="/test/typescript-errors" component={() => import("./pages/TypeScriptErrorTest").then(module => {
