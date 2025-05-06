@@ -160,7 +160,7 @@ export default function CommunityPage() {
   return (
     <div className="min-h-screen relative">
       <CosmicBackground opacity={0.4} />
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
@@ -270,7 +270,7 @@ export default function CommunityPage() {
                 </li>
               </ul>
             </div>
-            
+
             <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6 border border-white/10">
               <h3 className="text-xl font-semibold mb-4 flex items-center">
                 <Users className="h-5 w-5 mr-2 text-blue-400" />

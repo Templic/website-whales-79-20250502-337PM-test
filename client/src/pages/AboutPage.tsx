@@ -184,7 +184,7 @@ export default function AboutPage() {
             </div>
           </div>
         </div>
-        
+
         {/* Artistic Journey image section */}
         <div className="mb-16 mt-10 cosmic-fade-in">
           <h2 className="cosmic-heading-responsive font-bold text-[#00ebd6] mb-8 text-center">Artistic Journey</h2>
@@ -215,7 +215,7 @@ export default function AboutPage() {
                 </button>
               </SimpleHexagon>
             </div>
-            
+
             <div className="w-full">
               <SimpleHexagon className="w-full max-w-[280px] mx-auto">
                 <h3>Geometric Rhythms</h3>
@@ -225,7 +225,7 @@ export default function AboutPage() {
                 </button>
               </SimpleHexagon>
             </div>
-            
+
             <div className="w-full">
               <SimpleHexagon className="w-full max-w-[280px] mx-auto">
                 <h3>Oceanic Flow</h3>

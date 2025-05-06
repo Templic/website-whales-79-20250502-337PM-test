@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from "react";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ProductFilter } from "@/components/shop/ProductFilter";
-// ShopHeader removed to prevent duplicate headers
+import { MainHeader } from "@/components/layout/MainHeader"; // Added import for MainHeader
 import { useRoute } from "wouter";
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import EnhancedShoppingExperience from "@/components/shop/EnhancedShoppingExperience";
@@ -255,14 +255,14 @@ const ShopPage: React.FC = () => {
   const handleAddProduct = (product: Product) => {
     // Add to cart using our context
     addItemToCart(product);
-    
+
     // Add animation to the cart button
     animateCartButton();
-    
+
     // Add points for each item added to cart (in a real app this would happen on purchase)
     setUserPoints((prev) => prev + Math.round(product.price));
   };
-  
+
   // Get the cart total
   const cartTotal = getCartTotal();
 
@@ -291,10 +291,10 @@ const ShopPage: React.FC = () => {
     <div className="min-h-screen relative bg-[#121b35] text-[#f1f0ee]">
       {/* Adjusted background with higher brightness */}
       <CosmicBackground opacity={0.35} color="indigo" nebulaEffect={true} />
-      
+
       {/* Improved lighting overlay for better visibility */}
       <div className="fixed inset-0 z-0 bg-gradient-to-b from-indigo-900/5 via-blue-900/5 to-violet-900/5 pointer-events-none"></div>
-      
+
       {/* Sacred geometry elements in page margins with better visibility */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         {/* Left margin sacred geometry - one at top, one at bottom */}
@@ -304,7 +304,7 @@ const ShopPage: React.FC = () => {
         <div className="absolute bottom-40 left-5 opacity-30 hidden md:block">
           <SacredGeometry variant="dodecahedron" size={120} animated={true} />
         </div>
-        
+
         {/* Right margin sacred geometry - one at top, one at bottom */}
         <div className="absolute top-40 right-5 opacity-30 hidden md:block">
           <SacredGeometry variant="icosahedron" size={120} animated={true} />
@@ -312,7 +312,7 @@ const ShopPage: React.FC = () => {
         <div className="absolute bottom-40 right-5 opacity-30 hidden md:block">
           <SacredGeometry variant="flower-of-life" size={120} animated={true} />
         </div>
-        
+
         {/* Additional ambient lighting elements */}
         <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-indigo-500/10 filter blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-violet-500/10 filter blur-3xl animate-pulse"></div>
@@ -355,6 +355,7 @@ const ShopPage: React.FC = () => {
 
         <div className="max-w-7xl mx-auto">
           {/* ShopHeader removed to prevent duplicate headers - main page header is used instead */}
+          <MainHeader /> {/* Added MainHeader component */}
           <div className="mb-6 flex flex-col gap-4">
             <h1 className="text-3xl font-bold text-white">Cosmic Shop</h1>
             <div className="flex flex-wrap gap-3 items-center">
@@ -375,7 +376,7 @@ const ShopPage: React.FC = () => {
           <div className="mt-4">
             <EnhancedShoppingVenn />
           </div>
-          
+
           <div className="mt-16">
             <EnhancedShoppingExperience />
           </div>
@@ -411,11 +412,11 @@ const ShopPage: React.FC = () => {
               <ProductGrid filters={filters} products={filteredProducts} />
             </main>
           </div>
-          
+
           <div className="mt-16">
             <ProductComparison />
           </div>
-          
+
           <div className="mt-16">
             <CosmicCollectibles />
           </div>

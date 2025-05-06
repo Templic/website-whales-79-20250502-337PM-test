@@ -8,21 +8,16 @@ import { BinauralBeatGenerator } from "@/components/features/audio/BinauralBeatG
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Music, Infinity, PanelTop, Waves, Moon, Leaf as Lungs, Brain } from "lucide-react";
+import { MainHeader } from "@/components/layout/MainHeader"; // Added MainHeader import
 
-// Note: We don't need to import Header & Footer since they're part of the Layout component
 
 export default function CosmicExperiencePage() {
   const [backgroundType, setBackgroundType] = useState<"cosmic" | "particles">("cosmic");
   const [tracks, setTracks] = useState<any[]>([]);
   const { toast } = useToast();
 
-  // This is a placeholder for the tracks since we don't have actual audio files yet
   useEffect(() => {
-    // We're not setting any tracks since we don't have audio files yet
-    // The BreathSyncPlayer component will display a placeholder
     setTracks([]);
-
-    // Display a friendly message to the user about the audio files
     toast({
       title: "Audio files not available",
       description: "The breath synchronization feature works without music. Actual audio files will be added in a future update.",
@@ -32,10 +27,8 @@ export default function CosmicExperiencePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      {/* Dynamic Background */}
+      <MainHeader /> {/* Added MainHeader component */}
       {backgroundType === "cosmic" ? <CosmicBackground /> : <ParticleBackground />}
-
-      {/* Header */}
       <div className="container mx-auto pt-8 px-4">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-cyan-500">
@@ -45,8 +38,6 @@ export default function CosmicExperiencePage() {
             Explore the cosmic elements of music, sacred geometry, breath synchronization, and more.
             This showcase brings together components from our cosmic music artist experience.
           </p>
-
-
         </div>
 
         <Tabs defaultValue="music" className="max-w-5xl mx-auto">
@@ -68,18 +59,16 @@ export default function CosmicExperiencePage() {
                 This player synchronizes breathing patterns with music playback, creating a deeply immersive experience.
                 Select different breathing patterns and follow the visual cues to synchronize your breath.
               </p>
-
               <BreathSyncPlayer tracks={tracks} />
             </div>
 
             <div className="bg-gradient-to-br from-black/60 via-purple-900/30 to-black/60 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/5">
               <h2 className="text-2xl font-semibold mb-4">Binaural Beat Generator</h2>
               <p className="text-gray-300 mb-6">
-                Generate custom binaural beats to induce specific states of consciousness. 
-                Binaural beats occur when two slightly different frequencies are played separately in each ear, 
+                Generate custom binaural beats to induce specific states of consciousness.
+                Binaural beats occur when two slightly different frequencies are played separately in each ear,
                 creating a third "beat" frequency that can influence brain waves.
               </p>
-
               <BinauralBeatGenerator />
             </div>
           </TabsContent>
@@ -91,13 +80,11 @@ export default function CosmicExperiencePage() {
                 Sacred geometry patterns reveal the mathematical principles that govern our universe.
                 Explore these interactive containers shaped in various sacred forms.
               </p>
-
               <SacredGeometryDemo />
             </div>
           </TabsContent>
         </Tabs>
       </div>
-
       <div className="py-12"></div>
     </div>
   );
