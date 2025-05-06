@@ -61,36 +61,42 @@ export const MainHeader = () => {
     logoSize: 'h-12 w-12',
     navSpacing: 'space-x-4',
     showSearchInHeader: true,
-    showSocialLinks: false,
+    showSocialLinks: true,
     merkabaSize: 96,
-    merkabaOffset: -20
+    merkabaOffset: -20,
+    headerWidth: 'w-[85%]',
+    showMerkaba: true
   });
   
   // Header shadow effect based on scroll position
   const headerShadow = isScrolled
     ? '0 4px 20px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(6, 182, 212, 0.1)'
-    : 'none';
+    : '0 0 20px rgba(0, 235, 214, 0.15), 0 0 40px rgba(111, 76, 255, 0.1)';
   
   // Update layout based on screen width
   useEffect(() => {
     function updateLayout() {
       if (window.innerWidth < 640) {
         setLayout({
-          logoSize: 'h-8 w-8',
-          navSpacing: 'space-x-1',
+          logoSize: 'h-9 w-9',
+          navSpacing: 'space-x-2',
           showSearchInHeader: false,
-          showSocialLinks: false,
-          merkabaSize: 60,
-          merkabaOffset: -10
+          showSocialLinks: true,
+          merkabaSize: 70,
+          merkabaOffset: -15,
+          headerWidth: 'w-[92%]',
+          showMerkaba: true
         });
       } else if (window.innerWidth < 1024) {
         setLayout({
           logoSize: 'h-10 w-10',
-          navSpacing: 'space-x-2',
+          navSpacing: 'space-x-3',
           showSearchInHeader: true,
-          showSocialLinks: false,
+          showSocialLinks: true,
           merkabaSize: 80,
-          merkabaOffset: -15
+          merkabaOffset: -15,
+          headerWidth: 'w-[90%]',
+          showMerkaba: true
         });
       } else {
         setLayout({
@@ -99,7 +105,9 @@ export const MainHeader = () => {
           showSearchInHeader: true,
           showSocialLinks: true,
           merkabaSize: 96,
-          merkabaOffset: -20
+          merkabaOffset: -20,
+          headerWidth: 'w-[85%]',
+          showMerkaba: true
         });
       }
     }
@@ -267,7 +275,7 @@ export const MainHeader = () => {
       <GlowEffects idPrefix="header" />
       
       {/* Hexagram Merkaba shapes positioned behind the header */}
-      <div className="fixed z-10 left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 hidden md:block" style={{ left: layout.merkabaOffset + '%' }}>
+      <div className={`fixed z-10 left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 ${layout.showMerkaba ? 'block' : 'hidden'}`} style={{ left: layout.merkabaOffset + '%' }}>
         <HexagramMerkaba 
           size={layout.merkabaSize} 
           color="#10edb3" 
@@ -289,7 +297,7 @@ export const MainHeader = () => {
       </div>
       
       {/* Right side Hexagram Merkaba shapes */}
-      <div className="fixed z-10 right-0 top-1/2 -translate-y-1/2 translate-x-1/2 hidden md:block" style={{ right: layout.merkabaOffset + '%' }}>
+      <div className={`fixed z-10 right-0 top-1/2 -translate-y-1/2 translate-x-1/2 ${layout.showMerkaba ? 'block' : 'hidden'}`} style={{ right: layout.merkabaOffset + '%' }}>
         <HexagramMerkaba 
           size={layout.merkabaSize} 
           color="#10edb3" 
@@ -372,7 +380,7 @@ export const MainHeader = () => {
         <div className="absolute bottom-0 left-0 w-full h-[1px] bg-cyan-400/30 z-0"></div>
         <div className="absolute bottom-0 left-0 w-full h-[1px] bg-cyan-400/10 shadow-lg shadow-cyan-500/50 z-0"></div>
       
-        <div className="container mx-auto px-4 h-full relative w-[85%]">
+        <div className={`container mx-auto px-4 h-full relative ${layout.headerWidth}`}>
           {/* Implement the Advanced Header Layout Grid System per specifications */}
           <div className="grid grid-cols-12 gap-2 items-center h-full relative">
             {/* Logo spans 3 columns on desktop, 6 on mobile */}
@@ -579,19 +587,43 @@ export const MainHeader = () => {
             animate="visible"
             exit="exit"
             variants={containerVariants}
-            className="fixed inset-x-0 top-20 z-50 md:hidden bg-gray-900/90 backdrop-blur-lg border-b border-white/5
-            overflow-hidden flex flex-col mobile-menu"
+            className={`fixed inset-x-0 top-20 z-50 md:hidden ${layout.headerWidth} mx-auto backdrop-blur-lg border-b border-white/5
+            overflow-hidden flex flex-col mobile-menu rounded-b-xl`}
             style={{
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+              boxShadow: '0 10px 20px -3px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(6, 182, 212, 0.2)',
+              background: 'rgba(30, 58, 138, 0.9)'  // Match the header background
             }}
           >
-            <div className="px-4 py-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
-              <nav className="flex flex-col space-y-3">
+            {/* Mobile merkaba decoration */}
+            <div className="absolute -left-8 top-0 opacity-40 rotate-45" style={{ transform: 'scale(0.5)' }}>
+              <HexagramMerkaba 
+                size={60}
+                color="#10edb3" 
+                glowColor="rgba(16, 237, 179, 0.6)"
+                rotationSpeed={45}
+                rotationDirection="clockwise"
+                opacity={0.7}
+              />
+            </div>
+            
+            <div className="absolute -right-8 bottom-0 opacity-40 -rotate-45" style={{ transform: 'scale(0.5)' }}>
+              <HexagramMerkaba 
+                size={60}
+                color="#10edb3" 
+                glowColor="rgba(16, 237, 179, 0.6)"
+                rotationSpeed={45}
+                rotationDirection="counterclockwise"
+                opacity={0.7}
+              />
+            </div>
+            
+            <div className="px-6 py-6 overflow-y-auto max-h-[calc(100vh-5rem)] relative">
+              <nav className="flex flex-col space-y-4">
                 {navigationItems.map((item, index) => (
                   <motion.div
                     key={item.path}
                     variants={itemVariants}
-                    className="mobile-menu-item"
+                    className="mobile-menu-item group"
                   >
                     <Link
                       href={item.path}
@@ -599,21 +631,45 @@ export const MainHeader = () => {
                         e.preventDefault();
                         handleNavigationClick(item.path);
                       }}
-                      className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors
+                      className={`flex items-center space-x-3 px-5 py-3 rounded-lg transition-all duration-300
                       ${location.includes(item.path) && (item.path === "/" ? location === "/" : true)
                         ? 'bg-cyan-600/20 text-white'
-                        : 'text-white/70 hover:bg-white/5 hover:text-white'
-                      }`}
+                        : 'text-white/80 hover:bg-white/10 hover:text-white hover:translate-x-1'
+                      } relative overflow-hidden`}
                     >
-                      <div className="w-6 h-6 flex items-center justify-center relative">
+                      {/* Background pattern */}
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300">
+                        <SacredGeometry
+                          type={getGeometryForIndex(index)}
+                          color={getColorForIndex(index)}
+                          size={100}
+                          animated={false}
+                          aria-hidden="true"
+                        />
+                      </div>
+                      
+                      <div className="w-8 h-8 flex items-center justify-center relative">
                         <div className={`absolute inset-0 rounded-full ${
                           location.includes(item.path) && (item.path === "/" ? location === "/" : true)
-                            ? 'bg-gradient-to-br from-cyan-500/30 to-purple-600/30'
-                            : 'bg-white/5'
-                        }`}></div>
-                        {item.icon}
+                            ? 'bg-gradient-to-br from-cyan-500/40 to-purple-600/40'
+                            : 'bg-white/5 group-hover:bg-gradient-to-br group-hover:from-cyan-500/20 group-hover:to-purple-600/20'
+                        } transition-all duration-300 group-hover:scale-110`}></div>
+                        <motion.div 
+                          whileHover={{ rotate: 360 }}
+                          transition={{ duration: 0.5 }}
+                          className="relative z-10"
+                        >
+                          {item.icon}
+                        </motion.div>
                       </div>
-                      <span>{item.name}</span>
+                      <span className="font-medium">{item.name}</span>
+                      
+                      {/* Right side indicator for active item */}
+                      {location.includes(item.path) && (item.path === "/" ? location === "/" : true) && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500"></div>
+                        </div>
+                      )}
                     </Link>
                   </motion.div>
                 ))}
@@ -622,20 +678,21 @@ export const MainHeader = () => {
               {/* Mobile Search */}
               <motion.div
                 variants={itemVariants}
-                className="px-4 py-4 mt-4 border-t border-white/5"
+                className="px-4 py-5 mt-5 border-t border-white/10"
               >
                 <form onSubmit={handleSearchSubmit} className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-white/50" />
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-cyan-400/70" />
                   </div>
                   <input
                     type="text"
-                    placeholder="Search..."
+                    placeholder="Search cosmic content..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-white/5 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm 
+                    className="bg-white/5 border border-cyan-400/20 rounded-lg py-3 pl-12 pr-4 text-sm 
                     w-full text-white placeholder-white/50 focus:outline-none focus:ring-1 
-                    focus:ring-cyan-400 focus:border-cyan-400"
+                    focus:ring-cyan-400 focus:border-cyan-400 transition-all duration-300
+                    hover:border-cyan-400/30"
                   />
                 </form>
               </motion.div>
@@ -643,16 +700,25 @@ export const MainHeader = () => {
               {/* Social Links in mobile menu */}
               <motion.div
                 variants={itemVariants}
-                className="flex justify-center space-x-4 mt-6 px-4"
+                className="flex justify-center space-x-5 mt-6 px-4 border-t border-white/10 pt-6"
               >
                 {socialLinks.map((link) => (
                   <Link
                     key={link.name}
                     href={link.path}
-                    className="text-white/50 hover:text-white transition-colors p-2 rounded-full hover:bg-white/5"
+                    className="text-white/70 hover:text-white transition-colors p-2.5 rounded-full
+                    hover:bg-white/5 relative group overflow-hidden"
                     aria-label={link.name}
                   >
-                    {link.icon}
+                    {/* Glow background */}
+                    <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-30
+                    bg-gradient-to-r from-cyan-400/30 to-purple-400/30 transition-opacity duration-300"></div>
+                    <motion.div 
+                      whileHover={{ scale: 1.2 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                    >
+                      {link.icon}
+                    </motion.div>
                   </Link>
                 ))}
               </motion.div>
