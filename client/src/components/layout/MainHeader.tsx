@@ -48,7 +48,27 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-export const MainHeader = () => {
+export interface MainHeaderProps {
+  title?: string;
+  actions?: Array<{
+    label: string;
+    onClick: () => void;
+    icon?: React.ReactNode;
+  }>;
+  showSearch?: boolean;
+  showLogo?: boolean;
+  variant?: 'default' | 'transparent' | 'minimal';
+  className?: string;
+}
+
+export const MainHeader = ({
+  title,
+  actions = [],
+  showSearch = true,
+  showLogo = true,
+  variant = 'default',
+  className = ''
+}: MainHeaderProps = {}) => {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
