@@ -21,11 +21,18 @@ interface ToastContextType {
   toasts: Toast[];
 }
 
-// Simple toast implementation
+// Simple toast notification function for direct usage
+export const toast = (props: ToastProps) => {
+  // For now, just log to console
+  console.log(`Toast [${props.variant || 'default'}]: ${props.title}${props.description ? ` - ${props.description}` : ''}`);
+  return props;
+};
+
+// Toast hook implementation for component usage
 export function useToast(): ToastContextType {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const toast = useCallback(
+  const toastFn = useCallback(
     ({ title, description, variant = 'default', duration = 5000 }: ToastProps) => {
       const id = Math.random().toString(36).substring(2, 9);
       
@@ -50,7 +57,7 @@ export function useToast(): ToastContextType {
   }, []);
 
   return {
-    toast,
+    toast: toastFn,
     dismiss,
     toasts,
   };

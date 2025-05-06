@@ -1,152 +1,200 @@
 /**
  * HexagramMerkaba.tsx
  * 
- * A specialized sacred geometry component that renders a hexagram (Star of David) merkaba
- * with glowing effects and rotation animations as seen in the provided screenshots.
+ * A specialized component for drawing hexagram merkaba shapes with glow effects
+ * as shown in the design screenshots.
  */
 
-import React, { useId, useEffect } from 'react';
-import { motion, useMotionValue, useTransform, useMotionTemplate } from 'framer-motion';
+import React from 'react';
+import { motion } from 'framer-motion';
 
 interface HexagramMerkabaProps {
+  size?: number;
   color?: string;
   glowColor?: string;
-  size?: number;
-  opacity?: number;
   rotationSpeed?: number;
   rotationDirection?: 'clockwise' | 'counterclockwise';
+  opacity?: number;
   className?: string;
 }
 
-export const HexagramMerkaba: React.FC<HexagramMerkabaProps> = ({
-  color = "#10edb3", // Bright neon green from screenshots
-  glowColor = "rgba(16, 237, 179, 0.8)",
-  size = 96,
-  opacity = 1,
-  rotationSpeed = 60, // Seconds per full rotation
+const HexagramMerkaba: React.FC<HexagramMerkabaProps> = ({
+  size = 100,
+  color = '#10edb3', // Default to the bright green color from screenshots
+  glowColor = 'rgba(16, 237, 179, 0.8)',
+  rotationSpeed = 60,
   rotationDirection = 'clockwise',
-  className = '',
+  opacity = 1,
+  className = ''
 }) => {
-  const filterId = useId();
-  const pulseValue = useMotionValue(0.7);
-  
-  // Create pulse animation for glow intensity
-  useEffect(() => {
-    const animateGlow = () => {
-      let startValue = 0.7;
-      let endValue = 0.9;
-      let duration = 2000;
-      
-      const animate = () => {
-        pulseValue.set(startValue);
-        setTimeout(() => {
-          // Switch the values for the next animation
-          const temp = startValue;
-          startValue = endValue;
-          endValue = temp;
-          animate();
-        }, duration);
-      };
-      
-      animate();
+  // Calculate points for the two overlapping triangles of the Star of David
+  // with slightly different sizes for the layered effect
+  const generateHexagramPoints = (scale: number = 1) => {
+    const centerX = 50;
+    const centerY = 50;
+    const outerRadius = 45 * scale;
+    const innerRadius = 25 * scale;
+    
+    // First triangle (pointing up)
+    const upTriangle = `
+      M${centerX},${centerY - outerRadius}
+      L${centerX + outerRadius * Math.cos(Math.PI / 6)},${centerY + outerRadius * Math.sin(Math.PI / 6)}
+      L${centerX - outerRadius * Math.cos(Math.PI / 6)},${centerY + outerRadius * Math.sin(Math.PI / 6)}
+      Z
+    `;
+    
+    // Second triangle (pointing down)
+    const downTriangle = `
+      M${centerX},${centerY + outerRadius}
+      L${centerX + outerRadius * Math.cos(Math.PI / 6)},${centerY - outerRadius * Math.sin(Math.PI / 6)}
+      L${centerX - outerRadius * Math.cos(Math.PI / 6)},${centerY - outerRadius * Math.sin(Math.PI / 6)}
+      Z
+    `;
+    
+    // Inner hexagon for the layered effect
+    const innerHexagon = `
+      M${centerX},${centerY - innerRadius}
+      L${centerX + innerRadius * Math.cos(Math.PI / 6)},${centerY - innerRadius * Math.sin(Math.PI / 6)}
+      L${centerX + innerRadius * Math.cos(-Math.PI / 6)},${centerY - innerRadius * Math.sin(-Math.PI / 6)}
+      L${centerX},${centerY + innerRadius}
+      L${centerX - innerRadius * Math.cos(-Math.PI / 6)},${centerY - innerRadius * Math.sin(-Math.PI / 6)}
+      L${centerX - innerRadius * Math.cos(Math.PI / 6)},${centerY - innerRadius * Math.sin(Math.PI / 6)}
+      Z
+    `;
+    
+    return {
+      upTriangle,
+      downTriangle,
+      innerHexagon
     };
-    
-    animateGlow();
-    
-    // No cleanup needed for this simplified approach
-    return () => {};
-  }, []);
+  };
+
+  // Generate path data for different layers
+  const outerLayer = generateHexagramPoints(1);
+  const middleLayer = generateHexagramPoints(0.85);
+  const innerLayer = generateHexagramPoints(0.7);
   
-  // Dynamic glow intensity based on pulse value
-  const glowIntensity = useTransform(
-    pulseValue, 
-    [0.7, 0.9], 
-    [0.7, 1]
-  );
+  // SVG filter ID for the glow effect
+  const filterId = `hexagram-glow-${Math.random().toString(36).substring(2, 9)}`;
   
-  // Dynamic filter blur amount
-  const blurAmount = useTransform(
-    pulseValue,
-    [0.7, 0.9],
-    [8, 10]
-  );
+  // Animation variants
+  const rotationVariant = {
+    animate: {
+      rotate: rotationDirection === 'clockwise' ? 360 : -360,
+      transition: {
+        duration: rotationSpeed,
+        repeat: Infinity,
+        ease: "linear"
+      }
+    }
+  };
   
-  // Dynamic filter brightness
-  const brightness = useTransform(
-    pulseValue,
-    [0.7, 0.9],
-    [1, 1.2]
-  );
-  
-  // Combined filter style
-  const filterStyle = useMotionTemplate`blur(${blurAmount}px) brightness(${brightness})`;
-  
-  // Determine rotation direction
-  const rotateAnimate = rotationDirection === 'clockwise' ? 360 : -360;
+  // Pulse animation for the glow effect
+  const pulseVariant = {
+    animate: {
+      opacity: [opacity, opacity * 0.7, opacity],
+      scale: [1, 1.02, 1],
+      transition: {
+        duration: rotationSpeed / 6,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
 
   return (
-    <div className={`relative ${className}`} style={{ width: size, height: size, opacity }}>
-      <motion.div
-        animate={{ rotate: rotateAnimate }}
-        transition={{ duration: rotationSpeed, repeat: Infinity, ease: "linear" }}
-        className="absolute inset-0"
-        style={{ filter: `drop-shadow(0 0 8px ${glowColor})` }}
+    <div className={`relative ${className}`} style={{ width: size, height: size }}>
+      {/* SVG Filter definition for glow */}
+      <svg width="0" height="0" style={{ position: 'absolute' }}>
+        <defs>
+          <filter id={filterId} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="glow" />
+            <feBlend in="SourceGraphic" in2="glow" mode="screen" />
+          </filter>
+        </defs>
+      </svg>
+      
+      {/* Main Merkaba shape with rotation */}
+      <motion.svg 
+        width={size} 
+        height={size} 
+        viewBox="0 0 100 100"
+        initial={{ rotate: 0 }}
+        animate="animate"
+        variants={rotationVariant}
       >
-        <svg 
-          width="100%"
-          height="100%" 
-          viewBox="0 0 120 120"
-        >
-          <defs>
-            <filter id={filterId} x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="2.5" result="blur" />
-              <feFlood 
-                floodColor={color} 
-                floodOpacity="0.8" 
-                result="color" 
-              />
-              <feComposite in="color" in2="blur" operator="in" result="glow" />
-              <feComposite in="SourceGraphic" in2="glow" operator="over" />
-            </filter>
-          </defs>
-          
-          {/* Star of David (Hexagram) */}
-          <g filter={`url(#${filterId})`}>
-            {/* Upward-pointing triangle */}
-            <path
-              d="M60,10 L85,55 L60,100 L35,55 Z"
-              fill="none"
-              stroke={color}
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-            
-            {/* Downward-pointing triangle */}
-            <path
-              d="M35,30 L85,30 L110,75 L85,120 L35,120 L10,75 Z"
-              fill="none"
-              stroke={color}
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-              transform="translate(60, 75) rotate(180) translate(-60, -75)"
-            />
-            
-            {/* Internal connecting lines */}
-            <line x1="60" y1="10" x2="60" y2="100" stroke={color} strokeWidth="1" strokeOpacity="0.6" />
-            <line x1="35" y1="55" x2="85" y2="55" stroke={color} strokeWidth="1" strokeOpacity="0.6" />
-            
-            {/* Inner circles */}
-            <circle cx="60" cy="55" r="8" fill="none" stroke={color} strokeWidth="0.8" />
-            <circle cx="60" cy="55" r="4" fill="none" stroke={color} strokeWidth="0.8" />
-            
-            {/* Connection points */}
-            <circle cx="60" cy="10" r="2" fill={color} fillOpacity="0.9" />
-            <circle cx="85" cy="55" r="2" fill={color} fillOpacity="0.9" />
-            <circle cx="60" cy="100" r="2" fill={color} fillOpacity="0.9" />
-            <circle cx="35" cy="55" r="2" fill={color} fillOpacity="0.9" />
-          </g>
-        </svg>
-      </motion.div>
+        {/* Base layer with glow filter */}
+        <g filter={`url(#${filterId})`}>
+          <path
+            d={outerLayer.upTriangle}
+            fill={color}
+            fillOpacity={0.6}
+            stroke={color}
+            strokeWidth={0.5}
+          />
+          <path
+            d={outerLayer.downTriangle}
+            fill={color}
+            fillOpacity={0.6}
+            stroke={color}
+            strokeWidth={0.5}
+          />
+        </g>
+        
+        {/* Middle layer */}
+        <path
+          d={middleLayer.upTriangle}
+          fill={color}
+          fillOpacity={0.4}
+          stroke={color}
+          strokeWidth={0.3}
+        />
+        <path
+          d={middleLayer.downTriangle}
+          fill={color}
+          fillOpacity={0.4}
+          stroke={color}
+          strokeWidth={0.3}
+        />
+        
+        {/* Inner layer */}
+        <path
+          d={innerLayer.upTriangle}
+          fill={color}
+          fillOpacity={0.2}
+          stroke={color}
+          strokeWidth={0.2}
+        />
+        <path
+          d={innerLayer.downTriangle}
+          fill={color}
+          fillOpacity={0.2}
+          stroke={color}
+          strokeWidth={0.2}
+        />
+        
+        {/* Central hexagon */}
+        <path
+          d={innerLayer.innerHexagon}
+          fill={color}
+          fillOpacity={0.3}
+          stroke={color}
+          strokeWidth={0.2}
+        />
+      </motion.svg>
+      
+      {/* Outer glow effect with pulse animation */}
+      <motion.div
+        className="absolute inset-0 rounded-full"
+        style={{
+          boxShadow: `0 0 20px ${glowColor}, 0 0 40px ${glowColor}`,
+          opacity: 0.4
+        }}
+        initial={{ opacity: 0.4 }}
+        animate="animate"
+        variants={pulseVariant}
+      />
     </div>
   );
 };
