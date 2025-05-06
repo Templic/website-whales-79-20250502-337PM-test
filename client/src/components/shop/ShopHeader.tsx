@@ -1,3 +1,9 @@
+/**
+ * @deprecated This component has been deprecated in favor of MainHeader.tsx.
+ * This file is kept for reference and backward compatibility with old pages.
+ * New components should use MainHeader with specialized shop controls.
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'wouter';
 import { Input } from '@/components/ui/input';

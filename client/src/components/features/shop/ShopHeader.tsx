@@ -1,5 +1,7 @@
 /**
- * ShopHeader.tsx
+ * @deprecated This component has been deprecated in favor of MainHeader.tsx.
+ * This file is kept for reference and backward compatibility with old pages.
+ * New components should use MainHeader with specialized shop controls.
  * 
  * Component Type: feature
  * Migrated as part of the repository reorganization.

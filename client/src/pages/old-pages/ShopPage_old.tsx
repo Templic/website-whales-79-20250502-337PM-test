@@ -1,7 +1,12 @@
+/**
+ * @deprecated Old version of the shop page. Kept for reference only.
+ * New code should use the MainHeader component instead of ShopHeader for consistency.
+ */
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRoute, Link } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
+// Note: ShopHeader is deprecated in favor of MainHeader
 import ShopHeader from '@/components/shop/ShopHeader';
 import ProductGrid from '@/components/shop/ProductGrid';
 import ProductFilters from '@/components/shop/ProductFilters';
