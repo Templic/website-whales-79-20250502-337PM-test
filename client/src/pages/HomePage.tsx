@@ -11,7 +11,7 @@ import { useEffect } from "react";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
 import { DynamicContent } from "@/components/content";
 import { createDynamicComponent } from "@/lib/bundle-optimization";
-import { MainHeader } from "@/components/layout/MainHeader"; // Added import for MainHeader
+// MainHeader is already included in MainLayout, so we don't need to import it here
 
 // Import geometric shape components from the responsive demo
 import { 
@@ -29,7 +29,7 @@ export default function HomePage() {
 
   return (
     <>
-      <MainHeader /> {/* Added MainHeader component */}
+      {/* MainHeader is already included in MainLayout, so we don't need to add it here */}
       <SpotlightEffect />
       <div className="container mx-auto px-0 py-4 max-w-[1600px]">
 
