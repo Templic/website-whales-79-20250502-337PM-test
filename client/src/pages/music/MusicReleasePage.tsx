@@ -21,12 +21,11 @@ interface Track {
   createdAt: string;
 }
 
-export default import { MainHeader } from '@/components/layout/MainHeader';
+// MainHeader is already included in MainLayout, so we don't need to import it here
 
-function MusicReleasePage() {
-  return (
-    <>
-      <MainHeader />
+// Export the component
+export default function MusicReleasePage() {
+  
   const [tracks, setTracks] = useState<Track[]>([]);
   const { user } = useAuth();
   const [location] = useLocation();

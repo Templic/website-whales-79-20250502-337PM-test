@@ -1,22 +1,38 @@
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
-import { MainHeader } from "@/components/layout/MainHeader";
 import { FrequencyAttunementChamber } from "@/components/immersive/FrequencyAttunementChamber";
 import { BreathSynchronizationCeremony } from "@/components/immersive/BreathSynchronizationCeremony";
 import { MultidimensionalSoundJourney } from "@/components/immersive/MultidimensionalSoundJourney";
 import { CosmicButton } from "@/components/features/cosmic/CosmicButton";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
+import { useEffect } from "react";
+import { usePageHeader } from "@/hooks/use-page-header";
 
 export default function ImmersivePage() {
+  // Use the page header hook to configure the header instead of rendering MainHeader directly
+  usePageHeader({
+    title: "Cosmic Consciousness Portal",
+    actions: [],
+    showSearch: false,
+    showLogo: true,
+    variant: 'default',
+    isScrollBehaviorEnabled: true,
+    shrinkOnScroll: true,
+    blurOnScroll: true,
+    backdropBlur: true,
+    glassmorphism: true
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-gray-900 relative">
       <CosmicBackground />
 
-      {/* Immersive Page Title Section */}
-      <MainHeader
-        title="Cosmic Consciousness Portal"
-        description="Explore our collection of consciousness-expanding tools designed to deepen your connection with healing frequencies through personalization, breath synchronization, and spatial audio."
-      />
+      {/* Immersive Page Title Section - MainHeader is now managed by the HeaderContext */}
+      <div className="container mx-auto pt-32 pb-8 px-4 text-center">
+        <p className="text-gray-300 max-w-2xl mx-auto">
+          Explore our collection of consciousness-expanding tools designed to deepen your connection with healing frequencies through personalization, breath synchronization, and spatial audio.
+        </p>
+      </div>
 
       {/* Frequency Attunement Chamber */}
       <div className="container mx-auto py-10 md:py-12 px-4">

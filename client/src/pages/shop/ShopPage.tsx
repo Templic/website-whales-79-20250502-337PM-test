@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from "react";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ProductFilter } from "@/components/shop/ProductFilter";
-import { MainHeader } from "@/components/layout/MainHeader"; // Added import for MainHeader
+// MainHeader is already included in MainLayout, so we don't need to import it here
 import { useRoute } from "wouter";
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import EnhancedShoppingExperience from "@/components/shop/EnhancedShoppingExperience";
@@ -354,8 +354,7 @@ const ShopPage: React.FC = () => {
         )}
 
         <div className="max-w-7xl mx-auto">
-          {/* ShopHeader removed to prevent duplicate headers - main page header is used instead */}
-          <MainHeader /> {/* Added MainHeader component */}
+          {/* MainHeader is already included in MainLayout, so we don't need to add it here */}
           <div className="mb-6 flex flex-col gap-4">
             <h1 className="text-3xl font-bold text-white">Cosmic Shop</h1>
             <div className="flex flex-wrap gap-3 items-center">

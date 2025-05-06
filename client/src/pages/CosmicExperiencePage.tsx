@@ -8,7 +8,7 @@ import { BinauralBeatGenerator } from "@/components/features/audio/BinauralBeatG
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Music, Infinity, PanelTop, Waves, Moon, Leaf as Lungs, Brain } from "lucide-react";
-import { MainHeader } from "@/components/layout/MainHeader"; // Added MainHeader import
+// MainHeader is already included in MainLayout, so we don't need to import it here
 
 
 export default function CosmicExperiencePage() {
@@ -27,7 +27,7 @@ export default function CosmicExperiencePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <MainHeader /> {/* Added MainHeader component */}
+      {/* MainHeader is already included in MainLayout, so we don't need to add it here */}
       {backgroundType === "cosmic" ? <CosmicBackground /> : <ParticleBackground />}
       <div className="container mx-auto pt-8 px-4">
         <div className="text-center mb-8">
