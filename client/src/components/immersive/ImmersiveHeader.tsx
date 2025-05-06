@@ -1,15 +1,21 @@
+/**
+ * @deprecated This component has been renamed to ImmersivePageHeader to avoid confusion with the main site header.
+ * This component is NOT a site header/navigation, but rather a page title section for immersive experiences.
+ */
+
 "use client"
 
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-interface ImmersiveHeaderProps {
+interface ImmersivePageHeaderProps {
   title: string;
   description: string;
   className?: string;
 }
 
-export function ImmersiveHeader({ title, description, className }: ImmersiveHeaderProps) {
+// Renamed component to better reflect its purpose as a page title section
+export function ImmersivePageHeader({ title, description, className }: ImmersivePageHeaderProps) {
   return (
     <div className={cn("pt-20 pb-12 md:pt-28 md:pb-16 relative", className)}>
       <motion.div
@@ -29,3 +35,6 @@ export function ImmersiveHeader({ title, description, className }: ImmersiveHead
     </div>
   );
 }
+
+// Export the old name for backward compatibility
+export const ImmersiveHeader = ImmersivePageHeader;

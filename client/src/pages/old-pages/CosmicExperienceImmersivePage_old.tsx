@@ -9,7 +9,7 @@
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { ParticleBackground } from "@/components/cosmic/ParticleBackground";
 import { SacredGeometryDemo } from "@/components/cosmic/SacredGeometryDemo";
-import { ImmersiveHeader } from "@/components/immersive/ImmersiveHeader";
+import { ImmersivePageHeader } from "@/components/immersive/ImmersiveHeader";
 import { FrequencyAttunementChamber } from "@/components/immersive/FrequencyAttunementChamber";
 import { BreathSynchronizationCeremony } from "@/components/immersive/BreathSynchronizationCeremony";
 import { MultidimensionalSoundJourney } from "@/components/immersive/MultidimensionalSoundJourney";
@@ -26,7 +26,7 @@ export default function CosmicExperienceImmersivePage_Old() {
     <div className="min-h-screen bg-gradient-to-b from-black via-purple-950/90 to-indigo-950 relative z-10">
       <ParticleBackground />
       
-      <ImmersiveHeader
+      <ImmersivePageHeader
         title="Cosmic Consciousness Portal"
         description="Experience transformative frequencies through personalization, breath synchronization, and spatial audio."
       />
