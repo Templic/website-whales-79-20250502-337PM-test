@@ -328,15 +328,17 @@ export const MainHeader = ({
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isHeaderHidden]);
 
-  // Navigation items aligned with the specification
+  // Navigation items aligned with the "Dale Loves Whales" design in screenshot
   const navigationItems: NavItem[] = [
     { name: "Home", path: "/", icon: <Home className="h-4 w-4" /> },
     { name: "About", path: "/about", icon: <Users className="h-4 w-4" /> },
-    { name: "New Music", path: "/music-release", icon: <Music className="h-4 w-4" /> },
-    { name: "Archived Music", path: "/archived-music", icon: <Headphones className="h-4 w-4" /> },
+    { name: "Music", path: "/music-release", icon: <Music className="h-4 w-4" /> },
     { name: "Tour", path: "/tour", icon: <Calendar className="h-4 w-4" /> },
+    { name: "Blog", path: "/blog", icon: <Mail className="h-4 w-4" /> },
     { name: "Shop", path: "/shop", icon: <ShoppingBag className="h-4 w-4" /> },
-    { name: "Engage", path: "/engage", icon: <Heart className="h-4 w-4" /> },
+    { name: "AI Chat", path: "/ai-chat", icon: <HelpCircle className="h-4 w-4" /> },
+    { name: "Newsletter", path: "/newsletter", icon: <Mail className="h-4 w-4" /> },
+    { name: "Collaboration", path: "/collaboration", icon: <Heart className="h-4 w-4" /> },
     { name: "Contact", path: "/contact", icon: <Mail className="h-4 w-4" /> }
   ];
   
@@ -557,7 +559,7 @@ export const MainHeader = ({
 
             {/* Desktop Navigation spans 6 columns, only on desktop */}
             <nav className="hidden md:block md:col-span-6 z-content">
-              <div className="grid grid-flow-col auto-cols-max gap-x-1">
+              <div className="flex justify-center items-center h-full space-x-5">
                 {navigationItems.map((item, index) => (
                   <Link 
                     key={item.path} 
@@ -568,7 +570,7 @@ export const MainHeader = ({
                       handleNavigationClick(item.path);
                     }}
                     onKeyDown={(e) => handleKeyboardNav(e, index)}
-                    className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-white nav-link group ${
+                    className={`relative px-2 py-2 text-sm font-medium transition-all duration-300 hover:text-white nav-link group ${
                       location.includes(item.path) && (item.path === "/" ? location === "/" : true)
                         ? 'text-white' 
                         : 'text-white/70'
@@ -576,26 +578,30 @@ export const MainHeader = ({
                     aria-current={location.includes(item.path) && (item.path === "/" ? location === "/" : true) ? "page" : undefined}
                     tabIndex={0}
                   >
-                    {/* Interactive background geometry appears on hover - based on specifications */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-cosmic-background">
-                      <SacredGeometry
-                        type="merkaba"
-                        color={getColorForIndex(index)}
-                        size={40}
-                        animated={true}
+                    {/* Navigation item with circular indicator as shown in screenshot */}
+                    <div className="flex items-center">
+                      {/* Circular indicator dot */}
+                      <div 
+                        className={`h-2 w-2 rounded-full mr-1.5 
+                          ${location.includes(item.path) && (item.path === "/" ? location === "/" : true)
+                            ? 'bg-cyan-400 shadow-glow-cyan' 
+                            : 'bg-cyan-400/40'
+                          }`}
                         aria-hidden="true"
                       />
+                      
+                      {/* Navigation item text */}
+                      <motion.span 
+                        className="flex items-center relative z-10"
+                        whileHover={{ y: -1 }}
+                        whileTap={{ y: 0 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      >
+                        <span>{item.name}</span>
+                      </motion.span>
                     </div>
                     
-                    <motion.span 
-                      className="flex items-center space-x-1 relative z-10"
-                      whileHover={{ y: -2 }}
-                      whileTap={{ y: 0 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                    >
-                      {item.icon}
-                      <span>{item.name}</span>
-                    </motion.span>
+                    {/* Active indicator line */}
                     {location.includes(item.path) && (item.path === "/" ? location === "/" : true) && (
                       <motion.div 
                         layoutId="nav-indicator"
@@ -777,7 +783,7 @@ export const MainHeader = ({
                       {/* Background pattern */}
                       <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300">
                         <SacredGeometry
-                          type={getGeometryForIndex(index)}
+                          type="merkaba"
                           color={getColorForIndex(index)}
                           size={100}
                           animated={false}
