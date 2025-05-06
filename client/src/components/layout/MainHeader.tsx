@@ -5,7 +5,8 @@
  * staggered navigation, and cosmic design elements.
  * 
  * Created: 2025-04-05 - Updated with enhancements
- * Latest Update: Complete redesign based on new specifications - May 5, 2025
+ * Latest Update: Complete redesign based on new specifications - May 6, 2025
+ * Implemented the hexagram merkaba sacred geometry elements as shown in screenshots
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
@@ -37,7 +38,7 @@ import {
   Settings,
   HelpCircle
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, useMotionTemplate } from "framer-motion";
 import SacredGeometry from "../ui/sacred-geometry";
 
 // Define navigation items
