@@ -9,8 +9,8 @@ import { useHeader, HeaderConfig } from '../contexts/HeaderContext';
 export function usePageHeader(config: HeaderConfig) {
   const { setHeaderConfig } = useHeader();
   
+  // Set the header config when the component mounts or when key properties change
   useEffect(() => {
-    // Set the header config when the component mounts
     setHeaderConfig(config);
     
     // Reset header to defaults when the component unmounts
@@ -22,7 +22,37 @@ export function usePageHeader(config: HeaderConfig) {
         showLogo: true,
         variant: 'default',
         className: '',
+        style: {},
+        isScrollBehaviorEnabled: true,
+        hideOnScroll: false,
+        shrinkOnScroll: true,
+        blurOnScroll: true,
+        backdropBlur: true,
+        glassmorphism: true
       });
     };
-  }, [config, setHeaderConfig]);
+  }, [
+    config.title,
+    config.variant,
+    config.showSearch,
+    config.showLogo,
+    config.className,
+    // For style object, we can't rely on reference equality or stringify it safely
+    // Instead, we track specific style properties that might change
+    config.style?.backgroundColor,
+    config.style?.color,
+    config.style?.backdropFilter,
+    config.style?.borderColor,
+    // For scroll behavior options
+    config.isScrollBehaviorEnabled,
+    config.hideOnScroll,
+    config.shrinkOnScroll,
+    config.blurOnScroll,
+    config.backdropBlur,
+    config.glassmorphism,
+    // For actions array, using length as a simple dependency
+    // This won't catch all changes but will work for most cases
+    config.actions?.length,
+    setHeaderConfig
+  ]);
 }

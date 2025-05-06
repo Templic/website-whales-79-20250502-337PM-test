@@ -60,6 +60,13 @@ export interface MainHeaderProps {
   showLogo?: boolean;
   variant?: 'default' | 'transparent' | 'minimal';
   className?: string;
+  style?: React.CSSProperties;
+  isScrollBehaviorEnabled?: boolean;
+  hideOnScroll?: boolean;
+  shrinkOnScroll?: boolean;
+  blurOnScroll?: boolean;
+  backdropBlur?: boolean;
+  glassmorphism?: boolean;
 }
 
 export const MainHeader = ({
@@ -68,7 +75,14 @@ export const MainHeader = ({
   showSearch: propShowSearch = true,
   showLogo: propShowLogo = true,
   variant: propVariant = 'default',
-  className: propClassName = ''
+  className: propClassName = '',
+  style: propStyle = {},
+  isScrollBehaviorEnabled: propIsScrollBehaviorEnabled = true,
+  hideOnScroll: propHideOnScroll = false,
+  shrinkOnScroll: propShrinkOnScroll = true,
+  blurOnScroll: propBlurOnScroll = true,
+  backdropBlur: propBackdropBlur = true,
+  glassmorphism: propGlassmorphism = true
 }: MainHeaderProps = {}) => {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
@@ -81,6 +95,27 @@ export const MainHeader = ({
   const showLogo = propShowLogo !== undefined ? propShowLogo : headerConfig.showLogo;
   const variant = propVariant || headerConfig.variant || 'default';
   const className = propClassName || headerConfig.className || '';
+  const style = propStyle && Object.keys(propStyle).length > 0 ? propStyle : headerConfig.style || {};
+  
+  // Scroll behavior props merged with context values
+  const isScrollBehaviorEnabled = propIsScrollBehaviorEnabled !== undefined 
+    ? propIsScrollBehaviorEnabled 
+    : headerConfig.isScrollBehaviorEnabled;
+  const hideOnScroll = propHideOnScroll !== undefined 
+    ? propHideOnScroll 
+    : headerConfig.hideOnScroll;
+  const shrinkOnScroll = propShrinkOnScroll !== undefined 
+    ? propShrinkOnScroll 
+    : headerConfig.shrinkOnScroll;
+  const blurOnScroll = propBlurOnScroll !== undefined 
+    ? propBlurOnScroll 
+    : headerConfig.blurOnScroll;
+  const backdropBlur = propBackdropBlur !== undefined 
+    ? propBackdropBlur 
+    : headerConfig.backdropBlur;
+  const glassmorphism = propGlassmorphism !== undefined 
+    ? propGlassmorphism 
+    : headerConfig.glassmorphism;
   
   const [searchQuery, setSearchQuery] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
