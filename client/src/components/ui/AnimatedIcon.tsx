@@ -1,41 +1,81 @@
 /**
  * AnimatedIcon.tsx
  * 
- * A wrapper component that adds subtle rotation animation to icons
- * as seen in the navigation items in the header.
+ * A component for displaying icons with subtle animations
+ * Used in navigation elements to provide visual interest.
  */
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { cn } from '../../lib/utils';
 
 interface AnimatedIconProps {
-  children: React.ReactNode;
+  icon: React.ReactNode;
   color?: string;
+  size?: number;
   className?: string;
-  hoverScale?: number;
+  hoverEffect?: 'pulse' | 'spin' | 'bounce' | 'glow' | 'none';
   animationDuration?: number;
 }
 
 export const AnimatedIcon: React.FC<AnimatedIconProps> = ({
-  children,
-  color = 'currentColor',
+  icon,
+  color = '#ffffff',
+  size = 24,
   className = '',
-  hoverScale = 1.1,
-  animationDuration = 20
+  hoverEffect = 'pulse',
+  animationDuration = 2
 }) => {
+  // Define animation variants based on hover effect
+  const variants = {
+    pulse: {
+      scale: [1, 1.1, 1],
+      opacity: [1, 0.8, 1],
+      transition: {
+        duration: animationDuration,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    },
+    spin: {
+      rotate: [0, 360],
+      transition: {
+        duration: animationDuration,
+        repeat: Infinity,
+        ease: "linear"
+      }
+    },
+    bounce: {
+      y: [0, -5, 0],
+      transition: {
+        duration: animationDuration,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    },
+    glow: {
+      filter: ["drop-shadow(0 0 2px rgba(255,255,255,0.2))", "drop-shadow(0 0 8px rgba(255,255,255,0.6))", "drop-shadow(0 0 2px rgba(255,255,255,0.2))"],
+      transition: {
+        duration: animationDuration,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    },
+    none: {}
+  };
+
   return (
     <motion.div
-      className={`inline-flex items-center justify-center ${className}`}
-      style={{ color }}
-      animate={{ rotate: 360 }}
-      transition={{ 
-        duration: animationDuration, 
-        repeat: Infinity, 
-        ease: "linear" 
+      className={cn("flex items-center justify-center", className)}
+      whileHover={hoverEffect !== 'none' ? hoverEffect : undefined}
+      variants={variants}
+      style={{
+        color,
+        width: size,
+        height: size
       }}
-      whileHover={{ scale: hoverScale }}
     >
-      {children}
+      {icon}
     </motion.div>
   );
 };

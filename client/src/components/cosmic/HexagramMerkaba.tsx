@@ -32,13 +32,29 @@ export const HexagramMerkaba: React.FC<HexagramMerkabaProps> = ({
   
   // Create pulse animation for glow intensity
   useEffect(() => {
-    const animation = motion.animate(pulseValue, [0.7, 0.9, 0.7], {
-      duration: 4,
-      repeat: Infinity,
-      ease: "easeInOut"
-    });
+    const animateGlow = () => {
+      let startValue = 0.7;
+      let endValue = 0.9;
+      let duration = 2000;
+      
+      const animate = () => {
+        pulseValue.set(startValue);
+        setTimeout(() => {
+          // Switch the values for the next animation
+          const temp = startValue;
+          startValue = endValue;
+          endValue = temp;
+          animate();
+        }, duration);
+      };
+      
+      animate();
+    };
     
-    return () => animation.stop();
+    animateGlow();
+    
+    // No cleanup needed for this simplified approach
+    return () => {};
   }, []);
   
   // Dynamic glow intensity based on pulse value
@@ -86,7 +102,7 @@ export const HexagramMerkaba: React.FC<HexagramMerkabaProps> = ({
               <feGaussianBlur stdDeviation="2.5" result="blur" />
               <feFlood 
                 floodColor={color} 
-                floodOpacity={useTransform(glowIntensity, value => value)} 
+                floodOpacity="0.8" 
                 result="color" 
               />
               <feComposite in="color" in2="blur" operator="in" result="glow" />
