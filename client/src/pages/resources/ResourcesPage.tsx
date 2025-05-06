@@ -4,7 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Music, Headphones, Heart, MoonStar, Star, Sparkles } from "lucide-react";
 
-export default function ResourcesPage() {
+export default import { MainHeader } from '@/components/layout/MainHeader';
+
+function ResourcesPage() {
+  return (
+    <>
+      <MainHeader />
   useEffect(() => {
     document.title = "Cosmic Resources - Dale Loves Whales";
   }, []);

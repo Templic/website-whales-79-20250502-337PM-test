@@ -21,7 +21,12 @@ interface Track {
   createdAt: string;
 }
 
-export default function MusicReleasePage() {
+export default import { MainHeader } from '@/components/layout/MainHeader';
+
+function MusicReleasePage() {
+  return (
+    <>
+      <MainHeader />
   const [tracks, setTracks] = useState<Track[]>([]);
   const { user } = useAuth();
   const [location] = useLocation();
