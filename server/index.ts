@@ -42,6 +42,7 @@ import { contentApiCsrfBypass } from './middleware/contentApiCsrfBypass';
 import { thirdPartyIntegrationMiddleware, taskadeIntegrationMiddleware } from './middleware/thirdPartyIntegrationMiddleware';
 import { noSecurityMiddleware } from './middleware/noSecurityMiddleware';
 import directValidationTestRoutes from './routes/direct-validation-test-routes';
+import { exemptDemoRoutes } from './routes/demo-routes-exempt';
 // Replit environment is detected via environment variables when needed
 
 // Start time tracking
@@ -119,6 +120,18 @@ if (config.security.csrfProtection) {
       // Make sure the paths are also covered with query parameters and fragments
       '/direct-validation-test.html?*',
       '/direct-validation-test.html#*',
+      // Demo pages
+      '/header-demo',
+      '/components',
+      '/cosmic-components',
+      '/test/cosmic',
+      '/dynamic-content-demo',
+      '/test/audio',
+      '/responsive-demo',
+      '/responsive-demo2',
+      '/content-ai-demo',
+      '/content-recommendations-demo',
+      '/performance',
       // Flask app routes
       '/',
       '/index.html',
@@ -215,6 +228,10 @@ if (config.security.csrfProtection) {
   // Apply Content API CSRF bypass middleware
   app.use(contentApiCsrfBypass);
   log('✅ Content API CSRF bypass middleware initialized successfully', 'server');
+  
+  // Apply demo routes exemption middleware
+  app.use(exemptDemoRoutes);
+  log('✅ Demo routes CSRF exemption middleware initialized successfully', 'server');
   
   // Then apply CSRF middleware for non-Vite requests
   app.use((req, res, next) => {
