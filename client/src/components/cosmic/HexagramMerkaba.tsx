@@ -3,6 +3,9 @@
  * 
  * A specialized component for drawing hexagram merkaba shapes with glow effects
  * as shown in the design screenshots.
+ * 
+ * Update: Enhanced with refraction effects to create the illusion of passing through
+ * surfaces at different zoom levels.
  */
 
 import React from 'react';
@@ -16,6 +19,14 @@ interface HexagramMerkabaProps {
   rotationDirection?: 'clockwise' | 'counterclockwise';
   opacity?: number;
   className?: string;
+  /** Whether this merkaba should appear refracted, as if behind a surface */
+  refracted?: boolean;
+  /** Level of refraction blur (0-10) */
+  refractionLevel?: number;
+  /** Whether this merkaba is a shadow of another merkaba */
+  isShadow?: boolean;
+  /** Offset position for shadow merkabas */
+  shadowOffset?: { x: number; y: number };
 }
 
 const HexagramMerkaba: React.FC<HexagramMerkabaProps> = ({
@@ -25,7 +36,11 @@ const HexagramMerkaba: React.FC<HexagramMerkabaProps> = ({
   rotationSpeed = 60,
   rotationDirection = 'clockwise',
   opacity = 1,
-  className = ''
+  className = '',
+  refracted = false,
+  refractionLevel = 5,
+  isShadow = false,
+  shadowOffset = { x: 5, y: 5 }
 }) => {
   // Calculate points for the two overlapping triangles of the Star of David
   // with slightly different sizes for the layered effect
@@ -74,8 +89,10 @@ const HexagramMerkaba: React.FC<HexagramMerkabaProps> = ({
   const middleLayer = generateHexagramPoints(0.85);
   const innerLayer = generateHexagramPoints(0.7);
   
-  // SVG filter ID for the glow effect
+  // SVG filter IDs for various effects
   const filterId = `hexagram-glow-${Math.random().toString(36).substring(2, 9)}`;
+  const refractionFilterId = `hexagram-refraction-${Math.random().toString(36).substring(2, 9)}`;
+  const shadowFilterId = `hexagram-shadow-${Math.random().toString(36).substring(2, 9)}`;
   
   // Animation variants
   const rotationVariant = {
@@ -88,6 +105,9 @@ const HexagramMerkaba: React.FC<HexagramMerkabaProps> = ({
       }
     }
   };
+  
+  // Adjust opacity based on props
+  const effectiveOpacity = refracted ? opacity * 0.6 : isShadow ? opacity * 0.4 : opacity;
   
   // Pulse animation for the glow effect
   const pulseVariant = {
@@ -104,13 +124,31 @@ const HexagramMerkaba: React.FC<HexagramMerkabaProps> = ({
 
   return (
     <div className={`relative ${className}`} style={{ width: size, height: size }}>
-      {/* SVG Filter definition for glow */}
+      {/* SVG Filter definitions for various effects */}
       <svg width="0" height="0" style={{ position: 'absolute' }}>
         <defs>
+          {/* Standard glow filter */}
           <filter id={filterId} x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
             <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="glow" />
             <feBlend in="SourceGraphic" in2="glow" mode="screen" />
+          </filter>
+          
+          {/* Refraction filter - simulates light passing through a surface */}
+          <filter id={refractionFilterId} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation={refractionLevel} result="blur" />
+            <feColorMatrix in="blur" mode="matrix" 
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 10 -4" result="refraction" />
+            <feBlend in="SourceGraphic" in2="refraction" mode="screen" />
+          </filter>
+          
+          {/* Shadow filter - creates a blurred offset shadow effect */}
+          <filter id={shadowFilterId} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="shadow" />
+            <feOffset dx={shadowOffset.x} dy={shadowOffset.y} in="shadow" result="offsetShadow" />
+            <feColorMatrix in="offsetShadow" mode="matrix" 
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 8 -3" result="coloredShadow" />
+            <feBlend in="SourceGraphic" in2="coloredShadow" mode="normal" />
           </filter>
         </defs>
       </svg>
@@ -123,78 +161,98 @@ const HexagramMerkaba: React.FC<HexagramMerkabaProps> = ({
         initial={{ rotate: 0 }}
         animate="animate"
         variants={rotationVariant}
+        style={{ 
+          filter: refracted 
+            ? `url(#${refractionFilterId})` 
+            : isShadow 
+              ? `url(#${shadowFilterId})` 
+              : 'none'
+        }}
       >
-        {/* Base layer with glow filter */}
-        <g filter={`url(#${filterId})`}>
+        {/* Base layer with appropriate filter based on merkaba state */}
+        <g filter={refracted || isShadow ? 'none' : `url(#${filterId})`}>
           <path
             d={outerLayer.upTriangle}
             fill={color}
-            fillOpacity={0.6}
+            fillOpacity={refracted ? 0.3 : isShadow ? 0.25 : 0.6}
             stroke={color}
-            strokeWidth={0.5}
+            strokeWidth={refracted || isShadow ? 0.3 : 0.5}
+            strokeOpacity={refracted ? 0.3 : isShadow ? 0.2 : 1}
           />
           <path
             d={outerLayer.downTriangle}
             fill={color}
-            fillOpacity={0.6}
+            fillOpacity={refracted ? 0.3 : isShadow ? 0.25 : 0.6}
             stroke={color}
-            strokeWidth={0.5}
+            strokeWidth={refracted || isShadow ? 0.3 : 0.5}
+            strokeOpacity={refracted ? 0.3 : isShadow ? 0.2 : 1}
           />
         </g>
         
-        {/* Middle layer */}
+        {/* Middle layer with adjusted opacity based on state */}
         <path
           d={middleLayer.upTriangle}
           fill={color}
-          fillOpacity={0.4}
+          fillOpacity={refracted ? 0.15 : isShadow ? 0.15 : 0.4}
           stroke={color}
-          strokeWidth={0.3}
+          strokeWidth={refracted || isShadow ? 0.2 : 0.3}
+          strokeOpacity={refracted ? 0.2 : isShadow ? 0.15 : 0.8}
         />
         <path
           d={middleLayer.downTriangle}
           fill={color}
-          fillOpacity={0.4}
+          fillOpacity={refracted ? 0.15 : isShadow ? 0.15 : 0.4}
           stroke={color}
-          strokeWidth={0.3}
+          strokeWidth={refracted || isShadow ? 0.2 : 0.3}
+          strokeOpacity={refracted ? 0.2 : isShadow ? 0.15 : 0.8}
         />
         
-        {/* Inner layer */}
-        <path
-          d={innerLayer.upTriangle}
-          fill={color}
-          fillOpacity={0.2}
-          stroke={color}
-          strokeWidth={0.2}
-        />
-        <path
-          d={innerLayer.downTriangle}
-          fill={color}
-          fillOpacity={0.2}
-          stroke={color}
-          strokeWidth={0.2}
-        />
-        
-        {/* Central hexagon */}
-        <path
-          d={innerLayer.innerHexagon}
-          fill={color}
-          fillOpacity={0.3}
-          stroke={color}
-          strokeWidth={0.2}
-        />
+        {/* Inner layer - reduced visibility when refracted/shadow */}
+        {(!refracted && !isShadow) && (
+          <>
+            <path
+              d={innerLayer.upTriangle}
+              fill={color}
+              fillOpacity={0.2}
+              stroke={color}
+              strokeWidth={0.2}
+            />
+            <path
+              d={innerLayer.downTriangle}
+              fill={color}
+              fillOpacity={0.2}
+              stroke={color}
+              strokeWidth={0.2}
+            />
+            
+            {/* Central hexagon */}
+            <path
+              d={innerLayer.innerHexagon}
+              fill={color}
+              fillOpacity={0.3}
+              stroke={color}
+              strokeWidth={0.2}
+            />
+          </>
+        )}
       </motion.svg>
       
-      {/* Outer glow effect with pulse animation */}
-      <motion.div
-        className="absolute inset-0 rounded-full"
-        style={{
-          boxShadow: `0 0 20px ${glowColor}, 0 0 40px ${glowColor}`,
-          opacity: 0.4
-        }}
-        initial={{ opacity: 0.4 }}
-        animate="animate"
-        variants={pulseVariant}
-      />
+      {/* Outer glow effect with pulse animation - different intensity based on state */}
+      {!isShadow && (
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          style={{
+            boxShadow: refracted 
+              ? `0 0 10px ${glowColor}, 0 0 20px ${glowColor}`
+              : `0 0 20px ${glowColor}, 0 0 40px ${glowColor}`,
+            opacity: refracted ? 0.2 : 0.4,
+            filter: refracted ? 'blur(3px)' : 'none',
+          }}
+          initial={{ opacity: refracted ? 0.2 : 0.4 }}
+          animate="animate"
+          variants={pulseVariant}
+        />
+      )}
     </div>
   );
 };

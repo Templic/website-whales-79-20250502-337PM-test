@@ -413,47 +413,93 @@ export const MainHeader = ({
       {/* Global SVG filters for glowing effects */}
       <GlowEffects idPrefix="header" />
       
-      {/* Hexagram Merkaba shapes positioned behind the header */}
-      <div className={`fixed z-10 left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 ${layout.showMerkaba ? 'block' : 'hidden'}`} style={{ left: layout.merkabaOffset + '%' }}>
-        <HexagramMerkaba 
-          size={layout.merkabaSize} 
-          color="#10edb3" 
-          glowColor="rgba(16, 237, 179, 0.8)"
-          rotationSpeed={60}
-          rotationDirection="clockwise"
-          opacity={0.9}
-        />
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full mt-4">
-          <HexagramMerkaba 
-            size={layout.merkabaSize * 0.7} 
-            color="#10edb3" 
-            glowColor="rgba(16, 237, 179, 0.8)"
-            rotationSpeed={50}
-            rotationDirection="counterclockwise"
-            opacity={0.8}
-          />
+      {/* Enhanced Merkaba Implementation with refraction effects */}
+      {/* Merkaba system positioned on left side of header */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {/* Left side Merkaba system */}
+        <div className="absolute left-0 top-1/2 transform -translate-y-1/2">
+          {/* Layer 1: Behind header (z-10) - refracted effect */}
+          <div className="absolute z-10" style={{ left: '10px' }}>
+            <HexagramMerkaba 
+              size={80} 
+              color="#10edb3" 
+              glowColor="rgba(16, 237, 179, 0.5)"
+              rotationSpeed={60}
+              rotationDirection="clockwise"
+              opacity={0.7}
+              refracted={true}
+              refractionLevel={7}
+            />
+          </div>
+          
+          {/* Layer 2: Shadow merkaba - offset and behind */}
+          <div className="absolute z-10" style={{ left: '20px', top: '10px' }}>
+            <HexagramMerkaba 
+              size={70} 
+              color="#10edb3" 
+              glowColor="rgba(16, 237, 179, 0.3)"
+              rotationSpeed={70}
+              rotationDirection="counterclockwise"
+              opacity={0.4}
+              isShadow={true}
+              shadowOffset={{ x: 8, y: 8 }}
+            />
+          </div>
+          
+          {/* Layer 3: Main crisp merkaba in front (z-30) */}
+          <div className="absolute z-30" style={{ left: '5px' }}>
+            <HexagramMerkaba 
+              size={75} 
+              color="#10edb3" 
+              glowColor="rgba(16, 237, 179, 0.8)"
+              rotationSpeed={60}
+              rotationDirection="clockwise"
+              opacity={0.9}
+            />
+          </div>
         </div>
-      </div>
-      
-      {/* Right side Hexagram Merkaba shapes */}
-      <div className={`fixed z-10 right-0 top-1/2 -translate-y-1/2 translate-x-1/2 ${layout.showMerkaba ? 'block' : 'hidden'}`} style={{ right: layout.merkabaOffset + '%' }}>
-        <HexagramMerkaba 
-          size={layout.merkabaSize} 
-          color="#10edb3" 
-          glowColor="rgba(16, 237, 179, 0.8)"
-          rotationSpeed={60}
-          rotationDirection="counterclockwise"
-          opacity={0.9}
-        />
-        <div className="absolute right-1/2 top-0 translate-x-1/2 -translate-y-full mt-4">
-          <HexagramMerkaba 
-            size={layout.merkabaSize * 0.7} 
-            color="#10edb3" 
-            glowColor="rgba(16, 237, 179, 0.8)"
-            rotationSpeed={50}
-            rotationDirection="clockwise"
-            opacity={0.8}
-          />
+        
+        {/* Right side Merkaba system */}
+        <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
+          {/* Layer 1: Behind header (z-10) - refracted effect */}
+          <div className="absolute z-10" style={{ right: '10px' }}>
+            <HexagramMerkaba 
+              size={80} 
+              color="#10edb3" 
+              glowColor="rgba(16, 237, 179, 0.5)"
+              rotationSpeed={60}
+              rotationDirection="counterclockwise"
+              opacity={0.7}
+              refracted={true}
+              refractionLevel={7}
+            />
+          </div>
+          
+          {/* Layer 2: Shadow merkaba - offset and behind */}
+          <div className="absolute z-10" style={{ right: '20px', top: '10px' }}>
+            <HexagramMerkaba 
+              size={70} 
+              color="#10edb3" 
+              glowColor="rgba(16, 237, 179, 0.3)"
+              rotationSpeed={70}
+              rotationDirection="clockwise"
+              opacity={0.4}
+              isShadow={true}
+              shadowOffset={{ x: -8, y: 8 }}
+            />
+          </div>
+          
+          {/* Layer 3: Main crisp merkaba in front (z-30) */}
+          <div className="absolute z-30" style={{ right: '5px' }}>
+            <HexagramMerkaba 
+              size={75} 
+              color="#10edb3" 
+              glowColor="rgba(16, 237, 179, 0.8)"
+              rotationSpeed={60}
+              rotationDirection="counterclockwise"
+              opacity={0.9}
+            />
+          </div>
         </div>
       </div>
     
