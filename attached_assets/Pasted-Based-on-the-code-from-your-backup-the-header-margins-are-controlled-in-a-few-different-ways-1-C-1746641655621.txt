@@ -1,0 +1,99 @@
+Based on the code from your backup, the header margins are controlled in a few different ways:
+1. Container Element
+
+The main header uses a container with horizontal padding:
+
+// From MainHeader.tsx
+<header className="fixed top-0 z-[100] w-full bg-black/80 backdrop-blur-lg border-b border-white/5">
+  <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+    {/* Header content */}
+  </div>
+</header>
+
+The container class centers the content, and px-4 adds horizontal padding of 1rem (16px) on both sides.
+2. Responsive Padding System
+
+The padding scales responsively using Tailwind's responsive prefixes:
+
+// Responsive padding that increases on larger screens
+<div className="px-4 sm:px-6 md:px-8 lg:px-12">
+  {/* Content */}
+</div>
+
+This creates a progression of padding:
+
+    Default: 1rem (16px) on each side
+    sm: 1.5rem (24px) on each side
+    md: 2rem (32px) on each side
+    lg: 3rem (48px) on each side
+
+3. Logo Margin Spacing
+
+The logo element has specific margin spacing:
+
+<Link to="/" className="flex items-center space-x-2 group z-10">
+  <div className="relative h-12 w-12">
+    {/* Logo content */}
+  </div>
+  <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-300">
+    Dale Loves Whales
+  </span>
+</Link>
+
+The space-x-2 class adds a horizontal gap of 0.5rem (8px) between the logo icon and text.
+4. Navigation Item Spacing
+
+Navigation items use margin and padding for proper spacing:
+
+<nav className="hidden md:flex items-center space-x-1 ml-6">
+  {navigationItems.map((item, index) => (
+    <Link 
+      key={item.path} 
+      href={item.path} 
+      className="px-3 py-2 text-sm font-medium transition-all duration-300"
+    >
+      <span>{item.label}</span>
+    </Link>
+  ))}
+</nav>
+
+Here:
+
+    ml-6 adds a 1.5rem (24px) left margin to the entire navigation
+    space-x-1 adds 0.25rem (4px) spacing between nav items
+    Each nav item has px-3 (0.75rem horizontal padding) and py-2 (0.5rem vertical padding)
+
+5. Auto Margin for Alignment
+
+Some components use auto margins for positioning:
+
+<div className="ml-auto flex items-center space-x-4">
+  <SearchComponent />
+  <UserMenu />
+</div>
+
+The ml-auto pushes this div to the right side of the header by automatically filling available space on the left.
+6. Vertical Margins and Height
+
+The header height is controlled by:
+
+// Fixed height
+<header className="h-16"> // 4rem (64px) height
+
+// Dynamic height based on scroll position
+<header className={`transition-all duration-300 ${isScrolled ? 'h-16' : 'h-20'}`}>
+
+This creates a header that's either 4rem (64px) or 5rem (80px) tall depending on scroll position.
+7. Absolute Positioning for Merkaba Elements
+
+The geometric elements in the margins use absolute positioning relative to the viewport:
+
+<div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+  <div className="absolute -top-20 -right-20 opacity-20">
+    {/* Merkaba elements */}
+  </div>
+</div>
+
+The negative values (-top-20, -right-20) position elements partially outside the viewport, creating the effect of elements peeking in from the edges.
+
+These techniques together create the sophisticated margin system in your header design.
